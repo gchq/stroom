@@ -1,8 +1,6 @@
 package stroom.dashboard.expression.v1.ref;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class ValueReferenceIndex {
         return new StoredValues(new Object[list.size()]);
     }
 
-    public StoredValues read(final Input input) {
+    public StoredValues read(final MyByteBufferInput input) {
         final StoredValues storedValues = createStoredValues();
         for (ValueReference<?> valueReference : list) {
             valueReference.read(storedValues, input);
@@ -69,30 +67,15 @@ public class ValueReferenceIndex {
         return storedValues;
     }
 
-    public StoredValues read(final InputFactory inputFactory, final byte[] bytes) {
-        try (final Input input = inputFactory.create(bytes)) {
+    public StoredValues read(final ByteBuffer byteBuffer) {
+        try (final MyByteBufferInput input = new MyByteBufferInput(byteBuffer)) {
             return read(input);
         }
     }
 
-    public void write(final StoredValues storedValues, final Output output) {
+    public void write(final StoredValues storedValues, final MyByteBufferOutput output) {
         for (ValueReference<?> valueReference : list) {
             valueReference.write(storedValues, output);
         }
-    }
-
-    public byte[] getBytes(final OutputFactory outputFactory,
-                           final StoredValues storedValues,
-                           final ErrorConsumer errorConsumer) {
-        final byte[] bytes;
-        try (final Output output = outputFactory.createValueOutput(errorConsumer)) {
-            if (list.size() > Byte.MAX_VALUE) {
-                throw new RuntimeException("You can only write a maximum of " + 255 + " values");
-            }
-            write(storedValues, output);
-            output.flush();
-            bytes = output.toBytes();
-        }
-        return bytes;
     }
 }

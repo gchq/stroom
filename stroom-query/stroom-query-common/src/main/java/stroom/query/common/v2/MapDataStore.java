@@ -67,7 +67,6 @@ public class MapDataStore implements DataStore, Data {
     private final GroupingFunction[] groupingFunctions;
     private final boolean hasSort;
     private final CompletionState completionState = new CompletionStateImpl();
-    private final KeyFactoryConfig keyFactoryConfig;
     private final KeyFactory keyFactory;
 
     private volatile boolean hasEnoughData;
@@ -84,8 +83,8 @@ public class MapDataStore implements DataStore, Data {
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFields, tableSettings.showDetail());
         this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFields);
         this.compiledDepths = compiledDepths;
-        keyFactoryConfig = new BasicKeyFactoryConfig();
-        keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
+        final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
+        keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         this.maxResults = dataStoreSettings.getMaxResults();
         this.storeSize = dataStoreSettings.getStoreSize();
 
@@ -558,13 +557,13 @@ public class MapDataStore implements DataStore, Data {
         public Val getValue(final int index, final boolean evaluateChildren) {
             Val val = cachedValues[index];
             if (val == null) {
-                val = createValue(index, evaluateChildren);
+                val = createValue(index);
                 cachedValues[index] = val;
             }
             return val;
         }
 
-        private Val createValue(final int index, final boolean evaluateChildren) {
+        private Val createValue(final int index) {
             Val val;
             final Generator generator = dataStore.compiledFields[index].getGenerator();
             if (key.isGrouped()) {

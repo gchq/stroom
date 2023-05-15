@@ -2,26 +2,36 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 public interface KeyFactory {
 
     /**
-     * Turn the key into a byte array.
+     * Write a key to an output.
      *
-     * @param key           The key to turn into a byte array.
-     * @param errorConsumer The error consumer to consume all errors that occur during the conversion.
-     * @return The key as a byte array.
+     * @param key The key to serialise.
      */
-    byte[] keyToBytes(Key key, ErrorConsumer errorConsumer);
+    void write(Key key, Output output);
 
     /**
-     * Turn a byte array into a key.
+     * Read a key from an input.
      *
-     * @param bytes The bytes to create the key from.
-     * @return The key created from the supplied byte array.
+     * @param input The input to read the key from.
+     * @return The key read from the input.
      */
-    Key keyFromBytes(byte[] bytes);
+    Key read(Input input);
+
+    /**
+     * Read a key from a byteBuffer.
+     *
+     * @param byteBuffer The byteBuffer to read the key from.
+     * @return The key read from the byteBuffer.
+     */
+    Key read(ByteBuffer byteBuffer);
 
     /**
      * Decode a set of string encoded key bytes into a set of keys.

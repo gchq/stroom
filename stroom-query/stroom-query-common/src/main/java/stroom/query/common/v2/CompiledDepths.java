@@ -26,7 +26,8 @@ class CompiledDepths {
     private final boolean[][] groupIndicesByDepth;
     private final boolean[][] valueIndicesByDepth;
 
-    CompiledDepths(final CompiledField[] compiledFields, final boolean showDetail) {
+    CompiledDepths(final CompiledField[] compiledFields,
+                   final boolean showDetail) {
         int maxGroupDepth = -1;
         int maxDepth = -1;
         int length = 0;

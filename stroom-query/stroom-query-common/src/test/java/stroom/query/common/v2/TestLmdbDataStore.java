@@ -35,6 +35,7 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.Metrics;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,36 +120,41 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         .build())
                 .build();
 
-        final DataStoreSettings dataStoreSettings = DataStoreSettings
-                .createBigStoreSettings();
-        final DataStore dataStore = create(tableSettings, dataStoreSettings);
+        final DataStore dataStore = create(tableSettings);
 
-        for (int i = 0; i < 3000; i++) {
-            final Val val = ValString.create("Text " + i + "test".repeat(1000));
-            dataStore.add(Val.of(val, val));
-        }
+        Metrics.setEnabled(true);
+        Metrics.measure("Added data", () -> {
+            for (int i = 0; i < 300_000; i++) {
+                final Val val = ValString.create("Text " + i + "test".repeat(1000));
+                dataStore.add(Val.of(val, val));
+            }
 
-        // Wait for all items to be added.
-        try {
-            dataStore.getCompletionState().signalComplete();
-            dataStore.getCompletionState().awaitCompletion();
-        } catch (final InterruptedException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+            // Wait for all items to be added.
+            try {
+                dataStore.getCompletionState().signalComplete();
+                dataStore.getCompletionState().awaitCompletion();
+            } catch (final InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
+        Metrics.report();
 
-        // Make sure we only get 50 results.
-        final ResultRequest tableResultRequest = ResultRequest.builder()
-                .componentId("componentX")
-                .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
-                .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
-        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
-                dataStore,
-                tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        Metrics.measure("Retrieved data", () -> {
+            // Make sure we only get 50 results.
+            final ResultRequest tableResultRequest = ResultRequest.builder()
+                    .componentId("componentX")
+                    .addMappings(tableSettings)
+                    .requestedRange(new OffsetRange(0, 3000))
+                    .build();
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                    fieldFormatter,
+                    defaultMaxResultsSizes);
+            final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                    dataStore,
+                    tableResultRequest);
+            assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        });
+        Metrics.report();
     }
 
     @Test
