@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.10-open-id-6] - 2023-05-15
+
+* Uplift packaged send_to_stroom.sh version to v3.2.2.
+
+
 ## [v7.2-beta.10-open-id-5] - 2023-05-15
 
 * Fix check style errors.
@@ -5308,7 +5313,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-6...HEAD
+[v7.2-beta.10-open-id-6]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-5...v7.2-beta.10-open-id-6
 [v7.2-beta.10-open-id-5]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-4...v7.2-beta.10-open-id-5
 [v7.2-beta.10-open-id-4]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-3...v7.2-beta.10-open-id-4
 [v7.2-beta.10-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...v7.2-beta.10-open-id-3
