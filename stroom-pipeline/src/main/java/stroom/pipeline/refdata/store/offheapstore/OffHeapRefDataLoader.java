@@ -210,7 +210,6 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 currentLoaderState, putsToRefStoreCounter);
 
         checkCurrentState(LoaderState.INITIALISED);
-//            beginTxnIfRequired();
         offHeapStagingStore.completeLoad();
         loadIntoStagingTimer.stop();
 

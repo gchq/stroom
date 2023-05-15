@@ -226,7 +226,13 @@ class ReferenceDataLoadTaskHandler {
 
                         // Process the boundary.
                         //process the pipeline, ref data will be loaded via the ReferenceDataFilter
-                        pipeline.process(inputStream, encoding);
+                        try {
+                            pipeline.process(inputStream, encoding);
+                        } finally {
+                            // This calls endProcessing on the ReferenceDataFilter, which will initiate
+                            // the transfer from staging to ref store
+                            pipeline.endProcessing();
+                        }
                     }
                 }
 
@@ -264,13 +270,6 @@ class ReferenceDataLoadTaskHandler {
                 // Something unexpected happened
                 log(Severity.ERROR, e.getMessage(), e);
                 refDataLoader.completeProcessing(ProcessingState.FAILED);
-            } finally {
-                try {
-                    pipeline.endProcessing();
-                } catch (final RuntimeException e) {
-                    log(Severity.FATAL_ERROR, e.getMessage(), e);
-                    refDataLoader.completeProcessing(ProcessingState.FAILED);
-                }
             }
         });
 
