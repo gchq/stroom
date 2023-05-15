@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.10-open-id-4] - 2023-05-15
+
+* Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
+
+* Issue **#3395** : Fix nested use of selectors such as first() and last() in dashboard tables.
+
+* Issue **#3411** : Fix sorting or search results in LMDB.
+
+* Ensure the same request/response logging feature is used for all jersey clients and server in stroom and proxy.
+
+* Issue **#3449** : Ensure jersey client responses are closed properly.
+
+
 ## [v7.2-beta.10-open-id-3] - 2023-05-12
 
 * Issue **#3117** : Fix problems with user display name not showing on welcome screen.
@@ -5290,7 +5303,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-4...HEAD
+[v7.2-beta.10-open-id-4]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-3...v7.2-beta.10-open-id-4
 [v7.2-beta.10-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...v7.2-beta.10-open-id-3
 [v7.2-beta.10-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...v7.2-beta.10-open-id-2
 [v7.2-beta.10-open-id]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.10-open-id
