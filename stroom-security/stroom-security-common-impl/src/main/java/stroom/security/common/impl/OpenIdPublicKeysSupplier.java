@@ -118,10 +118,6 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
     }
 
     private KeySetWrapper fetchKeys(final String jwksUri) {
-//        if (IdpType.TEST.equals(openIdConfigProvider.getIdentityProviderType())) {
-//            LOGGER.debug("Using default public json web keys");
-//            return buildHardCodedKeySet();
-//        } else {
         String json = null;
         try {
             // Use Client instead of WebTargetFactory so we do it un-authenticated
@@ -140,13 +136,12 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
                     jwksUri, dumpJsonWebKeySet(jsonWebKeySet)));
             return new KeySetWrapper(jsonWebKeySet, expiryEpochMs);
         } catch (JoseException e) {
-            LOGGER.error("Error building JsonWebKeySet from json: {}", json, e);
+            LOGGER.error("Error building JsonWebKeySet from json: {}: {}", json, e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error fetching Open ID public keys from {}", jwksUri), e);
+                    "Error fetching Open ID public keys from {}: {}", jwksUri, e.getMessage()), e);
         }
         return null;
-//        }
     }
 
     private String dumpJsonWebKeySet(final JsonWebKeySet jsonWebKeySet) {
