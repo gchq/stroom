@@ -68,11 +68,10 @@ public class LmdbPayloadCreator {
                         valueBuffer.put(value, 0, value.length);
                         valueBuffer.flip();
 
-                        LmdbRowKey rowKey = new LmdbRowKey(keyBuffer);
                         // Create a new unique key if this isn't a group key.
-                        rowKey = lmdbRowKeyFactory.makeUnique(rowKey);
-                        final LmdbRowValue rowValue = new LmdbRowValue(valueBuffer);
-                        final LmdbKV lmdbKV = new LmdbKV(null, rowKey, rowValue);
+                        LmdbKV lmdbKV = new LmdbKV(null, keyBuffer, valueBuffer);
+                        lmdbKV = lmdbRowKeyFactory.makeUnique(lmdbKV);
+
                         lmdbDataStore.put(lmdbKV);
                     }
                 }

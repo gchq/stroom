@@ -26,7 +26,11 @@ public class ValReference implements ValueReference<Val> {
 
     @Override
     public void set(final StoredValues storedValues, final Val value) {
-        storedValues.set(index, value);
+        if (value == ValNull.INSTANCE) {
+            storedValues.set(index, null);
+        } else {
+            storedValues.set(index, value);
+        }
     }
 
     @Override

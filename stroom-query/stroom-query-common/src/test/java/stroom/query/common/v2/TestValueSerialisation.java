@@ -11,6 +11,7 @@ import stroom.query.api.v2.Field;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class TestValueSerialisation {
         final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         final KeyFactory keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final LmdbRowValueFactory lmdbRowValueFactory =
-                new LmdbRowValueFactory(keyFactory, valueReferenceIndex, serialisers.getOutputFactory(), errorConsumer);
+                new LmdbRowValueFactory(valueReferenceIndex, serialisers.getOutputFactory(), errorConsumer);
         final long timeMs = System.currentTimeMillis();
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();
         compiledFieldArray[0].getGenerator().set(Val.of(ValLong.create(1L)), storedValues);
@@ -39,11 +40,9 @@ public class TestValueSerialisation {
         final long uniqueId = keyFactory.getUniqueId();
         final Key parentKey = Key.ROOT_KEY;
         final Key key = parentKey.resolve(timeMs, uniqueId);
-        final LmdbRowValue rowValue = lmdbRowValueFactory.create(key, storedValues);
+        final ByteBuffer rowValue = lmdbRowValueFactory.create(storedValues);
 
-        final LmdbRowValue readRowValue = LmdbRowValueFactory.read(rowValue.getByteBuffer());
-
-        final StoredValues readStoredValues = valueReferenceIndex.read(readRowValue.getValue());
+        final StoredValues readStoredValues = valueReferenceIndex.read(rowValue);
         Assertions.assertThat(readStoredValues).isEqualTo(storedValues);
     }
 }

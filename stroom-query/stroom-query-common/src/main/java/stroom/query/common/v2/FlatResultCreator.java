@@ -97,9 +97,9 @@ public class FlatResultCreator implements ResultCreator {
                     tableSettings.size(),
                     queryKey,
                     componentId));
-            errorConsumer.add(new Throwable(LogUtil.message(
+            errorConsumer.add(() -> LogUtil.message(
                     "Component with ID: '{}' has not been configured correctly so will not show any data.",
-                    componentId)));
+                    componentId));
             mappers = Collections.emptyList();
         }
 

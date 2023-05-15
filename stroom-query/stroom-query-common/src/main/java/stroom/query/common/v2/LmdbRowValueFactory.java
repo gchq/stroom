@@ -11,18 +11,15 @@ import java.util.function.Consumer;
 
 public class LmdbRowValueFactory {
 
-    private final KeyFactory keyFactory;
     private final ValueReferenceIndex valueReferenceIndex;
     private final OutputFactory outputFactory;
     private final ErrorConsumer errorConsumer;
 
     private int bufferSize = 128;
 
-    public LmdbRowValueFactory(final KeyFactory keyFactory,
-                               final ValueReferenceIndex valueReferenceIndex,
+    public LmdbRowValueFactory(final ValueReferenceIndex valueReferenceIndex,
                                final OutputFactory outputFactory,
                                final ErrorConsumer errorConsumer) {
-        this.keyFactory = keyFactory;
         this.valueReferenceIndex = valueReferenceIndex;
         this.outputFactory = outputFactory;
         this.errorConsumer = errorConsumer;
@@ -39,52 +36,12 @@ public class LmdbRowValueFactory {
         }
     }
 
-    public LmdbRowValue create(final Key key,
-                               final StoredValues storedValues) {
-        return new LmdbRowValue(useOutput(output -> write(key, storedValues, output)));
+    public ByteBuffer create(final StoredValues storedValues) {
+        return useOutput(output -> write(storedValues, output));
     }
 
-    public static LmdbRowValue read(final ByteBuffer byteBuffer) {
-        final int start = byteBuffer.position();
-        final int keyLength = byteBuffer.getInt(start);
-        final int valueLength = byteBuffer.getInt(start + Integer.BYTES + keyLength);
-        final int length = Integer.BYTES + keyLength + Integer.BYTES + valueLength;
-        final ByteBuffer slice = byteBuffer.slice(start, length);
-        byteBuffer.position(start + length);
-        return new LmdbRowValue(slice);
-    }
-
-    private void write(final Key key,
-                       final StoredValues storedValues,
+    private void write(final StoredValues storedValues,
                        final MyByteBufferOutput output) {
-        writeKey(key, output);
-        writeValue(storedValues, output);
-    }
-
-    private void writeKey(final Key key,
-                          final MyByteBufferOutput output) {
-        addPart(output, o -> keyFactory.write(key, o));
-    }
-
-    public void writeValue(final StoredValues storedValues,
-                           final MyByteBufferOutput output) {
-        addPart(output, o -> valueReferenceIndex.write(storedValues, o));
-    }
-
-    private void addPart(final MyByteBufferOutput output,
-                         final Consumer<MyByteBufferOutput> consumer) {
-        final int pos = output.getByteBuffer().position();
-        output.writeIntDirect(0);
-        consumer.accept(output);
-        output.flush();
-        final ByteBuffer byteBuffer = output.getByteBuffer();
-        final int length = byteBuffer.position() - pos - Integer.BYTES;
-        byteBuffer.putInt(pos, length);
-    }
-
-    public void copyPart(final ByteBuffer byteBuffer,
-                         final MyByteBufferOutput output) {
-        output.writeIntDirect(byteBuffer.remaining());
-        output.writeByteBuffer(byteBuffer);
+        valueReferenceIndex.write(storedValues, output);
     }
 }

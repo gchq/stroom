@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.KryoException;
+import com.esotericsoftware.kryo.io.Output;
 
 public class OutputFactoryImpl implements OutputFactory {
 
@@ -20,12 +21,12 @@ public class OutputFactoryImpl implements OutputFactory {
 
     private String truncate(final String value, final ErrorConsumer errorConsumer) {
         if (value.length() > maxStringFieldLength) {
-            LOGGER.debug(() -> "Truncating string: " + value);
+            LOGGER.trace(() -> "Truncating string: " + value);
             final String truncated = value.substring(0, maxStringFieldLength);
-            errorConsumer.add(new RuntimeException("Truncating string as it is longer than '" +
+            errorConsumer.add(() -> "Truncating string as it is longer than '" +
                     maxStringFieldLength +
                     "' : " +
-                    truncated));
+                    truncated);
             return truncated;
         }
         return value;
@@ -34,6 +35,16 @@ public class OutputFactoryImpl implements OutputFactory {
     @Override
     public MyByteBufferOutput createOutput(final int bufferSize, final ErrorConsumer errorConsumer) {
         return new MyByteBufferOutput(bufferSize, -1) {
+            @Override
+            public void writeString(final String value) throws KryoException {
+                super.writeString(truncate(value, errorConsumer));
+            }
+        };
+    }
+
+    @Override
+    public Output createHashOutput(final int bufferSize, final ErrorConsumer errorConsumer) {
+        return new Output(bufferSize, -1) {
             @Override
             public void writeString(final String value) throws KryoException {
                 super.writeString(truncate(value, errorConsumer));

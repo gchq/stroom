@@ -17,7 +17,7 @@ public interface LmdbRowKeyFactory {
      * @param timeMs          The time if needed.
      * @return A new LMDB row key.
      */
-    LmdbRowKey create(int depth,
+    ByteBuffer create(int depth,
                       long parentGroupHash,
                       long groupHash,
                       long timeMs);
@@ -28,7 +28,7 @@ public interface LmdbRowKeyFactory {
      * @param rowKey The row key to change.
      * @return A row key that has been altered to make it unique if necessary.
      */
-    LmdbRowKey makeUnique(LmdbRowKey rowKey);
+    LmdbKV makeUnique(LmdbKV rowKey);
 
     /**
      * Determine if the supplied row key is a grouping key.
@@ -36,7 +36,7 @@ public interface LmdbRowKeyFactory {
      * @param rowKey The row key to test.
      * @return True if the supplied key is a grouping key.
      */
-    boolean isGroup(LmdbRowKey rowKey);
+    boolean isGroup(LmdbKV rowKey);
 
     /**
      * Create a key range to filter rows to find the children of the supplied parent key.

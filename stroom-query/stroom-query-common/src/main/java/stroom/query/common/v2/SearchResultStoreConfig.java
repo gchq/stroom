@@ -11,12 +11,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class SearchResultStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
 
     public SearchResultStoreConfig() {
-        super(10_000,
+        super(100_000,
                 true,
                 ByteSize.ofMebibytes(1),
                 ByteSize.ofGibibytes(1),
                 1000,
-                10_000,
+                1_000_000,
                 ResultStoreLmdbConfig.builder().localDir("search_results").build(),
                 "1000000,100,10,1");
     }

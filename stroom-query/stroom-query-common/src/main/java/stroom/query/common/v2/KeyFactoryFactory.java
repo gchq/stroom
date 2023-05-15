@@ -2,9 +2,9 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
 import stroom.util.logging.Metrics;
 
-import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -58,7 +58,7 @@ public class KeyFactoryFactory {
 
         @Override
         public Key read(final ByteBuffer byteBuffer) {
-            try (final ByteBufferInput input = new ByteBufferInput(byteBuffer)) {
+            try (final MyByteBufferInput input = new MyByteBufferInput(byteBuffer)) {
                 return read(input);
             }
         }
