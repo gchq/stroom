@@ -11,6 +11,7 @@ import stroom.util.time.StroomDuration;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
+import event.logging.And.Builder;
 import event.logging.Criteria;
 import event.logging.DeleteEventAction;
 import event.logging.Query;
@@ -81,30 +82,38 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                     "Can't parse purgeAge [{}]", purgeAge), e);
         }
 
+        final String nodeStr = nodeName == null
+                ? "all nodes"
+                : "node " + nodeName;
+        final Builder<Void> andBuilder = And.builder()
+                .addTerm(Term.builder()
+                        .withName("purgeAge")
+                        .withCondition(TermCondition.EQUALS)
+                        .withValue(purgeAge)
+                        .build());
+        if (nodeName != null) {
+            andBuilder.addTerm(Term.builder()
+                    .withName("nodeName")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(nodeName)
+                    .build());
+        }
+
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(andBuilder.build())
+                        .build())
+                .build();
+
         final Boolean result = eventLoggingServiceProvider.get()
                 .loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "purgeByAge"))
                 .withDescription(LogUtil.message(
-                        "Purging reference data older than {} on node {}",
-                        purgeAge, nodeName))
+                        "Purging reference data older than {} on {}",
+                        purgeAge, nodeStr))
                 .withDefaultEventAction(DeleteEventAction.builder()
                         .addCriteria(Criteria.builder()
-                                .withQuery(Query.builder()
-                                        .withAdvanced(AdvancedQuery.builder()
-                                                .addAnd(And.builder()
-                                                        .addTerm(Term.builder()
-                                                                .withName("purgeAge")
-                                                                .withCondition(TermCondition.EQUALS)
-                                                                .withValue(purgeAge)
-                                                                .build())
-                                                        .addTerm(Term.builder()
-                                                                .withName("nodeName")
-                                                                .withCondition(TermCondition.EQUALS)
-                                                                .withValue(nodeName)
-                                                                .build())
-                                                        .build())
-                                                .build())
-                                        .build())
+                                .withQuery(query)
                                 .build())
                         .build())
                 .withSimpleLoggedResult(() -> {
