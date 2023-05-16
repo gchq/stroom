@@ -271,3 +271,53 @@ Events
    </PIPE_GROUP>
 </TOKEN_GROUP>
 -----
+'Test Index'
+| where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+| eval UserId = upperCase(UserId)
+| table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+=====
+<TOKEN_GROUP>
+   <SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING>
+   <PIPE_GROUP PIPE_OPERATION="where">
+      <STRING>EventTime</STRING>
+      <GREATER_THAN>></GREATER_THAN>
+      <STRING>2023-05-05T00:00:00.000Z</STRING>
+      <AND>and</AND>
+      <TOKEN_GROUP>
+         <STRING>Field</STRING>
+         <EQUALS>=</EQUALS>
+         <SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING>
+         <OR>or</OR>
+         <STRING>Field</STRING>
+         <EQUALS>=</EQUALS>
+         <SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING>
+      </TOKEN_GROUP>
+   </PIPE_GROUP>
+   <PIPE_GROUP PIPE_OPERATION="eval">
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <FUNCTION_GROUP FUNCTION_NAME="upperCase">
+         <STRING>UserId</STRING>
+      </FUNCTION_GROUP>
+   </PIPE_GROUP>
+   <PIPE_GROUP PIPE_OPERATION="table">
+      <STRING>StreamId</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventId</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventTime</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <DOUBLE_QUOTED_STRING>"Status"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <STRING>UserId</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING>
+   </PIPE_GROUP>
+</TOKEN_GROUP>
+-----

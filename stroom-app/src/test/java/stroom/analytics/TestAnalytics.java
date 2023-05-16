@@ -269,6 +269,16 @@ class TestAnalytics extends StroomIntegrationTest {
         basicTest(query, 9, 27);
     }
 
+    @Test
+    void testCompoundWhere() {
+        // Add alert
+        final String query = """
+                "index_view"
+                | where UserId = user5 and  (UserId = user5 or MissingField = bob)
+                | table StreamId, EventId, UserId""";
+        basicTest(query, 9, 6);
+    }
+
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {

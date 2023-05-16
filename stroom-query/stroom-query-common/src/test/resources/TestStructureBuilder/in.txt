@@ -50,3 +50,8 @@ Events
 | where  duration > 0
     // Pick out the earliest stop for each start and client:
 | summarize arg_min(duration, *) by bin(StartTime,1s), ClientIp
+-----
+'Test Index'
+| where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+| eval UserId = upperCase(UserId)
+| table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"

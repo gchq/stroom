@@ -80,9 +80,9 @@ public class StructureBuilder {
                 if (index + 1 < tokens.size()) {
                     index++;
                     final AbstractToken operation = tokens.get(index);
-                    if (!TokenType.PIPE_OPERATION.equals(operation.getTokenType())) {
-                        throw new TokenException(operation, "Expected pipe operation");
-                    }
+//                    if (!TokenType.PIPE_OPERATION.equals(operation.getTokenType())) {
+//                        throw new TokenException(operation, "Expected pipe operation");
+//                    }
 
                     if (currentGroup != null && currentGroup != out) {
                         out.add(currentGroup.build());

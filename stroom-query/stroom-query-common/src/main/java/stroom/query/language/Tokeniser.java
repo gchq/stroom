@@ -30,6 +30,13 @@ public class Tokeniser {
         extractQuotedTokens(TokenType.DOUBLE_QUOTED_STRING, '\"', '\\');
         extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
 
+        // Tag keywords.
+        split("(^|\\s|\\))(and)(\\s|\\(|$)", 2, TokenType.AND);
+        split("(^|\\s|\\))(or)(\\s|\\(|$)", 2, TokenType.OR);
+        split("(^|\\s|\\))(not)(\\s|\\(|$)", 2, TokenType.NOT);
+        split("(^|\\s|\\))(by)(\\s|\\(|$)", 2, TokenType.BY);
+        split("(^|\\s|\\))(as)(\\s|\\(|$)", 2, TokenType.AS);
+
         // Tag commands and functions.
         split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.PIPE_OPERATION);
         split("([a-z-A-Z_]+)([\\s]*\\()", 1, TokenType.FUNCTION_NAME);
@@ -47,12 +54,6 @@ public class Tokeniser {
 
         // Tag pipes.
         split("\\|", 0, TokenType.PIPE);
-
-        split("(^|\\s|\\))(and)(\\s|\\(|$)", 2, TokenType.AND);
-        split("(^|\\s|\\))(or)(\\s|\\(|$)", 2, TokenType.OR);
-        split("(^|\\s|\\))(not)(\\s|\\(|$)", 2, TokenType.NOT);
-        split("(^|\\s|\\))(by)(\\s|\\(|$)", 2, TokenType.BY);
-        split("(^|\\s|\\))(as)(\\s|\\(|$)", 2, TokenType.AS);
 
         // Tag dates.
         split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.STRING);

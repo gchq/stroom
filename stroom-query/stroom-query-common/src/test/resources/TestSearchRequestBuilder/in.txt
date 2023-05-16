@@ -16,3 +16,8 @@
 | and EventTime >= 2016-01-02T00:00:00.000Z
 | eval UserId = upperCase(UserId)
 | table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+-----
+'Test Index'
+| where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+| eval UserId = upperCase(UserId)
+| table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"

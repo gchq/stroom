@@ -141,7 +141,10 @@ public class SearchRequestBuilder {
             final List<AbstractToken> tokens,
             final ExpressionOperator.Builder parentBuilder) {
         if (tokens.size() < 3) {
+            // Ignore incomplete terms.
             return;
+        } else if (tokens.size() > 3) {
+            throw new TokenException(tokens.get(3), "Unexpected token after term.");
         }
 
         final String field = tokens.get(0).getUnescapedText();
