@@ -218,7 +218,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                     .append("'");
         }
 
-        LOGGER.info(sb.toString());
+        LOGGER.warn(sb.toString());
     }
 
     private UserIdentity createAuthFlowUserIdentity(final JwtClaims jwtClaims,
