@@ -140,6 +140,10 @@
 .flexLayout-markerVisible {
 }
 
+.flexLayout-marker-tab {
+   	opacity: 0.8;
+}
+
 .flexLayout-splitter {
 	display: none;
 	position: absolute;

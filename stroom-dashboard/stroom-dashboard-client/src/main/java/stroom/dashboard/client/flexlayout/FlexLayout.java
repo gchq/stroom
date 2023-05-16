@@ -28,6 +28,7 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
+import stroom.util.client.Console;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
@@ -989,9 +990,18 @@ public class FlexLayout extends Composite {
                                                 linkTab);
                                     }
                                 } else if (selection == null || !tabData.equals(selection.tab)) {
-                                    if (mouseTarget == null ||
-                                            (x >= ElementUtil.getClientLeft(tabElement) &&
-                                                    x <= ElementUtil.getClientRight(tabElement))) {
+                                    final double clientLeft = ElementUtil.getClientLeft(tabElement);
+                                    final double clientRight = ElementUtil.getClientRight(tabElement);
+//                                    Console.log(tabData.getLabel() +
+//                                            " " +
+//                                            "clientLeft=" +
+//                                            clientLeft +
+//                                            " clientRight=" +
+//                                            clientRight +
+//                                            " x=" +
+//                                            x);
+
+                                    if (x >= clientLeft && x <= clientRight) {
                                         // If the mouse position is over the tab then we might want to insert before
                                         // this tab.
                                         mouseTarget = new MouseTarget(layoutConfig,
@@ -1001,7 +1011,9 @@ public class FlexLayout extends Composite {
                                                 tabData,
                                                 i,
                                                 linkTab);
-                                    } else if (x > ElementUtil.getClientRight(tabElement)) {
+//                                        Console.log("tab");
+
+                                    } else if (x > clientRight) {
                                         // If the mouse position is right of the right-hand side of the tab then we
                                         // might want to insert the tab we are dragging after the current tab.
                                         mouseTarget = new MouseTarget(layoutConfig,
@@ -1011,6 +1023,7 @@ public class FlexLayout extends Composite {
                                                 tabData,
                                                 i + 1,
                                                 linkTab);
+//                                        Console.log("after tab");
                                     }
                                 }
                             }
@@ -1039,6 +1052,7 @@ public class FlexLayout extends Composite {
                             ElementUtil.getClientTop(tabElement),
                             5,
                             tabElement.getOffsetHeight());
+                    marker.getElement().addClassName("flexLayout-marker-tab");
                     break;
                 case AFTER_TAB:
                     showMarker(ElementUtil.getClientLeft(tabElement) +
@@ -1047,6 +1061,7 @@ public class FlexLayout extends Composite {
                             ElementUtil.getClientTop(tabElement),
                             5,
                             tabElement.getOffsetHeight());
+                    marker.getElement().addClassName("flexLayout-marker-tab");
                     break;
                 default:
                     hideMarker();
@@ -1128,7 +1143,7 @@ public class FlexLayout extends Composite {
         final Rect outer = ElementUtil.getClientRect(scrollPanel.getElement());
         final Rect inner = new Rect(top, top + height, left, left + width);
         final Rect min = Rect.min(outer, inner);
-
+        marker.getElement().removeClassName("flexLayout-marker-tab");
         marker.show(min);
     }
 
