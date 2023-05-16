@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -877,14 +878,14 @@ public class LmdbDataStore implements DataStore {
          * @return The child items for the parent key.
          */
         @Override
-        public Items get(final Key parentKey, final TimeFilter timeFilter) {
+        public Optional<Items> get(final Key parentKey, final TimeFilter timeFilter) {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET);
             LOGGER.trace(() -> "get() called for parentKey: " + parentKey);
 
             return Metrics.measure("get", () -> {
                 final int childDepth = parentKey.getChildDepth();
                 final int trimmedSize = maxResults.size(childDepth);
-                return getChildren(parentKey, timeFilter, childDepth, trimmedSize, false);
+                return Optional.ofNullable(getChildren(parentKey, timeFilter, childDepth, trimmedSize, false));
             });
         }
 

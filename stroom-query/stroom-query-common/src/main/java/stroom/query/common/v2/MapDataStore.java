@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -259,7 +260,11 @@ public class MapDataStore implements DataStore, Data {
      * @return The filtered child items for the parent key.
      */
     @Override
-    public ItemsImpl get(final Key key, final TimeFilter timeFilter) {
+    public Optional<Items> get(final Key key, final TimeFilter timeFilter) {
+        return Optional.ofNullable(getInternal(key, timeFilter));
+    }
+
+    public ItemsImpl getInternal(final Key key, final TimeFilter timeFilter) {
         if (timeFilter != null) {
             throw new RuntimeException("Time filtering is not supported by the map data store");
         }
@@ -273,13 +278,12 @@ public class MapDataStore implements DataStore, Data {
         return result;
     }
 
-
     private List<ItemImpl> getChildren(final Key parentKey,
                                        final TimeFilter timeFilter,
                                        final int childDepth,
                                        final int trimmedSize,
                                        final boolean trimTop) {
-        ItemsImpl items = get(parentKey, timeFilter);
+        ItemsImpl items = getInternal(parentKey, timeFilter);
         if (items == null) {
             return null;
         }
@@ -595,11 +599,8 @@ public class MapDataStore implements DataStore, Data {
 
                     @Override
                     public long count() {
-                        final ItemsImpl items = dataStore.get(key, null);
-                        if (items != null) {
-                            return items.size();
-                        }
-                        return 0;
+                        final Optional<Items> optional = dataStore.get(key, null);
+                        return optional.map(Items::size).orElse(0);
                     }
 
                     private StoredValues singleValue(final int trimmedSize, final boolean trimTop) {
