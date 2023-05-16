@@ -66,9 +66,9 @@ public class SearchRequestBuilder {
         if (query.getDataSource() == null) {
             throw new TokenException(null, "No data source has been specified.");
         }
-        if (query.getExpression() == null) {
-            throw new TokenException(null, "No query expression has been defined, are you missing a `where` clause?");
-        }
+//        if (query.getExpression() == null) {
+//            throw new TokenException(null, "No query expression has been defined, are you missing a `where` clause?");
+//        }
 
         // Create result requests.
         final List<ResultRequest> resultRequests = new ArrayList<>();
@@ -127,6 +127,8 @@ public class SearchRequestBuilder {
         if (whereGroup != null && whereGroup.size() > 0) {
             final ExpressionOperator expressionOperator = processLogic(whereGroup);
             expressionConsumer.accept(expressionOperator);
+        } else {
+            expressionConsumer.accept(ExpressionOperator.builder().build());
         }
 
         if (i < tokens.size()) {

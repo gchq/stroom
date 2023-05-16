@@ -52,7 +52,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.view.impl.ViewStore;
@@ -85,7 +84,6 @@ public class AnalyticsExecutor {
     private final MetaService metaService;
     private final AnalyticRuleStore analyticRuleStore;
     private final SecurityContext securityContext;
-    private final PipelineScopeRunnable pipelineScopeRunnable;
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
@@ -109,7 +107,6 @@ public class AnalyticsExecutor {
                              final Provider<DetectionsWriter> detectionsWriterProvider,
                              final ViewStore viewStore,
                              final MetaService metaService,
-                             final PipelineScopeRunnable pipelineScopeRunnable,
                              final PipelineStore pipelineStore,
                              final PipelineDataCache pipelineDataCache,
                              final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
@@ -127,7 +124,6 @@ public class AnalyticsExecutor {
         this.securityContext = securityContext;
         this.viewStore = viewStore;
         this.metaService = metaService;
-        this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.analyticsStreamProcessorProvider = analyticsStreamProcessorProvider;
