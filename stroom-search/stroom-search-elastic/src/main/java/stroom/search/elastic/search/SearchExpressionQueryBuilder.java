@@ -202,9 +202,11 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY -> {
                     return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 }
-                default ->
-                        throw new UnsupportedOperationException("Unsupported condition '" + condition.getDisplayValue() +
-                                "' for " + indexField.getFieldUse().getDisplayValue() + " field type");
+                default -> throw new UnsupportedOperationException("Unsupported condition '" +
+                        condition.getDisplayValue() +
+                        "' for " +
+                        indexField.getFieldUse().getDisplayValue() +
+                        " field type");
             }
         } else {
             // This is a type other than `keyword`, such as `text` or `wildcard`. Perform a full-text match.
