@@ -35,5 +35,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 @JsonInclude(Include.NON_NULL)
 public interface ComponentSettings {
+    Builder copy();
 
+    interface Builder {
+        ComponentSettings build();
+    }
 }
