@@ -39,7 +39,6 @@ import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
 
-    public static final int DEFAULT_INITIAL_OFFSET_PX = 5;
     private static final int PADDING = 5;
     private static final int ICON_WIDTH = 20;
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(
