@@ -5,7 +5,6 @@ import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.nio.ByteBuffer;
 import java.util.Set;
 
 public interface KeyFactory {
@@ -24,14 +23,6 @@ public interface KeyFactory {
      * @return The key read from the input.
      */
     Key read(Input input);
-
-    /**
-     * Read a key from a byteBuffer.
-     *
-     * @param byteBuffer The byteBuffer to read the key from.
-     * @return The key read from the byteBuffer.
-     */
-    Key read(ByteBuffer byteBuffer);
 
     /**
      * Decode a set of string encoded key bytes into a set of keys.

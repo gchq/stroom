@@ -2,9 +2,9 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
 import stroom.util.logging.Metrics;
 
+import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -57,13 +57,6 @@ public class KeyFactoryFactory {
         private int bufferSize = 8;
 
         @Override
-        public Key read(final ByteBuffer byteBuffer) {
-            try (final MyByteBufferInput input = new MyByteBufferInput(byteBuffer)) {
-                return read(input);
-            }
-        }
-
-        @Override
         public Set<Key> decodeSet(final Set<String> openGroups) {
             return Metrics.measure("Converting open groups", () -> {
                 Set<Key> keys = Collections.emptySet();
@@ -71,7 +64,9 @@ public class KeyFactoryFactory {
                     keys = new HashSet<>();
                     for (final String encodedGroup : openGroups) {
                         final ByteBuffer buffer = ByteBuffer.wrap(Base64.getDecoder().decode(encodedGroup));
-                        keys.add(read(buffer));
+                        try (final ByteBufferInput input = new ByteBufferInput(buffer)) {
+                            keys.add(read(input));
+                        }
                     }
                 }
                 return keys;
