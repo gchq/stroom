@@ -15,7 +15,7 @@
 ~ See the License for the specific language governing permissions and
 ~ limitations under the License.
 -->
-<xs:schema xmlns:doc="index-documents:1" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="index-documents:1" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0.0" id="index-documents-v1.0.0">
+<xs:schema xmlns:doc="index-documents:1" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="index-documents:1" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0" id="index-documents-v1.0">
     <xs:annotation>
         <xs:documentation>This schema describes the allowed element structure for document indexing.</xs:documentation>
     </xs:annotation>
