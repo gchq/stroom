@@ -13,6 +13,29 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.12] - 2023-05-16
+
+* Issue **#3441** : Min and Max expression functions now return correct type.
+
+* Issue **#3456** : Fix NPE.
+
+* Issue **#3436** : Fix expander col width.
+
+* Issue **#3458** : Improve dashboard tab drag/drop behaviour.
+
+* Issue **#3433** : Conditional highlighting now highlights entire row.
+
+* Issue **#3430** : Activity screen now shows entries across multiple lines.
+
+* Issue **#3445** : Ensure duplicated dashboard tabs create duplicate config.
+
+* Issue **#3422** : Ensure UI shows processor filter status correctly.
+
+* Issue **#3444** : Allow the absence of a where clause or missing fields in where clause.
+
+* Issue **#3432** : Fix processing of where clause in QL.
+
+
 ## [v7.2-beta.11] - 2023-05-15
 
 * Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
@@ -5284,7 +5307,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.12...HEAD
+[v7.2-beta.12]: https://github.com/gchq/stroom/compare/v7.2-beta.11...v7.2-beta.12
 [v7.2-beta.11]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.11
 [v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
 [v7.2-beta.9]: https://github.com/gchq/stroom/compare/v7.2-beta.8...v7.2-beta.9
