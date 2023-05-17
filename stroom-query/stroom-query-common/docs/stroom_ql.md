@@ -62,7 +62,7 @@ A window inserts additional rows for future periods so that rows for future peri
 
 Specify the field to window by and a duration. Durations are specified in simple terms e.g. `1d`, `2w` etc.
 
-By default a window will insert a count into the next period row. This is because by default we advance by the specified window size. If you wish to advance by a different duration you can speficy the advance amount which will insert counts into multiple future rows.
+By default, a window will insert a count into the next period row. This is because by default we advance by the specified window size. If you wish to advance by a different duration you can speficy the advance amount which will insert counts into multiple future rows.
 
 # Examples
 from "index_view" // view
