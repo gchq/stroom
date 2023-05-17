@@ -11,7 +11,7 @@ where <FIELD> <CONDITION> <VALUE> [and|or|not]
 [having] <FIELD> <CONDITION> <VALUE> [and|or|not]
 [group by] <FIELD>
 [sort by] <FIELD> [desc|asc] // asc by default
-table <FIELD> [as <COLUMN NAME>], ...
+select <FIELD> [as <COLUMN NAME>], ...
 [limit] <MAX_ROWS> 
 ```
 
@@ -77,19 +77,10 @@ eval count = count()
 group by StreamId
 sort by Sl desc
 select Sl, StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
-limit 10"
+limit 10
 
-| Simple Query        | Query | {
-"type" : "Query",
-"uuid" : "1031de6d-826a-43f2-8832-0d0ac3ec4ee8",
-"name" : "Simple Query",
-"version" : "33316793-9a6a-47a5-bb73-70c82d831f15",
-"createTimeMs" : 1671197311828,
-"updateTimeMs" : 1672762074000,
-"createUser" : "admin",
-"updateUser" : "admin",
-"description" : "wq",
-"query" : "/*
+
+/*
 doc comment
 */
 
@@ -105,19 +96,11 @@ eval count = count()
 group by StreamId
 sort by Sl desc
 select Sl, StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
-limit 10"
-} |
-| Simple Query - Copy | Query | {
-"type" : "Query",
-"uuid" : "72c15a8f-0678-4377-88ee-c35aca2eb8ee",
-"name" : "Simple Query - Copy",
-"version" : "c6f15979-99d1-40a6-abdb-791d2efbed60",
-"createTimeMs" : 1671197311828,
-"updateTimeMs" : 1672926129055,
-"createUser" : "admin",
-"updateUser" : "admin",
-"description" : "wq",
-"query" : "/*
+limit 10
+
+
+
+/*
 doc comment
 */
 
@@ -133,10 +116,7 @@ eval Sl = stringLength(FirstName)
 // group by StreamId
 // sort by Sl desc
 select StreamId as "Stream Id", EventId as "Event Id"
-// limit 10"
-}                                                        |
-
-
+// limit 10
 
 
 
