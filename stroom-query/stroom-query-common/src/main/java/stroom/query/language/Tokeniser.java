@@ -5,10 +5,15 @@ import stroom.query.language.QuotedStringToken.Builder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Tokeniser {
+
+    private static final Map<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<>();
 
     private List<Token> tokens;
 
@@ -23,7 +28,6 @@ public class Tokeniser {
 
         // Tag Comments
         split("//.*", 0, TokenType.COMMENT);
-//        split("/\\*[^*]*\\*/", 0, TokenType.BLOCK_COMMENT);
         split("/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/", 0, TokenType.BLOCK_COMMENT);
 
         // Tag quoted strings.
@@ -31,14 +35,15 @@ public class Tokeniser {
         extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
 
         // Tag keywords.
-        split("(^|\\s|\\))(and)(\\s|\\(|$)", 2, TokenType.AND);
-        split("(^|\\s|\\))(or)(\\s|\\(|$)", 2, TokenType.OR);
-        split("(^|\\s|\\))(not)(\\s|\\(|$)", 2, TokenType.NOT);
-        split("(^|\\s|\\))(by)(\\s|\\(|$)", 2, TokenType.BY);
-        split("(^|\\s|\\))(as)(\\s|\\(|$)", 2, TokenType.AS);
+        TokenType.KEYWORDS.forEach(token -> {
+            tagKeyword(token.toString().toLowerCase(Locale.ROOT), token);
+        });
+        // Treat other conjunctions as keywords.
+        tagKeyword("by", TokenType.BY);
+        tagKeyword("as", TokenType.AS);
+        tagKeyword("between", TokenType.BETWEEN);
 
-        // Tag commands and functions.
-        split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.PIPE_OPERATION);
+        // Tag functions.
         split("([a-z-A-Z_]+)([\\s]*\\()", 1, TokenType.FUNCTION_NAME);
 
         // Tag brackets.
@@ -79,6 +84,10 @@ public class Tokeniser {
         categorise(TokenType.STRING);
     }
 
+    private void tagKeyword(final String pattern, final TokenType tokenType) {
+        split("(^|\\s|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType);
+    }
+
     public static List<Token> parse(final String string) {
         return new Tokeniser(string).tokens;
     }
@@ -103,7 +112,8 @@ public class Tokeniser {
     private void split(final String regex,
                        final int group,
                        final TokenType tokenType) {
-        final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        final Pattern pattern = PATTERN_CACHE
+                .computeIfAbsent(regex, k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {

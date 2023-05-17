@@ -73,17 +73,18 @@ before 'test of inner \' strings '
 table | where this = that | and foo = 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
-   <STRING>table</STRING>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   <TABLE>
+   </TABLE>
+   <WHERE>
       <STRING>this</STRING>
       <EQUALS>=</EQUALS>
       <STRING>that</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="and">
+   </WHERE>
+   <AND>
       <STRING>foo</STRING>
       <EQUALS>=</EQUALS>
       <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
-   </PIPE_GROUP>
+   </AND>
 </TOKEN_GROUP>
 -----
 Test Index
@@ -94,25 +95,26 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-      <AND>and</AND>
+   </WHERE>
+   <AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="and">
+   </AND>
+   <AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <STRING>2000-01-01T00:00:00.000Z</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="and">
+   </AND>
+   <AND>
       <STRING>EventTime</STRING>
       <GREATER_THAN_OR_EQUAL_TO>>=</GREATER_THAN_OR_EQUAL_TO>
       <STRING>2016-01-02T00:00:00.000Z</STRING>
-   </PIPE_GROUP>
+   </AND>
 </TOKEN_GROUP>
 -----
 Test Index
@@ -122,21 +124,22 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-      <AND>and</AND>
+   </WHERE>
+   <AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="and">
+   </AND>
+   <AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
-   </PIPE_GROUP>
+   </AND>
 </TOKEN_GROUP>
 -----
 Test Index
@@ -146,23 +149,24 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-      <AND>and</AND>
+   </WHERE>
+   <AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="and">
+   </AND>
+   <AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
       <PLUS>+</PLUS>
       <STRING>3d</STRING>
-   </PIPE_GROUP>
+   </AND>
 </TOKEN_GROUP>
 -----
 Test Index
@@ -172,23 +176,53 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-      <AND>and</AND>
+   </WHERE>
+   <AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="and">
+   </AND>
+   <AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
       <PLUS>+</PLUS>
       <NUMBER>3</NUMBER>
-   </PIPE_GROUP>
+   </AND>
+</TOKEN_GROUP>
+-----
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= day()-1d-1h
+=====
+<TOKEN_GROUP>
+   <STRING>Test</STRING>
+   <STRING>Index</STRING>
+   <WHERE>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+   </WHERE>
+   <AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </AND>
+   <AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP FUNCTION_NAME="day">
+      </FUNCTION_GROUP>
+      <MINUS>-</MINUS>
+      <STRING>1d</STRING>
+      <MINUS>-</MINUS>
+      <STRING>1h</STRING>
+   </AND>
 </TOKEN_GROUP>
 -----
 Events
@@ -207,12 +241,11 @@ Events
 =====
 <TOKEN_GROUP>
    <STRING>Events</STRING>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   <WHERE>
       <STRING>Name</STRING>
       <EQUALS>=</EQUALS>
       <DOUBLE_QUOTED_STRING>"Start"</DOUBLE_QUOTED_STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="project">
+      <STRING>project</STRING>
       <STRING>City</STRING>
       <COMMA>,</COMMA>
       <STRING>ClientIp</STRING>
@@ -220,41 +253,37 @@ Events
       <STRING>StartTime</STRING>
       <EQUALS>=</EQUALS>
       <STRING>timestamp</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="join">
+      <STRING>join</STRING>
       <STRING>kind</STRING>
       <EQUALS>=</EQUALS>
       <FUNCTION_GROUP FUNCTION_NAME="inner">
          <STRING>Events</STRING>
-         <PIPE_GROUP PIPE_OPERATION="where">
+         <WHERE>
             <STRING>Name</STRING>
             <EQUALS>=</EQUALS>
             <DOUBLE_QUOTED_STRING>"Stop"</DOUBLE_QUOTED_STRING>
-         </PIPE_GROUP>
-         <PIPE_GROUP PIPE_OPERATION="project">
+            <STRING>project</STRING>
             <STRING>StopTime</STRING>
             <EQUALS>=</EQUALS>
             <STRING>timestamp</STRING>
             <COMMA>,</COMMA>
             <STRING>ClientIp</STRING>
-         </PIPE_GROUP>
+         </WHERE>
       </FUNCTION_GROUP>
       <STRING>on</STRING>
       <STRING>ClientIp</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="extend">
+      <STRING>extend</STRING>
       <STRING>duration</STRING>
       <EQUALS>=</EQUALS>
       <STRING>StopTime</STRING>
       <MINUS>-</MINUS>
       <STRING>StartTime</STRING>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   </WHERE>
+   <WHERE>
       <STRING>duration</STRING>
       <GREATER_THAN>></GREATER_THAN>
       <NUMBER>0</NUMBER>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="summarize">
+      <STRING>summarize</STRING>
       <FUNCTION_GROUP FUNCTION_NAME="arg_min">
          <STRING>duration</STRING>
          <COMMA>,</COMMA>
@@ -268,7 +297,7 @@ Events
       </FUNCTION_GROUP>
       <COMMA>,</COMMA>
       <STRING>ClientIp</STRING>
-   </PIPE_GROUP>
+   </WHERE>
 </TOKEN_GROUP>
 -----
 'Test Index'
@@ -278,29 +307,31 @@ Events
 =====
 <TOKEN_GROUP>
    <SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING>
-   <PIPE_GROUP PIPE_OPERATION="where">
+   <WHERE>
       <STRING>EventTime</STRING>
       <GREATER_THAN>></GREATER_THAN>
       <STRING>2023-05-05T00:00:00.000Z</STRING>
-      <AND>and</AND>
+   </WHERE>
+   <AND>
       <TOKEN_GROUP>
          <STRING>Field</STRING>
          <EQUALS>=</EQUALS>
          <SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING>
-         <OR>or</OR>
-         <STRING>Field</STRING>
-         <EQUALS>=</EQUALS>
-         <SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING>
+         <OR>
+            <STRING>Field</STRING>
+            <EQUALS>=</EQUALS>
+            <SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING>
+         </OR>
       </TOKEN_GROUP>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="eval">
+   </AND>
+   <EVAL>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <FUNCTION_GROUP FUNCTION_NAME="upperCase">
          <STRING>UserId</STRING>
       </FUNCTION_GROUP>
-   </PIPE_GROUP>
-   <PIPE_GROUP PIPE_OPERATION="table">
+   </EVAL>
+   <TABLE>
       <STRING>StreamId</STRING>
       <AS>as</AS>
       <DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING>
@@ -318,6 +349,26 @@ Events
       <STRING>UserId</STRING>
       <AS>as</AS>
       <DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING>
-   </PIPE_GROUP>
+   </TABLE>
+</TOKEN_GROUP>
+-----
+from "index_view"
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+table StreamId
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>EventTime</STRING>
+      <BETWEEN>between</BETWEEN>
+      <STRING>2022-05-05T00:00:00.000Z</STRING>
+      <BETWEEN_AND>and</BETWEEN_AND>
+      <STRING>2023-05-05T00:00:00.000Z</STRING>
+   </WHERE>
+   <TABLE>
+      <STRING>StreamId</STRING>
+   </TABLE>
 </TOKEN_GROUP>
 -----

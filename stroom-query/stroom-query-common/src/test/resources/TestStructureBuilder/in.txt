@@ -37,6 +37,10 @@ Test Index
 | where UserId = user5 and Description = e0567
 | and EventTime <= now() + 3
 -----
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= day()-1d-1h
+-----
 Events
 | where Name = "Start"
 | project City, ClientIp, StartTime = timestamp
@@ -55,3 +59,7 @@ Events
 | where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
 | eval UserId = upperCase(UserId)
 | table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+-----
+from "index_view"
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+table StreamId
