@@ -225,7 +225,9 @@ public final class ExpressionOperator extends ExpressionItem {
         private Builder(final ExpressionOperator expressionOperator) {
             super(expressionOperator);
             this.op = expressionOperator.op;
-            this.children.addAll(expressionOperator.children);
+            if (expressionOperator.children != null) {
+                this.children.addAll(expressionOperator.children);
+            }
         }
 
         /**
