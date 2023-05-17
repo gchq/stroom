@@ -113,13 +113,13 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
     void testHavingCount() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | eval count = count()
-                | eval EventTime = floorYear(EventTime)
-                | group by EventTime, UserId
-                | having count > 3
-                | table EventTime, UserId, count""";
+                from index_view
+                where UserId = user5
+                eval count = count()
+                eval EventTime = floorYear(EventTime)
+                group by EventTime, UserId
+                having count > 3
+                select EventTime, UserId, count""";
 
         // Create the rule.
         final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()

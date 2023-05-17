@@ -112,9 +112,9 @@ class TestAnalytics extends StroomIntegrationTest {
     void testSingleEvent() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | table StreamId, EventId, UserId""";
+                from index_view
+                where UserId = user5
+                select StreamId, EventId, UserId""";
         basicTest(query, 9, 6);
     }
 
@@ -122,13 +122,13 @@ class TestAnalytics extends StroomIntegrationTest {
     void testHavingCount() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | eval count = count()
-                | eval EventTime = floorYear(EventTime)
-                | group by EventTime, UserId
-                | having count > 3
-                | table EventTime, UserId, count""";
+                from index_view
+                where UserId = user5
+                eval count = count()
+                eval EventTime = floorYear(EventTime)
+                group by EventTime, UserId
+                having count > 3
+                select EventTime, UserId, count""";
 
         // Create the rule.
         final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()
@@ -166,12 +166,12 @@ class TestAnalytics extends StroomIntegrationTest {
     void testWindowCount() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | window EventTime by 1y advance 1y
-                | group by UserId
-                //| having count > countPrevious
-                | table UserId""";
+                from index_view
+                where UserId = user5
+                window EventTime by 1y advance 1y
+                group by UserId
+                // having count > countPrevious
+                select UserId""";
 
         // Create the rule.
         final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()
@@ -210,12 +210,12 @@ class TestAnalytics extends StroomIntegrationTest {
     void testWindowCountHaving() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | window EventTime by 1y advance 1y
-                | group by UserId
-                | having "period-0" = 0
-                | table UserId""";
+                from index_view
+                where UserId = user5
+                window EventTime by 1y advance 1y
+                group by UserId
+                having "period-0" = 0
+                select UserId""";
 
         // Create the rule.
         final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()
@@ -253,10 +253,10 @@ class TestAnalytics extends StroomIntegrationTest {
     void testMissingField() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | and MissingField = bob
-                | table StreamId, EventId, UserId""";
+                from index_view
+                where UserId = user5
+                and MissingField = bob
+                select StreamId, EventId, UserId""";
         basicTest(query, 9, 6);
     }
 
@@ -264,8 +264,8 @@ class TestAnalytics extends StroomIntegrationTest {
     void testNoWhere() {
         // Add alert
         final String query = """
-                "index_view"
-                | table StreamId, EventId, UserId""";
+                from index_view
+                select StreamId, EventId, UserId""";
         basicTest(query, 9, 27);
     }
 
@@ -273,9 +273,9 @@ class TestAnalytics extends StroomIntegrationTest {
     void testCompoundWhere() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5 and  (UserId = user5 or MissingField = bob)
-                | table StreamId, EventId, UserId""";
+                from index_view
+                where UserId = user5 and  (UserId = user5 or MissingField = bob)
+                select StreamId, EventId, UserId""";
         basicTest(query, 9, 6);
     }
 
