@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.13] - 2023-05-17
+
+* Issue **#3462** : Make enabled the first item in the list.
+
+* Issue **#3461** : Remove requirement for pipes in QL, add 'from', add 'select' instead of 'table', add 'between' operator.
+
+
 ## [v7.2-beta.12] - 2023-05-16
 
 * Issue **#3441** : Min and Max expression functions now return correct type.
@@ -5307,7 +5314,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.13...HEAD
+[v7.2-beta.13]: https://github.com/gchq/stroom/compare/v7.2-beta.12...v7.2-beta.13
 [v7.2-beta.12]: https://github.com/gchq/stroom/compare/v7.2-beta.11...v7.2-beta.12
 [v7.2-beta.11]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.11
 [v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
