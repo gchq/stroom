@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.14] - 2023-05-17
+
+* Issue **#3465** : Fix index shard search for index name.
+
+* Issue **#3371** : Stats now supports multiple date terms and none. Fix stats with time selector and time series vis.
+
+
 ## [v7.2-beta.13] - 2023-05-17
 
 * Issue **#3462** : Make enabled the first item in the list.
@@ -5314,7 +5321,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.14...HEAD
+[v7.2-beta.14]: https://github.com/gchq/stroom/compare/v7.2-beta.13...v7.2-beta.14
 [v7.2-beta.13]: https://github.com/gchq/stroom/compare/v7.2-beta.12...v7.2-beta.13
 [v7.2-beta.12]: https://github.com/gchq/stroom/compare/v7.2-beta.11...v7.2-beta.12
 [v7.2-beta.11]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.11
