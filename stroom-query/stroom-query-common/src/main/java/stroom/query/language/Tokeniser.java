@@ -57,8 +57,8 @@ public class Tokeniser {
         // Tag whitespace.
         split("\\s+", 0, TokenType.WHITESPACE);
 
-        // Tag pipes.
-        split("\\|", 0, TokenType.PIPE);
+//        // Tag pipes.
+//        split("\\|", 0, TokenType.PIPE);
 
         // Tag dates.
         split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.STRING);

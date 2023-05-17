@@ -86,20 +86,27 @@ public class SearchRequestBuilder {
     private List<AbstractToken> addDataSource(final List<AbstractToken> tokens, final Consumer<DocRef> consumer) {
         AbstractToken token = tokens.get(0);
 
-        // The first token can be `FROM`.
-        if (TokenType.FROM.equals(token.getTokenType())) {
-            KeywordGroup keywordGroup = (KeywordGroup) token;
-            addDataSource(keywordGroup.getChildren(), consumer);
-        } else {
-            if (!TokenType.STRING.equals(token.getTokenType()) &&
-                    !TokenType.SINGLE_QUOTED_STRING.equals(token.getTokenType()) &&
-                    !TokenType.DOUBLE_QUOTED_STRING.equals(token.getTokenType())) {
-                throw new TokenException(token, "Expected string");
-            }
-            final String dataSourceName = token.getUnescapedText();
-            final DocRef dataSource = new DocRef(null, null, dataSourceName);
-            consumer.accept(dataSource);
+        // The first token must be `FROM`.
+        if (!TokenType.FROM.equals(token.getTokenType())) {
+            throw new TokenException(token, "Expected from");
         }
+
+        final KeywordGroup keywordGroup = (KeywordGroup) token;
+        if (keywordGroup.getChildren().size() == 0) {
+            throw new TokenException(token, "Expected data source");
+        } else if (keywordGroup.getChildren().size() > 1) {
+            throw new TokenException(keywordGroup.getChildren().get(1), "Unexpected token");
+        }
+
+        AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
+        if (!TokenType.STRING.equals(dataSourceToken.getTokenType()) &&
+                !TokenType.SINGLE_QUOTED_STRING.equals(dataSourceToken.getTokenType()) &&
+                !TokenType.DOUBLE_QUOTED_STRING.equals(dataSourceToken.getTokenType())) {
+            throw new TokenException(dataSourceToken, "Expected string");
+        }
+        final String dataSourceName = dataSourceToken.getUnescapedText();
+        final DocRef dataSource = new DocRef(null, null, dataSourceName);
+        consumer.accept(dataSource);
 
         return tokens.subList(1, tokens.size());
     }
@@ -359,8 +366,8 @@ public class SearchRequestBuilder {
                         remaining =
                                 addExpression(remaining, TokenType.HAVING, tableSettingsBuilder::aggregateFilter);
                     }
-                    case SELECT, TABLE -> {
-                        processTablePipeOperation(
+                    case SELECT -> {
+                        processSelectOperation(
                                 keywordGroup,
                                 functions,
                                 sortMap,
@@ -574,12 +581,12 @@ public class SearchRequestBuilder {
         sb.append(")");
     }
 
-    private void processTablePipeOperation(final KeywordGroup keywordGroup,
-                                           final Map<String, String> functions,
-                                           final Map<String, Sort> sortMap,
-                                           final Map<String, Integer> groupMap,
-                                           final Map<String, Filter> filterMap,
-                                           final TableSettings.Builder tableSettingsBuilder) {
+    private void processSelectOperation(final KeywordGroup keywordGroup,
+                                        final Map<String, String> functions,
+                                        final Map<String, Sort> sortMap,
+                                        final Map<String, Integer> groupMap,
+                                        final Map<String, Filter> filterMap,
+                                        final TableSettings.Builder tableSettingsBuilder) {
         final List<AbstractToken> children = keywordGroup.getChildren();
         String fieldName = null;
         String columnName = null;

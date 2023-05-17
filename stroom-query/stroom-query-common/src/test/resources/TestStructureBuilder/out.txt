@@ -70,11 +70,13 @@ before 'test of inner \' strings '
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
 </TOKEN_GROUP>
 -----
-table | where this = that | and foo = 'test of inner \' strings '
+from test
+where this = that and foo = 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
-   <TABLE>
-   </TABLE>
+   <FROM>
+      <STRING>test</STRING>
+   </FROM>
    <WHERE>
       <STRING>this</STRING>
       <EQUALS>=</EQUALS>
@@ -87,14 +89,15 @@ table | where this = that | and foo = 'test of inner \' strings '
    </AND>
 </TOKEN_GROUP>
 -----
-Test Index
-| where UserId = user5 and Description = e0567
-| and EventTime <= 2000-01-01T00:00:00.000Z
-| and EventTime >= 2016-01-02T00:00:00.000Z
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
 =====
 <TOKEN_GROUP>
-   <STRING>Test</STRING>
-   <STRING>Index</STRING>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
    <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
@@ -117,13 +120,14 @@ Test Index
    </AND>
 </TOKEN_GROUP>
 -----
-Test Index
-| where UserId = user5 and Description = e0567
-| and EventTime <= now()
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now()
 =====
 <TOKEN_GROUP>
-   <STRING>Test</STRING>
-   <STRING>Index</STRING>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
    <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
@@ -142,13 +146,14 @@ Test Index
    </AND>
 </TOKEN_GROUP>
 -----
-Test Index
-| where UserId = user5 and Description = e0567
-| and EventTime <= now() + 3d
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3d
 =====
 <TOKEN_GROUP>
-   <STRING>Test</STRING>
-   <STRING>Index</STRING>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
    <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
@@ -169,13 +174,14 @@ Test Index
    </AND>
 </TOKEN_GROUP>
 -----
-Test Index
-| where UserId = user5 and Description = e0567
-| and EventTime <= now() + 3
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3
 =====
 <TOKEN_GROUP>
-   <STRING>Test</STRING>
-   <STRING>Index</STRING>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
    <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
@@ -196,13 +202,14 @@ Test Index
    </AND>
 </TOKEN_GROUP>
 -----
-Test Index
-| where UserId = user5 and Description = e0567
-| and EventTime <= day()-1d-1h
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= day()-1d-1h
 =====
 <TOKEN_GROUP>
-   <STRING>Test</STRING>
-   <STRING>Index</STRING>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
    <WHERE>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
@@ -225,88 +232,29 @@ Test Index
    </AND>
 </TOKEN_GROUP>
 -----
-Events
-| where Name = "Start"
-| project City, ClientIp, StartTime = timestamp
-| join  kind=inner
-    (Events
-    | where Name = "Stop"
-    | project StopTime = timestamp, ClientIp)
-    on ClientIp
-| extend duration = StopTime - StartTime
-    // Remove matches with earlier stops:
-| where  duration > 0
-    // Pick out the earliest stop for each start and client:
-| summarize arg_min(duration, *) by bin(StartTime,1s), ClientIp
+from Events
+where Name = "Start"
 =====
 <TOKEN_GROUP>
-   <STRING>Events</STRING>
+   <FROM>
+      <STRING>Events</STRING>
+   </FROM>
    <WHERE>
       <STRING>Name</STRING>
       <EQUALS>=</EQUALS>
       <DOUBLE_QUOTED_STRING>"Start"</DOUBLE_QUOTED_STRING>
-      <STRING>project</STRING>
-      <STRING>City</STRING>
-      <COMMA>,</COMMA>
-      <STRING>ClientIp</STRING>
-      <COMMA>,</COMMA>
-      <STRING>StartTime</STRING>
-      <EQUALS>=</EQUALS>
-      <STRING>timestamp</STRING>
-      <STRING>join</STRING>
-      <STRING>kind</STRING>
-      <EQUALS>=</EQUALS>
-      <FUNCTION_GROUP FUNCTION_NAME="inner">
-         <STRING>Events</STRING>
-         <WHERE>
-            <STRING>Name</STRING>
-            <EQUALS>=</EQUALS>
-            <DOUBLE_QUOTED_STRING>"Stop"</DOUBLE_QUOTED_STRING>
-            <STRING>project</STRING>
-            <STRING>StopTime</STRING>
-            <EQUALS>=</EQUALS>
-            <STRING>timestamp</STRING>
-            <COMMA>,</COMMA>
-            <STRING>ClientIp</STRING>
-         </WHERE>
-      </FUNCTION_GROUP>
-      <STRING>on</STRING>
-      <STRING>ClientIp</STRING>
-      <STRING>extend</STRING>
-      <STRING>duration</STRING>
-      <EQUALS>=</EQUALS>
-      <STRING>StopTime</STRING>
-      <MINUS>-</MINUS>
-      <STRING>StartTime</STRING>
-   </WHERE>
-   <WHERE>
-      <STRING>duration</STRING>
-      <GREATER_THAN>></GREATER_THAN>
-      <NUMBER>0</NUMBER>
-      <STRING>summarize</STRING>
-      <FUNCTION_GROUP FUNCTION_NAME="arg_min">
-         <STRING>duration</STRING>
-         <COMMA>,</COMMA>
-         <MULTIPLICATION>*</MULTIPLICATION>
-      </FUNCTION_GROUP>
-      <BY>by</BY>
-      <FUNCTION_GROUP FUNCTION_NAME="bin">
-         <STRING>StartTime</STRING>
-         <COMMA>,</COMMA>
-         <STRING>1s</STRING>
-      </FUNCTION_GROUP>
-      <COMMA>,</COMMA>
-      <STRING>ClientIp</STRING>
    </WHERE>
 </TOKEN_GROUP>
 -----
-'Test Index'
-| where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
-| eval UserId = upperCase(UserId)
-| table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
 =====
 <TOKEN_GROUP>
-   <SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING>
+   <FROM>
+      <SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING>
+   </FROM>
    <WHERE>
       <STRING>EventTime</STRING>
       <GREATER_THAN>></GREATER_THAN>
@@ -331,7 +279,7 @@ Events
          <STRING>UserId</STRING>
       </FUNCTION_GROUP>
    </EVAL>
-   <TABLE>
+   <SELECT>
       <STRING>StreamId</STRING>
       <AS>as</AS>
       <DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING>
@@ -349,12 +297,12 @@ Events
       <STRING>UserId</STRING>
       <AS>as</AS>
       <DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING>
-   </TABLE>
+   </SELECT>
 </TOKEN_GROUP>
 -----
 from "index_view"
 where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
-table StreamId
+select StreamId
 =====
 <TOKEN_GROUP>
    <FROM>
@@ -367,8 +315,8 @@ table StreamId
       <BETWEEN_AND>and</BETWEEN_AND>
       <STRING>2023-05-05T00:00:00.000Z</STRING>
    </WHERE>
-   <TABLE>
+   <SELECT>
       <STRING>StreamId</STRING>
-   </TABLE>
+   </SELECT>
 </TOKEN_GROUP>
 -----

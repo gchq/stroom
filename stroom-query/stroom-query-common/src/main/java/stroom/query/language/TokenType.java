@@ -6,12 +6,10 @@ public enum TokenType {
     // Uncategorized content.
     UNKNOWN,
 
-    PIPE,
     OPEN_BRACKET,
     CLOSE_BRACKET,
 
     // Structure
-//    PIPE_GROUP,
     TOKEN_GROUP,
     FUNCTION_GROUP,
     FUNCTION_NAME,
@@ -60,7 +58,6 @@ public enum TokenType {
     GROUP,
     FILTER,
     WINDOW,
-    TABLE, // Alias for select
     LIMIT,
     HAVING,
 
@@ -75,7 +72,7 @@ public enum TokenType {
     COMMENT,
     BLOCK_COMMENT;
 
-    public static Set<TokenType> KEYWORDS = Set.of(
+    public static final Set<TokenType> KEYWORDS = Set.of(
             FROM,
             WHERE,
             AND,
@@ -84,7 +81,6 @@ public enum TokenType {
             FILTER,
             EVAL,
             SELECT,
-            TABLE,
             SORT,
             GROUP,
             WINDOW,

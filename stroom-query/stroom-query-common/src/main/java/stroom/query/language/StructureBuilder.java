@@ -76,8 +76,6 @@ public class StructureBuilder {
                     index = createStructure(tokens, group, index + 1);
                     currentGroup.add(group.build());
                 }
-            } else if (TokenType.PIPE.equals(tokenType)) {
-                // Ignore pipes.
             } else if (TokenType.KEYWORDS.contains(tokenType)) {
                 if (ignoreNextAnd && TokenType.AND.equals(tokenType)) {
                     final Token betweenAnd = new Token.Builder(token).tokenType(TokenType.BETWEEN_AND).build();
