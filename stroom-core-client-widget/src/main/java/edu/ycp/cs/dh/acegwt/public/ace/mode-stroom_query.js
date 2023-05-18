@@ -19,26 +19,26 @@ var StroomQueryHighlightRules = function() {
         "when|desc|asc|window"
     );
 
-    var builtinConstants = (
-        "true|false"
-    );
-
-    // Created from `stroom.dashboard.expression.v1.FunctionFactory`
-    var builtinFunctions = (
-        "add|+|annotation|any|average|mean|bottom|ceiling|ceilingday|ceilinghour|ceilingminute|ceilingmonth|ceilingsecond|ceilingyear|concat|count|countgroups|countprevious|countunique|currentuser|dashboard|data|decode|decodeurl|distinct|/|divide|encodeurl|=|equals|err|exclude|extractauthorityfromuri|extractfragmentfromuri|extracthostfromuri|extractpathfromuri|extractportfromuri|extractqueryfromuri|extractschemefromuri|extractschemespecificpartfromuri|extractuserinfofromuri|false|first|floor|floorday|floorhour|floorminute|floormonth|floorsecond|flooryear|formatdate|>|greaterthan|>=|greaterthanorequalto|hash|if|include|indexof|isboolean|isdouble|iserror|isinteger|islong|isnull|isnumber|isstring|isvalue|joining|last|lastindexof|<|lessthan|<=|lessthanorequalto|link|lowercase|match|max|min|%|mod|modulo|*|multiply|negate|not|nth|null|parsedate|^|power|param|params|random|replace|round|roundday|roundhour|roundminute|roundmonth|roundsecond|roundyear|stdev|stepping|stringlength|substring|substringafter|substringbefore|-|subtract|sum|toboolean|todouble|tointeger|tolong|tostring|top|true|typeof|uppercase|variance|" +
-        "now|second|minute|hour|day|week|month|year"
-    );
-
-    var dataTypes = (
-        "int|numeric|decimal|date|varchar|char|bigint|float|double|bit|binary|text|set|timestamp|" +
-        "money|real|number|integer"
-    );
+//    var builtinConstants = (
+//        "true|false"
+//    );
+//
+//    // Created from `stroom.dashboard.expression.v1.FunctionFactory`
+//    var builtinFunctions = (
+//        "add|+|annotation|any|average|mean|bottom|ceiling|ceilingday|ceilinghour|ceilingminute|ceilingmonth|ceilingsecond|ceilingyear|concat|count|countgroups|countprevious|countunique|currentuser|dashboard|data|decode|decodeurl|distinct|/|divide|encodeurl|=|equals|err|exclude|extractauthorityfromuri|extractfragmentfromuri|extracthostfromuri|extractpathfromuri|extractportfromuri|extractqueryfromuri|extractschemefromuri|extractschemespecificpartfromuri|extractuserinfofromuri|false|first|floor|floorday|floorhour|floorminute|floormonth|floorsecond|flooryear|formatdate|>|greaterthan|>=|greaterthanorequalto|hash|if|include|indexof|isboolean|isdouble|iserror|isinteger|islong|isnull|isnumber|isstring|isvalue|joining|last|lastindexof|<|lessthan|<=|lessthanorequalto|link|lowercase|match|max|min|%|mod|modulo|*|multiply|negate|not|nth|null|parsedate|^|power|param|params|random|replace|round|roundday|roundhour|roundminute|roundmonth|roundsecond|roundyear|stdev|stepping|stringlength|substring|substringafter|substringbefore|-|subtract|sum|toboolean|todouble|tointeger|tolong|tostring|top|true|typeof|uppercase|variance|" +
+//        "now|second|minute|hour|day|week|month|year"
+//    );
+//
+//    var dataTypes = (
+//        "int|numeric|decimal|date|varchar|char|bigint|float|double|bit|binary|text|set|timestamp|" +
+//        "money|real|number|integer"
+//    );
 
     var keywordMapper = this.createKeywordMapper({
-        "support.function": builtinFunctions,
+//        "support.function": builtinFunctions,
         "keyword": keywords,
-        "constant.language": builtinConstants,
-        "storage.type": dataTypes
+//        "constant.language": builtinConstants,
+//        "storage.type": dataTypes
     }, "identifier", true);
 
     this.$rules = {
@@ -68,6 +68,9 @@ var StroomQueryHighlightRules = function() {
             token : "constant.numeric", // Duration
             regex : "[+-]?\\d+[yMwdhms]"
         }, {
+            token : ["support.function", "paren.lparen" ], // Functions
+            regex : "(\\w+)(\\s*\\()"
+        },  {
             token : keywordMapper,
             regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
         }, {
