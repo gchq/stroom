@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.16] - 2023-05-18
+
+* Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
+
+
 ## [v7.2-beta.15] - 2023-05-18
 
 * Issue **#3468** : Expected interrupted exceptions are now logged as debug not error.
@@ -5328,7 +5333,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.16...HEAD
+[v7.2-beta.16]: https://github.com/gchq/stroom/compare/v7.2-beta.15...v7.2-beta.16
 [v7.2-beta.15]: https://github.com/gchq/stroom/compare/v7.2-beta.14...v7.2-beta.15
 [v7.2-beta.14]: https://github.com/gchq/stroom/compare/v7.2-beta.13...v7.2-beta.14
 [v7.2-beta.13]: https://github.com/gchq/stroom/compare/v7.2-beta.12...v7.2-beta.13
