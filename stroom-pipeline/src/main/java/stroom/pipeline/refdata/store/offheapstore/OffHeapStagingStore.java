@@ -46,7 +46,6 @@ public class OffHeapStagingStore implements AutoCloseable {
     private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 2_000;
 
     private final LmdbEnv stagingLmdbEnv;
-    private final RefDataLmdbEnv refStoreLmdbEnv;
     private final KeyValueStagingDb keyValueStagingDb;
     private final RangeValueStagingDb rangeValueStagingDb;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
@@ -62,14 +61,12 @@ public class OffHeapStagingStore implements AutoCloseable {
     private final UnsortedDupKeyFactory<RangeStoreKey> rangeStoreKeyFactory;
     private boolean isComplete = false;
 
-    public OffHeapStagingStore(final LmdbEnv stagingLmdbEnv,
-                               final RefDataLmdbEnv refStoreLmdbEnv,
-                               final KeyValueStagingDb keyValueStagingDb,
-                               final RangeValueStagingDb rangeValueStagingDb,
-                               final MapDefinitionUIDStore mapDefinitionUIDStore,
-                               final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory) {
+    OffHeapStagingStore(final LmdbEnv stagingLmdbEnv,
+                        final KeyValueStagingDb keyValueStagingDb,
+                        final RangeValueStagingDb rangeValueStagingDb,
+                        final MapDefinitionUIDStore mapDefinitionUIDStore,
+                        final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory) {
         this.stagingLmdbEnv = stagingLmdbEnv;
-        this.refStoreLmdbEnv = refStoreLmdbEnv;
         this.keyValueStagingDb = keyValueStagingDb;
         this.rangeValueStagingDb = rangeValueStagingDb;
         this.mapDefinitionUIDStore = mapDefinitionUIDStore;
@@ -244,28 +241,13 @@ public class OffHeapStagingStore implements AutoCloseable {
         // per loader it makes sense to cache the MapDefinition=>UID mappings on heap for quicker access.
         final UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
             LOGGER.trace("MapDefinition not found in local cache so getting it from the store, {}", mapDefinition);
-            // Here we use the main ref store env txn as we need a valid UID.
-            final UID uidFromStore = refStoreLmdbEnv.getWithWriteTxn(writeTxn -> {
-                // The temporaryUidPooledBuffer may not be used if we find the map def in the DB
-                try (final PooledByteBuffer temporaryUidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
 
-                    final PooledByteBuffer cachedUidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer();
-                    // Add it to the list, so it will be released on close
-                    pooledByteBuffers.add(cachedUidPooledBuffer);
+            final PooledByteBuffer cachedUidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer();
+            // Add it to the list, so it will be released on close
+            pooledByteBuffers.add(cachedUidPooledBuffer);
 
-                    // The returned UID wraps a direct buffer that is either owned by LMDB or came from
-                    // temporaryUidPooledBuffer so as the txn is about to be closed we must copy it into
-                    // another pooled buffer that we can cache for the life of this store.
-                    final UID newUid = mapDefinitionUIDStore.getOrCreateUid(
-                            writeTxn,
-                            mapDef,
-                            temporaryUidPooledBuffer);
+            final UID uidFromStore = mapDefinitionUIDStore.getOrCreateUid(mapDef, cachedUidPooledBuffer);
 
-                    // Now clone it into a different buffer and wrap in a new UID instance
-                    final UID newUidClone = newUid.cloneToBuffer(cachedUidPooledBuffer.getByteBuffer());
-                    return newUidClone;
-                }
-            });
             // Add the reverse mapping
             uidToMapDefinitionMap.put(uidFromStore, mapDef);
             return uidFromStore;

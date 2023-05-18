@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
@@ -84,5 +85,24 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
      */
     public UID extractUid(final ByteBuffer byteBuffer) {
         return UIDSerde.extractUid(byteBuffer, UID_OFFSET);
+    }
+
+    /**
+     * Copy the contents of sourceByteBuffer into destByteBuffer but with the supplied UID.
+     */
+    public void copyWithNewUid(final ByteBuffer sourceByteBuffer,
+                               final ByteBuffer destByteBuffer,
+                               final UID newUid) {
+        Objects.requireNonNull(sourceByteBuffer);
+        Objects.requireNonNull(destByteBuffer);
+        Objects.requireNonNull(newUid);
+
+        destByteBuffer.put(newUid.getBackingBuffer());
+        final ByteBuffer keyPartBuffer = sourceByteBuffer.slice(
+                KEY_OFFSET,
+                sourceByteBuffer.remaining() - UID.UID_ARRAY_LENGTH);
+        destByteBuffer.put(keyPartBuffer);
+        destByteBuffer.flip();
+        sourceByteBuffer.rewind();
     }
 }

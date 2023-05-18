@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
@@ -37,6 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
@@ -46,6 +46,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class RangeStoreDb
@@ -61,7 +62,7 @@ public class RangeStoreDb
     private final ValueStoreKeySerde valueSerde;
 
     @Inject
-    public RangeStoreDb(final RefDataLmdbEnv lmdbEnvironment,
+    public RangeStoreDb(@Assisted final RefDataLmdbEnv lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final RangeStoreKeySerde keySerde,
                         final ValueStoreKeySerde valueSerde) {
@@ -194,6 +195,24 @@ public class RangeStoreDb
                 // If we find anything in our range then it means this map uid is in the range store.
                 return cursorIterable.iterator().hasNext();
             }
+        }
+    }
+
+    /**
+     * Apply the passes entryConsumer for each entry found matching the supplied UID
+     */
+    public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
+                                    final UID mapUid,
+                                    final Consumer<KeyVal<ByteBuffer>> keyValueConsumer) {
+        try (final PooledByteBuffer startKeyBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer stopKeyBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> keyRange = buildSingleMapUidKeyRange(
+                    mapUid,
+                    startKeyBuffer.getByteBuffer(),
+                    stopKeyBuffer.getByteBuffer());
+
+            forEachEntryAsBytes(txn, keyRange, keyValueConsumer);
         }
     }
 
@@ -371,8 +390,12 @@ public class RangeStoreDb
         return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
-        RangeStoreDb create(final LmdbEnv lmdbEnvironment);
+        RangeStoreDb create(final RefDataLmdbEnv lmdbEnvironment);
     }
 }

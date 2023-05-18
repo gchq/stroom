@@ -21,10 +21,12 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StagingValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +51,7 @@ public class ValueStore {
 
 
     @Inject
-    ValueStore(final RefDataLmdbEnv lmdbEnv,
+    ValueStore(@Assisted final RefDataLmdbEnv lmdbEnv,
                final ValueStoreDb valueStoreDb,
                final ValueStoreMetaDb valueStoreMetaDb) {
         this.lmdbEnv = lmdbEnv;
@@ -70,14 +72,12 @@ public class ValueStore {
      */
     ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
                               final PooledByteBuffer valueStorePooledKeyBuffer,
-                              final StagingValue stagingValue,
-                              final boolean overwriteExisting) {
+                              final StagingValue stagingValue) {
         //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
         return valueStoreDb.getOrCreateKey(
                 writeTxn,
                 stagingValue,
                 valueStorePooledKeyBuffer,
-                overwriteExisting,
                 (txn, keyBuffer, valueBuffer) ->
                         valueStoreMetaDb.incrementReferenceCount(txn, keyBuffer),
                 (txn, keyBuffer, valueBuffer) ->
@@ -91,6 +91,11 @@ public class ValueStore {
             valueStoreDb.serializeKey(keyBuffer, valueStoreKey);
             return get(txn, keyBuffer);
         }
+    }
+
+    public Optional<ByteBuffer> getAsBytes(final Txn<ByteBuffer> txn,
+                                           final ByteBuffer valueStoreKeyBuffer) {
+        return valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer);
     }
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn,
@@ -177,11 +182,24 @@ public class ValueStore {
         }
     }
 
+    ValueStoreHashAlgorithm getValueStoreHashAlgorithm() {
+        return valueStoreDb.getValueStoreHashAlgorithm();
+    }
+
     public PooledByteBuffer getPooledKeyBuffer() {
         return valueStoreDb.getPooledKeyBuffer();
     }
 
     long getEntryCount() {
         return valueStoreMetaDb.getEntryCount();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface Factory {
+
+        ValueStore create(final RefDataLmdbEnv lmdbEnvironment);
     }
 }

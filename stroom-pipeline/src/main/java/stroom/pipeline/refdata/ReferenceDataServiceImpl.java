@@ -38,6 +38,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -64,7 +65,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -633,7 +636,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // TODO @AT need to get rid of the up front limit. Instead we need a method on the refstore to
         //  allow us consume a stream of entries within a read txn. The limit can then be set after the
         //  filtering has happened.
-        final Predicate<RefStoreEntry> predicate = buildEntryPredicate(criteria);
+        final Predicate<RefStoreEntry> filter = buildEntryPredicate(criteria);
 
         final long skipCount = Optional.ofNullable(criteria)
                 .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
@@ -648,37 +651,36 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         LOGGER.debug("Searching ref entries with criteria {}, skipCount {}, limit {}",
                 criteria, skipCount, limit);
 
-        refDataStore.consumeEntryStream(stream -> {
-            stream
-                    .filter(predicate)
-                    .skip(skipCount)
-                    .limit(limit)
-                    .forEach(refStoreEntry -> {
-                        if (taskContext.isTerminated()) {
-                            throw new RuntimeException("Aborting search due to task termination");
-                        }
+        final AtomicLong allItemsCounter = new AtomicLong(0);
+        final AtomicLong consumedCounter = new AtomicLong(0);
+        final Predicate<RefStoreEntry> takeWhilePredicate = refStoreEntry ->
+                        consumedCounter.incrementAndGet() <= limit;
+        final BooleanSupplier skipTest = skipCount == 0
+                ? () -> true
+                : () -> allItemsCounter.incrementAndGet() > skipCount;
 
-                        final Val[] valArr = new Val[fields.length];
+        refDataStore.consumeEntries(filter, takeWhilePredicate, refStoreEntry -> {
+            if (taskContext.isTerminated() || Thread.currentThread().isInterrupted()) {
+                throw new TaskTerminatedException();
+            }
+            if (skipTest.getAsBoolean()) {
 
-                        // Useful for slowing down the search in dev to test termination
-//                        try {
-//                            Thread.sleep(50);
-//                        } catch (InterruptedException e) {
-//                            Thread.currentThread().interrupt();
-//                        }
+                final Val[] valArr = new Val[fields.length];
 
-                        for (int i = 0; i < fields.length; i++) {
-                            AbstractField field = fields[i];
-                            // May be a custom field that we obvs can't extract
-                            if (field != null) {
-                                final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
-                                        .apply(refStoreEntry);
-                                valArr[i] = convertToVal(value, fields[i]);
-                            }
-                        }
-                        consumer.add(Val.of(valArr));
-                    });
-            return null;
+                // Useful for slowing down the search in dev to test termination
+                //ThreadUtil.sleepIgnoringInterrupts(50);
+
+                for (int i = 0; i < fields.length; i++) {
+                    AbstractField field = fields[i];
+                    // May be a custom field that we obvs can't extract
+                    if (field != null) {
+                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
+                                .apply(refStoreEntry);
+                        valArr[i] = convertToVal(value, fields[i]);
+                    }
+                }
+                consumer.add(Val.of(valArr));
+            }
         });
     }
 

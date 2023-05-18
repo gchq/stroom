@@ -24,18 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public interface RefDataStore {
-
-    /**
-     * Returns the {@link RefDataProcessingInfo} for the passed {@link MapDefinition}, or an empty
-     * {@link Optional} if there isn't one. If one is found the last accessed time is updated if it has
-     * not been updated in the last hour.
-     */
-    Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition);
 
     /**
      * Returns true if all the data for the passed stream definition has been successfully loaded into the
@@ -107,7 +98,16 @@ public interface RefDataStore {
     List<RefStoreEntry> list(final int limit,
                              final Predicate<RefStoreEntry> filter);
 
-    <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction);
+//    <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction);
+
+    /**
+     * @param filter A filter or null if not filtering is needed.
+     * @param takeWhile Must be thread safe. Keeps passing entries to the entryConsumer until this returns false.
+     * @param entryConsumer May be called by multiple threads.
+     */
+    void consumeEntries(final Predicate<RefStoreEntry> filter,
+                        final Predicate<RefStoreEntry> takeWhile,
+                        final Consumer<RefStoreEntry> entryConsumer);
 
     List<ProcessingInfoResponse> listProcessingInfo(final int limit);
 

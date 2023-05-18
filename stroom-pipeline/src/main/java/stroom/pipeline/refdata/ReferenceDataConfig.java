@@ -25,6 +25,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     private final ReferenceDataLmdbConfig lmdbConfig;
     private final ReferenceDataStagingLmdbConfig stagingLmdbConfig;
     private final CacheConfig effectiveStreamCache;
+    private final CacheConfig metaIdToRefStoreCache;
 
     public ReferenceDataConfig() {
         maxPutsBeforeCommit = 200_000;
@@ -38,6 +39,11 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 .maximumSize(1000L)
                 .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
+
+        metaIdToRefStoreCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
     }
 
     @JsonCreator
@@ -47,7 +53,8 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                                @JsonProperty("loadingLockStripes") final int loadingLockStripes,
                                @JsonProperty("lmdb") final ReferenceDataLmdbConfig lmdbConfig,
                                @JsonProperty("stagingLmdb") final ReferenceDataStagingLmdbConfig stagingLmdbConfig,
-                               @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache) {
+                               @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache,
+                               @JsonProperty("metaIdToRefStoreCache") final CacheConfig metaIdToRefStoreCache) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
         this.purgeAge = purgeAge;
@@ -55,6 +62,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         this.lmdbConfig = lmdbConfig;
         this.stagingLmdbConfig = stagingLmdbConfig;
         this.effectiveStreamCache = effectiveStreamCache;
+        this.metaIdToRefStoreCache = metaIdToRefStoreCache;
     }
 
     @Min(0)
@@ -106,6 +114,10 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         return effectiveStreamCache;
     }
 
+    public CacheConfig getMetaIdToRefStoreCache() {
+        return metaIdToRefStoreCache;
+    }
+
     public ReferenceDataConfig withLmdbConfig(final ReferenceDataLmdbConfig lmdbConfig) {
         return new ReferenceDataConfig(
                 maxPutsBeforeCommit,
@@ -114,7 +126,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 loadingLockStripes,
                 lmdbConfig,
                 stagingLmdbConfig,
-                effectiveStreamCache);
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withPurgeAge(final StroomDuration purgeAge) {
@@ -125,7 +137,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 loadingLockStripes,
                 lmdbConfig,
                 stagingLmdbConfig,
-                effectiveStreamCache);
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
@@ -136,7 +148,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 loadingLockStripes,
                 lmdbConfig,
                 stagingLmdbConfig,
-                effectiveStreamCache);
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withMaxPurgeDeletesBeforeCommit(final int maxPurgeDeletesBeforeCommit) {
@@ -147,7 +159,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 loadingLockStripes,
                 lmdbConfig,
                 stagingLmdbConfig,
-                effectiveStreamCache);
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withEffectiveStreamCache(final CacheConfig effectiveStreamCache) {
@@ -158,7 +170,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 loadingLockStripes,
                 lmdbConfig,
                 stagingLmdbConfig,
-                effectiveStreamCache);
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     @Override

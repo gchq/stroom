@@ -11,6 +11,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
@@ -57,7 +58,7 @@ public class MapDefinitionUIDStore {
     //  stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataLoader#isAppendableData
 
     @Inject
-    MapDefinitionUIDStore(final RefDataLmdbEnv lmdbEnv,
+    MapDefinitionUIDStore(@Assisted final RefDataLmdbEnv lmdbEnv,
                           final MapUidForwardDb mapUidForwardDb,
                           final MapUidReverseDb mapUidReverseDb) {
         this.lmdbEnv = lmdbEnv;
@@ -68,9 +69,16 @@ public class MapDefinitionUIDStore {
     Optional<UID> getUid(final MapDefinition mapDefinition, final ByteBuffer uidByteBuffer) {
         // The returned UID is outside the txn so must be a clone of the found one
         return lmdbEnv.getWithReadTxn(txn ->
-                getUid(txn, mapDefinition)
-                        .flatMap(uid ->
-                                Optional.of(uid.cloneToBuffer(uidByteBuffer))));
+                getUid(txn, mapDefinition, uidByteBuffer));
+    }
+
+    Optional<UID> getUid(final Txn<ByteBuffer> txn,
+                         final MapDefinition mapDefinition,
+                         final ByteBuffer uidByteBuffer) {
+        // The returned UID is outside the txn so must be a clone of the found one
+        return getUid(txn, mapDefinition)
+                .flatMap(uid ->
+                        Optional.of(uid.cloneToBuffer(uidByteBuffer)));
     }
 
     Optional<UID> getUid(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
@@ -111,6 +119,41 @@ public class MapDefinitionUIDStore {
         }
     }
 
+    /**
+     * Returns the UID corresponding to the passed mapDefinition if it exists in the two mapping DBs. If it doesn't
+     * exist, a forward and reverse mapping will be created and the new UID returned. The returned UID wraps a
+     * direct allocation {@link ByteBuffer} owned by LMDB, so it may ONLY be used whilst still inside the passed
+     * {@link Txn}.
+     */
+    UID getOrCreateUid(final MapDefinition mapDefinition,
+                       final PooledByteBuffer uidPooledBuffer) {
+        return lmdbEnv.getWithWriteTxn(writeTxn -> {
+            try (final PooledByteBuffer mapDefinitionPooledBuffer = mapUidForwardDb.getPooledKeyBuffer()) {
+
+                final ByteBuffer mapDefinitionBuffer = mapDefinitionPooledBuffer.getByteBuffer();
+
+                mapUidForwardDb.serializeKey(mapDefinitionBuffer, mapDefinition);
+
+                // if we already have a UID for this mapDefinition return it
+                // if not, create the pair of entries and return the created UID
+                return mapUidForwardDb.getAsBytes(writeTxn, mapDefinitionBuffer)
+                        .map(uidBuffer -> {
+                            LOGGER.trace(() ->
+                                    LogUtil.message("Found existing UID {}",
+                                            ByteBufferUtils.byteBufferInfo(uidBuffer)));
+                            // uidBuffer belongs to LMDB so we must copy it before leaving the txn
+                            final ByteBuffer uidBufferCopy = uidPooledBuffer.getByteBuffer();
+                            ByteBufferUtils.copy(uidBuffer, uidBufferCopy);
+                            return mapUidForwardDb.deserializeValue(uidBufferCopy);
+                        })
+                        .orElseGet(() -> {
+                            // The returned UID wraps uidPooledBuffer so no copy needed
+                            return createForwardReversePair(writeTxn, mapDefinitionBuffer, uidPooledBuffer);
+                        });
+            }
+        });
+    }
+
     Optional<UID> get(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
         return mapUidForwardDb.get(txn, mapDefinition);
     }
@@ -142,8 +185,8 @@ public class MapDefinitionUIDStore {
         LOGGER.trace("deletePair({})", mapUid);
 
         final ByteBuffer mapDefinitionBuffer = mapUidReverseDb.getAsBytes(
-                writeTxn,
-                mapUid.getBackingBuffer())
+                        writeTxn,
+                        mapUid.getBackingBuffer())
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "No entry exists for mapUid {}",
                         ByteBufferUtils.byteBufferInfo(mapUid.getBackingBuffer()))));
@@ -226,5 +269,14 @@ public class MapDefinitionUIDStore {
     public List<MapDefinition> getMapDefinitions(final Txn<ByteBuffer> readTxn,
                                                  final RefStreamDefinition refStreamDefinition) {
         return mapUidForwardDb.getMapDefinitions(readTxn, refStreamDefinition);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface Factory {
+
+        MapDefinitionUIDStore create(final RefDataLmdbEnv lmdbEnvironment);
     }
 }

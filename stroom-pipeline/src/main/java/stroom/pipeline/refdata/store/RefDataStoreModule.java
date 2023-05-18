@@ -21,13 +21,24 @@ import stroom.bytebuffer.ByteBufferModule;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.pipeline.refdata.store.offheapstore.DelegatingRefDataOffHeapStore;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
+import stroom.pipeline.refdata.store.offheapstore.MapDefinitionUIDStore;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataLoader;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.pipeline.refdata.store.offheapstore.StringByteBufferConsumer;
+import stroom.pipeline.refdata.store.offheapstore.ValueStore;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeValueStagingDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
@@ -61,16 +72,27 @@ public class RefDataStoreModule extends AbstractModule {
         // Bind the @Assisted inject factories
         install(new FactoryModuleBuilder().build(KeyValueStagingDb.Factory.class));
         install(new FactoryModuleBuilder().build(RangeValueStagingDb.Factory.class));
+        install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
+        install(new FactoryModuleBuilder().build(RangeStoreDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ValueStoreDb.Factory.class));
+        install(new FactoryModuleBuilder().build(MapUidForwardDb.Factory.class));
+        install(new FactoryModuleBuilder().build(MapUidReverseDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ValueStoreMetaDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ValueStore.Factory.class));
+        install(new FactoryModuleBuilder().build(MapDefinitionUIDStore.Factory.class));
         install(new FactoryModuleBuilder().build(OffHeapRefDataLoader.Factory.class));
         install(new FactoryModuleBuilder().build(OffHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(OnHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
+        install(new FactoryModuleBuilder().build(RefDataLmdbEnv.Factory.class));
+        install(new FactoryModuleBuilder().build(RefDataOffHeapStore.Factory.class));
 
         bind(ValueStoreHashAlgorithm.class).to(XxHashValueStoreHashAlgorithm.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(RefDataOffHeapStore.class);
+                .bind(DelegatingRefDataOffHeapStore.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(RefDataPurge.class, builder -> builder

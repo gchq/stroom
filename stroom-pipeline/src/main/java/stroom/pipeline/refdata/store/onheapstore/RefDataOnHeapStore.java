@@ -66,14 +66,14 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         return StorageType.ON_HEAP;
     }
 
-    @Override
-    public Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
-
-        return Optional.ofNullable(processingInfoMap.computeIfPresent(
-                refStreamDefinition,
-                (refStreamDef, refDataProcessingInfo) ->
-                        refDataProcessingInfo.updateLastAccessedTime()));
-    }
+//    @Override
+//    public Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
+//
+//        return Optional.ofNullable(processingInfoMap.computeIfPresent(
+//                refStreamDefinition,
+//                (refStreamDef, refDataProcessingInfo) ->
+//                        refDataProcessingInfo.updateLastAccessedTime()));
+//    }
 
     @Override
     public Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition) {
@@ -211,8 +211,15 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+//    @Override
+//    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+//        throw new UnsupportedOperationException("Not yet implemented");
+//    }
+//
     @Override
-    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+    public void consumeEntries(final Predicate<RefStoreEntry> filter,
+                               final Predicate<RefStoreEntry> takeWhile,
+                               final Consumer<RefStoreEntry> entryConsumer) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 

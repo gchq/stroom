@@ -77,7 +77,7 @@ class ReferenceDataLoadTaskHandler {
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
     private final RefDataLoaderHolder refDataLoaderHolder;
-    private final RefDataStore refDataStore;
+    private final RefDataStoreFactory refDataStoreFactory;
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineDataCache pipelineDataCache;
@@ -107,7 +107,7 @@ class ReferenceDataLoadTaskHandler {
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.feedProperties = feedProperties;
-        this.refDataStore = refDataStoreFactory.getOffHeapStore();
+        this.refDataStoreFactory = refDataStoreFactory;
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
         this.metaHolder = metaHolder;
@@ -189,6 +189,9 @@ class ReferenceDataLoadTaskHandler {
                               final RefStreamDefinition refStreamDefinition) {
         // Set the source meta.
         metaHolder.setMeta(meta);
+
+        // Get the store specific to this load
+        final RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
             // we are now blocking any other thread loading the same refStreamDefinition

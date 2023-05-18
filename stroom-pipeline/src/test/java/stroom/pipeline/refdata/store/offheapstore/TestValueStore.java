@@ -108,8 +108,7 @@ class TestValueStore extends AbstractStoreDbTest {
             ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                     writeTxn,
                     valueStoreKeyPooledBuffer,
-                    stagingValue,
-                    false);
+                    stagingValue);
 
             return valueStoreDb.deserializeKey(valueStoreKeyBuffer);
         }

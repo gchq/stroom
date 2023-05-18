@@ -189,9 +189,16 @@ public class TestUtil {
         comparePerformance(rounds, iterations, null, outputConsumer, testCases);
     }
 
+    /**
+     * @param rounds
+     * @param iterations
+     * @param setup          Run before each test case in each round
+     * @param outputConsumer
+     * @param testCases
+     */
     public static void comparePerformance(final int rounds,
                                           final int iterations,
-                                          final Runnable setup,
+                                          final TestSetup setup,
                                           final Consumer<String> outputConsumer,
                                           final TimedCase... testCases) {
 
@@ -210,7 +217,7 @@ public class TestUtil {
                 final MeasuredWork work = testCase.getWork();
                 if (setup != null) {
                     LOGGER.debug("Running setup");
-                    setup.run();
+                    setup.run(round, iterations);
                 }
                 final Duration duration = DurationTimer.measure(() -> {
                     work.run(round, iterations);
@@ -250,6 +257,11 @@ public class TestUtil {
                 tableStr));
     }
 
+    public static interface TestSetup {
+
+        void run(final int rounds, final int iterations);
+    }
+
     public static class TimedCase {
 
         private final String name;
@@ -272,6 +284,10 @@ public class TestUtil {
             return work;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface MeasuredWork {
 

@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.KeyConsumer;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
@@ -34,6 +33,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.PutFlags;
@@ -74,7 +74,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     private final ValueStoreMetaSerde valueSerde;
 
     @Inject
-    public ValueStoreMetaDb(final RefDataLmdbEnv lmdbEnvironment,
+    public ValueStoreMetaDb(@Assisted final RefDataLmdbEnv lmdbEnvironment,
                             final ByteBufferPool byteBufferPool,
                             final ValueStoreKeySerde keySerde,
                             final ValueStoreMetaSerde valueSerde) {
@@ -215,10 +215,12 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
         }
     }
 
+
     // --------------------------------------------------------------------------------
+
 
     public interface Factory {
 
-        ValueStoreMetaDb create(final LmdbEnv lmdbEnvironment);
+        ValueStoreMetaDb create(final RefDataLmdbEnv lmdbEnvironment);
     }
 }

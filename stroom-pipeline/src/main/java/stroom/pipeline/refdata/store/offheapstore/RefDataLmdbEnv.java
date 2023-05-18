@@ -5,12 +5,15 @@ import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnv.WriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.assistedinject.Assisted;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
@@ -29,13 +32,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
-/**
- * The main environment for the reference data store. Wraps and delegates to a {@link LmdbEnv}
- * instance.
- */
-@Singleton
 public class RefDataLmdbEnv {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataLmdbEnv.class);
@@ -45,10 +42,12 @@ public class RefDataLmdbEnv {
 
     @Inject
     public RefDataLmdbEnv(final LmdbEnvFactory lmdbEnvFactory,
-                          final Provider<ReferenceDataConfig> referenceDataConfigProvider) {
+                          final Provider<ReferenceDataConfig> referenceDataConfigProvider,
+                          @Assisted @Nullable final String subDirName) {
         lmdbEnvironment = createEnvironment(
                 lmdbEnvFactory,
-                referenceDataConfigProvider.get().getLmdbConfig());
+                referenceDataConfigProvider.get().getLmdbConfig(),
+                subDirName);
     }
 
     public LmdbEnv getEnvironment() {
@@ -175,7 +174,8 @@ public class RefDataLmdbEnv {
     }
 
     private LmdbEnv createEnvironment(final LmdbEnvFactory lmdbEnvFactory,
-                                      final ReferenceDataLmdbConfig lmdbConfig) {
+                                      final ReferenceDataLmdbConfig lmdbConfig,
+                                      final String subDirName) {
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -188,12 +188,28 @@ public class RefDataLmdbEnv {
         // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
         // set it larger than the amount of free space on the filesystem.
 
-        final LmdbEnv env = lmdbEnvFactory.builder(lmdbConfig)
+        final SimpleEnvBuilder builder = lmdbEnvFactory.builder(lmdbConfig)
                 .withMaxDbCount(7)
-                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .addEnvFlag(EnvFlags.MDB_NOTLS);
+
+        if (subDirName != null) {
+            builder.withSubDirectory(subDirName);
+        }
+
+        final LmdbEnv env = builder
+                .withSubDirectory(subDirName)
                 .build();
 
         LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
         return env;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface Factory {
+
+        RefDataLmdbEnv create(final String subDirName);
     }
 }

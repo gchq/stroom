@@ -29,6 +29,7 @@ import stroom.util.logging.LogUtil;
 import com.google.common.base.Preconditions;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -43,6 +44,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -467,6 +469,28 @@ public abstract class AbstractLmdbDb<K, V>
             serializeKey(keyBuffer, key);
             return exists(txn, keyBuffer);
         }
+    }
+
+    /**
+     * Scans over all entries till it finds a match, so not recommended for use on big tables.
+     * De-serialises each key as it goes.
+     * Intended for use when it is not possible to test a key without di-serialisation, e.g. when
+     * variable width serialisation is used.
+     * @return True if any entry exists that matches keyPredicate.
+     */
+    public boolean exists(final Txn<ByteBuffer> txn, final Predicate<K> keyPredicate) {
+        Objects.requireNonNull(keyPredicate);
+        boolean wasMatchFound = false;
+        try (CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+            for (final KeyVal<ByteBuffer> keyValBuffer : iterable) {
+                final K key = deserializeKey(keyValBuffer.key());
+                if (keyPredicate.test(key)) {
+                    wasMatchFound = true;
+                    break;
+                }
+            }
+        }
+        return wasMatchFound;
     }
 
     /**

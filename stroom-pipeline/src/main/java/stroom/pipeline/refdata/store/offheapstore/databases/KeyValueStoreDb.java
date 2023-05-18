@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
@@ -34,6 +33,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class KeyValueStoreDb
@@ -60,7 +61,7 @@ public class KeyValueStoreDb
     private final ValueStoreKeySerde valueSerde;
 
     @Inject
-    KeyValueStoreDb(final RefDataLmdbEnv lmdbEnvironment,
+    KeyValueStoreDb(@Assisted final RefDataLmdbEnv lmdbEnvironment,
                     final ByteBufferPool byteBufferPool,
                     final KeyValueStoreKeySerde keySerde,
                     final ValueStoreKeySerde valueSerde) {
@@ -174,6 +175,24 @@ public class KeyValueStoreDb
         return cnt;
     }
 
+    /**
+     * Apply the passes entryConsumer for each entry found matching the supplied UID
+     */
+    public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
+                                    final UID mapUid,
+                                    final Consumer<KeyVal<ByteBuffer>> keyValueConsumer) {
+        try (final PooledByteBuffer startKeyBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer stopKeyBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> keyRange = buildSingleMapUidKeyRange(
+                    mapUid,
+                    startKeyBuffer.getByteBuffer(),
+                    stopKeyBuffer.getByteBuffer());
+
+            forEachEntryAsBytes(txn, keyRange, keyValueConsumer);
+        }
+    }
+
     public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, PooledByteBuffer pooledByteBuffer) {
 
         try (CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
@@ -216,8 +235,12 @@ public class KeyValueStoreDb
         return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
-        KeyValueStoreDb create(final LmdbEnv lmdbEnvironment);
+        KeyValueStoreDb create(final RefDataLmdbEnv lmdbEnvironment);
     }
 }

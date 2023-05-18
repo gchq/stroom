@@ -9,6 +9,9 @@ import java.util.function.Supplier;
 
 /**
  * A staging value held in byte form
+ * <pre>{@code
+ * <type ID int><hash code long><value bytes................>
+ * }</pre>
  */
 public class StagingValueImpl implements StagingValue {
 
@@ -59,7 +62,6 @@ public class StagingValueImpl implements StagingValue {
 
     /**
      * Copies the contents of this into a new {@link StagingValue} backed by the supplied buffer.
-     * Only call this after you have finished writing to the output stream.
      */
     @Override
     public StagingValue copy(final Supplier<ByteBuffer> byteBufferSupplier) {

@@ -24,13 +24,14 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
-import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.EntryStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
+import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
 import stroom.util.NullSafe;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -63,7 +64,7 @@ import javax.inject.Inject;
 /**
  * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
  * write transaction. Accessed via
- * {@link RefDataStore#doWithLoaderUnlessComplete(RefStreamDefinition, long, Consumer)}.
+ * {@link stroom.pipeline.refdata.store.RefDataStore#doWithLoaderUnlessComplete(RefStreamDefinition, long, Consumer)}.
  * Commits data loaded so far every N entries, where N is maxPutsBeforeCommit.
  * If a value of maxPutsBeforeCommit is greater than one then processing should be kept
  * as lightweight as possible to avoid holding on to a write txn for too long.
@@ -115,12 +116,12 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     OffHeapRefDataLoader(@Assisted final Striped<Lock> refStreamDefStripedReentrantLock,
                          @Assisted final RefStreamDefinition refStreamDefinition,
                          @Assisted final long effectiveTimeMs,
+                         @Assisted final RefDataLmdbEnv refStoreLmdbEnv,
                          final KeyValueStoreDb keyValueStoreDb,
                          final RangeStoreDb rangeStoreDb,
                          final ValueStore valueStore,
                          final MapDefinitionUIDStore mapDefinitionUIDStore,
                          final ProcessingInfoDb processingInfoDb,
-                         final RefDataLmdbEnv refStoreLmdbEnv,
                          final OffHeapStagingStoreFactory offHeapStagingStoreFactory) {
 
         this.keyValueStoreDb = keyValueStoreDb;
@@ -198,7 +199,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final PutOutcome putOutcome = processingInfoDb.put(
                 refStreamDefinition, refDataProcessingInfo, true);
 
-        this.offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition);
+        this.offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition, mapDefinitionUIDStore);
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;
@@ -281,6 +282,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     private void logLoadInfo(final ProcessingState processingState) {
+        final Duration overalDuration = overallTimer.get();
+        final Duration loadIntoStagingDuration = loadIntoStagingTimer.get();
+        final Duration transferStagedEntriesDuration = this.transferStagedEntriesTimer.get();
+
         LOGGER.info(LogUtil.inBoxOnNewLine(
                 """
                         Processed {} reference entries with outcome {}
@@ -307,9 +312,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 getMapNamesStr(),
                 refStreamDefinition.getStreamId(),
                 getPipelineNameStr(),
-                loadIntoStagingTimer,
-                transferStagedEntriesTimer,
-                overallTimer));
+                LogUtil.withPercentage(loadIntoStagingDuration, overalDuration),
+                LogUtil.withPercentage(transferStagedEntriesDuration, overalDuration),
+                overalDuration));
     }
 
     @Override
@@ -482,12 +487,12 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         });
     }
 
-    private <K> PutOutcome transferEntryToRefStore(final BatchingWriteTxn batchingWriteTxn,
-                                                   final K dbKey,
-                                                   final StagingValue stagingValue,
-                                                   final PooledByteBuffer pooledKeyBuffer,
-                                                   final EntryStoreDb<K> entryStoreDb,
-                                                   final boolean isAppendableData) {
+    <K> PutOutcome transferEntryToRefStore(final BatchingWriteTxn batchingWriteTxn,
+                                           final K dbKey,
+                                           final StagingValue stagingValue,
+                                           final PooledByteBuffer pooledKeyBuffer,
+                                           final EntryStoreDb<K> entryStoreDb,
+                                           final boolean isAppendableData) {
 
         LOGGER.trace("transferEntryToRefStore({}, {}", dbKey, stagingValue);
         putsToRefStoreCounter++;
@@ -583,10 +588,71 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         // First get/create the value entry, so we can then link our entry to it
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
-                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExistingEntries);
+                writeTxn, valueStorePooledKeyBuffer, refDataValue);
 
         return entryStoreDb.put(
                 writeTxn, keyBuffer, valueStoreKeyBuffer, overwriteExistingEntries, isAppending);
+    }
+
+    void migrateKeyEntry(final BatchingWriteTxn batchingWriteTxn,
+                         final MapDefinition mapDefinition,
+                         final ByteBuffer sourceKeyBuffer,
+                         final int valueTypeId,
+                         final ByteBuffer refDataValueBuffer) {
+        // Need to assign a new map UID in the dest store
+        final UID newMapUid = mapDefinitionUIDStore.getOrCreateUid(batchingWriteTxn.getTxn(),
+                mapDefinition,
+                pooledUidBuffer);
+        final KeyValueStoreKeySerde keySerde = (KeyValueStoreKeySerde) keyValueStoreDb.getKeySerde();
+
+        final ByteBuffer destKeyBuffer = keyValuePooledKeyBuffer.getByteBuffer();
+        keySerde.copyWithNewUid(sourceKeyBuffer, destKeyBuffer, newMapUid);
+
+        final StagingValue stagingValue = new MigrationValue(
+                valueTypeId,
+                refDataValueBuffer,
+                valueStore.getValueStoreHashAlgorithm());
+
+        // This is a migration, so we know the entries do not exist in the destination.
+        // We are reading the entries from the source in key order and we are creating new UIDs
+        // for each map, so we can run in append mode for speed.
+        putEntryWithValue(
+                batchingWriteTxn.getTxn(),
+                keyValueStoreDb,
+                stagingValue,
+                destKeyBuffer,
+                true);
+    }
+
+    void migrateRangeEntry(final BatchingWriteTxn batchingWriteTxn,
+                           final MapDefinition mapDefinition,
+                           final ByteBuffer sourceKeyBuffer,
+                           final int valueTypeId,
+                           final ByteBuffer refDataValueBuffer) {
+
+        // Need to assign a new map UID in the dest store
+        final UID newMapUid = mapDefinitionUIDStore.getOrCreateUid(batchingWriteTxn.getTxn(),
+                mapDefinition,
+                pooledUidBuffer);
+        final RangeStoreKeySerde keySerde = (RangeStoreKeySerde) rangeStoreDb.getKeySerde();
+
+        final ByteBuffer destKeyBuffer = keyValuePooledKeyBuffer.getByteBuffer();
+        keySerde.copyWithNewUid(sourceKeyBuffer, destKeyBuffer, newMapUid);
+
+        final StagingValue stagingValue = new MigrationValue(
+                valueTypeId,
+                refDataValueBuffer,
+                valueStore.getValueStoreHashAlgorithm());
+
+        // This is a migration, so we know the entries do not exist in the destination.
+        // We are reading the entries from the source in key order and we are creating new UIDs
+        // for each map, so we can run in append mode for speed.
+        putEntryWithValue(
+                batchingWriteTxn.getTxn(),
+                rangeStoreDb,
+                stagingValue,
+                destKeyBuffer,
+                true);
     }
 
     @Override
@@ -674,6 +740,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         OffHeapRefDataLoader create(final Striped<Lock> refStreamDefStripedReentrantLock,
                                     final RefStreamDefinition refStreamDefinition,
-                                    final long effectiveTimeMs);
+                                    final long effectiveTimeMs,
+                                    final RefDataLmdbEnv refDataLmdbEnv);
     }
 }

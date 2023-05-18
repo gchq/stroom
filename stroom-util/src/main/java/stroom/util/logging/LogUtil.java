@@ -7,6 +7,9 @@ import stroom.util.shared.ModelStringUtil;
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -244,18 +247,25 @@ public final class LogUtil {
                 return withPercentage(value,
                         ((Duration) value).toMillis(),
                         ((Duration) total).toMillis());
-            } else if (value instanceof DurationAdder) {
+            } else if (value instanceof final DurationAdder durationAdder) {
                 return withPercentage(value,
-                        ((DurationAdder) value).toMillis(),
-                        ((DurationAdder) total).toMillis());
+                        durationAdder.toMillis(),
+                        durationAdder.toMillis());
+            } else if (value instanceof final DurationTimer durationTimer) {
+                return withPercentage(value,
+                        durationTimer.get().toMillis(),
+                        durationTimer.get().toMillis());
             } else if (value instanceof Number) {
                 final double valNum = ((Number) value).doubleValue();
                 final double totalNum = ((Number) total).doubleValue();
                 if (totalNum == 0) {
                     return originalValue + " (undefined%)";
                 } else {
-                    final int pct = (int) (valNum / totalNum * 100);
-                    return originalValue + " (" + pct + "%)";
+//                    final int pct = (int) (valNum / totalNum * 100);
+
+                    BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
+                            .round(new MathContext(3, RoundingMode.HALF_UP));
+                    return originalValue + " (" + pct.toPlainString() + "%)";
                 }
             } else {
                 throw new IllegalArgumentException("Type "

@@ -3,6 +3,11 @@ package stroom.pipeline.refdata.store;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 
+/**
+ * <pre>{@code
+ * <type ID int><hash code long><value bytes................>
+ * }</pre>
+ */
 public interface StagingValue extends RefDataValue {
 
     int TYPE_ID_OFFSET = 0;

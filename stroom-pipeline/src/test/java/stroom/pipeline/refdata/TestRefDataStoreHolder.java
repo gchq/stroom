@@ -43,8 +43,6 @@ class TestRefDataStoreHolder {
     @Test
     void testIsLookupNeeded_validMap() {
 
-        Mockito.when(mockRefDataStoreFactory.getOffHeapStore())
-                .thenReturn(mockRefDataStore);
         Mockito.when(mockRefDataStore.getMapNames(Mockito.any()))
                 .thenReturn(Set.of("foo", "bar"));
         Mockito.when(mockRefDataStore.getLoadState(Mockito.any()))
@@ -80,8 +78,6 @@ class TestRefDataStoreHolder {
     @Test
     void testIsLookupNeeded_invalidMap() {
 
-        Mockito.when(mockRefDataStoreFactory.getOffHeapStore())
-                .thenReturn(mockRefDataStore);
         Mockito.when(mockRefDataStore.getMapNames(Mockito.any()))
                 .thenReturn(Set.of("foo", "bar"));
         Mockito.when(mockRefDataStore.getLoadState(Mockito.any()))
@@ -122,8 +118,6 @@ class TestRefDataStoreHolder {
         final RefStreamDefinition refStreamDefinition2 = new RefStreamDefinition(
                 "pipeUUID2", "pipeVer2", 2L);
 
-        Mockito.when(mockRefDataStoreFactory.getOffHeapStore())
-                .thenReturn(mockRefDataStore);
         Mockito.when(mockRefDataStore.getMapNames(Mockito.eq(refStreamDefinition1)))
                 .thenReturn(Set.of("foo", "bar"));
         Mockito.when(mockRefDataStore.getMapNames(Mockito.eq(refStreamDefinition2)))

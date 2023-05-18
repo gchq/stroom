@@ -43,6 +43,10 @@ public class KeyValueStagingDb
                 DbiFlags.MDB_CREATE);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
         KeyValueStagingDb create(final LmdbEnv lmdbEnvironment);

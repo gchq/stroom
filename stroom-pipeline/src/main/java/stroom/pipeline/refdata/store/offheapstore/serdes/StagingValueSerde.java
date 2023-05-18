@@ -15,6 +15,8 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static stroom.pipeline.refdata.store.StagingValue.VALUE_HASH_OFFSET;
+
 /**
  * <pre>{@code
  * <type ID int><hash code long><value bytes................>
@@ -23,8 +25,8 @@ import java.util.function.Supplier;
 public class StagingValueSerde implements Serde<StagingValue> {
 
     private static final int TYPE_ID_OFFSET = 0;
-    private static final int VALUE_HASH_OFFSET = TYPE_ID_OFFSET + Integer.BYTES;
-    private static final int VALUE_OFFSET = VALUE_HASH_OFFSET + Long.BYTES;
+//    private static final int VALUE_HASH_OFFSET = TYPE_ID_OFFSET + Integer.BYTES;
+//    private static final int VALUE_OFFSET = VALUE_HASH_OFFSET + Long.BYTES;
     private static final int META_LENGTH = Integer.BYTES + Long.BYTES;
 
     @Override

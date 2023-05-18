@@ -4,7 +4,6 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.AbstractLmdbDb;
-import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -15,6 +14,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.lmdbjava.CursorIterable;
@@ -40,7 +40,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     private final RefDataProcessingInfoSerde valueSerde;
 
     @Inject
-    public ProcessingInfoDb(final RefDataLmdbEnv lmdbEnvironment,
+    public ProcessingInfoDb(@Assisted final RefDataLmdbEnv lmdbEnvironment,
                             final ByteBufferPool byteBufferPool,
                             final RefStreamDefinitionSerde keySerde,
                             final RefDataProcessingInfoSerde valueSerde) {
@@ -188,9 +188,13 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                         : Optional.of(Instant.ofEpochMilli(latestLastAccessedTime.get())));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
-        ProcessingInfoDb create(final LmdbEnv lmdbEnvironment);
+        ProcessingInfoDb create(final RefDataLmdbEnv lmdbEnvironment);
     }
 
 }

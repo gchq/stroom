@@ -6,7 +6,7 @@ import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
-import stroom.pipeline.refdata.store.RefDataStoreModule;
+import stroom.pipeline.refdata.store.RefDataStoreTestModule;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StagingValueOutputStream;
@@ -14,17 +14,11 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
-import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.PathCreator;
-import stroom.util.io.SimplePathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.pipeline.scope.PipelineScopeModule;
 
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -55,24 +49,25 @@ class TestOffHeapStagingStore extends StroomUnitTest {
     @Inject
     private OffHeapStagingStoreFactory offHeapStagingStoreFactory;
     @Inject
-    private RefDataLmdbEnv refDataLmdbEnv;
-    @Inject
     private ValueStoreHashAlgorithm valueStoreHashAlgorithm;
     @Inject
     private PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+    @Inject
+    private MapDefinitionUIDStore.Factory mapDefinitionUidStoreFactory;
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
     private Path dbDir = null;
     private OffHeapStagingStore offHeapStagingStore;
     private RefDataStore refDataStore;
+    private RefDataLmdbEnv refDataLmdbEnv;
 
     private final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
             UUID.randomUUID().toString(),
             UUID.randomUUID().toString(),
-            123L);
+            RefDataStoreTestModule.REF_STREAM_1_ID);
 
     @BeforeEach
     void setup() throws IOException {
@@ -99,19 +94,25 @@ class TestOffHeapStagingStore extends StroomUnitTest {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(ReferenceDataConfig.class).toProvider(() -> getReferenceDataConfig());
-                        bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
-                        bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
-                        bind(PathCreator.class).to(SimplePathCreator.class);
-                        install(new RefDataStoreModule());
-                        install(new MockTaskModule());
-                        install(new PipelineScopeModule());
+//                        bind(ReferenceDataConfig.class).toProvider(() -> getReferenceDataConfig());
+//                        bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
+//                        bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
+//                        bind(PathCreator.class).to(SimplePathCreator.class);
+//                        install(new RefDataStoreModule());
+//                        install(new PipelineScopeModule());
+                        install(new RefDataStoreTestModule(
+                                () -> getReferenceDataConfig(),
+                                () -> getCurrentTestDir(),
+                                () -> getCurrentTestDir()));
                     }
                 });
 
         injector.injectMembers(this);
-        offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition);
-        refDataStore = refDataStoreFactory.getOffHeapStore();
+        refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
+        refDataLmdbEnv = ((RefDataOffHeapStore) refDataStore).getLmdbEnvironment();
+        final MapDefinitionUIDStore mapDefinitionUIDStore = mapDefinitionUidStoreFactory.create(refDataLmdbEnv);
+        offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition, mapDefinitionUIDStore);
+
         LOGGER.debug("setup() finished");
     }
 

@@ -23,7 +23,6 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.RefDataValue;
@@ -38,6 +37,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
@@ -99,7 +99,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
 
     @Inject
-    public ValueStoreDb(final RefDataLmdbEnv lmdbEnvironment,
+    public ValueStoreDb(@Assisted final RefDataLmdbEnv lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final ValueStoreKeySerde keySerde,
                         final GenericRefDataValueSerde valueSerde,
@@ -153,23 +153,23 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         return areValuesEqual;
     }
 
-    /**
-     * For testing use
-     */
-    ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
-                              final StagingValue refDataValue,
-                              final PooledByteBuffer valueStoreKeyPooledBuffer,
-                              final EntryConsumer onExistingEntryAction,
-                              final EntryConsumer onNewEntryAction) {
-
-        return getOrCreateKey(
-                writeTxn,
-                refDataValue,
-                valueStoreKeyPooledBuffer,
-                false,
-                onExistingEntryAction,
-                onNewEntryAction);
-    }
+//    /**
+//     * For testing use
+//     */
+//    ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
+//                              final StagingValue refDataValue,
+//                              final PooledByteBuffer valueStoreKeyPooledBuffer,
+//                              final EntryConsumer onExistingEntryAction,
+//                              final EntryConsumer onNewEntryAction) {
+//
+//        return getOrCreateKey(
+//                writeTxn,
+//                refDataValue,
+//                valueStoreKeyPooledBuffer,
+//                false,
+//                onExistingEntryAction,
+//                onNewEntryAction);
+//    }
 
     /**
      * Either gets the {@link ValueStoreKey} corresponding to the passed refDataValue
@@ -186,13 +186,12 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     public ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
                                      final StagingValue refDataValue,
                                      final PooledByteBuffer valueStoreKeyPooledBuffer,
-                                     final boolean isOverwrite,
                                      final EntryConsumer onExistingEntryAction,
                                      final EntryConsumer onNewEntryAction) {
 
         Preconditions.checkArgument(!writeTxn.isReadOnly(), "A write transaction is required");
 
-        LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite: {}", refDataValue, isOverwrite);
+        LOGGER.trace("getOrCreate called for refDataValue: {}", refDataValue);
 
         final ByteBuffer valueBuffer = refDataValue.getValueBuffer();
 
@@ -340,8 +339,12 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 ValueStoreKey.lowestKey(value.getValueHashCode()));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
-        ValueStoreDb create(final LmdbEnv lmdbEnvironment);
+        ValueStoreDb create(final RefDataLmdbEnv lmdbEnvironment);
     }
 }

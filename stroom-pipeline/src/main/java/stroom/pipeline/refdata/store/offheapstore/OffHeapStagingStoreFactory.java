@@ -1,13 +1,11 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
-import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.ReferenceDataStagingLmdbConfig;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb.Factory;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeValueStagingDb;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -33,36 +31,28 @@ public class OffHeapStagingStoreFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OffHeapStagingStoreFactory.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
             .withZone(ZoneOffset.UTC);
+    protected static final String FILE_NAME_DELIMTER = "__";
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final RefDataLmdbEnv refDataLmdbEnv;
-    private final ByteBufferPool byteBufferPool;
     private final KeyValueStagingDb.Factory keyValueStagingDbFactory;
     private final RangeValueStagingDb.Factory rangeValueStagingDbFactory;
     private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
-    private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final Provider<ReferenceDataStagingLmdbConfig> referenceDataStagingLmdbConfigProvider;
     private final PathCreator pathCreator;
 
     @Inject
     public OffHeapStagingStoreFactory(
             final LmdbEnvFactory lmdbEnvFactory,
-            final RefDataLmdbEnv refDataLmdbEnv,
-            final ByteBufferPool byteBufferPool,
-            final Factory keyValueStagingDbFactory,
+            final KeyValueStagingDb.Factory keyValueStagingDbFactory,
             final RangeValueStagingDb.Factory rangeValueStagingDbFactory,
             final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory,
-            final MapDefinitionUIDStore mapDefinitionUIDStore,
             final Provider<ReferenceDataStagingLmdbConfig> referenceDataStagingLmdbConfigProvider,
             final PathCreator pathCreator) {
 
         this.lmdbEnvFactory = lmdbEnvFactory;
-        this.refDataLmdbEnv = refDataLmdbEnv;
-        this.byteBufferPool = byteBufferPool;
         this.keyValueStagingDbFactory = keyValueStagingDbFactory;
         this.rangeValueStagingDbFactory = rangeValueStagingDbFactory;
         this.pooledByteBufferOutputStreamFactory = pooledByteBufferOutputStreamFactory;
-        this.mapDefinitionUIDStore = mapDefinitionUIDStore;
         this.referenceDataStagingLmdbConfigProvider = referenceDataStagingLmdbConfigProvider;
         this.pathCreator = pathCreator;
 
@@ -79,8 +69,11 @@ public class OffHeapStagingStoreFactory {
 
     /**
      * Create a {@link OffHeapStagingStore} for use by one thread to load a reference stream into.
+     * @param refStreamDefinition The {@link RefStreamDefinition} of the stream being loaded.
+     * @param mapDefinitionUIDStore The mapDefinitionUIDStore for the destination.
      */
-    public OffHeapStagingStore create(final RefStreamDefinition refStreamDefinition) {
+    public OffHeapStagingStore create(final RefStreamDefinition refStreamDefinition,
+                                      final MapDefinitionUIDStore mapDefinitionUIDStore) {
 
         final LmdbEnv stagingLmdbEnv = buildStagingEnv(
                 lmdbEnvFactory,
@@ -91,7 +84,6 @@ public class OffHeapStagingStoreFactory {
 
         return new OffHeapStagingStore(
                 stagingLmdbEnv,
-                refDataLmdbEnv,
                 keyValueStagingDb,
                 rangeValueStagingDb,
                 mapDefinitionUIDStore,
@@ -105,9 +97,9 @@ public class OffHeapStagingStoreFactory {
         // Dir needs to be unique to avoid any clashes. Add in the datetime, stream, part to help
         // with any debugging of lingering files.
         final String subDirName = DATE_FORMATTER.format(Instant.now())
-                + "_" + refStreamDefinition.getStreamId()
-                + "_" + refStreamDefinition.getPartNumber()
-                + "_" + UUID.randomUUID();
+                + FILE_NAME_DELIMTER + refStreamDefinition.getStreamId()
+                + FILE_NAME_DELIMTER + refStreamDefinition.getPartNumber()
+                + FILE_NAME_DELIMTER + UUID.randomUUID();
         final Path subDirPath = stagingEnvBaseDir.resolve(subDirName);
 
         LOGGER.info("Creating temporary reference data staging LMDB environment in {}", subDirPath);

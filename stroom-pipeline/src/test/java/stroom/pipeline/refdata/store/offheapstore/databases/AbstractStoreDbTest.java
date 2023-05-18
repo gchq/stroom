@@ -68,7 +68,7 @@ public abstract class AbstractStoreDbTest extends StroomUnitTest {
                 pathCreator,
                 tempDirProvider,
                 LmdbLibraryConfig::new);
-        refDataLmdbEnv = new RefDataLmdbEnv(lmdbEnvFactory, ReferenceDataConfig::new);
+        refDataLmdbEnv = new RefDataLmdbEnv(lmdbEnvFactory, ReferenceDataConfig::new, null);
         lmdbEnv = refDataLmdbEnv.getEnvironment();
 
 //        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)

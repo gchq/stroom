@@ -27,10 +27,9 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
-import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
-import stroom.pipeline.refdata.store.RefDataStoreModule;
+import stroom.pipeline.refdata.store.RefDataStoreTestModule;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStoreEntry;
@@ -47,18 +46,13 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.test.RefTestUtil;
 import stroom.pipeline.refdata.test.RefTestUtil.KeyOutcomeMap;
 import stroom.pipeline.refdata.test.RefTestUtil.RangeOutcomeMap;
-import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.PathCreator;
-import stroom.util.io.SimplePathCreator;
-import stroom.util.io.TempDirProvider;
+import stroom.util.logging.AsciiTable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Range;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -143,23 +137,16 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     @Inject
     private ValueStoreHashAlgorithm valueStoreHashAlgorithm;
 
+    private RefDataStoreTestModule refDataStoreTestModule;
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
     private RefDataStore refDataStore;
     private Path dbDir = null;
 
-//    void setDbMaxSizeProperty() {
-//        setDbMaxSizeProperty(ByteSize.ofMebibytes(5_000));
-//    }
-//
-//    void setDbMaxSizeProperty(final ByteSize size) {
-//        referenceDataConfig.setMaxStoreSize(size);
-//    }
 
     @BeforeEach
     void setup() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
-//        dbDir = Paths.get("/home/dev/tmp/ref_test");
         Files.createDirectories(dbDir);
         FileUtil.deleteContents(dbDir);
 
@@ -175,17 +162,16 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                 .withMaxPutsBeforeCommit(batchSize)
                 .withMaxPurgeDeletesBeforeCommit(batchSize);
 
+        refDataStoreTestModule = new RefDataStoreTestModule(
+                this::getReferenceDataConfig,
+                this::getCurrentTestDir,
+                this::getCurrentTestDir);
+
         injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(ReferenceDataConfig.class).toProvider(() -> getReferenceDataConfig());
-                        bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
-                        bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
-                        bind(PathCreator.class).to(SimplePathCreator.class);
-                        install(new RefDataStoreModule());
-                        install(new MockTaskModule());
-                        install(new PipelineScopeModule());
+                        install(refDataStoreTestModule);
                     }
                 });
 
@@ -217,12 +203,13 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         bulkLoadAndAssert(true, 100);
 
-        final List<RefStoreEntry> entries = refDataStore.consumeEntryStream(stream ->
-                stream
-                        .filter(refStoreEntry ->
-                                refStoreEntry.getKey().equals("key38")
-                                        || refStoreEntry.getKey().equals("key2"))
-                        .collect(Collectors.toList()));
+        final List<RefStoreEntry> entries = new ArrayList<>();
+        refDataStore.consumeEntries(
+                refStoreEntry ->
+                        refStoreEntry.getKey().equals("key38")
+                                || refStoreEntry.getKey().equals("key2"),
+                null,
+                entries::add);
 
         // 2 because we have filtered on two unique entries
         assertThat(entries)
@@ -964,13 +951,13 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
     @Test
     void testDoWithRefStreamDefinitionLock() {
-
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        final RefDataOffHeapStore effectiveStore = getEffectiveStore(refStreamDefinition);
 
         // ensure reentrance works
-        ((RefDataOffHeapStore) refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+        effectiveStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
             LOGGER.debug("Got lock");
-            ((RefDataOffHeapStore) refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+            effectiveStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
                 LOGGER.debug("Got inner lock");
             });
         });
@@ -999,6 +986,12 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         refDataStore.logAllContents();
 
         LOGGER.info("------------------------purge-starts-here--------------------------------------");
+
+        refStreamDefinitions.forEach(refStreamDefinition -> {
+            final RefDataOffHeapStore effectiveStore = getEffectiveStore(refStreamDefinition);
+            LOGGER.info("\n{}", AsciiTable.fromCollection(effectiveStore.listProcessingInfo(Integer.MAX_VALUE)));
+        });
+
         refDataStore.purgeOldData();
 
         assertThat(refDataStore.getProcessingInfoEntryCount())
@@ -1095,7 +1088,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         int expectedRefStreamDefCount = refStreamDefCount;
 
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
+        assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
                 .isEqualTo(expectedRefStreamDefCount);
 
         // Now change the states
@@ -1430,7 +1423,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         final Instant fullTestStartTime = Instant.now();
 
-        MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
+        MapNameFunc mapNameFunc = this::buildMapNameWithoutRefStreamDef;
 
         setPurgeAgeProperty(StroomDuration.ofDays(1));
         int refStreamDefCount = 5;
@@ -1455,7 +1448,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                     rangeValueMapCount,
                     entryCount,
                     0,
-                    mapNamFunc);
+                    mapNameFunc);
 
             if (doAsserts) {
                 assertDbCounts(
@@ -1475,7 +1468,12 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             LOGGER.info("-----------------------second-load starts here----------------------------------");
 
             refStreamDefs2 = loadBulkData(
-                    refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
+                    refStreamDefCount,
+                    keyValueMapCount,
+                    rangeValueMapCount,
+                    entryCount,
+                    refStreamDefCount,
+                    mapNameFunc);
 
             LOGGER.info("Completed both loads in {}",
                     Duration.between(startInstant, Instant.now()).toString());
@@ -1508,7 +1506,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                 Stream.of(KV_TYPE, RANGE_TYPE).forEach(valueType -> {
                     for (int i = 0; i < entryCount; i++) {
 
-                        String mapName = mapNamFunc.buildMapName(refStreamDef,
+                        String mapName = mapNameFunc.buildMapName(refStreamDef,
                                 valueType,
                                 random.nextInt(keyValueMapCount));
                         MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
@@ -1603,7 +1601,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         final Instant fullTestStartTime = Instant.now();
 
-        MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
+        MapNameFunc mapNameFunc = this::buildMapNameWithoutRefStreamDef;
 
         setPurgeAgeProperty(StroomDuration.ofDays(1));
         int refStreamDefCount = 30;
@@ -1625,7 +1623,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                 keyValueMapCount,
                 entryCount,
                 0,
-                mapNamFunc);
+                mapNameFunc);
 
         // here to aid debugging problems at low volumes
         if (entryCount < 10) {
@@ -1662,29 +1660,36 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                 final int totalRangeValueEntryCount,
                                 final int totalValueEntryCount) {
 
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
+        assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
                 .isEqualTo(refStreamDefCount);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(MapUidForwardDb.DB_NAME))
+        assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(MapUidForwardDb.DB_NAME))
                 .isEqualTo(totalMapEntries);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(MapUidReverseDb.DB_NAME))
+        assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(MapUidReverseDb.DB_NAME))
                 .isEqualTo(totalMapEntries);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(KeyValueStoreDb.DB_NAME))
+        assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(KeyValueStoreDb.DB_NAME))
                 .isEqualTo(totalKeyValueEntryCount);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(RangeStoreDb.DB_NAME))
+        assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(RangeStoreDb.DB_NAME))
                 .isEqualTo(totalRangeValueEntryCount);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ValueStoreDb.DB_NAME))
+        assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(ValueStoreDb.DB_NAME))
                 .isEqualTo(totalValueEntryCount);
     }
 
+    private RefDataOffHeapStore getEffectiveStore(final RefStreamDefinition refStreamDefinition) {
+        return ((DelegatingRefDataOffHeapStore) refDataStore).getEffectiveStore(
+                refStreamDefinition);
+    }
+
     private void setLastAccessedTime(final RefStreamDefinition refStreamDef, final long newLastAccessedTimeMs) {
-        ((RefDataOffHeapStore) refDataStore).setLastAccessedTime(refStreamDef, newLastAccessedTimeMs);
+        getEffectiveStore(refStreamDef).setLastAccessedTime(refStreamDef, newLastAccessedTimeMs);
     }
 
     private void setProcessingState(final RefStreamDefinition refStreamDef, final ProcessingState processingState) {
-        ((RefDataOffHeapStore) refDataStore).setProcessingState(refStreamDef, processingState);
+        getEffectiveStore(refStreamDef).setProcessingState(refStreamDef, processingState);
     }
 
     private RefStreamDefinition buildUniqueRefStreamDefinition(final long streamId) {
+        refDataStoreTestModule.addMetaFeedAssociation(streamId, RefDataStoreTestModule.FEED_1_NAME);
+
         return new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
@@ -1692,10 +1697,11 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     }
 
     private RefStreamDefinition buildUniqueRefStreamDefinition() {
+        // This is a default mapping so no need to add it
         return new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
-                123456L);
+                RefDataStoreTestModule.REF_STREAM_1_ID);
     }
 
     private void bulkLoadAndAssert(final boolean overwriteExisting,
@@ -1742,7 +1748,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             final int keyValueMapCount,
             final int entryCount,
             final int refStreamDefinitionOffset,
-            final MapNamFunc mapNamFunc) {
+            final MapNameFunc mapNameFunc) {
 
         assertThat(refStreamDefinitionCount)
                 .isGreaterThan(0);
@@ -1771,7 +1777,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                         entryCount,
                                         refStreamDefinition,
                                         loader,
-                                        mapNamFunc);
+                                        mapNameFunc);
 
                                 loader.completeProcessing();
                             });
@@ -1802,7 +1808,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             final int rangeValueMapCount,
             final int entryCount,
             final int refStreamDefinitionOffset,
-            final MapNamFunc mapNamFunc) {
+            final MapNameFunc mapNameFunc) {
 
         assertThat(refStreamDefinitionCount)
                 .isGreaterThan(0);
@@ -1833,13 +1839,13 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                         entryCount,
                                         refStreamDefinition,
                                         loader,
-                                        mapNamFunc);
+                                        mapNameFunc);
 
                                 loadRangeValueData(keyValueMapCount,
                                         entryCount,
                                         refStreamDefinition,
                                         loader,
-                                        mapNamFunc);
+                                        mapNameFunc);
 
                                 loader.completeProcessing();
                             });
@@ -1857,6 +1863,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     }
 
     private RefStreamDefinition buildRefStreamDefinition(final long i) {
+        refDataStoreTestModule.addMetaFeedAssociation(i, RefDataStoreTestModule.FEED_1_NAME);
         return new RefStreamDefinition(
                 FIXED_PIPELINE_UUID,
                 FIXED_PIPELINE_VERSION,
@@ -1878,10 +1885,10 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                     final int entryCount,
                                     final RefStreamDefinition refStreamDefinition,
                                     final RefDataLoader loader,
-                                    final MapNamFunc mapNamFunc) {
+                                    final MapNameFunc mapNameFunc) {
         // load the range/value data
         for (int j = 0; j < keyValueMapCount; j++) {
-            String mapName = mapNamFunc.buildMapName(refStreamDefinition, RANGE_TYPE, j);
+            String mapName = mapNameFunc.buildMapName(refStreamDefinition, RANGE_TYPE, j);
             MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
             for (int k = 0; k < entryCount; k++) {
@@ -1908,10 +1915,10 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                   final int entryCount,
                                   final RefStreamDefinition refStreamDefinition,
                                   final RefDataLoader loader,
-                                  final MapNamFunc mapNamFunc) {
+                                  final MapNameFunc mapNameFunc) {
         // load the key/value data
         for (int j = 0; j < keyValueMapCount; j++) {
-            String mapName = mapNamFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
+            String mapName = mapNameFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
             MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
             for (int k = 0; k < entryCount; k++) {
@@ -1926,10 +1933,10 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                                  final int entryCount,
                                                  final RefStreamDefinition refStreamDefinition,
                                                  final RefDataLoader loader,
-                                                 final MapNamFunc mapNamFunc) {
+                                                 final MapNameFunc mapNameFunc) {
         // load the key/value data
         for (int j = 0; j < keyValueMapCount; j++) {
-            String mapName = mapNamFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
+            String mapName = mapNameFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
             MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
             for (int k = 0; k < entryCount; k++) {
@@ -2042,15 +2049,15 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
 //            refDataStore.logAllContents();
 
-            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition)
+            ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition)
                     .get();
 
-            assertThat(refDataProcessingInfo.getProcessingState())
+            assertThat(processingState)
                     .isEqualTo(ProcessingState.COMPLETE);
 
         });
 
-        if (ENTRIES_PER_MAP_DEF < 50) {
+        if (ENTRIES_PER_MAP_DEF < 20) {
             refDataStore.logAllContents(LOGGER::info);
         }
 
@@ -2228,9 +2235,9 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         assertThat(didLoadHappen)
                 .isEqualTo(isLoadExpectedToHappen);
 
-        RefDataProcessingInfo processingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
+        ProcessingState processingInfo = refDataStore.getLoadState(refStreamDefinition).get();
 
-        assertThat(processingInfo.getProcessingState())
+        assertThat(processingInfo)
                 .isEqualTo(ProcessingState.COMPLETE);
 
         boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
@@ -2240,7 +2247,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         return ENTRIES_PER_MAP_DEF * mapNames.size();
     }
 
-    private interface MapNamFunc {
+    private interface MapNameFunc {
 
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 

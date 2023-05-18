@@ -25,21 +25,15 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
-import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
-import stroom.pipeline.refdata.store.RefDataStoreModule;
+import stroom.pipeline.refdata.store.RefDataStoreTestModule;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
-import stroom.task.mock.MockTaskModule;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.PathCreator;
-import stroom.util.io.SimplePathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -54,7 +48,11 @@ import io.vavr.Tuple3;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,6 +85,8 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT) // For the mocks in RefDataStoreTestModule
 class TestRefDataOnHeapStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOnHeapStore.class);
@@ -119,12 +119,10 @@ class TestRefDataOnHeapStore {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
-                        bind(HomeDirProvider.class).toInstance(() -> tempDir);
-                        bind(TempDirProvider.class).toInstance(() -> tempDir);
-                        bind(PathCreator.class).to(SimplePathCreator.class);
-                        install(new MockTaskModule());
-                        install(new RefDataStoreModule());
+                        install(new RefDataStoreTestModule(
+                                () -> getReferenceDataConfig(),
+                                () -> tempDir,
+                                () -> tempDir));
                     }
                 });
         injector.injectMembers(this);
@@ -966,12 +964,10 @@ class TestRefDataOnHeapStore {
                 throw new RuntimeException(e);
             }
 
-//            ((RefDataOffHeapStore) refDataStore).logAllContents();
-
-            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition)
+            ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition)
                     .get();
 
-            assertThat(refDataProcessingInfo.getProcessingState())
+            assertThat(processingState)
                     .isEqualTo(ProcessingState.COMPLETE);
 
         });
@@ -1088,9 +1084,9 @@ class TestRefDataOnHeapStore {
         assertThat(didLoadHappen)
                 .isEqualTo(isLoadExpectedToHappen);
 
-        RefDataProcessingInfo processingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
+        ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition).get();
 
-        assertThat(processingInfo.getProcessingState())
+        assertThat(processingState)
                 .isEqualTo(ProcessingState.COMPLETE);
 
         boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
@@ -1100,7 +1096,7 @@ class TestRefDataOnHeapStore {
         return entriesPerMapDef * mapNames.size();
     }
 
-    RefDataStore getRefDataStore() {
+    stroom.pipeline.refdata.store.RefDataStore getRefDataStore() {
         return refDataStoreFactory.createOnHeapStore();
     }
 
@@ -1178,6 +1174,10 @@ class TestRefDataOnHeapStore {
                 .isEqualTo(expectedIsSuccess);
         assertThat(putOutcome.isDuplicate())
                 .isEqualTo(expectedIsDuplicate);
+    }
+
+    private ReferenceDataConfig getReferenceDataConfig() {
+        return referenceDataConfig;
     }
 
 }
