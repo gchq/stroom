@@ -8,29 +8,29 @@ public class ValueReferenceIndex {
 
     private final List<ValueReference<?>> list = new ArrayList<>();
 
-    public CountReference addCount() {
-        return add(new CountReference(list.size()));
+    public CountReference addCount(final String name) {
+        return add(new CountReference(list.size(), name));
     }
 
-    public CountIterationReference addCountIteration(final int iteration) {
-        return add(new CountIterationReference(list.size(), iteration));
+    public CountIterationReference addCountIteration(final int iteration, final String name) {
+        return add(new CountIterationReference(list.size(), name, iteration));
     }
 
-    public DoubleListReference addDoubleList() {
-        return add(new DoubleListReference(list.size()));
+    public DoubleListReference addDoubleList(final String name) {
+        return add(new DoubleListReference(list.size(), name));
     }
 
-    public StringListReference addStringList() {
-        return add(new StringListReference(list.size()));
+    public StringListReference addStringList(final String name) {
+        return add(new StringListReference(list.size(), name));
     }
 
-    public ValListReference addValList() {
-        return add(new ValListReference(list.size()));
+    public ValListReference addValList(final String name) {
+        return add(new ValListReference(list.size(), name));
     }
 
-    public FieldValReference addFieldValue(final int fieldIndex) {
+    public FieldValReference addFieldValue(final int fieldIndex, final String name) {
         final FieldValReference valueReference =
-                new FieldValReference(list.size(), fieldIndex);
+                new FieldValReference(list.size(), fieldIndex, name);
 
         // Only store one reference to each field.
         int index = list.indexOf(valueReference);
@@ -42,12 +42,12 @@ public class ValueReferenceIndex {
         return valueReference;
     }
 
-    public RandomValReference addRandomValue() {
-        return add(new RandomValReference(list.size()));
+    public RandomValReference addRandomValue(final String name) {
+        return add(new RandomValReference(list.size(), name));
     }
 
-    public ValReference addValue() {
-        return add(new ValReference(list.size()));
+    public ValReference addValue(final String name) {
+        return add(new ValReference(list.size(), name));
     }
 
     private <T extends ValueReference<?>> T add(T valueReference) {

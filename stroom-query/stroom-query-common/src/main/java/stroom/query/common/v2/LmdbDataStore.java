@@ -22,6 +22,7 @@ import stroom.dashboard.expression.v1.CountPrevious;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
@@ -611,6 +612,7 @@ public class LmdbDataStore implements DataStore {
                                     readTxn,
                                     compiledFieldArray,
                                     compiledSorters,
+                                    compiledDepths,
                                     maxResults,
                                     queryKey,
                                     valueReferenceIndex))));
@@ -846,6 +848,7 @@ public class LmdbDataStore implements DataStore {
         private final Txn<ByteBuffer> readTxn;
         private final CompiledField[] compiledFields;
         private final CompiledSorter<Item>[] compiledSorters;
+        private final CompiledDepths compiledDepths;
         private final Sizes maxResults;
         private final QueryKey queryKey;
         private final ValueReferenceIndex valueReferenceIndex;
@@ -856,6 +859,7 @@ public class LmdbDataStore implements DataStore {
                         final Txn<ByteBuffer> readTxn,
                         final CompiledField[] compiledFields,
                         final CompiledSorter<Item>[] compiledSorters,
+                        final CompiledDepths compiledDepths,
                         final Sizes maxResults,
                         final QueryKey queryKey,
                         final ValueReferenceIndex valueReferenceIndex) {
@@ -865,6 +869,7 @@ public class LmdbDataStore implements DataStore {
             this.readTxn = readTxn;
             this.compiledFields = compiledFields;
             this.compiledSorters = compiledSorters;
+            this.compiledDepths = compiledDepths;
             this.maxResults = maxResults;
             this.queryKey = queryKey;
             this.valueReferenceIndex = valueReferenceIndex;
@@ -927,13 +932,12 @@ public class LmdbDataStore implements DataStore {
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
 
                         // All valid keys are more than a single byte long. Single byte keys are used to store db info.
-                        if (keyVal.key().limit() > 1) {
+                        if (keyVal.key().remaining() > LmdbRowKeyFactoryFactory.DB_STATE_KEY.remaining()) {
                             final ByteBuffer valueBuffer = keyVal.val();
                             while (valueBuffer.remaining() > 0 && addMore) {
 
 //                            if (key.getParent().equals(parentKey)) {
-                                final StoredValues storedValues =
-                                        valueReferenceIndex.read(valueBuffer);
+                                final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
                                 final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
 
                                 list.add(new ItemImpl(this, key, timeFilter, storedValues));
@@ -1113,74 +1117,79 @@ public class LmdbDataStore implements DataStore {
 
         private Val createValue(final int index) {
             Val val;
-            final Generator generator = data.compiledFields[index].getGenerator();
-            if (key.isGrouped()) {
-                final Supplier<ChildData> childDataSupplier = () -> {
-                    // If we don't have any children at the requested depth then return null.
-                    if (data.compiledSorters.length <= key.getChildDepth()) {
-                        return null;
-                    }
+            if (!data.compiledDepths.getValueIndicesByDepth()[key.getDepth()][index]) {
+                val = ValNull.INSTANCE;
 
-                    return new ChildData() {
-                        @Override
-                        public StoredValues first() {
-                            return singleValue(1, false);
-                        }
-
-                        @Override
-                        public StoredValues last() {
-                            return singleValue(1, true);
-                        }
-
-                        @Override
-                        public StoredValues nth(final int pos) {
-                            return singleValue(pos + 1, false);
-                        }
-
-                        @Override
-                        public Iterable<StoredValues> top(final int limit) {
-                            return getStoredValueIterable(limit, false);
-                        }
-
-                        @Override
-                        public Iterable<StoredValues> bottom(final int limit) {
-                            return getStoredValueIterable(limit, true);
-                        }
-
-                        @Override
-                        public long count() {
-                            return data.countChildren(
-                                    key,
-                                    key.getChildDepth());
-                        }
-
-                        private StoredValues singleValue(final int trimmedSize, final boolean trimTop) {
-                            final Iterable<StoredValues> values = getStoredValueIterable(trimmedSize, trimTop);
-                            final Iterator<StoredValues> iterator = values.iterator();
-                            if (iterator.hasNext()) {
-                                return iterator.next();
-                            }
+            } else {
+                final Generator generator = data.compiledFields[index].getGenerator();
+                if (key.isGrouped()) {
+                    final Supplier<ChildData> childDataSupplier = () -> {
+                        // If we don't have any children at the requested depth then return null.
+                        if (data.compiledSorters.length <= key.getChildDepth()) {
                             return null;
                         }
 
-                        private Iterable<StoredValues> getStoredValueIterable(final int limit,
-                                                                              final boolean trimTop) {
-                            final ItemsImpl items = data.getChildren(
-                                    key,
-                                    timeFilter,
-                                    key.getChildDepth(),
-                                    limit,
-                                    trimTop);
-                            if (items != null && items.size() > 0) {
-                                return items.getStoredValueIterable();
+                        return new ChildData() {
+                            @Override
+                            public StoredValues first() {
+                                return singleValue(1, false);
                             }
-                            return Collections::emptyIterator;
-                        }
+
+                            @Override
+                            public StoredValues last() {
+                                return singleValue(1, true);
+                            }
+
+                            @Override
+                            public StoredValues nth(final int pos) {
+                                return singleValue(pos + 1, false);
+                            }
+
+                            @Override
+                            public Iterable<StoredValues> top(final int limit) {
+                                return getStoredValueIterable(limit, false);
+                            }
+
+                            @Override
+                            public Iterable<StoredValues> bottom(final int limit) {
+                                return getStoredValueIterable(limit, true);
+                            }
+
+                            @Override
+                            public long count() {
+                                return data.countChildren(
+                                        key,
+                                        key.getChildDepth());
+                            }
+
+                            private StoredValues singleValue(final int trimmedSize, final boolean trimTop) {
+                                final Iterable<StoredValues> values = getStoredValueIterable(trimmedSize, trimTop);
+                                final Iterator<StoredValues> iterator = values.iterator();
+                                if (iterator.hasNext()) {
+                                    return iterator.next();
+                                }
+                                return null;
+                            }
+
+                            private Iterable<StoredValues> getStoredValueIterable(final int limit,
+                                                                                  final boolean trimTop) {
+                                final ItemsImpl items = data.getChildren(
+                                        key,
+                                        timeFilter,
+                                        key.getChildDepth(),
+                                        limit,
+                                        trimTop);
+                                if (items != null && items.size() > 0) {
+                                    return items.getStoredValueIterable();
+                                }
+                                return Collections::emptyIterator;
+                            }
+                        };
                     };
-                };
-                val = generator.eval(storedValues, childDataSupplier);
-            } else {
-                val = generator.eval(storedValues, null);
+                    val = generator.eval(storedValues, childDataSupplier);
+                } else {
+                    val = generator.eval(storedValues, null);
+                }
             }
             return val;
         }
