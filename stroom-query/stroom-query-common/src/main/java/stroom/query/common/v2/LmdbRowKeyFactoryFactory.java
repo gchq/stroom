@@ -8,7 +8,8 @@ import java.nio.ByteBuffer;
 
 public class LmdbRowKeyFactoryFactory {
 
-    public static final ByteBuffer DB_STATE_KEY = ByteBuffer.allocateDirect(1);
+    private static final int DB_STATE_KEY_LENGTH = 1;
+    public static final ByteBuffer DB_STATE_KEY = ByteBuffer.allocateDirect(DB_STATE_KEY_LENGTH);
 
     static {
         DB_STATE_KEY.put((byte) -1);
@@ -20,6 +21,15 @@ public class LmdbRowKeyFactoryFactory {
 
     private LmdbRowKeyFactoryFactory() {
         // Non instantiable.
+    }
+
+    public static boolean isNotStateKey(final ByteBuffer key) {
+        return key.limit() != LmdbRowKeyFactoryFactory.DB_STATE_KEY_LENGTH;
+    }
+
+    public static boolean isStateKey(final ByteBuffer key) {
+        return key.limit() == LmdbRowKeyFactoryFactory.DB_STATE_KEY_LENGTH &&
+                key.equals(LmdbRowKeyFactoryFactory.DB_STATE_KEY);
     }
 
     public static LmdbRowKeyFactory create(final KeyFactory keyFactory,

@@ -803,7 +803,7 @@ public class LmdbDataStore implements DataStore {
                 if (iterator.hasNext()) {
                     final KeyVal<ByteBuffer> keyVal = iterator.next();
                     final ByteBuffer key = keyVal.key();
-                    if (key.limit() == 1 & key.equals(LmdbRowKeyFactoryFactory.DB_STATE_KEY)) {
+                    if (LmdbRowKeyFactoryFactory.isStateKey(key)) {
                         final ByteBuffer val = keyVal.val();
                         final long streamId = val.getLong(0);
                         final long eventId = val.getLong(Long.BYTES);
@@ -932,7 +932,7 @@ public class LmdbDataStore implements DataStore {
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
 
                         // All valid keys are more than a single byte long. Single byte keys are used to store db info.
-                        if (keyVal.key().remaining() > LmdbRowKeyFactoryFactory.DB_STATE_KEY.remaining()) {
+                        if (LmdbRowKeyFactoryFactory.isNotStateKey(keyVal.key())) {
                             final ByteBuffer valueBuffer = keyVal.val();
                             while (valueBuffer.remaining() > 0 && addMore) {
 
