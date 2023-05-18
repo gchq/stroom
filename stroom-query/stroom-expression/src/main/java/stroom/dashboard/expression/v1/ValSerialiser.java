@@ -7,7 +7,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class ValSerialiser {
-    private static final Serialiser[] SERIALISERS = new Serialiser[20];
+    private static final Serialiser[] SERIALISERS = new Serialiser[10];
 
     static {
         SERIALISERS[Type.NULL.getId()] = new Serialiser(
