@@ -30,10 +30,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A heap based implementation of the {@link RefDataStore}
@@ -343,5 +341,10 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     public long getSizeOnDisk() {
         // On heap so zero size on disk
         return 0;
+    }
+
+    @Override
+    public String getName() {
+        return "On Heap";
     }
 }

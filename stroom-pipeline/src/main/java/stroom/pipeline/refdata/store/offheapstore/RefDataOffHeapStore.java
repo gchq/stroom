@@ -37,6 +37,7 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataLoader.LoaderMode;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
@@ -45,7 +46,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.HasHealthCheck;
-import stroom.util.NullSafe;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -66,7 +66,6 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -83,6 +82,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -124,6 +124,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final Striped<Lock> refStreamDefStripedReentrantLock;
 
     private final ByteBufferPool byteBufferPool;
+    private final String storeName;
+
 
     @Inject
     RefDataOffHeapStore(@Assisted final RefDataLmdbEnv lmdbEnvironment,
@@ -157,40 +159,45 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int stripesCount = referenceDataConfigProvider.get().getLoadingLockStripes();
         LOGGER.debug("Initialising striped with {} stripes", stripesCount);
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
+        this.storeName = lmdbEnvironment.getName().orElse(null);
     }
 
     private void purgePartialLoads() {
 
         final Instant startTime = Instant.now();
 
-        final Predicate<ByteBuffer> partialLoadProgressPredicate =
+        final Predicate<ByteBuffer> isPurgeablePredicate =
                 RefDataProcessingInfoSerde.createProcessingStatePredicate(
                         ProcessingState.LOAD_IN_PROGRESS,
                         ProcessingState.PURGE_IN_PROGRESS,
-                        ProcessingState.TERMINATED);
+                        ProcessingState.TERMINATED,
+                        ProcessingState.READY_FOR_PURGE);
 
         // Get all the ref stream defs in a partially loaded/purged state
         // It is only in exceptional circumstances that we get streams in this state so the list should
         // not be big.
-        final List<Entry<RefStreamDefinition, RefDataProcessingInfo>> invalidStreams = lmdbEnvironment.getWithReadTxn(
-                readTxn -> getInvalidStreams(readTxn, partialLoadProgressPredicate));
+        final List<Entry<RefStreamDefinition, RefDataProcessingInfo>> purgeableRefStreamDefs =
+                lmdbEnvironment.getWithReadTxn(readTxn -> getInvalidStreams(readTxn, isPurgeablePredicate));
 
-        if (!invalidStreams.isEmpty()) {
+        if (!purgeableRefStreamDefs.isEmpty()) {
             AtomicReference<PurgeCounts> purgeCountsRef = new AtomicReference<>(PurgeCounts.ZERO);
-            for (final Entry<RefStreamDefinition, RefDataProcessingInfo> entry : invalidStreams) {
+            for (final Entry<RefStreamDefinition, RefDataProcessingInfo> entry : purgeableRefStreamDefs) {
                 try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
                     final RefStreamDefinition refStreamDefinition = entry.getKey();
                     final RefDataProcessingInfo refDataProcessingInfo = entry.getValue();
-                    taskContextFactory.current().info(() -> LogUtil.message(
-                            "Purging partially loaded/purged reference stream {}:{} with state {}",
+                    final Supplier<String> msgSupplier = () -> LogUtil.message(
+                            "Purging partially loaded/purged reference stream {}:{} with state {} in store '{}'",
                             refStreamDefinition.getStreamId(),
                             refStreamDefinition.getPartNumber(),
-                            refDataProcessingInfo.getProcessingState()));
+                            refDataProcessingInfo.getProcessingState(),
+                            storeName);
+                    taskContextFactory.current().info(msgSupplier);
+                    LOGGER.info(msgSupplier);
                     processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
 
                     // Need to recheck the state under lock in case it has changed
                     final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
-                            partialLoadProgressPredicate,
+                            isPurgeablePredicate,
                             refStreamDefPooledBuf.getByteBuffer(),
                             refStreamDefinition);
 
@@ -202,13 +209,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             }
 
             LOGGER.info(() -> LogUtil.message(
-                    "Purge of partial loads/purges {}- {}",
+                    "Purge of partial loads/purges {} in store {} - {}",
                     (Thread.currentThread().isInterrupted()
                             ? "interrupted"
-                            : "completed successfully "),
-                    buildPurgeInfoString(startTime, purgeCountsRef.get())));
+                            : "completed successfully"),
+                    buildPurgeInfoString(startTime, purgeCountsRef.get()), storeName));
         } else {
-            LOGGER.info("Completed check for invalid ref loads/purges in {}",
+            LOGGER.info("Completed check for invalid ref loads/purges in store {} in '{}'",
+                    storeName,
                     Duration.between(startTime, Instant.now()));
         }
     }
@@ -467,9 +475,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purgeOldData() {
-        LOGGER.info("purgeAge in purgeOldData: {}", referenceDataConfigProvider.get().getPurgeAge());
         purgeOldData(Instant.now(), referenceDataConfigProvider.get().getPurgeAge());
-
         // Also clear out any partial loads/purges
         purgePartialLoads();
     }
@@ -477,7 +483,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Override
     public void purgeOldData(final StroomDuration purgeAge) {
         purgeOldData(Instant.now(), purgeAge);
-
         // Also clear out any partial loads/purges
         purgePartialLoads();
     }
@@ -486,8 +491,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public void purge(final long refStreamId, final long partIndex) {
         final TaskContext taskContext = taskContextFactory.current();
         final Instant startTime = Instant.now();
-        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{}",
-                refStreamId, partIndex));
+        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{} in store '{}'",
+                refStreamId, partIndex, storeName));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
 
@@ -629,7 +634,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private void migrateRefStreamDef(final RefStreamDefinition refStreamDefinition,
-                                     final RefDataOffHeapStore destinationStore) {
+                                     final RefDataOffHeapStore destStore) {
 
         final DurationTimer timer = DurationTimer.start();
         // Here just to make code clearer
@@ -637,39 +642,40 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // Need to lock both to ensure no one is trying to load the same stream into the dest store
         // or purge it from the source store. A deadlock is a bit of a worry as we are getting two locks
         // but this should be the only code that tries to lock the legacy store and a new one.
-        destinationStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+        destStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
             LOGGER.debug("Acquired destination lock in {}, refStreamDef: {}", timer, refStreamDefinition);
             legacyStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
                 LOGGER.debug("Acquired source lock in {}, refStreamDef: {}", timer, refStreamDefinition);
 
                 // It is possible another thread beat us to the migration (or loaded it),
                 // so check again for existence
-                final boolean refStreamDefExists = destinationStore.exists(refStreamDefinition);
+                final boolean refStreamDefExists = destStore.exists(refStreamDefinition);
                 if (refStreamDefExists) {
                     LOGGER.debug("refStreamDefinition already exists in destinationStore, nothing to do. " +
                             "refStreamDefinition: {}", refStreamDefinition);
                 } else {
                     final Optional<RefDataProcessingInfo> optInfo = processingInfoDb.get(refStreamDefinition);
                     optInfo.ifPresent(info -> {
-                        destinationStore.doWithLoaderUnlessComplete(
+                        destStore.doWithLoaderUnlessComplete(
                                 refStreamDefinition,
                                 info.getEffectiveTimeEpochMs(),
                                 refDataLoader -> {
                                     final OffHeapRefDataLoader destStoreLoader =
                                             (OffHeapRefDataLoader) refDataLoader;
-                                    migrateRefStreamDef(refStreamDefinition, destStoreLoader);
+                                    migrateRefStreamDef(refStreamDefinition, destStore, destStoreLoader);
                                 });
                     });
                 }
-                // Now this stream is all migrated, set the access time in the legacy store to the epoch,
-                // so it will get purged on the next purge run.
+                // Now this stream is all migrated, mark as ready to purge so it is picked up in
+                // purgePartialLoads
                 LOGGER.info("Making ref stream available for purge: {}", refStreamDefinition);
-                legacyStore.setLastAccessedTime(refStreamDefinition, 0);
+                legacyStore.setProcessingState(refStreamDefinition, ProcessingState.READY_FOR_PURGE);
             });
         });
     }
 
     private void migrateRefStreamDef(final RefStreamDefinition refStreamDefinition,
+                                     final RefDataOffHeapStore destStore,
                                      final OffHeapRefDataLoader destStoreLoader) {
         LOGGER.debug("Migrating entries for refStreamDefinition: {}", refStreamDefinition);
         final MutableLong keyValueEntryCount = new MutableLong(0);
@@ -677,21 +683,22 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try {
             // We are pulling data from an existing store, so duplicates have already been
             // dealt with
-            destStoreLoader.initialise(false, true);
+            destStoreLoader.initialise(false, LoaderMode.MIGRATE);
             final int maxCommits = referenceDataConfigProvider.get().getMaxPutsBeforeCommit();
 
             try (final PooledByteBuffer uidPooledByteBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer();
-                    final BatchingWriteTxn batchingWriteTxn = lmdbEnvironment.openBatchingWriteTxn(maxCommits)) {
+                    final BatchingWriteTxn destBatchingWriteTxn = destStore.lmdbEnvironment
+                            .openBatchingWriteTxn(maxCommits)) {
 
                 final ByteBuffer uidByteBuffer = uidPooledByteBuffer.getByteBuffer();
 
-                // Read source store
-                lmdbEnvironment.doWithReadTxn(readTxn -> {
-                    final List<MapDefinition> mapDefinitions = mapDefinitionUIDStore.getMapDefinitions(readTxn,
+                // Read txn on source store
+                lmdbEnvironment.doWithReadTxn(sourceReadTxn -> {
+                    final List<MapDefinition> mapDefinitions = mapDefinitionUIDStore.getMapDefinitions(sourceReadTxn,
                             refStreamDefinition);
 
                     mapDefinitions.forEach(mapDefinition -> {
-                        final UID mapUid = mapDefinitionUIDStore.getUid(readTxn, mapDefinition, uidByteBuffer)
+                        final UID mapUid = mapDefinitionUIDStore.getUid(sourceReadTxn, mapDefinition, uidByteBuffer)
                                 .orElseThrow(() ->
                                         new RuntimeException("No UID for mapDefinition " + mapDefinition));
 
@@ -699,24 +706,24 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
                         migrateKeyValueEntries(destStoreLoader,
                                 keyValueEntryCount,
-                                batchingWriteTxn,
-                                readTxn,
+                                destBatchingWriteTxn,
+                                sourceReadTxn,
                                 mapDefinitions,
                                 mapDefinition,
                                 mapUid);
 
                         migrateRangeValueEntries(destStoreLoader,
                                 rangeValueEntryCount,
-                                batchingWriteTxn,
-                                readTxn,
+                                destBatchingWriteTxn,
+                                sourceReadTxn,
                                 mapDefinitions,
                                 mapDefinition,
                                 mapUid);
                     });
                 });
+                destBatchingWriteTxn.commit();
             }
 
-            destStoreLoader.markMigrationPutsComplete();
             destStoreLoader.completeProcessing(ProcessingState.COMPLETE);
         } catch (Exception e) {
             destStoreLoader.completeProcessing(ProcessingState.FAILED);
@@ -725,39 +732,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     }
 
-    private void migrateRangeValueEntries(final OffHeapRefDataLoader destStoreLoader,
-                                          final MutableLong rangeValueEntryCount,
-                                          final BatchingWriteTxn batchingWriteTxn,
-                                          final Txn<ByteBuffer> readTxn,
-                                          final List<MapDefinition> mapDefinitions,
-                                          final MapDefinition mapDefinition,
-                                          final UID mapUid) {
-        LOGGER.debug("Migrating Range/Value entries for mapDefinition: {}", mapDefinitions);
-        // Loop over all KV entries for this map name in this stream
-        rangeStoreDb.forEachEntryAsBytes(readTxn, mapUid, keyValBuffers -> {
-            final ByteBuffer rangeStoreKeyBuffer = keyValBuffers.key();
-            final ByteBuffer valueStoreKeyBuffer = keyValBuffers.val();
-
-            final int typeId = valueStore.getTypeId(readTxn, valueStoreKeyBuffer)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Every entry should have a corresponding value meta"));
-            final ByteBuffer refDataValueBuffer = valueStore.getAsBytes(readTxn, valueStoreKeyBuffer)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Every entry should have a corresponding value"));
-
-            destStoreLoader.migrateRangeEntry(
-                    batchingWriteTxn,
-                    mapDefinition,
-                    rangeStoreKeyBuffer,
-                    typeId,
-                    refDataValueBuffer);
-            rangeValueEntryCount.increment();
-        });
-    }
-
     private void migrateKeyValueEntries(final OffHeapRefDataLoader destStoreLoader,
                                         final MutableLong keyValueEntryCount,
-                                        final BatchingWriteTxn batchingWriteTxn,
+                                        final BatchingWriteTxn destBatchingWriteTxn,
                                         final Txn<ByteBuffer> readTxn,
                                         final List<MapDefinition> mapDefinitions,
                                         final MapDefinition mapDefinition,
@@ -776,12 +753,44 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             "Every entry should have a corresponding value"));
 
             destStoreLoader.migrateKeyEntry(
-                    batchingWriteTxn,
+                    destBatchingWriteTxn,
                     mapDefinition,
                     keyValueStoreKeyBuffer,
                     typeId,
                     refDataValueBuffer);
             keyValueEntryCount.increment();
+            destBatchingWriteTxn.commitIfRequired();
+        });
+    }
+
+    private void migrateRangeValueEntries(final OffHeapRefDataLoader destStoreLoader,
+                                          final MutableLong rangeValueEntryCount,
+                                          final BatchingWriteTxn destBatchingWriteTxn,
+                                          final Txn<ByteBuffer> sourceReadTxn,
+                                          final List<MapDefinition> mapDefinitions,
+                                          final MapDefinition mapDefinition,
+                                          final UID mapUid) {
+        LOGGER.debug("Migrating Range/Value entries for mapDefinition: {}", mapDefinitions);
+        // Loop over all range:value entries for this map name in this stream
+        rangeStoreDb.forEachEntryAsBytes(sourceReadTxn, mapUid, keyValBuffers -> {
+            final ByteBuffer rangeStoreKeyBuffer = keyValBuffers.key();
+            final ByteBuffer valueStoreKeyBuffer = keyValBuffers.val();
+
+            final int typeId = valueStore.getTypeId(sourceReadTxn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Every entry should have a corresponding value meta"));
+            final ByteBuffer refDataValueBuffer = valueStore.getAsBytes(sourceReadTxn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Every entry should have a corresponding value"));
+
+            destStoreLoader.migrateRangeEntry(
+                    destBatchingWriteTxn,
+                    mapDefinition,
+                    rangeStoreKeyBuffer,
+                    typeId,
+                    refDataValueBuffer);
+            rangeValueEntryCount.increment();
+            destBatchingWriteTxn.commitIfRequired();
         });
     }
 
@@ -831,13 +840,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      */
     synchronized void purgeOldData(final Instant now, final StroomDuration purgeAge) {
         final TaskContext taskContext = taskContextFactory.current();
-        taskContext.info(() -> "Purging old data");
+        taskContext.info(() -> "Purging old data in store " + storeName);
         final Instant startTime = Instant.now();
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
-
         final Instant purgeCutOffTime = TimeUtils.durationToThreshold(now, purgeAge);
 
-        LOGGER.info("Purging reference data store with purge age {} ({}), cut off time {}",
+        LOGGER.info("Checking ref store '{}' for streams to purge, with purge age: {} ({}), cut off time: {}",
+                storeName,
                 purgeAge,
                 purgeAge.getDuration(),
                 purgeCutOffTime);
@@ -898,8 +907,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             final PurgeCounts purgeCounts = countsRef.get();
             if (purgeCounts.refStreamDefsFailedCount == 0) {
-                LOGGER.info(() -> "Purge completed successfully - " +
-                        buildPurgeInfoString(startTime, purgeCounts));
+                if (purgeCounts.isZero()) {
+                    LOGGER.info("Nothing to purge in store '{}'", storeName);
+                } else {
+                    LOGGER.info(() -> LogUtil.message("Purge completed successfully on store '{}' - {}",
+                            storeName, buildPurgeInfoString(startTime, purgeCounts)));
+                }
             } else {
                 // One or more ref stream defs failed
                 throw new RuntimeException(LogUtil.message(
@@ -1064,25 +1077,30 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                                    final BatchingWriteTxn batchingWriteTxn) {
         final TaskContext taskContext = taskContextFactory.current();
 
-        taskContext.info(() -> "Purging reference stream " +
-                refStreamDefinition.getStreamId() + ":" +
-                refStreamDefinition.getPartIndex());
+        taskContext.info(() -> LogUtil.message("Purging reference stream {}:{} in store '{}'",
+                refStreamDefinition.getStreamId(),
+                refStreamDefinition.getPartIndex(),
+                storeName));
 
+        final Duration age = Duration.between(refDataProcessingInfo.getLastAccessedTime(), Instant.now());
         final String refStreamDefStr = LogUtil.message(
                 "stream: {}, " +
+                        "state: {}, " +
+                        "access time: {} (age: {}), " +
+                        "store: '{}'" +
+                        "create time: {}, " +
                         "effective time: {}, " +
                         "pipeline: {}, " +
-                        "pipeline version: {}, " +
-                        "create time: {}, " +
-                        "access time: {}, " +
-                        "state: {}",
+                        "pipeline version: {}",
                 refStreamDefinition.getStreamId(),
+                refDataProcessingInfo.getProcessingState(),
+                refDataProcessingInfo.getLastAccessedTime(),
+                age,
+                storeName,
+                refDataProcessingInfo.getCreateTime(),
                 refDataProcessingInfo.getEffectiveTime(),
                 DocRefUtil.createSimpleDocRefString(refStreamDefinition.getPipelineDocRef()),
-                refStreamDefinition.getPipelineVersion(),
-                refDataProcessingInfo.getCreateTime(),
-                refDataProcessingInfo.getLastAccessedTime(),
-                refDataProcessingInfo.getProcessingState());
+                refStreamDefinition.getPipelineVersion());
 
         LOGGER.info("Purging refStreamDefinition with {}", refStreamDefStr);
 
@@ -1180,7 +1198,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private RefStreamPurgeCounts purgeRefStreamData(final BatchingWriteTxn batchingWriteTxn,
                                                     final RefStreamDefinition refStreamDefinition) {
 
-        LOGGER.debug("purgeRefStreamData({})", refStreamDefinition);
+        LOGGER.debug("purgeRefStreamData({}), store: '{}'", refStreamDefinition, storeName);
 
         RefStreamPurgeCounts summaryInfo = RefStreamPurgeCounts.zero();
         Optional<UID> optMapUid;
@@ -1210,10 +1228,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             dataPurgeCounts._1(),
                             dataPurgeCounts._2());
 
-                    LOGGER.info("  Purged map {}, {} values deleted, {} values de-referenced",
+                    LOGGER.info("  Purged map {}, {} values deleted, {} values de-referenced, store: '{}'",
                             mapDefinition.getMapName(),
                             dataPurgeCounts._1(),
-                            dataPurgeCounts._2());
+                            dataPurgeCounts._2(),
+                            storeName);
                 } else {
                     LOGGER.debug("No more map definitions to purge for refStreamDefinition {}", refStreamDefinition);
                 }
@@ -1658,10 +1677,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     @Override
-    public String toString() {
-        return "RefDataOffHeapStore{" +
-                "localDir=" + NullSafe.toString(lmdbEnvironment, RefDataLmdbEnv::getLocalDir, Path::getFileName) +
-                '}';
+    public String getName() {
+        return storeName;
     }
 
     // --------------------------------------------------------------------------------
@@ -1687,6 +1704,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         public static PurgeCounts zero() {
             return ZERO;
+        }
+
+        public boolean isZero() {
+            return refStreamDefsDeletedCount == 0
+                    && refStreamDefsFailedCount == 0
+                    && refStreamPurgeCounts.isZero();
         }
 
         public PurgeCounts increment(final RefStreamPurgeCounts refStreamPurgeCounts) {

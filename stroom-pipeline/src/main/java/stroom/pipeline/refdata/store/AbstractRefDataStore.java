@@ -145,4 +145,9 @@ public abstract class AbstractRefDataStore implements RefDataStore {
             lock.unlock();
         }
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

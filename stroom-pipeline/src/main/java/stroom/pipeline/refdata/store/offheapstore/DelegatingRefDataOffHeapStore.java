@@ -128,6 +128,12 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         return Collections.unmodifiableMap(feedNameToStoreMap);
     }
 
+    public Optional<String> getFeedName(final RefStreamDefinition refStreamDefinition) {
+        final long streamId = Objects.requireNonNull(refStreamDefinition).getStreamId();
+        return metaIdToFeedStoreCache.getIfPresent(streamId)
+                .map(FeedSpecificStore::feedName);
+    }
+
     @Override
     public Set<String> getMapNames(final RefStreamDefinition refStreamDefinition) {
         return getEffectiveStore(refStreamDefinition).getMapNames(refStreamDefinition);
@@ -312,6 +318,11 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                 .parallel()
                 .mapToLong(RefDataOffHeapStore::getSizeOnDisk)
                 .sum();
+    }
+
+    @Override
+    public String getName() {
+        return "Delegating store";
     }
 
     @Override
@@ -592,7 +603,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
      * For testing only!
      */
     RefDataOffHeapStore getLegacyRefDataStore(final boolean createIfNotExists) {
-        initLegacyStore(true);
+        if (legacyRefDataStore == null) {
+            initLegacyStore(createIfNotExists);
+        }
         return legacyRefDataStore;
     }
 

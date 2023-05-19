@@ -144,6 +144,8 @@ public interface RefDataStore {
      */
     long getSizeOnDisk();
 
+    String getName();
+
     enum StorageType {
         ON_HEAP,
         OFF_HEAP

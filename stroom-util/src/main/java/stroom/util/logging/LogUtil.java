@@ -77,7 +77,8 @@ public final class LogUtil {
         final String text = message(format, args);
         final String str = Strings.repeat(String.valueOf(BOX_HORIZONTAL_LINE), 3)
                 + " "
-                + text;
+                + text
+                + " ";
         return Strings.padEnd(str, 100, BOX_HORIZONTAL_LINE);
     }
 

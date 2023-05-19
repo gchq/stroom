@@ -97,6 +97,7 @@ public class LmdbEnvFactory {
         protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
         protected boolean isReaderBlockedByWriter = LmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER;
         protected String subDir = null;
+        protected String name = null;
 
         private AbstractEnvBuilder(final PathCreator pathCreator,
                                    final TempDirProvider tempDirProvider,
@@ -153,6 +154,11 @@ public class LmdbEnvFactory {
 
         public AbstractEnvBuilder withSubDirectory(final String subDir) {
             this.subDir = subDir;
+            return this;
+        }
+
+        public AbstractEnvBuilder withName(final String name) {
+            this.name = name;
             return this;
         }
 
@@ -345,7 +351,7 @@ public class LmdbEnvFactory {
                         "Error creating LMDB env at {}: {}",
                         envDir.toAbsolutePath().normalize(), e.getMessage()), e);
             }
-            return new LmdbEnv(envDir, env, envFlags, isReaderBlockedByWriter);
+            return new LmdbEnv(envDir, name, env, envFlags, isReaderBlockedByWriter);
         }
     }
 
@@ -385,6 +391,11 @@ public class LmdbEnvFactory {
             return this;
         }
 
+        @Override
+        public CustomEnvBuilder withName(final String name) {
+            super.withName(name);
+            return this;
+        }
 
         @Override
         public CustomEnvBuilder addEnvFlag(final EnvFlags envFlag) {
@@ -456,6 +467,12 @@ public class LmdbEnvFactory {
         @Override
         public SimpleEnvBuilder withSubDirectory(final String subDirectory) {
             super.withSubDirectory(subDirectory);
+            return this;
+        }
+
+        @Override
+        public SimpleEnvBuilder withName(final String name) {
+            super.withName(name);
             return this;
         }
     }

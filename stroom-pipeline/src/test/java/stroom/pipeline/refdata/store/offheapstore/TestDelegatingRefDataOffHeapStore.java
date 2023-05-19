@@ -79,7 +79,7 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
 
         final long keyValueCount1 = legacyStore.getKeyValueEntryCount();
         final long rangeValueCount1 = legacyStore.getRangeValueEntryCount();
-        LOGGER.info("");
+        logEntryCounts();
 
         // No feed stores at this point
         assertThat(getDelegatingStore().getFeedNameToStoreMap())
@@ -108,8 +108,12 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
         // cut off should not matter as access time is now epoch
         getDelegatingStore().purgeOldData();
 
-        getDelegatingStore().logAllContents();
+        for (final RefDataOffHeapStore feedStore : getDelegatingStore().getFeedNameToStoreMap().values()) {
+            LOGGER.info("Dumping contents of store {}", feedStore.getLmdbEnvironment().getLocalDir().getFileName());
+            feedStore.logAllContents(LOGGER::info);
+        }
 
+        // These counts include feed stores and legacy
         final long keyValueCount2 = getDelegatingStore().getKeyValueEntryCount();
         final long rangeValueCount2 = getDelegatingStore().getRangeValueEntryCount();
 
@@ -119,19 +123,31 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 .isEqualTo(rangeValueCount1);
     }
 
+    private long getFeedSpecificKeyEntryCount() {
+        return getDelegatingStore().getFeedNameToStoreMap()
+                .values()
+                .stream()
+                .mapToLong(RefDataOffHeapStore::getKeyValueEntryCount)
+                .sum();
+    }
+
+    private long getFeedSpecificRangeEntryCount() {
+        return getDelegatingStore().getFeedNameToStoreMap()
+                .values()
+                .stream()
+                .mapToLong(RefDataOffHeapStore::getRangeValueEntryCount)
+                .sum();
+    }
+
     private void triggerMigrationThenPurge(final RefStreamDefinition refStreamDefinition) {
-        final RefDataOffHeapStore legacyStore = getLegacyStore(false);
-        LOGGER.info(LogUtil.inSeparatorLine("Triggering migration"));
+        LOGGER.info(LogUtil.inSeparatorLine("Triggering migration for stream: {}, feed: {}",
+                refStreamDefinition.getStreamId(),
+                getDelegatingStore().getFeedName(refStreamDefinition).orElse("?")));
 
         // Trigger migration of all with the same stream id as this
         getDelegatingStore().getEffectiveStore(RefDataStoreTestModule.REF_STREAM_1_DEF);
 
-        LOGGER.info("Legacy keyValueEntryCount: {}, getRangeValueEntryCount: {}",
-                legacyStore.getKeyValueEntryCount(),
-                legacyStore.getRangeValueEntryCount());
-        LOGGER.info("Delegating keyValueEntryCount: {}, getRangeValueEntryCount: {}",
-                getDelegatingStore().getKeyValueEntryCount(),
-                getDelegatingStore().getRangeValueEntryCount());
+        logEntryCounts();
 
         assertThat(getDelegatingStore().getFeedNameToStoreMap())
                 .hasSize(1);
@@ -141,12 +157,17 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
         // cut off should not matter as access time is now epoch
         getDelegatingStore().purgeOldData();
 
+        logEntryCounts();
+    }
+
+    private void logEntryCounts() {
+        final RefDataOffHeapStore legacyStore = getLegacyStore(false);
         LOGGER.info("Legacy keyValueEntryCount: {}, getRangeValueEntryCount: {}",
                 legacyStore.getKeyValueEntryCount(),
                 legacyStore.getRangeValueEntryCount());
         LOGGER.info("Delegating keyValueEntryCount: {}, getRangeValueEntryCount: {}",
-                getDelegatingStore().getKeyValueEntryCount(),
-                getDelegatingStore().getRangeValueEntryCount());
+                getFeedSpecificKeyEntryCount(),
+                getFeedSpecificRangeEntryCount());
     }
 
     @Test

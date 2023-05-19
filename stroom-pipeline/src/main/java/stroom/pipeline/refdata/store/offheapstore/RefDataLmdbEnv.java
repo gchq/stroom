@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
@@ -36,6 +38,7 @@ import javax.inject.Provider;
 public class RefDataLmdbEnv {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataLmdbEnv.class);
+    protected static final String LEGACY_STORE_NAME = "Legacy";
 
     private final LmdbEnv lmdbEnvironment;
     private final Map<String, LmdbDb> databaseMap = new HashMap<>();
@@ -64,6 +67,10 @@ public class RefDataLmdbEnv {
 
     public Path getLocalDir() {
         return lmdbEnvironment.getLocalDir();
+    }
+
+    public Optional<String> getName() {
+        return lmdbEnvironment.getName();
     }
 
     public void sync(final boolean force) {
@@ -196,12 +203,23 @@ public class RefDataLmdbEnv {
             builder.withSubDirectory(subDirName);
         }
 
+        final String name = Objects.requireNonNullElse(subDirName, LEGACY_STORE_NAME);
         final LmdbEnv env = builder
                 .withSubDirectory(subDirName)
+                .withName(name)
                 .build();
 
-        LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
+        LOGGER.info("Env: {}, existing databases: [{}]", name, String.join(",", env.getDbiNames()));
         return env;
+    }
+
+    @Override
+    public String toString() {
+        return "RefDataLmdbEnv{" +
+                "localDir=" + getLocalDir() +
+                ", name='" + getName() + '\'' +
+                ", envFlags=" + getEnvFlags() +
+                '}';
     }
 
 

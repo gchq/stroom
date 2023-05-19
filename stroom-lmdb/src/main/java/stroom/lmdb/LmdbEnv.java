@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +53,7 @@ public class LmdbEnv implements AutoCloseable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv.class);
 
     private final Path localDir;
+    private final String name;
     private final Env<ByteBuffer> env;
     private final Set<EnvFlags> envFlags;
 
@@ -66,14 +68,16 @@ public class LmdbEnv implements AutoCloseable {
     LmdbEnv(final Path localDir,
             final Env<ByteBuffer> env,
             final Set<EnvFlags> envFlags) {
-        this(localDir, env, envFlags, false);
+        this(localDir, null, env, envFlags, false);
     }
 
     LmdbEnv(final Path localDir,
+            final String name,
             final Env<ByteBuffer> env,
             final Set<EnvFlags> envFlags,
             final boolean isReaderBlockedByWriter) {
         this.localDir = localDir;
+        this.name = name;
         this.env = env;
         this.envFlags = Collections.unmodifiableSet(envFlags);
 
@@ -120,6 +124,10 @@ public class LmdbEnv implements AutoCloseable {
 
     public Path getLocalDir() {
         return localDir;
+    }
+
+    public Optional<String> getName() {
+        return Optional.ofNullable(name);
     }
 
     /**
@@ -522,6 +530,14 @@ public class LmdbEnv implements AutoCloseable {
                 .build();
     }
 
+    @Override
+    public String toString() {
+        return "LmdbEnv{" +
+                "localDir=" + localDir +
+                ", name='" + name + '\'' +
+                ", envFlags=" + envFlags +
+                '}';
+    }
 
     // --------------------------------------------------------------------------------
 
