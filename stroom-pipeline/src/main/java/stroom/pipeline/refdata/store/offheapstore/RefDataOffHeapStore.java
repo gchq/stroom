@@ -663,7 +663,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 }
                 // Now this stream is all migrated, set the access time in the legacy store to the epoch,
                 // so it will get purged on the next purge run.
-                LOGGER.info("Making ref stream {} available for purge", refStreamDefinition);
+                LOGGER.info("Making ref stream available for purge: {}", refStreamDefinition);
                 legacyStore.setLastAccessedTime(refStreamDefinition, 0);
             });
         });
@@ -677,7 +677,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try {
             // We are pulling data from an existing store, so duplicates have already been
             // dealt with
-            destStoreLoader.initialise(false);
+            destStoreLoader.initialise(false, true);
             final int maxCommits = referenceDataConfigProvider.get().getMaxPutsBeforeCommit();
 
             try (final PooledByteBuffer uidPooledByteBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer();
@@ -716,7 +716,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 });
             }
 
-            destStoreLoader.markPutsComplete();
+            destStoreLoader.markMigrationPutsComplete();
             destStoreLoader.completeProcessing(ProcessingState.COMPLETE);
         } catch (Exception e) {
             destStoreLoader.completeProcessing(ProcessingState.FAILED);
@@ -795,7 +795,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     protected RefDataLoader createLoader(final RefStreamDefinition refStreamDefinition,
                                          final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
-        RefDataLoader refDataLoader = offHeapRefDataLoaderFactory.create(
+        final RefDataLoader refDataLoader = offHeapRefDataLoaderFactory.create(
                 refStreamDefStripedReentrantLock,
                 refStreamDefinition,
                 effectiveTimeMs,

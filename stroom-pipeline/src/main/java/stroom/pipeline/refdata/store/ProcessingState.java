@@ -53,6 +53,10 @@ public enum ProcessingState {
      * into the reference store.
      */
     STAGED((byte) 6, "Entries Staged"),
+    /**
+     * Explicitly marked for purge.
+     */
+    READY_FOR_PURGE((byte) 7, "Ready for Purge")
     ;
 
     private final byte id;

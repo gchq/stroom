@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 
 public class RefDataStoreTestModule extends AbstractModule {
 
-    public static final long REF_STREAM_1_ID = 123L;
-    public static final long REF_STREAM_2_ID = 456L;
-    public static final long REF_STREAM_4_ID = 789L;
+    public static final long REF_STREAM_1_ID = 1L;
+    public static final long REF_STREAM_3_ID = 3L;
+    public static final long REF_STREAM_4_ID = 4L;
     public static final String FEED_1_NAME = "FEED1";
     public static final String FEED_1_UUID = "45a5ea9b-fc80-4685-beff-2fb1e84fb2bd";
     public static final String FEED_2_NAME = "FEED2";
@@ -44,12 +44,12 @@ public class RefDataStoreTestModule extends AbstractModule {
     // FEED_1, stream 1, pipe 2
     public static RefStreamDefinition REF_STREAM_2_DEF = new RefStreamDefinition(
             PIPE_1_UUID, PIPE_1_VER_2, REF_STREAM_1_ID);
-    // FEED_1, stream 2, pipe 1
+    // FEED_1, stream 3, pipe 1
     public static RefStreamDefinition REF_STREAM_3_DEF = new RefStreamDefinition(
-            PIPE_1_UUID, PIPE_1_VER_1, REF_STREAM_2_ID);
-    // FEED_2, stream 3, pipe 1
+            PIPE_1_UUID, PIPE_1_VER_1, REF_STREAM_3_ID);
+    // FEED_2, stream 4, pipe 2
     public static RefStreamDefinition REF_STREAM_4_DEF = new RefStreamDefinition(
-            PIPE_1_UUID, PIPE_1_VER_1, REF_STREAM_4_ID);
+            PIPE_2_UUID, PIPE_2_VER_1, REF_STREAM_4_ID);
 
     public static final List<RefStreamDefinition> DEFAULT_REF_STREAM_DEFINITIONS = List.of(
             REF_STREAM_1_DEF,
@@ -73,8 +73,9 @@ public class RefDataStoreTestModule extends AbstractModule {
         addFeeds(FeedDoc.buildDocRef().name(FEED_1_NAME).uuid(FEED_1_UUID).build(),
                 FeedDoc.buildDocRef().name(FEED_2_NAME).uuid(FEED_2_UUID).build());
         addMetaFeedAssociations(Map.of(
+                // Two streams for the same feed
                 REF_STREAM_1_ID, FEED_1_NAME,
-                REF_STREAM_2_ID, FEED_1_NAME,
+                REF_STREAM_3_ID, FEED_1_NAME,
                 REF_STREAM_4_ID, FEED_2_NAME));
     }
 

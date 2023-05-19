@@ -114,6 +114,29 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
                 .isNotEqualByComparingTo(keyValueStoreKeyBuffer1);
     }
 
+    @Test
+    void testCopyWithNewUid() {
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
+                uid1,
+                "myKey");
+
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 4, 5, 6, 7);
+
+        final ByteBuffer sourceBuffer = ByteBuffer.allocateDirect(200);
+        getSerde().serialize(sourceBuffer, keyValueStoreKey);
+        final ByteBuffer destBuffer = ByteBuffer.allocateDirect(200);
+
+        KeyValueStoreKeySerde.copyWithNewUid(sourceBuffer, destBuffer, uid2);
+
+        final KeyValueStoreKey keyValueStoreKey2 = getSerde().deserialize(destBuffer);
+
+        assertThat(keyValueStoreKey2.getKey())
+                .isEqualTo(keyValueStoreKey.getKey());
+        assertThat(keyValueStoreKey2.getMapUid())
+                .isEqualTo(uid2);
+    }
+
     @Override
     TypeLiteral<KeyValueStoreKeySerde> getSerdeType() {
         return new TypeLiteral<KeyValueStoreKeySerde>(){};

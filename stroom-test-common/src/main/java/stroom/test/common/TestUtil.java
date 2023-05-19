@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -67,6 +69,22 @@ public class TestUtil {
     public static <K, V> void dumpMapToDebug(final String message,
                                              final Map<K, V> map) {
         LOGGER.debug("{}:\n{}", message, AsciiTable.fromMap(map));
+    }
+
+    /**
+     * Returns map but without keysToRemove
+     */
+    public static <K, V> Map<K, V> mapWithoutKeys(final Map<K, V> map, final K... keysToRemove) {
+        Objects.requireNonNull(map);
+        if (keysToRemove == null) {
+            return map;
+        } else {
+            final Set<K> removeKeySet = Set.of(keysToRemove);
+            return map.entrySet()
+                    .stream()
+                    .filter(entry -> !removeKeySet.contains(entry.getKey()))
+                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        }
     }
 
     /**

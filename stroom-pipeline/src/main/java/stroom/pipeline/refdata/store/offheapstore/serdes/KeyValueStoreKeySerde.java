@@ -17,11 +17,13 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
@@ -90,12 +92,18 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
     /**
      * Copy the contents of sourceByteBuffer into destByteBuffer but with the supplied UID.
      */
-    public void copyWithNewUid(final ByteBuffer sourceByteBuffer,
-                               final ByteBuffer destByteBuffer,
-                               final UID newUid) {
+    public static void copyWithNewUid(final ByteBuffer sourceByteBuffer,
+                                      final ByteBuffer destByteBuffer,
+                                      final UID newUid) {
         Objects.requireNonNull(sourceByteBuffer);
         Objects.requireNonNull(destByteBuffer);
         Objects.requireNonNull(newUid);
+
+        if (destByteBuffer.remaining() < sourceByteBuffer.remaining()) {
+            throw new RuntimeException(LogUtil.message("Insufficient remaining,\nsource: {},\ndest: {}",
+                    ByteBufferUtils.byteBufferInfo(sourceByteBuffer),
+                    ByteBufferUtils.byteBufferInfo(destByteBuffer)));
+        }
 
         destByteBuffer.put(newUid.getBackingBuffer());
         final ByteBuffer keyPartBuffer = sourceByteBuffer.slice(

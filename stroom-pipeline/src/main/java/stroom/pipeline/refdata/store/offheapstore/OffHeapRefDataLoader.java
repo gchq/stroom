@@ -180,11 +180,17 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
     @Override
     public PutOutcome initialise(final boolean overwriteExistingEntries) {
+        return initialise(overwriteExistingEntries, false);
+    }
+
+    PutOutcome initialise(final boolean overwriteExistingEntries, final boolean isMigration) {
         LOGGER.debug("initialise called, overwriteExistingEntries: {}", overwriteExistingEntries);
         checkCurrentState(LoaderState.NEW);
 
         overallTimer = DurationTimer.start();
-        loadIntoStagingTimer = DurationTimer.start();
+        if (!isMigration) {
+            loadIntoStagingTimer = DurationTimer.start();
+        }
 
         this.overwriteExistingEntries = overwriteExistingEntries;
 
@@ -199,7 +205,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final PutOutcome putOutcome = processingInfoDb.put(
                 refStreamDefinition, refDataProcessingInfo, true);
 
-        this.offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition, mapDefinitionUIDStore);
+        if (!isMigration) {
+            this.offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition, mapDefinitionUIDStore);
+        }
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;
@@ -234,12 +242,38 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         }
     }
 
+    public void markMigrationPutsComplete() {
+        LOGGER.debug("markMigrationPutsComplete() called, currentLoaderState: {}", currentLoaderState);
+
+        checkCurrentState(LoaderState.INITIALISED);
+//
+//        LOGGER.debug(() -> LogUtil.getDurationMessage(
+//                LogUtil.message("Migration of {} entries into staging store for pipe {}",
+//                        putsToStagingStoreCounter, refStreamDefinition, getPipelineNameStr()),
+//                loadIntoStagingTimer.get(),
+//                putsToStagingStoreCounter));
+
+        // Pipe processing successful so transfer our staged data
+        currentLoaderState = LoaderState.STAGED;
+        // Update the meta data in the store
+        updateProcessingState(ProcessingState.STAGED);
+
+//        try {
+//            // Move all the entries loaded into the staging store into the main ref store
+//            transferStagedEntries();
+//        } catch (Exception e) {
+//            throw new RuntimeException(LogUtil.message("Error transferring entries into the ref store: {}",
+//                    e.getMessage()), e);
+//        }
+    }
+
     @Override
     public void completeProcessing(final ProcessingState processingState) {
         LOGGER.debug("completeProcessing() called, currentLoaderState: {}, processingState: {}, put count: {}",
                 currentLoaderState, processingState, putsToRefStoreCounter);
 
-        if (LoaderState.INITIALISED.equals(currentLoaderState)) {
+        if (LoaderState.INITIALISED.equals(currentLoaderState)
+                && ProcessingState.COMPLETE.equals(processingState)) {
             // markPutsComplete hasn't been called, so call it now
             markPutsComplete();
         }
@@ -275,6 +309,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         return String.join(", ", offHeapStagingStore.getStagedMapNames());
     }
 
+    private String getMapUidsStr() {
+        return offHeapStagingStore.getStagedUids()
+        .stream()
+                .map(UID::getValue)
+                .sorted()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+    }
+
     private String getPipelineNameStr() {
         return refStreamDefinition.getPipelineDocRef().getName() != null
                 ? refStreamDefinition.getPipelineDocRef().getName()
@@ -282,9 +325,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     private void logLoadInfo(final ProcessingState processingState) {
-        final Duration overalDuration = overallTimer.get();
-        final Duration loadIntoStagingDuration = loadIntoStagingTimer.get();
-        final Duration transferStagedEntriesDuration = this.transferStagedEntriesTimer.get();
+        final Duration overalDuration = NullSafe.durationTimer(overallTimer).get();
+        final Duration loadIntoStagingDuration = NullSafe.durationTimer(loadIntoStagingTimer).get();
+        final Duration transferStagedEntriesDuration = NullSafe.durationTimer(transferStagedEntriesTimer).get();
 
         LOGGER.info(LogUtil.inBoxOnNewLine(
                 """
@@ -296,8 +339,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         dup-key entry removed:      {}
                         dup-key ignored:            {}
                         Map name(s): [{}]
+                        Map UID(s):  [{}]
                         Stream: {}
-                        Pipeline: {}
+                        Pipeline name:    {}
+                        Pipeline UUID:    {}
+                        Pipeline version: {}
                         Load to staging time:       {}
                         Transfer from staging time: {}
                         Total time:                 {}""",
@@ -310,8 +356,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 Strings.padStart(ModelStringUtil.formatCsv(removedEntriesCount), PAD_LENGTH, ' '),
                 Strings.padStart(ModelStringUtil.formatCsv(ignoredCount), PAD_LENGTH, ' '),
                 getMapNamesStr(),
+                getMapUidsStr(),
                 refStreamDefinition.getStreamId(),
-                getPipelineNameStr(),
+                Objects.requireNonNullElse(refStreamDefinition.getPipelineDocRef().getName(), "?"),
+                refStreamDefinition.getPipelineDocRef().getUuid(),
+                refStreamDefinition.getPipelineVersion(),
                 LogUtil.withPercentage(loadIntoStagingDuration, overalDuration),
                 LogUtil.withPercentage(transferStagedEntriesDuration, overalDuration),
                 overalDuration));
@@ -603,10 +652,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final UID newMapUid = mapDefinitionUIDStore.getOrCreateUid(batchingWriteTxn.getTxn(),
                 mapDefinition,
                 pooledUidBuffer);
-        final KeyValueStoreKeySerde keySerde = (KeyValueStoreKeySerde) keyValueStoreDb.getKeySerde();
 
         final ByteBuffer destKeyBuffer = keyValuePooledKeyBuffer.getByteBuffer();
-        keySerde.copyWithNewUid(sourceKeyBuffer, destKeyBuffer, newMapUid);
+        destKeyBuffer.clear();
+        KeyValueStoreKeySerde.copyWithNewUid(sourceKeyBuffer, destKeyBuffer, newMapUid);
 
         final StagingValue stagingValue = new MigrationValue(
                 valueTypeId,
@@ -634,10 +683,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final UID newMapUid = mapDefinitionUIDStore.getOrCreateUid(batchingWriteTxn.getTxn(),
                 mapDefinition,
                 pooledUidBuffer);
-        final RangeStoreKeySerde keySerde = (RangeStoreKeySerde) rangeStoreDb.getKeySerde();
 
-        final ByteBuffer destKeyBuffer = keyValuePooledKeyBuffer.getByteBuffer();
-        keySerde.copyWithNewUid(sourceKeyBuffer, destKeyBuffer, newMapUid);
+        final ByteBuffer destKeyBuffer = rangeValuePooledKeyBuffer.getByteBuffer();
+        destKeyBuffer.clear();
+        RangeStoreKeySerde.copyWithNewUid(sourceKeyBuffer, destKeyBuffer, newMapUid);
 
         final StagingValue stagingValue = new MigrationValue(
                 valueTypeId,

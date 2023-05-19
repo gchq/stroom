@@ -23,6 +23,7 @@ import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
 import org.slf4j.Logger;
@@ -124,12 +125,18 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     /**
      * Copy the contents of sourceByteBuffer into destByteBuffer but with the supplied UID.
      */
-    public void copyWithNewUid(final ByteBuffer sourceByteBuffer,
-                               final ByteBuffer destByteBuffer,
-                               final UID newUid) {
+    public static void copyWithNewUid(final ByteBuffer sourceByteBuffer,
+                                      final ByteBuffer destByteBuffer,
+                                      final UID newUid) {
         Objects.requireNonNull(sourceByteBuffer);
         Objects.requireNonNull(destByteBuffer);
         Objects.requireNonNull(newUid);
+
+        if (destByteBuffer.remaining() < sourceByteBuffer.remaining()) {
+            throw new RuntimeException(LogUtil.message("Insufficient remaining, source: {}, dest: {}",
+                    sourceByteBuffer.remaining(),
+                    destByteBuffer.remaining()));
+        }
 
         destByteBuffer.put(newUid.getBackingBuffer());
         final ByteBuffer rangePartBuffer = sourceByteBuffer.slice(

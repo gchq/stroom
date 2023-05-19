@@ -1,5 +1,6 @@
 package stroom.util;
 
+import stroom.util.logging.DurationTimer;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
@@ -293,6 +294,15 @@ public class NullSafe {
         return duration != null
                 ? duration
                 : Duration.ZERO;
+    }
+
+    /**
+     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
+     */
+    public static DurationTimer durationTimer(final DurationTimer durationTimer) {
+        return durationTimer != null
+                ? durationTimer
+                : DurationTimer.ZERO;
     }
 
     /**

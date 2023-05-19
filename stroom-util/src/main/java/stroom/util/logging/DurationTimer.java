@@ -8,11 +8,18 @@ import java.util.function.Supplier;
 
 public class DurationTimer {
 
-    private final Instant startTime = Instant.now();
+    public static final DurationTimer ZERO = new DurationTimer(Instant.EPOCH, Instant.EPOCH);
+    private final Instant startTime;
     private volatile Instant endTime = null;
 
     private DurationTimer() {
+        startTime = Instant.now();
         // Use start() factory method.
+    }
+
+    private DurationTimer(final Instant startTime, final Instant endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
     public static DurationTimer start() {

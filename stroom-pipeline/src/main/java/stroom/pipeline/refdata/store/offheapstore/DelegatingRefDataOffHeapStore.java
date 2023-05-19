@@ -62,9 +62,12 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DelegatingRefDataOffHeapStore.class);
 
     private static final String CACHE_NAME = "Reference Data - Meta ID to Ref Store Cache";
-    private static final String PARAM_NAME_FEED = "feed";
-    protected static final String DELIMITER = "___";
-    protected static final Pattern DELIMITER_PATTERN = Pattern.compile(DELIMITER);
+    private static final String DELIMITER = "___";
+    private static final Pattern DELIMITER_PATTERN = Pattern.compile(DELIMITER);
+    private static final Pattern FEED_NAME_CLEAN_PATTERN = Pattern.compile("[^A-Z0-9_-]");
+    private static final String FEED_NAME_CLEAN_REPLACEMENT = "_";
+
+    static final String PARAM_NAME_FEED = "feed";
 
     private final Provider<ReferenceDataConfig> referenceDataConfigProvider;
     private final RefDataLmdbEnv.Factory refDataLmdbEnvFactory;
@@ -337,6 +340,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             final ReferenceDataConfig referenceDataConfig = referenceDataConfigProvider.get();
 
             final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+                    .addDetail("Store count", feedNameToStoreMap.size())
                     .addDetail("Feed store paths", feedNameToStoreMap.values()
                             .stream()
                             .map(store -> store.getLmdbEnvironment().getLocalDir().toAbsolutePath().toString())
@@ -372,10 +376,12 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private String lookUpFeedName(final long refSteamId) {
         // Ref store is not specific to one user, so we need to see all feeds.
         // Ref lookups will take care of perm checks
-        return securityContext.asProcessingUserResult(() ->
+        final String feedName = securityContext.asProcessingUserResult(() ->
                 NullSafe.getAsOptional(metaService.getMeta(refSteamId),
                                 Meta::getFeedName)
                         .orElseThrow(() -> new RuntimeException("No meta record found for meta ID " + refSteamId)));
+        LOGGER.debug("Looked up feedName '{}' for refStreamId: {}", feedName, refSteamId);
+        return feedName;
     }
 
     public RefDataOffHeapStore getEffectiveStore(final MapDefinition mapDefinition) {
@@ -394,6 +400,12 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         Objects.requireNonNull(feedSpecificStore);
         LOGGER.debug("getEffectiveStore() - refStreamId: {}, feedSpecificStore: {}", refStreamId, feedSpecificStore);
         return feedSpecificStore.refDataOffHeapStore;
+    }
+
+    public RefDataOffHeapStore getEffectiveStore(final String feedName) {
+        return feedNameToStoreMap.computeIfAbsent(
+                feedName,
+                this::getOrCreateFeedSpecificStore);
     }
 
     private FeedSpecificStore getOrCreateFeedSpecificStore(final long refStreamId) {
@@ -533,13 +545,17 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         // This will get/create the env on disk
         final RefDataLmdbEnv refDataLmdbEnv = refDataLmdbEnvFactory.create(subDirName);
         final RefDataOffHeapStore refDataOffHeapStore = refDataOffHeapStoreFactory.create(refDataLmdbEnv);
-        LOGGER.info("Created reference data store for feed: '{}' in sub dir: '{}'", feedName, subDirName);
+        LOGGER.info("Created {}reference data store for feed: '{}' in dir: '{}'",
+                (feedName == null
+                        ? "legacy "
+                        : ""), feedName, refDataLmdbEnv.getLocalDir());
         return refDataOffHeapStore;
     }
 
     private String feedNameToSubDirName(final String feedName) {
-        final String cleanedFeedName = feedName.toUpperCase()
-                .replaceAll("[^A-Z0-9_-]", "_");
+        Objects.requireNonNull(feedName);
+        final String cleanedFeedName = FEED_NAME_CLEAN_PATTERN.matcher(feedName.toUpperCase())
+                .replaceAll(FEED_NAME_CLEAN_REPLACEMENT);
 
         final List<DocRef> feedDocRefs = docRefInfoService.findByName(
                 FeedDoc.DOCUMENT_TYPE, feedName, false);
@@ -554,7 +570,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         // It is possible for two feed names to share the same cleaned name, so add a UUID on the end to make it
         // unique
         final String subDirName = String.join(DELIMITER, cleanedFeedName, feedDocUuid);
-        LOGGER.debug("feedName: '{}', subDirName: '{}'", feedName, subDirName);
+        LOGGER.debug("Using subDirName: '{}' for feedName: '{}', ", feedName, subDirName);
         return subDirName;
     }
 

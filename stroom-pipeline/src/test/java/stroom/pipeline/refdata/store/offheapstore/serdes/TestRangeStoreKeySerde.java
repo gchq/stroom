@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStoreKeySerde> {
 
     @Test
@@ -37,6 +39,28 @@ class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStore
         final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid, range);
 
         doSerialisationDeserialisationTest(rangeStoreKey);
+    }
+
+    @Test
+    void testCopyWithNewUid() {
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final Range<Long> range = new Range<>(23L, 52L);
+
+        final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid1, range);
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 4, 5, 6, 7);
+
+        final ByteBuffer sourceBuffer = ByteBuffer.allocateDirect(200);
+        getSerde().serialize(sourceBuffer, rangeStoreKey);
+        final ByteBuffer destBuffer = ByteBuffer.allocateDirect(200);
+
+        RangeStoreKeySerde.copyWithNewUid(sourceBuffer, destBuffer, uid2);
+
+        final RangeStoreKey rangeStoreKey2 = getSerde().deserialize(destBuffer);
+
+        assertThat(rangeStoreKey2.getKeyRange())
+                .isEqualTo(rangeStoreKey.getKeyRange());
+        assertThat(rangeStoreKey2.getMapUid())
+                .isEqualTo(uid2);
     }
 
     @Override
