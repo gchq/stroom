@@ -30,7 +30,9 @@ class StreamAttributeMapUtil {
             map.put(MetaFields.CREATE_TIME.getName(), meta.getCreateMs());
             map.put(MetaFields.EFFECTIVE_TIME.getName(), meta.getEffectiveMs());
             map.put(MetaFields.STATUS_TIME.getName(), meta.getStatusMs());
-            map.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
+            if (meta.getStatus() != null) {
+                map.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
+            }
             if (meta.getParentMetaId() != null) {
                 map.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
             }
