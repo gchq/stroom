@@ -88,6 +88,8 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
         try {
             if (documentEditPresenter instanceof FolderPresenter) {
                 ((FolderPresenter) documentEditPresenter).read(docRef);
+            } else if (documentEditPresenter instanceof FolderRootPresenter) {
+                ((FolderRootPresenter) documentEditPresenter).read();
             }
 
             // Open the tab.
