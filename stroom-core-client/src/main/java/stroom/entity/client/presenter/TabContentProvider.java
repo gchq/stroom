@@ -35,13 +35,14 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasDocumentWri
     private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
     private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 
-    private Set<PresenterWidget<?>> usedPresenters;
+    private final Set<PresenterWidget<?>> usedPresenters = new HashSet<>();
 
     private DirtyHandler dirtyHandler;
     private PresenterWidget<?> currentPresenter;
     private DocRef docRef;
     private E entity;
     private boolean readOnly = true;
+    private int readCount;
 
     public <T extends PresenterWidget<?>> void add(final TabData tab, final Provider<T> provider) {
         tabProviders.put(tab, provider);
@@ -59,22 +60,13 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasDocumentWri
                 // Handle dirty events.
                 if (currentPresenter instanceof HasDirtyHandlers && dirtyHandler != null) {
                     final HasDirtyHandlers hasDirtyHandlers = (HasDirtyHandlers) currentPresenter;
-                    hasDirtyHandlers.addDirtyHandler(event -> {
-//                        if (event.isDirty()) {
-//                            if (dirtyTabs == null) {
-//                                dirtyTabs = new HashSet<>();
-//                            }
-//
-//                            dirtyTabs.add(tab);
-//                        }
-                        dirtyHandler.onDirty(event);
-                    });
+                    hasDirtyHandlers.addDirtyHandler(event -> dirtyHandler.onDirty(event));
                 }
             }
         }
 
         // Read entity if not read since entity set.
-        if (usedPresenters == null || !usedPresenters.contains(currentPresenter)) {
+        if (readCount > 0 && !usedPresenters.contains(currentPresenter)) {
             read(currentPresenter, docRef, entity, readOnly);
         }
 
@@ -87,28 +79,19 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasDocumentWri
         this.entity = document;
         this.readOnly = readOnly;
 
-        if (usedPresenters != null) {
-            for (final PresenterWidget<?> presenterWidget : usedPresenters) {
-                read(presenterWidget, docRef, document, readOnly);
-            }
-            if (currentPresenter != null && !usedPresenters.contains(currentPresenter)) {
-                read(currentPresenter, docRef, document, readOnly);
-            }
-        } else if (currentPresenter != null) {
+        for (final PresenterWidget<?> presenterWidget : usedPresenters) {
+            read(presenterWidget, docRef, document, readOnly);
+        }
+        if (currentPresenter != null && !usedPresenters.contains(currentPresenter)) {
             read(currentPresenter, docRef, document, readOnly);
         }
 
-//        // Clear the dirty tab state as we are reading a new entity.
-//        if (dirtyTabs != null) {
-//            dirtyTabs.clear();
-//        }
+        readCount++;
     }
 
     public E write(E document) {
-        if (usedPresenters != null) {
-            for (final PresenterWidget<?> presenter : usedPresenters) {
-                document = write(presenter, document);
-            }
+        for (final PresenterWidget<?> presenter : usedPresenters) {
+            document = write(presenter, document);
         }
         return document;
     }
@@ -122,10 +105,6 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasDocumentWri
         if (presenter instanceof HasDocumentRead<?>) {
             final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
             hasDocumentRead.read(docRef, entity, readOnly);
-
-            if (usedPresenters == null) {
-                usedPresenters = new HashSet<>();
-            }
             usedPresenters.add(presenter);
         }
     }
