@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.18] - 2023-05-22
+
+* Issue **#3388** : Fix mouse selection drag scrolling in ace editor.
+
+* Issue **#3435** : Speculative fix for stuck search extraction jobs.
+
+* Issue **#3423** : Catch exceptions thrown trying to update for deleted rules.
+
+
 ## [v7.2-beta.17] - 2023-05-19
 
 * Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
@@ -5338,7 +5347,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.18...HEAD
+[v7.2-beta.18]: https://github.com/gchq/stroom/compare/v7.2-beta.17...v7.2-beta.18
 [v7.2-beta.17]: https://github.com/gchq/stroom/compare/v7.2-beta.16...v7.2-beta.17
 [v7.2-beta.16]: https://github.com/gchq/stroom/compare/v7.2-beta.15...v7.2-beta.16
 [v7.2-beta.15]: https://github.com/gchq/stroom/compare/v7.2-beta.14...v7.2-beta.15
