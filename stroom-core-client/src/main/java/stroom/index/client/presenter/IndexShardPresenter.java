@@ -446,10 +446,11 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
                 dataProvider.addDataDisplay(dataGrid);
             }
 
-            securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
-                this.allowDelete = result;
-                enableButtons();
-            });
+            securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.DELETE)
+                    .onSuccess(result -> {
+                        this.allowDelete = result;
+                        enableButtons();
+                    });
         }
     }
 

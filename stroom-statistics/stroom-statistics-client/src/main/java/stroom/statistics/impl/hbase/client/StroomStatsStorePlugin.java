@@ -147,9 +147,10 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     private void doSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
                         final StroomStatsStoreDoc entity) {
         save(DocRefUtil.create(entity), entity, doc ->
-                presenter.read(DocRefUtil.create(doc), doc,
-                presenter.isReadOnly()), throwable -> {
-        });
+                        presenter.read(DocRefUtil.create(doc), doc,
+                                presenter.isReadOnly()),
+                throwable -> {
+                });
     }
 
     @Override

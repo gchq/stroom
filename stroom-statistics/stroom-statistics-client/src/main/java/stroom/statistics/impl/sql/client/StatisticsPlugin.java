@@ -145,9 +145,11 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     private void doSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
                         final StatisticStoreDoc entity) {
-        save(DocRefUtil.create(entity), entity, doc -> presenter.read(DocRefUtil.create(doc), doc,
-                presenter.isReadOnly()), throwable -> {
-        });
+        save(DocRefUtil.create(entity), entity, doc ->
+                        presenter.read(DocRefUtil.create(doc), doc,
+                                presenter.isReadOnly()),
+                throwable -> {
+                });
     }
 
     @Override
