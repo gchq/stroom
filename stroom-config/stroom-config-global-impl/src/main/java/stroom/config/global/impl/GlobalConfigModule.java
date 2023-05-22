@@ -30,7 +30,7 @@ public class GlobalConfigModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(GlobalConfigResourceImpl.class);
         RestResourcesBinder.create(binder())
-                .bind(UserUserPreferencesResourceImpl.class);
+                .bind(UserPreferencesResourceImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(AppConfigSystemInfo.class);

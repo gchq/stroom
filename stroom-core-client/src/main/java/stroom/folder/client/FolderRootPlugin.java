@@ -18,27 +18,29 @@
 package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
-import stroom.core.client.event.CloseContentEvent;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.event.CloseContentEvent.Handler;
+import stroom.docref.DocRef;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.explorer.client.event.ExplorerTreeSelectEvent;
+import stroom.document.client.DocumentTabData;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
+import stroom.task.client.TaskEndEvent;
 import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.util.client.SelectionType;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class FolderRootPlugin extends Plugin implements TabData {
+public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData {
 
     private final ContentManager contentManager;
     private final Provider<FolderRootPresenter> editorProvider;
@@ -52,55 +54,99 @@ public class FolderRootPlugin extends Plugin implements TabData {
                             final ClientSecurityContext securityContext,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.contentManager = contentManager;
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
+//    @Override
+//    protected void onBind() {
+//        super.onBind();
+//
+//        // 4. Handle explorer events and open items as required.
+//        registerHandler(
+//                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
+//                    final SelectionType selectionType = event.getSelectionType();
+//                    if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
+//                        final ExplorerNode selected = event.getSelectionModel().getSelected();
+//                        if (selected != null && ExplorerConstants.SYSTEM.equals(selected.getType())) {
+//                            if (presenter == null && selectionType.isDoubleSelect()) {
+//                                // If the presenter is null then we haven't got
+//                                // this tab open.
+//                                // Create a new presenter.
+//                                presenter = createEditor();
+//                            }
+//
+//                            if (presenter != null) {
+//                                final CloseContentEvent.Handler closeHandler = evt -> {
+//                                    // Give the content manager the ok to
+//                                    // close the tab.
+//                                    evt.getCallback().closeTab(true);
+//
+//                                    // After we close the tab set the
+//                                    // presenter back to null so
+//                                    // that we can open it again.
+//                                    presenter = null;
+//                                };
+//                                contentManager.open(closeHandler, presenter, presenter);
+//                            }
+//                        }
+//                    }
+//                }));
+//    }
 
-        // 4. Handle explorer events and open items as required.
-        registerHandler(
-                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
-                    final SelectionType selectionType = event.getSelectionType();
-                    if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
-                        final ExplorerNode selected = event.getSelectionModel().getSelected();
-                        if (selected != null && ExplorerConstants.SYSTEM.equals(selected.getType())) {
-                            if (presenter == null && selectionType.isDoubleSelect()) {
-                                // If the presenter is null then we haven't got
-                                // this tab open.
-                                // Create a new presenter.
-                                presenter = createEditor();
-                            }
-
-                            if (presenter != null) {
-                                final CloseContentEvent.Handler closeHandler = evt -> {
-                                    // Give the content manager the ok to
-                                    // close the tab.
-                                    evt.getCallback().closeTab(true);
-
-                                    // After we close the tab set the
-                                    // presenter back to null so
-                                    // that we can open it again.
-                                    presenter = null;
-                                };
-                                contentManager.open(closeHandler, presenter, presenter);
-                            }
-                        }
-                    }
-                }));
-    }
-
-    private FolderRootPresenter createEditor() {
+    protected FolderRootPresenter createEditor() {
         if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(
                 PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 
         return null;
+    }
+
+    @Override
+    public void load(final DocRef docRef,
+                     final Consumer<DocRef> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
+        // Root folder is just a constant so no load needed
+//        resultConsumer.accept(ExplorerConstants.SYSTEM_DOC_REF);
+    }
+
+    @Override
+    public void save(final DocRef docRef,
+                     final DocRef document,
+                     final Consumer<DocRef> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
+        // Nothing to do here, root folder is special
+    }
+
+    @Override
+    protected void showTab(final DocRef docRef,
+                           final MyPresenterWidget<?> documentEditPresenter,
+                           final Handler closeHandler,
+                           final DocumentTabData tabData) {
+        try {
+            if (documentEditPresenter instanceof FolderRootPresenter) {
+                ((FolderRootPresenter) documentEditPresenter).read();
+            }
+
+            // Open the tab.
+            contentManager.open(closeHandler, tabData, documentEditPresenter);
+        } finally {
+            // Stop spinning.
+            TaskEndEvent.fire(FolderRootPlugin.this);
+        }
+    }
+
+    @Override
+    protected DocRef getDocRef(final DocRef document) {
+        return ExplorerConstants.SYSTEM_DOC_REF;
+    }
+
+    @Override
+    public String getType() {
+        return ExplorerConstants.SYSTEM;
     }
 
     @Override
