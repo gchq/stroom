@@ -28,8 +28,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollupResource;
@@ -58,8 +57,7 @@ import java.util.List;
 import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+        implements HasDocumentRead<StatisticStoreDoc>, HasDocumentWrite<StatisticStoreDoc>, HasDirtyHandlers {
 
     private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE = GWT.create(StatisticRollupResource.class);
 
@@ -247,30 +245,27 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerVi
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
+    public void read(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
         // initialise the columns and hold the statDataSource on first time
         // or if we are passed a different object
-        if (this.statisticsDataSource == null || this.statisticsDataSource != statisticsDataSource) {
-            this.statisticsDataSource = statisticsDataSource;
+        if (this.statisticsDataSource == null || this.statisticsDataSource != document) {
+            this.statisticsDataSource = document;
 
             removeAllColumns();
             addColumns();
         }
 
-        refreshFromEntity(statisticsDataSource);
+        refreshFromEntity(document);
     }
 
     @Override
-    public StatisticStoreDoc write(final StatisticStoreDoc entity) {
-        entity.getConfig()
+    public StatisticStoreDoc write(final StatisticStoreDoc document) {
+        document.getConfig()
                 .setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
+        return document;
     }
 
     @Override

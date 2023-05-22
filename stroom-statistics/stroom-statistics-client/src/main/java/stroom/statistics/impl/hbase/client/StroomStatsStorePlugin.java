@@ -27,6 +27,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStorePresenter;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
 import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
@@ -60,8 +61,9 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                                   final Provider<StroomStatsStorePresenter> editorProvider,
                                   final RestFactory restFactory,
                                   final ContentManager contentManager,
-                                  final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                                  final DocumentPluginEventManager entityPluginEventManager,
+                                  final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
@@ -144,7 +146,9 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
 
     private void doSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
                         final StroomStatsStoreDoc entity) {
-        save(DocRefUtil.create(entity), entity, doc -> presenter.read(DocRefUtil.create(doc), doc), throwable -> {
+        save(DocRefUtil.create(entity), entity, doc ->
+                presenter.read(DocRefUtil.create(doc), doc,
+                presenter.isReadOnly()), throwable -> {
         });
     }
 

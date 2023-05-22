@@ -17,6 +17,7 @@
 package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.LinkTabPanelView2;
 import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,29 +28,22 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
+public class LinkTabPanelView2Impl extends ViewImpl implements LinkTabPanelView2 {
 
     private final Widget widget;
-    @UiField
-    FlowPanel left;
     @UiField
     TabBar tabBar;
     @UiField
     LayerContainer layerContainer;
 
     @Inject
-    public LinkTabPanelViewImpl(final Binder binder) {
+    public LinkTabPanelView2Impl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void addWidgetLeft(final Widget widget) {
-        left.add(widget);
     }
 
     @Override
@@ -62,7 +56,7 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
         return layerContainer;
     }
 
-    public interface Binder extends UiBinder<Widget, LinkTabPanelViewImpl> {
+    public interface Binder extends UiBinder<Widget, LinkTabPanelView2Impl> {
 
     }
 }

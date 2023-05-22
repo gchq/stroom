@@ -22,7 +22,6 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
@@ -42,7 +41,6 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
 
     private final XSDBrowserPresenter xsdBrowserPresenter;
     private final EditorPresenter codePresenter;
-    private boolean readOnly = true;
 
     private final XSDModel data = new XSDModel();
     private final XMLSchemaSettingsPresenter settingsPresenter;
@@ -54,9 +52,8 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                               final LinkTabPanelView view,
                               final XMLSchemaSettingsPresenter settingsPresenter,
                               final XSDBrowserPresenter xsdBrowserPresenter,
-                              final EditorPresenter codePresenter,
-                              final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                              final EditorPresenter codePresenter) {
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
         this.xsdBrowserPresenter = xsdBrowserPresenter;
         this.codePresenter = codePresenter;
@@ -109,7 +106,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                 if (!shownText) {
                     shownText = true;
                     codePresenter.setMode(AceEditorMode.XML);
-                    codePresenter.getFormatAction().setAvailable(!readOnly);
+                    codePresenter.getFormatAction().setAvailable(!isReadOnly());
                     codePresenter.setText(getEntity().getData(), true);
                 }
             }
@@ -117,32 +114,17 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema) {
-        super.onRead(docRef, xmlSchema);
-        settingsPresenter.read(docRef, xmlSchema);
+    protected void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema, final boolean readOnly) {
+        super.onRead(docRef, xmlSchema, readOnly);
+        settingsPresenter.read(docRef, xmlSchema, readOnly);
 
         shownText = false;
         updateDiagram = false;
 
         data.setContents(xmlSchema.getData());
-    }
 
-    @Override
-    protected XmlSchemaDoc onWrite(XmlSchemaDoc xmlSchema) {
-        xmlSchema = settingsPresenter.write(xmlSchema);
-        if (shownText) {
-            xmlSchema.setData(codePresenter.getText().trim());
-        }
-        return xmlSchema;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
         codePresenter.setReadOnly(readOnly);
         codePresenter.getFormatAction().setAvailable(!readOnly);
-        settingsPresenter.onReadOnly(readOnly);
 
         if (!readOnly) {
             // Enable controls based on user permission
@@ -153,6 +135,14 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
         }
     }
 
+    @Override
+    protected XmlSchemaDoc onWrite(XmlSchemaDoc xmlSchema) {
+        xmlSchema = settingsPresenter.write(xmlSchema);
+        if (shownText) {
+            xmlSchema.setData(codePresenter.getText().trim());
+        }
+        return xmlSchema;
+    }
     @Override
     public String getType() {
         return XmlSchemaDoc.DOCUMENT_TYPE;

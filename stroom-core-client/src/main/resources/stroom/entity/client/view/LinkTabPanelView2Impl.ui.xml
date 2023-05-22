@@ -5,7 +5,6 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel styleName="dock-min">
             <g:FlowPanel styleName="linkTabPanelViewImpl">
-                <g:FlowPanel ui:field="left" styleName="linkTabPanelViewImpl-left"/>
                 <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>
             </g:FlowPanel>
         </g:SimplePanel>

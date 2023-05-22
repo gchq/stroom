@@ -24,26 +24,23 @@ import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
 
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.Objects;
 import javax.inject.Provider;
 
 public class AnalyticRuleSettingsPresenter
-        extends DocumentSettingsPresenter<AnalyticRuleSettingsView, AnalyticRuleDoc>
+        extends DocumentEditPresenter<AnalyticRuleSettingsView, AnalyticRuleDoc>
         implements DirtyUiHandlers {
 
-    private final EditorPresenter codePresenter;
     private final EntityDropDownPresenter feedPresenter;
 
     private DocRef currentFeed;
@@ -55,18 +52,8 @@ public class AnalyticRuleSettingsPresenter
                                          final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
         this.feedPresenter = feedPresenter;
-        codePresenter = editorPresenterProvider.get();
-        codePresenter.setMode(AceEditorMode.STROOM_QUERY);
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-//            codePresenter.setReadOnly(readOnly);
-//        codePresenter.getFormatAction().setAvailable(!readOnly);
-        if (getEntity() != null && getEntity().getQuery() != null) {
-            codePresenter.setText(getEntity().getQuery());
-        }
 
         view.setUiHandlers(this);
-        view.setQueryWidget(codePresenter.getWidget());
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
@@ -76,7 +63,6 @@ public class AnalyticRuleSettingsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
         registerHandler(feedPresenter.addDataSelectionHandler(event -> {
             if (!Objects.equals(feedPresenter.getSelectedEntityReference(), currentFeed)) {
                 setDirty(true);
@@ -85,10 +71,9 @@ public class AnalyticRuleSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc alertRule) {
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc alertRule, final boolean readOnly) {
         getView().setDescription(alertRule.getDescription());
         getView().setLanguageVersion(alertRule.getLanguageVersion());
-        codePresenter.setText(alertRule.getQuery());
         getView().setAnalyticRuleType(alertRule.getAnalyticRuleType());
         currentFeed = alertRule.getDestinationFeed();
         feedPresenter.setSelectedEntityReference(currentFeed);
@@ -99,7 +84,6 @@ public class AnalyticRuleSettingsPresenter
         return alertRule.copy()
                 .description(getView().getDescription())
                 .languageVersion(getView().getLanguageVersion())
-                .query(codePresenter.getText())
                 .analyticRuleType(getView().getAnalyticRuleType())
                 .destinationFeed(feedPresenter.getSelectedEntityReference())
                 .build();
@@ -124,8 +108,6 @@ public class AnalyticRuleSettingsPresenter
         QueryLanguageVersion getLanguageVersion();
 
         void setLanguageVersion(final QueryLanguageVersion languageVersion);
-
-        void setQueryWidget(Widget widget);
 
         AnalyticRuleType getAnalyticRuleType();
 

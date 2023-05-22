@@ -18,8 +18,8 @@
 package stroom.query.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.query.client.presenter.QueryDocSettingsPresenter.QueryDocSettingsView;
+import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.query.client.presenter.QuerySettingsPresenter.QuerySettingsView;
 import stroom.query.shared.QueryDoc;
 
 import com.google.gwt.event.dom.client.InputEvent;
@@ -29,14 +29,12 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class QueryDocSettingsPresenter extends DocumentSettingsPresenter<QueryDocSettingsView, QueryDoc> {
+public class QuerySettingsPresenter extends DocumentEditPresenter<QuerySettingsView, QueryDoc> {
 
     @Inject
-    public QueryDocSettingsPresenter(final EventBus eventBus,
-                                     final QueryDocSettingsView view) {
+    public QuerySettingsPresenter(final EventBus eventBus,
+                                  final QuerySettingsView view) {
         super(eventBus, view);
-
-
     }
 
     @Override
@@ -49,7 +47,7 @@ public class QueryDocSettingsPresenter extends DocumentSettingsPresenter<QueryDo
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final QueryDoc query) {
+    protected void onRead(final DocRef docRef, final QueryDoc query, final boolean readOnly) {
         getView().getDescription().setText(query.getDescription());
     }
 
@@ -64,7 +62,7 @@ public class QueryDocSettingsPresenter extends DocumentSettingsPresenter<QueryDo
         return QueryDoc.DOCUMENT_TYPE;
     }
 
-    public interface QueryDocSettingsView extends View {
+    public interface QuerySettingsView extends View {
 
         TextArea getDescription();
     }

@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.search.elastic.shared.ElasticClusterDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -41,9 +40,8 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
     public ElasticClusterPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenter,
-            final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+            final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenter) {
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -62,15 +60,9 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ElasticClusterDoc cluster) {
-        super.onRead(docRef, cluster);
-        tabContentProvider.read(docRef, cluster);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+    public void onRead(final DocRef docRef, final ElasticClusterDoc cluster, final boolean readOnly) {
+        super.onRead(docRef, cluster, readOnly);
+        tabContentProvider.read(docRef, cluster, readOnly);
     }
 
     @Override

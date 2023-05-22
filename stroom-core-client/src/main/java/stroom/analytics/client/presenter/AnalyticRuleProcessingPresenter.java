@@ -22,7 +22,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleProcessSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
@@ -31,7 +31,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class AnalyticRuleProcessingPresenter
-        extends DocumentSettingsPresenter<AnalyticRuleProcessingView, AnalyticRuleDoc>
+        extends DocumentEditPresenter<AnalyticRuleProcessingView, AnalyticRuleDoc>
         implements DirtyUiHandlers {
 
     @Inject
@@ -47,7 +47,7 @@ public class AnalyticRuleProcessingPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc alertRule) {
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc alertRule, final boolean readOnly) {
         AnalyticRuleProcessSettings settings = alertRule.getProcessSettings();
         if (settings == null) {
             settings = AnalyticRuleProcessSettings.builder().build();

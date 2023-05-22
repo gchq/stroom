@@ -12,9 +12,6 @@
         <form:FormGroup identity="analyticRuleSettingsLanguageVersion" label="Language Version">
             <item:ItemListBox ui:field="languageVersion" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticRuleSettingsQuery" label="Query">
-            <g:SimplePanel ui:field="query" width="800px" height="600px" addStyleNames="stroom-control"/>
-        </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsAlertRuleType" label="Alert Rule Type">
             <l:ItemListBox ui:field="analyticRuleType"/>
         </form:FormGroup>

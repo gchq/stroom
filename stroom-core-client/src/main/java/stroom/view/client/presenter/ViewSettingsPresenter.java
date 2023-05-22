@@ -20,7 +20,7 @@ package stroom.view.client.presenter;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.meta.shared.MetaFields;
@@ -39,7 +39,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
-public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSettingsView, ViewDoc> {
+public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsView, ViewDoc> {
 
     private final RestFactory restFactory;
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
@@ -86,7 +86,7 @@ public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSetting
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ViewDoc entity) {
+    protected void onRead(final DocRef docRef, final ViewDoc entity, final boolean readOnly) {
         getView().getDescription().setText(entity.getDescription());
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());

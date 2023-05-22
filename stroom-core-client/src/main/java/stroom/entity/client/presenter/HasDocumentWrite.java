@@ -16,17 +16,7 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.widget.tab.client.presenter.TabBar;
+public interface HasDocumentWrite<E> {
 
-import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.LayerContainer;
-import com.gwtplatform.mvp.client.View;
-
-public interface LinkTabPanelView extends View {
-
-    void addWidgetLeft(Widget widget);
-
-    TabBar getTabBar();
-
-    LayerContainer getLayerContainer();
+    E write(E document);
 }

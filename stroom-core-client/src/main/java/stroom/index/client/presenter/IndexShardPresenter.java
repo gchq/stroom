@@ -33,7 +33,6 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
@@ -68,7 +67,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class IndexShardPresenter extends MyPresenterWidget<PagerView>
-        implements Refreshable, HasDocumentRead<IndexDoc>, ReadOnlyChangeHandler {
+        implements Refreshable, HasDocumentRead<IndexDoc> {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
@@ -413,9 +412,12 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final IndexDoc index) {
-        if (index != null) {
-            this.index = index;
+    public void read(final DocRef docRef, final IndexDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
+        if (document != null) {
+            this.index = document;
             queryCriteria.getIndexUuidSet().add(docRef.getUuid());
             selectionCriteria.getIndexUuidSet().add(docRef.getUuid());
             selectionCriteria.getIndexShardIdSet().clear();
@@ -444,17 +446,11 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
                 dataProvider.addDataDisplay(dataGrid);
             }
 
-            securityContext.hasDocumentPermission(index.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
+            securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
                 this.allowDelete = result;
                 enableButtons();
             });
         }
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
     }
 
     private void onChangeData(final ResultPage<IndexShard> data) {

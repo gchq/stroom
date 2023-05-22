@@ -21,7 +21,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc>
+public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsView, IndexDoc>
         implements IndexSettingsUiHandlers {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
@@ -105,7 +105,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final IndexDoc index) {
+    protected void onRead(final DocRef docRef, final IndexDoc index, final boolean readOnly) {
         getView().getDescription().setText(index.getDescription());
         getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
         getView().setShardsPerPartition(index.getShardsPerPartition());

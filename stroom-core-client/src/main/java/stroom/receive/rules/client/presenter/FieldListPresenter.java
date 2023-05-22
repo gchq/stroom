@@ -28,8 +28,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -49,8 +48,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FieldListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+        implements HasDocumentRead<ReceiveDataRules>, HasDocumentWrite<ReceiveDataRules>, HasDirtyHandlers {
 
     private final MyDataGrid<AbstractField> dataGrid;
     private final MultiSelectionModelImpl<AbstractField> selectionModel;
@@ -294,23 +292,19 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final ReceiveDataRules policy) {
-        if (policy != null) {
-            fields = policy.getFields();
+    public void read(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+        if (document != null) {
+            fields = document.getFields();
             refresh();
         }
     }
 
     @Override
-    public ReceiveDataRules write(final ReceiveDataRules policy) {
-        policy.setFields(fields);
-        return policy;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
+    public ReceiveDataRules write(final ReceiveDataRules document) {
+        document.setFields(fields);
+        return document;
     }
 
     @Override

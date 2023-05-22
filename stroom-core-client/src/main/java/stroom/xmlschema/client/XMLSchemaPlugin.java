@@ -25,6 +25,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
@@ -50,8 +51,9 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                            final Provider<XMLSchemaPresenter> editorProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
-                           final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                           final DocumentPluginEventManager entityPluginEventManager,
+                           final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }

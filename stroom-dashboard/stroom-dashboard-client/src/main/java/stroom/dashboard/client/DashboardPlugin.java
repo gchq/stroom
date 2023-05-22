@@ -36,6 +36,7 @@ import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskStartEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -66,8 +67,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                            final Provider<DashboardPresenter> dashboardPresenterProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
-                           final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                           final DocumentPluginEventManager entityPluginEventManager,
+                           final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.dashboardSuperPresenterProvider = dashboardSuperPresenterProvider;
         this.dashboardPresenterProvider = dashboardPresenterProvider;
         this.restFactory = restFactory;

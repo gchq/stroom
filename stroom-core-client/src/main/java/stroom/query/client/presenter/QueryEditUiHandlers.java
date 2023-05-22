@@ -20,7 +20,7 @@ import stroom.query.api.v2.TimeRange;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface QueryDocUiHandlers extends UiHandlers {
+public interface QueryEditUiHandlers extends UiHandlers {
 
     void onTimeRange(TimeRange timeRange);
 

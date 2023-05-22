@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,46 +12,51 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.client.presenter;
 
+import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
+import stroom.docref.DocRef;
+import stroom.docref.HasType;
+import stroom.document.client.DocumentTabData;
+import stroom.explorer.shared.DocumentType;
+import stroom.svg.client.Icon;
+import stroom.svg.client.Preset;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-import java.util.ArrayList;
-import java.util.List;
+public abstract class DocumentEditTabPresenter2<V extends LinkTabPanelView2, D>
+        extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType, HasSave {
 
-public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPanelView> implements Refreshable {
-
-    private final List<TabData> tabs = new ArrayList<>();
     private TabData selectedTab;
+    private String lastLabel;
     private PresenterWidget<?> currentContent;
+    private DocRef docRef;
 
-    public LinkTabPanelPresenter(final EventBus eventBus, final LinkTabPanelView view) {
+    public DocumentEditTabPresenter2(final EventBus eventBus,
+                                     final V view) {
         super(eventBus, view);
-
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);
-        tabs.add(tab);
     }
 
     protected abstract void getContent(TabData tab, ContentCallback callback);
 
     public void selectTab(final TabData tab) {
-        TaskStartEvent.fire(LinkTabPanelPresenter.this);
+        TaskStartEvent.fire(DocumentEditTabPresenter2.this);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -70,7 +75,7 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
                 });
             }
 
-            TaskEndEvent.fire(LinkTabPanelPresenter.this);
+            TaskEndEvent.fire(DocumentEditTabPresenter2.this);
         });
     }
 
@@ -87,6 +92,41 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
             if (currentContent != null && currentContent instanceof Refreshable) {
                 ((Refreshable) currentContent).refresh();
             }
+        }
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef, final D entity, final boolean readOnly) {
+        this.docRef = docRef;
+    }
+
+    @Override
+    public String getLabel() {
+        if (isDirty()) {
+            return "* " + docRef.getName();
+        }
+
+        return docRef.getName();
+    }
+
+    @Override
+    public boolean isCloseable() {
+        return true;
+    }
+
+    @Override
+    public Icon getIcon() {
+        return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getType(), null, true);
+    }
+
+    @Override
+    public void onDirty(final boolean dirty) {
+        super.onDirty(dirty);
+
+        // Only fire tab refresh if the tab has changed.
+        if (lastLabel == null || !lastLabel.equals(getLabel())) {
+            lastLabel = getLabel();
+            RefreshContentTabEvent.fire(this, this);
         }
     }
 }

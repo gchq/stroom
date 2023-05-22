@@ -16,7 +16,14 @@
 
 package stroom.entity.client.presenter;
 
-public interface HasWrite<E> {
+import stroom.widget.tab.client.presenter.TabBar;
 
-    E write(E entity);
+import com.gwtplatform.mvp.client.LayerContainer;
+import com.gwtplatform.mvp.client.View;
+
+public interface LinkTabPanelView2 extends View {
+
+    TabBar getTabBar();
+
+    LayerContainer getLayerContainer();
 }

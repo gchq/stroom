@@ -79,7 +79,7 @@ public class DashboardMainPresenter
         });
     }
 
-    private void onLoadSuccess(final DashboardDoc dashboard) {
+    private void onLoadSuccess(final DashboardDoc dashboard, final boolean readOnly) {
         if (dashboard == null) {
             AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
 
@@ -87,7 +87,7 @@ public class DashboardMainPresenter
             setInSlot(CONTENT, dashboardPresenter);
             forceReveal();
 
-            dashboardPresenter.read(DocRefUtil.create(dashboard), dashboard);
+            dashboardPresenter.read(DocRefUtil.create(dashboard), dashboard, readOnly);
             Window.setTitle(dashboardPresenter.getLabel());
         }
     }
@@ -130,7 +130,7 @@ public class DashboardMainPresenter
                 final DocRef docRef = new DocRef(type, uuid);
                 final Rest<DashboardDoc> rest = restFactory.create();
                 rest
-                        .onSuccess(this::onLoadSuccess)
+                        .onSuccess(doc -> onLoadSuccess(doc, true))
                         .onFailure(this::onLoadFailure)
                         .call(DASHBOARD_RESOURCE)
                         .fetch(docRef.getUuid());

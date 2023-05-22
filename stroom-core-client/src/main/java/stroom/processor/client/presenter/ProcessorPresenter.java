@@ -88,11 +88,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     @Override
-    public void read(final DocRef docRef, final Object entity) {
+    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
         this.docRef = docRef;
-        processorListPresenter.read(docRef, entity);
-        if (entity instanceof PipelineDoc) {
-            this.pipelineDoc = (PipelineDoc) entity;
+        processorListPresenter.read(docRef, document, readOnly);
+        if (document instanceof PipelineDoc) {
+            this.pipelineDoc = (PipelineDoc) document;
         }
     }
 

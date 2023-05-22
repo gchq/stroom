@@ -45,8 +45,6 @@ public class AnalyticRuleSettingsViewImpl
     @UiField
     ItemListBox<QueryLanguageVersion> languageVersion;
     @UiField
-    SimplePanel query;
-    @UiField
     ItemListBox<AnalyticRuleType> analyticRuleType;
     @UiField
     FlowPanel aggregateSettings;
@@ -100,12 +98,6 @@ public class AnalyticRuleSettingsViewImpl
             this.languageVersion.setSelectedItem(languageVersion);
         }
     }
-
-    @Override
-    public void setQueryWidget(final Widget widget) {
-        this.query.setWidget(widget);
-    }
-
 
     @Override
     public AnalyticRuleType getAnalyticRuleType() {

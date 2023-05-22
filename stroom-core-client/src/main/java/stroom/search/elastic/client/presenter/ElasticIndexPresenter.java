@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -43,9 +42,8 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<ElasticIndexSettingsPresenter> indexSettingsPresenter,
-            final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenter,
-            final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+            final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenter) {
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -66,15 +64,9 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ElasticIndexDoc index) {
-        super.onRead(docRef, index);
-        tabContentProvider.read(docRef, index);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+    public void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
+        super.onRead(docRef, index, readOnly);
+        tabContentProvider.read(docRef, index, readOnly);
     }
 
     @Override

@@ -20,7 +20,7 @@ package stroom.script.client.presenter;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
@@ -32,8 +32,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class ScriptSettingsPresenter
-        extends DocumentSettingsPresenter<ScriptSettingsView, ScriptDoc> {
+public class ScriptSettingsPresenter extends DocumentEditPresenter<ScriptSettingsView, ScriptDoc> {
 
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
 
@@ -68,10 +67,10 @@ public class ScriptSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ScriptDoc script) {
+    protected void onRead(final DocRef docRef, final ScriptDoc script, final boolean readOnly) {
         getView().getDescription().setText(script.getDescription());
 
-        scriptDependencyListPresenter.read(docRef, script);
+        scriptDependencyListPresenter.read(docRef, script, readOnly);
     }
 
     @Override
@@ -79,12 +78,6 @@ public class ScriptSettingsPresenter
         script.setDescription(getView().getDescription().getText().trim());
         script = scriptDependencyListPresenter.write(script);
         return script;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        scriptDependencyListPresenter.onReadOnly(readOnly);
     }
 
     public interface ScriptSettingsView extends View, ReadOnlyChangeHandler {

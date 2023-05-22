@@ -19,7 +19,7 @@ package stroom.pipeline.client.presenter;
 
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 import stroom.pipeline.shared.XsltDoc;
 
@@ -30,7 +30,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSettingsView, XsltDoc> {
+public class XsltSettingsPresenter extends DocumentEditPresenter<XsltSettingsView, XsltDoc> {
 
     @Inject
     public XsltSettingsPresenter(final EventBus eventBus, final XsltSettingsView view) {
@@ -54,7 +54,7 @@ public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSetting
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final XsltDoc xslt) {
+    protected void onRead(final DocRef docRef, final XsltDoc xslt, final boolean readOnly) {
         getView().getDescription().setText(xslt.getDescription());
     }
 

@@ -25,8 +25,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
@@ -44,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<DictionaryDoc>, HasWrite<DictionaryDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<DictionaryDoc>, HasDocumentWrite<DictionaryDoc>, HasDirtyHandlers {
 
     private final DocRefListPresenter docRefListPresenter;
     private final Provider<EntityChooser> dictionarySelection;
@@ -121,31 +120,28 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public void read(final DocRef docRef, final DictionaryDoc dictionary) {
+    public void read(final DocRef docRef, final DictionaryDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
         currentDoc = docRef;
         imports = new ArrayList<>();
-        if (dictionary != null) {
-            if (dictionary.getImports() != null) {
-                imports.addAll(dictionary.getImports());
+        if (document != null) {
+            if (document.getImports() != null) {
+                imports.addAll(document.getImports());
             }
         }
         refresh();
     }
 
     @Override
-    public DictionaryDoc write(final DictionaryDoc dictionary) {
+    public DictionaryDoc write(final DictionaryDoc document) {
         if (imports.size() == 0) {
-            dictionary.setImports(null);
+            document.setImports(null);
         } else {
-            dictionary.setImports(imports);
+            document.setImports(imports);
         }
-        return dictionary;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
+        return document;
     }
 
     private void enableButtons() {

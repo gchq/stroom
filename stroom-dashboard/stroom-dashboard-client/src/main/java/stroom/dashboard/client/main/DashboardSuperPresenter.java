@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -43,10 +42,9 @@ public class DashboardSuperPresenter
     @Inject
     public DashboardSuperPresenter(final EventBus eventBus,
                                    final LinkTabPanelView view,
-                                   final ClientSecurityContext securityContext,
                                    final Provider<DashboardSettingsPresenter> settingsPresenterProvider,
                                    final Provider<DashboardPresenter> dashboardPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
         dashboardPresenter = dashboardPresenterProvider.get();
 
         tabContentProvider.setDirtyHandler(event -> {
@@ -70,20 +68,14 @@ public class DashboardSuperPresenter
     }
 
     @Override
-    public void onRead(final DocRef docRef, final DashboardDoc feed) {
-        super.onRead(docRef, feed);
-        tabContentProvider.read(docRef, feed);
+    public void onRead(final DocRef docRef, final DashboardDoc feed, final boolean readOnly) {
+        super.onRead(docRef, feed, readOnly);
+        tabContentProvider.read(docRef, feed, readOnly);
     }
 
     @Override
     protected DashboardDoc onWrite(DashboardDoc feed) {
         return tabContentProvider.write(feed);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

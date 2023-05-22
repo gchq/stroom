@@ -30,13 +30,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, ReadOnlyChangeHandler {
+public class TabContentProvider<E> implements HasDocumentRead<E>, HasDocumentWrite<E> {
 
     private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
     private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 
     private Set<PresenterWidget<?>> usedPresenters;
-    private Set<TabData> dirtyTabs;
 
     private DirtyHandler dirtyHandler;
     private PresenterWidget<?> currentPresenter;
@@ -61,13 +60,13 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, R
                 if (currentPresenter instanceof HasDirtyHandlers && dirtyHandler != null) {
                     final HasDirtyHandlers hasDirtyHandlers = (HasDirtyHandlers) currentPresenter;
                     hasDirtyHandlers.addDirtyHandler(event -> {
-                        if (event.isDirty()) {
-                            if (dirtyTabs == null) {
-                                dirtyTabs = new HashSet<>();
-                            }
-
-                            dirtyTabs.add(tab);
-                        }
+//                        if (event.isDirty()) {
+//                            if (dirtyTabs == null) {
+//                                dirtyTabs = new HashSet<>();
+//                            }
+//
+//                            dirtyTabs.add(tab);
+//                        }
                         dirtyHandler.onDirty(event);
                     });
                 }
@@ -76,61 +75,53 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, R
 
         // Read entity if not read since entity set.
         if (usedPresenters == null || !usedPresenters.contains(currentPresenter)) {
-            read(currentPresenter, docRef, entity);
-            setReadOnly(currentPresenter, readOnly);
+            read(currentPresenter, docRef, entity, readOnly);
         }
 
         return currentPresenter;
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final E document, final boolean readOnly) {
         this.docRef = docRef;
-        this.entity = entity;
+        this.entity = document;
+        this.readOnly = readOnly;
 
         if (usedPresenters != null) {
             for (final PresenterWidget<?> presenterWidget : usedPresenters) {
-                read(presenterWidget, docRef, entity);
+                read(presenterWidget, docRef, document, readOnly);
             }
             if (currentPresenter != null && !usedPresenters.contains(currentPresenter)) {
-                read(currentPresenter, docRef, entity);
+                read(currentPresenter, docRef, document, readOnly);
             }
         } else if (currentPresenter != null) {
-            read(currentPresenter, docRef, entity);
+            read(currentPresenter, docRef, document, readOnly);
         }
 
-        // Clear the dirty tab state as we are reading a new entity.
-        if (dirtyTabs != null) {
-            dirtyTabs.clear();
-        }
+//        // Clear the dirty tab state as we are reading a new entity.
+//        if (dirtyTabs != null) {
+//            dirtyTabs.clear();
+//        }
     }
 
-    public E write(E entity) {
+    public E write(E document) {
         if (usedPresenters != null) {
             for (final PresenterWidget<?> presenter : usedPresenters) {
-                entity = write(presenter, entity);
+                document = write(presenter, document);
             }
         }
-        return entity;
+        return document;
     }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        if (usedPresenters != null) {
-            for (final PresenterWidget<?> presenter : usedPresenters) {
-                setReadOnly(presenter, readOnly);
-            }
-        }
-    }
 
     @SuppressWarnings("unchecked")
     private void read(final PresenterWidget<?> presenter,
                       final DocRef docRef,
-                      final E entity) {
+                      final E entity,
+                      final boolean readOnly) {
         if (presenter instanceof HasDocumentRead<?>) {
             final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
-            hasDocumentRead.read(docRef, entity);
+            hasDocumentRead.read(docRef, entity, readOnly);
 
             if (usedPresenters == null) {
                 usedPresenters = new HashSet<>();
@@ -141,25 +132,14 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, R
 
     @SuppressWarnings("unchecked")
     private E write(final PresenterWidget<?> presenter, E entity) {
-        if (entity != null && presenter instanceof HasWrite<?>) {
-            final HasWrite<E> hasWrite = (HasWrite<E>) presenter;
-            entity = hasWrite.write(entity);
+        if (entity != null && presenter instanceof HasDocumentWrite<?>) {
+            final HasDocumentWrite<E> hasDocumentWrite = (HasDocumentWrite<E>) presenter;
+            entity = hasDocumentWrite.write(entity);
         }
         return entity;
     }
 
-    private void setReadOnly(final PresenterWidget<?> presenter, final boolean readOnly) {
-        if (presenter instanceof ReadOnlyChangeHandler) {
-            final ReadOnlyChangeHandler changeHandler = (ReadOnlyChangeHandler) presenter;
-            changeHandler.onReadOnly(readOnly);
-        }
-    }
-
     public void setDirtyHandler(final DirtyHandler handler) {
         this.dirtyHandler = handler;
-    }
-
-    public boolean isTabDirty(final TabData tab) {
-        return dirtyTabs != null && dirtyTabs.contains(tab);
     }
 }

@@ -27,7 +27,6 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
@@ -64,10 +63,9 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                                final LinkTabPanelView view,
                                final DictionarySettingsPresenter settingsPresenter,
                                final Provider<EditorPresenter> editorPresenterProvider,
-                               final ClientSecurityContext securityContext,
                                final RestFactory restFactory,
                                final LocationManager locationManager) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
         this.restFactory = restFactory;
@@ -111,12 +109,17 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     }
 
     @Override
-    public void onRead(final DocRef docRef, final DictionaryDoc doc) {
-        super.onRead(docRef, doc);
+    public void onRead(final DocRef docRef, final DictionaryDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
         this.docRef = docRef;
         downloadButton.setEnabled(true);
-        settingsPresenter.read(docRef, doc);
-        if (codePresenter != null) {
+        settingsPresenter.read(docRef, doc, readOnly);
+
+        codePresenter = getOrCreateCodePresenter();
+        codePresenter.setReadOnly(readOnly);
+        codePresenter.getStylesOption().setUnavailable();
+        codePresenter.getFormatAction().setUnavailable();
+        if (getEntity() != null) {
             codePresenter.setText(doc.getData());
             codePresenter.setMode(AceEditorMode.TEXT);
         }
@@ -129,19 +132,6 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             doc.setData(codePresenter.getText());
         }
         return doc;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        settingsPresenter.onReadOnly(readOnly);
-        codePresenter = getOrCreateCodePresenter();
-        codePresenter.setReadOnly(readOnly);
-        codePresenter.getStylesOption().setUnavailable();
-        codePresenter.getFormatAction().setUnavailable();
-        if (getEntity() != null) {
-            codePresenter.setText(getEntity().getData());
-        }
     }
 
     @Override

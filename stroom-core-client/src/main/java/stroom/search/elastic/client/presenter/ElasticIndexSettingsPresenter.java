@@ -22,7 +22,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
@@ -45,7 +45,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
-public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
+public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
         implements ElasticIndexSettingsUiHandlers {
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
@@ -132,7 +132,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ElasticIndexDoc index) {
+    protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
         getView().setDescription(index.getDescription());
         clusterPresenter.setSelectedEntityReference(index.getClusterRef());
         getView().setIndexName(index.getIndexName());

@@ -23,7 +23,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
@@ -43,8 +43,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class StroomStatsStoreSettingsPresenter
         extends MyPresenterWidget<StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView>
-        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
-        ReadOnlyChangeHandler,
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasDocumentWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
         StroomStatsStoreSettingsUiHandlers {
 
     @Inject
@@ -72,31 +71,27 @@ public class StroomStatsStoreSettingsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        if (stroomStatsStoreEntity != null) {
-            getView().getDescription().setText(stroomStatsStoreEntity.getDescription());
-            getView().setStatisticType(stroomStatsStoreEntity.getStatisticType());
-            getView().getEnabled().setValue(stroomStatsStoreEntity.isEnabled());
-            getView().setPrecision(stroomStatsStoreEntity.getPrecision());
-            getView().setRollUpType(stroomStatsStoreEntity.getRollUpType());
-        }
-    }
-
-    @Override
-    public StroomStatsStoreDoc write(final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        if (stroomStatsStoreEntity != null) {
-            stroomStatsStoreEntity.setDescription(getView().getDescription().getText());
-            stroomStatsStoreEntity.setStatisticType(getView().getStatisticType());
-            stroomStatsStoreEntity.setEnabled(getView().getEnabled().getValue());
-            stroomStatsStoreEntity.setPrecision(getView().getPrecision());
-            stroomStatsStoreEntity.setRollUpType(getView().getRollUpType());
-        }
-        return stroomStatsStoreEntity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
+    public void read(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
         getView().onReadOnly(readOnly);
+        if (document != null) {
+            getView().getDescription().setText(document.getDescription());
+            getView().setStatisticType(document.getStatisticType());
+            getView().getEnabled().setValue(document.isEnabled());
+            getView().setPrecision(document.getPrecision());
+            getView().setRollUpType(document.getRollUpType());
+        }
+    }
+
+    @Override
+    public StroomStatsStoreDoc write(final StroomStatsStoreDoc document) {
+        if (document != null) {
+            document.setDescription(getView().getDescription().getText());
+            document.setStatisticType(getView().getStatisticType());
+            document.setEnabled(getView().getEnabled().getValue());
+            document.setPrecision(getView().getPrecision());
+            document.setRollUpType(getView().getRollUpType());
+        }
+        return document;
     }
 
     @Override

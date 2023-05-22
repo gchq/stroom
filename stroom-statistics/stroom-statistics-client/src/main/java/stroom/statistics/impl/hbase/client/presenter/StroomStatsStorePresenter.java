@@ -22,7 +22,6 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.widget.tab.client.presenter.TabData;
@@ -46,9 +45,8 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
             final LinkTabPanelView view,
             final Provider<StroomStatsStoreSettingsPresenter> stroomStatsStoreSettingsPresenter,
             final Provider<StroomStatsStoreFieldListPresenter> stroomStatsStoreFieldListPresenter,
-            final Provider<StroomStatsStoreCustomMaskListPresenter> stroomStatsStoreCustomMaskListPresenter,
-            final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+            final Provider<StroomStatsStoreCustomMaskListPresenter> stroomStatsStoreCustomMaskListPresenter) {
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -73,15 +71,15 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     }
 
     @Override
-    public void onRead(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        super.onRead(docRef, stroomStatsStoreEntity);
+    public void onRead(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity, final boolean readOnly) {
+        super.onRead(docRef, stroomStatsStoreEntity, readOnly);
         if (stroomStatsStoreEntity != null) {
             if (stroomStatsStoreEntity.getConfig() == null) {
                 stroomStatsStoreEntity.setConfig(new StroomStatsStoreEntityData());
             }
         }
 
-        tabContentProvider.read(docRef, stroomStatsStoreEntity);
+        tabContentProvider.read(docRef, stroomStatsStoreEntity, readOnly);
 
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other
@@ -92,12 +90,6 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     @Override
     protected StroomStatsStoreDoc onWrite(final StroomStatsStoreDoc stroomStatsStoreEntity) {
         return tabContentProvider.write(stroomStatsStoreEntity);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

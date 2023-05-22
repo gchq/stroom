@@ -21,7 +21,7 @@ import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
@@ -43,7 +43,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, FeedDoc> {
+public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
 
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
 
@@ -125,7 +125,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final FeedDoc feed) {
+    protected void onRead(final DocRef docRef, final FeedDoc feed, final boolean readOnly) {
         getView().getDescription().setText(feed.getDescription());
         getView().getReference().setValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());

@@ -28,7 +28,6 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
@@ -56,7 +55,6 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     private final LocationManager locationManager;
 
     private EditorPresenter editorPresenter;
-    private boolean readOnly = true;
 
     private DocRef docRef;
 
@@ -64,11 +62,10 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     public KafkaConfigPresenter(final EventBus eventBus,
                                 final LinkTabPanelView view,
                                 final KafkaConfigSettingsPresenter settingsPresenter,
-                                final ClientSecurityContext securityContext,
                                 final Provider<EditorPresenter> editorPresenterProvider,
                                 final RestFactory restFactory,
                                 final LocationManager locationManager) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
         this.restFactory = restFactory;
@@ -113,15 +110,19 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     }
 
     @Override
-    public void onRead(final DocRef docRef, final KafkaConfigDoc doc) {
-        super.onRead(docRef, doc);
+    public void onRead(final DocRef docRef, final KafkaConfigDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
         this.docRef = docRef;
         downloadButton.setEnabled(true);
 
-        settingsPresenter.read(docRef, doc);
+        settingsPresenter.read(docRef, doc, readOnly);
 
-        if (editorPresenter != null && doc.getData() != null) {
-            editorPresenter.setText(doc.getData());
+        if (editorPresenter != null) {
+            if (doc.getData() != null) {
+                editorPresenter.setText(doc.getData());
+            }
+            editorPresenter.setReadOnly(readOnly);
+            editorPresenter.getFormatAction().setAvailable(!readOnly);
         }
     }
 
@@ -135,17 +136,6 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (editorPresenter != null) {
-            editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getFormatAction().setAvailable(!readOnly);
-        }
-    }
-
-    @Override
     public String getType() {
         return KafkaConfigDoc.DOCUMENT_TYPE;
     }
@@ -156,8 +146,8 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
             editorPresenter.setMode(AceEditorMode.PROPERTIES);
             registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
-            editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getFormatAction().setAvailable(!readOnly);
+            editorPresenter.setReadOnly(isReadOnly());
+            editorPresenter.getFormatAction().setAvailable(!isReadOnly());
             if (getEntity() != null && getEntity().getData() != null) {
                 editorPresenter.setText(getEntity().getData());
             }

@@ -19,7 +19,7 @@ package stroom.pipeline.client.presenter;
 
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -33,7 +33,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 public class TextConverterSettingsPresenter
-        extends DocumentSettingsPresenter<TextConverterSettingsView, TextConverterDoc> {
+        extends DocumentEditPresenter<TextConverterSettingsView, TextConverterDoc> {
 
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view) {
@@ -63,7 +63,7 @@ public class TextConverterSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final TextConverterDoc textConverter) {
+    protected void onRead(final DocRef docRef, final TextConverterDoc textConverter, final boolean readOnly) {
         getView().getDescription().setText(textConverter.getDescription());
         getView().getConverterType().setSelectedItem(textConverter.getConverterType());
     }

@@ -17,7 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.query.client.presenter.QueryDocSettingsPresenter.QueryDocSettingsView;
+import stroom.query.client.presenter.QuerySettingsPresenter.QuerySettingsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class QueryDocSettingsViewImpl extends ViewImpl implements QueryDocSettingsView, ReadOnlyChangeHandler {
+public class QuerySettingsViewImpl extends ViewImpl implements QuerySettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
 
@@ -34,7 +34,7 @@ public class QueryDocSettingsViewImpl extends ViewImpl implements QueryDocSettin
     TextArea description;
 
     @Inject
-    public QueryDocSettingsViewImpl(final Binder binder) {
+    public QuerySettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -53,7 +53,7 @@ public class QueryDocSettingsViewImpl extends ViewImpl implements QueryDocSettin
         description.setEnabled(!readOnly);
     }
 
-    public interface Binder extends UiBinder<Widget, QueryDocSettingsViewImpl> {
+    public interface Binder extends UiBinder<Widget, QuerySettingsViewImpl> {
 
     }
 }

@@ -6,7 +6,7 @@
     <g:FlowPanel styleName="DashboardViewImpl max dock-container-vertical DashboardViewImpl">
         <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
             <g:FlowPanel styleName="dock-max">
-                <q:NavButtons ui:field="navButtons" addStyleNames="dock-min"/>
+<!--                <q:NavButtons ui:field="navButtons" addStyleNames="dock-min"/>-->
             </g:FlowPanel>
             <g:FlowPanel styleName="DashboardViewImpl-top-buttons dock-min dock-container-horizontal">
                 <q:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
@@ -15,7 +15,7 @@
             </g:FlowPanel>
         </g:FlowPanel>
         <g:MySplitLayoutPanel styleName="max">
-            <g:north size="200">
+            <g:north size="400">
                 <g:SimplePanel ui:field="queryEditorContainer" styleName="max control__padding-right"/>
             </g:north>
             <g:center>

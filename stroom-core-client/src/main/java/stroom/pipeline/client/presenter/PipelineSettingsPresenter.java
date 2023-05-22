@@ -18,7 +18,7 @@
 package stroom.pipeline.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.shared.PipelineDoc;
 
@@ -28,7 +28,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class PipelineSettingsPresenter
-        extends DocumentSettingsPresenter<PipelineSettingsView, PipelineDoc>
+        extends DocumentEditPresenter<PipelineSettingsView, PipelineDoc>
         implements PipelineSettingsUiHandlers {
 
     @Inject
@@ -43,7 +43,7 @@ public class PipelineSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final PipelineDoc pipelineDoc) {
+    protected void onRead(final DocRef docRef, final PipelineDoc pipelineDoc, final boolean readOnly) {
         getView().setDescription(pipelineDoc.getDescription());
     }
 

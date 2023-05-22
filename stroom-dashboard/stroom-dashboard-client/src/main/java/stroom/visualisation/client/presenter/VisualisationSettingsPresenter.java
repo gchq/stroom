@@ -20,7 +20,7 @@ package stroom.visualisation.client.presenter;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
@@ -37,8 +37,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-public class VisualisationSettingsPresenter
-        extends DocumentSettingsPresenter<VisualisationSettingsView, VisualisationDoc> {
+public class VisualisationSettingsPresenter extends DocumentEditPresenter<VisualisationSettingsView, VisualisationDoc> {
+
     private final EntityDropDownPresenter scriptPresenter;
     private final EditorPresenter editorPresenter;
 
@@ -88,7 +88,11 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final VisualisationDoc visualisation) {
+    protected void onRead(final DocRef docRef, final VisualisationDoc visualisation, final boolean readOnly) {
+        scriptPresenter.setEnabled(!readOnly);
+        editorPresenter.setReadOnly(readOnly);
+        editorPresenter.getFormatAction().setAvailable(!readOnly);
+
         getView().getDescription().setText(visualisation.getDescription());
         getView().getFunctionName().setText(visualisation.getFunctionName());
         scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef());
@@ -104,15 +108,8 @@ public class VisualisationSettingsPresenter
         return visualisation;
     }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        scriptPresenter.setEnabled(!readOnly);
-        editorPresenter.setReadOnly(readOnly);
-        editorPresenter.getFormatAction().setAvailable(!readOnly);
-    }
-
     public interface VisualisationSettingsView extends View {
+
         TextArea getDescription();
 
         TextBox getFunctionName();

@@ -55,7 +55,6 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.view.QueryButtons;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.util.shared.Version;
 import stroom.widget.menu.client.presenter.Item;
@@ -122,9 +121,8 @@ public class DashboardPresenter
                               final Components components,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
-                              final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
-                              final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                              final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider) {
+        super(eventBus, view);
         this.layoutPresenter = flexLayout;
         this.components = components;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
@@ -263,7 +261,7 @@ public class DashboardPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final DashboardDoc dashboard) {
+    protected void onRead(final DocRef docRef, final DashboardDoc dashboard, final boolean readOnly) {
         this.docRef = docRef;
         if (!loaded) {
             loaded = true;
@@ -432,6 +430,8 @@ public class DashboardPresenter
                 setDesignMode(true);
             }
         }
+
+        getView().setReadOnly(readOnly || embedded);
     }
 
     private Component addComponent(final String type, final ComponentConfig componentConfig) {
@@ -497,12 +497,6 @@ public class DashboardPresenter
         dashboardConfig.setModelVersion(VERSION_7_2_0);
         dashboard.setDashboardConfig(dashboardConfig);
         return dashboard;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly || embedded);
-        getView().setReadOnly(readOnly || embedded);
     }
 
     @Override
@@ -764,7 +758,9 @@ public class DashboardPresenter
     }
 
     @Override
-    public void onDirtyChange() {
+    public void onDirty(final boolean dirty) {
+        super.onDirty(dirty);
+
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();
