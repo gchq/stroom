@@ -374,7 +374,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     private static void getTerms(final ExpressionOperator expressionOperator,
                                  final AbstractField field,
                                  final Set<String> terms) {
-        if (expressionOperator.enabled()) {
+        if (expressionOperator.enabled() && expressionOperator.getChildren() != null) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
