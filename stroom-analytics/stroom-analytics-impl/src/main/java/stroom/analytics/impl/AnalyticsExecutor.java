@@ -143,12 +143,14 @@ public class AnalyticsExecutor {
             for (final DocRef docRef : docRefList) {
                 try {
                     final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
-                    final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
-                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
-                    if (dataSource != null && ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                        process(analyticRuleDoc, searchRequest, dataSource);
-                    } else {
-                        LOGGER.error("Rule needs to reference a view");
+                    if (analyticRuleDoc != null) {
+                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
+                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
+                        if (dataSource != null && ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                            process(analyticRuleDoc, searchRequest, dataSource);
+                        } else {
+                            LOGGER.error("Rule needs to reference a view");
+                        }
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
@@ -191,16 +193,20 @@ public class AnalyticsExecutor {
     }
 
     private void disableRule(final AnalyticRuleDoc analyticRuleDoc) {
-        LOGGER.info("Disabling: " + analyticRuleDoc.getName());
-        final AnalyticRuleDoc disabledAnalyticRuleDoc = analyticRuleDoc
-                .copy()
-                .processSettings(
-                        analyticRuleDoc.getProcessSettings()
-                                .copy()
-                                .enabled(false)
-                                .build())
-                .build();
-        analyticRuleStore.writeDocument(disabledAnalyticRuleDoc);
+        try {
+            LOGGER.info("Disabling: " + analyticRuleDoc.getName());
+            final AnalyticRuleDoc disabledAnalyticRuleDoc = analyticRuleDoc
+                    .copy()
+                    .processSettings(
+                            analyticRuleDoc.getProcessSettings()
+                                    .copy()
+                                    .enabled(false)
+                                    .build())
+                    .build();
+            analyticRuleStore.writeDocument(disabledAnalyticRuleDoc);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
     }
 
     private void processEventAnalytic(final AnalyticRuleDoc analyticRuleDoc,
