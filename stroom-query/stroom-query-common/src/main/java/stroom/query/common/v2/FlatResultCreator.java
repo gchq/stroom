@@ -28,6 +28,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -58,7 +59,7 @@ public class FlatResultCreator implements ResultCreator {
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
-                             final QueryKey queryKey,
+                             final SearchRequest searchRequest,
                              final String componentId,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
@@ -82,9 +83,23 @@ public class FlatResultCreator implements ResultCreator {
                 // parent table and the default maximum sizes.
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
+
+                final List<Integer> childMaxResults = child != null
+                        ? child.getMaxResults()
+                        : Collections.emptyList();
+                final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
+                final DataStoreSettings dataStoreSettings = DataStoreSettings
+                        .createBasicSearchResultStoreSettings(searchRequest)
+                        .copy()
+                        .maxResults(maxResults)
+                        .storeSize(Sizes.create(Integer.MAX_VALUE))
+                        .build();
+
+
                 mappers.add(new Mapper(
                         dataStoreFactory,
-                        queryKey,
+                        dataStoreSettings,
+                        searchRequest.getKey(),
                         componentId,
                         parent,
                         child,
@@ -96,7 +111,7 @@ public class FlatResultCreator implements ResultCreator {
             LOGGER.debug(() -> LogUtil.message(
                     "Invalid non-null tableSettings count ({}) for search: {} and componentId: {}",
                     tableSettings.size(),
-                    queryKey,
+                    searchRequest.getKey(),
                     componentId));
             errorConsumer.add(() -> LogUtil.message(
                     "Component with ID: '{}' has not been configured correctly so will not show any data.",
@@ -369,6 +384,7 @@ public class FlatResultCreator implements ResultCreator {
         private final int maxItems;
 
         Mapper(final DataStoreFactory dataStoreFactory,
+               final DataStoreSettings dataStoreSettings,
                final QueryKey queryKey,
                final String componentId,
                final TableSettings parent,
@@ -402,15 +418,6 @@ public class FlatResultCreator implements ResultCreator {
 
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
-            final List<Integer> childMaxResults = child != null
-                    ? child.getMaxResults()
-                    : Collections.emptyList();
-            final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
-            final DataStoreSettings dataStoreSettings = DataStoreSettings.createBasicSearchResultStoreSettings()
-                    .copy()
-                    .maxResults(maxResults)
-                    .storeSize(Sizes.create(Integer.MAX_VALUE))
-                    .build();
             dataStore = dataStoreFactory.create(
                     queryKey,
                     componentId,

@@ -1,5 +1,8 @@
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -45,8 +48,24 @@ public class DataStoreSettings {
                 .build();
     }
 
-    public static DataStoreSettings createBasicSearchResultStoreSettings() {
-        return DataStoreSettings.builder().subDirectory(UUID.randomUUID().toString()).build();
+    public static DataStoreSettings createBasicSearchResultStoreSettings(final SearchRequest searchRequest) {
+        if (searchRequest != null && searchRequest.getSearchRequestSource() != null) {
+            return createBasicSearchResultStoreSettings(searchRequest.getSearchRequestSource().getSourceType());
+        } else {
+            return createBasicSearchResultStoreSettings(SourceType.DASHBOARD_UI);
+        }
+    }
+
+    public static DataStoreSettings createBasicSearchResultStoreSettings(final SourceType sourceType) {
+        final Builder builder = DataStoreSettings.builder()
+                .subDirectory(UUID.randomUUID().toString());
+        if (SourceType.ANALYTIC_RULE_UI.equals(sourceType) ||
+                SourceType.ANALYTIC_RULE.equals(sourceType)) {
+            builder.requireStreamIdValue(true)
+                    .requireEventIdValue(true)
+                    .requireTimeValue(true);
+        }
+        return builder.build();
     }
 
     public static DataStoreSettings createPayloadProducerSearchResultStoreSettings() {
@@ -186,8 +205,7 @@ public class DataStoreSettings {
 
         public Builder subDirectory(final String subDirectory) {
             // Make safe for the file system.
-            final String dir = subDirectory.replaceAll("[^A-Za-z0-9]", "_");
-            this.subDirectory = dir;
+            this.subDirectory = subDirectory.replaceAll("[^A-Za-z0-9]", "_");
             return this;
         }
 

@@ -58,6 +58,7 @@ public class QueryModel {
     private QuerySearchRequest currentSearch;
     private Boolean mode = false;
     private boolean searching;
+    private SourceType sourceType = SourceType.QUERY_UI;
 
     private final List<Consumer<Boolean>> modeListeners = new ArrayList<>();
     private final List<Consumer<List<String>>> errorListeners = new ArrayList<>();
@@ -187,7 +188,7 @@ public class QueryModel {
                 .searchRequestSource(
                         SearchRequestSource
                                 .builder()
-                                .sourceType(SourceType.QUERY_UI)
+                                .sourceType(sourceType)
                                 .ownerDocUuid(queryUuid)
                                 .build())
                 .query(query)
@@ -498,4 +499,9 @@ public class QueryModel {
 //    public void removeErrorListener(final Consumer<List<String>> consumer) {
 //        errorListeners.remove(consumer);
 //    }
+
+
+    public void setSourceType(final SourceType sourceType) {
+        this.sourceType = sourceType;
+    }
 }

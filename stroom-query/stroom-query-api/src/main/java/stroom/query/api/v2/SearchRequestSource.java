@@ -44,7 +44,8 @@ public class SearchRequestSource {
     @Override
     public String toString() {
         return "SearchRequestSource{" +
-                "dashboardUuid='" + ownerDocUuid + '\'' +
+                "sourceType=" + sourceType +
+                ", ownerDocUuid='" + ownerDocUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 '}';
     }
@@ -97,6 +98,7 @@ public class SearchRequestSource {
 
     public enum SourceType implements HasDisplayValue {
         ANALYTIC_RULE("Analytic Rule"),
+        ANALYTIC_RULE_UI("Analytic Rule UI"),
         DASHBOARD_UI("Dashboard UI"),
         QUERY_UI("Query UI"),
         API("API Request"),

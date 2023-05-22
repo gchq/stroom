@@ -27,6 +27,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryButtons;
@@ -219,6 +220,10 @@ public class QueryEditPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public void setSourceType(final SourceType sourceType) {
+        this.queryModel.setSourceType(sourceType);
     }
 
     public interface QueryEditView extends View, HasUiHandlers<QueryEditUiHandlers> {
