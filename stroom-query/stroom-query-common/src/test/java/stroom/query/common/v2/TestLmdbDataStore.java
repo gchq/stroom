@@ -204,7 +204,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         }
 
         // Wait for all items to be added.
-        final CurrentDbState currentDbState = dataStore.sync();
+        CurrentDbState currentDbState = dataStore.sync();
         assertThat(currentDbState.getStreamId()).isEqualTo(100);
         assertThat(currentDbState.getEventId()).isEqualTo(100);
 
@@ -236,11 +236,32 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         resultStoreConfig,
                         dataStoreSettings);
 
-        final CurrentDbState currentDbState2 = dataStore2.sync();
-        assertThat(currentDbState2.getStreamId()).isEqualTo(100);
-        assertThat(currentDbState2.getEventId()).isEqualTo(100);
+        currentDbState = dataStore2.sync();
+        assertThat(currentDbState.getStreamId()).isEqualTo(100);
+        assertThat(currentDbState.getEventId()).isEqualTo(100);
 
         // Make sure we only get 50 results.
+        searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore2,
+                tableResultRequest);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+
+        // Load some more data.
+        for (int i = 101; i <= 200; i++) {
+            for (int j = 101; j <= 200; j++) {
+                final Val streamId = ValLong.create(i);
+                final Val eventId = ValLong.create(j);
+                final Val eventTime = ValLong.create(System.currentTimeMillis());
+                dataStore2.add(Val.of(streamId, eventId, eventTime));
+            }
+        }
+
+        // Wait for all items to be added.
+        currentDbState = dataStore2.sync();
+        assertThat(currentDbState.getStreamId()).isEqualTo(200);
+        assertThat(currentDbState.getEventId()).isEqualTo(200);
+
+        // Make sure we still only get 50 results.
         searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore2,
                 tableResultRequest);
