@@ -30,6 +30,7 @@ import org.mockito.stubbing.Answer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -304,7 +305,7 @@ class TestSearchResponseCreator {
             public void getData(final Consumer<Data> consumer) {
                 consumer.accept((key, timeFilter) -> {
                     if (key == Key.ROOT_KEY) {
-                        return new Items() {
+                        return Optional.of(new Items() {
 
                             @Override
                             public Item get(final int index) {
@@ -325,9 +326,9 @@ class TestSearchResponseCreator {
                             public Iterable<Item> getIterable() {
                                 return List.of(item);
                             }
-                        };
+                        });
                     }
-                    return null;
+                    return Optional.empty();
                 });
             }
 
@@ -361,7 +362,6 @@ class TestSearchResponseCreator {
             @Override
             public KeyFactory getKeyFactory() {
                 return KeyFactoryFactory.create(
-                        new Serialisers(new SearchResultStoreConfig()),
                         new BasicKeyFactoryConfig(),
                         new CompiledDepths(null, false));
             }

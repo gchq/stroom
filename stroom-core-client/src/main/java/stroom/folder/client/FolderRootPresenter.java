@@ -18,6 +18,7 @@ package stroom.folder.client;
 
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
+import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -36,7 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class FolderRootPresenter extends LinkTabPanelPresenter implements TabData {
+public class FolderRootPresenter extends LinkTabPanelPresenter implements DocumentTabData {
 
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
@@ -88,6 +89,10 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
         callback.onReady(tabContentProvider.getPresenter(tab));
     }
 
+    public void read() {
+        tabContentProvider.read(ExplorerConstants.SYSTEM_DOC_REF, null);
+    }
+
     @Override
     public boolean isCloseable() {
         return true;
@@ -101,5 +106,10 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
     @Override
     public Icon getIcon() {
         return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getLabel(), null, true);
+    }
+
+    @Override
+    public String getType() {
+        return ExplorerConstants.SYSTEM;
     }
 }

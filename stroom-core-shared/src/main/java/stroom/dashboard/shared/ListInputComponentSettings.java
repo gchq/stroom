@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -116,11 +117,12 @@ public class ListInputComponentSettings implements ComponentSettings {
         return new Builder();
     }
 
+    @Override
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static final class Builder {
+    public static final class Builder implements ComponentSettings.Builder {
 
         private String key;
         private String value;
@@ -134,7 +136,9 @@ public class ListInputComponentSettings implements ComponentSettings {
         private Builder(final ListInputComponentSettings keyValueInputComponentSettings) {
             this.key = keyValueInputComponentSettings.key;
             this.value = keyValueInputComponentSettings.value;
-            this.values = keyValueInputComponentSettings.values;
+            this.values = keyValueInputComponentSettings.values == null
+                    ? null
+                    : new ArrayList<>(keyValueInputComponentSettings.values);
             this.dictionary = keyValueInputComponentSettings.dictionary;
             this.useDictionary = keyValueInputComponentSettings.useDictionary;
         }
@@ -164,6 +168,7 @@ public class ListInputComponentSettings implements ComponentSettings {
             return this;
         }
 
+        @Override
         public ListInputComponentSettings build() {
             return new ListInputComponentSettings(
                     key,

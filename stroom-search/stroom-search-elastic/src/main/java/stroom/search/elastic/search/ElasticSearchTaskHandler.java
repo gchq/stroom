@@ -38,6 +38,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -175,6 +176,8 @@ public class ElasticSearchTaskHandler {
                     futures[i] = CompletableFuture.runAsync(runnable, executor);
                 }
             });
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final RuntimeException e) {
             error(errorConsumer, e);
         }
@@ -245,6 +248,8 @@ public class ElasticSearchTaskHandler {
             ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
             clearScrollRequest.addScrollId(scrollId);
             elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
 
@@ -313,6 +318,8 @@ public class ElasticSearchTaskHandler {
                     valuesConsumer.add(Val.of(values));
                 }
             }
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final RuntimeException e) {
             error(errorConsumer, e);
         }
@@ -335,10 +342,12 @@ public class ElasticSearchTaskHandler {
     }
 
     private void error(final ErrorConsumer errorConsumer, final Throwable t) {
-        if (errorConsumer == null) {
-            LOGGER.error(t::getMessage, t);
-        } else {
-            errorConsumer.add(t);
+        if (!(t instanceof UncheckedInterruptedException)) {
+            if (errorConsumer == null) {
+                LOGGER.error(t::getMessage, t);
+            } else {
+                errorConsumer.add(t);
+            }
         }
     }
 }

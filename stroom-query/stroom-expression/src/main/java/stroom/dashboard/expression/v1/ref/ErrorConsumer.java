@@ -1,9 +1,12 @@
 package stroom.dashboard.expression.v1.ref;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public interface ErrorConsumer {
+
+    void add(final Supplier<String> message);
 
     void add(final Throwable exception);
 

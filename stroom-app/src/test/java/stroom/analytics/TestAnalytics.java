@@ -112,46 +112,23 @@ class TestAnalytics extends StroomIntegrationTest {
     void testSingleEvent() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | table StreamId, EventId, UserId""";
-
-        final DocRef alertRuleDocRef = analyticRuleStore.createDocument("Threshold Event Rule");
-        AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(alertRuleDocRef);
-        analyticRuleDoc = analyticRuleDoc.copy()
-                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query(query)
-                .analyticRuleType(AnalyticRuleType.EVENT)
-                .processSettings(AnalyticRuleProcessSettings.builder().enabled(true).build())
-                .build();
-        analyticRuleStore.writeDocument(analyticRuleDoc);
-
-        // Now run the search process.
-        analyticsExecutor.exec();
-        analyticsDataSetup.checkStreamCount(9);
-
-        // As we have created alerts ensure we now have more streams.
-        final Meta newestMeta = analyticsDataSetup.getNewestMeta();
-        try (final Source source = streamStore.openSource(newestMeta.getId())) {
-            final String result = SourceUtil.readString(source);
-            assertThat(result.split("<record>").length).isEqualTo(6);
-            assertThat(result).contains("user5");
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+                from index_view
+                where UserId = user5
+                select StreamId, EventId, UserId""";
+        basicTest(query, 9, 6);
     }
 
     @Test
     void testHavingCount() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | eval count = count()
-                | eval EventTime = floorYear(EventTime)
-                | group by EventTime, UserId
-                | having count > 3
-                | table EventTime, UserId, count""";
+                from index_view
+                where UserId = user5
+                eval count = count()
+                eval EventTime = floorYear(EventTime)
+                group by EventTime, UserId
+                having count > 3
+                select EventTime, UserId, count""";
 
         // Create the rule.
         final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()
@@ -189,12 +166,12 @@ class TestAnalytics extends StroomIntegrationTest {
     void testWindowCount() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | window EventTime by 1y advance 1y
-                | group by UserId
-                //| having count > countPrevious
-                | table UserId""";
+                from index_view
+                where UserId = user5
+                window EventTime by 1y advance 1y
+                group by UserId
+                // having count > countPrevious
+                select UserId""";
 
         // Create the rule.
         final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()
@@ -233,12 +210,12 @@ class TestAnalytics extends StroomIntegrationTest {
     void testWindowCountHaving() {
         // Add alert
         final String query = """
-                "index_view"
-                | where UserId = user5
-                | window EventTime by 1y advance 1y
-                | group by UserId
-                | having "period-0" = 0
-                | table UserId""";
+                from index_view
+                where UserId = user5
+                window EventTime by 1y advance 1y
+                group by UserId
+                having "period-0" = 0
+                select UserId""";
 
         // Create the rule.
         final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()
@@ -255,7 +232,6 @@ class TestAnalytics extends StroomIntegrationTest {
                 .processSettings(processSettings)
                 .destinationFeed(detections)
                 .build();
-
         analyticRuleStore.writeDocument(analyticRuleDoc);
 
         // Now run the search process.
@@ -267,6 +243,64 @@ class TestAnalytics extends StroomIntegrationTest {
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
             assertThat(result.split("<record>").length).isEqualTo(2);
+            assertThat(result).contains("user5");
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Test
+    void testMissingField() {
+        // Add alert
+        final String query = """
+                from index_view
+                where UserId = user5
+                and MissingField = bob
+                select StreamId, EventId, UserId""";
+        basicTest(query, 9, 6);
+    }
+
+    @Test
+    void testNoWhere() {
+        // Add alert
+        final String query = """
+                from index_view
+                select StreamId, EventId, UserId""";
+        basicTest(query, 9, 27);
+    }
+
+    @Test
+    void testCompoundWhere() {
+        // Add alert
+        final String query = """
+                from index_view
+                where UserId = user5 and  (UserId = user5 or MissingField = bob)
+                select StreamId, EventId, UserId""";
+        basicTest(query, 9, 6);
+    }
+
+    private void basicTest(final String query,
+                           final int expectedStreams,
+                           final int expectedRecords) {
+        final DocRef alertRuleDocRef = analyticRuleStore.createDocument("Threshold Event Rule");
+        AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(alertRuleDocRef);
+        analyticRuleDoc = analyticRuleDoc.copy()
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(query)
+                .analyticRuleType(AnalyticRuleType.EVENT)
+                .processSettings(AnalyticRuleProcessSettings.builder().enabled(true).build())
+                .build();
+        analyticRuleStore.writeDocument(analyticRuleDoc);
+
+        // Now run the search process.
+        analyticsExecutor.exec();
+        analyticsDataSetup.checkStreamCount(expectedStreams);
+
+        // As we have created alerts ensure we now have more streams.
+        final Meta newestMeta = analyticsDataSetup.getNewestMeta();
+        try (final Source source = streamStore.openSource(newestMeta.getId())) {
+            final String result = SourceUtil.readString(source);
+            assertThat(result.split("<record>").length).isEqualTo(expectedRecords);
             assertThat(result).contains("user5");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

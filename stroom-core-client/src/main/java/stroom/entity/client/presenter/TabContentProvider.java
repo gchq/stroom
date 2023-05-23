@@ -130,7 +130,9 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, R
                       final E entity) {
         if (presenter instanceof HasDocumentRead<?>) {
             final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
-            hasDocumentRead.read(docRef, entity);
+            if (docRef != null) {
+                hasDocumentRead.read(docRef, entity);
+            }
 
             if (usedPresenters == null) {
                 usedPresenters = new HashSet<>();

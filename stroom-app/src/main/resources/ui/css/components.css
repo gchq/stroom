@@ -493,7 +493,6 @@
 
 .tabBarContainer {
     display: flex;
-    margin-top: 3px;
 }
 
 .curveTabLayoutViewImpl-layout {

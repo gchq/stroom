@@ -43,6 +43,8 @@ public class FunctionFactory {
     }
 
     private static void scanClassPathForFunctions() {
+//        final StringBuilder functions = new StringBuilder();
+
         // Scan the class path to find all the classes with @FunctionDef
         try (ScanResult result = new ClassGraph()
                 .acceptPackages(Function.class.getPackageName())
@@ -67,6 +69,9 @@ public class FunctionFactory {
                                     .filter(Objects::nonNull)
                                     .map(String::toLowerCase)
                                     .forEach(name -> {
+//                                        functions.append(name);
+//                                        functions.append("|");
+
                                         if (ALIAS_MAP.containsKey(name)) {
                                             final Class<? extends Function> existingClass = ALIAS_MAP.get(name);
                                             throw new RuntimeException(("Name/alias [" + name +
@@ -77,10 +82,13 @@ public class FunctionFactory {
                                         ALIAS_MAP.put(name, functionClazz);
                                     });
 
+
                             LOGGER.debug("Adding function {}", functionClazz.getName());
                         }
                     });
         }
+
+//        System.out.println(functions);
     }
 
     public static Function create(final String functionName) {

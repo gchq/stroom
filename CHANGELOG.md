@@ -12,6 +12,62 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#3388** : Fix mouse selection drag scrolling in ace editor.
+
+* Issue **#3435** : Speculative fix for stuck search extraction jobs.
+
+* Issue **#3423** : Catch exceptions thrown trying to update for deleted rules.
+
+* Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
+
+* Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
+
+* Issue **#3468** : Expected interrupted exceptions are now logged as debug not error.
+
+* Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
+
+* Issue **#3465** : Fix index shard search for index name.
+
+* Issue **#3371** : Stats now supports multiple date terms and none. Fix stats with time selector and time series vis.
+
+* Issue **#3462** : Make enabled the first item in the list.
+
+* Issue **#3461** : Remove requirement for pipes in QL, add 'from', add 'select' instead of 'table', add 'between' operator.
+
+* Issue **#3441** : Min and Max expression functions now return correct type.
+
+* Issue **#3456** : Fix NPE.
+
+* Issue **#3436** : Fix expander col width.
+
+* Issue **#3458** : Improve dashboard tab drag/drop behaviour.
+
+* Issue **#3433** : Conditional highlighting now highlights entire row.
+
+* Issue **#3430** : Activity screen now shows entries across multiple lines.
+
+* Issue **#3445** : Ensure duplicated dashboard tabs create duplicate config.
+
+* Issue **#3422** : Ensure UI shows processor filter status correctly.
+
+* Issue **#3444** : Allow the absence of a where clause or missing fields in where clause.
+
+* Issue **#3432** : Fix processing of where clause in QL.
+
+* Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+
+* Issue **#3395** : Fix nested use of selectors such as first() and last() in dashboard tables.
+
+* Issue **#3411** : Fix sorting or search results in LMDB.
+
+* Ensure the same request/response logging feature is used for all jersey clients and server in stroom and proxy.
+
+* Issue **#3449** : Ensure jersey client responses are closed properly.
+
+* Issue **#3429** : Fix error logging.
+
 
 ## [v7.2-beta.10-open-id-6] - 2023-05-15
 

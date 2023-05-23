@@ -88,6 +88,14 @@
 	overflow-x: hidden;
 }
 
+.multiline .dataGridHeader > div,
+.multiline .dataGridCell > div {
+    display: block;
+	text-overflow: ellipsis;
+	overflow-x: hidden;
+	padding: var(--row__padding--vertical) 0;
+}
+
 .dataGridCell .svgCell-button {
 	vertical-align: middle;
 }

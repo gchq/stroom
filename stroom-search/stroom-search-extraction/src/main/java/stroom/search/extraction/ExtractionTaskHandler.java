@@ -176,7 +176,7 @@ public class ExtractionTaskHandler {
             }
 
             final StoredError storedError = new StoredError(severity, location, elementId, message);
-            errorConsumer.add(new RuntimeException(storedError.toString(), e));
+            errorConsumer.add(storedError::toString);
             throw ProcessException.wrap(message, e);
         };
 

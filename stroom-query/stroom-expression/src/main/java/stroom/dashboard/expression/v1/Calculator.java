@@ -40,5 +40,7 @@ abstract class Calculator {
         }
     }
 
-    protected abstract double op(final double cur, final double val);
+    double op(final double cur, final double val) {
+        return cur;
+    }
 }

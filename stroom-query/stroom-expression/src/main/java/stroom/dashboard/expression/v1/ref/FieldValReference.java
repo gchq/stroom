@@ -7,8 +7,9 @@ public class FieldValReference extends ValReference {
     private final int fieldIndex;
 
     FieldValReference(final int index,
-                      final int fieldIndex) {
-        super(index);
+                      final int fieldIndex,
+                      final String name) {
+        super(index, name);
         this.fieldIndex = fieldIndex;
     }
 

@@ -33,7 +33,7 @@ public class SearchExpressionQueryCache {
         this.searchRequest = searchRequest;
     }
 
-    public SearchExpressionQuery getQuery() {
+    public SearchExpressionQuery getQuery(final boolean ignoreMissingFields) {
         try {
             if (luceneQuery == null) {
                 final SearchExpressionQueryBuilder searchExpressionQueryBuilder =
@@ -42,7 +42,9 @@ public class SearchExpressionQueryCache {
                                 searchRequest.getDateTimeSettings(),
                                 System.currentTimeMillis());
                 luceneQuery = searchExpressionQueryBuilder
-                        .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, searchRequest.getQuery().getExpression());
+                        .buildQuery(
+                                LuceneVersionUtil.CURRENT_LUCENE_VERSION,
+                                searchRequest.getQuery().getExpression());
             }
             return luceneQuery;
         } catch (final RuntimeException e) {

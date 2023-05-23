@@ -147,8 +147,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     @Override
     public void onPreviewNativeEvent(final NativePreviewEvent nativePreviewEvent) {
-//        GWT.log("onPreviewNativeEvent");
-
         final NativeEvent event = nativePreviewEvent.getNativeEvent();
         if (Event.ONMOUSEMOVE == nativePreviewEvent.getTypeInt()) {
             final ResizeHandle<R> resizeHandle = getResizeHandle();

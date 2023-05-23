@@ -12,12 +12,12 @@ public class ContentPacks {
             new GitRepo("stroom-content",
                     "https://github.com/gchq/stroom-content.git",
                     "7.2",
-                    "8b5f629bb1363a339101248414db875e9fbc453a");
+                    "67eae23270db76e5a9faaa1faf0e08c21e0ed9e4");
     private static final GitRepo STROOM_VISUALISATION_DEV_GIT_REPO =
             new GitRepo("stroom-visualisations-dev",
                     "https://github.com/gchq/stroom-visualisations-dev.git",
                     "7.2",
-                    "0f7f50b4138ab3cdb4cff8dcabedc2ca922bab7e");
+                    "ee138c9cc4f2005f191fc37aa1d8f6b9cadbf730");
 
     public static final ContentPack CORE_XML_SCHEMAS_PACK = createStandardContentPack("core-xml-schemas");
 

@@ -231,7 +231,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
 
         // Expander column.
-        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell(ExpanderCell.DEFAULT_INITIAL_OFFSET_PX)) {
+        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
             @Override
             public Expander getValue(final TableRow row) {
                 if (row == null) {
@@ -693,7 +693,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Set the expander column width.
-        expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth) + ExpanderCell.DEFAULT_INITIAL_OFFSET_PX;
+        expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
         return processed;

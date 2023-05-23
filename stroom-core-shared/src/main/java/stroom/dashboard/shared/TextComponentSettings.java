@@ -205,11 +205,12 @@ public class TextComponentSettings implements ComponentSettings {
         return new Builder();
     }
 
+    @Override
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static final class Builder {
+    public static final class Builder implements ComponentSettings.Builder {
 
         private String tableId;
         private Field streamIdField;
@@ -302,6 +303,7 @@ public class TextComponentSettings implements ComponentSettings {
             return this;
         }
 
+        @Override
         public TextComponentSettings build() {
             return new TextComponentSettings(
                     tableId,
