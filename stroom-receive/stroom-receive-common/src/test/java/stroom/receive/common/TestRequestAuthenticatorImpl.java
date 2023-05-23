@@ -136,7 +136,7 @@ class TestRequestAuthenticatorImpl {
                                 TokenState.FOUND,
                                 CertState.NOT_FOUND,
                                 Optional.empty()),
-                        Tuple.of(null, StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED))
+                        Tuple.of(null, StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED))
                 .addNamedCase(
                         "token only - Token not found, cert found but ignored",
                         new Input(

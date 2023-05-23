@@ -94,13 +94,8 @@ public class ReceiveDataHelper {
             // Add the proxy request id to help error diagnosis.
             attributeMap.put(proxyIdString, requestUuid);
 
-            final StroomStreamException stroomStreamException;
-            if (e instanceof StroomStreamException) {
-                stroomStreamException = (StroomStreamException) e;
-            } else {
-                stroomStreamException = StroomStreamException.create(
-                        e, AttributeMapUtil.create(request, certificateExtractor));
-            }
+            final StroomStreamException stroomStreamException = StroomStreamException.create(
+                    e, AttributeMapUtil.create(request, certificateExtractor));
 
             final StroomStreamStatus status = stroomStreamException.getStroomStreamStatus();
             LOGGER.debug("\"handleException()\",{},\"{}\"",

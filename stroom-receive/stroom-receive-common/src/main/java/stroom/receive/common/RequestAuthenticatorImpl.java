@@ -53,14 +53,19 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         final boolean foundToken = userIdentityFactory.hasAuthenticationToken(request);
         if (isTokenAuthEnabled) {
             if (foundToken) {
-                optUserIdentity = userIdentityFactory.getApiUserIdentity(request);
-                if (optUserIdentity.isEmpty() && isAuthRequired && !isCertAuthEnabled) {
-                    throwFunc.accept(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED);
+                try {
+                    optUserIdentity = userIdentityFactory.getApiUserIdentity(request);
+                    if (optUserIdentity.isEmpty() && isAuthRequired && !isCertAuthEnabled) {
+                        throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED, attributeMap);
+                    }
+                } catch (Exception e) {
+                    throw new StroomStreamException(
+                            StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED, attributeMap, e.getMessage());
                 }
             } else {
                 // No token found
                 if (isAuthRequired && !isCertAuthEnabled) {
-                    throwFunc.accept(StroomStatusCode.CLIENT_TOKEN_REQUIRED);
+                    throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
                 }
             }
         } else if (LOGGER.isDebugEnabled() && foundToken) {
@@ -81,9 +86,11 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                     // No cert found
                     if (isAuthRequired) {
                         if (isTokenAuthEnabled) {
-                            throwFunc.accept(StroomStatusCode.CLIENT_TOKEN_OR_CERT_REQUIRED);
+                            throw new StroomStreamException(
+                                    StroomStatusCode.CLIENT_TOKEN_OR_CERT_REQUIRED, attributeMap);
                         } else {
-                            throwFunc.accept(StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED);
+                            throw new StroomStreamException(
+                                    StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED, attributeMap);
                         }
                     }
                 }

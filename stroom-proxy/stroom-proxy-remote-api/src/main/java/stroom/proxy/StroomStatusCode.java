@@ -38,21 +38,22 @@ public enum StroomStatusCode {
             "Client Token or Certificate Required",
             "The feed you have provided requires a client HTTPS certificate to send data"),
 
-    CLIENT_CERTIFICATE_NOT_AUTHORISED(
-            HttpServletResponse.SC_FORBIDDEN,
+    CLIENT_CERTIFICATE_NOT_AUTHENTICATED(
+            HttpServletResponse.SC_UNAUTHORIZED,
             310,
-            "Client Certificate not authorised",
+            "Client Certificate failed authentication",
             "The feed you have provided does not allow your client certificate to send data"),
 
-    CLIENT_TOKEN_NOT_AUTHORISED(
-            HttpServletResponse.SC_FORBIDDEN,
+    CLIENT_TOKEN_NOT_AUTHENTICATED(
+            HttpServletResponse.SC_UNAUTHORIZED,
             311,
-            "Client Token not authorised",
+            "Client Token failed authentication",
             "The provided client token cannot be authorised"),
 
-    CLIENT_TOKEN_OR_CERT_NOT_AUTHORISED(HttpServletResponse.SC_FORBIDDEN,
+    CLIENT_TOKEN_OR_CERT_NOT_AUTHENTICATED(
+            HttpServletResponse.SC_UNAUTHORIZED,
             312,
-            "Client Token or Certificate not authorised",
+            "Client Token or Certificate failed authentication",
             "The provided client token or certificate cannot be authorised"),
 
     COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
