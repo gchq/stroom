@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
@@ -81,11 +80,9 @@ class SecurityContextImpl implements SecurityContext {
     public UserIdentity createIdentity(final String userId) {
         Objects.requireNonNull(userId, "Null user id provided");
         // Inject as provider to avoid circular dep issues
-        final Optional<User> optional = userCacheProvider.get().getOrCreate(userId);
-        if (optional.isEmpty()) {
-            throw new AuthenticationException("Unable to find user with id=" + userId);
-        }
-        return new BasicUserIdentity(optional.get().getUuid(), userId);
+        return userCacheProvider.get().getOrCreate(userId)
+                .map(BasicUserIdentity::new)
+                .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + userId));
     }
 
     @Override

@@ -59,6 +59,7 @@ public class JerseyModule extends AbstractModule {
             final Client client = jerseyClientFactory.getNamedClient(clientName);
             final WebTarget delegateWebTarget = client.target(url);
             LOGGER.debug("Building WebTarget for client: '{}', url: '{}'", clientName, url);
+
             return (WebTarget) new WebTargetProxy(delegateWebTarget) {
                 @Override
                 public Builder request() {
@@ -83,14 +84,26 @@ public class JerseyModule extends AbstractModule {
 
                 private void addAuthHeader(final Builder builder) {
                     final UserIdentity userIdentity = securityContext.getUserIdentity();
-                    final Map<String, String> authHeaders = userIdentityFactoryProvider.get()
-                            .getAuthHeaders(userIdentity);
+
+                    final UserIdentityFactory userIdentityFactory = userIdentityFactoryProvider.get();
+                    if (!userIdentityFactory.isServiceUserIdentity(userIdentity)) {
+                        // We are running as a user who is not the service/proc user so need to put their
+                        // identity in the headers. We can't use the human user identity as they may have
+                        // an AWS token that we can't refresh.
+                        builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, userIdentity.getId());
+                    }
+                    // Always authenticate as the proc user
+                    final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
+                    final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
+
                     LOGGER.debug(() -> LogUtil.message("Adding auth headers to request, keys: '{}', userType: {}",
                             String.join(", ", NullSafe.map(authHeaders).keySet()),
                             NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName)));
+
                     authHeaders.forEach(builder::header);
                 }
             };
         };
     }
+
 }
