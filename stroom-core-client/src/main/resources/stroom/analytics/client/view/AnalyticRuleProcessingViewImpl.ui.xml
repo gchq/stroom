@@ -5,10 +5,10 @@
              xmlns:d="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="alertRuleSettingsEnabled" label="Enabled">
+        <form:FormGroup identity="analyticRuleSettingsEnabled" label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabled"/>
         </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsTimeToWaitForData" label="Time To Wait For Data To Arrive">
+        <form:FormGroup identity="analyticRuleSettingsTimeToWaitForData" label="Time To Wait For Data To Arrive">
             <d:DurationPicker ui:field="timeToWaitForData"/>
         </form:FormGroup>
     </g:FlowPanel>

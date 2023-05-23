@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -75,6 +76,7 @@ public class AnalyticRuleSettingsPresenter
         getView().setDescription(alertRule.getDescription());
         getView().setLanguageVersion(alertRule.getLanguageVersion());
         getView().setAnalyticRuleType(alertRule.getAnalyticRuleType());
+        getView().setDataRetention(alertRule.getDataRetention());
         currentFeed = alertRule.getDestinationFeed();
         feedPresenter.setSelectedEntityReference(currentFeed);
     }
@@ -86,6 +88,7 @@ public class AnalyticRuleSettingsPresenter
                 .languageVersion(getView().getLanguageVersion())
                 .analyticRuleType(getView().getAnalyticRuleType())
                 .destinationFeed(feedPresenter.getSelectedEntityReference())
+                .dataRetention(getView().getDataRetention())
                 .build();
     }
 
@@ -114,5 +117,9 @@ public class AnalyticRuleSettingsPresenter
         void setAnalyticRuleType(AnalyticRuleType analyticRuleType);
 
         void setDestinationFeedView(View view);
+
+        SimpleDuration getDataRetention();
+
+        void setDataRetention(SimpleDuration dataRetention);
     }
 }

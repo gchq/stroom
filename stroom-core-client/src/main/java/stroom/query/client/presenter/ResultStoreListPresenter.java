@@ -26,6 +26,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -192,7 +193,8 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
 
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             final ResultStoreInfo selected = getSelectionModel().getSelected();
-            if (selected == null) {
+            if (selected == null ||
+                    SourceType.ANALYTIC_RULE.equals(selected.getSearchRequestSource().getSourceType())) {
                 terminateButton.setEnabled(false);
                 deleteButton.setEnabled(false);
                 settingsButton.setEnabled(false);

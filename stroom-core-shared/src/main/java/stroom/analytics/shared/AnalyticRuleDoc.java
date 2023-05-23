@@ -19,6 +19,7 @@ package stroom.analytics.shared;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.QueryKey;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,6 +48,8 @@ public class AnalyticRuleDoc extends Doc {
     private final DocRef destinationFeed;
     @JsonProperty
     private final AnalyticRuleProcessSettings processSettings;
+    @JsonProperty
+    private final SimpleDuration dataRetention;
 
     public AnalyticRuleDoc() {
         description = null;
@@ -55,6 +58,7 @@ public class AnalyticRuleDoc extends Doc {
         analyticRuleType = null;
         destinationFeed = null;
         processSettings = null;
+        dataRetention = null;
     }
 
     @JsonCreator
@@ -71,7 +75,8 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("query") final String query,
                            @JsonProperty("analyticRuleType") AnalyticRuleType analyticRuleType,
                            @JsonProperty("destinationFeed") final DocRef destinationFeed,
-                           @JsonProperty("processSettings") AnalyticRuleProcessSettings processSettings) {
+                           @JsonProperty("processSettings") AnalyticRuleProcessSettings processSettings,
+                           @JsonProperty("dataRetention") SimpleDuration dataRetention) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
@@ -79,6 +84,7 @@ public class AnalyticRuleDoc extends Doc {
         this.analyticRuleType = analyticRuleType;
         this.destinationFeed = destinationFeed;
         this.processSettings = processSettings;
+        this.dataRetention = dataRetention;
     }
 
     /**
@@ -126,6 +132,10 @@ public class AnalyticRuleDoc extends Doc {
         return new QueryKey(getUuid() + " - " + getName());
     }
 
+    public SimpleDuration getDataRetention() {
+        return dataRetention;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -143,7 +153,8 @@ public class AnalyticRuleDoc extends Doc {
                 Objects.equals(query, that.query) &&
                 analyticRuleType == that.analyticRuleType &&
                 Objects.equals(destinationFeed, that.destinationFeed) &&
-                Objects.equals(processSettings, that.processSettings);
+                Objects.equals(processSettings, that.processSettings) &&
+                Objects.equals(dataRetention, that.dataRetention);
     }
 
     @Override
@@ -154,7 +165,8 @@ public class AnalyticRuleDoc extends Doc {
                 query,
                 analyticRuleType,
                 destinationFeed,
-                processSettings);
+                processSettings,
+                dataRetention);
     }
 
     @Override
@@ -166,6 +178,7 @@ public class AnalyticRuleDoc extends Doc {
                 ", alertRuleType=" + analyticRuleType +
                 ", destinationFeed=" + destinationFeed +
                 ", processSettings=" + processSettings +
+                ", dataRetention=" + dataRetention +
                 '}';
     }
 
@@ -185,6 +198,7 @@ public class AnalyticRuleDoc extends Doc {
         private AnalyticRuleType analyticRuleType;
         private DocRef destinationFeed;
         private AnalyticRuleProcessSettings processSettings;
+        private SimpleDuration dataRetention;
 
         public Builder() {
         }
@@ -197,6 +211,7 @@ public class AnalyticRuleDoc extends Doc {
             this.analyticRuleType = doc.analyticRuleType;
             this.destinationFeed = doc.destinationFeed;
             this.processSettings = doc.processSettings;
+            this.dataRetention = doc.dataRetention;
         }
 
         public Builder description(final String description) {
@@ -229,6 +244,11 @@ public class AnalyticRuleDoc extends Doc {
             return self();
         }
 
+        public Builder dataRetention(final SimpleDuration dataRetention) {
+            this.dataRetention = dataRetention;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -250,7 +270,8 @@ public class AnalyticRuleDoc extends Doc {
                     query,
                     analyticRuleType,
                     destinationFeed,
-                    processSettings);
+                    processSettings,
+                    dataRetention);
         }
     }
 }

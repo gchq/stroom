@@ -6,6 +6,7 @@ import stroom.node.api.NodeService;
 import stroom.query.api.v2.FindResultStoreCriteria;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.shared.DestroyStoreRequest;
 import stroom.query.shared.ResultStoreResource;
@@ -16,8 +17,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
@@ -30,11 +33,15 @@ public class ResultStoreResourceImpl implements ResultStoreResource {
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<ResultStoreManager> resultStoreManagerProvider;
 
+    private final Set<HasResultStoreInfo> resultStoreInfoSet;
+
     @Inject
     public ResultStoreResourceImpl(final Provider<ResultStoreManager> resultStoreManagerProvider,
+                                   final Set<HasResultStoreInfo> resultStoreInfoSet,
                                    final Provider<NodeService> nodeServiceProvider) {
         this.resultStoreManagerProvider = resultStoreManagerProvider;
         this.nodeServiceProvider = nodeServiceProvider;
+        this.resultStoreInfoSet = resultStoreInfoSet;
     }
 
     @AutoLogged(OperationType.UNLOGGED) // Called for each node so too noisy to log and of limited benefit
@@ -56,12 +63,17 @@ public class ResultStoreResourceImpl implements ResultStoreResource {
                                     ResultStoreResource.FIND_PATH_PART,
                                     nodeName),
                             () -> {
-                                final ResultPage<ResultStoreInfo> resultPage = resultStoreManagerProvider.get()
-                                        .find(criteria);
+                                final List<ResultStoreInfo> list = new ArrayList<>();
+                                resultStoreInfoSet.forEach(provider -> {
+                                    final ResultPage<ResultStoreInfo> resultPage = provider
+                                            .find(criteria);
+                                    list.addAll(resultPage.getValues());
+                                });
+
                                 return new ResultStoreResponse(
-                                        resultPage.getValues(),
+                                        list,
                                         Collections.emptyList(),
-                                        resultPage.getPageResponse());
+                                        ResultPage.createPageResponse(list));
                             },
                             builder ->
                                     builder.post(Entity.json(criteria)));

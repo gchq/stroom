@@ -53,7 +53,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public final class ResultStoreManager implements Clearable {
+public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreManager.class);
 
@@ -595,6 +595,7 @@ public final class ResultStoreManager implements Clearable {
         resultStoreMap.forEach(this::destroyAndRemove);
     }
 
+    @Override
     public ResultPage<ResultStoreInfo> find(final FindResultStoreCriteria criteria) {
         final List<ResultStoreInfo> list = new ArrayList<>();
         resultStoreMap.forEach((queryKey, resultStore) -> {

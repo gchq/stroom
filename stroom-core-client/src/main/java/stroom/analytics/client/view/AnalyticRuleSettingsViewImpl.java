@@ -22,10 +22,14 @@ import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.ItemListBox;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.customdatebox.client.DurationPicker;
 
 import com.google.gwt.event.dom.client.InputEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -50,6 +54,8 @@ public class AnalyticRuleSettingsViewImpl
     FlowPanel aggregateSettings;
     @UiField
     SimplePanel destinationFeed;
+    @UiField
+    DurationPicker dataRetention;
 
     @Inject
     public AnalyticRuleSettingsViewImpl(final Binder binder) {
@@ -116,8 +122,23 @@ public class AnalyticRuleSettingsViewImpl
     }
 
     @Override
+    public SimpleDuration getDataRetention() {
+        return dataRetention.getValue();
+    }
+
+    @Override
+    public void setDataRetention(final SimpleDuration dataRetention) {
+        this.dataRetention.setValue(dataRetention);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
+    }
+
+    @UiHandler("dataRetention")
+    public void onDataRetention(final ValueChangeEvent<SimpleDuration> event) {
+        getUiHandlers().onDirty();
     }
 
     public interface Binder extends UiBinder<Widget, AnalyticRuleSettingsViewImpl> {

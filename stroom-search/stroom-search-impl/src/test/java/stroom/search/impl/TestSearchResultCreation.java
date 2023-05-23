@@ -23,7 +23,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -96,7 +95,6 @@ class TestSearchResultCreation {
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
                 SearchResultStoreConfig::new,
-                AnalyticResultStoreConfig::new,
                 pathCreator,
                 () -> executorService);
     }

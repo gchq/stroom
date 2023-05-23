@@ -1,6 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AlertManager;
+import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
 import stroom.analytics.impl.RecordConsumer.Data;
 import stroom.analytics.impl.RecordConsumer.Record;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
@@ -88,7 +89,7 @@ public class AnalyticsExecutor {
     private final PipelineDataCache pipelineDataCache;
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
     private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
-    private final AggregateRuleValuesConsumerFactory aggregateRuleValuesConsumerFactory;
+    private final AnalyticDataStores analyticDataStores;
     private final Provider<AlertWriter2> alertWriterProvider;
     private final TaskContextFactory taskContextFactory;
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
@@ -113,7 +114,7 @@ public class AnalyticsExecutor {
                              final Provider<ExtractionStateHolder> extractionStateHolderProvider,
                              final TaskContextFactory taskContextFactory,
                              final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
-                             final AggregateRuleValuesConsumerFactory aggregateRuleValuesConsumerFactory,
+                             final AnalyticDataStores analyticDataStores,
                              final Provider<AlertWriter2> alertWriterProvider,
                              final AnalyticRuleStateDao analyticRuleStateDao,
                              final AnalyticErrorWritingExecutor analyticErrorWritingExecutor) {
@@ -130,7 +131,7 @@ public class AnalyticsExecutor {
         this.extractionStateHolderProvider = extractionStateHolderProvider;
         this.taskContextFactory = taskContextFactory;
         this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
-        this.aggregateRuleValuesConsumerFactory = aggregateRuleValuesConsumerFactory;
+        this.analyticDataStores = analyticDataStores;
         this.alertWriterProvider = alertWriterProvider;
         this.analyticRuleStateDao = analyticRuleStateDao;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
@@ -138,19 +139,16 @@ public class AnalyticsExecutor {
 
     public void exec() {
         securityContext.asProcessingUser(() -> {
+            // Delete old data stores.
+            analyticDataStores.deleteOldStores();
+
             // Get views for each analytic rule.
             final List<DocRef> docRefList = analyticRuleStore.list();
             for (final DocRef docRef : docRefList) {
                 try {
                     final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
                     if (analyticRuleDoc != null) {
-                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
-                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
-                        if (dataSource != null && ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                            process(analyticRuleDoc, searchRequest, dataSource);
-                        } else {
-                            LOGGER.error("Rule needs to reference a view");
-                        }
+                        process(analyticRuleDoc);
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
@@ -159,9 +157,7 @@ public class AnalyticsExecutor {
         });
     }
 
-    private void process(final AnalyticRuleDoc analyticRuleDoc,
-                         final SearchRequest searchRequest,
-                         final DocRef dataSource) {
+    private void process(final AnalyticRuleDoc analyticRuleDoc) {
         taskContextFactory.context(
                 "Analytic: " + analyticRuleDoc.getName() + " (" + analyticRuleDoc.getUuid() + ")",
                 parentTaskContext -> {
@@ -171,17 +167,11 @@ public class AnalyticsExecutor {
                             if (AnalyticRuleType.EVENT.equals(analyticRuleDoc.getAnalyticRuleType())) {
                                 processEventAnalytic(
                                         analyticRuleDoc,
-                                        searchRequest,
-                                        dataSource,
-                                        searchRequest.getKey(),
                                         parentTaskContext);
 
                             } else if (AnalyticRuleType.AGGREGATE.equals(analyticRuleDoc.getAnalyticRuleType())) {
                                 processAggregateAnalytic(
                                         analyticRuleDoc,
-                                        searchRequest,
-                                        dataSource,
-                                        searchRequest.getKey(),
                                         parentTaskContext);
                             }
                         } catch (final RuntimeException e) {
@@ -210,10 +200,14 @@ public class AnalyticsExecutor {
     }
 
     private void processEventAnalytic(final AnalyticRuleDoc analyticRuleDoc,
-                                      final SearchRequest searchRequest,
-                                      final DocRef dataSource,
-                                      final QueryKey queryKey,
                                       final TaskContext parentTaskContext) {
+        final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
+        final DocRef dataSource = searchRequest.getQuery().getDataSource();
+        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+            LOGGER.error("Rule needs to reference a view");
+            throw new RuntimeException("Rule needs to reference a view");
+        }
+
         // Establish the analytic rule state.
         final String analyticUuid = analyticRuleDoc.getUuid();
         AnalyticRuleState analyticRuleState = getAnalyticRuleState(analyticUuid, null);
@@ -275,7 +269,7 @@ public class AnalyticsExecutor {
 
                                     final ExtractionStateHolder extractionStateHolder =
                                             extractionStateHolderProvider.get();
-                                    extractionStateHolder.setQueryKey(queryKey);
+                                    extractionStateHolder.setQueryKey(searchRequest.getKey());
                                     extractionStateHolder.setFieldListConsumer(analyticFieldListConsumer);
                                     extractionStateHolder.setFieldIndex(fieldIndex);
 
@@ -308,12 +302,13 @@ public class AnalyticsExecutor {
     }
 
     private void processAggregateAnalytic(final AnalyticRuleDoc analyticRuleDoc,
-                                          final SearchRequest searchRequest,
-                                          final DocRef dataSource,
-                                          final QueryKey queryKey,
                                           final TaskContext parentTaskContext) {
+        final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
+        final SearchRequest searchRequest = dataStore.searchRequest();
+        final DocRef dataSource = searchRequest.getQuery().getDataSource();
+
         // Get or create LMDB data store.
-        final LmdbDataStore lmdbDataStore = aggregateRuleValuesConsumerFactory.create(searchRequest);
+        final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
         CurrentDbState currentDbState = lmdbDataStore.sync();
 
         // Establish the analytic rule state.
@@ -377,7 +372,7 @@ public class AnalyticsExecutor {
 
                                     final ExtractionStateHolder extractionStateHolder =
                                             extractionStateHolderProvider.get();
-                                    extractionStateHolder.setQueryKey(queryKey);
+                                    extractionStateHolder.setQueryKey(searchRequest.getKey());
                                     extractionStateHolder.setFieldListConsumer(analyticFieldListConsumer);
                                     extractionStateHolder.setFieldIndex(fieldIndex);
 
@@ -414,11 +409,11 @@ public class AnalyticsExecutor {
         }
 
         // Now run aggregate rule.
-        runAggregateAnalyticRule(analyticRuleDoc, lmdbDataStore, currentDbState, analyticRuleState, parentTaskContext);
+        runAggregateAnalyticRule(analyticRuleDoc, dataStore, currentDbState, analyticRuleState, parentTaskContext);
     }
 
     private void runAggregateAnalyticRule(final AnalyticRuleDoc analyticRuleDoc,
-                                          final LmdbDataStore lmdbDataStore,
+                                          final AnalyticDataStore dataStore,
                                           final CurrentDbState currentDbState,
                                           final AnalyticRuleState analyticRuleState,
                                           final TaskContext parentTaskContext) {
@@ -439,7 +434,7 @@ public class AnalyticsExecutor {
                             execThresholdAnalyticRule(analyticRuleDoc,
                                     analyticRuleDoc.getProcessSettings(),
                                     detectionsWriter,
-                                    lmdbDataStore,
+                                    dataStore,
                                     currentDbState,
                                     analyticRuleState);
                         } catch (final RuntimeException e) {
@@ -455,9 +450,11 @@ public class AnalyticsExecutor {
     private void execThresholdAnalyticRule(final AnalyticRuleDoc analyticRuleDoc,
                                            final AnalyticRuleProcessSettings processSettings,
                                            final RecordConsumer recordConsumer,
-                                           final LmdbDataStore lmdbDataStore,
+                                           final AnalyticDataStore dataStore,
                                            final CurrentDbState currentDbState,
                                            final AnalyticRuleState analyticRuleState) {
+        SearchRequest searchRequest = dataStore.searchRequest();
+        final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
         final QueryKey queryKey = analyticRuleDoc.getQueryKey();
         final SimpleDuration timeToWaitForData = processSettings.getTimeToWaitForData();
         final Long lastTime = analyticRuleState.lastExecutionTime();
@@ -478,8 +475,6 @@ public class AnalyticsExecutor {
                 .orElse(BEGINNING_OF_TIME);
         to = SimpleDurationUtil.minus(to, timeToWaitForData);
         if (to.isAfter(from)) {
-            // Create a search request.
-            SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
             // Create a time filter.
             final TimeFilter timeFilter = new TimeFilter(
                     from.toInstant(ZoneOffset.UTC).toEpochMilli(),
@@ -506,6 +501,30 @@ public class AnalyticsExecutor {
                     .lastExecutionTime(to.toInstant(ZoneOffset.UTC).toEpochMilli())
                     .build();
             updateAnalyticRuleState(newState);
+
+            // Delete old data from the DB.
+            applyDataRetentionRules(lmdbDataStore, analyticRuleDoc);
+        }
+    }
+
+    private void applyDataRetentionRules(final LmdbDataStore lmdbDataStore,
+                                         final AnalyticRuleDoc analyticRuleDoc) {
+        final SimpleDuration dataRetention = analyticRuleDoc.getDataRetention();
+        if (dataRetention != null) {
+            final CurrentDbState currentDbState = lmdbDataStore.sync();
+
+            final LocalDateTime from = BEGINNING_OF_TIME;
+            LocalDateTime to = Optional
+                    .ofNullable(currentDbState)
+                    .map(CurrentDbState::getLastEventTime)
+                    .map(time -> LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneOffset.UTC))
+                    .orElse(BEGINNING_OF_TIME);
+            to = SimpleDurationUtil.minus(to, dataRetention);
+
+            // Create a time filter.
+            final TimeFilter timeFilter = new TimeFilter(
+                    from.toInstant(ZoneOffset.UTC).toEpochMilli(),
+                    to.toInstant(ZoneOffset.UTC).toEpochMilli());
 
             // Delete old data from the DB.
             lmdbDataStore.delete(new DeleteCommand(Key.ROOT_KEY, timeFilter));
