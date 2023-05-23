@@ -61,9 +61,4 @@ public class XMLParser extends AbstractParser {
         }
         return parser.getXMLReader();
     }
-
-    @Override
-    protected InputSource getInputSource(final InputSource inputSource) {
-        return inputSource;
-    }
 }
