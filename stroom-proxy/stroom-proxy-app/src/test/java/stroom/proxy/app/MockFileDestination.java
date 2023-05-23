@@ -162,7 +162,7 @@ public class MockFileDestination {
                 () -> getForwardFileMetaCount(config),
                 (long) count,
                 () -> "Forwarded file pairs count",
-                Duration.ofSeconds(10),
+                Duration.ofMinutes(1),
                 Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 

@@ -53,7 +53,7 @@ class Subtract extends NumericFunction {
 
 
         @Override
-        protected double op(final double cur, final double val) {
+        double op(final double cur, final double val) {
             return cur - val;
         }
     }

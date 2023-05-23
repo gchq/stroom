@@ -16,7 +16,6 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.language.PipeGroup.PipeOperation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,16 +58,16 @@ public class SearchRequestBuilder {
         List<AbstractToken> remaining = addDataSource(childTokens, queryBuilder::dataSource);
 
         // Add where expression.
-        remaining = addExpression(remaining, PipeOperation.WHERE, queryBuilder::expression);
+        remaining = addExpression(remaining, TokenType.WHERE, queryBuilder::expression);
 
         // Try to make a query.
         Query query = queryBuilder.build();
         if (query.getDataSource() == null) {
             throw new TokenException(null, "No data source has been specified.");
         }
-        if (query.getExpression() == null) {
-            throw new TokenException(null, "No query expression has been defined, are you missing a `where` clause?");
-        }
+//        if (query.getExpression() == null) {
+//            throw new TokenException(null, "No query expression has been defined, are you missing a `where` clause?");
+//        }
 
         // Create result requests.
         final List<ResultRequest> resultRequests = new ArrayList<>();
@@ -85,39 +84,54 @@ public class SearchRequestBuilder {
     }
 
     private List<AbstractToken> addDataSource(final List<AbstractToken> tokens, final Consumer<DocRef> consumer) {
-        final AbstractToken firstToken = tokens.get(0);
-        if (!TokenType.STRING.equals(firstToken.getTokenType()) &&
-                !TokenType.SINGLE_QUOTED_STRING.equals(firstToken.getTokenType()) &&
-                !TokenType.DOUBLE_QUOTED_STRING.equals(firstToken.getTokenType())) {
-            throw new TokenException(firstToken, "Expected string");
+        AbstractToken token = tokens.get(0);
+
+        // The first token must be `FROM`.
+        if (!TokenType.FROM.equals(token.getTokenType())) {
+            throw new TokenException(token, "Expected from");
         }
-        final String dataSourceName = firstToken.getUnescapedText();
+
+        final KeywordGroup keywordGroup = (KeywordGroup) token;
+        if (keywordGroup.getChildren().size() == 0) {
+            throw new TokenException(token, "Expected data source");
+        } else if (keywordGroup.getChildren().size() > 1) {
+            throw new TokenException(keywordGroup.getChildren().get(1), "Unexpected token");
+        }
+
+        AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
+        if (!TokenType.STRING.equals(dataSourceToken.getTokenType()) &&
+                !TokenType.SINGLE_QUOTED_STRING.equals(dataSourceToken.getTokenType()) &&
+                !TokenType.DOUBLE_QUOTED_STRING.equals(dataSourceToken.getTokenType())) {
+            throw new TokenException(dataSourceToken, "Expected string");
+        }
+        final String dataSourceName = dataSourceToken.getUnescapedText();
         final DocRef dataSource = new DocRef(null, null, dataSourceName);
         consumer.accept(dataSource);
+
         return tokens.subList(1, tokens.size());
     }
 
     private List<AbstractToken> addExpression(final List<AbstractToken> tokens,
-                                              final PipeOperation pipeOperation,
+                                              final TokenType pipeOperation,
                                               final Consumer<ExpressionOperator> expressionConsumer) {
         List<AbstractToken> whereGroup = null;
         int i = 0;
         for (; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
-            if (token instanceof PipeGroup) {
-                final PipeGroup pipeGroup = (PipeGroup) token;
-                if (pipeOperation.equals(pipeGroup.getPipeOperation())) {
+            if (token instanceof final KeywordGroup keywordGroup) {
+                final TokenType tokenType = keywordGroup.getTokenType();
+                if (pipeOperation.equals(tokenType)) {
                     if (whereGroup == null) {
                         whereGroup = new ArrayList<>();
                     }
-                    whereGroup.add(pipeGroup);
-                } else if (PipeOperation.AND.equals(pipeGroup.getPipeOperation()) ||
-                        PipeOperation.OR.equals(pipeGroup.getPipeOperation()) ||
-                        PipeOperation.NOT.equals(pipeGroup.getPipeOperation())) {
+                    whereGroup.add(keywordGroup);
+                } else if (TokenType.AND.equals(tokenType) ||
+                        TokenType.OR.equals(tokenType) ||
+                        TokenType.NOT.equals(tokenType)) {
                     if (whereGroup == null) {
                         throw new TokenException(token, "Unexpected token");
                     }
-                    whereGroup.add(pipeGroup);
+                    whereGroup.add(keywordGroup);
                 } else {
                     break;
                 }
@@ -127,6 +141,8 @@ public class SearchRequestBuilder {
         if (whereGroup != null && whereGroup.size() > 0) {
             final ExpressionOperator expressionOperator = processLogic(whereGroup);
             expressionConsumer.accept(expressionOperator);
+        } else {
+            expressionConsumer.accept(ExpressionOperator.builder().build());
         }
 
         if (i < tokens.size()) {
@@ -139,6 +155,7 @@ public class SearchRequestBuilder {
             final List<AbstractToken> tokens,
             final ExpressionOperator.Builder parentBuilder) {
         if (tokens.size() < 3) {
+            // Ignore incomplete terms.
             return;
         }
 
@@ -146,41 +163,32 @@ public class SearchRequestBuilder {
         final AbstractToken condition = tokens.get(1);
         final StringBuilder value = new StringBuilder();
         for (int i = 2; i < tokens.size(); i++) {
-            value.append(" ");
-            value.append(tokens.get(i).getText());
+            final AbstractToken token = tokens.get(i);
+            if (TokenType.BETWEEN_AND.equals(token.getTokenType())) {
+                value.append(",");
+            } else {
+                value.append(" ");
+                value.append(token.getText());
+            }
         }
 
         // If we have a where clause then we expect the next token to contain an expression.
         Condition cond;
         boolean not = false;
         switch (condition.getTokenType()) {
-            case EQUALS:
-                cond = Condition.EQUALS;
-                break;
-            case NOT_EQUALS:
+            case EQUALS -> cond = Condition.EQUALS;
+            case NOT_EQUALS -> {
                 cond = Condition.EQUALS;
                 not = true;
-                break;
-            case GREATER_THAN:
-                cond = Condition.GREATER_THAN;
-                break;
-            case GREATER_THAN_OR_EQUAL_TO:
-                cond = Condition.GREATER_THAN_OR_EQUAL_TO;
-                break;
-            case LESS_THAN:
-                cond = Condition.LESS_THAN;
-                break;
-            case LESS_THAN_OR_EQUAL_TO:
-                cond = Condition.LESS_THAN_OR_EQUAL_TO;
-                break;
-            case IS_NULL:
-                cond = Condition.IS_NULL;
-                break;
-            case IS_NOT_NULL:
-                cond = Condition.IS_NOT_NULL;
-                break;
-            default:
-                throw new TokenException(condition, "Unknown condition: " + condition);
+            }
+            case GREATER_THAN -> cond = Condition.GREATER_THAN;
+            case GREATER_THAN_OR_EQUAL_TO -> cond = Condition.GREATER_THAN_OR_EQUAL_TO;
+            case LESS_THAN -> cond = Condition.LESS_THAN;
+            case LESS_THAN_OR_EQUAL_TO -> cond = Condition.LESS_THAN_OR_EQUAL_TO;
+            case IS_NULL -> cond = Condition.IS_NULL;
+            case IS_NOT_NULL -> cond = Condition.IS_NOT_NULL;
+            case BETWEEN -> cond = Condition.BETWEEN;
+            default -> throw new TokenException(condition, "Unknown condition: " + condition);
         }
 
         final ExpressionTerm expressionTerm = ExpressionTerm
@@ -216,7 +224,7 @@ public class SearchRequestBuilder {
                             TokenType.OR.equals(tokenType) ||
                             TokenType.NOT.equals(tokenType);
 
-            if (!(token instanceof PipeGroup) &&
+            if (!(token instanceof KeywordGroup) &&
                     !(token instanceof TokenGroup) &&
                     !logic) {
 
@@ -225,21 +233,20 @@ public class SearchRequestBuilder {
 
             } else {
                 // Add current term.
-                addTerm(termTokens, builder);
-                termTokens.clear();
+                if (termTokens.size() > 0) {
+                    addTerm(termTokens, builder);
+                    termTokens.clear();
+                }
 
-                if (token instanceof PipeGroup) {
-                    final PipeGroup pipeGroup = (PipeGroup) token;
-                    final PipeOperation pipeOperation = pipeGroup.getPipeOperation();
-                    switch (pipeOperation) {
-                        case WHERE, HAVING, FILTER, AND -> builder = addAnd(builder, pipeGroup.getChildren());
-                        case OR -> builder = addOr(builder, pipeGroup.getChildren());
-                        case NOT -> builder = addNot(builder, pipeGroup.getChildren());
+                if (token instanceof final KeywordGroup keywordGroup) {
+                    switch (tokenType) {
+                        case WHERE, HAVING, FILTER, AND -> builder = addAnd(builder, keywordGroup.getChildren());
+                        case OR -> builder = addOr(builder, keywordGroup.getChildren());
+                        case NOT -> builder = addNot(builder, keywordGroup.getChildren());
                         default -> throw new TokenException(token, "Unexpected pipe operation in query");
                     }
 
-                } else if (token instanceof TokenGroup) {
-                    TokenGroup tokenGroup = (TokenGroup) token;
+                } else if (token instanceof final TokenGroup tokenGroup) {
                     builder = addAnd(builder, tokenGroup.getChildren());
 
                 } else if (logic) {
@@ -323,34 +330,33 @@ public class SearchRequestBuilder {
         List<AbstractToken> remaining = new LinkedList<>(tokens);
         while (remaining.size() > 0 && lastTokenCount != remaining.size()) {
             final AbstractToken token = remaining.get(0);
-            if (token instanceof PipeGroup) {
-                final PipeGroup pipeGroup = (PipeGroup) token;
-                switch (pipeGroup.getPipeOperation()) {
+            if (token instanceof final KeywordGroup keywordGroup) {
+                switch (keywordGroup.getTokenType()) {
                     case FILTER -> {
                         remaining =
-                                addExpression(remaining, PipeOperation.FILTER, tableSettingsBuilder::valueFilter);
+                                addExpression(remaining, TokenType.FILTER, tableSettingsBuilder::valueFilter);
                     }
                     case EVAL -> {
                         processEvalPipeOperation(
-                                pipeGroup,
+                                keywordGroup,
                                 functions);
                         remaining.remove(0);
                     }
                     case WINDOW -> {
                         processWindowPipeOperation(
-                                pipeGroup,
+                                keywordGroup,
                                 tableSettingsBuilder);
                         remaining.remove(0);
                     }
                     case SORT -> {
                         processSortPipeOperation(
-                                pipeGroup,
+                                keywordGroup,
                                 sortMap);
                         remaining.remove(0);
                     }
                     case GROUP -> {
                         processGroupPipeOperation(
-                                pipeGroup,
+                                keywordGroup,
                                 groupMap,
                                 groupDepth);
                         groupDepth++;
@@ -358,11 +364,11 @@ public class SearchRequestBuilder {
                     }
                     case HAVING -> {
                         remaining =
-                                addExpression(remaining, PipeOperation.HAVING, tableSettingsBuilder::aggregateFilter);
+                                addExpression(remaining, TokenType.HAVING, tableSettingsBuilder::aggregateFilter);
                     }
-                    case TABLE -> {
-                        processTablePipeOperation(
-                                pipeGroup,
+                    case SELECT -> {
+                        processSelectOperation(
+                                keywordGroup,
                                 functions,
                                 sortMap,
                                 groupMap,
@@ -372,7 +378,7 @@ public class SearchRequestBuilder {
                     }
                     case LIMIT -> {
                         processLimitPipeOperation(
-                                pipeGroup,
+                                keywordGroup,
                                 tableSettingsBuilder);
                         remaining.remove(0);
                     }
@@ -443,9 +449,9 @@ public class SearchRequestBuilder {
 //        }
 //    }
 
-    private void processWindowPipeOperation(final PipeGroup pipeGroup,
+    private void processWindowPipeOperation(final KeywordGroup keywordGroup,
                                             final TableSettings.Builder builder) {
-        final List<AbstractToken> children = pipeGroup.getChildren();
+        final List<AbstractToken> children = keywordGroup.getChildren();
 
         String field = null;
         String durationString = null;
@@ -457,7 +463,7 @@ public class SearchRequestBuilder {
             }
             field = token.getUnescapedText();
         } else {
-            throw new TokenException(pipeGroup, "Expected field");
+            throw new TokenException(keywordGroup, "Expected field");
         }
 
         if (children.size() > 1) {
@@ -466,7 +472,7 @@ public class SearchRequestBuilder {
                 throw new TokenException(token, "Syntax exception, expected by");
             }
         } else {
-            throw new TokenException(pipeGroup, "Syntax exception, expected by");
+            throw new TokenException(keywordGroup, "Syntax exception, expected by");
         }
 
         if (children.size() > 2) {
@@ -476,7 +482,7 @@ public class SearchRequestBuilder {
             }
             durationString = token.getUnescapedText();
         } else {
-            throw new TokenException(pipeGroup, "Syntax exception, expected window duration");
+            throw new TokenException(keywordGroup, "Syntax exception, expected window duration");
         }
 
         if (children.size() > 3) {
@@ -495,7 +501,7 @@ public class SearchRequestBuilder {
                 }
                 advanceString = token.getUnescapedText();
             } else {
-                throw new TokenException(pipeGroup, "Syntax exception, expected advance duration");
+                throw new TokenException(keywordGroup, "Syntax exception, expected advance duration");
             }
         }
 
@@ -508,9 +514,9 @@ public class SearchRequestBuilder {
                 .build());
     }
 
-    private void processEvalPipeOperation(final PipeGroup pipeGroup,
+    private void processEvalPipeOperation(final KeywordGroup keywordGroup,
                                           final Map<String, String> functions) {
-        final List<AbstractToken> children = pipeGroup.getChildren();
+        final List<AbstractToken> children = keywordGroup.getChildren();
 
         String field = null;
         if (children.size() > 0) {
@@ -557,7 +563,7 @@ public class SearchRequestBuilder {
                 sb.append(ParamSubstituteUtil.makeParam(token.getUnescapedText()));
             }
         } else if (token instanceof QuotedStringToken) {
-            sb.append(((QuotedStringToken) token).getText());
+            sb.append(token.getText());
         } else {
             sb.append(token.getUnescapedText());
         }
@@ -575,13 +581,13 @@ public class SearchRequestBuilder {
         sb.append(")");
     }
 
-    private void processTablePipeOperation(final PipeGroup pipeGroup,
-                                           final Map<String, String> functions,
-                                           final Map<String, Sort> sortMap,
-                                           final Map<String, Integer> groupMap,
-                                           final Map<String, Filter> filterMap,
-                                           final TableSettings.Builder tableSettingsBuilder) {
-        final List<AbstractToken> children = pipeGroup.getChildren();
+    private void processSelectOperation(final KeywordGroup keywordGroup,
+                                        final Map<String, String> functions,
+                                        final Map<String, Sort> sortMap,
+                                        final Map<String, Integer> groupMap,
+                                        final Map<String, Filter> filterMap,
+                                        final TableSettings.Builder tableSettingsBuilder) {
+        final List<AbstractToken> children = keywordGroup.getChildren();
         String fieldName = null;
         String columnName = null;
         boolean afterAs = false;
@@ -648,9 +654,9 @@ public class SearchRequestBuilder {
         tableSettingsBuilder.addFields(field);
     }
 
-    private void processLimitPipeOperation(final PipeGroup pipeGroup,
+    private void processLimitPipeOperation(final KeywordGroup keywordGroup,
                                            final TableSettings.Builder tableSettingsBuilder) {
-        final List<AbstractToken> children = pipeGroup.getChildren();
+        final List<AbstractToken> children = keywordGroup.getChildren();
         for (final AbstractToken t : children) {
             if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
                 try {
@@ -666,11 +672,11 @@ public class SearchRequestBuilder {
         }
     }
 
-    private void processSortPipeOperation(final PipeGroup pipeGroup,
+    private void processSortPipeOperation(final KeywordGroup keywordGroup,
                                           final Map<String, Sort> sortMap) {
         String fieldName = null;
         SortDirection direction = null;
-        final List<AbstractToken> children = pipeGroup.getChildren();
+        final List<AbstractToken> children = keywordGroup.getChildren();
         boolean first = true;
         for (final AbstractToken t : children) {
             if (first && TokenType.BY.equals(t.getTokenType())) {
@@ -720,11 +726,11 @@ public class SearchRequestBuilder {
         }
     }
 
-    private void processGroupPipeOperation(final PipeGroup pipeGroup,
+    private void processGroupPipeOperation(final KeywordGroup keywordGroup,
                                            final Map<String, Integer> groupMap,
                                            final int groupDepth) {
         String fieldName = null;
-        final List<AbstractToken> children = pipeGroup.getChildren();
+        final List<AbstractToken> children = keywordGroup.getChildren();
         boolean first = true;
         for (final AbstractToken t : children) {
             if (first && TokenType.BY.equals(t.getTokenType())) {

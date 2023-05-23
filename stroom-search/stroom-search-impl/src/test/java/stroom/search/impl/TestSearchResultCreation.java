@@ -62,6 +62,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -462,11 +463,14 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
-            final Items dataItems = data.get(Key.ROOT_KEY, null);
-            final Item dataItem = dataItems.getIterable().iterator().next();
-            final Val val = dataItem.getValue(2, true);
-            assertThat(val.toLong())
-                    .isEqualTo(count);
+            final Optional<Items> optional = data.get(Key.ROOT_KEY, null);
+            assertThat(optional).isPresent();
+            optional.ifPresent(items -> {
+                final Item dataItem = items.getIterable().iterator().next();
+                final Val val = dataItem.getValue(2, true);
+                assertThat(val.toLong())
+                        .isEqualTo(count);
+            });
         });
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);

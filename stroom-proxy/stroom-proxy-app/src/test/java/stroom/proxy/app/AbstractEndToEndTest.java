@@ -78,7 +78,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
             }
         }
         if (didTimeout) {
-            // Get the healtcheck content so we can see what is wrong. Likely a feed status check issue
+            // Get the health check content so we can see what is wrong. Likely a feed status check issue
             final Map<String, Object> map = response.readEntity(new GenericType<Map<String, Object>>() {
             });
             throw new RuntimeException(LogUtil.message(

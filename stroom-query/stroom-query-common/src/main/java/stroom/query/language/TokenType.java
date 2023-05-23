@@ -6,16 +6,14 @@ public enum TokenType {
     // Uncategorized content.
     UNKNOWN,
 
-    PIPE,
     OPEN_BRACKET,
     CLOSE_BRACKET,
 
     // Structure
-    PIPE_GROUP,
     TOKEN_GROUP,
     FUNCTION_GROUP,
     FUNCTION_NAME,
-    PIPE_OPERATION,
+//    PIPE_OPERATION,
 
     // Strings
     WHITESPACE,
@@ -46,28 +44,52 @@ public enum TokenType {
     IS_NULL,
     IS_NOT_NULL,
 
-//    // Commands
-//    WHERE,
-//    TABLE,
-
     // Logic
     AND,
     OR,
     NOT,
 
+    // Other keywords
+    FROM,
+    WHERE,
+    EVAL,
+    SELECT,
+    SORT,
+    GROUP,
+    FILTER,
+    WINDOW,
+    LIMIT,
+    HAVING,
+
+    // Additional tokens
     BY,
     AS,
+    BETWEEN,
+    BETWEEN_AND,
 
 
     // Comments
     COMMENT,
     BLOCK_COMMENT;
 
-//    public static Set<TokenType> COMMANDS = Set.of(WHERE, TABLE);
+    public static final Set<TokenType> KEYWORDS = Set.of(
+            FROM,
+            WHERE,
+            AND,
+            OR,
+            NOT,
+            FILTER,
+            EVAL,
+            SELECT,
+            SORT,
+            GROUP,
+            WINDOW,
+            LIMIT,
+            HAVING);
 //
 //    public static Set<TokenType> QUERY = Set.of(WHERE, AND, OR, NOT);
-
-    public static Set<TokenType> LOGIC = Set.of(AND, OR, NOT);
+//
+//    public static Set<TokenType> LOGIC = Set.of(AND, OR, NOT);
 
     public static boolean isString(AbstractToken token) {
         return TokenType.STRING.equals(token.getTokenType()) ||

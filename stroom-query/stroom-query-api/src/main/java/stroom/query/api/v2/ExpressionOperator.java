@@ -58,8 +58,6 @@ import javax.xml.bind.annotation.XmlType;
         description = "A logical addOperator term in a query expression tree")
 public final class ExpressionOperator extends ExpressionItem {
 
-    private static final long serialVersionUID = 6602004424564268512L;
-
     @XmlElement(name = "op")
     @Schema(description = "The logical addOperator type",
             required = true)
@@ -227,7 +225,9 @@ public final class ExpressionOperator extends ExpressionItem {
         private Builder(final ExpressionOperator expressionOperator) {
             super(expressionOperator);
             this.op = expressionOperator.op;
-            this.children.addAll(expressionOperator.children);
+            if (expressionOperator.children != null) {
+                this.children.addAll(expressionOperator.children);
+            }
         }
 
         /**

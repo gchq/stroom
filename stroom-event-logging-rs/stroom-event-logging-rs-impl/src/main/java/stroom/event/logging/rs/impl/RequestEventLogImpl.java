@@ -21,6 +21,9 @@ import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
@@ -37,6 +40,8 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 class RequestEventLogImpl implements RequestEventLog {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RequestEventLogImpl.class);
 
     private final Injector injector;
     private final LoggingConfig config;
@@ -59,18 +64,21 @@ class RequestEventLogImpl implements RequestEventLog {
 
     @Override
     public void log(final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error) {
-        if (!requestInfo.getContainerResourceInfo().shouldLog(config)) {
+        final ContainerResourceInfo containerResourceInfo = requestInfo.getContainerResourceInfo();
+        if (!containerResourceInfo.shouldLog(config)) {
             return;
         }
 
-        Object requestEntity = requestInfo.getRequestObj();
-
-        final String typeId = requestInfo.getContainerResourceInfo().getTypeId();
-        final String descriptionVerb = requestInfo.getContainerResourceInfo().getVerbFromAnnotations();
+        final Object requestEntity = requestInfo.getRequestObj();
+        final String typeId = containerResourceInfo.getTypeId();
+        final String descriptionVerb = containerResourceInfo.getVerbFromAnnotations();
         final Class<? extends EventActionDecorator> decoratorClass =
-                requestInfo.getContainerResourceInfo().getEventActionDecoratorClass();
+                containerResourceInfo.getEventActionDecoratorClass();
 
-        switch (requestInfo.getContainerResourceInfo().getOperationType()) {
+        LOGGER.debug(() -> LogUtil.message("log() - typeId: '{}', descVerb: '{}', decoratorClass: {}, opType: {}",
+                typeId, descriptionVerb, decoratorClass.getSimpleName(), containerResourceInfo.getOperationType()));
+
+        switch (containerResourceInfo.getOperationType()) {
             case DELETE:
                 documentEventLog.delete(requestInfo.getBeforeCallObj(), typeId, descriptionVerb, error);
                 break;
@@ -85,10 +93,13 @@ class RequestEventLogImpl implements RequestEventLog {
                 break;
             case UPDATE:
                 if (!RequestInfo.objectIsLoggable(responseEntity)) {
-                    //A success status or similar is returned, we need to find the actual entity being updated.
+                    // A success status or similar is returned, so we need to find the actual entity being updated
+                    // by hitting a fetch method on the resource to get the post update entity. Relies on the resource
+                    // implementing one of the FetchWith.... interfaces.
                     documentEventLog.update(requestInfo.getBeforeCallObj(),
                             requestInfo.getAfterCallObj(securityContext), typeId, descriptionVerb, error);
                 } else {
+                    // The request contains the before and the response contains the after
                     documentEventLog.update(requestInfo.getBeforeCallObj(),
                             responseEntity,
                             typeId,

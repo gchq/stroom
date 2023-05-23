@@ -62,8 +62,8 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        valReference = valueReferenceIndex.addValue();
-        countReference = valueReferenceIndex.addCount();
+        valReference = valueReferenceIndex.addValue("average - sum");
+        countReference = valueReferenceIndex.addCount("average - count");
         super.addValueReferences(valueReferenceIndex);
     }
 

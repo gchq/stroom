@@ -39,8 +39,6 @@ public class RightBar extends Composite {
         sinkEvents(Event.ONMOUSEDOWN);
 
         final SimplePanel simplePanel = new SimplePanel();
-        simplePanel.setStyleName("codeEditor-rightBar");
-
         initWidget(simplePanel);
     }
 

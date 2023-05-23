@@ -126,21 +126,24 @@ public class TableResultCreator implements ResultCreator {
             final RowCreator rowCreator = optionalRowCreator.orElse(null);
 
             final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
-            dataStore.getData(data ->
-                    addTableResults(data,
-                            latestFields.toArray(new Field[0]),
-                            maxResults,
-                            offset,
-                            length,
-                            resultRequest.getTimeFilter(),
-                            openGroups,
-                            tableResultBuilder,
-                            currentLength,
-                            data.get(Key.ROOT_KEY, resultRequest.getTimeFilter()),
-                            0,
-                            totalResults,
-                            rowCreator,
-                            errorConsumer));
+            dataStore.getData(data -> {
+                final Optional<Items> optional = data.get(Key.ROOT_KEY, resultRequest.getTimeFilter());
+                optional.ifPresent(items ->
+                        addTableResults(data,
+                                latestFields.toArray(new Field[0]),
+                                maxResults,
+                                offset,
+                                length,
+                                resultRequest.getTimeFilter(),
+                                openGroups,
+                                tableResultBuilder,
+                                currentLength,
+                                items,
+                                0,
+                                totalResults,
+                                rowCreator,
+                                errorConsumer));
+            });
         } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
             errorConsumer.add(e);
@@ -196,21 +199,23 @@ public class TableResultCreator implements ResultCreator {
 
                 // Add child results if a node is open.
                 if (openGroups != null && openGroups.contains(item.getKey())) {
-                    addTableResults(
-                            data,
-                            fields,
-                            maxResults,
-                            offset,
-                            length,
-                            timeFilter,
-                            openGroups,
-                            tableResultBuilder,
-                            currentLength,
-                            data.get(item.getKey(), timeFilter),
-                            depth + 1,
-                            pos,
-                            rowCreator,
-                            errorConsumer);
+                    final Optional<Items> optional = data.get(item.getKey(), timeFilter);
+                    optional.ifPresent(childItems ->
+                            addTableResults(
+                                    data,
+                                    fields,
+                                    maxResults,
+                                    offset,
+                                    length,
+                                    timeFilter,
+                                    openGroups,
+                                    tableResultBuilder,
+                                    currentLength,
+                                    childItems,
+                                    depth + 1,
+                                    pos,
+                                    rowCreator,
+                                    errorConsumer));
                 }
 
                 // Increment the total results at this depth.

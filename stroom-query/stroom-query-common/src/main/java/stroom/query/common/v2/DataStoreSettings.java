@@ -45,15 +45,6 @@ public class DataStoreSettings {
                 .build();
     }
 
-    public static DataStoreSettings createBigStoreSettings() {
-        return DataStoreSettings
-                .builder()
-                .maxResults(Sizes.create(Integer.MAX_VALUE))
-                .storeSize(Sizes.create(Integer.MAX_VALUE))
-                .subDirectory(UUID.randomUUID().toString())
-                .build();
-    }
-
     public static DataStoreSettings createBasicSearchResultStoreSettings() {
         return DataStoreSettings.builder().subDirectory(UUID.randomUUID().toString()).build();
     }
