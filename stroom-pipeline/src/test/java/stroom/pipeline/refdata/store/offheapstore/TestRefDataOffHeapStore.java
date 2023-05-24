@@ -398,6 +398,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
             doLoaderPut(loader, mapDefinition, key1, val1);
+            loader.markPutsComplete();
             loader.completeProcessing(ProcessingState.FAILED);
         });
 
@@ -413,6 +414,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                                 loader.initialise(overwriteExisting);
                                 doLoaderPut(loader, mapDefinition, key1, val1);
                                 doLoaderPut(loader, mapDefinition, key2, val2);
+                                loader.markPutsComplete();
                                 loader.completeProcessing(ProcessingState.COMPLETE);
                             });
                         })
@@ -452,6 +454,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
             wasWorkDone.set(true);
             loader.initialise(overwriteExisting);
             doLoaderPut(loader, mapDefinition, key1, val1);
+            loader.markPutsComplete();
             loader.completeProcessing(ProcessingState.COMPLETE);
         });
 
@@ -467,6 +470,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
             loader.initialise(overwriteExisting);
             doLoaderPut(loader, mapDefinition, key1, val1);
             doLoaderPut(loader, mapDefinition, key2, val2);
+            loader.markPutsComplete();
             loader.completeProcessing(ProcessingState.COMPLETE);
         });
         assertThat(wasWorkDone)
@@ -512,6 +516,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
                                         // if we don't complete it will be left as load in progress
                                         if (!ProcessingState.LOAD_IN_PROGRESS.equals(processingState)) {
+                                            loader.markPutsComplete();
                                             loader.completeProcessing(processingState);
                                         }
                                     });
@@ -531,6 +536,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                                         // Put two this time
                                         doLoaderPut(loader, mapDefinition, key1, val1);
                                         doLoaderPut(loader, mapDefinition, key2, val2);
+                                        loader.markPutsComplete();
                                         loader.completeProcessing(ProcessingState.COMPLETE);
                                     });
                             assertThat(wasWorkDone)
@@ -618,6 +624,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                         doLoaderPut(loader, mapDefinitionRange, range, StringValue.of("Value" + i));
                         //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
                     }
+                    loader.markPutsComplete();
                     loader.completeProcessing();
                     LOGGER.debug("Finished loading data");
 
@@ -699,6 +706,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                         for (int i = 0; i < recCount; i++) {
                             doLoaderPut(loader, mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
                         }
+                        loader.markPutsComplete();
                         loader.completeProcessing();
                         LOGGER.debug("Finished loading data");
                     } catch (Exception e) {
@@ -796,6 +804,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                         doLoaderPut(loader, mapDefinitionRange, range, StringValue.of("Value" + i));
                         //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
                     }
+                    loader.markPutsComplete();
                     loader.completeProcessing();
                     LOGGER.debug("Finished loading data");
 
