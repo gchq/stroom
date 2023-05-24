@@ -40,7 +40,6 @@
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     vertical-align: middle;
     overflow: hidden;
-    height: var(--row__height);
     white-space: nowrap;
 }
 
