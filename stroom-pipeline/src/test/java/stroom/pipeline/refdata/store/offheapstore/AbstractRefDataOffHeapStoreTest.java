@@ -135,10 +135,10 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void assertDbCounts(final int refStreamDefCount,
-                                final int totalMapEntries,
-                                final int totalKeyValueEntryCount,
-                                final int totalRangeValueEntryCount,
-                                final int totalValueEntryCount) {
+                                  final int totalMapEntries,
+                                  final int totalKeyValueEntryCount,
+                                  final int totalRangeValueEntryCount,
+                                  final int totalValueEntryCount) {
 
         assertThat(((DelegatingRefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
                 .isEqualTo(refStreamDefCount);
@@ -185,7 +185,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void bulkLoadAndAssert(final boolean overwriteExisting,
-                                   final int commitInterval) {
+                                     final int commitInterval) {
         List<RefStreamDefinition> refStreamDefinitions = IntStream.rangeClosed(1, REF_STREAM_DEF_COUNT)
                 .boxed()
                 .map(i -> buildUniqueRefStreamDefinition())
@@ -351,9 +351,9 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void loadRangeValueData(final int keyValueMapCount,
-                                    final int entryCount,
-                                    final RefStreamDefinition refStreamDefinition,
-                                    final RefDataLoader loader) {
+                                      final int entryCount,
+                                      final RefStreamDefinition refStreamDefinition,
+                                      final RefDataLoader loader) {
         loadRangeValueData(keyValueMapCount,
                 entryCount,
                 refStreamDefinition,
@@ -362,10 +362,10 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void loadRangeValueData(final int keyValueMapCount,
-                                    final int entryCount,
-                                    final RefStreamDefinition refStreamDefinition,
-                                    final RefDataLoader loader,
-                                    final MapNameFunc mapNameFunc) {
+                                      final int entryCount,
+                                      final RefStreamDefinition refStreamDefinition,
+                                      final RefDataLoader loader,
+                                      final MapNameFunc mapNameFunc) {
         // load the range/value data
         for (int j = 0; j < keyValueMapCount; j++) {
             String mapName = mapNameFunc.buildMapName(refStreamDefinition, RANGE_TYPE, j);
@@ -385,17 +385,17 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
 
 
     protected void loadKeyValueData(final int keyValueMapCount,
-                                  final int entryCount,
-                                  final RefStreamDefinition refStreamDefinition,
-                                  final RefDataLoader loader) {
+                                    final int entryCount,
+                                    final RefStreamDefinition refStreamDefinition,
+                                    final RefDataLoader loader) {
         loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, this::buildMapNameWithRefStreamDef);
     }
 
     protected void loadKeyValueData(final int keyValueMapCount,
-                                  final int entryCount,
-                                  final RefStreamDefinition refStreamDefinition,
-                                  final RefDataLoader loader,
-                                  final MapNameFunc mapNameFunc) {
+                                    final int entryCount,
+                                    final RefStreamDefinition refStreamDefinition,
+                                    final RefDataLoader loader,
+                                    final MapNameFunc mapNameFunc) {
         // load the key/value data
         for (int j = 0; j < keyValueMapCount; j++) {
             String mapName = mapNameFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
@@ -410,10 +410,10 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void loadKeyValueDataWithLargeValues(final int keyValueMapCount,
-                                                 final int entryCount,
-                                                 final RefStreamDefinition refStreamDefinition,
-                                                 final RefDataLoader loader,
-                                                 final MapNameFunc mapNameFunc) {
+                                                   final int entryCount,
+                                                   final RefStreamDefinition refStreamDefinition,
+                                                   final RefDataLoader loader,
+                                                   final MapNameFunc mapNameFunc) {
         // load the key/value data
         for (int j = 0; j < keyValueMapCount; j++) {
             String mapName = mapNameFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
@@ -451,8 +451,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected String buildKeyStoreValue(final String mapName,
-                                      final int i,
-                                      final String key) {
+                                        final int i,
+                                        final String key) {
         // pad the values out to make them more realistic in length to see impact on writes
         return LogUtil.message("{}-{}-value{}{}", mapName, key, i, PADDING);
     }
@@ -462,8 +462,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void bulkLoad(final List<RefStreamDefinition> refStreamDefinitions,
-                                     final boolean overwriteExisting,
-                                     final int commitInterval) {
+                            final boolean overwriteExisting,
+                            final int commitInterval) {
         bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval, false, refDataStore);
 
     }
@@ -593,8 +593,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
             final String key = tuple3._2;
             final StringValue expectedValue = tuple3._3;
 
-            if (counter.incrementAndGet() % tenPercent == 0) {
-                if (keyValueLoadedData.size() > 10_000) {
+            if (keyValueLoadedData.size() > 10_000) {
+                if (counter.incrementAndGet() % tenPercent == 0) {
                     // Show progress for big loads
                     final Duration duration = Duration.between(startTime, Instant.now());
                     LOGGER.info("Count so far: {}, in {}, gets/ms: {}",
@@ -638,8 +638,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
             final Range<Long> keyRange = tuple3._2;
             final StringValue expectedValue = tuple3._3;
 
-            if (counter.incrementAndGet() % tenPercent == 0) {
-                if (keyRangeValueLoadedData.size() > 10_000) {
+            if (keyRangeValueLoadedData.size() > 10_000) {
+                if (counter.incrementAndGet() % tenPercent == 0) {
                     final Duration duration = Duration.between(startTime, Instant.now());
                     // *5 because we do 5 different gets for each tuple3 entry
                     LOGGER.info("Count so far: {}, in {}, gets/ms: {}",
@@ -773,9 +773,9 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void doLoaderPut(final RefDataLoader refDataLoader,
-                             final MapDefinition mapDefinition,
-                             final String key,
-                             final RefDataValue refDataValue) {
+                               final MapDefinition mapDefinition,
+                               final String key,
+                               final RefDataValue refDataValue) {
         try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
                 valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory)) {
@@ -785,9 +785,9 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected void doLoaderPut(final RefDataLoader refDataLoader,
-                             final MapDefinition mapDefinition,
-                             final Range<Long> range,
-                             final RefDataValue refDataValue) {
+                               final MapDefinition mapDefinition,
+                               final Range<Long> range,
+                               final RefDataValue refDataValue) {
         try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
                 valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory)) {
@@ -797,7 +797,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected static void writeValue(final RefDataValue refDataValue,
-                                   final StagingValueOutputStream stagingValueOutputStream) {
+                                     final StagingValueOutputStream stagingValueOutputStream) {
         stagingValueOutputStream.clear();
         try {
             if (refDataValue instanceof StringValue) {
@@ -842,8 +842,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected static void assertPutOutcome(final PutOutcome putOutcome,
-                                         final boolean expectedIsSuccess,
-                                         final boolean expectedIsDuplicate) {
+                                           final boolean expectedIsSuccess,
+                                           final boolean expectedIsDuplicate) {
         assertThat(putOutcome.isSuccess())
                 .isEqualTo(expectedIsSuccess);
         assertThat(putOutcome.isDuplicate())
@@ -851,8 +851,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
     protected static void assertPutOutcome(final PutOutcome putOutcome,
-                                         final boolean expectedIsSuccess,
-                                         final Optional<Boolean> expectedIsDuplicate) {
+                                           final boolean expectedIsSuccess,
+                                           final Optional<Boolean> expectedIsDuplicate) {
         assertThat(putOutcome.isSuccess())
                 .isEqualTo(expectedIsSuccess);
         assertThat(putOutcome.isDuplicate())

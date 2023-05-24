@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -172,11 +173,19 @@ public class RefDataLmdbEnv {
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
     public void logAllContents(Consumer<String> logEntryConsumer) {
+        AtomicLong counter = new AtomicLong();
+        final Consumer<String> countingConsumer = str -> {
+            counter.incrementAndGet();
+            logEntryConsumer.accept(str);
+        };
         databaseMap.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(Map.Entry::getValue)
                 .forEach(lmdbDb ->
-                        lmdbDb.logDatabaseContents(logEntryConsumer));
+                        lmdbDb.logDatabaseContents(countingConsumer));
+        if (counter.get() == 0) {
+            logEntryConsumer.accept("All databases are empty");
+        }
     }
 
     public long getEntryCount(final String dbName) {

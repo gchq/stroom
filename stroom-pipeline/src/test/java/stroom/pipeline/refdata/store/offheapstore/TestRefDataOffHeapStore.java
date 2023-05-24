@@ -101,7 +101,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         final List<RefStoreEntry> entries = new ArrayList<>();
         refDataStore.consumeEntries(
                 refStoreEntry ->
-                        refStoreEntry.getKey().equals("key38")
+                        refStoreEntry.getKey().equals("key5")
                                 || refStoreEntry.getKey().equals("key2"),
                 null,
                 entries::add);
@@ -179,7 +179,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
             assertPutOutcome(putOutcomes.get(0), true, false);
             assertPutOutcome(putOutcomes.get(1), overwriteExisting, true);
         });
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
                 .isEqualTo(expectedFinalValue);
@@ -217,7 +217,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
             assertPutOutcome(putOutcomes.get(1), overwriteExisting, true);
         });
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
         assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
                 .isEqualTo(expectedFinalValue);
 
@@ -276,7 +276,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
             outcomeMap.assertPutOutcome(mapDefinition, key1, 1, overwriteExisting, true);
             outcomeMap.assertPutOutcome(mapDefinition, key2, 1, true, false);
         });
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         final Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinition, key1);
 
@@ -313,7 +313,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 assertPutOutcome(putOutcomes.get(0), true, Optional.empty());
             }
         });
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertThat(refDataStore.getKeyValueEntryCount())
                 .isEqualTo(0); // all nulls so none loaded
@@ -370,7 +370,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
             outcomeMap.assertPutOutcome(mapDefinition, range1, 1, overwriteExisting, true);
             outcomeMap.assertPutOutcome(mapDefinition, range2, 1, true, false);
         });
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         final Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinition, "50");
 
@@ -401,7 +401,9 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
             loader.completeProcessing(ProcessingState.FAILED);
         });
 
-        refDataStore.logAllContents();
+        LOGGER.debug(LogUtil.inSeparatorLine("Dumping contents 1"));
+
+        refDataStore.logAllContents(LOGGER::debug);
 
         AtomicBoolean wasWorkDone = new AtomicBoolean(false);
         Assertions.assertThatThrownBy(
@@ -419,7 +421,9 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(wasWorkDone)
                 .isFalse();
 
-        refDataStore.logAllContents();
+        LOGGER.debug(LogUtil.inSeparatorLine("Dumping contents 2"));
+
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertThat(refDataStore.getValue(mapDefinition, key1))
                 .isPresent();
@@ -454,7 +458,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(wasWorkDone)
                 .isTrue();
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
         wasWorkDone.set(false);
 
         // Last one was complete so this won't do anything
@@ -468,7 +472,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(wasWorkDone)
                 .isFalse();
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertThat(refDataStore.getValue(mapDefinition, key1))
                 .isPresent();
@@ -515,7 +519,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                             assertThat(wasWorkDone)
                                     .isTrue();
 
-                            refDataStore.logAllContents();
+                            refDataStore.logAllContents(LOGGER::debug);
                             wasWorkDone.set(false);
 
                             // Last one was in-complete so reload over the top
@@ -532,7 +536,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                             assertThat(wasWorkDone)
                                     .isTrue();
 
-                            refDataStore.logAllContents();
+                            refDataStore.logAllContents(LOGGER::debug);
 
                             assertThat(refDataStore.getValue(mapDefinition, key1))
                                     .isPresent();
@@ -878,7 +882,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(refDataStore.getRangeValueEntryCount())
                 .isGreaterThan(0);
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         LOGGER.info("------------------------purge-starts-here--------------------------------------");
 
@@ -914,7 +918,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         List<RefStreamDefinition> refStreamDefs = loadBulkData(
                 refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertDbCounts(
                 refStreamDefCount,
@@ -934,7 +938,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         // do the purge
         refDataStore.purgeOldData();
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         int expectedRefStreamDefCount = 2;
         assertDbCounts(
@@ -962,7 +966,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         final List<RefStreamDefinition> refStreamDefs = loadBulkData(
                 refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertDbCounts(
                 refStreamDefCount,
@@ -1002,7 +1006,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         // do the purge
         refDataStore.purgeOldData();
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         expectedRefStreamDefCount = refStreamDefCount - 3;
         assertDbCounts(
@@ -1030,7 +1034,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         List<RefStreamDefinition> refStreamDefs = loadBulkData(
                 refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertDbCounts(
                 refStreamDefCount,
@@ -1044,7 +1048,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         // do the purge
         refDataStore.purgeOldData();
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         // same as above as nothing is old enough for a purge
         assertDbCounts(
@@ -1077,7 +1081,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 0,
                 this::buildMapNameWithoutRefStreamDef);
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         assertDbCounts(
                 refStreamDefCount,
@@ -1096,7 +1100,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 4,
                 this::buildMapNameWithoutRefStreamDef);
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         // as we have run again with different refStreamDefs we should get 2x of everything
         // except the value entries as those will be the same (except with high reference counts)
@@ -1117,7 +1121,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         // do the purge
         refDataStore.purgeOldData();
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         // back to how it was after first load with no change to value entry count as they have just been de-referenced
         assertDbCounts(
@@ -1151,7 +1155,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(refDataStore.getRangeValueEntryCount())
                 .isEqualTo((long) refStreamDefinitions.size() * entriesPerRefStream);
 
-        refDataStore.logAllContents();
+        refDataStore.logAllContents(LOGGER::debug);
 
         LOGGER.info("------------------------purge-starts-here--------------------------------------");
         refDataStore.purge(2, 0);
