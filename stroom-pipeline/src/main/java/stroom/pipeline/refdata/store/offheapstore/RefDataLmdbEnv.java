@@ -38,7 +38,7 @@ import javax.inject.Provider;
 public class RefDataLmdbEnv {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataLmdbEnv.class);
-    protected static final String LEGACY_STORE_NAME = "Legacy";
+    public static final String LEGACY_STORE_NAME = "Legacy";
 
     private final String feedName;
     private final LmdbEnv lmdbEnvironment;

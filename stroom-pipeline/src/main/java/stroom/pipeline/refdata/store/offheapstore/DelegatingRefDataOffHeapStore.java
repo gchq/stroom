@@ -53,6 +53,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+
 /**
  * Is a front for multiple {@link RefDataOffHeapStore} instances, one per feed.
  * It either delegates to the appropriate store if the stream id is know (so that the feed can be derived
@@ -202,7 +203,35 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         if (takeWhilePredicate != null) {
             stream = stream.takeWhile(takeWhilePredicate);
         }
-        stream.forEach(entryConsumer);
+        stream.map(entry -> {
+                    final String feedName = entry.getFeedName();
+                    if (RefDataLmdbEnv.LEGACY_STORE_NAME.equals(feedName)) {
+                        return renameLegacyFeed(entry, feedName);
+                    } else {
+                        return entry;
+                    }
+                })
+                .forEach(entryConsumer);
+    }
+
+    private RefStoreEntry renameLegacyFeed(final RefStoreEntry entry, final String feedName) {
+        // Replace 'Legacy' with 'ACTUAL_FEED_NAME (Legacy)'
+        final String actualFeedName = NullSafe.get(
+                entry.getMapDefinition(),
+                MapDefinition::getRefStreamDefinition,
+                RefStreamDefinition::getStreamId,
+                this::lookUpFeedName);
+        return NullSafe.getOrElse(
+                actualFeedName,
+                name -> name + " (" + feedName + ")",
+                newName -> new RefStoreEntry(
+                        newName,
+                        entry.getMapDefinition(),
+                        entry.getKey(),
+                        entry.getValue(),
+                        entry.getValueReferenceCount(),
+                        entry.getRefDataProcessingInfo()),
+                entry);
     }
 
     @Override
