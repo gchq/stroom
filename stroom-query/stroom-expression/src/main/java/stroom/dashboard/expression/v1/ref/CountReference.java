@@ -5,9 +5,11 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class CountReference implements ValueReference<Long> {
     private final int index;
+    private final String name;
 
-    CountReference(final int index) {
+    CountReference(final int index, final String name) {
         this.index = index;
+        this.name = name;
     }
 
     public void increment(final StoredValues storedValues) {
@@ -40,5 +42,10 @@ public class CountReference implements ValueReference<Long> {
     @Override
     public void write(final StoredValues storedValues, final Output output) {
         output.writeLong(get(storedValues));
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

@@ -48,10 +48,26 @@ class Min extends AbstractAggregateFunction {
 
     static class Calc extends Calculator {
 
+        private static final ValComparator COMPARATOR = new ValComparator();
 
         @Override
-        protected double op(final double cur, final double val) {
-            return Math.min(val, cur);
+        Val calc(final Val current, final Val value) {
+            try {
+                if (value.type().isError() ||
+                        current.type().isNull()) {
+                    return value;
+                } else if (current.type().isError()) {
+                    return current;
+                }
+
+                if (COMPARATOR.compare(current, value) > 0) {
+                    return value;
+                }
+                return current;
+
+            } catch (RuntimeException e) {
+                return ValErr.create(e.getMessage());
+            }
         }
     }
 }

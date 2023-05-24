@@ -266,4 +266,57 @@ class TestExpressionParserAggregates extends AbstractExpressionParserTest {
             assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
         });
     }
+
+    @Test
+    void testMinDate() {
+        createGenerator("min(${val1})", (gen, storedValues) -> {
+            gen.set(Val.of(ValDate.create("2023-05-16T01:00:00.000Z")), storedValues);
+            gen.set(Val.of(ValDate.create("2023-05-16T04:00:00.000Z")), storedValues);
+            gen.set(Val.of(ValDate.create("2023-05-15T04:00:00.000Z")), storedValues);
+            gen.set(Val.of(ValDate.create("2023-05-16T05:00:00.000Z")), storedValues);
+
+            Val out = gen.eval(storedValues, null);
+            assertThat(out.type()).isEqualTo(Type.DATE);
+            assertThat(out.toString()).isEqualTo("2023-05-15T04:00:00.000Z");
+
+            gen.set(Val.of(ValDate.create("2023-05-13T04:00:00.000Z")), storedValues);
+
+            out = gen.eval(storedValues, null);
+            assertThat(out.type()).isEqualTo(Type.DATE);
+            assertThat(out.toString()).isEqualTo("2023-05-13T04:00:00.000Z");
+
+            gen.set(Val.of(ValDate.create("2023-05-18T04:00:00.000Z")), storedValues);
+
+            out = gen.eval(storedValues, null);
+            assertThat(out.type()).isEqualTo(Type.DATE);
+            assertThat(out.toString()).isEqualTo("2023-05-13T04:00:00.000Z");
+        });
+    }
+
+    @Test
+    void testMaxDate() {
+        createGenerator("max(${val1})", (gen, storedValues) -> {
+            gen.set(Val.of(ValDate.create("2023-05-16T01:00:00.000Z")), storedValues);
+            gen.set(Val.of(ValDate.create("2023-05-16T04:00:00.000Z")), storedValues);
+            gen.set(Val.of(ValDate.create("2023-05-16T05:00:00.000Z")), storedValues);
+            gen.set(Val.of(ValDate.create("2023-05-15T04:00:00.000Z")), storedValues);
+
+            Val out = gen.eval(storedValues, null);
+            assertThat(out.type()).isEqualTo(Type.DATE);
+            assertThat(out.toString()).isEqualTo("2023-05-16T05:00:00.000Z");
+
+            gen.set(Val.of(ValDate.create("2023-05-16T05:00:00.000Z")), storedValues);
+
+            out = gen.eval(storedValues, null);
+            assertThat(out.type()).isEqualTo(Type.DATE);
+            assertThat(out.toString()).isEqualTo("2023-05-16T05:00:00.000Z");
+
+            gen.set(Val.of(ValDate.create("2023-05-16T02:00:00.000Z")), storedValues);
+
+            out = gen.eval(storedValues, null);
+            assertThat(out.type()).isEqualTo(Type.DATE);
+            assertThat(out.toString()).isEqualTo("2023-05-16T05:00:00.000Z");
+        });
+    }
+
 }

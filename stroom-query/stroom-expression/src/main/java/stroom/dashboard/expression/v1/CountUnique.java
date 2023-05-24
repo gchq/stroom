@@ -82,7 +82,7 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        valListReference = valueReferenceIndex.addValList();
+        valListReference = valueReferenceIndex.addValList(name);
         super.addValueReferences(valueReferenceIndex);
     }
 

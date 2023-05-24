@@ -14,13 +14,13 @@ class TestMax extends AbstractFunctionTest<Max> {
         return Stream.of(
                 TestCase.of(
                         "basic int",
-                        ValDouble.create(100),
+                        ValInteger.create(100),
                         ValInteger.create(1),
                         ValInteger.create(100),
                         ValInteger.create(10)),
                 TestCase.ofAggregate(
                         "aggregate int",
-                        ValDouble.create(100),
+                        ValInteger.create(100),
                         ValInteger.create(1),
                         ValInteger.create(100),
                         ValInteger.create(10)),

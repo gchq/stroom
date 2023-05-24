@@ -44,6 +44,59 @@ class TestNullSafe {
         return other;
     }
 
+    @Test
+    void testEquals1() {
+        // Null parent
+        Assertions.assertThat(NullSafe.equals(nullLevel1, Level1::getNonNullLevel2, nonNullLevel1.getNonNullLevel2()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNullLevel2, nonNullLevel1.getNonNullLevel2()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, "foobar"))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, null))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        nonNullLevel1.getNonNullLevel2()))
+                .isTrue();
+    }
+
+    @Test
+    void testEquals2() {
+        // Null parent
+        Assertions.assertThat(NullSafe.equals(
+                        nullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNullLevel2,
+                        Level2::getNonNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        "foobar"))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        null))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isTrue();
+    }
+
     @TestFactory
     Stream<DynamicTest> testCoalesce_twoValues() {
         return TestUtil.buildDynamicTestStream()
@@ -1012,6 +1065,25 @@ class TestNullSafe {
         public String toString() {
             return id + ":" + level;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level1 level1 = (Level1) o;
+            return id == level1.id && Objects.equals(nullLevel2, level1.nullLevel2) && Objects.equals(
+                    nonNullLevel2,
+                    level1.nonNullLevel2) && Objects.equals(level, level1.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel2, nonNullLevel2, level);
+        }
     }
 
     private static class Level2 {
@@ -1041,6 +1113,25 @@ class TestNullSafe {
         @Override
         public String toString() {
             return id + ":" + level;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level2 level2 = (Level2) o;
+            return id == level2.id && Objects.equals(nullLevel3, level2.nullLevel3) && Objects.equals(
+                    nonNullLevel3,
+                    level2.nonNullLevel3) && Objects.equals(level, level2.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel3, nonNullLevel3, level);
         }
     }
 
@@ -1072,6 +1163,25 @@ class TestNullSafe {
         public String toString() {
             return id + ":" + level;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level3 level3 = (Level3) o;
+            return id == level3.id && Objects.equals(nullLevel4, level3.nullLevel4) && Objects.equals(
+                    nonNullLevel4,
+                    level3.nonNullLevel4) && Objects.equals(level, level3.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel4, nonNullLevel4, level);
+        }
     }
 
     private static class Level4 {
@@ -1102,6 +1212,25 @@ class TestNullSafe {
         public String toString() {
             return id + ":" + level;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level4 level4 = (Level4) o;
+            return id == level4.id && Objects.equals(nullLevel5, level4.nullLevel5) && Objects.equals(
+                    nonNullLevel5,
+                    level4.nonNullLevel5) && Objects.equals(level, level4.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel5, nonNullLevel5, level);
+        }
     }
 
     private static class Level5 {
@@ -1120,6 +1249,23 @@ class TestNullSafe {
         @Override
         public String toString() {
             return id + ":" + level;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level5 level5 = (Level5) o;
+            return id == level5.id && Objects.equals(level, level5.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, level);
         }
     }
 

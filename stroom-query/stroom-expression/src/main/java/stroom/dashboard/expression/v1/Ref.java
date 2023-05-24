@@ -40,7 +40,7 @@ class Ref extends AbstractFunction {
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
         // If the field index is less than 0 then we will always return null so don't store.
         if (fieldIndex >= 0) {
-            fieldValReference = valueReferenceIndex.addFieldValue(fieldIndex);
+            fieldValReference = valueReferenceIndex.addFieldValue(fieldIndex, text);
         }
         super.addValueReferences(valueReferenceIndex);
     }

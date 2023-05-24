@@ -9,9 +9,11 @@ import java.util.List;
 public class StringListReference implements ValueReference<List<String>> {
 
     private final int index;
+    private final String name;
 
-    StringListReference(final int index) {
+    StringListReference(final int index, final String name) {
         this.index = index;
+        this.name = name;
     }
 
     @Override
@@ -45,5 +47,10 @@ public class StringListReference implements ValueReference<List<String>> {
         for (final String string : list) {
             output.writeString(string);
         }
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

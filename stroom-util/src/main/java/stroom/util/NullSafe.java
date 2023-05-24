@@ -27,6 +27,43 @@ public class NullSafe {
     }
 
     /**
+     * Allows you to safely compare a child property of val1 to other.
+     * @return False if val1 is null else whether the child property of val1 is equal to other
+     */
+    public static <T1, T2> boolean equals(final T1 val1,
+                                          final Function<T1, T2> getter,
+                                          final Object other) {
+        if (val1 == null) {
+            return false;
+        } else {
+            final T2 val2 = getter.apply(val1);
+            return Objects.equals(val2, other);
+        }
+    }
+
+    /**
+     * Allows you to safely compare a grandchild property of val1 to other.
+     * @return False if val1 is null or if val1's child property is null,
+     * else whether the grandchild property of val1 is equal to other
+     */
+    public static <T1, T2, T3> boolean equals(final T1 val1,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, T3> getter2,
+                                              final Object other) {
+        if (val1 == null) {
+            return false;
+        } else {
+            final T2 val2 = getter1.apply(val1);
+            if (val2 == null) {
+                return false;
+            } else {
+                final T3 val3 = getter2.apply(val2);
+                return Objects.equals(val3, other);
+            }
+        }
+    }
+
+    /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */
     public static <T> Optional<T> coalesce(final T val1, final T val2) {

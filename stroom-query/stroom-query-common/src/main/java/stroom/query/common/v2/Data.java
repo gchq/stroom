@@ -2,6 +2,8 @@ package stroom.query.common.v2;
 
 import stroom.query.api.v2.TimeFilter;
 
+import java.util.Optional;
+
 public interface Data {
 
     /**
@@ -11,5 +13,5 @@ public interface Data {
      * @param timeFilter The time filter to use to limit the data returned.
      * @return The filtered child items for the parent key.
      */
-    Items get(Key key, TimeFilter timeFilter);
+    Optional<Items> get(Key key, TimeFilter timeFilter);
 }

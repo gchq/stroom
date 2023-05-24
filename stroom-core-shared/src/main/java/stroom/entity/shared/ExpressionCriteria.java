@@ -76,4 +76,13 @@ public class ExpressionCriteria extends BaseCriteria {
     public int hashCode() {
         return Objects.hash(super.hashCode(), expression);
     }
+
+    @Override
+    public String toString() {
+        return "BaseCriteria{" +
+                "pageRequest=" + getPageRequest() +
+                ", sortList=" + getSortList() +
+                ", expression=" + expression +
+                '}';
+    }
 }

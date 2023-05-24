@@ -100,11 +100,12 @@ public class VisComponentSettings implements ComponentSettings {
         return new Builder();
     }
 
+    @Override
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static final class Builder {
+    public static final class Builder implements ComponentSettings.Builder {
 
         private String tableId;
         private DocRef visualisation;
@@ -118,7 +119,9 @@ public class VisComponentSettings implements ComponentSettings {
             this.tableId = visComponentSettings.tableId;
             this.visualisation = visComponentSettings.visualisation;
             this.json = visComponentSettings.json;
-            this.tableSettings = visComponentSettings.tableSettings;
+            this.tableSettings = visComponentSettings.tableSettings == null
+                    ? null
+                    : visComponentSettings.tableSettings.copy().build();
         }
 
         public Builder tableId(final String tableId) {
@@ -141,6 +144,7 @@ public class VisComponentSettings implements ComponentSettings {
             return this;
         }
 
+        @Override
         public VisComponentSettings build() {
             return new VisComponentSettings(tableId, visualisation, json, tableSettings);
         }

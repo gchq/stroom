@@ -61,7 +61,7 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        doubleListReference = valueReferenceIndex.addDoubleList();
+        doubleListReference = valueReferenceIndex.addDoubleList(name);
         super.addValueReferences(valueReferenceIndex);
     }
 
