@@ -203,7 +203,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         if (takeWhilePredicate != null) {
             stream = stream.takeWhile(takeWhilePredicate);
         }
-        stream.map(entry -> {
+        stream
+                .map(entry -> {
                     final String feedName = entry.getFeedName();
                     if (RefDataLmdbEnv.LEGACY_STORE_NAME.equals(feedName)) {
                         return renameLegacyFeed(entry, feedName);
