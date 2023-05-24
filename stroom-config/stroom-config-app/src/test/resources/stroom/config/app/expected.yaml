@@ -480,6 +480,10 @@ appConfig:
       loadingLockStripes: 2048
       maxPurgeDeletesBeforeCommit: 200000
       maxPutsBeforeCommit: 200000
+      metaIdToRefStoreCache:
+        expireAfterAccess: "PT1H"
+        expireAfterWrite: null
+        maximumSize: 1000
       purgeAge: "P30D"
       stagingLmdb:
         localDir: "reference_staging_data"

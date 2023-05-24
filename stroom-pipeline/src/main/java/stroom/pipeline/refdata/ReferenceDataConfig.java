@@ -36,13 +36,14 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         stagingLmdbConfig = new ReferenceDataStagingLmdbConfig();
 
         effectiveStreamCache = CacheConfig.builder()
-                .maximumSize(1000L)
+                .maximumSize(1_000L)
                 .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
 
+        // Mappings are immutable so can hang on to them for a long time
         metaIdToRefStoreCache = CacheConfig.builder()
-                .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .maximumSize(1_000L)
+                .expireAfterAccess(StroomDuration.ofHours(1))
                 .build();
     }
 
