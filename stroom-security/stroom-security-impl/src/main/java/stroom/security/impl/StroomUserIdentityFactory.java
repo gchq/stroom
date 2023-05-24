@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
 import stroom.security.common.impl.JwtContextFactory;
@@ -87,9 +88,31 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     protected Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
                                                     final HttpServletRequest request) {
 
-        // Always try to get the proc user identity as it is a bit of a special case
-        return getProcessingUser(jwtContext)
-                .or(() -> getApiUserIdentity(jwtContext, request));
+        final String headerKey = UserIdentityFactory.RUN_AS_USER_HEADER;
+        final String runAsUserId = request.getHeader(headerKey);
+        if (!NullSafe.isBlankString(runAsUserId)) {
+            // Request is proxying for a user, so it needs to be the processing user that
+            // sent the request. Getting the proc user, even though we don't do anything with it will
+            // ensure it is authenticated.
+            // We have to run as like this because human users may have aws tokens that are not refreshable.
+            getProcessingUser(jwtContext)
+                    .orElseThrow(() -> new AuthenticationException(
+                            "Expecting request to be made by processing user identity. url: "
+                                    + request.getRequestURI()));
+
+            final UserIdentity runAsUserIdentity = userCache.get(runAsUserId)
+                    .map(BasicUserIdentity::new)
+                    .orElseThrow(() -> new AuthenticationException(LogUtil.message("{} {} not found",
+                            headerKey, runAsUserId)));
+            LOGGER.trace("Found '{}' header, running as user {}", headerKey, runAsUserIdentity);
+            return Optional.ofNullable(runAsUserIdentity);
+        } else {
+            // Always try to get the proc user identity as it is a bit of a special case
+            final Optional<UserIdentity> optUserIdentity = getProcessingUser(jwtContext)
+                    .or(() -> getApiUserIdentity(jwtContext, request));
+            LOGGER.debug("Returning optUserIdentity: {}", optUserIdentity);
+            return optUserIdentity;
+        }
     }
 
     @Override

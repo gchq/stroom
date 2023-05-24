@@ -7,6 +7,11 @@ import javax.servlet.http.HttpServletRequest;
 public interface UserIdentityFactory {
 
     /**
+     * This header is used to set the user id that the request should be run as.
+     */
+    String RUN_AS_USER_HEADER = "stroom-run-as-user";
+
+    /**
      * Extracts the authenticated user's identity from the http request to an API.
      */
     Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request);

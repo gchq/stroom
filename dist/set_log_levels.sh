@@ -157,7 +157,7 @@ main() {
     source "${scripts_env_file}"
   fi
 
-  readonly URL="http://127.0.0.1:${ADMIN_PORT:-8081}/${ADMIN_PATH:-stroomAdmin}/tasks/log-level"
+  readonly URL="${ADMIN_SCHEME:-http}://127.0.0.1:${ADMIN_PORT:-8081}/${ADMIN_PATH:-stroomAdmin}/tasks/log-level"
 
   echo -e "Using URL ${BLUE}${URL}${NC}"
   echo -e "Using JAR file ${BLUE}${PATH_TO_JAR}${NC}"
