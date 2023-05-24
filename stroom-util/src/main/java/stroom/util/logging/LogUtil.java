@@ -251,11 +251,11 @@ public final class LogUtil {
             } else if (value instanceof final DurationAdder durationAdder) {
                 return withPercentage(value,
                         durationAdder.toMillis(),
-                        durationAdder.toMillis());
+                        ((DurationAdder) total).toMillis());
             } else if (value instanceof final DurationTimer durationTimer) {
                 return withPercentage(value,
                         durationTimer.get().toMillis(),
-                        durationTimer.get().toMillis());
+                        ((DurationTimer) total).get().toMillis());
             } else if (value instanceof Number) {
                 final double valNum = ((Number) value).doubleValue();
                 final double totalNum = ((Number) total).doubleValue();
@@ -265,6 +265,7 @@ public final class LogUtil {
 //                    final int pct = (int) (valNum / totalNum * 100);
 
                     BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
+                            .stripTrailingZeros()
                             .round(new MathContext(3, RoundingMode.HALF_UP));
                     return originalValue + " (" + pct.toPlainString() + "%)";
                 }
