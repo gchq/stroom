@@ -1,7 +1,11 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore.StorageType;
 import stroom.pipeline.refdata.store.RefDataStoreTestModule;
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.test.common.TestUtil;
 import stroom.util.json.JsonUtil;
@@ -9,6 +13,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.assertj.core.api.Assertions;
@@ -19,10 +24,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
+// Aim of this is to load data which will go into multiple ref stream defs across multiple stores,
+// then check that the delegating store can access it all from the appropriate delegate store.
 class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDelegatingRefDataOffHeapStore.class);
@@ -76,9 +86,9 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 false,
                 legacyStore);
 
-
         final long keyValueCount1 = legacyStore.getKeyValueEntryCount();
         final long rangeValueCount1 = legacyStore.getRangeValueEntryCount();
+        final long procInfoEntryCount1 = legacyStore.getProcessingInfoEntryCount();
         logEntryCounts();
 
         // No feed stores at this point
@@ -86,19 +96,19 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 .hasSize(0);
 
         // Trigger migration of all with the same stream id as this
-        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_1_DEF);
+        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_1_DEF, 1);
 
         assertThat(getDelegatingStore().getFeedNameToStoreMap())
                 .hasSize(1);
 
         // Nothing happens here as it has same stream id as the one above so has already
         // been migrated
-        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_2_DEF);
+        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_2_DEF, 1);
 
-        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_3_DEF);
+        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_3_DEF, 1);
 
         // Trigger migration of all streams for its feed
-        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_4_DEF);
+        triggerMigrationThenPurge(RefDataStoreTestModule.REF_STREAM_4_DEF, 2);
 
         assertThat(getDelegatingStore().getFeedNameToStoreMap())
                 .hasSize(2);
@@ -113,14 +123,30 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
             feedStore.logAllContents(LOGGER::info);
         }
 
-        // These counts include feed stores and legacy
+        // These counts include feed stores and legacy (if present)
         final long keyValueCount2 = getDelegatingStore().getKeyValueEntryCount();
         final long rangeValueCount2 = getDelegatingStore().getRangeValueEntryCount();
+        final long procInfoEntryCount2 = getDelegatingStore().getProcessingInfoEntryCount();
 
+        // kv counts match those from legacy store at start
         assertThat(keyValueCount2)
                 .isEqualTo(keyValueCount1);
         assertThat(rangeValueCount2)
                 .isEqualTo(rangeValueCount1);
+        assertThat(procInfoEntryCount2)
+                .isEqualTo(procInfoEntryCount1);
+
+        // Legacy store is not empty
+        final long keyValueCount2Legacy = getLegacyStore(false).getKeyValueEntryCount();
+        final long rangeValueCount2Legacy = getLegacyStore(false).getRangeValueEntryCount();
+        final long procInfoEntryCount2Legacy = getLegacyStore(false).getProcessingInfoEntryCount();
+
+        assertThat(keyValueCount2Legacy)
+                .isZero();
+        assertThat(rangeValueCount2Legacy)
+                .isZero();
+        assertThat(procInfoEntryCount2Legacy)
+                .isZero();
     }
 
     private long getFeedSpecificKeyEntryCount() {
@@ -139,18 +165,19 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 .sum();
     }
 
-    private void triggerMigrationThenPurge(final RefStreamDefinition refStreamDefinition) {
+    private void triggerMigrationThenPurge(final RefStreamDefinition refStreamDefinition,
+                                           final int expectedFeedStoreCount) {
         LOGGER.info(LogUtil.inSeparatorLine("Triggering migration for stream: {}, feed: {}",
                 refStreamDefinition.getStreamId(),
                 getDelegatingStore().getFeedName(refStreamDefinition).orElse("?")));
 
         // Trigger migration of all with the same stream id as this
-        getDelegatingStore().getEffectiveStore(RefDataStoreTestModule.REF_STREAM_1_DEF);
+        getDelegatingStore().getEffectiveStore(refStreamDefinition);
 
         logEntryCounts();
 
         assertThat(getDelegatingStore().getFeedNameToStoreMap())
-                .hasSize(1);
+                .hasSize(expectedFeedStoreCount);
 
         LOGGER.info(LogUtil.inSeparatorLine("Purging"));
 
@@ -172,38 +199,121 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
 
     @Test
     void getMapNames() {
+        loadDefaultData();
+
+        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
+            final Set<String> mapNames = getDelegatingStore().getMapNames(refStreamDef);
+            LOGGER.info("mapNames: {}", mapNames);
+            assertThat(mapNames)
+                    .hasSize(MAPS_PER_REF_STREAM_DEF);
+                }
+        );
     }
 
     @Test
     void getLoadState() {
+        loadDefaultData();
+
+        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
+                final ProcessingState processingState = getDelegatingStore().getLoadState(refStreamDef)
+                                .orElseThrow();
+                assertThat(processingState)
+                        .isEqualTo(ProcessingState.COMPLETE);
+        });
     }
 
     @Test
     void exists() {
+        loadDefaultData();
+
+        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
+            final List<MapDefinition> mapDefinitions = getDefaultMapDefinitions(refStreamDef);
+            mapDefinitions.forEach(mapDefinition -> {
+                final boolean exists = getDelegatingStore().exists(mapDefinition);
+                assertThat(exists)
+                        .isTrue();
+            });
+        });
     }
 
     @Test
     void getValue() {
+        loadDefaultData();
+
+        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
+            final List<MapDefinition> mapDefinitions = getDefaultMapDefinitions(refStreamDef);
+            mapDefinitions.forEach(mapDefinition -> {
+                // Find first entry for this map def and get its KV key (range entries have '-'
+                // in the key
+                final String key = getDelegatingStore().list(Integer.MAX_VALUE, refStoreEntry ->
+                                refStoreEntry.getMapDefinition().equals(mapDefinition)
+                                        && !refStoreEntry.getKey().contains("-"))
+                        .get(0)
+                        .getKey();
+
+                // Look up our key
+                final RefDataValue val = getDelegatingStore().getValue(mapDefinition, key)
+                        .orElseThrow();
+                assertThat(val)
+                        .isNotNull();
+            });
+        });
     }
 
     @Test
     void getValueProxy() {
+        loadDefaultData();
+
+        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
+            final List<MapDefinition> mapDefinitions = getDefaultMapDefinitions(refStreamDef);
+            mapDefinitions.forEach(mapDefinition -> {
+                // Find first entry for this map def and get its KV key (range entries have '-'
+                // in the key
+                final String key = getDelegatingStore().list(Integer.MAX_VALUE, refStoreEntry ->
+                                refStoreEntry.getMapDefinition().equals(mapDefinition)
+                                        && !refStoreEntry.getKey().contains("-"))
+                        .get(0)
+                        .getKey();
+
+                // Look up our key
+                final RefDataValueProxy refDataValueProxy = getDelegatingStore().getValueProxy(mapDefinition, key);
+                assertThat(refDataValueProxy.getKey())
+                        .isEqualTo(key);
+                assertThat(refDataValueProxy.supplyValue())
+                        .isPresent();
+            });
+        });
     }
 
     @Test
     void consumeValueBytes() {
-    }
+        loadDefaultData();
 
-    @Test
-    void doWithLoaderUnlessComplete() {
-    }
+        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
+            final List<MapDefinition> mapDefinitions = getDefaultMapDefinitions(refStreamDef);
+            mapDefinitions.forEach(mapDefinition -> {
+                // Find first entry for this map def and get its KV key (range entries have '-'
+                // in the key
+                final String key = getDelegatingStore().list(Integer.MAX_VALUE, refStoreEntry ->
+                                refStoreEntry.getMapDefinition().equals(mapDefinition)
+                                        && !refStoreEntry.getKey().contains("-"))
+                        .get(0)
+                        .getKey();
 
-    @Test
-    void list() {
-    }
-
-    @Test
-    void testList() {
+                // Look up our key
+                final AtomicBoolean wasConsumed = new AtomicBoolean(false);
+                final boolean wasFound = getDelegatingStore().consumeValueBytes(
+                        mapDefinition, key, typedByteBuffer -> {
+                            assertThat(typedByteBuffer)
+                                    .isNotNull();
+                            wasConsumed.set(true);
+                        });
+                assertThat(wasFound)
+                        .isTrue();
+                assertThat(wasConsumed)
+                        .isTrue();
+            });
+        });
     }
 
     @Test
@@ -232,41 +342,71 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
     }
 
     @Test
-    void listProcessingInfo() {
-    }
-
-    @Test
-    void testListProcessingInfo() {
-    }
-
-    @Test
     void getKeyValueEntryCount() {
+        loadDefaultData();
+        final long keyValueEntryCount = getDelegatingStore().getKeyValueEntryCount();
+        assertThat(keyValueEntryCount)
+                .isEqualTo((long) ENTRIES_PER_MAP_DEF
+                        * getDefaultRefStreamDefinitions().size()
+                        * MAPS_PER_REF_STREAM_DEF);
     }
 
     @Test
     void getRangeValueEntryCount() {
+        loadDefaultData();
+        final long rangeValueEntryCount = getDelegatingStore().getRangeValueEntryCount();
+        assertThat(rangeValueEntryCount)
+                .isEqualTo((long) ENTRIES_PER_MAP_DEF
+                        * getDefaultRefStreamDefinitions().size()
+                        * MAPS_PER_REF_STREAM_DEF);
     }
 
     @Test
     void getProcessingInfoEntryCount() {
+        loadDefaultData();
+        final long processingInfoEntryCount = getDelegatingStore().getProcessingInfoEntryCount();
+        assertThat(processingInfoEntryCount)
+                .isEqualTo(getDefaultRefStreamDefinitions().size());
     }
 
     @Test
     void purgeOldData() {
-    }
+        loadDefaultData();
+        long processingInfoEntryCount = getDelegatingStore().getProcessingInfoEntryCount();
+        assertThat(processingInfoEntryCount)
+                .isEqualTo(getDefaultRefStreamDefinitions().size());
 
-    @Test
-    void testPurgeOldData() {
-    }
+        getDelegatingStore().purgeOldData(StroomDuration.ZERO);
 
-    @Test
-    void purge() {
+        processingInfoEntryCount = getDelegatingStore().getProcessingInfoEntryCount();
+        assertThat(processingInfoEntryCount)
+                .isZero();
+
+        final long keyValueEntryCount = getDelegatingStore().getKeyValueEntryCount();
+        assertThat(keyValueEntryCount)
+                .isZero();
+
+        final long rangeValueEntryCount = getDelegatingStore().getRangeValueEntryCount();
+        assertThat(rangeValueEntryCount)
+                .isZero();
     }
 
     @Test
     void getStorageType() {
         assertThat(refDataStore.getStorageType())
                 .isEqualTo(StorageType.OFF_HEAP);
+    }
+
+    @Test
+    void testGetSizeOnDisk() {
+        loadDefaultData();
+        final long sizeOnDisk = getDelegatingStore().getSizeOnDisk();
+        final long sizeOnDiskFeed1 = getDelegatingStore().getEffectiveStore(RefDataStoreTestModule.FEED_1_NAME)
+                .getSizeOnDisk();
+        final long sizeOnDiskFeed2 = getDelegatingStore().getEffectiveStore(RefDataStoreTestModule.FEED_2_NAME)
+                .getSizeOnDisk();
+        assertThat(sizeOnDisk)
+                .isEqualTo(sizeOnDiskFeed1 + sizeOnDiskFeed2);
     }
 
     @Test
@@ -281,9 +421,9 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
         assertThat(systemInfo.getDetails())
                 .extractingByKey("Store count", as(InstanceOfAssertFactories.INTEGER))
                 .isEqualTo(2);
-        final List<String> paths = (List<String>) systemInfo.getDetails().get("Feed store paths");
+        final Map<String, Object> paths = (Map<String, Object>) systemInfo.getDetails().get("Feed store paths");
 
-        assertThat(String.join(" ", paths))
+        assertThat(paths.keySet())
                 .contains(RefDataStoreTestModule.FEED_1_NAME)
                 .contains(RefDataStoreTestModule.FEED_2_NAME);
     }
@@ -291,21 +431,31 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
     @Test
     void testGetSystemInfo_byFeed() {
         loadDefaultData();
-
         final String feedName = RefDataStoreTestModule.FEED_1_NAME;
 
-        final SystemInfoResult systemInfo1 = getDelegatingStore().getSystemInfo(
+        final SystemInfoResult delegatingStoreInfo = getDelegatingStore().getSystemInfo(
                 Map.of(DelegatingRefDataOffHeapStore.PARAM_NAME_FEED, feedName));
-        final SystemInfoResult systemInfo2 = getDelegatingStore().getEffectiveStore(feedName).getSystemInfo();
+        final SystemInfoResult feedSpecificStoreInfo = getDelegatingStore().getEffectiveStore(feedName)
+                .getSystemInfo();
 
         // Ensure param gives us the sys info for the feed specific store
         // Purge cut of is time sensitive
-        assertThat(TestUtil.mapWithoutKeys(systemInfo1.getDetails(), "Purge cut off"))
-                .isEqualTo(TestUtil.mapWithoutKeys(systemInfo2.getDetails(), "Purge cut off"));
+        assertThat(TestUtil.mapWithoutKeys(delegatingStoreInfo.getDetails(), "Purge cut off"))
+                .isEqualTo(TestUtil.mapWithoutKeys(feedSpecificStoreInfo.getDetails(), "Purge cut off"));
     }
 
     private void loadDefaultData() {
         bulkLoad(RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS, true, 1_000);
+    }
+
+    private List<RefStreamDefinition> getDefaultRefStreamDefinitions() {
+        return RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS;
+    }
+
+    private List<MapDefinition> getDefaultMapDefinitions(final RefStreamDefinition refStreamDefinition) {
+        return IntStream.rangeClosed(1, MAPS_PER_REF_STREAM_DEF)
+                .mapToObj(i -> new MapDefinition(refStreamDefinition, buildDefaultMapName(i)))
+                .collect(Collectors.toList());
     }
 
     private RefDataOffHeapStore getLegacyStore(final boolean createIfNotExists) {

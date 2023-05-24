@@ -51,8 +51,11 @@ import java.util.stream.Stream;
 public class LmdbEnv implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv.class);
+    private static final String DATA_FILE_NAME = "data.mdb";
+    private static final String LOCK_FILE_NAME = "lock.mdb";
 
     private final Path localDir;
+    private final boolean isDedicatedDir;
     private final String name;
     private final Env<ByteBuffer> env;
     private final Set<EnvFlags> envFlags;
@@ -65,18 +68,25 @@ public class LmdbEnv implements AutoCloseable {
     private final ReadWriteLock readWriteLock;
     private final Semaphore activeReadTransactionsSemaphore;
 
-    LmdbEnv(final Path localDir,
-            final Env<ByteBuffer> env,
-            final Set<EnvFlags> envFlags) {
-        this(localDir, null, env, envFlags, false);
-    }
-
+    /**
+     * @param localDir The directory where the LMDB env will be persisted or read from if it already exists.
+     * @param name A name for the environment.
+     * @param env The actual LMDB env.
+     * @param envFlags The flags used when the LMDB env was created. Mostly for debug purposes.
+     * @param isReaderBlockedByWriter Set to true if you want writes to block reads. If false reads can happen
+     *                                concurrently with writes. Writes always block other writes.
+     * @param isDedicatedDir True if localDir is dedicated to this LMDB env and contains no other files.
+     *                       When {@link LmdbEnv#delete()} is called, if isDedicatedDir is true, localDir will be
+     *                       deleted, else it will just delete the LMDB .mdb files and leave localDir present.
+     */
     LmdbEnv(final Path localDir,
             final String name,
             final Env<ByteBuffer> env,
             final Set<EnvFlags> envFlags,
-            final boolean isReaderBlockedByWriter) {
+            final boolean isReaderBlockedByWriter,
+            final boolean isDedicatedDir) {
         this.localDir = localDir;
+        this.isDedicatedDir = isDedicatedDir;
         this.name = name;
         this.env = env;
         this.envFlags = Collections.unmodifiableSet(envFlags);
@@ -111,7 +121,8 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     public static boolean isLmdbDataFile(final Path file) {
-        return file != null && file.endsWith("data.mdb");
+        return file != null
+                && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
     }
 
     /**
@@ -390,9 +401,30 @@ public class LmdbEnv implements AutoCloseable {
         LOGGER.doIfDebugEnabled(this::dumpMdbFileSize);
 
         if (Files.isDirectory(localDir)) {
-            if (!FileUtil.deleteDir(localDir)) {
+            if (isDedicatedDir) {
+                // Dir dedicated to the env so can delete the whole dir
+                if (!FileUtil.deleteDir(localDir)) {
+                    throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
+                }
+            } else {
+                // Not dedicated dir so just delete the files
+                deleteEnvFile(LOCK_FILE_NAME);
+                deleteEnvFile(DATA_FILE_NAME);
+            }
+        }
+    }
+
+    private void deleteEnvFile(final String filename) {
+        final Path file = localDir.resolve(filename);
+        if (Files.isRegularFile(file)) {
+            try {
+                LOGGER.info("Deleting file {}", file.toAbsolutePath());
+                Files.delete(file);
+            } catch (IOException e) {
                 throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
             }
+        } else {
+            LOGGER.error("LMDB env file {} doesn't exist", file.toAbsolutePath());
         }
     }
 

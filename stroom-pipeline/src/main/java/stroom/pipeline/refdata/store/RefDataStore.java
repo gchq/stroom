@@ -98,8 +98,6 @@ public interface RefDataStore {
     List<RefStoreEntry> list(final int limit,
                              final Predicate<RefStoreEntry> filter);
 
-//    <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction);
-
     /**
      * @param filter A filter or null if not filtering is needed.
      * @param takeWhile Must be thread safe. Keeps passing entries to the entryConsumer until this returns false.

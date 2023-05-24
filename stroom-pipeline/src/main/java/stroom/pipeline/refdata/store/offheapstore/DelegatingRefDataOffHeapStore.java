@@ -18,6 +18,7 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv.Factory;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -53,7 +55,7 @@ import javax.inject.Singleton;
 
 /**
  * Is a front for multiple {@link RefDataOffHeapStore} instances, one per feed.
- * It either delegates to the appropriate store if the stream id is know (so the feed can be derived
+ * It either delegates to the appropriate store if the stream id is know (so that the feed can be derived
  * from the stream ID), or it delegates to all stores and aggregates the results.
  */
 @Singleton
@@ -94,7 +96,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     @SuppressWarnings("unused")
     public DelegatingRefDataOffHeapStore(final Provider<ReferenceDataConfig> referenceDataConfigProvider,
                                          final CacheManager cacheManager,
-                                         final RefDataLmdbEnv.Factory refDataLmdbEnvFactory,
+                                         final Factory refDataLmdbEnvFactory,
                                          final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory,
                                          final MetaService metaService,
                                          final DocRefInfoService docRefInfoService,
@@ -191,8 +193,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                                final Predicate<RefStoreEntry> takeWhilePredicate,
                                final Consumer<RefStoreEntry> entryConsumer) {
 
+        // It is possible this would benefit from some form of parallelism but have not used .parallel() as IO
+        // is involved
         Stream<RefStoreEntry> stream = getAllStoresAsStream()
-                .parallel()
                 .flatMap(store ->
                         store.list(Integer.MAX_VALUE, filter).stream());
 
@@ -213,8 +216,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private <T> List<T> getListOnAllStores(final int limit,
                                            final Function<RefDataOffHeapStore, List<T>> listFunction) {
 
+        // It is possible this would benefit from some form of parallelism but have not used .parallel() as IO
+        // is involved
         Stream<T> stream = getAllStoresAsStream()
-                .parallel()
                 .flatMap(store ->
                         listFunction.apply(store).stream());
         if (limit > 0 && limit < Integer.MAX_VALUE) {
@@ -226,8 +230,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     @Override
     public List<ProcessingInfoResponse> listProcessingInfo(final int limit,
                                                            final Predicate<ProcessingInfoResponse> filter) {
+        // It is possible this would benefit from some form of parallelism but have not used .parallel() as IO
+        // is involved
         return getAllStoresAsStream()
-                .parallel()
                 .flatMap(store ->
                         store.listProcessingInfo(limit, filter).stream())
                 .limit(limit)
@@ -250,8 +255,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     }
 
     private long getStoresAggregateValue(final ToLongFunction<RefDataOffHeapStore> valueFunc) {
+        // It is possible this would benefit from some form of parallelism but have not used .parallel() as IO
+        // is involved
         return getAllStoresAsStream()
-                .parallel()
                 .mapToLong(valueFunc)
                 .sum();
     }
@@ -292,8 +298,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
     @Override
     public void logAllContents() {
-        // Not parallel so we don't get a disordered mess
+        // Sequential so we don't get a disordered mess
         getAllStoresAsStream()
+                .sequential()
                 .forEach(refDataOffHeapStore -> {
                     LOGGER.debug("Dumping contents of store {}", refDataOffHeapStore);
                     refDataOffHeapStore.logAllContents();
@@ -302,9 +309,13 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
     @Override
     public void logAllContents(final Consumer<String> logEntryConsumer) {
-        // Not parallel so we don't get a disordered mess
+        // Sequential so we don't get a disordered mess
         getAllStoresAsStream()
-                .forEach(store -> store.logAllContents(logEntryConsumer));
+                .sequential()
+                .forEach(store -> {
+                    logEntryConsumer.accept("Logging all contents for store " + store);
+                    store.logAllContents(logEntryConsumer);
+                });
     }
 
     @Override
@@ -314,8 +325,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
     @Override
     public long getSizeOnDisk() {
+        // It is possible this would benefit from some form of parallelism but have not used .parallel() as IO
+        // is involved
         return getAllStoresAsStream()
-                .parallel()
                 .mapToLong(RefDataOffHeapStore::getSizeOnDisk)
                 .sum();
     }
@@ -352,11 +364,15 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
             final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Store count", feedNameToStoreMap.size())
-                    .addDetail("Feed store paths", feedNameToStoreMap.values()
+                    .addDetail("Feed store paths", feedNameToStoreMap.entrySet()
                             .stream()
-                            .map(store -> store.getLmdbEnvironment().getLocalDir().toAbsolutePath().toString())
-                            .sorted()
-                            .collect(Collectors.toList()))
+                            .collect(Collectors.toMap(
+                                    Entry::getKey,
+                                    entry -> entry.getValue()
+                                            .getLmdbEnvironment()
+                                            .getLocalDir()
+                                            .toAbsolutePath()
+                                            .toString())))
                     .addDetail("Environment max size", referenceDataConfig.getLmdbConfig().getMaxStoreSize())
                     .addDetail("Environment current size (total)",
                             ModelStringUtil.formatIECByteSizeString(getSizeOnDisk()))
@@ -440,7 +456,20 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                 LOGGER.trace("refStreamId: {} already migrated", refStreamId);
                 migratedRefStreamIds.add(refStreamId);
             } else {
-                migrateRefStream(refStreamId, feedSpecificStore);
+                try {
+                    migrateRefStream(refStreamId, feedSpecificStore);
+                } catch (Exception e) {
+                    // We can't risk the migration holding up processing, so if it fails just ignore it.
+                    // The caller will then get a feed specific store that doesn't contain the stream so will try to
+                    // load it as normal.
+                    LOGGER.error("Error migrating refStreamId: {} to feed store '{}'. " +
+                                    "This stream will not be migrated so will have to be re-loaded as normal. " +
+                                    "Migration may be tried again if stroom is re-booted. {}",
+                            refStreamId, feedName, e.getMessage(), e);
+                } finally {
+                    // Even though we haven't migrated it, mark it as such, so we don't try again.
+                    migratedRefStreamIds.add(refStreamId);
+                }
             }
         } else {
             LOGGER.trace("No migration required");
@@ -450,8 +479,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     }
 
     long getEntryCount(final String dbName) {
+        // It is possible this would benefit from some form of parallelism but have not used .parallel() as IO
+        // is involved
         return getAllStoresAsStream()
-                .parallel()
                 .mapToLong(store -> store.getEntryCount(dbName))
                 .sum();
     }
@@ -470,17 +500,20 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private void discoverFeedSpecificStores() {
         final String localDirStr = referenceDataConfigProvider.get().getLmdbConfig().getLocalDir();
         final Path localDir = pathCreator.toAppPath(localDirStr);
+        LOGGER.debug(() -> "Attempting to discover feed specific ref data stores in " + localDir.toAbsolutePath());
         if (Files.isDirectory(localDir)) {
             try (final Stream<Path> pathStream = Files.list(localDir)) {
-                pathStream.filter(Files::isDirectory)
+                final int storeCount = pathStream.filter(Files::isDirectory)
                         .filter(path -> path.getFileName().toString().contains(DELIMITER))
-                        .forEach(dir -> {
+                        .mapToInt(dir -> {
                             final String dirName = dir.getFileName().toString();
                             final String[] parts = DELIMITER_PATTERN.split(dirName);
                             if (parts.length != 2) {
                                 LOGGER.error("Unable to parse store directory {}, parts: {}. Ignoring this store",
                                         dir, parts);
+                                return 0;
                             } else {
+                                // The dir name looks like '<feed name>___<feed uuid>'
                                 final String feedDocUuid = parts[1];
                                 final String feedName = NullSafe.get(
                                         docRefInfoService.decorate(FeedDoc.buildDocRef()
@@ -489,12 +522,18 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                                         DocRef::getName);
 
                                 if (!NullSafe.isBlankString(feedName)) {
+                                    LOGGER.debug("Found store for feed {}", feedName);
                                     feedNameToStoreMap.computeIfAbsent(feedName, this::getOrCreateFeedSpecificStore);
+                                    return 1;
                                 } else {
                                     LOGGER.error("No feed name for UUID {}. Ignoring store {}", feedDocUuid, dir);
+                                    return 0;
                                 }
                             }
-                        });
+                        })
+                        .sum();
+                LOGGER.info("Discovered {} feed specific ref data stores in {}",
+                        storeCount, localDir.toAbsolutePath());
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -519,24 +558,23 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         try (final Stream<Path> pathStream = Files.list(localDir).filter(Files::isRegularFile)) {
             final boolean foundDataFile = pathStream.anyMatch(LmdbEnv::isLmdbDataFile);
             if (foundDataFile) {
-                final RefDataOffHeapStore legacyStore = getOrCreateLegacyStore();
-                if (legacyStore.isEmpty()) {
-                    LOGGER.debug("Found empty legacy store in {}", localDir);
-                    legacyRefDataStore = null;
-                    migrationCheckRequired = false;
+                legacyRefDataStore = getOrCreateLegacyStore();
+                if (legacyRefDataStore.isEmpty()) {
+                    closeAndDeleteLegacyStore();
                 } else {
-                    LOGGER.debug("Found non-empty legacy store in {}", localDir);
-                    legacyRefDataStore = legacyStore;
+                    LOGGER.info("Found a non-empty legacy reference data store in {}. Migration of reference data " +
+                                    "will be performed on a stream by stream basis on demand.",
+                            localDir.toAbsolutePath());
                     migrationCheckRequired = true;
                 }
             } else {
                 if (createIfNotExists) {
-                    LOGGER.debug("No legacy store found in {}, creating an empty one", localDir);
+                    LOGGER.warn("TESTING ONLY! No legacy store found in {}, creating an empty one", localDir);
                     legacyRefDataStore = getOrCreateLegacyStore();
                     // createIfNotExists is only really here for migration testing so require a mig check
                     migrationCheckRequired = true;
                 } else {
-                    LOGGER.debug("No legacy store found in {}", localDir);
+                    LOGGER.info("No legacy reference data store found in {}. No migration required.", localDir);
                     legacyRefDataStore = null;
                     migrationCheckRequired = false;
                 }
@@ -547,6 +585,25 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         }
     }
 
+    private void closeAndDeleteLegacyStore() {
+        // This likely means all data has been migrated so delete it
+        final RefDataLmdbEnv lmdbEnvironment = legacyRefDataStore.getLmdbEnvironment();
+        LOGGER.info("Closing and deleting empty legacy reference data LMDB env from {}", lmdbEnvironment.getLocalDir());
+        try {
+            lmdbEnvironment.close();
+            try {
+                lmdbEnvironment.delete();
+            } catch (Exception e) {
+                LOGGER.error("Error deleting ref data lmdb env {}: {}", lmdbEnvironment, e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error closing ref data lmdb env {}: {}", lmdbEnvironment, e.getMessage(), e);
+        } finally {
+            this.legacyRefDataStore = null;
+            migrationCheckRequired = false;
+        }
+    }
+
     private RefDataOffHeapStore getOrCreateLegacyStore() {
         return getOrCreateFeedSpecificStore(null);
     }
@@ -554,12 +611,16 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private RefDataOffHeapStore getOrCreateFeedSpecificStore(final String feedName) {
         final String subDirName = NullSafe.get(feedName, this::feedNameToSubDirName);
         // This will get/create the env on disk
-        final RefDataLmdbEnv refDataLmdbEnv = refDataLmdbEnvFactory.create(subDirName);
+        final RefDataLmdbEnv refDataLmdbEnv = refDataLmdbEnvFactory.create(feedName, subDirName);
         final RefDataOffHeapStore refDataOffHeapStore = refDataOffHeapStoreFactory.create(refDataLmdbEnv);
-        LOGGER.info("Created {}reference data store for feed: '{}' in dir: '{}'",
+        LOGGER.debug("Created {} ref data store {}in dir: '{}'",
                 (feedName == null
-                        ? "legacy "
-                        : ""), feedName, refDataLmdbEnv.getLocalDir());
+                        ? "legacy"
+                        : "feed specific"),
+                (feedName == null
+                        ? ""
+                        : "for feed '" + refDataLmdbEnv.getFeedName() + "' "),
+                refDataLmdbEnv.getLocalDir());
         return refDataOffHeapStore;
     }
 
@@ -588,13 +649,17 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private void checkLegacyStoreState() {
         LOGGER.debug("checkLegacyStoreState()");
         final RefDataOffHeapStore legacyStore = this.legacyRefDataStore;
-        if (legacyStore != null && legacyStore.isEmpty()) {
-            // Purge may have cleaned it out, so don't need to check for migrations in future
-            if (LOGGER.isDebugEnabled()) {
-                if (migrationCheckRequired) {
-                    LOGGER.debug("Setting migrationCheckRequired to false");
+        if (legacyStore != null) {
+            if (legacyStore.isEmpty()) {
+                // Purge may have cleaned it out, so don't need to check for migrations in future
+                if (LOGGER.isDebugEnabled()) {
+                    if (migrationCheckRequired) {
+                        LOGGER.debug("Setting migrationCheckRequired to false");
+                    }
                 }
+                migrationCheckRequired = false;
             }
+        } else {
             migrationCheckRequired = false;
         }
     }

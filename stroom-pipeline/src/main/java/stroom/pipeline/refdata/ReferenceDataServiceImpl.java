@@ -86,6 +86,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
+            Map.entry(ReferenceDataFields.FEED_NAME_FIELD.getName(),
+                    RefStoreEntry::getFeedName),
             Map.entry(ReferenceDataFields.KEY_FIELD.getName(),
                     RefStoreEntry::getKey),
             Map.entry(ReferenceDataFields.VALUE_FIELD.getName(),
@@ -566,7 +568,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         }
     }
 
-
     private <T> T withPermissionCheck(final Supplier<T> supplier) {
         // TODO @AT Need some kind of fine grained doc permission check on the pipe associated with each entry
         //   but this will do for a first stab
@@ -1009,5 +1010,4 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     + "\" but was given string \"" + value + "\"");
         }
     }
-
 }

@@ -482,6 +482,10 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
 
     }
 
+    protected String buildDefaultMapName(final int i) {
+        return "Map" + i;
+    }
+
     protected void bulkLoadAndAssert(final List<RefStreamDefinition> refStreamDefinitions,
                                      final boolean overwriteExisting,
                                      final int commitInterval,
@@ -493,7 +497,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
 
         final List<String> mapNames = IntStream.rangeClosed(1, MAPS_PER_REF_STREAM_DEF)
                 .boxed()
-                .map(i -> "Map" + i)
+                .map(this::buildDefaultMapName)
                 .collect(Collectors.toList());
 
         final List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData = new ArrayList<>();

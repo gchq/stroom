@@ -40,13 +40,16 @@ public class RefDataLmdbEnv {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataLmdbEnv.class);
     protected static final String LEGACY_STORE_NAME = "Legacy";
 
+    private final String feedName;
     private final LmdbEnv lmdbEnvironment;
     private final Map<String, LmdbDb> databaseMap = new HashMap<>();
 
     @Inject
     public RefDataLmdbEnv(final LmdbEnvFactory lmdbEnvFactory,
                           final Provider<ReferenceDataConfig> referenceDataConfigProvider,
-                          @Assisted @Nullable final String subDirName) {
+                          @Assisted("feedName") @Nullable final String feedName,
+                          @Assisted("subDirName") @Nullable final String subDirName) {
+        this.feedName = Objects.requireNonNullElse(feedName, LEGACY_STORE_NAME);
         lmdbEnvironment = createEnvironment(
                 lmdbEnvFactory,
                 referenceDataConfigProvider.get().getLmdbConfig(),
@@ -67,6 +70,10 @@ public class RefDataLmdbEnv {
 
     public Path getLocalDir() {
         return lmdbEnvironment.getLocalDir();
+    }
+
+    public String getFeedName() {
+        return feedName;
     }
 
     public Optional<String> getName() {
@@ -209,14 +216,16 @@ public class RefDataLmdbEnv {
                 .withName(name)
                 .build();
 
-        LOGGER.info("Env: {}, existing databases: [{}]", name, String.join(",", env.getDbiNames()));
+        LOGGER.debug(() -> LogUtil.message("Created Ref Data LMDB Env: {}, localDir: {}, existing databases: [{}]",
+                name, env.getLocalDir().toAbsolutePath(), String.join(",", env.getDbiNames())));
         return env;
     }
 
     @Override
     public String toString() {
         return "RefDataLmdbEnv{" +
-                "localDir=" + getLocalDir() +
+                "feedName=" + feedName +
+                ", localDir=" + getLocalDir() +
                 ", name='" + getName() + '\'' +
                 ", envFlags=" + getEnvFlags() +
                 '}';
@@ -228,6 +237,8 @@ public class RefDataLmdbEnv {
 
     public interface Factory {
 
-        RefDataLmdbEnv create(final String subDirName);
+        // Have to name the params to avoid ambiguity in guice binding
+        RefDataLmdbEnv create(@Assisted("feedName") final String feedName,
+                              @Assisted("subDirName") final String subDirName);
     }
 }

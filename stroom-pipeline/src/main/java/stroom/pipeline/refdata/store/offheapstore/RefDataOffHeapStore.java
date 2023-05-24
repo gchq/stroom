@@ -579,7 +579,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      */
     void migrateRefStreams(final long refStreamId, final RefDataOffHeapStore destinationStore) {
         final TaskContext taskContext = taskContextFactory.current();
-        taskContext.info(() -> LogUtil.message("Migrating legacy ref data for reference stream {}", refStreamId));
+        taskContext.info(() -> LogUtil.message("Migrating legacy ref data for reference stream {} into store {}",
+                refStreamId, destinationStore.getName()));
         final DurationTimer timer = DurationTimer.start();
         try {
             final Predicate<RefStreamDefinition> refStreamDefinitionPredicate = refStreamDef ->
@@ -619,7 +620,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 }
             } while (wasMatchFound);
 
-            LOGGER.info("Completed migration of ref stream {} in {}", refStreamId, timer);
+            LOGGER.info("Completed migration of ref stream {} into store {} in {}",
+                    refStreamId, destinationStore.storeName, timer);
 
         } catch (TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
@@ -1593,7 +1595,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int valueReferenceCount = valueStore.getReferenceCount(readTxn, valueStoreKey)
                 .orElse(-1);
 
-        return new RefStoreEntry(mapDefinition, key, value, valueReferenceCount, refDataProcessingInfo);
+        return new RefStoreEntry(
+                lmdbEnvironment.getFeedName(),
+                mapDefinition,
+                key,
+                value,
+                valueReferenceCount,
+                refDataProcessingInfo);
     }
 
     private String getReferenceDataValue(final Txn<ByteBuffer> readTxn,
@@ -1639,7 +1647,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final ReferenceDataConfig referenceDataConfig = referenceDataConfigProvider.get();
 
             final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
-                    .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize())
+                    .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize().toString())
                     .addDetail("Environment max size", referenceDataConfig.getLmdbConfig().getMaxStoreSize())
                     .addDetail("Environment current size",
                             ModelStringUtil.formatIECByteSizeString(getSizeOnDisk()))
