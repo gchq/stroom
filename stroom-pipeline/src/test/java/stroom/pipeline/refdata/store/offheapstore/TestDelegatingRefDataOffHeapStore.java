@@ -201,11 +201,12 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
     void getMapNames() {
         loadDefaultData();
 
-        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
-            final Set<String> mapNames = getDelegatingStore().getMapNames(refStreamDef);
-            LOGGER.info("mapNames: {}", mapNames);
-            assertThat(mapNames)
-                    .hasSize(MAPS_PER_REF_STREAM_DEF);
+        RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(
+                refStreamDef -> {
+                    final Set<String> mapNames = getDelegatingStore().getMapNames(refStreamDef);
+                    LOGGER.info("mapNames: {}", mapNames);
+                    assertThat(mapNames)
+                            .hasSize(MAPS_PER_REF_STREAM_DEF);
                 }
         );
     }
@@ -215,10 +216,10 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
         loadDefaultData();
 
         RefDataStoreTestModule.DEFAULT_REF_STREAM_DEFINITIONS.forEach(refStreamDef -> {
-                final ProcessingState processingState = getDelegatingStore().getLoadState(refStreamDef)
-                                .orElseThrow();
-                assertThat(processingState)
-                        .isEqualTo(ProcessingState.COMPLETE);
+            final ProcessingState processingState = getDelegatingStore().getLoadState(refStreamDef)
+                    .orElseThrow();
+            assertThat(processingState)
+                    .isEqualTo(ProcessingState.COMPLETE);
         });
     }
 
