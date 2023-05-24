@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.2-beta.10-open-id-7] - 2023-05-24
+
+* Fix Data screen fetching data twice and consequently logging the fetch audit event twice.
+
+* Issue **#3358** : Fix audit events for user preferences screen.
+
+* Issue **#3475** : Change proxy error handling to return 401 for token authentication failures.
+
+* Change internode comms to authenticate as the processing user then run as a user supplied in headers.
+
 * Issue **#3388** : Fix mouse selection drag scrolling in ace editor.
 
 * Issue **#3435** : Speculative fix for stuck search extraction jobs.
@@ -5369,7 +5380,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-7...HEAD
+[v7.2-beta.10-open-id-7]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-6...v7.2-beta.10-open-id-7
 [v7.2-beta.10-open-id-6]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-5...v7.2-beta.10-open-id-6
 [v7.2-beta.10-open-id-5]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-4...v7.2-beta.10-open-id-5
 [v7.2-beta.10-open-id-4]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-3...v7.2-beta.10-open-id-4
