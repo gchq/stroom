@@ -1,5 +1,6 @@
 package stroom.processor.api;
 
+import stroom.util.NullSafe;
 import stroom.util.shared.Severity;
 
 import java.util.Map;
@@ -30,10 +31,18 @@ public class ProcessorResultImpl implements ProcessorResult {
 
     @Override
     public long getMarkerCount(final Severity... severity) {
-        long count = 0;
-        for (final Severity sev : severity) {
-            count += markerCounts.getOrDefault(sev, 0L);
-        }
-        return count;
+        return NullSafe.stream(severity)
+                .mapToLong(sev ->
+                        markerCounts.getOrDefault(sev, 0L))
+                .sum();
+    }
+
+    @Override
+    public String toString() {
+        return "ProcessorResultImpl{" +
+                "read=" + read +
+                ", written=" + written +
+                ", markerCounts=" + markerCounts +
+                '}';
     }
 }

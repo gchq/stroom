@@ -3,8 +3,8 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.feed.shared.FeedDoc;
+import stroom.docref.DocRefInfo;
+import stroom.feed.api.FeedStore;
 import stroom.lmdb.LmdbEnv;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -76,9 +76,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private final RefDataLmdbEnv.Factory refDataLmdbEnvFactory;
     private final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory;
     private final MetaService metaService;
-    private final DocRefInfoService docRefInfoService;
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
+    private final FeedStore feedStore;
 
     // feed => refDataOffHeapStore, shouldn't be that many ref feeds
     // Feeds are immutable things too so no TTL needed
@@ -100,16 +100,16 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                                          final Factory refDataLmdbEnvFactory,
                                          final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory,
                                          final MetaService metaService,
-                                         final DocRefInfoService docRefInfoService,
                                          final SecurityContext securityContext,
-                                         final PathCreator pathCreator) {
+                                         final PathCreator pathCreator,
+                                         final FeedStore feedStore) {
         this.referenceDataConfigProvider = referenceDataConfigProvider;
         this.refDataLmdbEnvFactory = refDataLmdbEnvFactory;
         this.refDataOffHeapStoreFactory = refDataOffHeapStoreFactory;
         this.metaService = metaService;
-        this.docRefInfoService = docRefInfoService;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
+        this.feedStore = feedStore;
 
         metaIdToFeedStoreCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -546,9 +546,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                                 // The dir name looks like '<feed name>___<feed uuid>'
                                 final String feedDocUuid = parts[1];
                                 final String feedName = NullSafe.get(
-                                        docRefInfoService.decorate(FeedDoc.buildDocRef()
-                                                .uuid(feedDocUuid)
-                                                .build()),
+                                        feedStore.info(feedDocUuid),
+                                        DocRefInfo::getDocRef,
                                         DocRef::getName);
 
                                 if (!NullSafe.isBlankString(feedName)) {
@@ -659,8 +658,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         final String cleanedFeedName = FEED_NAME_CLEAN_PATTERN.matcher(feedName.toUpperCase())
                 .replaceAll(FEED_NAME_CLEAN_REPLACEMENT);
 
-        final List<DocRef> feedDocRefs = docRefInfoService.findByName(
-                FeedDoc.DOCUMENT_TYPE, feedName, false);
+        final List<DocRef> feedDocRefs = feedStore.findByName(feedName);
         if (feedDocRefs.isEmpty()) {
             throw new RuntimeException(LogUtil.message("Expecting to find feed doc for name " + feedName));
         } else if (feedDocRefs.size() > 1) {

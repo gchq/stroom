@@ -24,11 +24,15 @@ import stroom.processor.api.ProcessorResult;
 import stroom.processor.impl.DataProcessorTaskHandler;
 import stroom.processor.impl.ProcessorTaskQueueManager;
 import stroom.processor.impl.ProcessorTaskTestHelper;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.Severity;
 
+import io.vavr.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +40,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -71,11 +77,17 @@ public class CommonTranslationTestHelper {
     private static final String REFFEED_HOSTNAME_TO_LOCATION = "HOSTNAME_TO_LOCATION";
     private static final String REFFEED_HOSTNAME_TO_IP = "HOSTNAME_TO_IP";
 
-    private static final String ID_TO_USER = "ID_TO_USER";
+    private static final String REFFEED_ID_TO_USER = "ID_TO_USER";
     private static final Path EMPLOYEE_REFERENCE_XSL = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "EmployeeReference.xsl");
     private static final Path EMPLOYEE_REFERENCE_CSV = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "EmployeeReference.in");
+
+//    private static final List<String> FEEDS = List.of(
+//            FEED_NAME,
+//            REFFEED_HOSTNAME_TO_IP,
+//            REFFEED_HOSTNAME_TO_LOCATION,
+//            REFFEED_ID_TO_USER);
 
     private final NodeInfo nodeInfo;
     private final ProcessorTaskQueueManager processorTaskQueueManager;
@@ -103,6 +115,8 @@ public class CommonTranslationTestHelper {
         // Force creation of stream tasks.
         processorTaskTestHelper.createAndQueueTasks();
 
+        LOGGER.info("Tasks to process {}", processorTaskQueueManager.getTaskQueueSize());
+
         // We have to process 1 task at a time to ensure the ref data gets processed first.
         final List<ProcessorResult> results = new ArrayList<>();
         ProcessorTaskList processorTasks = processorTaskQueueManager.assignTasks(nodeInfo.getThisNodeName(), 1);
@@ -118,7 +132,23 @@ public class CommonTranslationTestHelper {
 
     public ProcessorResult process(final ProcessorTask processorTask) {
         final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
-        return dataProcessorTaskHandler.exec(processorTask);
+        final ProcessorResult result = dataProcessorTaskHandler.exec(processorTask);
+
+        final String markerCounts = Arrays.stream(Severity.SEVERITIES)
+                .sorted()
+                .map(severity -> Tuple.of(severity, result.getMarkerCount(severity)))
+                .filter(tuple2 -> tuple2._2 > 0)
+                .map(tuple2 -> tuple2._1 + ":" + tuple2._2)
+                .collect(Collectors.joining(", "));
+
+        LOGGER.info("pipeline: {}, feed: {}, meta_id: {}, read: {}, written: {}, markers: [{}]",
+                NullSafe.get(processorTask.getProcessorFilter(), ProcessorFilter::getPipelineName),
+                processorTask.getFeedName(),
+                processorTask.getMetaId(),
+                result.getRead(),
+                result.getWritten(),
+                markerCounts);
+        return result;
     }
 
     public void setup() {
@@ -142,7 +172,7 @@ public class CommonTranslationTestHelper {
         final DocRef hostNameToLocation = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_LOCATION,
                 TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING, XSLT_HOST_NAME_TO_LOCATION,
                 REFDATA_HOST_NAME_TO_LOCATION);
-        final DocRef idToUser = storeCreationTool.addReferenceData(ID_TO_USER, TextConverterType.DATA_SPLITTER,
+        final DocRef idToUser = storeCreationTool.addReferenceData(REFFEED_ID_TO_USER, TextConverterType.DATA_SPLITTER,
                 CSV_WITH_HEADING, EMPLOYEE_REFERENCE_XSL, EMPLOYEE_REFERENCE_CSV);
 
         final Set<DocRef> referenceFeeds = new HashSet<>();
@@ -161,6 +191,6 @@ public class CommonTranslationTestHelper {
             }
         });
 
-        assertThat(metaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isZero();
     }
 }

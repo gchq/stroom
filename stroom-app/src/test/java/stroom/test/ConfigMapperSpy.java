@@ -5,6 +5,7 @@ import stroom.config.global.impl.ConfigMapper;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -116,5 +118,21 @@ public class ConfigMapperSpy extends ConfigMapper {
     public void clearConfigValueMappers() {
         STATIC_VALUE_MAPPERS.clear();
         this.valueMappers.clear();
+    }
+
+    public String dumpClassesWithMappers() {
+        return LogUtil.message("static mappers: [{}], mappers: [{}]",
+                NullSafe.map(STATIC_VALUE_MAPPERS)
+                        .keySet()
+                        .stream()
+                        .map(Class::getSimpleName)
+                        .sorted()
+                        .collect(Collectors.joining(", ")),
+                NullSafe.map(valueMappers)
+                        .keySet()
+                        .stream()
+                        .map(Class::getSimpleName)
+                        .sorted()
+                        .collect(Collectors.joining(", ")));
     }
 }
