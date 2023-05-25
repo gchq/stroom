@@ -321,12 +321,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     private String getMapNamesStr() {
-        return String.join(", ", offHeapStagingStore.getStagedMapNames());
+        return offHeapStagingStore.getStagedMapNames()
+                .stream()
+                .sorted()
+                .collect(Collectors.joining(", "));
     }
 
     private String getMapUidsStr() {
         return offHeapStagingStore.getStagedUids()
-        .stream()
+                .stream()
                 .map(UID::getValue)
                 .sorted()
                 .map(String::valueOf)
@@ -346,15 +349,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         LOGGER.info(LogUtil.inBoxOnNewLine(
                 """
-                        Processed {} reference entries with outcome {}
+                        Processed {} reference entries into store '{}' with outcome {}
                         New entries:                {}
                         Null values ignored:        {}
                         dup-key value updated:      {}
                         dup-key value identical:    {}
                         dup-key entry removed:      {}
                         dup-key ignored:            {}
-                        Map name(s):           [{}]
-                        Map UID(s):            [{}]
+                        Map name(s):           {}
+                        Map UID(s):            {}
                         Stream:                {}
                         Pipeline name:         {}
                         Pipeline UUID:         {}
@@ -363,6 +366,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         Transfer from staging: {}
                         Total:                 {}""",
                 ModelStringUtil.formatCsv(putsToStagingStoreCounter),
+                refStoreLmdbEnv.getName().orElse("?"),
                 processingState,
                 Strings.padStart(ModelStringUtil.formatCsv(newEntriesCount), PAD_LENGTH, ' '),
                 Strings.padStart(ModelStringUtil.formatCsv(ignoredNullsCount), PAD_LENGTH, ' '),
@@ -386,7 +390,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         LOGGER.info(LogUtil.inBoxOnNewLine(
                 """
-                        Migrated {} reference entries with outcome {}
+                        Migrated {} reference entries into store '{}' with outcome {}
                         Store directory:  {}
                         Stream:           {}
                         Pipeline name:    {}
@@ -394,6 +398,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         Pipeline version: {}
                         Total time:       {}""",
                 ModelStringUtil.formatCsv(newEntriesCount),
+                refStoreLmdbEnv.getName(),
                 processingState,
                 NullSafe.get(refStoreLmdbEnv.getLocalDir(), Path::getFileName),
                 refStreamDefinition.getStreamId(),

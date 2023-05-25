@@ -44,7 +44,7 @@
 
     <logger name="stroom.pipeline.writer.FileAppender" level="trace" />
 
-    <logger name="org.flywaydb" level="info" />
+    <logger name="org.flywaydb" level="error" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />

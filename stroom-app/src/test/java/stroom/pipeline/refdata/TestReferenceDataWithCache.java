@@ -24,6 +24,10 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -39,6 +43,7 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.security.api.SecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogUtil;
@@ -52,7 +57,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -62,16 +69,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
-    private static final String TEST_FEED_1 = "TEST_FEED_1";
-    private static final String TEST_FEED_2 = "TEST_FEED_2";
     private static final String TEST_PIPELINE_1 = "TEST_PIPELINE_1";
     private static final String TEST_PIPELINE_2 = "TEST_PIPELINE_2";
-    private static final EffectiveMeta EFFECTIVE_STREAM_1 = buildEffectiveMeta(
-            1, "2008-01-01T09:47:00.000Z");
-    private static final EffectiveMeta EFFECTIVE_STREAM_2 = buildEffectiveMeta(
-            2, "2009-01-01T09:47:00.000Z");
-    private static final EffectiveMeta EFFECTIVE_STREAM_3 = buildEffectiveMeta(
-            3, "2010-01-01T09:47:00.000Z");
 
     @Inject
     private FeedStore feedStore;
@@ -92,6 +91,10 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private ValueStoreHashAlgorithm valueStoreHashAlgorithm;
     @Inject
     private StagingValueOutputStream stagingValueOutputStream;
+    @Inject
+    private SecurityContext securityContext;
+    @Inject
+    private MetaService metaService;
 
     private RefDataStore refDataStore;
 
@@ -107,12 +110,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1 = feedStore.createDocument("TEST_FEED_1");
-//            feed1.setReference(true);
-//            feed1 = feedService.save(feed1);
-
             final DocRef feed2 = feedStore.createDocument("TEST_FEED_2");
-//            feed2.setReference(true);
-//            feed2 = feedService.save(feed2);
 
             final DocRef pipeline1Ref = pipelineStore.createDocument(TEST_PIPELINE_1);
             final DocRef pipeline2Ref = pipelineStore.createDocument(TEST_PIPELINE_2);
@@ -128,11 +126,25 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference1);
             pipelineReferences.add(pipelineReference2);
 
+            final Map<String, List<EffectiveMeta>> effectiveMetasByFeed = new HashMap();
+            for (final DocRef feedDocRef : List.of(feed1, feed2)) {
+                final List<EffectiveMeta> streamSet = new ArrayList<>();
+                streamSet.add(buildEffectiveMeta(
+                        createMeta(feedDocRef.getName()).getId(),
+                        "2008-01-01T09:47:00.000Z"));
+                streamSet.add(
+                        buildEffectiveMeta(createMeta(feedDocRef.getName()).getId(),
+                                "2009-01-01T09:47:00.000Z"));
+                streamSet.add(
+                        buildEffectiveMeta(createMeta(feedDocRef.getName()).getId(),
+                                "2010-01-01T09:47:00.000Z"));
+                effectiveMetasByFeed.put(feedDocRef.getName(), streamSet);
+            }
 
-            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
-            streamSet.add(EFFECTIVE_STREAM_1);
-            streamSet.add(EFFECTIVE_STREAM_2);
-            streamSet.add(EFFECTIVE_STREAM_3);
+//            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
+//            streamSet.add(EFFECTIVE_STREAM_1);
+//            streamSet.add(EFFECTIVE_STREAM_2);
+//            streamSet.add(EFFECTIVE_STREAM_3);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
@@ -142,7 +154,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         ReferenceDataConfig::new) {
                     @Override
                     public TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
-                        return streamSet;
+                        return new TreeSet<>(effectiveMetasByFeed.get(key.getFeed()));
                     }
                 };
                 final ReferenceData referenceData = referenceDataProvider.get();
@@ -151,8 +163,13 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
                 // Add multiple reference data items to prove that looping over maps
                 // works.
-                addData(pipeline1Ref, new String[]{"USERNAME_TO_PAYROLL_NO_1", "USERNAME_TO_PAYROLL_NO_2"});
-                addData(pipeline2Ref, new String[]{"USERNAME_TO_PAYROLL_NO_3", "USERNAME_TO_PAYROLL_NO_4"});
+                addData(
+                        pipeline1Ref,
+                        effectiveMetasByFeed.get(feed1.getName()),
+                        new String[]{"USERNAME_TO_PAYROLL_NO_1", "USERNAME_TO_PAYROLL_NO_2"});
+                addData(pipeline2Ref,
+                        effectiveMetasByFeed.get(feed2.getName()),
+                        new String[]{"USERNAME_TO_PAYROLL_NO_3", "USERNAME_TO_PAYROLL_NO_4"});
                 checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_1");
                 checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_2");
                 checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_3");
@@ -169,8 +186,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         return new RefStreamDefinition(pipelineRef, version, streamId);
     }
 
-    private void addData(final DocRef pipelineRef, final String[] mapNames) {
-        EffectiveMeta effectiveStream = EFFECTIVE_STREAM_1;
+    private void addData(final DocRef pipelineRef, final List<EffectiveMeta> effectiveMetas, final String[] mapNames) {
+        EffectiveMeta effectiveStream = effectiveMetas.get(0);
         RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition1,
@@ -185,7 +202,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                     refDataLoader.completeProcessing();
                 });
 
-        effectiveStream = EFFECTIVE_STREAM_2;
+        effectiveStream = effectiveMetas.get(1);
         RefStreamDefinition refStreamDefinition2 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition2,
@@ -200,7 +217,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                     refDataLoader.completeProcessing();
                 });
 
-        effectiveStream = EFFECTIVE_STREAM_3;
+        effectiveStream = effectiveMetas.get(2);
         RefStreamDefinition refStreamDefinition3 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition3,
@@ -219,15 +236,23 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private void checkData(final ReferenceData data,
                            final List<PipelineReference> pipelineReferences,
                            final String mapName) {
-        assertThat(lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1")).isEqualTo("B1111");
-        assertThat(lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1")).isEqualTo("B1111");
-        assertThat(lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1")).isEqualTo("A1111");
-        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1")).isEqualTo("A1111");
-        assertThat(lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1")).isEqualTo("1111");
+        assertThat(lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1"))
+                .isEqualTo("B1111");
+        assertThat(lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1"))
+                .isEqualTo("B1111");
+        assertThat(lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1"))
+                .isEqualTo("A1111");
+        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1"))
+                .isEqualTo("A1111");
+        assertThat(lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1"))
+                .isEqualTo("1111");
 
-        assertThat(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1")).isNull();
-        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X")).isNull();
-        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "USERNAME_TO_PF_X", "user1")).isNull();
+        assertThat(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1"))
+                .isNull();
+        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X"))
+                .isNull();
+        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "USERNAME_TO_PF_X", "user1"))
+                .isNull();
     }
 
     private String addSuffix(final String str, int id) {
@@ -241,8 +266,6 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feedRef = feedStore.createDocument("TEST_FEED_V3");
-//            feed.setReference(true);
-//            feed = feedService.save(feed);
 
             final DocRef pipelineRef = pipelineStore.createDocument(TEST_PIPELINE_1);
             final PipelineReference pipelineReference = new PipelineReference(
@@ -251,7 +274,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference);
 
 
-            EffectiveMeta effectiveStream = buildEffectiveMeta(0, 0L);
+            EffectiveMeta effectiveStream = buildEffectiveMeta(createMeta(feedRef.getName()).getId(), 0L);
             final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
             streamSet.add(effectiveStream);
 
@@ -375,14 +398,14 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         }
     }
 
-    private static EffectiveMeta buildEffectiveMeta(final long id, final String effectiveTimeStr) {
+    private EffectiveMeta buildEffectiveMeta(final long id, final String effectiveTimeStr) {
         return new EffectiveMeta(id,
                 "DUMMY_FEED",
                 "DummyType",
                 DateUtil.parseNormalDateTimeString(effectiveTimeStr));
     }
 
-    private static EffectiveMeta buildEffectiveMeta(final long id, final long effectiveMs) {
+    private EffectiveMeta buildEffectiveMeta(final long id, final long effectiveMs) {
         return new EffectiveMeta(id, "DUMMY_FEED", "DummyType", effectiveMs);
     }
 
@@ -420,5 +443,27 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         } catch (IOException e) {
             throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
         }
+    }
+
+    private Meta createMeta(final String feedName) {
+        return createMeta(null, feedName, StreamTypeNames.RAW_EVENTS);
+    }
+
+    private Meta createMeta(final Meta parent, final String feedName, final String typeName) {
+        return securityContext.asProcessingUserResult(() -> {
+            final Meta meta = metaService.create(createProps(parent, feedName, typeName));
+            metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
+            return meta;
+        });
+    }
+
+    private MetaProperties createProps(final Meta parent, final String feedName, final String typeName) {
+        final long now = System.currentTimeMillis();
+        return MetaProperties.builder()
+                .parent(parent)
+                .feedName(feedName)
+                .typeName(typeName)
+                .createMs(now)
+                .build();
     }
 }
