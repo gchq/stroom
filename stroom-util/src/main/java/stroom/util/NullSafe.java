@@ -4,6 +4,7 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -269,13 +270,24 @@ public class NullSafe {
     }
 
     /**
-     * Returns a {@link Stream<E>} if collection is non-null else returns an empty {@link Stream< E >}
+     * Returns a {@link Stream<E>} if collection is non-null else returns an empty {@link Stream<E>}
      */
     public static <E> Stream<E> stream(final Collection<E> collection) {
         if (collection == null || collection.isEmpty()) {
             return Stream.empty();
         } else {
             return collection.stream();
+        }
+    }
+
+    /**
+     * Returns a {@link Stream<T>} if items is non-null else returns an empty {@link Stream<T>}
+     */
+    public static <T> Stream<T> stream(final T... items) {
+        if (items == null || items.length == 0) {
+            return Stream.empty();
+        } else {
+            return Arrays.stream(items);
         }
     }
 
