@@ -67,4 +67,8 @@ public class LmdbLibraryConfig extends AbstractConfig implements IsStroomConfig 
                 ", systemLibraryExtractDir='" + systemLibraryExtractDir + '\'' +
                 '}';
     }
+
+    public LmdbLibraryConfig withSystemLibraryExtractDir(final String systemLibraryExtractDir) {
+        return new LmdbLibraryConfig(providedSystemLibraryPath, systemLibraryExtractDir);
+    }
 }

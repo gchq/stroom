@@ -16,13 +16,20 @@
 
 package stroom.test;
 
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 import javax.inject.Inject;
@@ -31,6 +38,25 @@ import javax.inject.Inject;
 @IncludeModule(DbTestModule.class)
 @IncludeModule(CoreTestModule.class)
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractCoreIntegrationTest.class);
+
+    // This is all a bit nasty, but we need to be able to set a config mapper before the
+    // guice bindings happen as the lmdb lib path is read by eager singletons before we
+    // can inject and use ConfigMapperSpy.
+    static {
+        final Path libPath;
+        try {
+            libPath = Files.createTempDirectory("stroom_lmdb_lib__");
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error creating temp directory for LMDB library. {}", e.getMessage()), e);
+        }
+        final String libPathStr = libPath.toAbsolutePath().toString();
+        LOGGER.info("Configuring LMDB lib location to {}", libPathStr);
+        ConfigMapperSpy.setStaticConfigValueMapper(LmdbLibraryConfig.class, lmdbLibraryConfig ->
+                lmdbLibraryConfig.withSystemLibraryExtractDir(libPathStr));
+    }
 
     @Inject
     private ConfigMapperSpy configMapperSpy;
