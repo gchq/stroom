@@ -33,6 +33,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -75,31 +76,32 @@ public class SearchExpressionQueryBuilder {
     }
 
     public SearchExpressionQuery buildQuery(final ExpressionOperator expression) {
-        if (expression == null) {
-            throw new SearchException("No search expression has been provided!");
-        }
-        if (!hasChildren(expression)) {
-            throw new SearchException("No search terms have been specified!");
+        Set<String> terms = Collections.emptySet();
+        Query query = null;
+        if (expression != null) {
+            BooleanQuery.setMaxClauseCount(maxBooleanClauseCount);
+
+            // Build a query.
+            terms = new HashSet<>();
+            query = getQuery(expression, terms);
         }
 
-        BooleanQuery.setMaxClauseCount(maxBooleanClauseCount);
-
-        // Build a query.
-        final Set<String> terms = new HashSet<>();
-        final Query query = getQuery(expression, terms);
+        // Ensure we at least match all.
+        if (query == null) {
+            query = new MatchAllDocsQuery();
+        }
         return new SearchExpressionQuery(query, terms);
     }
 
-    private Query getQuery(final ExpressionItem item, final Set<String> terms) {
+    private Query getQuery(final ExpressionItem item,
+                           final Set<String> terms) {
         if (item.enabled()) {
-            if (item instanceof ExpressionTerm) {
+            if (item instanceof final ExpressionTerm term) {
                 // Create queries for single terms.
-                final ExpressionTerm term = (ExpressionTerm) item;
                 return getTermQuery(term, terms);
 
-            } else if (item instanceof ExpressionOperator) {
+            } else if (item instanceof final ExpressionOperator operator) {
                 // Create queries for expression tree nodes.
-                final ExpressionOperator operator = (ExpressionOperator) item;
                 if (hasChildren(operator)) {
                     final List<Query> innerChildQueries = new ArrayList<>();
                     for (final ExpressionItem childItem : operator.getChildren()) {
@@ -130,8 +132,7 @@ public class SearchExpressionQueryBuilder {
                                 if (Occur.MUST.equals(occur)) {
                                     // If this is an AND then we can collapse
                                     // down non OR child queries.
-                                    if (child instanceof BooleanQuery) {
-                                        final BooleanQuery innerBoolean = (BooleanQuery) child;
+                                    if (child instanceof final BooleanQuery innerBoolean) {
                                         final Builder orTermsBuilder = new Builder();
                                         for (final BooleanClause clause : innerBoolean.clauses()) {
                                             if (Occur.MUST_NOT.equals(clause.getOccur())) {
@@ -158,8 +159,7 @@ public class SearchExpressionQueryBuilder {
                                     }
                                 } else if (Occur.MUST_NOT.equals(occur)) {
                                     // Remove double negation.
-                                    if (child instanceof BooleanQuery) {
-                                        final BooleanQuery innerBoolean = (BooleanQuery) child;
+                                    if (child instanceof final BooleanQuery innerBoolean) {
                                         final Builder orTermsBuilder = new Builder();
                                         for (final BooleanClause clause : innerBoolean.clauses()) {
                                             if (Occur.MUST_NOT.equals(clause.getOccur())) {
@@ -198,7 +198,8 @@ public class SearchExpressionQueryBuilder {
         return null;
     }
 
-    private Query getTermQuery(final ExpressionTerm term, final Set<String> terms) {
+    private Query getTermQuery(final ExpressionTerm term,
+                               final Set<String> terms) {
         String field = term.getField();
         final Condition condition = term.getCondition();
         String value = term.getValue();
@@ -219,7 +220,9 @@ public class SearchExpressionQueryBuilder {
         }
         final SolrIndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
-            throw new SearchException("Field not found in index: " + field);
+            // Ignore missing fields.
+            return null;
+//            throw new SearchException("Field not found in index: " + field);
         }
         final String fieldName = indexField.getFieldName();
 
@@ -238,33 +241,38 @@ public class SearchExpressionQueryBuilder {
             }
         }
 
-
         // Create a query based on the field type and condition.
         if (indexField.getFieldUse().isNumeric()) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final Long num1 = getNumber(fieldName, value);
                     return NumericRangeQuery.newLongRange(
                             fieldName, num1, num1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newLongRange(
                             fieldName, getNumber(fieldName, value), Long.MAX_VALUE, false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(
                             fieldName, getNumber(fieldName, value), Long.MAX_VALUE, true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newLongRange(
                             fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(
                             fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final long[] between = getNumbers(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 numbers needed for between query");
@@ -274,41 +282,49 @@ public class SearchExpressionQueryBuilder {
                     }
                     return NumericRangeQuery.newLongRange(
                             fieldName, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getNumericIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldUse().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         } else if (SolrIndexFieldType.DATE_FIELD.equals(indexField.getFieldUse())) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final Long date1 = getDate(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName,
                             8,
                             getDate(fieldName, value),
                             Long.MAX_VALUE,
                             false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(
                             fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newLongRange(
                             fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(
                             fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final long[] between = getDates(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 dates needed for between query");
@@ -318,31 +334,27 @@ public class SearchExpressionQueryBuilder {
                     }
                     return NumericRangeQuery.newLongRange(
                             fieldName, 8, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getDateIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldUse().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         } else {
-            switch (condition) {
-                case EQUALS:
-                    return getContains(fieldName, value, indexField, terms);
+            return switch (condition) {
+                case EQUALS -> getContains(fieldName, value, indexField, terms);
 //                    return getSubQuery(matchVersion, indexField, value, terms, false);
-                case CONTAINS:
-                    return getContains(fieldName, value, indexField, terms);
-                case IN:
-                    return getIn(fieldName, value, indexField, terms);
-                case IN_DICTIONARY:
-                    return getDictionary(fieldName, docRef, indexField, terms);
-                case IS_DOC_REF:
-                    return getSubQuery(indexField, docRef.getUuid(), terms, false);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldUse().getDisplayValue() + " field type");
-            }
+                case CONTAINS -> getContains(fieldName, value, indexField, terms);
+                case IN -> getIn(fieldName, value, indexField, terms);
+                case IN_DICTIONARY -> getDictionary(fieldName, docRef, indexField, terms);
+                case IS_DOC_REF -> getSubQuery(indexField, docRef.getUuid(), terms, false);
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldUse().getDisplayValue() + " field type");
+            };
         }
     }
 
@@ -405,8 +417,7 @@ public class SearchExpressionQueryBuilder {
     private Query modifyOccurrence(final Query query, final Occur occur) {
         // Change all occurs to must as we want to insist that all terms exist
         // in the matched documents.
-        if (query instanceof BooleanQuery) {
-            final BooleanQuery bq = (BooleanQuery) query;
+        if (query instanceof final BooleanQuery bq) {
             final Builder builder = new Builder();
             for (final BooleanClause bc : bq.clauses()) {
                 builder.add(bc.getQuery(), occur);
@@ -414,12 +425,6 @@ public class SearchExpressionQueryBuilder {
             return builder.build();
         }
         return query;
-    }
-
-    private Query getDocRef(final String fieldName, final DocRef docRef,
-                            final SolrIndexField indexField, final Set<String> terms) {
-        final Term term = new Term(fieldName, docRef.getUuid());
-        return new TermQuery(term);
     }
 
     private Query getDictionary(final String fieldName, final DocRef docRef,
@@ -457,14 +462,11 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Occur getOccur(final ExpressionOperator operator) {
-        switch (operator.op()) {
-            case OR:
-                return Occur.SHOULD;
-            case NOT:
-                return Occur.MUST_NOT;
-            default:
-                return Occur.MUST;
-        }
+        return switch (operator.op()) {
+            case OR -> Occur.SHOULD;
+            case NOT -> Occur.MUST_NOT;
+            default -> Occur.MUST;
+        };
     }
 
     private Query getSubQuery(final SolrIndexField field, final String value,
@@ -534,8 +536,7 @@ public class SearchExpressionQueryBuilder {
         if (operator != null && operator.enabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
                 if (child.enabled()) {
-                    if (child instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) child;
+                    if (child instanceof final ExpressionOperator childOperator) {
                         if (hasChildren(childOperator)) {
                             return true;
                         }

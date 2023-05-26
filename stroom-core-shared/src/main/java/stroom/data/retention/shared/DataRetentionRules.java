@@ -78,6 +78,15 @@ public class DataRetentionRules extends Doc {
     }
 
     /**
+     * @return A new {@link DocRef} for this document's type with the supplied uuid.
+     */
+    public static DocRef getDocRef(final String uuid) {
+        return DocRef.builder(DOCUMENT_TYPE)
+                .uuid(uuid)
+                .build();
+    }
+
+    /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {

@@ -9,9 +9,11 @@ import java.util.List;
 public class DoubleListReference implements ValueReference<List<Double>> {
 
     private final int index;
+    private final String name;
 
-    DoubleListReference(final int index) {
+    DoubleListReference(final int index, final String name) {
         this.index = index;
+        this.name = name;
     }
 
     @Override
@@ -45,5 +47,10 @@ public class DoubleListReference implements ValueReference<List<Double>> {
         for (final Double d : list) {
             output.writeDouble(d);
         }
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

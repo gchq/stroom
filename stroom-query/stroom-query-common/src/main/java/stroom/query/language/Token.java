@@ -10,6 +10,16 @@ public class Token extends AbstractToken {
 
     public static class Builder extends AbstractTokenBuilder<Token, Builder> {
 
+        public Builder() {
+        }
+
+        public Builder(Token token) {
+            this.tokenType = token.tokenType;
+            this.chars = token.chars;
+            this.start = token.start;
+            this.end = token.end;
+        }
+
         @Override
         Builder self() {
             return this;

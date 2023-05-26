@@ -21,6 +21,10 @@
 	z-index: 10;
 }
 
+.codeEditor-text {
+    border-bottom: 1px solid transparent; /* Required to allow mouse drag selection on ace editor text inside this panel. */
+}
+
 .codeEditor-rightBar {
     position: relative;
     overflow: hidden;

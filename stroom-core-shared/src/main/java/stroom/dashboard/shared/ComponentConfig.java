@@ -116,7 +116,9 @@ public class ComponentConfig {
             this.type = componentConfig.type;
             this.id = componentConfig.id;
             this.name = componentConfig.name;
-            this.settings = componentConfig.settings;
+            this.settings = componentConfig.settings == null
+                    ? null
+                    : componentConfig.settings.copy().build();
         }
 
         public Builder type(final String type) {

@@ -22,6 +22,16 @@ public class QuotedStringToken extends Token {
 
     public static class Builder extends AbstractTokenBuilder<QuotedStringToken, Builder> {
 
+        public Builder() {
+        }
+
+        public Builder(QuotedStringToken token) {
+            this.tokenType = token.tokenType;
+            this.chars = token.chars;
+            this.start = token.start;
+            this.end = token.end;
+        }
+
         @Override
         Builder self() {
             return this;

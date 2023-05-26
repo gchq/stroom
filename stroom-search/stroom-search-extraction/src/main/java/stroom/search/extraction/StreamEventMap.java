@@ -52,7 +52,7 @@ public class StreamEventMap {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
             throw new UncheckedInterruptedException(e);
         }
     }
@@ -87,7 +87,7 @@ public class StreamEventMap {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
             throw new UncheckedInterruptedException(e);
         }
     }
@@ -133,7 +133,7 @@ public class StreamEventMap {
 
             return eventSet;
         } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
             throw new UncheckedInterruptedException(e);
         }
     }

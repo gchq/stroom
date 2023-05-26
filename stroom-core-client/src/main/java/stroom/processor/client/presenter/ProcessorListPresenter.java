@@ -46,6 +46,7 @@ import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
@@ -420,9 +421,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                     final ProcessorFilterTracker tracker = processorFilterRow
                             .getProcessorFilter()
                             .getProcessorFilterTracker();
-                    status = tracker != null
-                            ? tracker.getMessage()
-                            : "";
+                    if (tracker != null) {
+                        if (tracker.getMessage() != null && tracker.getMessage().trim().length() > 0) {
+                            status = tracker.getMessage();
+                        } else if (tracker.getStatus() != null &&
+                                tracker.getStatus() != ProcessorFilterTrackerStatus.CREATED) {
+                            status = tracker.getStatus().getDisplayValue();
+                        }
+                    }
                 }
                 return status;
             }

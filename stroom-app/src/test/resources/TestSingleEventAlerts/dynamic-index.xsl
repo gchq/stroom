@@ -7,7 +7,7 @@
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 version="2.0">
     <xsl:template match="/Events">
-        <index-documents xsi:schemaLocation="index-documents:1 index-documents-v1.0.0.xsd" version="1.0.0">
+        <index-documents xsi:schemaLocation="index-documents:1 index-documents-v1.0.xsd" version="1.0">
             <xsl:apply-templates/>
         </index-documents>
     </xsl:template>

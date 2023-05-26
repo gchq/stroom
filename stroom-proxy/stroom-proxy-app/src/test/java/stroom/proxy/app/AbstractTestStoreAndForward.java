@@ -74,7 +74,7 @@ abstract class AbstractTestStoreAndForward {
                     .aggregatorConfig(AggregatorConfig.builder()
                             .maxItemsPerAggregate(1000)
                             .maxUncompressedByteSizeString("1G")
-                            .maxAggregateAge(StroomDuration.ofSeconds(1))
+                            .maxAggregateAge(StroomDuration.ofSeconds(5))
                             .aggregationFrequency(StroomDuration.ofSeconds(1))
                             .build())
                     .addForwardDestination(new ForwardFileConfig(true, "test",

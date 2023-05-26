@@ -30,8 +30,8 @@ import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
 import stroom.util.functions.TriFunction;
 
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
@@ -74,25 +74,23 @@ public class SearchExpressionQueryBuilder {
     }
 
     public QueryBuilder buildQuery(final ExpressionOperator expression) {
-        if (expression == null) {
-            throw new IllegalArgumentException("No search expression has been provided!");
+        QueryBuilder queryBuilder = null;
+        if (expression != null) {
+            queryBuilder = getQuery(expression);
         }
-        if (!operatorHasChildren(expression)) {
-            throw new IllegalArgumentException("No search terms have been specified!");
+        if (queryBuilder == null) {
+            queryBuilder = new MatchAllQueryBuilder();
         }
-
-        return getQuery(expression);
+        return queryBuilder;
     }
 
     private QueryBuilder getQuery(final ExpressionItem item) {
         if (item.enabled()) {
-            if (item instanceof ExpressionTerm) {
+            if (item instanceof final ExpressionTerm term) {
                 // Create queries for single terms.
-                final ExpressionTerm term = (ExpressionTerm) item;
                 return getTermQuery(term);
-            } else if (item instanceof ExpressionOperator) {
+            } else if (item instanceof final ExpressionOperator operator) {
                 // Create queries for expression tree nodes.
-                final ExpressionOperator operator = (ExpressionOperator) item;
                 if (operatorHasChildren(operator)) {
                     final List<QueryBuilder> innerChildQueries = operator.getChildren().stream()
                             .map(this::getQuery)
@@ -135,7 +133,9 @@ public class SearchExpressionQueryBuilder {
         }
         final ElasticIndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
-            throw new ResourceNotFoundException("Field not found in index: " + field);
+            // Ignore missing fields.
+            return null;
+//            throw new ResourceNotFoundException("Field not found in index: " + field);
         }
         final String fieldName = indexField.getFieldName();
 
@@ -184,11 +184,13 @@ public class SearchExpressionQueryBuilder {
         if (indexField.getFieldType().equals("keyword")) {
             // Elasticsearch field mapping type is `keyword`, so generate a term-level query
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     return buildKeywordQuery(fieldName, expression);
-                case MATCHES_REGEX:
+                }
+                case MATCHES_REGEX -> {
                     return QueryBuilders.regexpQuery(fieldName, expression);
-                case IN:
+                }
+                case IN -> {
                     if (terms.size() > 1) {
                         final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
                         terms.forEach(term -> boolQuery.should(buildKeywordQuery(fieldName, term)));
@@ -196,20 +198,26 @@ public class SearchExpressionQueryBuilder {
                     } else {
                         return buildKeywordQuery(fieldName, expression);
                     }
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return buildDictionaryQuery(condition, fieldName, docRef, indexField);
-                default:
-                    throw new UnsupportedOperationException("Unsupported condition '" + condition.getDisplayValue() +
-                            "' for " + indexField.getFieldUse().getDisplayValue() + " field type");
+                }
+                default -> throw new UnsupportedOperationException("Unsupported condition '" +
+                        condition.getDisplayValue() +
+                        "' for " +
+                        indexField.getFieldUse().getDisplayValue() +
+                        " field type");
             }
         } else {
             // This is a type other than `keyword`, such as `text` or `wildcard`. Perform a full-text match.
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     return buildTextQuery(fieldName, expression);
-                case MATCHES_REGEX:
+                }
+                case MATCHES_REGEX -> {
                     return QueryBuilders.regexpQuery(fieldName, expression);
-                case IN:
+                }
+                case IN -> {
                     if (terms.size() > 1) {
                         final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
                         terms.forEach(term -> boolQuery.should(buildTextQuery(fieldName, term)));
@@ -217,11 +225,12 @@ public class SearchExpressionQueryBuilder {
                     } else {
                         return buildTextQuery(fieldName, expression);
                     }
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return buildDictionaryQuery(condition, fieldName, docRef, indexField);
-                default:
-                    throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldUse().getDisplayValue() + " field type");
+                }
+                default -> throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         }
     }
@@ -260,38 +269,43 @@ public class SearchExpressionQueryBuilder {
         List<T> numericValues;
 
         switch (condition) {
-            case EQUALS:
+            case EQUALS -> {
                 numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .termQuery(fieldName, numericValue);
-            case CONTAINS:
-            case IN:
+            }
+            case CONTAINS, IN -> {
                 numericValues = tokenizeExpression(fieldValue)
                         .map(val -> valueParser.apply(condition, fieldName, val))
                         .collect(Collectors.toList());
                 return QueryBuilders
                         .termsQuery(fieldName, numericValues);
-            case GREATER_THAN:
+            }
+            case GREATER_THAN -> {
                 numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .gt(numericValue);
-            case GREATER_THAN_OR_EQUAL_TO:
+            }
+            case GREATER_THAN_OR_EQUAL_TO -> {
                 numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .gte(numericValue);
-            case LESS_THAN:
+            }
+            case LESS_THAN -> {
                 numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .lt(numericValue);
-            case LESS_THAN_OR_EQUAL_TO:
+            }
+            case LESS_THAN_OR_EQUAL_TO -> {
                 numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .lte(numericValue);
-            case BETWEEN:
+            }
+            case BETWEEN -> {
                 numericValues = tokenizeExpression(fieldValue)
                         .map(val -> valueParser.apply(condition, fieldName, val))
                         .collect(Collectors.toList());
@@ -303,11 +317,12 @@ public class SearchExpressionQueryBuilder {
                         .rangeQuery(fieldName)
                         .gte(numericValues.get(0))
                         .lte(numericValues.get(1));
-            case IN_DICTIONARY:
+            }
+            case IN_DICTIONARY -> {
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
-            default:
-                throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
-                        indexField.getFieldUse().getDisplayValue() + " field type");
+            }
+            default -> throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
+                    indexField.getFieldUse().getDisplayValue() + " field type");
         }
     }
 
@@ -442,8 +457,7 @@ public class SearchExpressionQueryBuilder {
         if (operator != null && operator.enabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
                 if (child.enabled()) {
-                    if (child instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) child;
+                    if (child instanceof final ExpressionOperator childOperator) {
                         if (operatorHasChildren(childOperator)) {
                             return true;
                         }

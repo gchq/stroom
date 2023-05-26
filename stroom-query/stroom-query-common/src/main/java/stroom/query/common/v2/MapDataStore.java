@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -67,7 +68,6 @@ public class MapDataStore implements DataStore, Data {
     private final GroupingFunction[] groupingFunctions;
     private final boolean hasSort;
     private final CompletionState completionState = new CompletionStateImpl();
-    private final KeyFactoryConfig keyFactoryConfig;
     private final KeyFactory keyFactory;
 
     private volatile boolean hasEnoughData;
@@ -84,8 +84,8 @@ public class MapDataStore implements DataStore, Data {
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFields, tableSettings.showDetail());
         this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFields);
         this.compiledDepths = compiledDepths;
-        keyFactoryConfig = new BasicKeyFactoryConfig();
-        keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
+        final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
+        keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         this.maxResults = dataStoreSettings.getMaxResults();
         this.storeSize = dataStoreSettings.getStoreSize();
 
@@ -260,7 +260,11 @@ public class MapDataStore implements DataStore, Data {
      * @return The filtered child items for the parent key.
      */
     @Override
-    public ItemsImpl get(final Key key, final TimeFilter timeFilter) {
+    public Optional<Items> get(final Key key, final TimeFilter timeFilter) {
+        return Optional.ofNullable(getInternal(key, timeFilter));
+    }
+
+    public ItemsImpl getInternal(final Key key, final TimeFilter timeFilter) {
         if (timeFilter != null) {
             throw new RuntimeException("Time filtering is not supported by the map data store");
         }
@@ -274,13 +278,12 @@ public class MapDataStore implements DataStore, Data {
         return result;
     }
 
-
     private List<ItemImpl> getChildren(final Key parentKey,
                                        final TimeFilter timeFilter,
                                        final int childDepth,
                                        final int trimmedSize,
                                        final boolean trimTop) {
-        ItemsImpl items = get(parentKey, timeFilter);
+        ItemsImpl items = getInternal(parentKey, timeFilter);
         if (items == null) {
             return null;
         }
@@ -558,13 +561,13 @@ public class MapDataStore implements DataStore, Data {
         public Val getValue(final int index, final boolean evaluateChildren) {
             Val val = cachedValues[index];
             if (val == null) {
-                val = createValue(index, evaluateChildren);
+                val = createValue(index);
                 cachedValues[index] = val;
             }
             return val;
         }
 
-        private Val createValue(final int index, final boolean evaluateChildren) {
+        private Val createValue(final int index) {
             Val val;
             final Generator generator = dataStore.compiledFields[index].getGenerator();
             if (key.isGrouped()) {
@@ -596,11 +599,8 @@ public class MapDataStore implements DataStore, Data {
 
                     @Override
                     public long count() {
-                        final ItemsImpl items = dataStore.get(key, null);
-                        if (items != null) {
-                            return items.size();
-                        }
-                        return 0;
+                        final Optional<Items> optional = dataStore.get(key, null);
+                        return optional.map(Items::size).orElse(0);
                     }
 
                     private StoredValues singleValue(final int trimmedSize, final boolean trimTop) {

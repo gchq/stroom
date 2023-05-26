@@ -20,7 +20,8 @@ public class CompletableObjectQueue<T> {
         try {
             queue.put(value);
         } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
+            throw new UncheckedInterruptedException(e);
         }
     }
 
@@ -32,7 +33,8 @@ public class CompletableObjectQueue<T> {
                 return (T) object;
             }
         } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
+            throw new UncheckedInterruptedException(e);
         }
         return null;
     }
@@ -41,7 +43,8 @@ public class CompletableObjectQueue<T> {
         try {
             queue.put(COMPLETE);
         } catch (final InterruptedException e) {
-            LOGGER.trace(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
+            throw new UncheckedInterruptedException(e);
         }
     }
 

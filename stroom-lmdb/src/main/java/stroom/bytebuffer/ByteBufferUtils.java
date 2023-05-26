@@ -298,4 +298,15 @@ public class ByteBufferUtils {
         return arr;
     }
 
+//    public static void debug(final ByteBuffer byteBuffer) {
+//        System.out.println(Arrays.toString(toBytes(byteBuffer.slice())));
+//    }
+//
+//    public static void debugCurrent(final ByteBuffer byteBuffer) {
+//        System.out.println(Arrays.toString(toBytes(byteBuffer.slice(0, byteBuffer.position()))));
+//    }
+//
+//    public static void debugCurrent(final UnsafeByteBufferOutput output) {
+//        debugCurrent(output.getByteBuffer());
+//    }
 }

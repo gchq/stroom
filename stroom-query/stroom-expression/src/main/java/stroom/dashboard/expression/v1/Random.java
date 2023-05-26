@@ -46,7 +46,7 @@ class Random extends AbstractFunction {
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        randomValReference = valueReferenceIndex.addRandomValue();
+        randomValReference = valueReferenceIndex.addRandomValue(name);
         super.addValueReferences(valueReferenceIndex);
     }
 

@@ -131,6 +131,10 @@ class TaskResourceImpl implements TaskResource {
         return true;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {
 
         @Override
