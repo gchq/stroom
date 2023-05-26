@@ -111,7 +111,7 @@ class Distinct extends AbstractFunction {
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        stringListReference = valueReferenceIndex.addStringList();
+        stringListReference = valueReferenceIndex.addStringList(name);
         super.addValueReferences(valueReferenceIndex);
     }
 

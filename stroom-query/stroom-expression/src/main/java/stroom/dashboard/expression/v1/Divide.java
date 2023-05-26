@@ -51,7 +51,7 @@ class Divide extends NumericFunction {
     static class Calc extends Calculator {
 
         @Override
-        protected double op(final double cur, final double val) {
+        double op(final double cur, final double val) {
             double retVal = cur / val;
             if (Double.isNaN(retVal) || Double.isInfinite(retVal)) {
                 throw new ArithmeticException(String.format("Result of %s / %s is not a number", cur, val));

@@ -1,12 +1,10 @@
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
-import com.esotericsoftware.kryo.io.ByteBufferInputStream;
-import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.assertj.core.data.Offset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,17 +88,17 @@ public class AbstractExpressionParserTest {
                                    final StoredValues storedValues) {
         final Val val = generator.eval(storedValues, null);
 
-        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
-
-        try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
+        ByteBuffer buffer;
+        try (final MyByteBufferOutput output = new MyByteBufferOutput(1024, -1)) {
             valueReferenceIndex.write(storedValues, output);
+            output.flush();
+            buffer = output.getByteBuffer();
+            buffer.flip();
+            print(buffer);
         }
 
-        buffer.flip();
-        print(buffer);
-
         StoredValues newStoredValues;
-        try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
+        try (final MyByteBufferInput input = new MyByteBufferInput(buffer)) {
             newStoredValues = valueReferenceIndex.read(input);
         }
 
@@ -303,10 +301,10 @@ public class AbstractExpressionParserTest {
             Val out = gen.eval(storedValues, null);
 
             System.out.printf("[%s: %s] %s [%s: %s] => [%s: %s%s]%n",
-                    val1.getClass().getSimpleName(), val1.toString(),
+                    val1.getClass().getSimpleName(), val1,
                     operator,
-                    val2.getClass().getSimpleName(), val2.toString(),
-                    out.getClass().getSimpleName(), out.toString(),
+                    val2.getClass().getSimpleName(), val2,
+                    out.getClass().getSimpleName(), out,
                     (out instanceof ValErr
                             ? (" - " + ((ValErr) out).getMessage())
                             : ""));

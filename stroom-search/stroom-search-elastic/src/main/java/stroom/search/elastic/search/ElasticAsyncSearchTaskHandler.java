@@ -26,6 +26,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -86,6 +87,8 @@ public class ElasticAsyncSearchTaskHandler {
                         parentContext.info(() -> task.getSearchName() + " - searching");
                     }
 
+                } catch (final UncheckedInterruptedException e) {
+                    // Ignore.
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                     coprocessors.getErrorConsumer().add(e);

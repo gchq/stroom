@@ -492,12 +492,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     public void setExpression(final ExpressionOperator expression) {
-        validateExpression(expression, exp -> {
-            this.criteria.setExpression(exp);
-//            this.criteria.obtainPageRequest().setOffset(0);
-//            this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
-            refresh();
-        });
+        validateExpression(expression, this.criteria::setExpression);
     }
 
     public void info() {

@@ -9,7 +9,6 @@ import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import com.google.common.io.Files;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -36,9 +35,8 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .storingEnabled(true)
                         .build())
                 .aggregatorConfig(AggregatorConfig.builder()
-                        .maxItemsPerAggregate(1000)
                         .maxUncompressedByteSizeString("1G")
-                        .maxAggregateAge(StroomDuration.ofSeconds(1))
+                        .maxAggregateAge(StroomDuration.ofSeconds(5))
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())

@@ -34,7 +34,7 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        valReference = valueReferenceIndex.addValue();
+        valReference = valueReferenceIndex.addValue(name);
         super.addValueReferences(valueReferenceIndex);
     }
 

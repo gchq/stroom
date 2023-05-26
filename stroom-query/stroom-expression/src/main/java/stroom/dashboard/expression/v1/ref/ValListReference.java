@@ -12,9 +12,11 @@ import java.util.List;
 public class ValListReference implements ValueReference<List<Val>> {
 
     private final int index;
+    private final String name;
 
-    ValListReference(final int index) {
+    ValListReference(final int index, final String name) {
         this.index = index;
+        this.name = name;
     }
 
     @Override
@@ -48,5 +50,10 @@ public class ValListReference implements ValueReference<List<Val>> {
         for (final Val val : list) {
             ValSerialiser.write(output, val);
         }
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

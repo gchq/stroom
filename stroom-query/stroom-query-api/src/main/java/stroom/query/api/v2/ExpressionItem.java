@@ -50,8 +50,6 @@ import javax.xml.bind.annotation.XmlType;
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 public abstract class ExpressionItem implements Serializable {
 
-    private static final long serialVersionUID = -8483817637655853635L;
-
     @XmlElement
     @Schema(description = "Whether this item in the expression tree is enabled or not",
             example = "true")

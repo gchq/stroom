@@ -11,6 +11,7 @@ import stroom.query.api.v2.Field;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,29 +30,19 @@ public class TestValueSerialisation {
         KeyFactoryConfigImpl keyFactoryConfig =
                 new KeyFactoryConfigImpl(compiledFieldArray, compiledDepths, DataStoreSettings.builder().build());
         final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
-        final KeyFactory keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
-        final LmdbRowKeyFactory lmdbRowKeyFactory =
-                LmdbRowKeyFactoryFactory.create(keyFactory, keyFactoryConfig, compiledDepths);
+        final KeyFactory keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final LmdbRowValueFactory lmdbRowValueFactory =
-                new LmdbRowValueFactory(keyFactory, valueReferenceIndex, serialisers.getOutputFactory(), errorConsumer);
-        final long groupHash = ValHasher.hash(Val.empty());
+                new LmdbRowValueFactory(valueReferenceIndex, serialisers.getOutputFactory(), errorConsumer);
         final long timeMs = System.currentTimeMillis();
-        final LmdbRowKey rowKey = lmdbRowKeyFactory
-                .create(0, 0, groupHash, timeMs);
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();
         compiledFieldArray[0].getGenerator().set(Val.of(ValLong.create(1L)), storedValues);
         // This item will not be grouped.
         final long uniqueId = keyFactory.getUniqueId();
         final Key parentKey = Key.ROOT_KEY;
         final Key key = parentKey.resolve(timeMs, uniqueId);
-        final LmdbRowValue rowValue = lmdbRowValueFactory.create(key, storedValues);
+        final ByteBuffer rowValue = lmdbRowValueFactory.create(storedValues);
 
-        final LmdbValueBytes lmdbValueBytes = LmdbValueBytes.create(serialisers.getInputFactory(),
-                rowValue.getByteBuffer());
-        final StoredValues storedValues2 =
-                valueReferenceIndex.read(
-                        serialisers.getInputFactory(),
-                        lmdbValueBytes.valueBytes());
-        Assertions.assertThat(storedValues2).isEqualTo(storedValues);
+        final StoredValues readStoredValues = valueReferenceIndex.read(rowValue);
+        Assertions.assertThat(readStoredValues).isEqualTo(storedValues);
     }
 }

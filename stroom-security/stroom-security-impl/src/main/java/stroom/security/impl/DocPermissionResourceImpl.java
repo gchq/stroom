@@ -1,7 +1,10 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerNodeService;
@@ -29,9 +32,12 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
 
+import event.logging.AuthorisationActionType;
+import event.logging.AuthoriseEventAction;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.Data;
 import event.logging.Data.Builder;
+import event.logging.Document;
 import event.logging.Event;
 import event.logging.Group;
 import event.logging.MultiObject;
@@ -69,6 +75,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     private final Provider<DocumentTypePermissions> documentTypePermissionsProvider;
     private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
     //Todo
     // Permission checking should be responsibility of underlying service rather than REST resource impl
     private final Provider<SecurityContext> securityContextProvider;
@@ -80,13 +87,15 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                               final Provider<DocumentTypePermissions> documentTypePermissionsProvider,
                               final Provider<ExplorerNodeService> explorerNodeServiceProvider,
                               final Provider<SecurityContext> securityContextProvider,
-                              final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+                              final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                              final Provider<DocRefInfoService> docRefInfoServiceProvider) {
         this.userServiceProvider = userServiceProvider;
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
         this.documentTypePermissionsProvider = documentTypePermissionsProvider;
         this.explorerNodeServiceProvider = explorerNodeServiceProvider;
         this.securityContextProvider = securityContextProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
     }
 
     @Override
@@ -165,9 +174,62 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     @Override
-    @AutoLogged(OperationType.VIEW)
+    @AutoLogged(OperationType.MANUALLY_LOGGED) // Only log failures
     public Boolean checkDocumentPermission(final CheckDocumentPermissionRequest request) {
-        return securityContextProvider.get().hasDocumentPermission(request.getDocumentUuid(), request.getPermission());
+        final boolean hasPerm;
+        try {
+            Objects.requireNonNull(request);
+            hasPerm = securityContextProvider.get().hasDocumentPermission(
+                    request.getDocumentUuid(),
+                    request.getPermission());
+            if (!hasPerm) {
+                // Only want to log a failure
+                logPermCheckFailure(request, null);
+            }
+        } catch (Exception e) {
+            try {
+                logPermCheckFailure(request, e);
+            } catch (Exception ex) {
+                LOGGER.error("Error logging event: {}", e.getMessage(), e);
+            }
+            throw new RuntimeException(e);
+        }
+
+        return hasPerm;
+    }
+
+    private void logPermCheckFailure(final CheckDocumentPermissionRequest request,
+                                     final Throwable e) {
+        final String uuid = request.getDocumentUuid();
+        final String name = NullSafe.getOrElse(uuid,
+                uuid2 -> {
+                    final Optional<DocRefInfo> optInfo = docRefInfoServiceProvider.get()
+                            .info(DocRef.builder().uuid(uuid2).build());
+                    return optInfo.map(DocRefInfo::getDocRef)
+                            .map(DocRef::getName)
+                            .orElse(null);
+                },
+                "?");
+
+        final String msg = LogUtil.message("User failed permissions check for permission {} document {} ({})",
+                request.getPermission(),
+                name,
+                uuid);
+
+        stroomEventLoggingServiceProvider.get().log(
+                StroomEventLoggingUtil.buildTypeId(this, "checkDocumentPermission"),
+                msg,
+                AuthoriseEventAction.builder()
+                        .withAction(AuthorisationActionType.REQUEST)
+                        .addDocument(Document.builder()
+                                .withId(uuid)
+                                .withName(name)
+                                .build())
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(false)
+                                .withDescription(NullSafe.getOrElse(e, Throwable::getMessage, msg))
+                                .build())
+                        .build());
     }
 
     @Override

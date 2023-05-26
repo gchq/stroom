@@ -131,11 +131,12 @@ public class QueryComponentSettings implements ComponentSettings {
         return new Builder();
     }
 
+    @Override
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static final class Builder {
+    public static final class Builder implements ComponentSettings.Builder {
 
         private DocRef dataSource;
         private ExpressionOperator expression;
@@ -149,11 +150,15 @@ public class QueryComponentSettings implements ComponentSettings {
 
         private Builder(final QueryComponentSettings queryComponentSettings) {
             this.dataSource = queryComponentSettings.dataSource;
-            this.expression = queryComponentSettings.expression;
-            this.automate = queryComponentSettings.automate;
-            if (queryComponentSettings.selectionHandlers != null) {
-                this.selectionHandlers = new ArrayList<>(queryComponentSettings.selectionHandlers);
-            }
+            this.expression = queryComponentSettings.expression == null
+                    ? null
+                    : queryComponentSettings.expression.copy().build();
+            this.automate = queryComponentSettings.automate == null
+                    ? null
+                    : queryComponentSettings.automate.copy().build();
+            this.selectionHandlers = queryComponentSettings.selectionHandlers == null
+                    ? null
+                    : new ArrayList<>(queryComponentSettings.selectionHandlers);
             this.lastQueryKey = queryComponentSettings.lastQueryKey;
             this.lastQueryNode = queryComponentSettings.lastQueryNode;
         }
@@ -196,6 +201,7 @@ public class QueryComponentSettings implements ComponentSettings {
             return this;
         }
 
+        @Override
         public QueryComponentSettings build() {
             return new QueryComponentSettings(
                     dataSource,

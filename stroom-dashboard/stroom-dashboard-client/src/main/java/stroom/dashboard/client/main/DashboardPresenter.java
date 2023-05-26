@@ -527,6 +527,7 @@ public class DashboardPresenter
     public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig originalTabConfig) {
         // Duplicate the referenced component.
         final Component originalComponent = components.get(originalTabConfig.getId());
+        originalComponent.write();
         final ComponentType type = originalComponent.getType();
 
         // Get sets of unique component ids and names.
@@ -580,6 +581,7 @@ public class DashboardPresenter
             for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
                 // Duplicate the referenced component.
                 final Component originalComponent = components.get(tabConfig.getId());
+                originalComponent.write();
                 final ComponentType type = originalComponent.getType();
 
                 final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
