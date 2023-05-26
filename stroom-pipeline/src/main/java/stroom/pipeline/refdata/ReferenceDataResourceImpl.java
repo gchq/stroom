@@ -180,7 +180,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                     .build());
         }
         if (purgeAge != null) {
-                andBuilder.addTerm(Term.builder()
+            andBuilder.addTerm(Term.builder()
                     .withName("purgeAge")
                     .withCondition(TermCondition.EQUALS)
                     .withValue(purgeAge)
