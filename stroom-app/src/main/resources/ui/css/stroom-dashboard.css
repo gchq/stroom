@@ -86,6 +86,7 @@
     height: var(--row__height);
 	white-space: nowrap;
     text-overflow: ellipsis;
+    flex-grow: 1;
 }
 
 .stroom-dashboard-text {

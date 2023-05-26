@@ -39,6 +39,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -80,32 +81,34 @@ public class SearchExpressionQueryBuilder {
         this.nowEpochMilli = nowEpochMilli;
     }
 
-    public SearchExpressionQuery buildQuery(final Version matchVersion, final ExpressionOperator expression) {
-        if (expression == null) {
-            throw new SearchException("No search expression has been provided!");
-        }
-        if (!hasChildren(expression)) {
-            throw new SearchException("No search terms have been specified!");
+    public SearchExpressionQuery buildQuery(final Version matchVersion,
+                                            final ExpressionOperator expression) {
+        Set<String> terms = Collections.emptySet();
+        Query query = null;
+        if (expression != null) {
+            BooleanQuery.setMaxClauseCount(maxBooleanClauseCount);
+
+            // Build a query.
+            terms = new HashSet<>();
+            query = getQuery(matchVersion, expression, terms);
         }
 
-        BooleanQuery.setMaxClauseCount(maxBooleanClauseCount);
-
-        // Build a query.
-        final Set<String> terms = new HashSet<>();
-        final Query query = getQuery(matchVersion, expression, terms);
+        if (query == null) {
+            query = new MatchAllDocsQuery();
+        }
         return new SearchExpressionQuery(query, terms);
     }
 
-    private Query getQuery(final Version matchVersion, final ExpressionItem item, final Set<String> terms) {
+    private Query getQuery(final Version matchVersion,
+                           final ExpressionItem item,
+                           final Set<String> terms) {
         if (item.enabled()) {
-            if (item instanceof ExpressionTerm) {
+            if (item instanceof final ExpressionTerm term) {
                 // Create queries for single terms.
-                final ExpressionTerm term = (ExpressionTerm) item;
                 return getTermQuery(term, matchVersion, terms);
 
-            } else if (item instanceof ExpressionOperator) {
+            } else if (item instanceof final ExpressionOperator operator) {
                 // Create queries for expression tree nodes.
-                final ExpressionOperator operator = (ExpressionOperator) item;
                 if (hasChildren(operator)) {
                     final List<Query> innerChildQueries = new ArrayList<>();
                     for (final ExpressionItem childItem : operator.getChildren()) {
@@ -136,8 +139,7 @@ public class SearchExpressionQueryBuilder {
                                 if (Occur.MUST.equals(occur)) {
                                     // If this is an AND then we can collapse
                                     // down non OR child queries.
-                                    if (child instanceof BooleanQuery) {
-                                        final BooleanQuery innerBoolean = (BooleanQuery) child;
+                                    if (child instanceof final BooleanQuery innerBoolean) {
                                         final Builder orTermsBuilder = new Builder();
                                         for (final BooleanClause clause : innerBoolean.clauses()) {
                                             if (Occur.MUST_NOT.equals(clause.getOccur())) {
@@ -164,8 +166,7 @@ public class SearchExpressionQueryBuilder {
                                     }
                                 } else if (Occur.MUST_NOT.equals(occur)) {
                                     // Remove double negation.
-                                    if (child instanceof BooleanQuery) {
-                                        final BooleanQuery innerBoolean = (BooleanQuery) child;
+                                    if (child instanceof final BooleanQuery innerBoolean) {
                                         final Builder orTermsBuilder = new Builder();
                                         for (final BooleanClause clause : innerBoolean.clauses()) {
                                             if (Occur.MUST_NOT.equals(clause.getOccur())) {
@@ -204,7 +205,9 @@ public class SearchExpressionQueryBuilder {
         return null;
     }
 
-    private Query getTermQuery(final ExpressionTerm term, final Version matchVersion, final Set<String> terms) {
+    private Query getTermQuery(final ExpressionTerm term,
+                               final Version matchVersion,
+                               final Set<String> terms) {
         String field = term.getField();
         final Condition condition = term.getCondition();
         String value = term.getValue();
@@ -225,7 +228,9 @@ public class SearchExpressionQueryBuilder {
         }
         final IndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
-            throw new SearchException("Field not found in index: " + field);
+            // Ignore missing fields.
+            return null;
+//            throw new SearchException("Field not found in index: " + field);
         }
         final String fieldName = indexField.getFieldName();
 
@@ -248,24 +253,30 @@ public class SearchExpressionQueryBuilder {
         // Create a query based on the field type and condition.
         if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final int num1 = getInt(fieldName, value);
                     return NumericRangeQuery.newIntRange(fieldName, num1, num1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, matchVersion, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newIntRange(fieldName, getInt(fieldName, value), Integer.MAX_VALUE, false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newIntRange(fieldName, getInt(fieldName, value), Integer.MAX_VALUE, true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newIntRange(fieldName, Integer.MIN_VALUE, getInt(fieldName, value), true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newIntRange(fieldName, Integer.MIN_VALUE, getInt(fieldName, value), true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final int[] between = getInts(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 numbers needed for between query");
@@ -274,34 +285,42 @@ public class SearchExpressionQueryBuilder {
                         throw new SearchException("From number must lower than to number");
                     }
                     return NumericRangeQuery.newIntRange(fieldName, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getIntIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final Long num1 = getLong(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, matchVersion, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final long[] between = getLongs(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 numbers needed for between query");
@@ -310,37 +329,45 @@ public class SearchExpressionQueryBuilder {
                         throw new SearchException("From number must lower than to number");
                     }
                     return NumericRangeQuery.newLongRange(fieldName, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getLongIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final Float num1 = getFloat(fieldName, value);
                     return NumericRangeQuery.newFloatRange(fieldName, num1, num1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, matchVersion, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newFloatRange(fieldName,
                             getFloat(fieldName, value),
                             Float.MAX_VALUE,
                             false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newFloatRange(fieldName, getFloat(fieldName, value), Float.MAX_VALUE, true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newFloatRange(fieldName, Float.MIN_VALUE, getFloat(fieldName, value), true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newFloatRange(fieldName, Float.MIN_VALUE, getFloat(fieldName, value), true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final float[] between = getFloats(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 numbers needed for between query");
@@ -349,46 +376,54 @@ public class SearchExpressionQueryBuilder {
                         throw new SearchException("From number must lower than to number");
                     }
                     return NumericRangeQuery.newFloatRange(fieldName, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getFloatIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final Double num1 = getDouble(fieldName, value);
                     return NumericRangeQuery.newDoubleRange(fieldName, num1, num1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, matchVersion, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newDoubleRange(fieldName,
                             getDouble(fieldName, value),
                             Double.MAX_VALUE,
                             false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newDoubleRange(fieldName,
                             getDouble(fieldName, value),
                             Double.MAX_VALUE,
                             true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newDoubleRange(fieldName,
                             Double.MIN_VALUE,
                             getDouble(fieldName, value),
                             true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newDoubleRange(fieldName,
                             Double.MIN_VALUE,
                             getDouble(fieldName, value),
                             true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final double[] between = getDoubles(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 numbers needed for between query");
@@ -397,38 +432,46 @@ public class SearchExpressionQueryBuilder {
                         throw new SearchException("From number must lower than to number");
                     }
                     return NumericRangeQuery.newDoubleRange(fieldName, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getDoubleIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final Long date1 = getDate(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, matchVersion, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName,
                             8,
                             getDate(fieldName, value),
                             Long.MAX_VALUE,
                             false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final long[] between = getDates(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 dates needed for between query");
@@ -437,34 +480,42 @@ public class SearchExpressionQueryBuilder {
                         throw new SearchException("From date must occur before to date");
                     }
                     return NumericRangeQuery.newLongRange(fieldName, 8, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getDateIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else if (indexField.getFieldType().isNumeric()) {
             switch (condition) {
-                case EQUALS:
+                case EQUALS -> {
                     final Long num1 = getLong(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
-                case CONTAINS:
+                }
+                case CONTAINS -> {
                     return getContains(fieldName, value, indexField, matchVersion, terms);
-                case GREATER_THAN:
+                }
+                case GREATER_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, false,
                             true);
-                case GREATER_THAN_OR_EQUAL_TO:
+                }
+                case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, true,
                             true);
-                case LESS_THAN:
+                }
+                case LESS_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
                             false);
-                case LESS_THAN_OR_EQUAL_TO:
+                }
+                case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
                             true);
-                case BETWEEN:
+                }
+                case BETWEEN -> {
                     final long[] between = getLongs(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 numbers needed for between query");
@@ -473,31 +524,27 @@ public class SearchExpressionQueryBuilder {
                         throw new SearchException("From number must lower than to number");
                     }
                     return NumericRangeQuery.newLongRange(fieldName, between[0], between[1], true, true);
-                case IN:
+                }
+                case IN -> {
                     return getLongIn(fieldName, value);
-                case IN_DICTIONARY:
+                }
+                case IN_DICTIONARY -> {
                     return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                }
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else {
-            switch (condition) {
-                case EQUALS:
-                    return getContains(fieldName, value, indexField, matchVersion, terms);
+            return switch (condition) {
+                case EQUALS -> getContains(fieldName, value, indexField, matchVersion, terms);
 //                    return getSubQuery(matchVersion, indexField, value, terms, false);
-                case CONTAINS:
-                    return getContains(fieldName, value, indexField, matchVersion, terms);
-                case IN:
-                    return getIn(fieldName, value, indexField, matchVersion, terms);
-                case IN_DICTIONARY:
-                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
-                case IS_DOC_REF:
-                    return getSubQuery(matchVersion, indexField, docRef.getUuid(), terms, false);
-                default:
-                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
-            }
+                case CONTAINS -> getContains(fieldName, value, indexField, matchVersion, terms);
+                case IN -> getIn(fieldName, value, indexField, matchVersion, terms);
+                case IN_DICTIONARY -> getDictionary(fieldName, docRef, indexField, matchVersion, terms);
+                case IS_DOC_REF -> getSubQuery(matchVersion, indexField, docRef.getUuid(), terms, false);
+                default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + indexField.getFieldType().getDisplayValue() + " field type");
+            };
         }
     }
 
@@ -611,8 +658,7 @@ public class SearchExpressionQueryBuilder {
     private Query modifyOccurrence(final Query query, final Occur occur) {
         // Change all occurs to must as we want to insist that all terms exist
         // in the matched documents.
-        if (query instanceof BooleanQuery) {
-            final BooleanQuery bq = (BooleanQuery) query;
+        if (query instanceof final BooleanQuery bq) {
             final Builder builder = new Builder();
             for (final BooleanClause bc : bq.clauses()) {
                 builder.add(bc.getQuery(), occur);
@@ -620,12 +666,6 @@ public class SearchExpressionQueryBuilder {
             return builder.build();
         }
         return query;
-    }
-
-    private Query getDocRef(final String fieldName, final DocRef docRef,
-                            final IndexField indexField, final Version matchVersion, final Set<String> terms) {
-        final Term term = new Term(fieldName, docRef.getUuid());
-        return new TermQuery(term);
     }
 
     private Query getDictionary(final String fieldName, final DocRef docRef,
@@ -671,14 +711,11 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Occur getOccur(final ExpressionOperator operator) {
-        switch (operator.op()) {
-            case OR:
-                return Occur.SHOULD;
-            case NOT:
-                return Occur.MUST_NOT;
-            default:
-                return Occur.MUST;
-        }
+        return switch (operator.op()) {
+            case OR -> Occur.SHOULD;
+            case NOT -> Occur.MUST_NOT;
+            default -> Occur.MUST;
+        };
     }
 
     private Query getSubQuery(final Version matchVersion, final IndexField field, final String value,
@@ -748,8 +785,7 @@ public class SearchExpressionQueryBuilder {
         if (operator != null && operator.enabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
                 if (child.enabled()) {
-                    if (child instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) child;
+                    if (child instanceof final ExpressionOperator childOperator) {
                         if (hasChildren(childOperator)) {
                             return true;
                         }

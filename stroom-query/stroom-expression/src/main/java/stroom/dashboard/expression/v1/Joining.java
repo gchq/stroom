@@ -111,7 +111,7 @@ class Joining extends AbstractFunction implements AggregateFunction {
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        stringListReference = valueReferenceIndex.addStringList();
+        stringListReference = valueReferenceIndex.addStringList(name);
         super.addValueReferences(valueReferenceIndex);
     }
 

@@ -16,7 +16,6 @@
 
 package stroom.feed.impl;
 
-import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.feed.api.FeedStore;
@@ -62,7 +61,8 @@ class FeedResourceImpl implements FeedResource {
 
     @Override
     public FeedDoc fetch(final String uuid) {
-        return documentResourceHelperProvider.get().read(feedStoreProvider.get(), getDocRef(uuid));
+        return documentResourceHelperProvider.get()
+                .read(feedStoreProvider.get(), FeedDoc.getDocRef(uuid));
     }
 
     @Override
@@ -71,13 +71,6 @@ class FeedResourceImpl implements FeedResource {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
         return documentResourceHelperProvider.get().update(feedStoreProvider.get(), doc);
-    }
-
-    private DocRef getDocRef(final String uuid) {
-        return DocRef.builder()
-                .uuid(uuid)
-                .type(FeedDoc.DOCUMENT_TYPE)
-                .build();
     }
 
     @Override

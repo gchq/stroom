@@ -33,6 +33,7 @@ import stroom.search.extraction.StoredDataQueue;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -152,6 +153,8 @@ class ElasticClusterSearchTaskHandler {
             }
 
             LOGGER.debug(() -> "Complete");
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final InterruptedException e) {
             LOGGER.trace(e::getMessage, e);
             // Keep interrupting this thread.

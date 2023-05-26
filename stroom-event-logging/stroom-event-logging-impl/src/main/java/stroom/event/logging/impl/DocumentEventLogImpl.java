@@ -195,36 +195,41 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                        final String eventTypeId,
                        final String description,
                        final Throwable ex) {
-        securityContext.insecure(() -> {
-            try {
-                final UpdateEventAction.Builder<Void> updateBuilder = UpdateEventAction.builder();
+        if (before == null && after == null) {
+            LOGGER.error("Unable to log update audit event (typeId: '{}', description: '{}'): " +
+                            "Either before or after must have a value", eventTypeId, description);
+        } else {
+            securityContext.insecure(() -> {
+                try {
+                    final UpdateEventAction.Builder<Void> updateBuilder = UpdateEventAction.builder();
 
-                if (before != null) {
-                    updateBuilder.withBefore(MultiObject.builder()
-                            .withObjects(createBaseObject(before))
-                            .build());
+                    if (before != null) {
+                        updateBuilder.withBefore(MultiObject.builder()
+                                .withObjects(createBaseObject(before))
+                                .build());
+                    }
+
+                    if (after != null) {
+                        updateBuilder.withAfter(MultiObject.builder()
+                                .withObjects(createBaseObject(after))
+                                .build());
+                    }
+
+                    updateBuilder.withOutcome(EventLoggingUtil.createOutcome(ex));
+
+                    eventLoggingService.log(
+                            eventTypeId != null
+                                    ? eventTypeId
+                                    : "Update",
+                            createEventDescription(description, "Updating", before),
+                            updateBuilder.build());
+
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Error logging update audit event (typeId: '{}', description: '{}'): {}",
+                            eventTypeId, description, e.getMessage(), e);
                 }
-
-                if (after != null) {
-                    updateBuilder.withAfter(MultiObject.builder()
-                            .withObjects(createBaseObject(after))
-                            .build());
-                }
-
-                updateBuilder.withOutcome(EventLoggingUtil.createOutcome(ex));
-
-                eventLoggingService.log(
-                        eventTypeId != null
-                                ? eventTypeId
-                                : "Update",
-                        createEventDescription(description, "Updating", before),
-                        updateBuilder.build());
-
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to log update event!", e);
-            }
-        });
-
+            });
+        }
     }
 
     @Override

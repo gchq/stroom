@@ -259,18 +259,6 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test
-    void testBuildCriteria_noDate() {
-        assertThatThrownBy(() -> {
-            final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
-
-            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-            dataSource.setName("MyDataSource");
-
-            StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
-        }).isInstanceOf(BadRequestException.class);
-    }
-
-    @Test
     void testBuildCriteria_invalidDateCondition() {
         assertThatThrownBy(() -> {
             final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();

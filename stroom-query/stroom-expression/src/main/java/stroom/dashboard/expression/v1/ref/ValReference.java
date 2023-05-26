@@ -10,9 +10,11 @@ import com.esotericsoftware.kryo.io.Output;
 public class ValReference implements ValueReference<Val> {
 
     private final int index;
+    private final String name;
 
-    ValReference(final int index) {
+    ValReference(final int index, final String name) {
         this.index = index;
+        this.name = name;
     }
 
     @Override
@@ -26,7 +28,11 @@ public class ValReference implements ValueReference<Val> {
 
     @Override
     public void set(final StoredValues storedValues, final Val value) {
-        storedValues.set(index, value);
+        if (value == ValNull.INSTANCE) {
+            storedValues.set(index, null);
+        } else {
+            storedValues.set(index, value);
+        }
     }
 
     @Override
@@ -37,5 +43,10 @@ public class ValReference implements ValueReference<Val> {
     @Override
     public void write(final StoredValues storedValues, final Output output) {
         ValSerialiser.write(output, get(storedValues));
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

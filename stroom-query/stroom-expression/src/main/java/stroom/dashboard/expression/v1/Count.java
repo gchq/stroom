@@ -43,7 +43,7 @@ class Count extends AbstractFunction implements AggregateFunction {
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        countReference = valueReferenceIndex.addCount();
+        countReference = valueReferenceIndex.addCount(name);
         super.addValueReferences(valueReferenceIndex);
     }
 
