@@ -31,7 +31,7 @@ public final class SvgPresets {
     public static final Preset COPY = disabled("svgIcon-copy", "Copy");
     public static final Preset DATABASE = enabled("svgIcon-database", "Database");
     public static final Preset DELETE = disabled("svgIcon-delete", "Delete");
-    public static final Preset DELETED = disabled("svgIcon-deleted", "Deleted");
+    public static final Preset DELETED = enabled("svgIcon-deleted", "Deleted");
     public static final Preset DEPENDENCIES = enabled("svgIcon-dependencies", "Dependencies");
     public static final Preset DISABLE = disabled("svgIcon-disable", "Disable");
     public static final Preset DOWN = disabled("svgIcon-down", "Down");
@@ -96,6 +96,7 @@ public final class SvgPresets {
     public static final Preset USER_DISABLED = enabled("svgIcon-user-disabled", "User");
     public static final Preset USER_GROUP = enabled("svgIcon-users", "User Group");
     public static final Preset USER_GROUP_DISABLED = enabled("svgIcon-users-disabled", "User Group");
+    public static final Preset FIND = enabled("svgIcon-find", "Find");
     public static final Preset VOLUMES = enabled("svgIcon-volumes", "Volumes");
 
     public static final Preset COLLAPSE_UP = enabled("svgIcon-collapse-up", "Collapse");

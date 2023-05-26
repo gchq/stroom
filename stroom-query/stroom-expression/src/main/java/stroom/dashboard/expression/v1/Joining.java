@@ -16,11 +16,11 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.StringListReference;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -74,7 +74,7 @@ import java.util.function.Supplier;
                                         argType = ValInteger.class),
                         })
         })
-class Joining extends AbstractFunction {
+class Joining extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "joining";
     static final int DEFAULT_LIMIT = 10;
@@ -84,6 +84,7 @@ class Joining extends AbstractFunction {
     private int limit = DEFAULT_LIMIT;
 
     private Function function;
+    private StringListReference stringListReference;
 
     public Joining(final String name) {
         super(name, 1, 3);
@@ -109,9 +110,15 @@ class Joining extends AbstractFunction {
     }
 
     @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        stringListReference = valueReferenceIndex.addStringList(name);
+        super.addValueReferences(valueReferenceIndex);
+    }
+
+    @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, delimiter, limit);
+        return new Gen(childGenerator, delimiter, limit, stringListReference);
     }
 
     @Override
@@ -124,63 +131,66 @@ class Joining extends AbstractFunction {
         return isAggregate();
     }
 
-    private static class Gen extends AbstractSingleChildGenerator {
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
 
+    private static class Gen extends AbstractSingleChildGenerator {
 
         private final String delimiter;
         private final int limit;
-        private final List<String> list = new ArrayList<>();
+        private final StringListReference stringListReference;
 
-        Gen(final Generator childGenerator, final String delimiter, final int limit) {
+        Gen(final Generator childGenerator,
+            final String delimiter,
+            final int limit,
+            final StringListReference stringListReference) {
             super(childGenerator);
             this.delimiter = delimiter;
             this.limit = limit;
+            this.stringListReference = stringListReference;
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
 
+            final List<String> list = stringListReference.get(storedValues);
             if (list.size() < limit) {
-                final Val val = childGenerator.eval(null);
+                final Val val = childGenerator.eval(storedValues, null);
                 final String value = val.toString();
                 if (value != null) {
                     list.add(value);
+                    stringListReference.set(storedValues, list);
                 }
             }
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final List<String> list = stringListReference.get(storedValues);
             return ValString.create(String.join(delimiter, list));
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final Gen gen = (Gen) generator;
-            for (final String value : gen.list) {
-                if (list.size() < limit) {
-                    list.add(value);
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            final List<String> existingList = stringListReference.get(existingValues);
+            final List<String> newList = stringListReference.get(newValues);
+            boolean changed = false;
+            for (final String value : newList) {
+                if (existingList.size() < limit) {
+                    existingList.add(value);
+                    changed = true;
                 }
             }
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            list.clear();
-            final int length = input.readInt();
-            for (int i = 0; i < length; i++) {
-                list.add(input.readString());
+            if (changed) {
+                stringListReference.set(existingValues, existingList);
             }
-        }
-
-        @Override
-        public void write(final Output output) {
-            output.writeInt(list.size());
-            for (final String string : list) {
-                output.writeString(string);
-            }
+            super.merge(existingValues, newValues);
         }
     }
 }

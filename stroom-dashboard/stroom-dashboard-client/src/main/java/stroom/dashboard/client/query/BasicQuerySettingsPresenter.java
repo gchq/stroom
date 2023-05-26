@@ -70,10 +70,10 @@ public class BasicQuerySettingsPresenter
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
-        final QueryComponentSettings settings = (QueryComponentSettings) componentData.getSettings();
+        final QueryComponentSettings settings = (QueryComponentSettings) componentConfig.getSettings();
         setDataSource(settings.getDataSource());
 
         Automate automate = settings.getAutomate();

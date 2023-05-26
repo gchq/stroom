@@ -29,6 +29,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
@@ -40,9 +41,9 @@ import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 import event.logging.ComplexLoggedOutcome;
@@ -58,8 +59,6 @@ import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerResourceImpl.class);
 
     private final Provider<ExplorerService> explorerServiceProvider;
     private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
@@ -125,7 +124,7 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public ExplorerNode getFromDocRef(final DocRef docRef) {
-        return explorerNodeServiceProvider.get().getNodeWithRoot(docRef).orElse(null);
+        return explorerServiceProvider.get().getFromDocRef(docRef).orElse(null);
     }
 
     @Override
@@ -200,4 +199,8 @@ class ExplorerResourceImpl implements ExplorerResource {
                 .build();
     }
 
+    @Override
+    public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
+        return explorerServiceProvider.get().findContent(request);
+    }
 }

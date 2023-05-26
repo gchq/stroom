@@ -19,7 +19,7 @@ package stroom.dashboard.client.input;
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
 import stroom.item.client.StringListBox;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -96,9 +96,9 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 //    }
 
     @UiHandler("value")
-    public void onSelectionChange(final ChangeEvent event) {
+    public void onSelectionChange(final ValueChangeEvent<String> event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onValueChanged(value.getSelectedValue());
+            getUiHandlers().onValueChanged(value.getValue());
         }
     }
 

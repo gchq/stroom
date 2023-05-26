@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -48,8 +49,6 @@ import javax.xml.bind.annotation.XmlType;
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 public abstract class ExpressionItem implements Serializable {
-
-    private static final long serialVersionUID = -8483817637655853635L;
 
     @XmlElement
     @Schema(description = "Whether this item in the expression tree is enabled or not",
@@ -79,6 +78,12 @@ public abstract class ExpressionItem implements Serializable {
      * at least one of the supplied fields.
      */
     public abstract boolean containsField(final String... fields);
+
+    /**
+     * @param predicate Test to run on each term in the expression
+     * @return True if any term matches predicate
+     */
+    public abstract boolean containsTerm(final Predicate<ExpressionTerm> predicate);
 
     @Override
     public boolean equals(final Object o) {

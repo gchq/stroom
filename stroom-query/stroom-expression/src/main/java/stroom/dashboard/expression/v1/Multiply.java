@@ -50,9 +50,8 @@ class Multiply extends NumericFunction {
 
     static class Calc extends Calculator {
 
-
         @Override
-        protected double op(final double cur, final double val) {
+        double op(final double cur, final double val) {
             return cur * val;
         }
     }

@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+body {
+	background-color: @THEME_BACKGROUND_COLOUR@;
+}
+
 /*
 .navigation {
 	background-color: @THEME_BACKGROUND_COLOUR@  !important;

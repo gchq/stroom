@@ -55,6 +55,23 @@ public final class TableSettings {
     @JsonProperty
     private final List<Field> fields;
 
+    @JsonProperty
+    private final Window window;
+
+    /**
+     * A filter to apply to raw values.
+     */
+    @Schema
+    @JsonProperty
+    private final ExpressionOperator valueFilter;
+
+    /**
+     * A filter to apply to aggregated values.
+     */
+    @Schema
+    @JsonProperty
+    private final ExpressionOperator aggregateFilter;
+
     @JsonPropertyDescription("TODO")
     @JsonProperty
     private final Boolean extractValues;
@@ -85,14 +102,20 @@ public final class TableSettings {
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("window") final Window window,
+            @JsonProperty("valueFilter") final ExpressionOperator valueFilter,
+            @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules) {
-
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
+                    conditionalFormattingRules) {
         this.queryId = queryId;
         this.fields = fields;
+        this.window = window;
+        this.valueFilter = valueFilter;
+        this.aggregateFilter = aggregateFilter;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
@@ -106,6 +129,18 @@ public final class TableSettings {
 
     public List<Field> getFields() {
         return fields;
+    }
+
+    public Window getWindow() {
+        return window;
+    }
+
+    public ExpressionOperator getValueFilter() {
+        return valueFilter;
+    }
+
+    public ExpressionOperator getAggregateFilter() {
+        return aggregateFilter;
     }
 
     public Boolean getExtractValues() {
@@ -153,6 +188,8 @@ public final class TableSettings {
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
+                Objects.equals(window, that.window) &&
+                Objects.equals(aggregateFilter, that.aggregateFilter) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
@@ -164,6 +201,8 @@ public final class TableSettings {
     public int hashCode() {
         return Objects.hash(queryId,
                 fields,
+                window,
+                aggregateFilter,
                 extractValues,
                 extractionPipeline,
                 maxResults,
@@ -176,6 +215,8 @@ public final class TableSettings {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", fields=" + fields +
+                ", window=" + window +
+                ", filter=" + aggregateFilter +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + maxResults +
@@ -197,13 +238,16 @@ public final class TableSettings {
      */
     public static final class Builder {
 
-        protected String queryId;
-        protected List<Field> fields;
-        protected Boolean extractValues;
-        protected DocRef extractionPipeline;
-        protected List<Integer> maxResults;
-        protected Boolean showDetail;
-        protected List<ConditionalFormattingRule> conditionalFormattingRules;
+        private String queryId;
+        private List<Field> fields;
+        private Window window;
+        private ExpressionOperator valueFilter;
+        private ExpressionOperator aggregateFilter;
+        private Boolean extractValues;
+        private DocRef extractionPipeline;
+        private List<Integer> maxResults;
+        private Boolean showDetail;
+        private List<ConditionalFormattingRule> conditionalFormattingRules;
 
         private Builder() {
         }
@@ -213,6 +257,9 @@ public final class TableSettings {
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
+            this.window = tableSettings.window;
+            this.valueFilter = tableSettings.valueFilter;
+            this.aggregateFilter = tableSettings.aggregateFilter;
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
             this.maxResults = tableSettings.getMaxResults() == null
@@ -233,8 +280,23 @@ public final class TableSettings {
             return this;
         }
 
+        public Builder window(final Window window) {
+            this.window = window;
+            return this;
+        }
+
         public Builder fields(final List<Field> fields) {
             this.fields = fields;
+            return this;
+        }
+
+        public Builder valueFilter(final ExpressionOperator valueFilter) {
+            this.valueFilter = valueFilter;
+            return this;
+        }
+
+        public Builder aggregateFilter(final ExpressionOperator rowFilter) {
+            this.aggregateFilter = rowFilter;
             return this;
         }
 
@@ -345,6 +407,9 @@ public final class TableSettings {
             return new TableSettings(
                     queryId,
                     fields,
+                    window,
+                    valueFilter,
+                    aggregateFilter,
                     extractValues,
                     extractionPipeline,
                     maxResults,

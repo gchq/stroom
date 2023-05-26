@@ -4,6 +4,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
+import stroom.proxy.repo.queue.QueueMonitors;
+import stroom.proxy.repo.store.FileStores;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
@@ -18,10 +20,14 @@ public class ForwardFileHandlers implements StreamHandlers {
 
     private final SequentialFileStore sequentialFileStore;
 
-    public ForwardFileHandlers(final ForwardFileConfig config,
-                               final PathCreator pathCreator) {
+    public ForwardFileHandlers(final ForwardFileConfig forwardFileConfig,
+                               final PathCreator pathCreator,
+                               final QueueMonitors queueMonitors,
+                               final FileStores fileStores,
+                               final int order,
+                               final String name) {
         this.sequentialFileStore = new SequentialFileStore(() ->
-                pathCreator.toAppPath(config.getPath()));
+                pathCreator.toAppPath(forwardFileConfig.getPath()), queueMonitors, fileStores, order, name);
     }
 
     @Override

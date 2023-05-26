@@ -12,6 +12,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchTaskProgress;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
@@ -176,7 +177,9 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                 modifiedSearchRequest.getDateTimeSettings());
 
         // Create coprocessors.
-        final Coprocessors coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
+        final Coprocessors coprocessors =
+                coprocessorsFactory.create(modifiedSearchRequest,
+                        DataStoreSettings.createBasicSearchResultStoreSettings());
         final ResultStore resultStore = resultStoreFactory.create(
                 searchRequest.getSearchRequestSource(),
                 coprocessors);

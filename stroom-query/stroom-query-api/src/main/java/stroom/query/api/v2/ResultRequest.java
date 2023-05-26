@@ -50,8 +50,11 @@ public final class ResultRequest {
     @JsonProperty
     private final OffsetRange requestedRange;
 
-    //TODO complete documentation
-    @Schema(description = "TODO",
+    @Schema(description = "If the data includes time in the key then you can apply a time filter when retrieving rows")
+    @JsonProperty
+    private final TimeFilter timeFilter;
+
+    @Schema(description = "A set of group keys of parent rows we want to display children for",
             required = true)
     @JsonProperty
     private final Set<String> openGroups;
@@ -71,12 +74,14 @@ public final class ResultRequest {
     public ResultRequest(@JsonProperty("componentId") final String componentId,
                          @JsonProperty("mappings") final List<TableSettings> mappings,
                          @JsonProperty("requestedRange") final OffsetRange requestedRange,
+                         @JsonProperty("timeFilter") final TimeFilter timeFilter,
                          @JsonProperty("openGroups") final Set<String> openGroups,
                          @JsonProperty("resultStyle") final ResultStyle resultStyle,
                          @JsonProperty("fetch") final Fetch fetch) {
         this.componentId = componentId;
         this.mappings = mappings;
         this.requestedRange = requestedRange;
+        this.timeFilter = timeFilter;
         this.openGroups = openGroups;
         this.resultStyle = resultStyle;
         this.fetch = fetch;
@@ -96,6 +101,10 @@ public final class ResultRequest {
 
     public OffsetRange getRequestedRange() {
         return requestedRange;
+    }
+
+    public TimeFilter getTimeFilter() {
+        return timeFilter;
     }
 
     public Set<String> getOpenGroups() {
@@ -128,6 +137,7 @@ public final class ResultRequest {
         return Objects.equals(componentId, that.componentId) &&
                 Objects.equals(mappings, that.mappings) &&
                 Objects.equals(requestedRange, that.requestedRange) &&
+                Objects.equals(timeFilter, that.timeFilter) &&
                 Objects.equals(openGroups, that.openGroups) &&
                 resultStyle == that.resultStyle &&
                 fetch == that.fetch;
@@ -135,7 +145,7 @@ public final class ResultRequest {
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentId, mappings, requestedRange, openGroups, resultStyle, fetch);
+        return Objects.hash(componentId, mappings, requestedRange, timeFilter, openGroups, resultStyle, fetch);
     }
 
     @Override
@@ -144,6 +154,7 @@ public final class ResultRequest {
                 "componentId='" + componentId + '\'' +
                 ", mappings=" + mappings +
                 ", requestedRange=" + requestedRange +
+                ", timeFilter=" + timeFilter +
                 ", openGroups=" + openGroups +
                 ", resultStyle=" + resultStyle +
                 ", fetch=" + fetch +
@@ -173,6 +184,7 @@ public final class ResultRequest {
         private String componentId;
         private List<TableSettings> mappings;
         private OffsetRange requestedRange;
+        private TimeFilter timeFilter;
         private Set<String> openGroups;
         private ResultRequest.ResultStyle resultStyle;
         private ResultRequest.Fetch fetch;
@@ -184,6 +196,7 @@ public final class ResultRequest {
             componentId = resultRequest.componentId;
             mappings = resultRequest.mappings;
             requestedRange = resultRequest.requestedRange;
+            timeFilter = resultRequest.timeFilter;
             openGroups = resultRequest.openGroups;
             resultStyle = resultRequest.resultStyle;
             fetch = resultRequest.fetch;
@@ -204,6 +217,11 @@ public final class ResultRequest {
          */
         public Builder requestedRange(final OffsetRange value) {
             this.requestedRange = value;
+            return this;
+        }
+
+        public Builder timeFilter(final TimeFilter timeFilter) {
+            this.timeFilter = timeFilter;
             return this;
         }
 
@@ -267,7 +285,7 @@ public final class ResultRequest {
         }
 
         public ResultRequest build() {
-            return new ResultRequest(componentId, mappings, requestedRange, openGroups, resultStyle, fetch);
+            return new ResultRequest(componentId, mappings, requestedRange, timeFilter, openGroups, resultStyle, fetch);
         }
     }
 }

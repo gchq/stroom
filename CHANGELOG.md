@@ -13,6 +13,307 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.18] - 2023-05-22
+
+* Issue **#3388** : Fix mouse selection drag scrolling in ace editor.
+
+* Issue **#3435** : Speculative fix for stuck search extraction jobs.
+
+* Issue **#3423** : Catch exceptions thrown trying to update for deleted rules.
+
+
+## [v7.2-beta.17] - 2023-05-19
+
+* Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
+
+
+## [v7.2-beta.16] - 2023-05-18
+
+* Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
+
+
+## [v7.2-beta.15] - 2023-05-18
+
+* Issue **#3468** : Expected interrupted exceptions are now logged as debug not error.
+
+* Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
+
+
+## [v7.2-beta.14] - 2023-05-17
+
+* Issue **#3465** : Fix index shard search for index name.
+
+* Issue **#3371** : Stats now supports multiple date terms and none. Fix stats with time selector and time series vis.
+
+
+## [v7.2-beta.13] - 2023-05-17
+
+* Issue **#3462** : Make enabled the first item in the list.
+
+* Issue **#3461** : Remove requirement for pipes in QL, add 'from', add 'select' instead of 'table', add 'between' operator.
+
+
+## [v7.2-beta.12] - 2023-05-16
+
+* Issue **#3441** : Min and Max expression functions now return correct type.
+
+* Issue **#3456** : Fix NPE.
+
+* Issue **#3436** : Fix expander col width.
+
+* Issue **#3458** : Improve dashboard tab drag/drop behaviour.
+
+* Issue **#3433** : Conditional highlighting now highlights entire row.
+
+* Issue **#3430** : Activity screen now shows entries across multiple lines.
+
+* Issue **#3445** : Ensure duplicated dashboard tabs create duplicate config.
+
+* Issue **#3422** : Ensure UI shows processor filter status correctly.
+
+* Issue **#3444** : Allow the absence of a where clause or missing fields in where clause.
+
+* Issue **#3432** : Fix processing of where clause in QL.
+
+
+## [v7.2-beta.11] - 2023-05-15
+
+* Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+
+* Issue **#3395** : Fix nested use of selectors such as first() and last() in dashboard tables.
+
+* Issue **#3411** : Fix sorting or search results in LMDB.
+
+* Ensure the same request/response logging feature is used for all jersey clients and server in stroom and proxy.
+
+* Issue **#3449** : Ensure jersey client responses are closed properly.
+
+* Issue **#3429** : Fix error logging.
+
+
+## [v7.2-beta.10] - 2023-05-05
+
+* Issue **#3428** : Automatically disable rules that error.
+
+
+## [v7.2-beta.9] - 2023-05-03
+
+* Issue **#3428** : Automatically disable rules that error.
+
+
+## [v7.2-beta.8] - 2023-05-03
+
+* Issue **#3383** : Fix dashboard query setting selection for searchable providers.
+
+* Issue **#3374** : Fix issue where search extraction prevents shutdown.
+
+* Issue **#3414** : Improve error logging.
+
+* Issue **#3415** : Improve row spacing.
+
+* Issue **#3417** : Fix date rounding functions to return date values.
+
+* Issue **#3393** : Copy/move of favourite items will now select the parent folder of the original node.
+
+* Issue **#3391** : Allow selection of processor filter text box.
+
+* Issue **#3403** : Remove `restClient` config property from proxy config. In stroom and proxy add `jerseryClients` configuration item outside the `appConfig`/`proxyConfig` sections. `jerseryClients:` supports multiple jersey client configurations keyed by name. Possible keys are `default`, `stroom`, `open_id`, `content_sync`, `feed_status`, `http_post_filter`. If a required name is not found in the config file `default` will be used. If that is not found, a vanilla jersey client configuration will be used. For configuration options see https://www.dropwizard.io/en/latest/manual/configuration.html#jerseyclient. Relative key/trust store paths will be treated as relative to stroom home.
+
+* Issue **#3405** : Fix NPE on dependencies screen for missing dependencies.
+
+* Issue **#3421** : Improve error handling for query expressions.
+
+* Issue **#3426** : Allow customisation of window column fields.
+
+* Issue **#3428** : Automatically disable rules that error.
+
+
+## [v7.2-beta.7] - 2023-04-28
+
+* Issue **#3396** : Made filter dialog modal.
+
+* Issue **#3406** : Increase spacing.
+
+* Issue **#3407** : Fix order of stepping filters.
+
+* Change proxy forwarding config structure. `forwardDestinations` has been replaced with `forwardHttpDestinations` and `forwardFileDestinations`. The sub-property `type` has been removed.
+
+* Issue **#3398** : Fix mutability of search/analytic result store settings.
+
+
+## [v7.2-beta.6] - 2023-04-27
+
+* Issue **#3400** : Fix dashboard table selector issue caused by key range comparator.
+
+
+## [v7.2-beta.5] - 2023-04-25
+
+* Issue **#3367** : Fix proxy forward failure handling.
+
+
+## [v7.2-beta.4] - 2023-04-21
+
+* Prevent DB migrations running if stroom is at the desired version.
+
+* Fix menu showing delayed sub-menu when the top menu is closed before the sub-menu appears. Make key left close the sub menu. Stop sub-menu closing when parent is clicked on.
+
+* Fix cursor for the vertical panel splitter.
+
+* Issue **#3378** : Fix duplicate Node columns appearing on Cache monitoring screen.
+
+* Issue **#3380** : Fix sub-menus not disappearing.
+
+* Issue **#3380** : Fix styling of highlighted menu items.
+
+* Change the new document sub-menu to have a sub-menu for each of its groups.
+
+* Issue **#3370** : Fix search result store attempting to look at children of non grouped keys.
+
+* Issue **#3385** : Fix NPE in DynamicIndexingFilter.
+
+* Issue **#3389** : Improve process error handling.
+
+* Issue **#3377** : Improve tab spacing.
+
+* Issue **#3373** : Fix proxy aggregate zip creation and processing.
+
+
+## [v7.2-beta.3] - 2023-04-07
+
+* Issue **#3341** : Fix stroom proxy creation of zip archives.
+
+* Issue **#3364** : Make Stroom Proxy feed status checking and default behaviour optional.
+
+
+## [v7.2-beta.2] - 2023-04-06
+
+* Add editor key bindings to user preferences.
+
+* Issue **#3342** : Stop showing current search result stores on login. This was only meant to be visible in development. The proper implementation is related to session restoration.
+
+* Issue **#3346** : Fix popup z-index issue.
+
+* Change menu item delay to 100ms and fix issue of it changing sub menus if your cursor moved across another top menu item.
+
+* Issue **#3345** : Fix key/value input box text change handling.
+
+* Issue **#3338** : Fix dark theme error banner colours.
+
+* Issue **#3347** : Fix annotation edit dialog scrolling.
+
+* Issue **#3352** : Fix layout density for dashboard table.
+
+* Issue **#3355** : Fix copy (ctrl+c) in popups.
+
+* Issue **#3349** : Remove all presence of upload button.
+
+* Issue **#3362** : Fix flickering menu items.
+
+* Issue **#3359** : Limit the height of the value spinner in a table.
+
+* Issue **#3354** : Fix search resource classes.
+
+* Issue **#3344** : Fix passing params between dashboards.
+
+* Issue **#3357** : Make new dashboards immediately editable.
+
+* Issue **#3356** : Add `stroom.ui.theme.pageBorder` property to allow environment identification.
+
+
+## [v7.2-beta.1] - 2023-03-20
+
+* Issue **#3309** : Add param input to pre 7.2 dashboards.
+
+* Issue **#3308** : Save state of quick time filter.
+
+* Issue **#3310** : Fix right alignment of numeric columns.
+
+* Issue **#3285** : Persist key/value and list input selections in dashboards.
+
+* Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
+
+* Issue **#3105** : Add duplicate column menu item to dashboard tables.
+
+* Issue **#3105** : Add feature to duplicate dashboard tabs and whole tab panels.
+
+* Issue **#3297** : Fix tab selector popup in dashboards.
+
+* Issue **#3313** : Add feature to move dashboard table columns first/last via menu.
+
+* Issue **#1631** : Add content search feature.
+
+* Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
+
+* Issue **#3278** : Fix warning about the data retention rule summary query cancellation action not been correctly configured for auto logging.
+
+* Remove thread sleep accidentally added for testing purposes in data retention summary query execution.
+
+* Issue **#3292** : Change the reference data load to not load entries with null values. If `overrideExistingValues` is set and an entry with a null value overrides an existing one with a non-null value, the existing one will be removed.
+
+* Issue **#3299** : Fix schema non-compliant events when importing config. Also fix error handling when user tries to import with no file selected. Improved the audit events for file upload.
+
+* Remove audit logging for `MetaResourceImpl.getTypes` which just lists the stream types and is not an explicit user action.
+
+* Issue **#3305** : Change the formatting of index/data volume limit to show 3 significant figures.
+
+* Issue **#3280** : Make orphan file/meta finder jobs drop out if stroom is shutdown. Change orphan meta finder job to user more efficient SQL. Improve logging output from both finders to include start time, duration and any error/interruption. Fix missing feed names in orphan file finder log.
+
+* Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
+
+* Issue **#3272** : Change handling for reference loads in unexpected states. It now logs an app log error but carries on and loads over the top.
+
+* Issue **#3260** : Change the select-all filter based delete/restore to delete by IDs with a temporary table to avoid locking other rows. This is configurable using the property `data.meta.metaStatusUpdateBatchSize`, with 0 meaning all in one batch.
+
+* Issue **#3201** : Change the way the mapping of feed and stream types to IDs is cached. Now uses the existing `Meta Type Cache` and `Meta Feed Cache` caches rather than simple hash maps that duplicated the caching.
+
+* Issue **#3136** : Improve the debug logging for reference data effective streams and add validation of the effective stream sets when debug is enabled for `stroom.pipeline.refdata.EffectiveStreamCache`.
+
+* Remove the read/write locking used on the caches. Change cache rebuild to do a full rebuild if config has changed, else just clear the existing cache.
+
+* Issue **#3286** : Fix error when changing property values for cache properties.
+
+* Issue **#2759** : Change `in dictionary` for filters and searchables to ignore blank lines.
+
+* Issue **#3271** : Fix warnings in logs about auto logging not being configured for reference data purge.
+
+
+## [v7.2-alpha.13] - 2023-03-13
+
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
+
+* Issue **#3274** : Improve progress monitoring.
+
+* Issue **#3274** : Improve config descriptions.
+
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3259** : Make task creation a separate managed job.
+
+
+## [v7.2-alpha.12] - 2023-02-24
+
+* Issue **#3039** : Display search suggestions and type hints in dashboards.
+
+* Issue **#3045** : Add stream selection info action button to meta view.
+
+* Issue **#3128** : Allow enumeration of meta keys in XSLT.
+
+* Issue **#3174** : Add search management.
+
+* Issue **#3195** : Add Elasticsearch hit highlighting.
+
+* Issue **#3214** : Use auto-complete list for adding dashboard table fields.
+
+* Issue **#3216** : Add 'Dependencies' to explorer item context menu, to display dependencies for that item.
+
+* Issue **#3206** : Add ability for users to set Explorer items as favourites.
+
+* Issue **#3244** : Add 'Copy link to clipboard' Explorer menu item.
+
 * Issue **#3255** : Fix error when creating a new processor filter.
 
 * Issue **#3204** : More changes to improve task creation performance.
@@ -5046,7 +5347,27 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.18...HEAD
+[v7.2-beta.18]: https://github.com/gchq/stroom/compare/v7.2-beta.17...v7.2-beta.18
+[v7.2-beta.17]: https://github.com/gchq/stroom/compare/v7.2-beta.16...v7.2-beta.17
+[v7.2-beta.16]: https://github.com/gchq/stroom/compare/v7.2-beta.15...v7.2-beta.16
+[v7.2-beta.15]: https://github.com/gchq/stroom/compare/v7.2-beta.14...v7.2-beta.15
+[v7.2-beta.14]: https://github.com/gchq/stroom/compare/v7.2-beta.13...v7.2-beta.14
+[v7.2-beta.13]: https://github.com/gchq/stroom/compare/v7.2-beta.12...v7.2-beta.13
+[v7.2-beta.12]: https://github.com/gchq/stroom/compare/v7.2-beta.11...v7.2-beta.12
+[v7.2-beta.11]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.11
+[v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
+[v7.2-beta.9]: https://github.com/gchq/stroom/compare/v7.2-beta.8...v7.2-beta.9
+[v7.2-beta.8]: https://github.com/gchq/stroom/compare/v7.2-beta.7...v7.2-beta.8
+[v7.2-beta.7]: https://github.com/gchq/stroom/compare/v7.2-beta.6...v7.2-beta.7
+[v7.2-beta.6]: https://github.com/gchq/stroom/compare/v7.2-beta.5...v7.2-beta.6
+[v7.2-beta.5]: https://github.com/gchq/stroom/compare/v7.2-beta.4...v7.2-beta.5
+[v7.2-beta.4]: https://github.com/gchq/stroom/compare/v7.2-beta.3...v7.2-beta.4
+[v7.2-beta.3]: https://github.com/gchq/stroom/compare/v7.2-beta.2...v7.2-beta.3
+[v7.2-beta.2]: https://github.com/gchq/stroom/compare/v7.2-beta.1...v7.2-beta.2
+[v7.2-beta.1]: https://github.com/gchq/stroom/compare/v7.2-alpha.13...v7.2-beta.1
+[v7.2-alpha.13]: https://github.com/gchq/stroom/compare/v7.2-alpha.12...v7.2-alpha.13
+[v7.2-alpha.12]: https://github.com/gchq/stroom/compare/v7.2-alpha.11...v7.2-alpha.12
 [v7.2-alpha.11]: https://github.com/gchq/stroom/compare/v7.2-alpha.10...v7.2-alpha.11
 [v7.2-alpha.10]: https://github.com/gchq/stroom/compare/v7.2-alpha.9...v7.2-alpha.10
 [v7.2-alpha.9]: https://github.com/gchq/stroom/compare/v7.2-alpha.8...v7.2-alpha.9

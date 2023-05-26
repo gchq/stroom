@@ -18,9 +18,10 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ListInputComponentSettings;
@@ -36,13 +37,18 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
-public class ListInputPresenter extends AbstractComponentPresenter<ListInputView> implements
-        ListInputUiHandlers {
+public class ListInputPresenter
+        extends AbstractComponentPresenter<ListInputView>
+        implements ListInputUiHandlers, HasParams {
 
-    public static final ComponentType TYPE = new ComponentType(1, "list-input", "List Input", ComponentUse.INPUT);
+    public static final ComponentType TYPE =
+            new ComponentType(1,
+                    "list-input",
+                    "List Input",
+                    ComponentUse.INPUT);
 
     private static final WordListResource WORD_LIST_RESOURCE = GWT.create(WordListResource.class);
 
@@ -61,51 +67,20 @@ public class ListInputPresenter extends AbstractComponentPresenter<ListInputView
     @Override
     public void onValueChanged(final String value) {
         setSettings(getListInputSettings().copy().value(value).build());
-        updateParams(value);
-
-//        if (!EqualsUtil.isEquals(currentParams, trimmed)) {
-//            setDirty(true);
-//
-//            currentParams = trimmed;
-//            start();
-//        }
-    }
-
-    private void updateParams(final String value) {
-        final String key = getListInputSettings().getKey();
-        final String componentId = getComponentConfig().getId();
-        getDashboardContext().removeParams(componentId);
-
-        if (key != null && key.trim().length() > 0 && value != null && value.trim().length() > 0) {
-            final Param param = new Param(key.trim(), value.trim());
-            getDashboardContext().addParams(componentId, Collections.singletonList(param));
-        }
-    }
-
-    @Override
-    public void onDirty() {
+        ComponentChangeEvent.fire(this, this);
         setDirty(true);
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-//        registerHandler(components.addComponentChangeHandler(event -> {
-//            if (getTextSettings() != null) {
-//                final Component component = event.getComponent();
-//                if (getTextSettings().getTableId() == null) {
-//                    if (component instanceof TablePresenter) {
-//                        currentTablePresenter = (TablePresenter) component;
-//                        update(currentTablePresenter);
-//                    }
-//                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
-//                    if (component instanceof TablePresenter) {
-//                        currentTablePresenter = (TablePresenter) component;
-//                        update(currentTablePresenter);
-//                    }
-//                }
-//            }
-//        }));
+    public List<Param> getParams() {
+        final List<Param> list = new ArrayList<>();
+        final String key = getListInputSettings().getKey();
+        final String value = getView().getSelectedValue();
+        if (key != null && key.trim().length() > 0 && value != null && value.trim().length() > 0) {
+            final Param param = new Param(key.trim(), value.trim());
+            list.add(param);
+        }
+        return list;
     }
 
     @Override
@@ -137,11 +112,9 @@ public class ListInputPresenter extends AbstractComponentPresenter<ListInputView
             getView().setValues(settings.getValues());
             getView().setSelectedValue(settings.getValue());
         }
-
-        updateParams(settings.getValue());
     }
 
-    public ListInputComponentSettings getListInputSettings() {
+    private ListInputComponentSettings getListInputSettings() {
         return (ListInputComponentSettings) getSettings();
     }
 

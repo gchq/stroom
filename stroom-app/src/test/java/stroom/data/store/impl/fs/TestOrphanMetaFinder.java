@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -51,7 +52,7 @@ class TestOrphanMetaFinder extends AbstractCoreIntegrationTest {
 
         final SimpleTaskContext taskContext = new SimpleTaskContext();
         final AtomicLong count = new AtomicLong();
-        final Consumer<Meta> orphanConsumer = m -> count.incrementAndGet();
+        final Consumer<SimpleMeta> orphanConsumer = m -> count.incrementAndGet();
         fsOrphanMetaFinder.scan(orphanConsumer, taskContext);
         assertThat(count.get()).isZero();
 

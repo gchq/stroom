@@ -3,13 +3,14 @@ package stroom.statistics.impl.sql.search;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.Period;
-import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.Range;
 
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,9 +27,6 @@ import java.util.Set;
 public class StatStoreCriteriaBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreCriteriaBuilder.class);
-
-    private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Collections.singletonList(
-            ExpressionTerm.Condition.BETWEEN);
 
     public static FindEventCriteria buildCriteria(final StatisticStoreDoc dataSource,
                                                   final ExpressionOperator expression,
@@ -49,58 +47,16 @@ public class StatStoreCriteriaBuilder {
 
         if (expression == null || expression.op() == null) {
             throw RestUtil.badRequest(
-                    "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
+                    "The top level operator for the query must be one of [" + Arrays.toString(Op.values()) + "]");
         }
 
         final List<ExpressionItem> childExpressions = expression.getChildren();
-        int validDateTermsFound = 0;
-        int dateTermsFound = 0;
 
-        // Identify the date term in the search criteria. Currently we must have
-        // a exactly one BETWEEN operator on the
-        // datetime
-        // field to be able to search. This is because of the way the search in
-        // hbase is done, ie. by start/stop row
-        // key.
-        // It may be possible to expand the capability to make multiple searches
-        // but that is currently not in place
-        ExpressionTerm dateTerm = null;
-        if (childExpressions != null) {
-            for (final ExpressionItem expressionItem : childExpressions) {
-                if (expressionItem.enabled()) {
-                    if (expressionItem instanceof ExpressionTerm) {
-                        final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
-
-                        if (expressionTerm.getField() == null) {
-                            throw RestUtil.badRequest("Expression term does not have a field specified");
-                        }
-
-                        if (expressionTerm.getField().equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
-                            dateTermsFound++;
-
-                            if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
-                                dateTerm = expressionTerm;
-                                validDateTermsFound++;
-                            }
-                        }
-                    } else if (expressionItem instanceof ExpressionOperator) {
-                        if (((ExpressionOperator) expressionItem).op() == null) {
-                            throw RestUtil.badRequest("An operator in the query is missing a type, it should " +
-                                    "be one of " + ExpressionOperator.Op.values());
-                        }
-                    }
-                }
-            }
-        }
-
-        // ensure we have a date term
-        if (dateTermsFound != 1 || validDateTermsFound != 1) {
-            throw RestUtil.badRequest(
-                    "Search queries on the statistic store must contain one term using the '"
-                            + StatisticStoreDoc.FIELD_NAME_DATE_TIME
-                            + "' field with one of the following condtitions [" + SUPPORTED_DATE_CONDITIONS.toString()
-                            + "].  Please amend the query");
-        }
+        // Identify the date term in the search criteria. Currently we must have a exactly one BETWEEN operator on the
+        // datetime field to be able to search. This is because of the way the search in hbase is done, ie. by
+        // start/stop row key.
+        // It may be possible to expand the capability to make multiple searches but that is currently not in place
+        final List<ExpressionTerm> dateTerms = getDateTerms(childExpressions);
 
         // ensure the value field is not used in the query terms
         if (contains(expression, StatisticStoreDoc.FIELD_NAME_VALUE)) {
@@ -110,7 +66,7 @@ public class StatStoreCriteriaBuilder {
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerm, dateTimeSettings, nowEpochMilli);
+        final Range<Long> range = extractRange(dateTerms, dateTimeSettings, nowEpochMilli);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
         findAllTermNodes(expression, termNodesInFilter);
@@ -142,10 +98,9 @@ public class StatStoreCriteriaBuilder {
             }
         }
 
-        // Date Time is handled spearately to the the filter tree so ignore it
+        // Date Time is handled separately to the the filter tree so ignore it
         // in the conversion
-        final Set<String> blackListedFieldNames = new HashSet<>();
-        blackListedFieldNames.addAll(rolledUpFieldNames);
+        final Set<String> blackListedFieldNames = new HashSet<>(rolledUpFieldNames);
         blackListedFieldNames.add(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
 
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder
@@ -155,10 +110,35 @@ public class StatStoreCriteriaBuilder {
                 dataSource.getName(), filterTermsTree, rolledUpFieldNames);
 
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(String.format("Searching statistics store with criteria: %s", criteria.toString()));
+            LOGGER.info(String.format("Searching statistics store with criteria: %s", criteria));
         }
 
         return criteria;
+    }
+
+    private static List<ExpressionTerm> getDateTerms(final List<ExpressionItem> childExpressions) {
+        final List<ExpressionTerm> dateTerms = new ArrayList<>();
+        if (childExpressions != null) {
+            for (final ExpressionItem expressionItem : childExpressions) {
+                if (expressionItem.enabled()) {
+                    if (expressionItem instanceof final ExpressionTerm expressionTerm) {
+
+                        if (expressionTerm.getField() == null) {
+                            throw RestUtil.badRequest("Expression term does not have a field specified");
+                        }
+
+                        if (expressionTerm.getField().equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
+                            dateTerms.add(expressionTerm);
+                        }
+                    } else if (expressionItem instanceof ExpressionOperator) {
+                        if (Op.AND.equals(((ExpressionOperator) expressionItem).op())) {
+                            dateTerms.addAll(getDateTerms(((ExpressionOperator) expressionItem).getChildren()));
+                        }
+                    }
+                }
+            }
+        }
+        return dateTerms;
     }
 
     /**
@@ -168,19 +148,14 @@ public class StatStoreCriteriaBuilder {
     private static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
         // Don't go any further down this branch if this node is disabled.
         if (node.enabled()) {
-            if (node instanceof ExpressionTerm) {
-                final ExpressionTerm termNode = (ExpressionTerm) node;
-
+            if (node instanceof final ExpressionTerm termNode) {
                 termsFound.add(termNode);
 
-            } else if (node instanceof ExpressionOperator) {
-                ExpressionOperator expressionOperator = (ExpressionOperator) node;
-                if (expressionOperator.getChildren() == null) {
-                    throw RestUtil.badRequest(LogUtil.message("{} operator contains no terms or operators",
-                            expressionOperator.op().getDisplayValue()));
-                }
-                for (final ExpressionItem childNode : expressionOperator.getChildren()) {
-                    findAllTermNodes(childNode, termsFound);
+            } else if (node instanceof final ExpressionOperator expressionOperator) {
+                if (expressionOperator.getChildren() != null) {
+                    for (final ExpressionItem childNode : expressionOperator.getChildren()) {
+                        findAllTermNodes(childNode, termsFound);
+                    }
                 }
             }
         }
@@ -207,25 +182,46 @@ public class StatStoreCriteriaBuilder {
         return hasBeenFound;
     }
 
-    private static Range<Long> extractRange(final ExpressionTerm dateTerm,
+    private static Range<Long> extractRange(final List<ExpressionTerm> dateTerms,
                                             final DateTimeSettings dateTimeSettings,
                                             final long nowEpochMilli) {
-        long rangeFrom = 0;
-        long rangeTo = Long.MAX_VALUE;
+        long maxRangeFrom = 0;
+        long minRangeTo = Long.MAX_VALUE;
 
-        final String[] dateArr = dateTerm.getValue().split(",");
+        for (final ExpressionTerm term : dateTerms) {
+            long rangeFrom = 0;
+            long rangeTo = Long.MAX_VALUE;
 
-        if (dateArr.length != 2) {
-            throw RestUtil.badRequest("DateTime term is not a valid format, term: " + dateTerm);
+            if (Condition.BETWEEN.equals(term.getCondition())) {
+                final String[] dateArr = term.getValue().split(",");
+
+                if (dateArr.length != 2) {
+                    throw RestUtil.badRequest("DateTime term is not a valid format, term: " + term);
+                }
+
+                rangeFrom = parseDateTime("from", dateArr[0], dateTimeSettings, nowEpochMilli);
+                // add one to make it exclusive
+                rangeTo = parseDateTime("to", dateArr[1], dateTimeSettings, nowEpochMilli) + 1;
+            } else if (Condition.EQUALS.equals(term.getCondition())) {
+                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings, nowEpochMilli);
+                rangeTo = rangeFrom;
+            } else if (Condition.GREATER_THAN.equals(term.getCondition())) {
+                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings, nowEpochMilli) + 1;
+            } else if (Condition.GREATER_THAN_OR_EQUAL_TO.equals(term.getCondition())) {
+                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings, nowEpochMilli);
+            } else if (Condition.LESS_THAN.equals(term.getCondition())) {
+                rangeTo = parseDateTime("to", term.getValue(), dateTimeSettings, nowEpochMilli) - 1;
+            } else if (Condition.LESS_THAN_OR_EQUAL_TO.equals(term.getCondition())) {
+                rangeTo = parseDateTime("to", term.getValue(), dateTimeSettings, nowEpochMilli);
+            } else {
+                throw RestUtil.badRequest("Unsupported condition for DateTime term: " + term);
+            }
+
+            maxRangeFrom = Math.max(maxRangeFrom, rangeFrom);
+            minRangeTo = Math.min(minRangeTo, rangeTo);
         }
 
-        rangeFrom = parseDateTime("from", dateArr[0], dateTimeSettings, nowEpochMilli);
-        // add one to make it exclusive
-        rangeTo = parseDateTime("to", dateArr[1], dateTimeSettings, nowEpochMilli) + 1;
-
-        final Range<Long> range = new Range<>(rangeFrom, rangeTo);
-
-        return range;
+        return new Range<>(maxRangeFrom, minRangeTo);
     }
 
     private static long parseDateTime(final String type,

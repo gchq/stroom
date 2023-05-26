@@ -9,6 +9,8 @@ import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
 import stroom.proxy.repo.queue.OperationWriteQueue;
+import stroom.proxy.repo.queue.QueueMonitor;
+import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.queue.ReadQueue;
 import stroom.proxy.repo.queue.RecordQueue;
 import stroom.util.shared.Flushable;
@@ -56,8 +58,8 @@ public class ForwardSourceDao implements Flushable {
     private final AtomicLong forwardAggregateId = new AtomicLong();
 
 
-    private final AtomicLong forwardAggregateNewPosition = new AtomicLong();
-    private final AtomicLong forwardAggregateRetryPosition = new AtomicLong();
+    private final AtomicLong forwardSourceNewPosition = new AtomicLong();
+    private final AtomicLong forwardSourceRetryPosition = new AtomicLong();
 
     private final RecordQueue recordQueue;
     private final OperationWriteQueue aggregateUpdateQueue;
@@ -69,9 +71,16 @@ public class ForwardSourceDao implements Flushable {
     private final OperationWriteQueue retryUpdateQueue;
     private final ReadQueue<ForwardSource> retryReadQueue;
 
+    private final QueueMonitor forwardQueueMonitor;
+    private final QueueMonitor retryQueueMonitor;
+
     @Inject
     ForwardSourceDao(final SqliteJooqHelper jooq,
-                     final ProxyDbConfig dbConfig) {
+                     final ProxyDbConfig dbConfig,
+                     final QueueMonitors queueMonitors) {
+        forwardQueueMonitor = queueMonitors.create(20, "Forward sources");
+        retryQueueMonitor = queueMonitors.create(21, "Retry forward sources");
+
         this.jooq = jooq;
         this.dbConfig = dbConfig;
         init();
@@ -95,17 +104,20 @@ public class ForwardSourceDao implements Flushable {
     }
 
     private long readNew(final long currentReadPos, final long limit, List<ForwardSource> readQueue) {
-        return read(currentReadPos, limit, readQueue, FORWARD_SOURCE.NEW_POSITION);
+        return read(currentReadPos, limit, readQueue, FORWARD_SOURCE.NEW_POSITION, forwardQueueMonitor);
     }
 
     private long readRetry(final long currentReadPos, final long limit, List<ForwardSource> readQueue) {
-        return read(currentReadPos, limit, readQueue, FORWARD_SOURCE.RETRY_POSITION);
+        return read(currentReadPos, limit, readQueue, FORWARD_SOURCE.RETRY_POSITION, retryQueueMonitor);
     }
 
     private long read(final long currentReadPos,
                       final long limit,
                       final List<ForwardSource> readQueue,
-                      final TableField<ForwardSourceRecord, Long> positionField) {
+                      final TableField<ForwardSourceRecord, Long> positionField,
+                      final QueueMonitor queueMonitor) {
+        queueMonitor.setReadPos(currentReadPos);
+
         final AtomicLong pos = new AtomicLong(currentReadPos);
         jooq.readOnlyTransactionResult(context -> context
                         .select(FORWARD_SOURCE.ID,
@@ -129,7 +141,10 @@ public class ForwardSourceDao implements Flushable {
                         .limit(limit)
                         .fetch())
                 .forEach(r -> {
-                    pos.set(r.get(positionField));
+                    final long newPosition = r.get(positionField);
+                    pos.set(newPosition);
+                    queueMonitor.setBufferPos(newPosition);
+
                     final ForwardDest forwardDest = new ForwardDest(r.get(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID),
                             r.get(FORWARD_DEST.NAME));
                     final RepoSource source = new RepoSource(
@@ -156,14 +171,19 @@ public class ForwardSourceDao implements Flushable {
                     .getMaxId(context, FORWARD_SOURCE, FORWARD_SOURCE.ID)
                     .orElse(0L));
 
-            forwardAggregateNewPosition.set(JooqUtil
-                    .getMaxId(context, FORWARD_SOURCE, FORWARD_SOURCE.NEW_POSITION)
-                    .orElse(0L));
-
-            forwardAggregateRetryPosition.set(JooqUtil
-                    .getMaxId(context, FORWARD_SOURCE, FORWARD_SOURCE.RETRY_POSITION)
-                    .orElse(0L));
+            forwardSourceNewPosition.set(initQueue(context, FORWARD_SOURCE.NEW_POSITION, forwardQueueMonitor));
+            forwardSourceRetryPosition.set(initQueue(context, FORWARD_SOURCE.RETRY_POSITION, retryQueueMonitor));
         });
+    }
+
+    private long initQueue(final DSLContext context,
+                           final TableField<ForwardSourceRecord, Long> positionField,
+                           final QueueMonitor queueMonitor) {
+        final long newPosition = JooqUtil
+                .getMaxId(context, FORWARD_SOURCE, positionField)
+                .orElse(0L);
+        queueMonitor.setWritePos(newPosition);
+        return newPosition;
     }
 
     public void clear() {
@@ -264,13 +284,16 @@ public class ForwardSourceDao implements Flushable {
         recordQueue.add(() -> {
             for (final RepoSource source : sources.list()) {
                 for (final ForwardDest forwardDest : forwardDests) {
+                    final long newPosition = forwardSourceNewPosition.incrementAndGet();
+                    forwardQueueMonitor.setWritePos(newPosition);
+
                     final Object[] row = new Object[FORWARD_SOURCE_COLUMNS.length];
                     row[0] = forwardAggregateId.incrementAndGet();
                     row[1] = System.currentTimeMillis();
                     row[2] = forwardDest.getId();
                     row[3] = source.id();
                     row[4] = false;
-                    row[5] = forwardAggregateNewPosition.incrementAndGet();
+                    row[5] = newPosition;
                     forwardAggregateWriteQueue.add(row);
                 }
 
@@ -381,13 +404,17 @@ public class ForwardSourceDao implements Flushable {
                             updateForwardSource(
                                     context,
                                     forwardSource,
-                                    forwardAggregateRetryPosition.incrementAndGet())));
+                                    forwardSourceRetryPosition.incrementAndGet())));
         }
     }
 
     private void updateForwardSource(final DSLContext context,
                                      final ForwardSource forwardSource,
                                      final Long retryPosition) {
+        if (retryPosition != null) {
+            retryQueueMonitor.setWritePos(retryPosition);
+        }
+
         context
                 .update(FORWARD_SOURCE)
                 .set(FORWARD_SOURCE.UPDATE_TIME_MS, forwardSource.getUpdateTimeMs())

@@ -28,8 +28,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class for representing a path to a property in an object tree, i.e
@@ -46,47 +50,123 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
 
     private static final PropertyPath EMPTY_INSTANCE = new PropertyPath(Collections.emptyList());
 
+    // Allows us to hold only one instance of each equal list to reduce mem use
+    private static final Map<List<String>, List<String>> PARENT_PARTS_MAP = new ConcurrentHashMap<>();
+
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
-    @JsonProperty("parts")
-    private final List<String> parts;
+    @JsonProperty("parentParts")
+    private final List<String> parentParts;
+    @JsonProperty("leafPart")
+    private final String leafPart;
 
     // Cache the hash to speed up map look-ups
     @JsonIgnore
     private final int hashCode;
 
-    @JsonCreator
-    PropertyPath(@JsonProperty("parts") final List<String> parts) {
-        if (parts == null) {
-            this.parts = Collections.emptyList();
+    PropertyPath(final List<String> parts) {
+        if (parts == null || parts.isEmpty()) {
+            this.parentParts = Collections.emptyList();
+            this.leafPart = null;
         } else {
             validateParts(parts);
-            // Can't use List.copyOf() as GWT doesn't know about it.
-            this.parts = Collections.unmodifiableList(new ArrayList<>(parts));
+            final List<String> parentParts = extractParentParts(parts);
+            this.parentParts = getInternedParentParts(parentParts);
+            this.leafPart = getInternedLeafPart(parts);
         }
-        hashCode = buildHashCode(this.parts);
+
+        hashCode = buildHashCode(this.parentParts, leafPart);
+    }
+
+    @JsonCreator
+    PropertyPath(@JsonProperty("parentParts") final List<String> parentParts,
+                 @JsonProperty("leafPart") final String leafPart) {
+        this.parentParts = getInternedParentParts(parentParts);
+        this.leafPart = leafPart != null
+                ? leafPart.intern()
+                : null;
+
+        hashCode = buildHashCode(this.parentParts, this.leafPart);
+    }
+
+    private String getInternedLeafPart(final List<String> allParts) {
+        if (allParts == null || allParts.isEmpty()) {
+            return null;
+        } else {
+            final String leafPart = allParts.get(allParts.size() - 1);
+            validatePart(leafPart);
+            return leafPart.intern();
+        }
+    }
+
+    private List<String> extractParentParts(final List<String> allParts) {
+        if (allParts == null || allParts.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            validateParts(allParts);
+            if (allParts.size() == 1) {
+                return Collections.emptyList();
+            } else {
+                return allParts.subList(0, allParts.size() - 1);
+            }
+        }
+    }
+
+    private List<String> getInternedParentParts(final List<String> parentParts) {
+        if (parentParts == null || parentParts.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            // Do a simple get first to avoid having to do the intern in case the key is not present
+            List<String> cachedParentParts = PARENT_PARTS_MAP.get(parentParts);
+            if (cachedParentParts == null) {
+                // Intern each part so that we only have one instance of each part
+                final List<String> internedParts = internParts(parentParts);
+                cachedParentParts = PARENT_PARTS_MAP.computeIfAbsent(internedParts, k -> internedParts);
+            }
+            return cachedParentParts;
+        }
+    }
+
+    private List<String> internParts(final List<String> parts) {
+        if (parts == null || parts.isEmpty()) {
+            return parts;
+        } else {
+            // The parts may not have come from string literals so intern them as we have lots
+            // of duplication of the parts
+            return parts.stream()
+                    .map(String::intern)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    private static List<String> combineLists(final List<String> parts1, final List<String> parts2) {
+        if (parts1 == null || parts1.isEmpty()) {
+            return parts2;
+        } else if (parts2 == null || parts2.isEmpty()) {
+            return parts1;
+        } else {
+            final List<String> allParts = new ArrayList<>(parts1.size() + parts2.size());
+            allParts.addAll(parts1);
+            allParts.addAll(parts2);
+            return allParts;
+        }
     }
 
     private PropertyPath(final List<String> parts1, final List<String> parts2) {
-        final List<String> mutableParts = new ArrayList<>(parts1.size() + parts2.size());
-        mutableParts.addAll(parts1);
-        mutableParts.addAll(parts2);
-        parts = Collections.unmodifiableList(mutableParts);
-        validateParts(parts);
-        hashCode = buildHashCode(this.parts);
+        this(combineLists(parts1, parts2));
     }
 
-    private PropertyPath(final List<String> parts1, final String finalPart) {
-        final List<String> mutableParts = new ArrayList<>(parts1.size() + 1);
-        mutableParts.addAll(parts1);
-        mutableParts.add(finalPart);
-        parts = Collections.unmodifiableList(mutableParts);
-        validateParts(parts);
-        hashCode = buildHashCode(this.parts);
-    }
+//    private PropertyPath(final List<String> parts1, final String finalPart) {
+//        final List<String> mutableParts = new ArrayList<>(parts1.size() + 1);
+//        mutableParts.addAll(parts1);
+//        mutableParts.add(finalPart);
+//        parts = internParts(mutableParts);
+//        validateParts(parts);
+//        hashCode = buildHashCode(this.parts);
+//    }
 
-    private int buildHashCode(final List<String> parts) {
-        return Objects.hashCode(parts);
+    private int buildHashCode(final List<String> parentParts, final String leafPart) {
+        return Objects.hash(parentParts, leafPart);
     }
 
     public static PropertyPath blank() {
@@ -95,11 +175,11 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
 
     @JsonIgnore
     public boolean isBlank() {
-        return parts.isEmpty();
+        return parentParts.isEmpty() && leafPart == null;
     }
 
     public boolean containsPart(final String part) {
-        return parts.contains(part);
+        return parentParts.contains(part) || Objects.equals(leafPart, part);
     }
 
     /**
@@ -133,19 +213,36 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     }
 
     private static void validateParts(final List<String> parts) {
-        for (final String part : parts) {
-            if (part == null || part.isEmpty()) {
-                throw new RuntimeException("Null or empty path part in " + parts);
+        if (parts != null) {
+            for (final String part : parts) {
+                validatePart(part);
             }
         }
     }
 
-    List<String> getParts() {
-        if (parts.isEmpty()) {
-            return Collections.emptyList();
-        } else {
-            return parts;
+    private static void validatePart(final String part) {
+        if (part == null || part.isEmpty()) {
+            throw new RuntimeException("Null or empty path part");
         }
+    }
+
+    List<String> getParts() {
+        if (parentParts == null || parentParts.isEmpty()) {
+            return leafPart == null || leafPart.isEmpty()
+                    ? Collections.emptyList()
+                    : Collections.singletonList(leafPart);
+        } else {
+            return Stream.concat(parentParts.stream(), Stream.of(leafPart))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    List<String> getParentParts() {
+        return parentParts;
+    }
+
+    String getLeafPart() {
+        return leafPart;
     }
 
     /**
@@ -155,7 +252,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         if (otherPath == null || otherPath.isBlank()) {
             return this;
         } else {
-            return new PropertyPath(this.parts, otherPath.parts);
+            return new PropertyPath(this.getParts(), otherPath.getParts());
         }
     }
 
@@ -166,7 +263,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         if (otherPart == null || otherPart.isEmpty()) {
             return this;
         } else {
-            return new PropertyPath(this.parts, otherPart);
+            return new PropertyPath(this.getParts(), otherPart);
         }
     }
 
@@ -177,16 +274,16 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         if (parts == null || parts.length == 0) {
             return this;
         } else {
-            return new PropertyPath(this.parts, Arrays.asList(parts));
+            return new PropertyPath(this.getParts(), Arrays.asList(parts));
         }
     }
 
     @JsonIgnore
     public Optional<PropertyPath> getParent() {
-        if (parts.size() <= 1) {
+        if (parentParts.isEmpty()) {
             return Optional.empty();
         } else {
-            return Optional.of(new PropertyPath(parts.subList(0, parts.size() - 1)));
+            return Optional.of(new PropertyPath(parentParts));
         }
     }
 
@@ -195,10 +292,10 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
      */
     @JsonIgnore
     public String getPropertyName() {
-        if (parts.isEmpty()) {
+        if (leafPart == null || leafPart.isEmpty()) {
             throw new RuntimeException("Unable to get property name from empty path");
         }
-        return parts.get(parts.size() - 1);
+        return leafPart;
     }
 
     /**
@@ -207,12 +304,11 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
      */
     @JsonIgnore
     public Optional<String> getParentPropertyName() {
-        if (parts.isEmpty()) {
-            throw new RuntimeException("Unable to get property name from empty path");
+        if (parentParts.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(parentParts.get(parentParts.size() - 1));
         }
-        return parts.size() >= 2
-                ? Optional.ofNullable(parts.get(parts.size() - 2))
-                : Optional.empty();
     }
 
     @Override
@@ -222,18 +318,14 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
 
     @Override
     public String toString() {
-        if (parts == null || parts.isEmpty()) {
-            return "";
-        } else {
-            return String.join(DELIMITER, parts);
-        }
+        return delimitedBy(DELIMITER);
     }
 
     public String delimitedBy(final String delimiter) {
-        if (parts == null || parts.isEmpty()) {
+        if (parentParts.isEmpty() && leafPart == null) {
             return "";
         } else {
-            return String.join(delimiter, parts);
+            return String.join(delimiter, getParts());
         }
     }
 
@@ -246,22 +338,45 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             return false;
         }
         final PropertyPath that = (PropertyPath) o;
-        return parts.equals(that.parts);
+        return Objects.equals(parentParts, that.parentParts)
+                && Objects.equals(leafPart, that.leafPart);
     }
 
-    public boolean equalsIgnoreCase(final PropertyPath o) {
+    public boolean equalsIgnoreCase(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (parts.size() != o.parts.size()) {
+        final PropertyPath that = (PropertyPath) o;
+        if (this.leafPart == null && that.leafPart == null) {
+            return areParentPartsEqualIgnoringCase(this.parentParts, that.parentParts);
+        } else if (this.leafPart == null && that.leafPart != null) {
             return false;
+        } else if (this.leafPart != null && that.leafPart == null) {
+            return false;
+        } else {
+            return this.leafPart.equalsIgnoreCase(that.leafPart)
+                    && areParentPartsEqualIgnoringCase(this.parentParts, that.parentParts);
         }
-        for (int i = 0; i < parts.size(); i++) {
-            if (!parts.get(i).equalsIgnoreCase(o.parts.get(i))) {
-                return false;
+    }
+
+    private boolean areParentPartsEqualIgnoringCase(final List<String> parentParts1,
+                                                    final List<String> parentParts2) {
+        if (parentParts1 == null && parentParts2 == null) {
+            return true;
+        } else if (parentParts1 == null) {
+            return false;
+        } else if (parentParts2 == null) {
+            return false;
+        } else if (parentParts1.size() != parentParts2.size()) {
+            return false;
+        } else {
+            for (int i = 0; i < parentParts1.size(); i++) {
+                if (!parentParts1.get(i).equalsIgnoreCase(parentParts2.get(i))) {
+                    return false;
+                }
             }
         }
         return true;
@@ -298,7 +413,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         }
 
         private Builder(final PropertyPath propertyPath) {
-            parts = propertyPath.parts;
+            parts = propertyPath.getParts();
         }
 
         /**

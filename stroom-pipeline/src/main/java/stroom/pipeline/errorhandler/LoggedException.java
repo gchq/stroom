@@ -16,14 +16,38 @@
 
 package stroom.pipeline.errorhandler;
 
-public class LoggedException extends ProcessException {
-    private static final long serialVersionUID = -8165048386670973035L;
+import net.sf.saxon.trans.UncheckedXPathException;
+import net.sf.saxon.trans.XPathException;
 
-    public LoggedException(final String message) {
-        super(message);
+import java.util.Objects;
+
+public class LoggedException extends ProcessException {
+
+    private LoggedException(final XPathException xPathException) {
+        super(xPathException);
     }
 
-    public LoggedException(final String message, final Throwable cause) {
-        super(message, cause);
+    public static LoggedException create(final String message) {
+        return new LoggedException(new XPathException(message));
+    }
+
+    public static LoggedException wrap(final Throwable throwable) {
+        if (throwable instanceof LoggedException) {
+            return (LoggedException) throwable;
+        }
+        if (throwable instanceof XPathException) {
+            return new LoggedException((XPathException) throwable);
+        }
+        if (throwable instanceof UncheckedXPathException) {
+            return new LoggedException(((UncheckedXPathException) throwable).getXPathException());
+        }
+        return new LoggedException(new XPathException(throwable));
+    }
+
+    public static LoggedException wrap(final String message, final Throwable throwable) {
+        if (Objects.equals(message, throwable.getMessage())) {
+            return wrap(throwable);
+        }
+        return new LoggedException(new XPathException(message, throwable));
     }
 }

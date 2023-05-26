@@ -259,7 +259,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(arr);
+                        consumer.add(Val.of(arr));
                     });
                 }
             }
@@ -347,6 +347,7 @@ class IndexShardDaoImpl implements IndexShardDao {
 
             valueMapper.map(IndexShardFields.FIELD_NODE, INDEX_SHARD.NODE_NAME, ValString::create);
             valueMapper.map(IndexShardFields.FIELD_INDEX, INDEX_SHARD.INDEX_UUID, this::getDocRefName);
+            valueMapper.map(IndexShardFields.FIELD_INDEX_NAME, INDEX_SHARD.INDEX_UUID, this::getDocRefName);
             valueMapper.map(IndexShardFields.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME, ValString::create);
             valueMapper.map(IndexShardFields.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT, ValInteger::create);
             valueMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, ValLong::create);
@@ -405,8 +406,10 @@ class IndexShardDaoImpl implements IndexShardDao {
 
             this.expressionMapper = expressionMapperFactory.create();
             expressionMapper.map(IndexShardFields.FIELD_NODE, INDEX_SHARD.NODE_NAME, value -> value);
-            expressionMapper.multiMap(
-                    IndexShardFields.FIELD_INDEX, INDEX_SHARD.INDEX_UUID, this::getIndexUuids, true);
+            expressionMapper.map(IndexShardFields.FIELD_INDEX, INDEX_SHARD.INDEX_UUID, value ->
+                    value, false);
+            expressionMapper.multiMap(IndexShardFields.FIELD_INDEX_NAME, INDEX_SHARD.INDEX_UUID,
+                    this::getIndexUuids, true);
             expressionMapper.map(IndexShardFields.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME, value -> value);
             expressionMapper.map(IndexShardFields.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT, Integer::valueOf);
             expressionMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, Long::valueOf);

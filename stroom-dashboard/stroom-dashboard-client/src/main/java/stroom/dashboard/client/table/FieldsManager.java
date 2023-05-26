@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.main.UniqueUtil;
 import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Field;
@@ -43,6 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class FieldsManager implements HeadingListener {
 
@@ -256,13 +259,63 @@ public class FieldsManager implements HeadingListener {
         });
     }
 
-    public void addField(final Field field) {
+    public void addField(final Field templateField) {
+        addField(getFields().size(), templateField);
+    }
+
+    public void addField(final int index, final Field templateField) {
+        final String fieldName = makeUniqueFieldName(templateField.getName());
+        final Field newField = templateField.copy()
+                .name(fieldName)
+                .id(createRandomFieldId())
+                .build();
+
         final List<Field> fields = getFields();
-        fields.add(field);
+        fields.add(index, newField);
         updateFields(fields);
 
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
+    }
+
+    private void duplicateField(final Field field) {
+        final List<Field> fields = getFields();
+        final int index = fields.indexOf(field);
+        addField(index + 1, field);
+    }
+
+    private void moveFirst(final Field field) {
+        final List<Field> fields = getFields();
+        fields.remove(field);
+        fields.add(0, field);
+        updateFields(fields);
+        tablePresenter.setDirty(true);
+        tablePresenter.updateColumns();
+    }
+
+    private void moveLast(final Field field) {
+        final List<Field> fields = getFields();
+        fields.remove(field);
+        fields.add(field);
+        updateFields(fields);
+        tablePresenter.setDirty(true);
+        tablePresenter.updateColumns();
+    }
+
+    private String makeUniqueFieldName(final String fieldName) {
+        final Set<String> currentFields = getFields().stream().map(Field::getName).collect(
+                Collectors.toSet());
+        return UniqueUtil.makeUniqueName(fieldName, currentFields);
+    }
+
+    private String createRandomFieldId() {
+        final Set<String> usedFieldIds = getFields().stream().map(Field::getId).collect(Collectors.toSet());
+        return createRandomFieldId(usedFieldIds);
+    }
+
+    public String createRandomFieldId(final Set<String> usedFieldIds) {
+        final String componentId = tablePresenter.getComponentConfig().getId();
+        return UniqueUtil.createUniqueFieldId(componentId, usedFieldIds);
     }
 
     private void deleteField(final Field field) {
@@ -361,6 +414,13 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(createFormatMenu(field));
         // Add filter menu item.
         menuItems.add(createFilterMenu(field));
+
+        // Create move menu.
+        menuItems.add(createMoveFirstMenu(field));
+        menuItems.add(createMoveLastMenu(field));
+
+        // Create duplicate menu.
+        menuItems.add(createDuplicateMenu(field));
 
         // Create hide menu.
         menuItems.add(createHideMenu(field));
@@ -572,9 +632,36 @@ public class FieldsManager implements HeadingListener {
                 .build();
     }
 
-    private Item createHideMenu(final Field field) {
+    private Item createMoveFirstMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(6)
+                .icon(SvgPresets.STEP_BACKWARD_BLUE)
+                .text("Move First")
+                .command(() -> moveFirst(field))
+                .build();
+    }
+
+    private Item createMoveLastMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(7)
+                .icon(SvgPresets.STEP_FORWARD_BLUE)
+                .text("Move Last")
+                .command(() -> moveLast(field))
+                .build();
+    }
+
+    private Item createDuplicateMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(8)
+                .icon(SvgPresets.COPY)
+                .text("Duplicate")
+                .command(() -> duplicateField(field))
+                .build();
+    }
+
+    private Item createHideMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(9)
                 .icon(SvgPresets.HIDE)
                 .text("Hide")
                 .command(() -> hideField(field))
@@ -602,7 +689,7 @@ public class FieldsManager implements HeadingListener {
         }
 
         return new IconParentMenuItem.Builder()
-                .priority(7)
+                .priority(10)
                 .icon(SvgPresets.SHOW)
                 .text("Show")
                 .children(menuItems)
@@ -611,7 +698,7 @@ public class FieldsManager implements HeadingListener {
 
     private Item createRemoveMenu(final Field field) {
         return new IconMenuItem.Builder()
-                .priority(8)
+                .priority(11)
                 .icon(SvgPresets.DELETE)
                 .text("Remove")
                 .command(() -> deleteField(field))

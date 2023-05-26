@@ -18,10 +18,19 @@
 package stroom.meta.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MetaTypeDao {
 
+    /**
+     * Gets the ID of a type if it exists or creates it if it doesn't
+     */
     Integer getOrCreate(String name);
+
+    /**
+     * Gets the ID of a type if it exists.
+     */
+    Optional<Integer> get(String name);
 
     List<String> list();
 }

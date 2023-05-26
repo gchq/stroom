@@ -93,7 +93,7 @@ public class PipelineImpl implements Pipeline {
         try {
             rootElement.setInputStream(inputStream, encoding);
         } catch (final IOException e) {
-            throw new ProcessException(e.getMessage(), e);
+            throw ProcessException.wrap(e);
         }
 
         try {
@@ -109,7 +109,7 @@ public class PipelineImpl implements Pipeline {
                 final List<Processor> processors = rootElement.createProcessors();
                 final Processor processor = processorFactory.create(processors);
                 if (processor == null) {
-                    throw new ProcessException("The pipeline contains no child elements capable of processing");
+                    throw ProcessException.create("The pipeline contains no child elements capable of processing");
                 }
 
                 if (stepping && processor instanceof ProcessorFactoryImpl.MultiWayProcessor) {
@@ -122,7 +122,7 @@ public class PipelineImpl implements Pipeline {
                     // To fix this some sort of synchronisation needs to occur between
                     // all threads when a step is detected and before IO is captured or
                     // cleaned. This will be difficult to fix so leaving for now.
-                    throw new ProcessException("Stepping mode is not currently supported on forked pipelines " +
+                    throw ProcessException.create("Stepping mode is not currently supported on forked pipelines " +
                             "that require piped IO to process them");
                 }
 

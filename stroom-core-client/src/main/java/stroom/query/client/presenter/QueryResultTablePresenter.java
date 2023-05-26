@@ -58,7 +58,6 @@ public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
         implements ResultConsumer {
 
-    private static final int MIN_EXPANDER_COL_WIDTH = 0;
     private int expanderColumnWidth;
     private final Column<TableRow, Expander> expanderColumn;
 
@@ -447,11 +446,7 @@ public class QueryResultTablePresenter
         }
 
         // Set the expander column width.
-        if (maxDepth > 0) {
-            expanderColumnWidth = 16 + (maxDepth * 10);
-        } else {
-            expanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-        }
+        expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
         return processed;

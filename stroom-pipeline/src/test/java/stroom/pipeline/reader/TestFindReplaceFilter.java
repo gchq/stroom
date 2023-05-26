@@ -668,7 +668,7 @@ class TestFindReplaceFilter {
             if (expectedError != null) {
                 assertThat(error.contains(expectedError)).isTrue();
             } else if (error.length() > 0) {
-                throw new ProcessException(error);
+                throw ProcessException.create(error);
             }
 
             assertThat(stringBuilder.toString())

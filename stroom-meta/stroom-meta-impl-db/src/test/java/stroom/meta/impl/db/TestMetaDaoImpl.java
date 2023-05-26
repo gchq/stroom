@@ -23,7 +23,6 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.data.retention.shared.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -34,6 +33,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -57,16 +57,23 @@ import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.TimePeriod;
 
 import com.google.common.base.Strings;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
+import org.jooq.Record1;
+import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -81,6 +88,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
@@ -90,6 +98,7 @@ import static stroom.meta.impl.db.MetaDaoImpl.metaFeed;
 import static stroom.meta.impl.db.MetaDaoImpl.metaProcessor;
 import static stroom.meta.impl.db.MetaDaoImpl.metaType;
 
+@ExtendWith(MockitoExtension.class)
 class TestMetaDaoImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaDaoImpl.class);
@@ -122,6 +131,9 @@ class TestMetaDaoImpl {
     private MetaValueDao metaValueDao;
     @Inject
     private MetaDbConnProvider metaDbConnProvider;
+
+    private MetaServiceConfig metaServiceConfigSpy = Mockito.spy(new MetaServiceConfig());
+
     private int totalMetaCount = 0;
     private int test1FeedCount = 0;
     private int test2FeedCount = 0;
@@ -129,6 +141,13 @@ class TestMetaDaoImpl {
 
     @BeforeEach
     void setup() {
+        final AbstractModule localModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(MetaServiceConfig.class)
+                        .toInstance(metaServiceConfigSpy);
+            }
+        };
         Guice.createInjector(
                         new MetaTestModule(),
                         new MetaDbModule(),
@@ -140,7 +159,9 @@ class TestMetaDaoImpl {
                         new MockDocRefInfoModule(),
                         new MockWordListProviderModule(),
                         new CacheModule(),
-                        new DbTestModule())
+                        new DbTestModule(),
+                        localModule
+                )
                 .injectMembers(this);
 
         populateDb();
@@ -181,14 +202,20 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
-        unlockAllStreams();
+        unlockAllLockedStreams();
     }
 
-    private void unlockAllStreams() {
-        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()),
-                Status.LOCKED,
-                Status.UNLOCKED,
-                System.currentTimeMillis());
+    private void unlockAllLockedStreams() {
+        JooqUtil.context(metaDbConnProvider, context -> {
+            final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+            final byte lockedId = MetaStatusId.getPrimitiveValue(Status.LOCKED);
+            final int count = context.update(meta)
+                    .set(meta.STATUS, unlockedId)
+                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
+                    .where(meta.STATUS.eq(lockedId))
+                    .execute();
+            LOGGER.debug("Unlocked {} meta records", count);
+        });
     }
 
     private List<EffectiveMeta> populateDbWithRefStreams(final Instant baseEffectiveTime) {
@@ -212,7 +239,7 @@ class TestMetaDaoImpl {
             totalMetaCount += 2; // parent + myMeta
             test1FeedCount += 2; // parent + myMeta
         }
-        unlockAllStreams();
+        unlockAllLockedStreams();
 
         return effectiveMetaList;
     }
@@ -491,7 +518,7 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
-        unlockAllStreams();
+        unlockAllLockedStreams();
 
         ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
@@ -545,10 +572,7 @@ class TestMetaDaoImpl {
                 .builder()
                 .field(MetaFields.PIPELINE.getName())
                 .condition(Condition.IS_DOC_REF)
-                .docRef(DocRef.builder()
-                        .type(PipelineDoc.DOCUMENT_TYPE)
-                        .uuid(pipelineUuid)
-                        .build())
+                .docRef(PipelineDoc.buildDocRef().uuid(pipelineUuid).build())
                 .enabled(enabled)
                 .build();
     }
@@ -631,7 +655,7 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
-        unlockAllStreams();
+        unlockAllLockedStreams();
 
         ResultPage<Meta> resultPage = metaDao.findReprocess(
                 new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
@@ -671,6 +695,8 @@ class TestMetaDaoImpl {
                 new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
         assertThat(selectionSummary.getItemCount())
                 .isEqualTo(0);
+
+        dumpMetaTableToDebug();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
@@ -818,6 +844,248 @@ class TestMetaDaoImpl {
         }
     }
 
+    @Test
+    void testUpdateByCriteria() {
+        Mockito.when(metaServiceConfigSpy.getMetaStatusUpdateBatchSize())
+                .thenReturn(12);
+
+        final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .build());
+
+        final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .build());
+
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        final int expectedCount = 20;
+        ResultPage<Meta> metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        // Now re-run and nothing should change
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        dumpMetaTable();
+    }
+
+    @Test
+    void testUpdateByCriteria_withMetaValPredicate() {
+        Mockito.when(metaServiceConfigSpy.getMetaStatusUpdateBatchSize())
+                .thenReturn(2);
+
+        final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
+                .addTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
+                .build());
+
+        final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
+                .addTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .build());
+
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        final int expectedCount = 5;
+        ResultPage<Meta> metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        // Now re-run and nothing should change
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        dumpMetaTable();
+    }
+
+    @Test
+    void testUpdateByCriteria_withProcessorAndMetaValPredicates() {
+        Mockito.when(metaServiceConfigSpy.getMetaStatusUpdateBatchSize())
+                .thenReturn(2);
+
+        final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
+                .addTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
+                .addTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
+                .build());
+
+        final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
+                .addTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
+                .addTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .build());
+
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        final int expectedCount = 5;
+        ResultPage<Meta> metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        // Now re-run and nothing should change
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        dumpMetaTable();
+    }
+
+    @Test
+    void testUpdateByCriteria_withProcessorPredicate() {
+        Mockito.when(metaServiceConfigSpy.getMetaStatusUpdateBatchSize())
+                .thenReturn(6);
+
+        final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
+                .build());
+
+        final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .build());
+
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        final int expectedCount = 10;
+        ResultPage<Meta> metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        // Now re-run and nothing should change
+        metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
+
+        metaResultPage = metaDao.find(deletedCriteria);
+        assertThat(metaResultPage.getValues())
+                .hasSize(expectedCount);
+
+        dumpMetaTable();
+    }
+
+    @Test
+    void testFindBatch_maxInsideBatch() {
+        // meta contains ids 1 => 40
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 10;
+        final Long maxId = minId + 4;
+        final int batchSize = 10;
+
+        final List<SimpleMeta> metaList = metaDao.findBatch(minId, maxId, batchSize);
+
+        assertThat(metaList)
+                .extracting(SimpleMeta::getId)
+                .containsExactlyElementsOf(LongStream.rangeClosed(minId, maxId)
+                        .boxed()
+                        .collect(Collectors.toList()));
+    }
+
+    @Test
+    void testFindBatch_maxOutsideBatch() {
+        // meta contains ids 1 => 40
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 10;
+        final Long maxId = minId + 40;
+        final int batchSize = 5;
+
+        final List<SimpleMeta> metaList = metaDao.findBatch(minId, maxId, batchSize);
+
+        assertThat(metaList)
+                .extracting(SimpleMeta::getId)
+                .containsExactlyElementsOf(LongStream.range(minId, minId + 5)
+                        .boxed()
+                        .collect(Collectors.toList()));
+    }
+
+    @Test
+    void testFindBatch_noMax() {
+
+        // meta contains ids 1 => 40
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 10;
+        final Long maxId = null;
+        final int batchSize = 5;
+
+        final List<SimpleMeta> metaList = metaDao.findBatch(minId, maxId, batchSize);
+
+        assertThat(metaList)
+                .extracting(SimpleMeta::getId)
+                .containsExactlyElementsOf(LongStream.range(minId, minId + 5)
+                        .boxed()
+                        .collect(Collectors.toList()));
+    }
+
+    @Test
+    void testExists_none() {
+
+        // meta contains 40 sequential ids
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 100; // outside valid ids
+
+        final Set<Long> ids = metaDao.exists(LongStream.range(minId, minId + 5)
+                .boxed()
+                .collect(Collectors.toSet()));
+
+        assertThat(ids)
+                .isEmpty();
+    }
+
+    @Test
+    void testExists_all() {
+
+        // meta contains 40 sequential ids
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId; // outside valid ids
+
+        final Set<Long> inputIds = LongStream.range(minId, minId + 5)
+                .boxed()
+                .collect(Collectors.toSet());
+
+        final Set<Long> ids = metaDao.exists(inputIds);
+
+        assertThat(ids)
+                .containsExactlyInAnyOrderElementsOf(inputIds);
+    }
+
+    @Test
+    void testExists_some() {
+
+        // meta contains 40 sequential ids
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId; // outside valid ids
+
+        final Set<Long> inputIds = LongStream.range(minId, minId + 50)
+                .boxed()
+                .collect(Collectors.toSet());
+
+        final Set<Long> ids = metaDao.exists(inputIds);
+
+        assertThat(ids)
+                .containsExactlyInAnyOrderElementsOf(LongStream.range(metaMinId, metaMinId + 40)
+                .boxed()
+                .collect(Collectors.toList()));
+
+        assertThat(inputIds.containsAll(ids))
+                .isTrue();
+    }
+
     private Instant addDeletedData(final List<Meta> metaList) {
         assertThat(JooqUtil.getTableCount(metaDbConnProvider, meta))
                 .isEqualTo(40);
@@ -851,7 +1119,19 @@ class TestMetaDaoImpl {
         return baseTime;
     }
 
-    private void dumpMetaTable() {
+    /**
+     * Mostly to aid in testing
+     */
+    Long getMinMetaId() {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                        .select(DSL.min(meta.ID))
+                        .from(meta)
+                        .fetchOptional())
+                .map(Record1::value1)
+                .orElse(null);
+    }
+
+    static void dumpMetaTable(MetaDbConnProvider metaDbConnProvider) {
         JooqUtil.context(metaDbConnProvider, context ->
                 LOGGER.debug("processor:\n{}", JooqUtil.toAsciiTable(context.select(
                                 meta.ID,
@@ -865,6 +1145,10 @@ class TestMetaDaoImpl {
                         .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                         .orderBy(meta.ID)
                         .fetch(), false)));
+    }
+
+    void dumpMetaTable() {
+        dumpMetaTable(metaDbConnProvider);
     }
 
     private MetaProperties createRawProperties(final String feedName) {

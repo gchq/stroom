@@ -23,23 +23,22 @@ public class LmdbPayloadCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbPayloadCreator.class);
 
-    private final Serialisers serialisers;
-    private final CompiledField[] compiledFields;
     private final int maxPayloadSize;
     private final QueryKey queryKey;
     private final LmdbDataStore lmdbDataStore;
     private final LmdbPayloadQueue currentPayload = new LmdbPayloadQueue(1);
+    private final LmdbRowKeyFactory lmdbRowKeyFactory;
+    private final int minPayloadSize;
 
-    LmdbPayloadCreator(final Serialisers serialisers,
-                       final QueryKey queryKey,
+    LmdbPayloadCreator(final QueryKey queryKey,
                        final LmdbDataStore lmdbDataStore,
-                       final CompiledField[] compiledFields,
-                       final ResultStoreConfig resultStoreConfig) {
-        this.serialisers = serialisers;
+                       final AbstractResultStoreConfig resultStoreConfig,
+                       final LmdbRowKeyFactory lmdbRowKeyFactory) {
         this.queryKey = queryKey;
         this.lmdbDataStore = lmdbDataStore;
-        this.compiledFields = compiledFields;
         maxPayloadSize = (int) resultStoreConfig.getMaxPayloadSize().getBytes();
+        this.lmdbRowKeyFactory = lmdbRowKeyFactory;
+        this.minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
     }
 
     /**
@@ -59,24 +58,20 @@ public class LmdbPayloadCreator {
                     while (!in.end()) {
                         final int rowKeyLength = in.readInt();
                         final byte[] key = in.readBytes(rowKeyLength);
-                        final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
+                        ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
                         keyBuffer.put(key, 0, key.length);
                         keyBuffer.flip();
 
                         final int valueLength = in.readInt();
                         final byte[] value = in.readBytes(valueLength);
-                        final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(value.length);
+                        ByteBuffer valueBuffer = ByteBuffer.allocateDirect(value.length);
                         valueBuffer.put(value, 0, value.length);
                         valueBuffer.flip();
 
-                        LmdbKey rowKey = new LmdbKey(keyBuffer);
-                        if (!rowKey.isGroup()) {
-                            // Create a new unique key if this isn't a group key.
-                            rowKey.makeUnique(lmdbDataStore::getUniqueId);
-                        }
+                        // Create a new unique key if this isn't a group key.
+                        LmdbKV lmdbKV = new LmdbKV(null, keyBuffer, valueBuffer);
+                        lmdbKV = lmdbRowKeyFactory.makeUnique(lmdbKV);
 
-                        final LmdbKV lmdbKV =
-                                new LmdbKV(rowKey, new LmdbValue(serialisers, compiledFields, valueBuffer));
                         lmdbDataStore.put(lmdbKV);
                     }
                 }
@@ -131,10 +126,10 @@ public class LmdbPayloadCreator {
         return currentPayload.isEmpty();
     }
 
-    boolean addPayload(final BatchingWriteTxn batchingWriteTxn,
+    boolean addPayload(final BatchingWriteTxn writeTxn,
                        final Dbi<ByteBuffer> dbi,
                        final boolean complete) {
-        final LmdbPayload payload = createPayload(batchingWriteTxn, dbi, complete);
+        final LmdbPayload payload = createPayload(writeTxn, dbi, complete);
         doPut(payload);
         return payload.isFinalPayload();
     }
@@ -153,19 +148,19 @@ public class LmdbPayloadCreator {
         }
     }
 
-    private LmdbPayload createPayload(final BatchingWriteTxn batchingWriteTxn,
+    private LmdbPayload createPayload(final BatchingWriteTxn writeTxn,
                                       final Dbi<ByteBuffer> dbi,
                                       final boolean complete) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CREATE_PAYLOAD);
-        final Txn<ByteBuffer> writeTxn = batchingWriteTxn.getTxn();
+        final Txn<ByteBuffer> txn = writeTxn.getTxn();
 
         return Metrics.measure("createPayload", () -> {
             if (maxPayloadSize > 0) {
-                final PayloadOutput payloadOutput = serialisers.getOutputFactory().createPayloadOutput();
+                final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
                 boolean finalPayload = complete;
                 long size = 0;
                 long count = 0;
-                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
+                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
@@ -183,7 +178,7 @@ public class LmdbPayloadCreator {
                             payloadOutput.writeInt(valBuffer.remaining());
                             payloadOutput.writeByteBuffer(valBuffer);
 
-                            dbi.delete(writeTxn, keyBuffer.flip());
+                            dbi.delete(txn, keyBuffer.flip());
 
                         } else {
                             // We have reached the maximum payload size so stop adding.
@@ -194,13 +189,13 @@ public class LmdbPayloadCreator {
                     }
                 }
 
-                batchingWriteTxn.commit();
+                writeTxn.commit();
                 payloadOutput.close();
                 return new LmdbPayload(finalPayload, payloadOutput.toBytes());
 
             } else {
-                final PayloadOutput payloadOutput = serialisers.getOutputFactory().createPayloadOutput();
-                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
+                final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
+                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
@@ -212,8 +207,8 @@ public class LmdbPayloadCreator {
                     }
                 }
 
-                dbi.drop(writeTxn);
-                batchingWriteTxn.commit();
+                dbi.drop(txn);
+                writeTxn.commit();
                 payloadOutput.close();
                 return new LmdbPayload(complete, payloadOutput.toBytes());
             }

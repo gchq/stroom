@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+
 import java.util.Map;
 
 @ArchitecturalFunction
@@ -40,6 +42,13 @@ public class Expression implements Function {
     public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
         if (function != null) {
             function.setStaticMappedValues(staticMappedValues);
+        }
+    }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        if (function != null) {
+            function.addValueReferences(valueReferenceIndex);
         }
     }
 
@@ -70,5 +79,9 @@ public class Expression implements Function {
     @Override
     public boolean requiresChildData() {
         return function.requiresChildData();
+    }
+
+    public boolean isCountPrevious() {
+        return function instanceof CountPrevious;
     }
 }

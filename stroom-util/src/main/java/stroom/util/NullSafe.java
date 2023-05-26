@@ -1,5 +1,8 @@
 package stroom.util;
 
+import stroom.util.time.StroomDuration;
+
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +23,43 @@ import java.util.stream.Stream;
 public class NullSafe {
 
     private NullSafe() {
+    }
+
+    /**
+     * Allows you to safely compare a child property of val1 to other.
+     * @return False if val1 is null else whether the child property of val1 is equal to other
+     */
+    public static <T1, T2> boolean equals(final T1 val1,
+                                          final Function<T1, T2> getter,
+                                          final Object other) {
+        if (val1 == null) {
+            return false;
+        } else {
+            final T2 val2 = getter.apply(val1);
+            return Objects.equals(val2, other);
+        }
+    }
+
+    /**
+     * Allows you to safely compare a grandchild property of val1 to other.
+     * @return False if val1 is null or if val1's child property is null,
+     * else whether the grandchild property of val1 is equal to other
+     */
+    public static <T1, T2, T3> boolean equals(final T1 val1,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, T3> getter2,
+                                              final Object other) {
+        if (val1 == null) {
+            return false;
+        } else {
+            final T2 val2 = getter1.apply(val1);
+            if (val2 == null) {
+                return false;
+            } else {
+                final T3 val3 = getter2.apply(val2);
+                return Objects.equals(val3, other);
+            }
+        }
     }
 
     /**
@@ -256,6 +296,33 @@ public class NullSafe {
         return map != null
                 ? map
                 : Collections.emptyMap();
+    }
+
+    /**
+     * Returns the passed string if it is non-null else returns an empty string.
+     */
+    public static String string(final String str) {
+        return str != null
+                ? str
+                : "";
+    }
+
+    /**
+     * Returns the passed stroomDuration if it is non-null else returns a ZERO {@link StroomDuration}
+     */
+    public static StroomDuration duration(final StroomDuration stroomDuration) {
+        return stroomDuration != null
+                ? stroomDuration
+                : StroomDuration.ZERO;
+    }
+
+    /**
+     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
+     */
+    public static Duration duration(final Duration duration) {
+        return duration != null
+                ? duration
+                : Duration.ZERO;
     }
 
     /**

@@ -85,14 +85,14 @@ class TestFileScanner {
         for (int fileCount = 0; fileCount < 100; fileCount++) {
             try (final Entries entries = sequentialFileStore.getEntries(attributeMap)) {
                 for (int entryCount = 0; entryCount < 10; entryCount++) {
-                    final StroomZipEntry metaEntry = StroomZipEntry.create(
+                    final StroomZipEntry metaEntry = StroomZipEntry.createFromBaseName(
                             String.valueOf(entryCount),
                             StroomZipFileType.META);
                     try (final OutputStream outputStream = entries.addEntry(metaEntry.getFullName())) {
                         StreamUtil.streamToStream(new ByteArrayInputStream(metaBytes), outputStream);
                     }
 
-                    final StroomZipEntry dataEntry = StroomZipEntry.create(
+                    final StroomZipEntry dataEntry = StroomZipEntry.createFromBaseName(
                             String.valueOf(entryCount),
                             StroomZipFileType.DATA);
                     try (final OutputStream outputStream = entries.addEntry(dataEntry.getFullName())) {

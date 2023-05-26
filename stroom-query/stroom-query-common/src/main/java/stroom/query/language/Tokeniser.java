@@ -5,16 +5,22 @@ import stroom.query.language.QuotedStringToken.Builder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Tokeniser {
 
+    private static final Map<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<>();
+
     private List<Token> tokens;
 
     private Tokeniser(final String string) {
-        Objects.requireNonNull(string, "Null query");
+        if (string == null || string.isBlank()) {
+            throw new TokenException(null, "Empty query");
+        }
 
         char[] chars = string.toCharArray();
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);
@@ -22,15 +28,22 @@ public class Tokeniser {
 
         // Tag Comments
         split("//.*", 0, TokenType.COMMENT);
-//        split("/\\*[^*]*\\*/", 0, TokenType.BLOCK_COMMENT);
         split("/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/", 0, TokenType.BLOCK_COMMENT);
 
         // Tag quoted strings.
         extractQuotedTokens(TokenType.DOUBLE_QUOTED_STRING, '\"', '\\');
         extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
 
-        // Tag commands and functions.
-        split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.PIPE_OPERATION);
+        // Tag keywords.
+        TokenType.KEYWORDS.forEach(token -> {
+            tagKeyword(token.toString().toLowerCase(Locale.ROOT), token);
+        });
+        // Treat other conjunctions as keywords.
+        tagKeyword("by", TokenType.BY);
+        tagKeyword("as", TokenType.AS);
+        tagKeyword("between", TokenType.BETWEEN);
+
+        // Tag functions.
         split("([a-z-A-Z_]+)([\\s]*\\()", 1, TokenType.FUNCTION_NAME);
 
         // Tag brackets.
@@ -44,14 +57,8 @@ public class Tokeniser {
         // Tag whitespace.
         split("\\s+", 0, TokenType.WHITESPACE);
 
-        // Tag pipes.
-        split("\\|", 0, TokenType.PIPE);
-
-        split("(^|\\s|\\))(and)(\\s|\\(|$)", 2, TokenType.AND);
-        split("(^|\\s|\\))(or)(\\s|\\(|$)", 2, TokenType.OR);
-        split("(^|\\s|\\))(not)(\\s|\\(|$)", 2, TokenType.NOT);
-        split("(^|\\s|\\))(by)(\\s|\\(|$)", 2, TokenType.BY);
-        split("(^|\\s|\\))(as)(\\s|\\(|$)", 2, TokenType.AS);
+//        // Tag pipes.
+//        split("\\|", 0, TokenType.PIPE);
 
         // Tag dates.
         split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.STRING);
@@ -75,6 +82,10 @@ public class Tokeniser {
 
         // Tag everything else as a string.
         categorise(TokenType.STRING);
+    }
+
+    private void tagKeyword(final String pattern, final TokenType tokenType) {
+        split("(^|\\s|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType);
     }
 
     public static List<Token> parse(final String string) {
@@ -101,7 +112,8 @@ public class Tokeniser {
     private void split(final String regex,
                        final int group,
                        final TokenType tokenType) {
-        final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        final Pattern pattern = PATTERN_CACHE
+                .computeIfAbsent(regex, k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {

@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:view="urn:import:stroom.widget.xsdbrowser.client.view">
-    <g:FlowPanel styleName="dock-container-vertical xsdBrowser">
+    <g:FlowPanel styleName="xsdBrowser dock-container-vertical max control__padding-right control__padding-bottom">
         <g:FlowPanel styleName="dock-min bar">
             <g:Label ui:field="homeLink" styleName="gwt-Label link" text="Home"/>
             <g:Label ui:field="backLink" styleName="gwt-Label link" text="Back"/>
@@ -11,15 +11,15 @@
             <g:east size="200">
                 <g:MySplitLayoutPanel vSplits="0.5" styleName="max">
                     <g:north size="300">
-                        <g:HTML ui:field="documentation" styleName="documentation"/>
+                        <g:HTML ui:field="documentation" styleName="dashboard-panel xsdBrowser-documentation"/>
                     </g:north>
                     <g:center>
-                        <view:XSDConstraintDisplay ui:field="constraints" styleName="constraints"/>
+                        <view:XSDConstraintDisplay ui:field="constraints" styleName="dashboard-panel xsdBrowser-constraints" />
                     </g:center>
                 </g:MySplitLayoutPanel>
             </g:east>
             <g:center>
-                <view:XSDDisplay ui:field="diagram" styleName="container display"/>
+                <view:XSDDisplay ui:field="diagram" styleName="dashboard-panel xsdBrowser-content" />
             </g:center>
         </g:MySplitLayoutPanel>
     </g:FlowPanel>

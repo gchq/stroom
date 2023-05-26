@@ -1,0 +1,102 @@
+{
+  content_packs : [ {
+    name : "core-xml-schemas",
+    path : "source/core-xml-schemas/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name : "event-logging-xml-schema",
+    path : "source/event-logging-xml-schema/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "example-index",
+    path: "source/example-index/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "internal-dashboards",
+    path: "source/internal-dashboards/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "internal-statistics-sql",
+    path: "source/internal-statistics-sql/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "internal-statistics-stroom-stats",
+    path: "source/internal-statistics-stroom-stats/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "standard-pipelines",
+    path: "source/standard-pipelines/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "stroom-101",
+    path: "source/stroom-101/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "stroom-logs",
+    path: "source/stroom-logs/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "template-pipelines",
+    path: "source/template-pipelines/stroomContent",
+    repo: {
+      name: "stroom-content",
+      uri : "https://github.com/gchq/stroom-content.git",
+      branch: "7.2",
+      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+    }
+  }, {
+    name: "stroom-visualisations",
+    path: "war/stroomContent",
+    repo: {
+      name: "stroom-visualisations-dev",
+      uri : "https://github.com/gchq/stroom-visualisations-dev.git",
+      branch: "7.2",
+      commit: "0f7f50b4138ab3cdb4cff8dcabedc2ca922bab7e"
+    }
+  } ]
+}

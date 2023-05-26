@@ -293,6 +293,6 @@ public class StreamAppender extends AbstractAppender {
 
     private void fatal(final String message) {
         errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, null);
-        throw new ProcessException(message);
+        throw ProcessException.create(message);
     }
 }

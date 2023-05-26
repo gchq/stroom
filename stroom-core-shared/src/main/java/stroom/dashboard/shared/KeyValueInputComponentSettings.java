@@ -68,11 +68,12 @@ public class KeyValueInputComponentSettings implements ComponentSettings {
         return new Builder();
     }
 
+    @Override
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static final class Builder {
+    public static final class Builder implements ComponentSettings.Builder {
 
         private String text;
 
@@ -88,6 +89,7 @@ public class KeyValueInputComponentSettings implements ComponentSettings {
             return this;
         }
 
+        @Override
         public KeyValueInputComponentSettings build() {
             return new KeyValueInputComponentSettings(
                     text

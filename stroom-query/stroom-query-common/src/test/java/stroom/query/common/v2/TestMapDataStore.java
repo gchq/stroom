@@ -17,25 +17,63 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 class TestMapDataStore extends AbstractDataStoreTest {
 
     @Override
-    DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
+    DataStore create(final QueryKey queryKey,
+                     final String componentId,
+                     final TableSettings tableSettings,
+                     final AbstractResultStoreConfig resultStoreConfig,
+                     final DataStoreSettings dataStoreSettings) {
         final FieldIndex fieldIndex = new FieldIndex();
-
-        final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
-        final Serialisers serialisers = new SerialisersFactory().create(errorConsumer);
+        final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         return new MapDataStore(
                 serialisers,
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),
-                maxResults,
-                storeSize,
-                errorConsumer);
+                dataStoreSettings);
+    }
+
+    @Test
+    void basicTest() {
+        super.basicTest();
+    }
+
+    @Test
+    void sortedTextTest() {
+        super.sortedTextTest();
+    }
+
+    @Test
+    void sortedNumberTest() {
+        super.sortedNumberTest();
+    }
+
+    @Test
+    void sortedCountedTextTest1() {
+        super.sortedCountedTextTest1();
+    }
+
+    @Test
+    void sortedCountedTextTest2() {
+        super.sortedCountedTextTest2();
+    }
+
+    @Test
+    void sortedCountedTextTest3() {
+        super.sortedCountedTextTest3();
+    }
+
+    @Test
+    void firstLastSelectorTest() {
+        super.firstLastSelectorTest();
     }
 }

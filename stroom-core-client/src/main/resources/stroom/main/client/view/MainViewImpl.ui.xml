@@ -1,9 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:s="urn:import:stroom.main.client.view">
+             xmlns:s="urn:import:stroom.main.client.view"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <!-- Add a focus panel as the root so we can catch all keyboard events. -->
-    <g:FocusPanel styleName="mainViewImpl-max">
+    <g:FocusPanel ui:field="root" styleName="mainViewImpl-max">
         <g:FlowPanel styleName="mainViewImpl-max">
             <g:SimplePanel ui:field="banner" styleName="mainViewImpl-banner"/>
             <g:FlowPanel ui:field="main" styleName="mainViewImpl-max">
@@ -11,8 +12,10 @@
                                      styleName="mainViewImpl-contentPanel">
                 </g:ResizeLayoutPanel>
                 <s:Spinner ui:field="spinner" styleName="spinner mainViewImpl-spinner"/>
-                <g:Button ui:field="tabMenu" title="Tab Actions" styleName="mainViewImpl-menu navigation-menu-button focus-without-border"/>
+                <b:InlineSvgButton ui:field="menu" title="Show Menu"
+                                   addStyleNames="mainViewImpl-menu navigation-menu-button focus-without-border"/>
             </g:FlowPanel>
         </g:FlowPanel>
     </g:FocusPanel>
 </ui:UiBinder>
+

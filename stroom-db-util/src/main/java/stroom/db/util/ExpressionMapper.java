@@ -2,12 +2,14 @@ package stroom.db.util;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.query.api.v2.ExpressionItem;
+import stroom.util.NullSafe;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -111,7 +113,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
          */
         static <T> MultiConverter<T> wrapSingleInputConverter(final Function<String, List<T>> converter) {
             return values -> {
-                if (values == null) {
+                if (NullSafe.isEmptyCollection(values)) {
                     return Collections.emptyList();
                 } else {
                     // Call the converter for each
@@ -127,11 +129,12 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
          */
         static <T> MultiConverter<T> wrapConverter(final Converter<T> converter) {
             return values -> {
-                if (values == null) {
+                if (NullSafe.isEmptyCollection(values)) {
                     return Collections.emptyList();
                 } else {
                     return values.stream()
                             .map(converter::apply)
+                            .filter(Objects::nonNull) // Null items would NPE on Collectors.toList
                             .collect(Collectors.toList());
                 }
             };

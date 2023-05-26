@@ -20,6 +20,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
@@ -101,7 +102,7 @@ public class SolrEventSearchTaskHandler {
                     task.getKey(),
                     Collections.singletonList(settings),
                     modifiedQuery.getParams(),
-                    false);
+                    DataStoreSettings.createBasicSearchResultStoreSettings());
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create the search result store.

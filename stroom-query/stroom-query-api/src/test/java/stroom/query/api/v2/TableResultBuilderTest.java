@@ -2,7 +2,6 @@ package stroom.query.api.v2;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -10,6 +9,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TableResultBuilderTest {
+
     @Test
     void doesBuild() {
         // Given
@@ -22,7 +22,7 @@ class TableResultBuilderTest {
         final Integer numberResults = 20;
 
         // When
-        final TableResult.Builder builder = TableResult
+        final TableResultBuilder builder = TableResult
                 .builder()
                 .componentId(componentId)
                 .errors(error)
@@ -32,11 +32,9 @@ class TableResultBuilderTest {
                         .length(length)
                         .build());
 
-        final List<Row> rows = new ArrayList<>();
         IntStream.range(0, numberResults).forEach(x ->
-                rows.add(Row.builder().groupKey(String.format("rowGroup%d", x)).build())
+                builder.addRow(Row.builder().groupKey(String.format("rowGroup%d", x)).build())
         );
-        builder.rows(rows);
 
         final TableResult tableResult = builder.build();
 

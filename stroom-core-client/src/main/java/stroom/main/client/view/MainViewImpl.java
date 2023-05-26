@@ -21,6 +21,7 @@ import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.main.client.presenter.MainUiHandlers;
 import stroom.svg.client.SvgImages;
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -29,9 +30,9 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -44,13 +45,15 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
 
     private final Widget widget;
     @UiField
+    FocusPanel root;
+    @UiField
     SimplePanel banner;
     @UiField
     FlowPanel main;
     @UiField
     Spinner spinner;
     @UiField
-    Button tabMenu;
+    InlineSvgButton menu;
     @UiField
     ResizeLayoutPanel contentPanel;
     private Widget maximisedWidget;
@@ -64,7 +67,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
-        tabMenu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
+        menu.setSvg(SvgImages.MONO_THREE_DOTS_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 
@@ -180,6 +183,13 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     }
 
     @Override
+    public void setBorderStyle(final String style) {
+        if (style != null && style.length() > 0) {
+            root.getElement().setPropertyString("style", style);
+        }
+    }
+
+    @Override
     public void setBanner(final String text) {
         if (!EqualsUtil.isEquals(currentBanner, text)) {
             currentBanner = text;
@@ -195,10 +205,10 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
         }
     }
 
-    @UiHandler("tabMenu")
-    void onTabMenu(final ClickEvent event) {
+    @UiHandler("menu")
+    void onMenu(final ClickEvent event) {
         if (MouseUtil.isPrimary(event)) {
-            getUiHandlers().showTabMenu(event.getNativeEvent(), tabMenu.getElement());
+            getUiHandlers().showMenu(event.getNativeEvent(), menu.getElement());
         }
     }
 

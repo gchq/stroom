@@ -16,8 +16,7 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
@@ -70,17 +69,17 @@ class IndexOf extends AbstractFunction {
 
             // Optimise replacement of static input in case user does something stupid.
             if (stringFunction instanceof StaticValueFunction) {
-                final String string = stringFunction.createGenerator().eval(null).toString();
+                final String string = ((StaticValueFunction) stringFunction).getValue().toString();
                 if (string != null) {
                     final String value = param.toString();
                     final int index = value.indexOf(string);
                     if (index < 0) {
-                        gen = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
+                        gen = Null.GEN;
                     } else {
-                        gen = new StaticValueFunction(ValInteger.create(index)).createGenerator();
+                        gen = new StaticValueGen(ValInteger.create(index));
                     }
                 } else {
-                    gen = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
+                    gen = Null.GEN;
                 }
             }
         }
@@ -101,9 +100,19 @@ class IndexOf extends AbstractFunction {
         return hasAggregate;
     }
 
+    @Override
+    public boolean requiresChildData() {
+        boolean requiresChildData = super.requiresChildData();
+        if (stringFunction != null && !requiresChildData) {
+            requiresChildData = stringFunction.requiresChildData();
+        }
+        if (function != null && !requiresChildData) {
+            requiresChildData = function.requiresChildData();
+        }
+        return requiresChildData;
+    }
+
     private static final class Gen extends AbstractSingleChildGenerator {
-
-
         private final Generator stringGenerator;
 
         Gen(final Generator childGenerator, final Generator stringGenerator) {
@@ -112,20 +121,20 @@ class IndexOf extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
-            stringGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
+            stringGenerator.set(values, storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerator.eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return ValErr.wrap(val);
             }
             final String value = val.toString();
 
-            final Val strVal = stringGenerator.eval(childDataSupplier);
+            final Val strVal = stringGenerator.eval(storedValues, childDataSupplier);
             if (!strVal.type().isValue()) {
                 return ValErr.wrap(strVal);
             }
@@ -138,17 +147,17 @@ class IndexOf extends AbstractFunction {
 
             return ValNull.INSTANCE;
         }
-
-        @Override
-        public void read(final Input input) {
-            super.read(input);
-            stringGenerator.read(input);
-        }
-
-        @Override
-        public void write(final Output output) {
-            super.write(output);
-            stringGenerator.write(output);
-        }
+//
+//        @Override
+//        public void read(final Input input) {
+//            super.read(input);
+//            stringGenerator.read(input);
+//        }
+//
+//        @Override
+//        public void write(final Output output) {
+//            super.write(output);
+//            stringGenerator.write(output);
+//        }
     }
 }

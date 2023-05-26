@@ -49,8 +49,8 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         final Binder binder = GWT.create(Binder.class);
         widget = binder.createAndBindUi(this);
 
-        final FlowPanel recent = createPanel("Recent");
-        for (final TimeRange timeRange : TimeRanges.RECENT_RANGES) {
+        final FlowPanel recent = createPanel("Relative");
+        for (final TimeRange timeRange : TimeRanges.RELATIVE_RANGES) {
             recent.add(createLabel(timeRange));
         }
 

@@ -18,7 +18,7 @@ package stroom.legacy.db.migration;
 
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.TimeUnit;
+import stroom.util.shared.time.TimeUnit;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.feed.shared.FeedDoc;

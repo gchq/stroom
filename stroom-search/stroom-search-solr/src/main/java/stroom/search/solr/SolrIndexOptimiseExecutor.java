@@ -20,7 +20,7 @@ package stroom.search.solr;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -43,17 +43,17 @@ public class SolrIndexOptimiseExecutor {
     private final SolrIndexStore solrIndexStore;
     private final SolrIndexClientCache solrIndexClientCache;
     private final ClusterLockService clusterLockService;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public SolrIndexOptimiseExecutor(final SolrIndexStore solrIndexStore,
                                      final SolrIndexClientCache solrIndexClientCache,
                                      final ClusterLockService clusterLockService,
-                                     final TaskContext taskContext) {
+                                     final TaskContextFactory taskContextFactory) {
         this.solrIndexStore = solrIndexStore;
         this.solrIndexClientCache = solrIndexClientCache;
         this.clusterLockService = clusterLockService;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
@@ -95,7 +95,7 @@ public class SolrIndexOptimiseExecutor {
     }
 
     private void info(final Supplier<String> message) {
-        taskContext.info(message);
+        taskContextFactory.current().info(message);
         LOGGER.info(message);
     }
 }

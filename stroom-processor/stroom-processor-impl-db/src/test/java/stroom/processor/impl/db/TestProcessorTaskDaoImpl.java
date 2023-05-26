@@ -44,7 +44,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterCount(null)).isOne();
 
         createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         assertThat(countTasks()).isEqualTo(3);
@@ -57,7 +57,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(countOwned(null)).isEqualTo(3);
 
         createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED);
 
         assertThat(countTasks()).isEqualTo(6);
@@ -88,10 +88,10 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterCount(null)).isOne();
 
         createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED);
 
         assertThat(countTasks()).isEqualTo(6);
@@ -169,7 +169,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
     private void createTasksForFilter(final ProcessorFilter filter) {
         createProcessorTask(filter, TaskStatus.CREATED, null, FEED);
         createProcessorTask(filter, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(filter, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(filter, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED);
         createProcessorTask(filter, TaskStatus.COMPLETE, NODE1, FEED);
     }
@@ -232,7 +232,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
         processorFilter1a = createProcessorFilter(processor1);
         createProcessorTask(processorFilter1a, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter1a.setDeleted(true);
@@ -241,12 +241,12 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
         processorFilter1b = createProcessorFilter(processor1);
         createProcessorTask(processorFilter1b, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter2 = createProcessorFilter(processor2);
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
         assertThat(getProcessorCount(null))
@@ -293,12 +293,12 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
         processorFilter1a = createProcessorFilter(processor1);
         createProcessorTask(processorFilter1a, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter1b = createProcessorFilter(processor1);
         createProcessorTask(processorFilter1b, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.COMPLETE, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.DELETED, NODE1, FEED);
@@ -318,7 +318,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
         processorFilter2 = createProcessorFilter(processor2);
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
         assertThat(getProcessorCount(null))

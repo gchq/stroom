@@ -24,8 +24,8 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.ResultStore;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
@@ -38,6 +38,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -175,6 +176,8 @@ public class ElasticSearchTaskHandler {
                     futures[i] = CompletableFuture.runAsync(runnable, executor);
                 }
             });
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final RuntimeException e) {
             error(errorConsumer, e);
         }
@@ -245,6 +248,8 @@ public class ElasticSearchTaskHandler {
             ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
             clearScrollRequest.addScrollId(scrollId);
             elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
 
@@ -310,9 +315,11 @@ public class ElasticSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(values);
+                    valuesConsumer.add(Val.of(values));
                 }
             }
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final RuntimeException e) {
             error(errorConsumer, e);
         }
@@ -335,10 +342,12 @@ public class ElasticSearchTaskHandler {
     }
 
     private void error(final ErrorConsumer errorConsumer, final Throwable t) {
-        if (errorConsumer == null) {
-            LOGGER.error(t::getMessage, t);
-        } else {
-            errorConsumer.add(t);
+        if (!(t instanceof UncheckedInterruptedException)) {
+            if (errorConsumer == null) {
+                LOGGER.error(t::getMessage, t);
+            } else {
+                errorConsumer.add(t);
+            }
         }
     }
 }

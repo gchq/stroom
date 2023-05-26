@@ -23,23 +23,23 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
+import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.query.common.v2.SerialisersFactory;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
-import stroom.search.extraction.ExtractionReceiver;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -62,6 +62,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -93,7 +94,8 @@ class TestSearchResultCreation {
                 () -> lmdbLibraryConfig);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
-                ResultStoreConfig::new,
+                SearchResultStoreConfig::new,
+                AnalyticResultStoreConfig::new,
                 pathCreator,
                 () -> executorService);
     }
@@ -116,7 +118,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -124,11 +125,11 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -142,7 +143,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                new SerialisersFactory(),
                 sizesProvider,
                 null,
                 coprocessors,
@@ -225,7 +225,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -233,19 +232,19 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                true);
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -272,7 +271,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
                 coprocessors2,
@@ -300,7 +298,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -308,19 +305,19 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                true);
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
 
-        final ExtractionReceiver consumer1 = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer1);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -349,7 +346,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
                 coprocessors2,
@@ -390,26 +386,25 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(), sizesProvider, dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -460,7 +455,6 @@ class TestSearchResultCreation {
                 searchRequest.getSearchRequestSource(),
                 null,
                 null,
-                null,
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get());
@@ -469,11 +463,14 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
-            final Items dataItems = data.get();
-            final Item dataItem = dataItems.iterator().next();
-            final Val val = dataItem.getValue(2, true);
-            assertThat(val.toLong())
-                    .isEqualTo(count);
+            final Optional<Items> optional = data.get(Key.ROOT_KEY, null);
+            assertThat(optional).isPresent();
+            optional.ifPresent(items -> {
+                final Item dataItem = items.getIterable().iterator().next();
+                final Val val = dataItem.getValue(2, true);
+                assertThat(val.toLong())
+                        .isEqualTo(count);
+            });
         });
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
@@ -488,7 +485,7 @@ class TestSearchResultCreation {
             final int target = mappings[j];
             vals[target] = ValString.create(value);
         }
-        consumer.add(vals);
+        consumer.add(Val.of(vals));
     }
 
     private void transferPayloads(final Coprocessors source, final Coprocessors target) {
@@ -503,8 +500,7 @@ class TestSearchResultCreation {
         }
     }
 
-    private int[] createMappings(ExtractionReceiver receiver) {
-        final FieldIndex fieldIndex = receiver.getFieldIndex();
+    private int[] createMappings(final FieldIndex fieldIndex) {
         final int[] mappings = new int[4];
         mappings[0] = fieldIndex.getPos("EventTime");
         mappings[1] = fieldIndex.getPos("UserId");
@@ -536,42 +532,18 @@ class TestSearchResultCreation {
         };
     }
 
-    private ExtractionReceiver createExtractionReceiver(final Coprocessors coprocessors) {
-        final Map<DocRef, ExtractionReceiver> receivers = new HashMap<>();
+    private ValuesConsumer createExtractionReceiver(final Coprocessors coprocessors) {
+        final Map<DocRef, ValuesConsumer> receivers = new HashMap<>();
         coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
             // Create a receiver that will send data to all coprocessors.
-            ExtractionReceiver receiver;
+            ValuesConsumer receiver;
             if (coprocessorSet.size() == 1) {
-                final Coprocessor coprocessor = coprocessorSet.iterator().next();
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessor.add(values);
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = coprocessorSet.iterator().next();
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
             }
-
             receivers.put(docRef, receiver);
         });
 

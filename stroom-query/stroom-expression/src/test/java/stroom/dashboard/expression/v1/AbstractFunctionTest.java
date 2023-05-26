@@ -1,5 +1,8 @@
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DynamicTest;
@@ -8,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +52,9 @@ public abstract class AbstractFunctionTest<T extends Function> {
                             Param[] params = testCase.getParams().toArray(new Param[0]);
                             function.setParams(params);
                         }
+                        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+                        function.addValueReferences(valueReferenceIndex);
+                        final StoredValues storedValues = valueReferenceIndex.createStoredValues();
                         final Generator generator = function.createGenerator();
 
                         if (!testCase.getAggregateValues().isEmpty()) {
@@ -55,16 +62,23 @@ public abstract class AbstractFunctionTest<T extends Function> {
                                     .map(this::argToString)
                                     .collect(Collectors.joining(" ")));
                             testCase.getAggregateValues().forEach(val ->
-                                    generator.set(new Val[]{val}));
+                                    generator.set(Val.of(val), storedValues));
                         }
 
                         // Run the function
                         final Val returnVal;
 
+                        // Create a set of child values.
+                        final List<StoredValues> childValues = new ArrayList<>();
+                        testCase.getAggregateValues().forEach(val -> {
+                            final StoredValues values = valueReferenceIndex.createStoredValues();
+                            generator.set(Val.of(val), values);
+                            childValues.add(values);
+                        });
                         final Supplier<ChildData> childDataSupplier =
-                                AbstractExpressionParserTest.createChildDataSupplier(testCase.getAggregateValues());
+                                AbstractExpressionParserTest.createChildDataSupplier(childValues);
 
-                        returnVal = generator.eval(childDataSupplier);
+                        returnVal = generator.eval(storedValues, childDataSupplier);
 
                         LOGGER.info("Return val: {}", argToString(returnVal));
 

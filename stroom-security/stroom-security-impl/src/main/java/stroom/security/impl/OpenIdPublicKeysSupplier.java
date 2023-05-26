@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
-import stroom.util.jersey.WebTargetFactory;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 @Singleton
@@ -21,15 +23,15 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdPublicKeysSupplier.class);
 
     private final ResolvedOpenIdConfig openIdConfig;
-    private final WebTargetFactory webTargetFactory;
+    private final JerseyClientFactory jerseyClientFactory;
 
     private final Map<String, JsonWebKeySet> cache = new ConcurrentHashMap<>();
 
     @Inject
     OpenIdPublicKeysSupplier(final ResolvedOpenIdConfig openIdConfig,
-                             final WebTargetFactory webTargetFactory) {
+                             final JerseyClientFactory jerseyClientFactory) {
         this.openIdConfig = openIdConfig;
-        this.webTargetFactory = webTargetFactory;
+        this.jerseyClientFactory = jerseyClientFactory;
     }
 
     @Override
@@ -41,8 +43,8 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
         return cache.computeIfAbsent(jwksUri, k -> {
             String json = null;
             try {
-                final Response res = webTargetFactory
-                        .create(jwksUri)
+                final WebTarget webTarget = jerseyClientFactory.createWebTarget(JerseyClientName.OPEN_ID, jwksUri);
+                final Response res = webTarget
                         .request()
                         .get();
                 json = res.readEntity(String.class);

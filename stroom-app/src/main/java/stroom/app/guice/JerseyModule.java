@@ -5,75 +5,52 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.security.api.SecurityContext;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.jersey.WebTargetFactory;
-import stroom.util.shared.BuildInfo;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.logging.LoggingFeature;
 
-import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class JerseyModule extends AbstractModule {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(JerseyModule.class);
-//
-//    // This name is used by dropwizard metrics
-//    private static final String JERSEY_CLIENT_NAME = "stroom_jersey_client";
-//    private static final String JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom/";
-//
-//    private final Environment environment;
-//    private final JerseyClientConfiguration jerseyClientConfiguration;
-//
-//    public JerseyModule(final Environment environment, final JerseyClientConfiguration jerseyClientConfiguration) {
-//        this.environment = environment;
-//        this.jerseyClientConfiguration = jerseyClientConfiguration;
-//    }
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JerseyModule.class);
 
     @Override
     protected void configure() {
+        bind(JerseyClientFactory.class).to(JerseyClientFactoryImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(NodeCallExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)
                 .addBinding(TokenExceptionMapper.class);
     }
 
+    /**
+     * Provides a Jersey {@link WebTargetFactory} with added Authorization header containing the
+     * user's access token.
+     * Only use this when you want {@link WebTarget} with the Authorization header already added to it,
+     * else just get a Client and create a {@link WebTarget} from that.
+     */
+    @SuppressWarnings("unused") // Guice injected
     @Provides
     @Singleton
-    Client provideJerseyClient(final Provider<BuildInfo> buildInfoProvider) {
-//        Objects.requireNonNull(environment, "Null environment");
-//
-//        // If the userAgent has not been explicitly set in the config then set it based
-//        // on the build version
-//        if (!jerseyClientConfiguration.getUserAgent().isPresent()) {
-//            final String userAgent = JERSEY_CLIENT_USER_AGENT_PREFIX + buildInfoProvider.get().getBuildVersion();
-//            LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
-//            jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
-//        }
-//
-//        LOGGER.info("Creating jersey client {}", JERSEY_CLIENT_NAME);
-//        return new JerseyClientBuilder(environment)
-//                .using(jerseyClientConfiguration)
-//                .build(JERSEY_CLIENT_NAME)
-//                .register(LoggingFeature.class);
-
-        return ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
-    }
-
-    @Provides
-    @Singleton
-    WebTargetFactory provideJerseyRequestBuilder(final Client client,
+    WebTargetFactory provideJerseyRequestBuilder(final JerseyClientFactoryImpl jerseyClientFactory,
                                                  final SecurityContext securityContext) {
         return url -> {
+            final JerseyClientName clientName = JerseyClientName.STROOM;
+            final Client client = jerseyClientFactory.getNamedClient(clientName);
             final WebTarget webTarget = client.target(url);
+            LOGGER.debug("Building WebTarget for client: '{}', url: '{}'", clientName, url);
             final WebTarget webTargetProxy = new WebTargetProxy(webTarget) {
                 @Override
                 public Builder request() {

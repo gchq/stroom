@@ -5,17 +5,17 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface MenuUiHandlers extends UiHandlers {
 
-    void toggleSubMenu(MenuItem menuItem, Element element);
-
     void showSubMenu(MenuItem menuItem, Element element);
 
-    void hideSubMenu();
+    void hideExistingSubMenu(MenuItem newItem);
 
-    boolean subMenuVisible();
+    void ensureParentItemSelected();
 
     void focusSubMenu();
 
-    void focusParent();
+    void focusParent(final boolean hideChildren);
+
+    boolean hasParent();
 
     void escape();
 

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -57,7 +59,7 @@ class Add extends NumericFunction {
     static class Calc extends Calculator {
 
         @Override
-        protected double op(final double cur, final double val) {
+        double op(final double cur, final double val) {
             return cur + val;
         }
     }
@@ -72,18 +74,11 @@ class Add extends NumericFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             boolean concat = false;
             final Val[] vals = new Val[childGenerators.length];
             for (int i = 0; i < vals.length; i++) {
-                final Val val = childGenerators[i].eval(childDataSupplier);
+                final Val val = childGenerators[i].eval(storedValues, childDataSupplier);
                 if (val.type().isError()) {
                     return val;
                 } else if (val instanceof ValString) {

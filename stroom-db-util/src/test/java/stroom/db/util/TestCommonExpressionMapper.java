@@ -288,7 +288,9 @@ class TestCommonExpressionMapper {
         private final String name;
 
         public MyDbField(String name) {
-            super(null, null, null);
+            super(name, true, List.of(
+                    ExpressionTerm.Condition.EQUALS,
+                    ExpressionTerm.Condition.IN));
             this.name = name;
         }
 

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 import java.util.function.Supplier;
 
@@ -39,7 +41,7 @@ abstract class AbstractCast extends AbstractFunction {
             hasAggregate = function.hasAggregate();
         } else {
             // Optimise replacement of static input in case user does something stupid.
-            gen = new StaticValueFunction(getCaster().cast((Val) param)).createGenerator();
+            gen = new StaticValueGen(getCaster().cast((Val) param));
         }
     }
 
@@ -56,6 +58,14 @@ abstract class AbstractCast extends AbstractFunction {
     @Override
     public boolean hasAggregate() {
         return hasAggregate;
+    }
+
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
     }
 
     abstract AbstractCaster getCaster();
@@ -75,13 +85,13 @@ abstract class AbstractCast extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return caster.cast(childGenerator.eval(childDataSupplier));
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return caster.cast(childGenerator.eval(storedValues, childDataSupplier));
         }
     }
 }

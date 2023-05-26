@@ -61,18 +61,6 @@ public class DataGridSelectionEventManager<T>
 
     @Override
     protected void onMouseDown(final CellPreviewEvent<T> event) {
-        // We set focus here so that we can use the keyboard to navigate once we have focus.
-        dataGrid.setFocus(true);
-
-        final NativeEvent nativeEvent = event.getNativeEvent();
-        if (event.getValue() != null) {
-            final List<T> rows = dataGrid.getVisibleItems();
-            final int index = rows.indexOf(event.getValue());
-            if (index != -1) {
-                dataGrid.setKeyboardSelectedRow(index);
-            }
-        }
-
         // Find out if the cell consumes this event because if it does then we won't use it to select the row.
         boolean consumed = false;
 
@@ -111,6 +99,18 @@ public class DataGridSelectionEventManager<T>
         }
 
         if (!consumed) {
+            // We set focus here so that we can use the keyboard to navigate once we have focus.
+            dataGrid.setFocus(true);
+
+            final NativeEvent nativeEvent = event.getNativeEvent();
+            if (event.getValue() != null) {
+                final List<T> rows = dataGrid.getVisibleItems();
+                final int index = rows.indexOf(event.getValue());
+                if (index != -1) {
+                    dataGrid.setKeyboardSelectedRow(index);
+                }
+            }
+
             final T row = event.getValue();
             if (row != null && MouseUtil.isPrimary(nativeEvent)) {
                 final boolean doubleClick = doubleClickTest.test(row);

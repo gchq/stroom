@@ -1,108 +1,60 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValSerialiser;
-import stroom.util.logging.Metrics;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+import java.util.Objects;
 
-public class Key implements Iterable<KeyPart> {
+public class Key {
 
-    private final Serialisers serialisers;
-    private byte[] bytes;
-    private int hashCode;
-    private List<KeyPart> keyParts;
+    public static Key ROOT_KEY = new Key(0, Collections.emptyList());
 
-    public Key(final Serialisers serialisers,
-               final byte[] bytes) {
-        this.serialisers = serialisers;
-        this.bytes = bytes;
-        this.hashCode = Arrays.hashCode(bytes);
-    }
+    private final long timeMs;
+    private final List<KeyPart> keyParts;
 
-    public Key(final Serialisers serialisers,
+    public Key(final long timeMs,
                final List<KeyPart> keyParts) {
-        this.serialisers = serialisers;
+        this.timeMs = timeMs;
         this.keyParts = keyParts;
     }
 
-    public static Key createRoot(final Serialisers serialisers) {
-        return new Key(serialisers, Collections.emptyList());
+    public long getTimeMs() {
+        return timeMs;
     }
 
-    public byte[] getBytes() {
-        if (bytes == null) {
-            Metrics.measure("Key getBytes", () -> {
-                try (final Output output = serialisers.getOutputFactory().createKeyOutput()) {
-                    output.writeInt(keyParts.size());
-                    for (final KeyPart keyPart : keyParts) {
-                        output.writeBoolean(keyPart.isGrouped());
-                        keyPart.write(output);
-                    }
-                    output.flush();
-                    bytes = output.toBytes();
-                    hashCode = Arrays.hashCode(bytes);
-                }
-            });
-        }
-        return bytes;
-    }
-
-    private List<KeyPart> getKeyParts() {
-        if (keyParts == null) {
-            Metrics.measure("Key getKeyParts", () -> {
-                try (final Input input = serialisers.getInputFactory().create(bytes)) {
-                    final int size = input.readInt();
-                    final List<KeyPart> list = new ArrayList<>(size);
-                    for (int i = 0; i < size; i++) {
-                        final boolean grouped = input.readBoolean();
-                        if (grouped) {
-                            list.add(new GroupKeyPart(ValSerialiser.readArray(input)));
-                        } else {
-                            list.add(new UngroupedKeyPart(input.readLong()));
-                        }
-                    }
-                    keyParts = list;
-                }
-            });
-        }
+    public List<KeyPart> getKeyParts() {
         return keyParts;
     }
 
-    Key resolve(final Val[] groupValues) {
-        return resolve(new GroupKeyPart(groupValues));
+    Key resolve(final long timeMs, final Val[] groupValues) {
+        return resolve(timeMs, new GroupKeyPart(groupValues));
     }
 
-    Key resolve(final long uniqueId) {
-        return resolve(new UngroupedKeyPart(uniqueId));
+    Key resolve(final long timeMs, final long uniqueId) {
+        return resolve(timeMs, new UngroupedKeyPart(uniqueId));
     }
 
-    private Key resolve(final KeyPart keyPart) {
-        final List<KeyPart> keyParts = getKeyParts();
+    private Key resolve(final long timeMs, final KeyPart keyPart) {
         final List<KeyPart> parts = new ArrayList<>(keyParts.size() + 1);
         parts.addAll(keyParts);
         parts.add(keyPart);
-        return new Key(serialisers, parts);
+        return new Key(timeMs, parts);
     }
 
     Key getParent() {
-        final List<KeyPart> keyParts = getKeyParts();
         if (keyParts.size() > 0) {
-            return new Key(serialisers, keyParts.subList(0, keyParts.size() - 1));
+            return new Key(timeMs, keyParts.subList(0, keyParts.size() - 1));
         }
         return null;
     }
 
-    int size() {
-        final List<KeyPart> keyParts = getKeyParts();
+    int getDepth() {
+        return keyParts.size() - 1;
+    }
+
+    int getChildDepth() {
         return keyParts.size();
     }
 
@@ -112,7 +64,6 @@ public class Key implements Iterable<KeyPart> {
     }
 
     private KeyPart getLast() {
-        final List<KeyPart> keyParts = getKeyParts();
         if (keyParts.size() > 0) {
             return keyParts.get(keyParts.size() - 1);
         }
@@ -128,19 +79,26 @@ public class Key implements Iterable<KeyPart> {
             return false;
         }
         final Key key = (Key) o;
-        return Arrays.equals(getBytes(), key.getBytes());
+        return Objects.equals(timeMs, key.timeMs) &&
+                Objects.equals(keyParts, key.keyParts);
     }
 
     @Override
     public int hashCode() {
-        getBytes();
-        return hashCode;
+        return Objects.hash(timeMs, keyParts);
     }
 
     @Override
     public String toString() {
-        final List<KeyPart> keyParts = getKeyParts();
+        if (keyParts.size() == 0) {
+            return "root";
+        }
+
         final StringBuilder sb = new StringBuilder();
+        sb.append("time: ");
+        sb.append(timeMs);
+        sb.append(" - ");
+
         for (int i = 0; i < keyParts.size(); i++) {
             final KeyPart keyPart = keyParts.get(i);
             if (i > 0) {
@@ -149,12 +107,5 @@ public class Key implements Iterable<KeyPart> {
             keyPart.append(sb);
         }
         return sb.toString();
-    }
-
-    @Override
-    @NotNull
-    public Iterator<KeyPart> iterator() {
-        final List<KeyPart> keyParts = getKeyParts();
-        return keyParts.iterator();
     }
 }

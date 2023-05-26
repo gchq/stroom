@@ -1,6 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
@@ -8,6 +9,8 @@ import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cache.CacheConfig;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
@@ -21,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +34,6 @@ import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
@@ -49,18 +52,18 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
-    private final Provider<Client> jerseyClientProvider;
+    private final JerseyClientFactory jerseyClientFactory;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
     RemoteFeedStatusService(final Provider<ProxyConfig> proxyConfigProvider,
                             final Provider<FeedStatusConfig> feedStatusConfigProvider,
-                            final Provider<Client> jerseyClientProvider,
-                            final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                            final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                            final JerseyClientFactory jerseyClientFactory) {
         this.proxyConfigProvider = proxyConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.jerseyClientProvider = jerseyClientProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
 
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
@@ -110,6 +113,15 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        final FeedStatus defaultFeedStatus = Optional
+                .ofNullable(feedStatusConfig.getDefaultStatus()).orElse(FeedStatus.Receive);
+
+        // If remote feed status checking is disabled then return the default status.
+        if (feedStatusConfig.getEnabled() != null && !feedStatusConfig.getEnabled()) {
+            return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
+        }
+
         final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
         final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
             CachedResponse result;
@@ -127,8 +139,9 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                             request, result, e.getMessage());
 
                 } else {
-                    // Assume ok to receive by default.
-                    result = new CachedResponse(Instant.now(), GetFeedStatusResponse.createOKRecieveResponse());
+                    // Revert to default behaviour.
+                    result = new CachedResponse(Instant.now(),
+                            GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
                     LOGGER.error(
                             "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
                             request, result, e.getMessage());
@@ -162,7 +175,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             }
             if (feedStatusResponse == null) {
                 // If we can't get a feed status response then we will assume ok.
-                feedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
+                feedStatusResponse = GetFeedStatusResponse.createOKReceiveResponse();
             }
             return feedStatusResponse;
         });
@@ -190,10 +203,9 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     }
 
     private WebTarget getFeedStatusWebTarget(final String url) {
-        final WebTarget feedStatusWebTarget = jerseyClientProvider.get()
-                .target(url)
+        return jerseyClientFactory.createWebTarget(
+                JerseyClientName.FEED_STATUS, url)
                 .path(GET_FEED_STATUS_PATH);
-        return feedStatusWebTarget;
     }
 
     @Override

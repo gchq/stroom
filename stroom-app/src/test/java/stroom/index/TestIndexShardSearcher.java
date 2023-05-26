@@ -52,7 +52,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -193,7 +192,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
                 new String[]{"test"},
                 new LongAdder(),
                 indexShardSearcher,
-                values -> LOGGER.debug(Arrays.toString(values)));
+                values -> LOGGER.debug(values.toString()));
         indexShardSearcher.destroy();
     }
 
@@ -321,7 +320,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
                 }
             }
 
-            valuesConsumer.add(values);
+            valuesConsumer.add(Val.of(values));
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);

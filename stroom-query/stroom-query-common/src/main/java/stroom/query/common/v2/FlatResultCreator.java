@@ -18,14 +18,18 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
+import stroom.query.api.v2.FlatResultBuilder;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
@@ -39,37 +43,34 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public class FlatResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlatResultCreator.class);
 
-    private final Serialisers serialisers;
     private final FieldFormatter fieldFormatter;
     private final List<Mapper> mappers;
     private final List<Field> fields;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
-    public FlatResultCreator(final SerialisersFactory serialisersFactory,
-                             final DataStoreFactory dataStoreFactory,
+    public FlatResultCreator(final DataStoreFactory dataStoreFactory,
                              final QueryKey queryKey,
                              final String componentId,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
                              final FieldFormatter fieldFormatter,
                              final Sizes defaultMaxResultsSizes) {
-        this.serialisers = serialisersFactory.create(errorConsumer);
         this.fieldFormatter = fieldFormatter;
 
         // User may have added a vis pane but not defined the vis
         final List<TableSettings> tableSettings = resultRequest.getMappings()
                 .stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
 
         if (tableSettings.size() > 1) {
             mappers = new ArrayList<>(tableSettings.size() - 1);
@@ -82,7 +83,6 @@ public class FlatResultCreator implements ResultCreator {
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
                 mappers.add(new Mapper(
-                        serialisers,
                         dataStoreFactory,
                         queryKey,
                         componentId,
@@ -98,9 +98,9 @@ public class FlatResultCreator implements ResultCreator {
                     tableSettings.size(),
                     queryKey,
                     componentId));
-            errorConsumer.add(new Throwable(LogUtil.message(
+            errorConsumer.add(() -> LogUtil.message(
                     "Component with ID: '{}' has not been configured correctly so will not show any data.",
-                    componentId)));
+                    componentId));
             mappers = Collections.emptyList();
         }
 
@@ -112,7 +112,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final Key key) {
-        if (key == null || key.size() == 0) {
+        if (key == null || key.getKeyParts().size() == 0) {
             return null;
         }
 
@@ -121,8 +121,8 @@ public class FlatResultCreator implements ResultCreator {
         }
 
         int depth = 0;
-        final List<Object> result = new ArrayList<>(key.size());
-        for (final KeyPart keyPart : key) {
+        final List<Object> result = new ArrayList<>(key.getKeyParts().size());
+        for (final KeyPart keyPart : key.getKeyParts()) {
             final Val[] values = keyPart.getGroupValues();
 
             if (values.length == 0) {
@@ -162,12 +162,23 @@ public class FlatResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
+        FlatResultBuilder flatResultBuilder = FlatResult.builder();
+        create(dataStore, resultRequest, flatResultBuilder);
+        return flatResultBuilder.build();
+    }
+
+    @Override
+    public void create(final DataStore dataStore,
+                       final ResultRequest resultRequest,
+                       final ResultBuilder<?> resultBuilder) {
+        final FlatResultBuilder flatResultBuilder = (FlatResultBuilder) resultBuilder;
+
         if (!errorConsumer.hasErrors()) {
             try {
                 // Map data.
                 DataStore mappedDataStore = dataStore;
                 for (final Mapper mapper : mappers) {
-                    mappedDataStore = mapper.map(mappedDataStore);
+                    mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
                 }
 
                 final List<List<Object>> results = new ArrayList<>();
@@ -175,44 +186,46 @@ public class FlatResultCreator implements ResultCreator {
 
                 // Get top level items.
                 mappedDataStore.getData(data -> {
-                    final Items items = data.get();
-                    if (items.size() > 0) {
-                        final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
-                        final OpenGroups openGroups =
-                                OpenGroupsFactory.create(OpenGroupsConverter.convertSet(serialisers,
-                                        resultRequest.getOpenGroups()));
+                    final Optional<Items> optional = data.get(Key.ROOT_KEY, resultRequest.getTimeFilter());
+                    optional.ifPresent(items -> {
+                        if (items.size() > 0) {
+                            final RangeChecker rangeChecker =
+                                    RangeCheckerFactory.create(resultRequest.getRequestedRange());
+                            final OpenGroups openGroups = OpenGroupsFactory
+                                    .create(dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups()));
 
-                        // Extract the maxResults settings from the last TableSettings object in the chain.
-                        // Do not constrain the max results with the default max results as the result size will have
-                        // already been constrained by the previous table mapping.
-                        final List<TableSettings> mappings = resultRequest.getMappings();
-                        final TableSettings tableSettings = mappings.get(mappings.size() - 1);
-                        // Create a set of max result sizes that are determined by the supplied max results or default
-                        // to integer max value.
-                        final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
+                            // Extract the maxResults settings from the last TableSettings object in the chain.
+                            // Do not constrain the max results with the default max results as the result size will
+                            // have already been constrained by the previous table mapping.
+                            final List<TableSettings> mappings = resultRequest.getMappings();
+                            final TableSettings tableSettings = mappings.get(mappings.size() - 1);
+                            // Create a set of max result sizes that are determined by the supplied max results or
+                            // default to integer max value.
+                            final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
 
-                        final Map<Integer, List<Field>> groupFields = new HashMap<>();
-                        for (final Field field : fields) {
-                            if (field.getGroup() != null) {
-                                groupFields.computeIfAbsent(field.getGroup(), k ->
-                                                new ArrayList<>())
-                                        .add(field);
+                            final Map<Integer, List<Field>> groupFields = new HashMap<>();
+                            for (final Field field : fields) {
+                                if (field.getGroup() != null) {
+                                    groupFields.computeIfAbsent(field.getGroup(), k ->
+                                                    new ArrayList<>())
+                                            .add(field);
+                                }
                             }
+
+                            addResults(
+                                    data,
+                                    rangeChecker,
+                                    resultRequest.getTimeFilter(),
+                                    openGroups,
+                                    items,
+                                    results,
+                                    0,
+                                    totalResults,
+                                    maxResults,
+                                    groupFields);
                         }
-
-                        addResults(
-                                data,
-                                rangeChecker,
-                                openGroups,
-                                items,
-                                results,
-                                0,
-                                totalResults,
-                                maxResults,
-                                groupFields);
-                    }
+                    });
                 });
-
 
                 final List<Field> structure = new ArrayList<>();
                 structure.add(Field.builder().name(":ParentKey").build());
@@ -220,14 +233,12 @@ public class FlatResultCreator implements ResultCreator {
                 structure.add(Field.builder().name(":Depth").build());
                 structure.addAll(this.fields);
 
-                return FlatResult
-                        .builder()
+                flatResultBuilder
                         .componentId(resultRequest.getComponentId())
                         .size(totalResults.get())
                         .errors(errorConsumer.getErrors())
                         .structure(structure)
-                        .values(results)
-                        .build();
+                        .values(results);
 
             } catch (final UncheckedInterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
@@ -239,12 +250,14 @@ public class FlatResultCreator implements ResultCreator {
             }
         }
 
-        return new FlatResult(resultRequest.getComponentId(), null, null, 0L,
-                errorConsumer.getErrors());
+        flatResultBuilder
+                .componentId(resultRequest.getComponentId())
+                .errors(errorConsumer.getErrors());
     }
 
     private void addResults(final Data data,
                             final RangeChecker rangeChecker,
+                            final TimeFilter timeFilter,
                             final OpenGroups openGroups,
                             final Items items,
                             final List<List<Object>> results,
@@ -255,7 +268,7 @@ public class FlatResultCreator implements ResultCreator {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
-        for (final Item item : items) {
+        for (final Item item : items.getIterable()) {
             if (rangeChecker.check(count.get())) {
                 final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
@@ -297,19 +310,22 @@ public class FlatResultCreator implements ResultCreator {
                 if (item.getKey() != null &&
                         item.getKey().isGrouped() &&
                         openGroups.isOpen(item.getKey())) {
-                    final Items childItems = data.get(item.getKey());
-                    if (childItems.size() > 0) {
-                        addResults(
-                                data,
-                                rangeChecker,
-                                openGroups,
-                                childItems,
-                                results,
-                                depth + 1,
-                                count,
-                                maxResults,
-                                groupFields);
-                    }
+                    final Optional<Items> optional = data.get(item.getKey(), timeFilter);
+                    optional.ifPresent(childItems -> {
+                        if (childItems.size() > 0) {
+                            addResults(
+                                    data,
+                                    rangeChecker,
+                                    timeFilter,
+                                    openGroups,
+                                    childItems,
+                                    results,
+                                    depth + 1,
+                                    count,
+                                    maxResults,
+                                    groupFields);
+                        }
+                    });
                 }
             }
 
@@ -352,8 +368,7 @@ public class FlatResultCreator implements ResultCreator {
         private final DataStore dataStore;
         private final int maxItems;
 
-        Mapper(final Serialisers serialisers,
-               final DataStoreFactory dataStoreFactory,
+        Mapper(final DataStoreFactory dataStoreFactory,
                final QueryKey queryKey,
                final String componentId,
                final TableSettings parent,
@@ -391,46 +406,50 @@ public class FlatResultCreator implements ResultCreator {
                     ? child.getMaxResults()
                     : Collections.emptyList();
             final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
+            final DataStoreSettings dataStoreSettings = DataStoreSettings.createBasicSearchResultStoreSettings()
+                    .copy()
+                    .maxResults(maxResults)
+                    .storeSize(Sizes.create(Integer.MAX_VALUE))
+                    .build();
             dataStore = dataStoreFactory.create(
-                    serialisers,
                     queryKey,
                     componentId,
                     child,
                     childFieldIndex,
                     paramMap,
-                    maxResults,
-                    Sizes.create(Integer.MAX_VALUE),
-                    false,
+                    dataStoreSettings,
                     errorConsumer);
         }
 
-        public DataStore map(final DataStore dataStore) {
+        public DataStore map(final DataStore dataStore, final TimeFilter timeFilter) {
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
             dataStore.getData(data -> {
-                final Items items = data.get();
+                final Optional<Items> optional = data.get(Key.ROOT_KEY, timeFilter);
                 this.dataStore.clear();
-                if (items.size() > 0) {
-                    int itemCount = 0;
-                    for (final Item item : items) {
-                        final Val[] values = new Val[parentFieldIndices.length];
-                        for (int i = 0; i < parentFieldIndices.length; i++) {
-                            final int index = parentFieldIndices[i];
-                            if (index != -1) {
-                                // TODO : @66 Currently evaluating more values than will be needed.
-                                final Val val = item.getValue(index, true);
-                                values[i] = val;
+                optional.ifPresent(items -> {
+                    if (items.size() > 0) {
+                        int itemCount = 0;
+                        for (final Item item : items.getIterable()) {
+                            final Val[] values = new Val[parentFieldIndices.length];
+                            for (int i = 0; i < parentFieldIndices.length; i++) {
+                                final int index = parentFieldIndices[i];
+                                if (index != -1) {
+                                    // TODO : @66 Currently evaluating more values than will be needed.
+                                    final Val val = item.getValue(index, true);
+                                    values[i] = val;
+                                }
+                            }
+                            this.dataStore.add(Val.of(values));
+
+                            // Trim the data to the parent first level result size.
+                            itemCount++;
+                            if (itemCount >= maxItems) {
+                                break;
                             }
                         }
-                        this.dataStore.add(values);
-
-                        // Trim the data to the parent first level result size.
-                        itemCount++;
-                        if (itemCount >= maxItems) {
-                            break;
-                        }
                     }
-                }
+                });
             });
 
             return this.dataStore;

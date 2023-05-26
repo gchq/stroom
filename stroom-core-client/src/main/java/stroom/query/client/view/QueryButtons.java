@@ -18,6 +18,7 @@ package stroom.query.client.view;
 
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -34,16 +35,13 @@ public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHand
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    Button start;
-//    @UiField
-//    Button stop;
+    InlineSvgButton start;
 
     private QueryUiHandlers uiHandlers;
 
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
-        start.getElement().setInnerHTML(SvgImages.MONO_PLAY);
-//        stop.getElement().setInnerHTML(SvgImages.MONO_STOP);
+        start.setSvg(SvgImages.MONO_PLAY);
     }
 
     @Override
@@ -62,12 +60,12 @@ public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHand
         if (mode) {
             start.addStyleName("QueryButtons-button stop");
             start.removeStyleName("QueryButtons-button play");
-            start.getElement().setInnerHTML(SvgImages.MONO_STOP);
+            start.setSvg(SvgImages.MONO_STOP);
             start.setTitle("Stop Query");
         } else {
             start.addStyleName("QueryButtons-button play");
             start.removeStyleName("QueryButtons-button stop");
-            start.getElement().setInnerHTML(SvgImages.MONO_PLAY);
+            start.setSvg(SvgImages.MONO_PLAY);
             start.setTitle("Execute Query");
         }
     }

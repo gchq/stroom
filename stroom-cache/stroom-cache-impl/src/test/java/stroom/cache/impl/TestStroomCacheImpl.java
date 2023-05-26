@@ -36,6 +36,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestStroomCacheImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStroomCacheImpl.class);
@@ -57,8 +59,12 @@ class TestStroomCacheImpl {
     void beforeEach() {
         // Call this to decorate the config with a path
         getCacheConfig();
+        cache = createCache();
+        populateCache();
+    }
 
-        cache = new StroomCacheImpl<>(
+    private StroomCache<Integer, String> createCache() {
+        return new StroomCacheImpl<>(
                 NAME,
                 this::getCacheConfig,
                 (k, v) -> {
@@ -68,11 +74,16 @@ class TestStroomCacheImpl {
                         removalConsumerRef.get().accept(k, v);
                     }
                 });
-        populateCache();
     }
 
     private void populateCache() {
-        for (int i = 1; i <= ALL_MONTHS_COUNT; i++) {
+        populateCache(ALL_MONTHS_COUNT);
+    }
+
+    private void populateCache(final int count) {
+
+        final int limit = Math.min(count, ALL_MONTHS_COUNT);
+        for (int i = 1; i <= limit; i++) {
             numbers.add(i);
             final String monthName = numberToMonth(i);
             monthNames.add(monthName);
@@ -82,8 +93,8 @@ class TestStroomCacheImpl {
         // If a max size is set then some of the 12 may have been removed by now
         // but can't be sure how many as it is async
         if (cacheConfig.getMaximumSize() == null) {
-            Assertions.assertThat(cache.size())
-                    .isEqualTo(ALL_MONTHS_COUNT);
+            assertThat(cache.size())
+                    .isEqualTo(limit);
         }
     }
 
@@ -94,25 +105,25 @@ class TestStroomCacheImpl {
 
     @Test
     void testName() {
-        Assertions.assertThat(cache.name())
+        assertThat(cache.name())
                 .isEqualTo(NAME);
     }
 
     @Test
     void testSize() {
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(numbers.size());
     }
 
     @Test
     void testKeySet() {
-        Assertions.assertThat(cache.keySet())
+        assertThat(cache.keySet())
                 .containsExactlyInAnyOrderElementsOf(numbers);
     }
 
     @Test
     void testValues() {
-        Assertions.assertThat(cache.values())
+        assertThat(cache.values())
                 .containsExactlyInAnyOrderElementsOf(monthNames);
     }
 
@@ -121,7 +132,7 @@ class TestStroomCacheImpl {
         numbers.forEach(i -> {
             final String name = cache.get(i);
             LOGGER.info("i: {}, name: {}", i, name);
-            Assertions.assertThat(name)
+            assertThat(name)
                     .isEqualTo(monthNames.get(i - 1));
         });
     }
@@ -131,7 +142,7 @@ class TestStroomCacheImpl {
         final int i = 999;
         final String name = cache.get(i);
         LOGGER.info("i: {}, name: {}", i, name);
-        Assertions.assertThat(name)
+        assertThat(name)
                 .isNull();
     }
 
@@ -141,7 +152,7 @@ class TestStroomCacheImpl {
         for (int i = 7; i <= ALL_MONTHS_COUNT; i++) {
             cache.remove(i);
         }
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(6);
 
         final AtomicInteger callCounter = new AtomicInteger();
@@ -155,10 +166,10 @@ class TestStroomCacheImpl {
         for (int i = 1; i <= ALL_MONTHS_COUNT; i++) {
             final String name = cache.get(i, valueProvider);
             LOGGER.info("i: {}, name: {}", i, name);
-            Assertions.assertThat(name)
+            assertThat(name)
                     .isEqualTo(monthNames.get(i - 1));
         }
-        Assertions.assertThat(callCounter)
+        assertThat(callCounter)
                 .hasValue(6);
 
         // Re-get all values, which should all now be in the cache so valueProvider
@@ -166,12 +177,12 @@ class TestStroomCacheImpl {
         for (int i = 1; i <= ALL_MONTHS_COUNT; i++) {
             final String name = cache.get(i, valueProvider);
             LOGGER.info("i: {}, name: {}", i, name);
-            Assertions.assertThat(name)
+            assertThat(name)
                     .isEqualTo(monthNames.get(i - 1));
         }
 
         // No change to call count
-        Assertions.assertThat(callCounter)
+        assertThat(callCounter)
                 .hasValue(6);
     }
 
@@ -185,9 +196,9 @@ class TestStroomCacheImpl {
         final int i = 999;
         final String name = cache.get(i, this::numberToMonth);
         LOGGER.info("i: {}, name: {}", i, name);
-        Assertions.assertThat(name)
+        assertThat(name)
                 .isNull();
-        Assertions.assertThat(callCounter)
+        assertThat(callCounter)
                 .hasValue(0);
     }
 
@@ -196,11 +207,11 @@ class TestStroomCacheImpl {
         Assertions.assertThat(cache.getIfPresent(999))
                 .isEmpty();
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         cache.put(999, "foo");
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(13);
 
         Assertions.assertThat(cache.getIfPresent(999))
@@ -210,14 +221,14 @@ class TestStroomCacheImpl {
     @Test
     void testPut_overwrite() {
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         Assertions.assertThat(cache.getIfPresent(5))
                 .hasValue("May");
 
         cache.put(5, "NewMay");
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         Assertions.assertThat(cache.getIfPresent(5))
@@ -230,7 +241,7 @@ class TestStroomCacheImpl {
             final Optional<String> optName = cache.getIfPresent(i);
             LOGGER.info("i: {}, name: {}", i, optName);
 
-            Assertions.assertThat(optName)
+            assertThat(optName)
                     .hasValue(monthNames.get(i - 1));
         });
     }
@@ -241,19 +252,19 @@ class TestStroomCacheImpl {
         final Optional<String> optName = cache.getIfPresent(i);
         LOGGER.info("i: {}, name: {}", i, optName);
 
-        Assertions.assertThat(optName)
+        assertThat(optName)
                 .isEmpty();
     }
 
     @Test
     void testContainsKey_true() {
-        Assertions.assertThat(cache.containsKey(5))
+        assertThat(cache.containsKey(5))
                 .isTrue();
     }
 
     @Test
     void testContainsKey_false() {
-        Assertions.assertThat(cache.containsKey(999))
+        assertThat(cache.containsKey(999))
                 .isFalse();
     }
 
@@ -267,9 +278,9 @@ class TestStroomCacheImpl {
             monthNames.add(name);
         });
 
-        Assertions.assertThat(numbers)
+        assertThat(numbers)
                 .containsExactlyInAnyOrderElementsOf(this.numbers);
-        Assertions.assertThat(monthNames)
+        assertThat(monthNames)
                 .containsExactlyInAnyOrderElementsOf(this.monthNames);
     }
 
@@ -285,11 +296,11 @@ class TestStroomCacheImpl {
         });
 
         cache.remove(5);
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(11);
-        Assertions.assertThat(cache.keySet())
+        assertThat(cache.keySet())
                 .doesNotContain(5);
-        Assertions.assertThat(cache.values())
+        assertThat(cache.values())
                 .doesNotContain("May");
 
         // removal func seems to be async so wait for it
@@ -298,9 +309,9 @@ class TestStroomCacheImpl {
                 1,
                 () -> "numbers size");
 
-        Assertions.assertThat(numbers)
+        assertThat(numbers)
                 .containsExactly(5);
-        Assertions.assertThat(monthNames)
+        assertThat(monthNames)
                 .containsExactly("May");
     }
 
@@ -313,7 +324,7 @@ class TestStroomCacheImpl {
                 0L,
                 () -> "Cache size");
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
 
         // Should not complain
@@ -339,11 +350,11 @@ class TestStroomCacheImpl {
                 11L,
                 () -> "Cache");
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(11);
-        Assertions.assertThat(cache.keySet())
+        assertThat(cache.keySet())
                 .doesNotContain(5);
-        Assertions.assertThat(cache.values())
+        assertThat(cache.values())
                 .doesNotContain("May");
 
         TestUtil.waitForIt(
@@ -351,9 +362,9 @@ class TestStroomCacheImpl {
                 1,
                 () -> "numbers size");
 
-        Assertions.assertThat(numbers)
+        assertThat(numbers)
                 .containsExactly(5);
-        Assertions.assertThat(monthNames)
+        assertThat(monthNames)
                 .containsExactly("May");
 
         // Now invalidate the same entry again to prove that it is repeatable/idempotent
@@ -364,7 +375,7 @@ class TestStroomCacheImpl {
     void testInvalidate_emptyCache() {
         cache.clear();
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
 
         // Should not complain
@@ -382,7 +393,7 @@ class TestStroomCacheImpl {
             monthNamesRemoved.add(name);
         });
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         // Remove specific entries
@@ -395,11 +406,11 @@ class TestStroomCacheImpl {
                 4,
                 () -> "4 items to be removed");
 
-        Assertions.assertThat(monthNamesRemoved)
+        assertThat(monthNamesRemoved)
                 .containsExactlyInAnyOrder(
                         "May", "September", "November", "December");
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(8);
     }
 
@@ -419,7 +430,7 @@ class TestStroomCacheImpl {
                 0L,
                 () -> "Cache size");
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
 
         TestUtil.waitForIt(
@@ -436,21 +447,21 @@ class TestStroomCacheImpl {
         // To allow for async removal (which we are asserting won't happen)
         ThreadUtil.sleepIgnoringInterrupts(20);
 
-        Assertions.assertThat(monthNamesRemoved)
+        assertThat(monthNamesRemoved)
                 .isEmpty();
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
     }
 
     @Test
     void clear() {
         cache.clear();
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
-        Assertions.assertThat(cache.keySet())
+        assertThat(cache.keySet())
                 .isEmpty();
-        Assertions.assertThat(cache.values())
+        assertThat(cache.values())
                 .isEmpty();
     }
 
@@ -459,13 +470,13 @@ class TestStroomCacheImpl {
         CacheInfo cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .doesNotContain(EXPIRE_AFTER_ACCESS);
 
         cache.evictExpiredElements();
 
         // Nothing evicted
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         // Now change the config and rebuild the cache
@@ -479,9 +490,9 @@ class TestStroomCacheImpl {
         cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .contains(EXPIRE_AFTER_ACCESS);
-        Assertions.assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_ACCESS))
+        assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_ACCESS))
                 .isEqualTo(cacheConfig.getExpireAfterAccess().toMillis() + "ms");
 
         cache.evictExpiredElements();
@@ -489,7 +500,7 @@ class TestStroomCacheImpl {
         ThreadUtil.sleepIgnoringInterrupts(100);
 
         // Nothing evicted yet, too soon
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         LOGGER.info("{}", cache.keySet()
@@ -498,7 +509,7 @@ class TestStroomCacheImpl {
                 .collect(Collectors.toList()));
 
         // Touch an entry so its access time is later than the others and won't be evicted
-        Assertions.assertThat(cache.get(5))
+        assertThat(cache.get(5))
                 .isEqualTo("May");
 
         ThreadUtil.sleepIgnoringInterrupts(200);
@@ -511,10 +522,10 @@ class TestStroomCacheImpl {
                 () -> "Cache");
 
         // everything except the touched entry should be evicted now
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(1);
 
-        Assertions.assertThat(cache.get(5))
+        assertThat(cache.get(5))
                 .isEqualTo("May");
 
         // Wait for > expiry time
@@ -528,7 +539,7 @@ class TestStroomCacheImpl {
                 () -> "Cache");
 
         // The remaining entry should now be gone
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
     }
 
@@ -537,13 +548,13 @@ class TestStroomCacheImpl {
         CacheInfo cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .doesNotContain(EXPIRE_AFTER_ACCESS);
 
         cache.evictExpiredElements();
 
         // Nothing evicted
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         // Now change the config and rebuild the cache
@@ -557,9 +568,9 @@ class TestStroomCacheImpl {
         cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .contains(EXPIRE_AFTER_ACCESS);
-        Assertions.assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_ACCESS))
+        assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_ACCESS))
                 .isEqualTo(cacheConfig.getExpireAfterAccess().toMillis() + "ms");
 
         cache.evictExpiredElements();
@@ -567,7 +578,7 @@ class TestStroomCacheImpl {
         ThreadUtil.sleepIgnoringInterrupts(100);
 
         // Nothing evicted yet, too soon
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         LOGGER.info("{}", cache.keySet()
@@ -589,7 +600,7 @@ class TestStroomCacheImpl {
                 () -> "Cache");
 
         // everything except the touched entry should be evicted now
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(1);
 
         Assertions.assertThat(cache.getIfPresent(5))
@@ -606,7 +617,7 @@ class TestStroomCacheImpl {
                 () -> "Cache");
 
         // The remaining entry should now be gone
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
     }
 
@@ -615,13 +626,13 @@ class TestStroomCacheImpl {
         CacheInfo cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .doesNotContain(EXPIRE_AFTER_WRITE);
 
         cache.evictExpiredElements();
 
         // Nothing evicted
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         // Now change the config and rebuild the cache
@@ -635,21 +646,21 @@ class TestStroomCacheImpl {
         cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .contains(EXPIRE_AFTER_WRITE);
-        Assertions.assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_WRITE))
+        assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_WRITE))
                 .isEqualTo(cacheConfig.getExpireAfterWrite().toMillis() + "ms");
 
         cache.evictExpiredElements();
 
         // Nothing evicted yet, too soon
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         ThreadUtil.sleepIgnoringInterrupts(100);
 
         // Nothing evicted yet, too soon
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         // Add a new item that is too new to be evicted
@@ -665,10 +676,10 @@ class TestStroomCacheImpl {
                 () -> "Cache");
 
         // everything should be evicted now
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(1);
 
-        Assertions.assertThat(cache.get(999))
+        assertThat(cache.get(999))
                 .isEqualTo("foo");
 
         ThreadUtil.sleepIgnoringInterrupts(300);
@@ -681,7 +692,7 @@ class TestStroomCacheImpl {
                 () -> "Cache");
 
         // The remaining entry should now be gone
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isZero();
     }
 
@@ -700,18 +711,19 @@ class TestStroomCacheImpl {
         cacheConfig = cacheConfig.copy()
                 .maximumSize(6L)
                 .build();
+        // Rebuild with swap
         cache.rebuild();
 
-        TestUtil.waitForIt(
-                removedNumbers::size,
-                ALL_MONTHS_COUNT,
-                () -> "removedNumbers size");
-
-        // Rebuild causes removal of all items
-        Assertions.assertThat(removedNumbers)
-                .hasSize(ALL_MONTHS_COUNT);
-        Assertions.assertThat(removedMonthNames)
-                .hasSize(ALL_MONTHS_COUNT);
+//        TestUtil.waitForIt(
+//                removedNumbers::size,
+//                ALL_MONTHS_COUNT,
+//                () -> "removedNumbers size");
+//
+//        // Rebuild causes removal of all items
+//        assertThat(removedNumbers)
+//                .hasSize(ALL_MONTHS_COUNT);
+//        assertThat(removedMonthNames)
+//                .hasSize(ALL_MONTHS_COUNT);
 
         removedNumbers.clear();
         removedMonthNames.clear();
@@ -721,23 +733,23 @@ class TestStroomCacheImpl {
 
         ThreadUtil.sleepIgnoringInterrupts(20);
 
-        Assertions.assertThat(cache.size())
+        assertThat(cache.size())
                 .isEqualTo(6);
 
-        Assertions.assertThat(removedNumbers)
+        assertThat(removedNumbers)
                 .hasSize(6);
-        Assertions.assertThat(removedMonthNames)
+        assertThat(removedMonthNames)
                 .hasSize(6);
     }
 
     @Test
     void testGetCacheInfo() {
         CacheInfo cacheInfo = cache.getCacheInfo();
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .doesNotContain(MAXIMUM_SIZE);
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .doesNotContain(EXPIRE_AFTER_ACCESS);
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .doesNotContain(EXPIRE_AFTER_WRITE);
 
         cacheConfig = cacheConfig.copy()
@@ -751,25 +763,25 @@ class TestStroomCacheImpl {
         cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .contains(MAXIMUM_SIZE);
-        Assertions.assertThat(cacheInfo.getMap().get(MAXIMUM_SIZE))
+        assertThat(cacheInfo.getMap().get(MAXIMUM_SIZE))
                 .isEqualTo("100");
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .contains(EXPIRE_AFTER_ACCESS);
-        Assertions.assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_ACCESS))
+        assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_ACCESS))
                 .isEqualTo("10ms");
 
-        Assertions.assertThat(cacheInfo.getMap().keySet())
+        assertThat(cacheInfo.getMap().keySet())
                 .contains(EXPIRE_AFTER_WRITE);
-        Assertions.assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_WRITE))
+        assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_WRITE))
                 .isEqualTo("30s");
     }
 
     @Test
-    void testOptimisticReadLock() throws ExecutionException, InterruptedException {
-        Assertions.assertThat(cache.size())
+    void testConcurrentReadAndFullRebuild() throws ExecutionException, InterruptedException {
+        assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
         final CountDownLatch writeFinishedCountDownLatch = new CountDownLatch(1);
@@ -781,10 +793,11 @@ class TestStroomCacheImpl {
         final CompletableFuture<Void> readFuture = CompletableFuture.runAsync(() -> {
             cache.invalidateEntries((i, name) -> {
                 readStartedCountDownLatch.countDown();
-                LOGGER.debug("invalidateEntries called for i: " + i);
+                LOGGER.debug("invalidateEntries called for i: {}", i);
                 callCount.incrementAndGet();
-                // Wait for the cache rebuild to finish so the optimistic read lock
-                // will have to re-run this lambda under a full read-lock
+
+                // Now wait for the cache rebuild to finish
+                // We should continue invalidating the old cache instance
                 InterruptibleRunnable.unchecked(writeFinishedCountDownLatch::await).run();
 
                 return i == 5;
@@ -795,11 +808,21 @@ class TestStroomCacheImpl {
         // lock and wait.
         readStartedCountDownLatch.await();
 
+        // Change the config so it does a full rebuild
+        touchCacheConfig();
+
         cache.rebuild();
-        populateCache();
         TestUtil.waitForIt(
                 cache::size,
-                (long) ALL_MONTHS_COUNT,
+                (long) 0,
+                () -> "cache size");
+
+        // Now fill it up a bit
+        populateCache(6);
+
+        TestUtil.waitForIt(
+                cache::size,
+                (long) 6,
                 () -> "cache size");
 
         LOGGER.info("Rebuild complete");
@@ -810,19 +833,82 @@ class TestStroomCacheImpl {
         // Wait for reader to finish
         readFuture.get();
 
-        // At least one of the invalidateEntries lambda calls will have to be repeated
-        // as the optimistic stamp will have been invalid
-        Assertions.assertThat(callCount)
-                .hasValueGreaterThan(ALL_MONTHS_COUNT);
+        // Reader should iterate over all of the original 12 items, not the 6 that are now in the new cache
+        assertThat(callCount)
+                .hasValue(ALL_MONTHS_COUNT);
 
         // invalidateEntries should remove one item
+        assertThat(cache.size())
+                .isEqualTo(6);
+    }
+
+    private void touchCacheConfig() {
+        cacheConfig = cacheConfig.copy()
+                .maximumSize(cacheConfig.getMaximumSize() != null
+                        ? cacheConfig.getMaximumSize() + 1
+                        : 100)
+                .build();
+    }
+
+    @Test
+    void testConcurrentReadAndRebuild_clearOnly() throws ExecutionException, InterruptedException {
+        assertThat(cache.size())
+                .isEqualTo(ALL_MONTHS_COUNT);
+
+        final CountDownLatch writeFinishedCountDownLatch = new CountDownLatch(1);
+        final CountDownLatch readStartedCountDownLatch = new CountDownLatch(1);
+        final AtomicInteger callCount = new AtomicInteger();
+
+        // invalidateEntries happens under an optimistic read lock so the BiConsumer
+        // may be called more than once for the same key
+        final CompletableFuture<Void> readFuture = CompletableFuture.runAsync(() -> {
+            cache.invalidateEntries((i, name) -> {
+                readStartedCountDownLatch.countDown();
+                LOGGER.info("invalidateEntries called for i: {}, {}",
+                        i, callCount.incrementAndGet());
+
+                // Now wait for the cache rebuild to finish
+                // We should continue invalidating the old cache instance
+                InterruptibleRunnable.unchecked(writeFinishedCountDownLatch::await).run();
+
+                return i == 5;
+            });
+        });
+
+        // Wait for the cacheInvalidation to be underway else it will detect the exclusive
+        // lock and wait.
+        readStartedCountDownLatch.await();
+
+        // No change to config so it will clear it only
+        cache.rebuild();
         TestUtil.waitForIt(
                 cache::size,
-                (long) ALL_MONTHS_COUNT - 1,
-                "cache size");
+                (long) 0,
+                () -> "cache size");
 
-        Assertions.assertThat(cache.size())
-                .isEqualTo(ALL_MONTHS_COUNT - 1);
+        // Now fill it up a bit
+        populateCache(6);
+
+        TestUtil.waitForIt(
+                cache::size,
+                (long) 6,
+                () -> "cache size");
+
+        LOGGER.info("Clear complete");
+
+        // Cache is now fully rebuilt so let the reader continue
+        writeFinishedCountDownLatch.countDown();
+
+        // Wait for reader to finish
+        readFuture.get();
+
+        // Reader should now have only iterated over the 6 items post-clear
+        assertThat(callCount)
+                .hasValue(6);
+
+        // invalidateEntries should remove one item
+        assertThat(cache.size())
+                .isEqualTo(5);
     }
 
     /**
@@ -856,7 +942,7 @@ class TestStroomCacheImpl {
 
                     final String name = cache.get(monthNo, valueProvider);
 
-                    Assertions.assertThat(name)
+                    assertThat(name)
                             .isEqualTo(numberToMonth(monthNo));
                     ThreadUtil.sleepIgnoringInterrupts(random.nextInt(5));
                 }

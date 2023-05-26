@@ -16,8 +16,9 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.CountReference;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.util.function.Supplier;
 
@@ -31,17 +32,24 @@ import java.util.function.Supplier;
                 returnType = ValLong.class,
                 returnDescription = "Number of records",
                 args = {}))
-class Count extends AbstractFunction {
+class Count extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "count";
+    private CountReference countReference;
 
     public Count(final String name) {
         super(name, 0, 0);
     }
 
     @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        countReference = valueReferenceIndex.addCount(name);
+        super.addValueReferences(valueReferenceIndex);
+    }
+
+    @Override
     public Generator createGenerator() {
-        return new Gen();
+        return new Gen(countReference);
     }
 
     @Override
@@ -56,33 +64,27 @@ class Count extends AbstractFunction {
 
     private static final class Gen extends AbstractNoChildGenerator {
 
-        private long count;
+        private final CountReference countReference;
 
-        @Override
-        public void set(final Val[] values) {
-            count++;
+        public Gen(final CountReference countReference) {
+            this.countReference = countReference;
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValLong.create(count);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            countReference.increment(storedValues);
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final Gen countGen = (Gen) generator;
-            count += countGen.count;
-            super.merge(generator);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return ValLong.create(countReference.get(storedValues));
         }
 
         @Override
-        public void read(final Input input) {
-            count = input.readLong(true);
-        }
-
-        @Override
-        public void write(final Output output) {
-            output.writeLong(count, true);
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            final long newValue = countReference.get(newValues);
+            countReference.add(existingValues, newValue);
+            super.merge(existingValues, newValues);
         }
     }
 }

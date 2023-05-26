@@ -17,7 +17,7 @@
 
 package stroom.search.extraction;
 
-import stroom.alert.api.AlertDefinition;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
@@ -31,17 +31,15 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.filter.IdEnrichmentFilter;
-import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.IdEnrichmentExpectedIds;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.security.api.SecurityContext;
@@ -58,8 +56,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 
 public class ExtractionTaskHandler {
@@ -76,6 +72,8 @@ public class ExtractionTaskHandler {
     private final PipelineFactory pipelineFactory;
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
+    private final IdEnrichmentExpectedIds idEnrichmentExpectedIds;
+    private final ExtractionStateHolder extractionStateHolder;
 
     @Inject
     ExtractionTaskHandler(final Store streamStore,
@@ -87,7 +85,9 @@ public class ExtractionTaskHandler {
                           final ErrorReceiverProxy errorReceiverProxy,
                           final PipelineFactory pipelineFactory,
                           final PipelineStore pipelineStore,
-                          final SecurityContext securityContext) {
+                          final SecurityContext securityContext,
+                          final IdEnrichmentExpectedIds idEnrichmentExpectedIds,
+                          final ExtractionStateHolder extractionStateHolder) {
         this.streamStore = streamStore;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
@@ -98,6 +98,8 @@ public class ExtractionTaskHandler {
         this.pipelineFactory = pipelineFactory;
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
+        this.idEnrichmentExpectedIds = idEnrichmentExpectedIds;
+        this.extractionStateHolder = extractionStateHolder;
     }
 
     public Meta extract(final TaskContext taskContext,
@@ -105,11 +107,8 @@ public class ExtractionTaskHandler {
                         final long streamId,
                         final long[] eventIds,
                         final DocRef pipelineRef,
-                        final ExtractionReceiver receiver,
                         final ErrorConsumer errorConsumer,
-                        final PipelineData pipelineData,
-                        final List<AlertDefinition> alertDefinitions,
-                        final Map<String, String> paramMapForAlerting) throws DataException {
+                        final PipelineData pipelineData) throws DataException {
         Meta meta = null;
 
         // Open the stream source.
@@ -141,26 +140,14 @@ public class ExtractionTaskHandler {
                 // input stream is now filtered to only include events matched by
                 // the search. This means that the event ids cannot be calculated by
                 // just counting events.
-                final IdEnrichmentFilter idEnrichmentFilter = getFilter(pipeline, IdEnrichmentFilter.class);
-                idEnrichmentFilter.setup(String.valueOf(streamId), eventIds);
-
-                // Set up the search result output filter to expect the same order of
-                // event ids and give it the result cache and stored data to write
-                // values to.
-                final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
-                        AbstractSearchResultOutputFilter.class);
-
-                searchResultOutputFilter.setup(queryKey, receiver);
-                if (alertDefinitions != null) {
-                    searchResultOutputFilter.setupForAlerting(alertDefinitions,
-                            paramMapForAlerting);
-                }
+                idEnrichmentExpectedIds.setStreamId(streamId);
+                idEnrichmentExpectedIds.setEventIds(eventIds);
 
                 // Process the stream segments.
                 processData(queryKey, source, eventIds, pipelineRef, pipeline, errorConsumer);
 
                 // Ensure count is the same.
-                if (eventIds.length != searchResultOutputFilter.getCount()) {
+                if (eventIds.length != extractionStateHolder.getCount()) {
                     LOGGER.debug(() -> "Extraction count mismatch");
                 }
             }
@@ -169,14 +156,6 @@ public class ExtractionTaskHandler {
         }
 
         return meta;
-    }
-
-    private <T extends XMLFilter> T getFilter(final Pipeline pipeline, final Class<T> clazz) {
-        final List<T> filters = pipeline.findFilters(clazz);
-        if (filters == null || filters.size() != 1) {
-            throw new ExtractionException("Unable to find single '" + clazz.getName() + "' in search result pipeline");
-        }
-        return filters.get(0);
     }
 
     /**
@@ -197,7 +176,7 @@ public class ExtractionTaskHandler {
             }
 
             final StoredError storedError = new StoredError(severity, location, elementId, message);
-            errorConsumer.add(new RuntimeException(storedError.toString(), e));
+            errorConsumer.add(storedError::toString);
             throw ProcessException.wrap(message, e);
         };
 

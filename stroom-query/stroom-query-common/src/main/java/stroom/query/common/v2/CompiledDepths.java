@@ -26,7 +26,8 @@ class CompiledDepths {
     private final boolean[][] groupIndicesByDepth;
     private final boolean[][] valueIndicesByDepth;
 
-    CompiledDepths(final CompiledField[] compiledFields, final boolean showDetail) {
+    CompiledDepths(final CompiledField[] compiledFields,
+                   final boolean showDetail) {
         int maxGroupDepth = -1;
         int maxDepth = -1;
         int length = 0;
@@ -49,8 +50,9 @@ class CompiledDepths {
             if (showDetail || maxGroupDepth < 0) {
                 maxDepth = maxGroupDepth + 1;
             } else {
-                final boolean requireChildren = Arrays.stream(compiledFields).anyMatch(field ->
-                        field.getExpression().requiresChildData());
+                final boolean requireChildren = Arrays
+                        .stream(compiledFields)
+                        .anyMatch(CompiledField::requiresChildData);
                 if (requireChildren) {
                     maxDepth = maxGroupDepth + 1;
                 } else {
@@ -80,8 +82,8 @@ class CompiledDepths {
                     } else if (depth > maxGroupDepth) {
                         valueIndices[i] = true;
                     } else {
-                        if (field.getExpression() != null) {
-                            if (field.getExpression().hasAggregate()) {
+                        if (field.getGenerator() != null) {
+                            if (field.hasAggregate()) {
                                 valueIndices[i] = true;
                             }
                         }

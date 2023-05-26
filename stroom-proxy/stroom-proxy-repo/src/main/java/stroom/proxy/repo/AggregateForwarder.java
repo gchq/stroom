@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -169,8 +170,8 @@ public class AggregateForwarder {
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
-        final Items items = sourceItemDao.fetchSourceItemsByAggregateId(aggregate.id());
-        if (items.map().size() > 0) {
+        final List<SourceItems> items = sourceItemDao.fetchSourceItemsByAggregateId(aggregate.id());
+        if (items.size() > 0) {
             final FeedKey feedKey = feedDao.getKey(aggregate.feedId());
             final long thisPostId = proxyForwardId.incrementAndGet();
             final String info = thisPostId + " " + feedKey.feed() + " - " + feedKey.type();
@@ -199,11 +200,12 @@ public class AggregateForwarder {
             // Start the POST
             try {
                 streamHandlers.handle(feedKey.feed(), feedKey.type(), attributeMap, handler -> {
-                    sender.sendDataToHandler(items, handler);
+                    sender.sendDataToHandler(attributeMap, items, handler);
                     success.set(true);
                     progressLog.increment("AggregateForwarder - forward");
                 });
             } catch (final RuntimeException ex) {
+                success.set(false);
                 error.set(ex.getMessage());
                 LOGGER.warn(() -> "Failed to send to feed " +
                         feedKey.feed() +

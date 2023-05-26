@@ -1,37 +1,72 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.FsPathHelper.DecodedPath;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
+
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class FsOrphanFileFinderSummary {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsOrphanFileFinderSummary.class);
+
     private final Map<SummaryLine, AtomicLong> summaryMap = new HashMap<>();
+    private final Map<Path, String> badPaths = new HashMap<>();
 
     public void addPath(final Path path) {
-        final String fileName = path.getFileName().toString();
-        final int index = fileName.lastIndexOf("_");
-        String feedName = "";
-        if (index != -1) {
-            feedName = fileName.substring(0, index);
+        LOGGER.trace("addPath called for path {}", path);
+        DecodedPath decodedPath;
+        try {
+            decodedPath = FsPathHelper.decodedPath(path);
+        } catch (Exception e) {
+            LOGGER.debug("Unable to decode path {}", path, e);
+            handleBadPath(path);
+            decodedPath = null;
         }
-        for (int i = path.getNameCount() - 5; i >= 0; i--) {
-            if (i + 4 < path.getNameCount() && "store".equals(path.getName(i).toString())) {
-                final String type = path.getName(i + 1).toString();
-                final String year = path.getName(i + 2).toString();
-                final String month = path.getName(i + 3).toString();
-                final String day = path.getName(i + 4).toString();
+        if (decodedPath != null) {
+            final SummaryLine summaryLine = new SummaryLine(decodedPath);
+            final long count = summaryMap
+                    .computeIfAbsent(summaryLine, k -> new AtomicLong())
+                    .incrementAndGet();
+            LOGGER.trace("Incremented count to {} for summaryLine: {}", count, summaryLine);
+        }
+    }
 
-                final String date = year + "-" + month + "-" + day;
-                final SummaryLine summaryLine = new SummaryLine(type, feedName, date);
-                summaryMap
-                        .computeIfAbsent(summaryLine, k -> new AtomicLong())
-                        .incrementAndGet();
+    private void handleBadPath(final Path path) {
+        if (path != null) {
+            String message = "";
+            // It is possible there are other paths that stroom can't parse so record them.
+            if (Files.isDirectory(path)) {
+                try {
+                    final boolean isEmpty = FileUtil.isEmptyDirectory(path);
+                    if (isEmpty) {
+                        message = "Empty directory";
+                    } else {
+                        message = "Non-empty directory";
+                    }
+                } catch (IOException e) {
+                    LOGGER.debug("Error checking contents of {}", path, e);
+                    message = "Directory with unknown contents" + ExceptionStringUtil.getMessage(e);
+                }
+            } else {
+                message = "File";
             }
+            badPaths.put(path, message);
         }
     }
 
@@ -40,45 +75,63 @@ public class FsOrphanFileFinderSummary {
         final StringBuilder summary = new StringBuilder();
         if (summaryMap.size() > 0) {
             summary.append("Summary:\n");
-            final AtomicReference<String> lastStreamType = new AtomicReference<>();
-            summaryMap
-                    .entrySet()
+
+            final List<Entry<SummaryLine, AtomicLong>> sortedEntries = summaryMap.entrySet()
                     .stream()
-                    .sorted(Map.Entry.comparingByKey(Comparator
+                    .sorted(Entry.comparingByKey(Comparator
                             .comparing(SummaryLine::getType)
                             .thenComparing(SummaryLine::getFeed)
                             .thenComparing(SummaryLine::getDate)))
-                    .forEach(entry -> {
-                        String lastType = lastStreamType.get();
-                        String type = entry.getKey().getType();
-                        lastStreamType.set(type);
+                    .toList();
 
-                        if (!Objects.equals(lastType, type)) {
-                            summary.append(type);
-                            summary.append("\n");
-                        }
+            summary.append("\n");
+            summary.append(AsciiTable.builder(sortedEntries)
+                    .withColumn(Column.of("Type", entry2 -> entry2.getKey().getType()))
+                    .withColumn(Column.of("File/Directory", entry2 -> entry2.getKey().isDirectory
+                            ? "Dir"
+                            : "File"))
+                    .withColumn(Column.of("Feed (if present)", entry2 -> entry2.getKey().getFeed()))
+                    .withColumn(Column.of("Date", entry2 -> entry2.getKey().getDate()))
+                    .withColumn(Column.integer("Orphan Count", entry2 -> entry2.getValue().get()))
+                    .build());
+            summary.append("\n");
+        }
 
-                        summary.append(entry.getKey().feed);
-                        summary.append(" - ");
-                        summary.append(entry.getKey().date);
-                        summary.append(" - ");
-                        summary.append(entry.getValue().get());
-                        summary.append("\n");
-                    });
+        if (!badPaths.isEmpty()) {
+            if (!summaryMap.isEmpty()) {
+                summary.append("\n");
+            }
+            summary.append("Invalid paths (can't be parsed to extract data/type/feed/id/etc.):\n");
+            final List<Entry<Path, String>> sortedEntries = badPaths.entrySet()
+                    .stream()
+                    .sorted(Entry.comparingByKey())
+                    .toList();
+            summary.append("\n");
+            summary.append(AsciiTable.builder(sortedEntries)
+                    .withColumn(Column.of("Path", Entry::getKey))
+                    .withColumn(Column.of("Info", Entry::getValue))
+                    .build());
+            summary.append("\n");
         }
         return summary.toString();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class SummaryLine {
 
         private final String type;
         private final String feed;
-        private final String date;
+        private final LocalDate date;
+        private final boolean isDirectory;
 
-        public SummaryLine(final String type, final String feed, final String date) {
-            this.type = type;
-            this.feed = feed;
-            this.date = date;
+        public SummaryLine(DecodedPath decodedPath) {
+            this.type = decodedPath.getTypeName();
+            this.feed = Objects.requireNonNullElse(decodedPath.getFeedName(), "");
+            this.date = decodedPath.getDate();
+            this.isDirectory = decodedPath.isDirectory();
         }
 
         public String getType() {
@@ -89,8 +142,12 @@ public class FsOrphanFileFinderSummary {
             return feed;
         }
 
-        public String getDate() {
+        public LocalDate getDate() {
             return date;
+        }
+
+        public boolean isDirectory() {
+            return isDirectory;
         }
 
         @Override
@@ -102,12 +159,18 @@ public class FsOrphanFileFinderSummary {
                 return false;
             }
             final SummaryLine that = (SummaryLine) o;
-            return type.equals(that.type) && feed.equals(that.feed) && date.equals(that.date);
+            return isDirectory == that.isDirectory && Objects.equals(type,
+                    that.type) && Objects.equals(feed, that.feed) && Objects.equals(date, that.date);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(type, feed, date);
+            return Objects.hash(type, feed, date, isDirectory);
+        }
+
+        @Override
+        public String toString() {
+            return String.join(":", feed, type, date.format(DateTimeFormatter.ISO_LOCAL_DATE));
         }
     }
 }

@@ -8,13 +8,13 @@
 @import url("font.css");
 
 /* Font Awesome */
-@import url("font-awesome.css");
+@import url("../fonts/FontAwesome/font-awesome.css");
 
 /* Roboto Font */
-@import url("roboto.css");
+@import url("../fonts/Roboto/roboto.css");
 
 /* Roboto Monospace Font */
-@import url("Roboto_Mono.css");
+@import url("../fonts/Roboto_Mono/Roboto_Mono.css");
 
 @import url("bootstrap/bootstrap.min.css");
 @import url("bootstrap/custom-bootstrap.css");
@@ -25,7 +25,6 @@
 
 @import url("webkit-scrollbar.css");
 @import url("firefox-scrollbar.css");
-@import url("fa-button.css");
 @import url("stroom.css");
 @import url("stroom-control.css");
 @import url("stroom-button.css");
@@ -48,8 +47,7 @@
 @import url("autocomplete-listbox.css");
 @import url("QuickFilter.css");
 @import url("ExpressionItemBox.css");
-@import url("ExplorerTickBoxCell.css");
-@import url("HyperlinkCell.css");
+@import url("CommandLinkCell.css");
 @import url("TermEditor.css");
 @import url("alert.css");
 @import url("spinner.css");

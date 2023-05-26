@@ -17,15 +17,20 @@
 
 package stroom.explorer.api;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ExplorerService extends Clearable {
 
@@ -53,4 +58,8 @@ public interface ExplorerService extends Clearable {
     List<DocumentType> getNonSystemTypes();
 
     List<DocumentType> getVisibleTypes();
+
+    ResultPage<ExplorerDocContentMatch> findContent(FindExplorerNodeQuery request);
+
+    Optional<ExplorerNode> getFromDocRef(DocRef docRef);
 }

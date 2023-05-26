@@ -68,9 +68,11 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-impl')
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
-    implementation project(':stroom-alert:stroom-alert-api')
-    implementation project(':stroom-alert:stroom-alert-impl')
-    implementation project(':stroom-alert:stroom-alert-rule-impl')
+    implementation project(':stroom-analytics:stroom-analytics-api')
+    implementation project(':stroom-analytics:stroom-analytics-impl')
+    implementation project(':stroom-analytics:stroom-analytics-impl-db')
+    implementation project(':stroom-analytics:stroom-analytics-impl-db-jooq')
+    implementation project(':stroom-analytics:stroom-analytics-rule-impl')
     implementation project(':stroom-annotation:stroom-annotation-api')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
@@ -195,6 +197,7 @@ dependencies {
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
+    implementation project(':stroom-task:stroom-task-mock')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-view:stroom-view-impl')
@@ -239,7 +242,7 @@ dependencies {
     // Use default DB config.
     testImplementation project(':stroom-activity:stroom-activity-api')
     testImplementation project(':stroom-activity:stroom-activity-mock')
-    testImplementation project(':stroom-alert:stroom-alert-mock')
+    testImplementation project(':stroom-analytics:stroom-analytics-mock')
     testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
     testImplementation project(':stroom-config:stroom-config-app')
     testImplementation project(':stroom-config:stroom-config-global-impl')
@@ -287,6 +290,7 @@ dependencies {
 
     testImplementation libs.commons_io
     testImplementation libs.classgraph
+    testImplementation libs.data_faker
     testImplementation libs.guice5
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher
@@ -299,7 +303,6 @@ dependencies {
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
-    testImplementation libs.stroomTestData
     testImplementation libs.swagger_annotations
     testImplementation libs.vavr
 

@@ -10,6 +10,7 @@ import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -22,11 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -66,6 +67,7 @@ public class RepoSourceItems {
             progressLog.increment("ProxyRepoSourceEntries - examineSource");
 
             final Map<String, RepoSourceItemBuilder> itemNameMap = new HashMap<>();
+            final List<RepoSourceItemBuilder> builderList = new ArrayList<>();
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipPath))) {
                 final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
                 while (entries.hasMoreElements()) {
@@ -74,10 +76,10 @@ public class RepoSourceItems {
 
                     // Skip directories
                     if (!entry.isDirectory()) {
-                        final FileName fileName = parseFileName(entry.getName());
-                        final String itemName = fileName.stem();
+                        final FileName fileName = FileName.parse(entry.getName());
+                        final String baseName = fileName.getBaseName();
                         final StroomZipFileType stroomZipFileType =
-                                StroomZipFileType.fromExtension(fileName.extension());
+                                StroomZipFileType.fromExtension(fileName.getExtension());
 
                         // If this is a meta entry then get the feed name.
                         String feedName = feedKey.feed();
@@ -105,10 +107,14 @@ public class RepoSourceItems {
                             }
                         }
 
-                        final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(itemName, k ->
-                                new RepoSourceItemBuilder()
-                                        .repoSource(source)
-                                        .name(itemName));
+                        final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(baseName, k -> {
+                            final RepoSourceItemBuilder b = new RepoSourceItemBuilder()
+                                    .repoSource(source)
+                                    .name(baseName);
+                            // Use a list to keep the items in the same order as the source.
+                            builderList.add(b);
+                            return b;
+                        });
 
                         // If we have an existing source item then update the feed and type names if we have some.
                         if (feedName != null && builder.getFeedName() == null) {
@@ -118,8 +124,7 @@ public class RepoSourceItems {
                             builder.typeName(typeName);
                         }
 
-                        builder.addEntry(fileName.extension(), entry.getSize());
-                        itemNameMap.put(fileName.stem(), builder);
+                        builder.addEntry(fileName.getExtension(), entry.getSize());
                     }
                 }
 
@@ -134,28 +139,12 @@ public class RepoSourceItems {
             }
 
             // We now have a map of all source entries so add them to the DB.
-            final List<RepoSourceItem> items = itemNameMap
-                    .values()
+            final List<RepoSourceItem> items = builderList
                     .stream()
                     .map(builder -> builder.build(feedDao))
                     .collect(Collectors.toList());
             sourceItemDao.addItems(source, items);
         });
-    }
-
-    private FileName parseFileName(final String fileName) {
-        Objects.requireNonNull(fileName, "fileName is null");
-        final int extensionIndex = fileName.lastIndexOf(".");
-        String stem;
-        String extension;
-        if (extensionIndex == -1) {
-            stem = fileName;
-            extension = "";
-        } else {
-            stem = fileName.substring(0, extensionIndex);
-            extension = fileName.substring(extensionIndex);
-        }
-        return new FileName(fileName, stem, extension);
     }
 
     public void clear() {
@@ -169,12 +158,5 @@ public class RepoSourceItems {
     public Batch<RepoSourceItemRef> getNewSourceItems(final long timeout,
                                                       final TimeUnit timeUnit) {
         return sourceItemDao.getNewSourceItems(timeout, timeUnit);
-    }
-
-    private record FileName(
-            String fullName,
-            String stem,
-            String extension) {
-
     }
 }

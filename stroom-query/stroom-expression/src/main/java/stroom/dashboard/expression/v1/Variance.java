@@ -16,8 +16,9 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.DoubleListReference;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -52,9 +53,18 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
 
     static final String NAME = "variance";
 
+    private DoubleListReference doubleListReference;
+
     public Variance(final String name) {
         super(name, 1, Integer.MAX_VALUE);
     }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        doubleListReference = valueReferenceIndex.addDoubleList(name);
+        super.addValueReferences(valueReferenceIndex);
+    }
+
 
     @Override
     public void setParams(final Param[] params) throws ParseException {
@@ -73,7 +83,7 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
         // mode.
         if (isAggregate()) {
             final Generator childGenerator = functions[0].createGenerator();
-            return new AggregateGen(childGenerator);
+            return new AggregateGen(childGenerator, doubleListReference);
         }
 
         return super.createGenerator();
@@ -91,62 +101,49 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
 
     private static final class AggregateGen extends AbstractSingleChildGenerator {
 
+        private final DoubleListReference doubleListReference;
 
-        private final List<Double> list = new ArrayList<>();
-
-        AggregateGen(final Generator childGenerator) {
+        AggregateGen(final Generator childGenerator,
+                     final DoubleListReference doubleListReference) {
             super(childGenerator);
+            this.doubleListReference = doubleListReference;
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
-            final Double d = childGenerator.eval(null).toDouble();
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
+
+            final List<Double> list = doubleListReference.get(storedValues);
+            final Double d = childGenerator.eval(storedValues, null).toDouble();
             if (d != null) {
                 list.add(d);
+                doubleListReference.set(storedValues, list);
             }
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final List<Double> list = doubleListReference.get(storedValues);
             if (list.size() == 0) {
                 return ValNull.INSTANCE;
             }
 
             // Isolate list.
-            Double[] arr;
-            synchronized (list) {
-                arr = list.toArray(new Double[0]);
-            }
+            final Double[] arr = list.toArray(new Double[0]);
 
             // calculate variance
             return ValDouble.create(Statistics.variance(arr));
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final AggregateGen aggregateGen = (AggregateGen) generator;
-            list.addAll(aggregateGen.list);
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            super.read(input);
-            final int size = input.readInt(true);
-            list.clear();
-            for (int i = 0; i < size; i++) {
-                list.add(input.readDouble());
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            final List<Double> existingList = doubleListReference.get(existingValues);
+            final List<Double> newList = doubleListReference.get(newValues);
+            if (newList.size() > 0) {
+                existingList.addAll(newList);
+                doubleListReference.set(existingValues, existingList);
             }
-        }
-
-        @Override
-        public void write(final Output output) {
-            super.write(output);
-            output.writeInt(list.size(), true);
-            for (final double d : list) {
-                output.writeDouble(d);
-            }
+            super.merge(existingValues, newValues);
         }
     }
 
@@ -157,17 +154,10 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator gen : childGenerators) {
-                gen.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final List<Double> list = new ArrayList<>(childGenerators.length);
             for (final Generator gen : childGenerators) {
-                final Val val = gen.eval(childDataSupplier);
+                final Val val = gen.eval(storedValues, childDataSupplier);
                 if (!val.type().isValue()) {
                     return val;
                 }

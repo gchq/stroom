@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.ComparisonHelper;
@@ -92,8 +93,6 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
-    @Inject
-    private TaskContext taskContext;
 
     @Test
     void testDefault() {
@@ -198,7 +197,7 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
                 // Create the parser.
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
                 final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
+                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, new SimpleTaskContext());
 
                 pipeline.startProcessing();
 

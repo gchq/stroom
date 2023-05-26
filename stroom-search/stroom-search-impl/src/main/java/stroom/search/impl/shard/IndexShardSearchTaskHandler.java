@@ -19,13 +19,13 @@ package stroom.search.impl.shard;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.impl.SearchException;
@@ -36,6 +36,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -216,15 +217,13 @@ public class IndexShardSearchTaskHandler {
                             // Take the next item.
                             // When we get null we are done.
                             final Integer docId = docIdQueue.take();
-                            if (docId != null) {
-                                if (!parentContext.isTerminated()) {
-                                    // If we have a doc id then retrieve the stored data for it.
-                                    SearchProgressLog.increment(queryKey,
-                                            SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
-                                    getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
-                                }
-                            } else {
+                            if (parentContext.isTerminated() || docId == null) {
                                 done = true;
+                            } else {
+                                // If we have a doc id then retrieve the stored data for it.
+                                SearchProgressLog.increment(queryKey,
+                                        SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
+                                getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
                             }
                         }
                     } catch (final RuntimeException e) {
@@ -278,7 +277,9 @@ public class IndexShardSearchTaskHandler {
                 }
             }
 
-            valuesConsumer.add(values);
+            valuesConsumer.add(Val.of(values));
+        } catch (final UncheckedInterruptedException e) {
+            throw e;
         } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
         }
@@ -286,10 +287,12 @@ public class IndexShardSearchTaskHandler {
 
     private void error(final ErrorConsumer errorConsumer,
                        final Throwable t) {
-        if (errorConsumer == null) {
-            LOGGER.error(t::getMessage, t);
-        } else {
-            errorConsumer.add(t);
+        if (!(t instanceof UncheckedInterruptedException)) {
+            if (errorConsumer == null) {
+                LOGGER.error(t::getMessage, t);
+            } else {
+                errorConsumer.add(t);
+            }
         }
     }
 }

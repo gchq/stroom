@@ -26,7 +26,7 @@ import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQu
 import stroom.search.solr.search.SolrSearchConfig;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -56,7 +56,7 @@ public class SolrIndexRetentionExecutor {
     private final WordListProvider dictionaryStore;
     private final ClusterLockService clusterLockService;
     private final Provider<SolrSearchConfig> searchConfigProvider;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public SolrIndexRetentionExecutor(final SolrIndexStore solrIndexStore,
@@ -65,14 +65,14 @@ public class SolrIndexRetentionExecutor {
                                       final WordListProvider dictionaryStore,
                                       final ClusterLockService clusterLockService,
                                       final Provider<SolrSearchConfig> searchConfigProvider,
-                                      final TaskContext taskContext) {
+                                      final TaskContextFactory taskContextFactory) {
         this.solrIndexStore = solrIndexStore;
         this.solrIndexCache = solrIndexCache;
         this.solrIndexClientCache = solrIndexClientCache;
         this.dictionaryStore = dictionaryStore;
         this.clusterLockService = clusterLockService;
         this.searchConfigProvider = searchConfigProvider;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
@@ -110,8 +110,8 @@ public class SolrIndexRetentionExecutor {
                                         searchConfigProvider.get().getMaxBooleanClauseCount(),
                                         null,
                                         System.currentTimeMillis());
-                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(
-                                solrIndexDoc.getRetentionExpression());
+                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder
+                                .buildQuery(solrIndexDoc.getRetentionExpression());
                         final Query query = searchExpressionQuery.getQuery();
                         final String queryString = query.toString();
                         solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {
@@ -136,7 +136,7 @@ public class SolrIndexRetentionExecutor {
     }
 
     private void info(final Supplier<String> message) {
-        taskContext.info(message);
+        taskContextFactory.current().info(message);
         LOGGER.info(message);
     }
 }

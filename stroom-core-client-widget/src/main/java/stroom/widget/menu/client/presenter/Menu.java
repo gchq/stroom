@@ -41,10 +41,13 @@ public class Menu {
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
                     .addAutoHidePartner(event.getAutoHidePartners())
+                    .onShow(e -> menuPresenter.focus())
                     .onHide(e -> {
                         if (event.getHideHandler() != null) {
                             event.getHideHandler().onHide(e);
                         }
+                        // Call hide to ensure any delayed sub menus are closed
+                        hide(false, false);
                         menuPresenter = null;
                         currentItems = null;
                     })

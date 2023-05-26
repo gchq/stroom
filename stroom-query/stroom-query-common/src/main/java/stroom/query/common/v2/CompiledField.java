@@ -16,23 +16,29 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Expression;
+import stroom.dashboard.expression.v1.Generator;
 import stroom.query.api.v2.Field;
 
 public class CompiledField {
 
     private final Field field;
     private final int groupDepth;
-    private final Expression expression;
+    private final Generator generator;
+    private final boolean hasAggregate;
+    private final boolean requiresChildData;
     private final CompiledFilter compiledFilter;
 
     public CompiledField(final Field field,
                          final int groupDepth,
-                         final Expression expression,
+                         final Generator generator,
+                         final boolean hasAggregate,
+                         final boolean requiresChildData,
                          final CompiledFilter compiledFilter) {
         this.field = field;
         this.groupDepth = groupDepth;
-        this.expression = expression;
+        this.generator = generator;
+        this.hasAggregate = hasAggregate;
+        this.requiresChildData = requiresChildData;
         this.compiledFilter = compiledFilter;
     }
 
@@ -44,8 +50,28 @@ public class CompiledField {
         return groupDepth;
     }
 
-    public Expression getExpression() {
-        return expression;
+    public Generator getGenerator() {
+        return generator;
+    }
+
+    /**
+     * Is this function an aggregating function or are any of the child
+     * parameters used going to aggregate data.
+     *
+     * @return True if this function is an aggregating function or any child
+     * parameters used will aggregate data.
+     */
+    public boolean hasAggregate() {
+        return hasAggregate;
+    }
+
+    /**
+     * If the function selects a child row return true.
+     *
+     * @return True is the function selects a child row.
+     */
+    public boolean requiresChildData() {
+        return requiresChildData;
     }
 
     public CompiledFilter getCompiledFilter() {
@@ -57,7 +83,7 @@ public class CompiledField {
         return "CompiledField{" +
                 "field=" + field +
                 ", groupDepth=" + groupDepth +
-                ", expression=" + expression +
+                ", generator=" + generator +
                 ", compiledFilter=" + compiledFilter +
                 '}';
     }

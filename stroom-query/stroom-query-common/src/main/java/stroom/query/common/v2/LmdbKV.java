@@ -1,29 +1,41 @@
 package stroom.query.common.v2;
 
-class LmdbKV {
+import stroom.bytebuffer.ByteBufferUtils;
 
-    private final LmdbKey rowKey;
-    private final LmdbValue rowValue;
+import java.nio.ByteBuffer;
 
-    public LmdbKV(final LmdbKey rowKey,
-                  final LmdbValue rowValue) {
+class LmdbKV implements LmdbQueueItem {
+
+    private final CurrentDbState currentDbState;
+    private final ByteBuffer rowKey;
+    private final ByteBuffer rowValue;
+
+    public LmdbKV(final CurrentDbState currentDbState,
+                  final ByteBuffer rowKey,
+                  final ByteBuffer rowValue) {
+        this.currentDbState = currentDbState;
         this.rowKey = rowKey;
         this.rowValue = rowValue;
     }
 
-    public LmdbKey getRowKey() {
+    public CurrentDbState getCurrentDbState() {
+        return currentDbState;
+    }
+
+    public ByteBuffer getRowKey() {
         return rowKey;
     }
 
-    public LmdbValue getRowValue() {
+    public ByteBuffer getRowValue() {
         return rowValue;
     }
 
     @Override
     public String toString() {
-        return "QueueItemImpl{" +
-                "rowKey=" + rowKey +
-                ", rowValue=" + rowValue +
+        return "LmdbKV{" +
+                "currentDbState=" + currentDbState +
+                ", rowKey=" + ByteBufferUtils.byteBufferToString(rowKey) +
+                ", rowValue=" + ByteBufferUtils.byteBufferToString(rowValue) +
                 '}';
     }
 }

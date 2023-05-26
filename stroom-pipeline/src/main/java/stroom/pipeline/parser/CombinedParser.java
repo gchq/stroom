@@ -95,7 +95,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private final TextConverterStore textConverterStore;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<TextConverterDoc> docHelper;
+    private final DocFinder<TextConverterDoc> docFinder;
     private final Provider<LocationHolder> locationHolderProvider;
 
     private String type;
@@ -123,7 +123,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
 
     @Override
@@ -132,8 +132,8 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
             case XML -> createXMLReader();
             case XML_FRAGMENT, DATA_SPLITTER -> createTextConverter();
             case JSON -> createJSONReader();
-            case UNKNOWN -> throw new ProcessException("Unknown parser type '" + type + "'");
-            default -> throw new ProcessException("Unexpected combined parser mode: " + getMode());
+            case UNKNOWN -> throw ProcessException.create("Unknown parser type '" + type + "'");
+            default -> throw ProcessException.create("Unexpected combined parser mode: " + getMode());
         };
 
         return xmlReader;
@@ -332,7 +332,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                                 message,
                                 null));
         if (docRef == null) {
-            throw new ProcessException(
+            throw ProcessException.create(
                     "No text converter is configured or can be found to match the provided name pattern");
         } else {
             final TextConverterDoc tc = textConverterStore.readDocument(docRef);
@@ -340,7 +340,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                 final String message = "Text converter \"" +
                         docRef.getName() +
                         "\" appears to have been deleted";
-                throw new ProcessException(message);
+                throw ProcessException.create(message);
             }
 
             return tc;
@@ -372,7 +372,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docHelper.findDoc(
+        return docFinder.findDoc(
                 textConverterRef,
                 namePattern,
                 feedName,

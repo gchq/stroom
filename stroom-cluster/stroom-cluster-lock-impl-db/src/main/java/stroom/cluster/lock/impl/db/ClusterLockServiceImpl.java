@@ -18,7 +18,7 @@ package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.node.api.NodeInfo;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import org.slf4j.Logger;
@@ -36,17 +36,17 @@ class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final ClusterLockHandler clusterLockHandler;
     private final NodeInfo nodeInfo;
     private final DbClusterLock dbClusterLock;
 
     @Inject
-    ClusterLockServiceImpl(final TaskContext taskContext,
+    ClusterLockServiceImpl(final TaskContextFactory taskContextFactory,
                            final ClusterLockHandler clusterLockHandler,
                            final NodeInfo nodeInfo,
                            final DbClusterLock dbClusterLock) {
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.clusterLockHandler = clusterLockHandler;
         this.nodeInfo = nodeInfo;
         this.dbClusterLock = dbClusterLock;
@@ -126,7 +126,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
         for (final Entry<String, ClusterLockKey> entry : lockMap.entrySet()) {
             final String lockName = entry.getKey();
-            taskContext.info(() -> "Keeping " + lockName + " alive");
+            taskContextFactory.current().info(() -> "Keeping " + lockName + " alive");
 
             final ClusterLockKey clusterLockKey = entry.getValue();
 

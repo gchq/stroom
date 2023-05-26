@@ -2,8 +2,6 @@ package stroom.data.zip;
 
 class StroomZipNameException extends RuntimeException {
 
-    private static final long serialVersionUID = 6550229574319866082L;
-
     private StroomZipNameException(String msg) {
         super(msg);
     }

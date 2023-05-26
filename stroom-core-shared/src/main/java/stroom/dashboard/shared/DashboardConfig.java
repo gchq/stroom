@@ -42,7 +42,9 @@ import javax.xml.bind.annotation.XmlType;
         "layout",
         "layoutConstraints",
         "tabVisibility",
-        "preferredSize"
+        "preferredSize",
+        "designMode",
+        "modelVersion"
 })
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "dashboard")
@@ -53,7 +55,9 @@ import javax.xml.bind.annotation.XmlType;
         "layout",
         "layoutConstraints",
         "tabVisibility",
-        "preferredSize"
+        "preferredSize",
+        "designMode",
+        "modelVersion"
 })
 public class DashboardConfig {
 
@@ -79,6 +83,10 @@ public class DashboardConfig {
     private TabVisibility tabVisibility;
     @JsonProperty("preferredSize")
     private Size preferredSize;
+    @JsonProperty("designMode")
+    private Boolean designMode;
+    @JsonProperty("modelVersion")
+    private String modelVersion;
 
     public DashboardConfig() {
         tabVisibility = TabVisibility.SHOW_ALL;
@@ -91,7 +99,9 @@ public class DashboardConfig {
                            @JsonProperty("layout") final LayoutConfig layout,
                            @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
                            @JsonProperty("tabVisibility") final TabVisibility tabVisibility,
-                           @JsonProperty("preferredSize") Size preferredSize) {
+                           @JsonProperty("preferredSize") Size preferredSize,
+                           @JsonProperty("designMode") final Boolean designMode,
+                           @JsonProperty("modelVersion") final String modelVersion) {
         this.parameters = parameters;
         this.timeRange = timeRange;
         this.components = components;
@@ -99,16 +109,20 @@ public class DashboardConfig {
         this.layoutConstraints = layoutConstraints;
         this.tabVisibility = tabVisibility;
         this.preferredSize = preferredSize;
+        this.designMode = designMode;
+        this.modelVersion = modelVersion;
 
         if (this.tabVisibility == null) {
             this.tabVisibility = TabVisibility.SHOW_ALL;
         }
     }
 
+    @Deprecated
     public String getParameters() {
         return parameters;
     }
 
+    @Deprecated
     public void setParameters(String parameters) {
         this.parameters = parameters;
     }
@@ -159,6 +173,22 @@ public class DashboardConfig {
 
     public void setPreferredSize(final Size preferredSize) {
         this.preferredSize = preferredSize;
+    }
+
+    public Boolean getDesignMode() {
+        return designMode;
+    }
+
+    public void setDesignMode(final Boolean designMode) {
+        this.designMode = designMode;
+    }
+
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    public void setModelVersion(final String modelVersion) {
+        this.modelVersion = modelVersion;
     }
 
     public enum TabVisibility implements HasDisplayValue {

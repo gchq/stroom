@@ -716,7 +716,7 @@ public final class StoreCreationTool {
         return null;
     }
 
-    private DocRef getXSLT(final String name, final Path xsltLocation) {
+    public DocRef getXSLT(final String name, final Path xsltLocation) {
         // Try to find an existing one first.
         final List<DocRef> refs = xsltStore.list().stream()
                 .filter(docRef ->
@@ -830,8 +830,8 @@ public final class StoreCreationTool {
                 .stream()
                 .filter(docRef ->
                         name.equals(docRef.getName()))
-                .collect(Collectors.toList());
-        if (refs != null && refs.size() > 0) {
+                .toList();
+        if (refs.size() > 0) {
             return refs.get(0);
         }
 
@@ -920,6 +920,29 @@ public final class StoreCreationTool {
 
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
+    }
+
+    public DocRef getIndexPipeline(final String name,
+                                   final Path pipelineLocation,
+                                   final Path xsltLocation,
+                                   final DocRef indexDocRef) {
+        final DocRef pipelineRef = getPipeline(name, pipelineLocation);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        // Setup the xslt.
+        final DocRef xslt = getXSLT(name, xsltLocation);
+        final PipelineData pipelineData = pipelineDoc.getPipelineData();
+
+        // Change some properties.
+        if (xslt != null) {
+            pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
+        }
+        if (indexDocRef != null) {
+            pipelineData.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexDocRef));
+        }
+
+        pipelineStore.writeDocument(pipelineDoc);
+        return pipelineRef;
     }
 
     public DocRef getSearchResultPipeline(final String name, final Path pipelineLocation, final Path xsltLocation) {

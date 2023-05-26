@@ -23,7 +23,7 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.Meta;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -60,7 +60,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     private final MetaKeyDao metaKeyService;
     private final Provider<MetaValueConfig> metaValueConfigProvider;
     private final ClusterLockService clusterLockService;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     private volatile List<Row> queue = new ArrayList<>();
 
@@ -69,12 +69,12 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                      final MetaKeyDao metaKeyService,
                      final Provider<MetaValueConfig> metaValueConfigProvider,
                      final ClusterLockService clusterLockService,
-                     final TaskContext taskContext) {
+                     final TaskContextFactory taskContextFactory) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfigProvider = metaValueConfigProvider;
         this.clusterLockService = clusterLockService;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
@@ -130,7 +130,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     @Override
     public void flush() {
-        taskContext.info(() -> "Flushing meta values to the DB");
+        taskContextFactory.current().info(() -> "Flushing meta values to the DB");
         final Optional<List<Row>> optional = add(Collections.emptyList(), 1);
         optional.ifPresent(this::insertRecords);
     }
@@ -162,7 +162,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
         // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a
         // single node do the job.
         clusterLockService.tryLock(LOCK_NAME, () -> {
-            taskContext.info(() -> "Deleting old meta values");
+            taskContextFactory.current().info(() -> "Deleting old meta values");
             final long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
             final int batchSize = metaValueConfigProvider.get().getDeleteBatchSize();
             LOGGER.debug(() ->
@@ -200,7 +200,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 + ", total so far " + totalCount
                 + ", completed in " + logExecutionTime);
 
-        taskContext.info(() ->
+        taskContextFactory.current().info(() ->
                 LogUtil.message("Deleting old meta values ({} deleted so far, batch size {})", totalCount, batchSize));
         return count;
     }

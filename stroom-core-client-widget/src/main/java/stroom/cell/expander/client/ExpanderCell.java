@@ -39,18 +39,39 @@ import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
 
+    private static final int PADDING = 5;
+    private static final int ICON_WIDTH = 20;
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(
             Arrays.asList(BrowserEvents.CLICK, BrowserEvents.KEYDOWN));
     private static volatile Template template;
+    private final int initialOffset;
 
     public ExpanderCell() {
+        this(0);
+    }
+
+    public ExpanderCell(final int initialOffset) {
         super(ENABLED_EVENTS);
+
+        this.initialOffset = initialOffset;
+
         if (template == null) {
             synchronized (ExpanderCell.class) {
                 if (template == null) {
                     template = GWT.create(Template.class);
                 }
             }
+        }
+    }
+
+    /**
+     * Get the maximum column width required to fit expander icons for all levels
+     */
+    public static int getColumnWidth(final int maxDepth) {
+        if (maxDepth > 0) {
+            return (maxDepth * ICON_WIDTH) + ICON_WIDTH + PADDING;
+        } else {
+            return 0;
         }
     }
 
@@ -82,7 +103,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
     public void render(final Context context, final Expander value, final SafeHtmlBuilder sb) {
         if (value != null) {
             final int depth = value.getDepth();
-            final int padding = depth * 10;
+            final int padding = (depth * ICON_WIDTH) + initialOffset;
             final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
             String className = "";
 
@@ -91,13 +112,13 @@ public class ExpanderCell extends AbstractCell<Expander> {
                 expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_DOT);
             } else if (value.isExpanded()) {
                 expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
-                className = " expanderCell-active";
+                className = " active";
             } else {
                 expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
-                className = " expanderCell-active";
+                className = " active";
             }
 
-            sb.append(template.expander("expanderCell-expanderIcon" + className, style, expanderIcon));
+            sb.append(template.expander("expanderCell", "expanderIcon" + className, style, expanderIcon));
 
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
@@ -106,7 +127,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
+        @Template("<div class=\"{0}\" style=\"{2}\"><div class=\"{1}\">{3}</div></div>")
+        SafeHtml expander(String expanderClass, String iconClass, SafeStyles styles, SafeHtml icon);
     }
 }

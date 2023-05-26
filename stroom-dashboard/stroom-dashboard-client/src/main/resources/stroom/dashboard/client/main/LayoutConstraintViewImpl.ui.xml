@@ -4,11 +4,11 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-page form">
-        <form:FormGroup identity="layoutConstraintFitWidth" label="Fit Width">
-            <tickbox:CustomCheckBox ui:field="fitWidth"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="fitWidth" label="Fit Width" identity="layoutConstraintFitWidth"/>
         </form:FormGroup>
-        <form:FormGroup identity="layoutConstraintFitHeight" label="Fit Height">
-            <tickbox:CustomCheckBox ui:field="fitHeight"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="fitHeight" label="Fit Height" identity="layoutConstraintFitHeight"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

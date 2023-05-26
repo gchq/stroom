@@ -676,7 +676,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 valArr[i] = convertToVal(value, fields[i]);
                             }
                         }
-                        consumer.add(valArr);
+                        consumer.add(Val.of(valArr));
                     });
             return null;
         });

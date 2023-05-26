@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -56,8 +57,6 @@ import javax.xml.bind.annotation.XmlType;
 @Schema(name = "ExpressionOperator",
         description = "A logical addOperator term in a query expression tree")
 public final class ExpressionOperator extends ExpressionItem {
-
-    private static final long serialVersionUID = 6602004424564268512L;
 
     @XmlElement(name = "op")
     @Schema(description = "The logical addOperator type",
@@ -83,6 +82,19 @@ public final class ExpressionOperator extends ExpressionItem {
         if (children != null) {
             for (final ExpressionItem child : children) {
                 if (child.containsField(fields)) {
+                    // Found a match so break out
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean containsTerm(final Predicate<ExpressionTerm> predicate) {
+        if (children != null) {
+            for (final ExpressionItem child : children) {
+                if (child.containsTerm(predicate)) {
                     // Found a match so break out
                     return true;
                 }
@@ -213,6 +225,9 @@ public final class ExpressionOperator extends ExpressionItem {
         private Builder(final ExpressionOperator expressionOperator) {
             super(expressionOperator);
             this.op = expressionOperator.op;
+            if (expressionOperator.children != null) {
+                this.children.addAll(expressionOperator.children);
+            }
         }
 
         /**

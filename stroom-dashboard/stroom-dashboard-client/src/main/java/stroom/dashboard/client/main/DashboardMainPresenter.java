@@ -115,7 +115,7 @@ public class DashboardMainPresenter
             final boolean queryOnOpen = Boolean.TRUE.toString().equalsIgnoreCase(queryParams.get("queryOnOpen"));
 
             dashboardPresenter.setCustomTitle(title);
-            dashboardPresenter.setParams(params);
+            dashboardPresenter.setParamsFromLink(params);
             dashboardPresenter.setEmbedded(embedded);
             dashboardPresenter.setQueryOnOpen(queryOnOpen);
 

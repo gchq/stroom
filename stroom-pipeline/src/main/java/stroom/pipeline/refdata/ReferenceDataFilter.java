@@ -24,6 +24,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -32,6 +33,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -555,13 +557,14 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         } catch (final BufferOverflowException boe) {
             final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
                     key,
-                    mapName,
-                    boe);
+                    mapName);
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), msg, boe);
             LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
-            LOGGER.error("Error putting key {} into map {}: {}", key, mapName, e.getMessage());
+            LOGGER.error("Error putting key {} into map {}: {} {}",
+                    key, mapName, e.getClass().getSimpleName(), e.getMessage());
+            LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e);
         }
 
         // Set keys to null.
@@ -633,17 +636,24 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             fastInfosetEndDocument();
 //            appliedUris.clear();
             LOGGER.trace("Serializing fast infoset events");
-            ByteBuffer fastInfosetBuffer = pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+            final ByteBuffer fastInfosetBuffer = pooledByteBufferOutputStream.getPooledByteBuffer()
+                    .getByteBuffer();
 
             // we are wrapping a reusable buffer up in our RefDataValue object so this refDataValue
             // MUST not be used after we have finished with this reference xml element else you will
             // risk mutating data that you did not mean to.
             refDataValue = FastInfosetValue.wrap(fastInfosetBuffer);
         } else {
-            LOGGER.trace("Getting string data");
-            // serialize the event list using fastInfoset
+            // Not seen any XML content so treat as string or null
+            final String content = contentBuffer.toString();
             // simple string value so use content buffer
-            refDataValue = StringValue.of(contentBuffer.toString());
+            if (NullSafe.isBlankString(content)) {
+                LOGGER.trace("Null value");
+                refDataValue = NullValue.getInstance();
+            } else {
+                LOGGER.trace("Getting string data");
+                refDataValue = StringValue.of(content);
+            }
         }
         return refDataValue;
     }

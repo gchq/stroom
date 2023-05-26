@@ -47,43 +47,43 @@
       "special" : false
     } ],
     "rows" : [ {
-      "groupKey" : "AQAAAAEBBXVzZXKx",
+      "groupKey" : "AQd1c2VysQ==",
       "values" : [ "user1", "393", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXIxsA==",
+      "groupKey" : "AQd1c2VyMbA=",
       "values" : [ "user10", "381", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXKy",
+      "groupKey" : "AQd1c2Vysg==",
       "values" : [ "user2", "377", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXKz",
+      "groupKey" : "AQd1c2Vysw==",
       "values" : [ "user3", "379", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXK0",
+      "groupKey" : "AQd1c2VytA==",
       "values" : [ "user4", "395", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXK1",
+      "groupKey" : "AQd1c2VytQ==",
       "values" : [ "user5", "377", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXK2",
+      "groupKey" : "AQd1c2Vytg==",
       "values" : [ "user6", "380", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXK3",
+      "groupKey" : "AQd1c2Vytw==",
       "values" : [ "user7", "380", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXK4",
+      "groupKey" : "AQd1c2VyuA==",
       "values" : [ "user8", "402", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAEBBXVzZXK5",
+      "groupKey" : "AQd1c2VyuQ==",
       "values" : [ "user9", "383", null, null ],
       "depth" : 0
     } ],
@@ -201,403 +201,403 @@
       "special" : false
     } ],
     "rows" : [ {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXKx",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user1", "322", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXIxsA==",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:00:00.000Z", "user10", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXKy",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user2", "1", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXKz",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user3", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK0",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user4", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK1",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user5", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK2",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user6", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK3",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user7", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK4",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user8", "1", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK5",
+      "groupKey" : "AgYAeC7nJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user9", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXKx",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user1", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXIxsA==",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:01:00.000Z", "user10", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXKy",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user2", "336", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXKz",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user3", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK0",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user4", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK1",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user5", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK2",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user6", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK3",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user7", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK4",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user8", "10", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK5",
+      "groupKey" : "AgZgYi/nJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user9", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXKx",
+      "groupKey" : "AgbATDDnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user1", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXIxsA==",
+      "groupKey" : "AgbATDDnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:02:00.000Z", "user10", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXKy",
+      "groupKey" : "AgbATDDnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user2", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXKz",
+      "groupKey" : "AgbATDDnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user3", "327", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK0",
+      "groupKey" : "AgbATDDnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user4", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK1",
+      "groupKey" : "AgbATDDnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user5", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK2",
+      "groupKey" : "AgbATDDnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user6", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK3",
+      "groupKey" : "AgbATDDnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user7", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK4",
+      "groupKey" : "AgbATDDnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user8", "14", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK5",
+      "groupKey" : "AgbATDDnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user9", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXKx",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user1", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXIxsA==",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:03:00.000Z", "user10", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXKy",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user2", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXKz",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user3", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK0",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user4", "338", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK1",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user5", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK2",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user6", "1", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK3",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user7", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK4",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user8", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK5",
+      "groupKey" : "AgYgNzHnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user9", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXKx",
+      "groupKey" : "AgaAITLnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user1", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXIxsA==",
+      "groupKey" : "AgaAITLnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:04:00.000Z", "user10", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXKy",
+      "groupKey" : "AgaAITLnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user2", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXKz",
+      "groupKey" : "AgaAITLnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user3", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK0",
+      "groupKey" : "AgaAITLnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user4", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK1",
+      "groupKey" : "AgaAITLnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user5", "323", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK2",
+      "groupKey" : "AgaAITLnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user6", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK3",
+      "groupKey" : "AgaAITLnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user7", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK4",
+      "groupKey" : "AgaAITLnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user8", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK5",
+      "groupKey" : "AgaAITLnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user9", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXKx",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user1", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXIxsA==",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:05:00.000Z", "user10", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXKy",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user2", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXKz",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user3", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK0",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user4", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK1",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user5", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK2",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user6", "334", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK3",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user7", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK4",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user8", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK5",
+      "groupKey" : "AgbgCzPnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user9", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXKx",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user1", "12", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXIxsA==",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:06:00.000Z", "user10", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXKy",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user2", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXKz",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user3", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK0",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user4", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK1",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user5", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK2",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user6", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK3",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user7", "330", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK4",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user8", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK5",
+      "groupKey" : "AgZA9jPnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user9", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXKx",
+      "groupKey" : "Agag4DTnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user1", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXIxsA==",
+      "groupKey" : "Agag4DTnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:07:00.000Z", "user10", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXKy",
+      "groupKey" : "Agag4DTnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user2", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXKz",
+      "groupKey" : "Agag4DTnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user3", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK0",
+      "groupKey" : "Agag4DTnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user4", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK1",
+      "groupKey" : "Agag4DTnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user5", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK2",
+      "groupKey" : "Agag4DTnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user6", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK3",
+      "groupKey" : "Agag4DTnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user7", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK4",
+      "groupKey" : "Agag4DTnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user8", "335", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK5",
+      "groupKey" : "Agag4DTnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user9", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXKx",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user1", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXIxsA==",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:08:00.000Z", "user10", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXKy",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user2", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXKz",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user3", "14", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK0",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user4", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK1",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user5", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK2",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user6", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK3",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user7", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK4",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user8", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK5",
+      "groupKey" : "AgYAyzXnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user9", "326", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXKx",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2VysQ==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user1", "12", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXIxsA==",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2VyMbA=",
       "values" : [ "2010-01-01T00:09:00.000Z", "user10", "327", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXKy",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2Vysg==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user2", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXKz",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2Vysw==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user3", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK0",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2VytA==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user4", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK1",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2VytQ==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user5", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK2",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2Vytg==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user6", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK3",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2Vytw==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user7", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK4",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2VyuA==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user8", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK5",
+      "groupKey" : "AgZgtTbnJQEAAAd1c2VyuQ==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user9", "6", null, null ],
       "depth" : 0
     } ],
@@ -672,7 +672,7 @@
       "visible" : true,
       "special" : false
     } ],
-    "values" : [ [ null, [ 1.262304E12 ], 0, 1.262304E12, null, null, null ], [ [ 1.262304E12 ], [ 1.262304E12, "user1" ], 1, 1.262304E12, "user1", null, null ], [ [ 1.262304E12, "user1" ], null, 2, 1.262304E12, "user1", "user1", 322.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user10" ], 1, 1.262304E12, "user10", null, null ], [ [ 1.262304E12, "user10" ], null, 2, 1.262304E12, "user10", "user10", 4.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user2" ], 1, 1.262304E12, "user2", null, null ], [ [ 1.262304E12, "user2" ], null, 2, 1.262304E12, "user2", "user2", 1.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user3" ], 1, 1.262304E12, "user3", null, null ], [ [ 1.262304E12, "user3" ], null, 2, 1.262304E12, "user3", "user3", 3.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user4" ], 1, 1.262304E12, "user4", null, null ], [ [ 1.262304E12, "user4" ], null, 2, 1.262304E12, "user4", "user4", 7.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user5" ], 1, 1.262304E12, "user5", null, null ], [ [ 1.262304E12, "user5" ], null, 2, 1.262304E12, "user5", "user5", 3.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user6" ], 1, 1.262304E12, "user6", null, null ], [ [ 1.262304E12, "user6" ], null, 2, 1.262304E12, "user6", "user6", 2.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user7" ], 1, 1.262304E12, "user7", null, null ], [ [ 1.262304E12, "user7" ], null, 2, 1.262304E12, "user7", "user7", 2.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user8" ], 1, 1.262304E12, "user8", null, null ], [ [ 1.262304E12, "user8" ], null, 2, 1.262304E12, "user8", "user8", 1.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user9" ], 1, 1.262304E12, "user9", null, null ], [ [ 1.262304E12, "user9" ], null, 2, 1.262304E12, "user9", "user9", 3.0 ], [ null, [ 1.26230406E12 ], 0, 1.26230406E12, null, null, null ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user1" ], 1, 1.26230406E12, "user1", null, null ], [ [ 1.26230406E12, "user1" ], null, 2, 1.26230406E12, "user1", "user1", 8.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user10" ], 1, 1.26230406E12, "user10", null, null ], [ [ 1.26230406E12, "user10" ], null, 2, 1.26230406E12, "user10", "user10", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user2" ], 1, 1.26230406E12, "user2", null, null ], [ [ 1.26230406E12, "user2" ], null, 2, 1.26230406E12, "user2", "user2", 336.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user3" ], 1, 1.26230406E12, "user3", null, null ], [ [ 1.26230406E12, "user3" ], null, 2, 1.26230406E12, "user3", "user3", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user4" ], 1, 1.26230406E12, "user4", null, null ], [ [ 1.26230406E12, "user4" ], null, 2, 1.26230406E12, "user4", "user4", 7.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user5" ], 1, 1.26230406E12, "user5", null, null ], [ [ 1.26230406E12, "user5" ], null, 2, 1.26230406E12, "user5", "user5", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user6" ], 1, 1.26230406E12, "user6", null, null ], [ [ 1.26230406E12, "user6" ], null, 2, 1.26230406E12, "user6", "user6", 3.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user7" ], 1, 1.26230406E12, "user7", null, null ], [ [ 1.26230406E12, "user7" ], null, 2, 1.26230406E12, "user7", "user7", 3.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user8" ], 1, 1.26230406E12, "user8", null, null ], [ [ 1.26230406E12, "user8" ], null, 2, 1.26230406E12, "user8", "user8", 10.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user9" ], 1, 1.26230406E12, "user9", null, null ], [ [ 1.26230406E12, "user9" ], null, 2, 1.26230406E12, "user9", "user9", 9.0 ], [ null, [ 1.26230412E12 ], 0, 1.26230412E12, null, null, null ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user1" ], 1, 1.26230412E12, "user1", null, null ], [ [ 1.26230412E12, "user1" ], null, 2, 1.26230412E12, "user1", "user1", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user10" ], 1, 1.26230412E12, "user10", null, null ], [ [ 1.26230412E12, "user10" ], null, 2, 1.26230412E12, "user10", "user10", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user2" ], 1, 1.26230412E12, "user2", null, null ], [ [ 1.26230412E12, "user2" ], null, 2, 1.26230412E12, "user2", "user2", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user3" ], 1, 1.26230412E12, "user3", null, null ], [ [ 1.26230412E12, "user3" ], null, 2, 1.26230412E12, "user3", "user3", 327.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user4" ], 1, 1.26230412E12, "user4", null, null ], [ [ 1.26230412E12, "user4" ], null, 2, 1.26230412E12, "user4", "user4", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user5" ], 1, 1.26230412E12, "user5", null, null ], [ [ 1.26230412E12, "user5" ], null, 2, 1.26230412E12, "user5", "user5", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user6" ], 1, 1.26230412E12, "user6", null, null ], [ [ 1.26230412E12, "user6" ], null, 2, 1.26230412E12, "user6", "user6", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user7" ], 1, 1.26230412E12, "user7", null, null ], [ [ 1.26230412E12, "user7" ], null, 2, 1.26230412E12, "user7", "user7", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user8" ], 1, 1.26230412E12, "user8", null, null ], [ [ 1.26230412E12, "user8" ], null, 2, 1.26230412E12, "user8", "user8", 14.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user9" ], 1, 1.26230412E12, "user9", null, null ], [ [ 1.26230412E12, "user9" ], null, 2, 1.26230412E12, "user9", "user9", 6.0 ], [ null, [ 1.26230418E12 ], 0, 1.26230418E12, null, null, null ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user1" ], 1, 1.26230418E12, "user1", null, null ], [ [ 1.26230418E12, "user1" ], null, 2, 1.26230418E12, "user1", "user1", 4.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user10" ], 1, 1.26230418E12, "user10", null, null ], [ [ 1.26230418E12, "user10" ], null, 2, 1.26230418E12, "user10", "user10", 5.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user2" ], 1, 1.26230418E12, "user2", null, null ], [ [ 1.26230418E12, "user2" ], null, 2, 1.26230418E12, "user2", "user2", 7.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user3" ], 1, 1.26230418E12, "user3", null, null ], [ [ 1.26230418E12, "user3" ], null, 2, 1.26230418E12, "user3", "user3", 4.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user4" ], 1, 1.26230418E12, "user4", null, null ], [ [ 1.26230418E12, "user4" ], null, 2, 1.26230418E12, "user4", "user4", 338.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user5" ], 1, 1.26230418E12, "user5", null, null ], [ [ 1.26230418E12, "user5" ], null, 2, 1.26230418E12, "user5", "user5", 6.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user6" ], 1, 1.26230418E12, "user6", null, null ], [ [ 1.26230418E12, "user6" ], null, 2, 1.26230418E12, "user6", "user6", 1.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user7" ], 1, 1.26230418E12, "user7", null, null ], [ [ 1.26230418E12, "user7" ], null, 2, 1.26230418E12, "user7", "user7", 7.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user8" ], 1, 1.26230418E12, "user8", null, null ], [ [ 1.26230418E12, "user8" ], null, 2, 1.26230418E12, "user8", "user8", 5.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user9" ], 1, 1.26230418E12, "user9", null, null ], [ [ 1.26230418E12, "user9" ], null, 2, 1.26230418E12, "user9", "user9", 4.0 ], [ null, [ 1.26230424E12 ], 0, 1.26230424E12, null, null, null ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user1" ], 1, 1.26230424E12, "user1", null, null ], [ [ 1.26230424E12, "user1" ], null, 2, 1.26230424E12, "user1", "user1", 7.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user10" ], 1, 1.26230424E12, "user10", null, null ], [ [ 1.26230424E12, "user10" ], null, 2, 1.26230424E12, "user10", "user10", 5.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user2" ], 1, 1.26230424E12, "user2", null, null ], [ [ 1.26230424E12, "user2" ], null, 2, 1.26230424E12, "user2", "user2", 3.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user3" ], 1, 1.26230424E12, "user3", null, null ], [ [ 1.26230424E12, "user3" ], null, 2, 1.26230424E12, "user3", "user3", 2.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user4" ], 1, 1.26230424E12, "user4", null, null ], [ [ 1.26230424E12, "user4" ], null, 2, 1.26230424E12, "user4", "user4", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user5" ], 1, 1.26230424E12, "user5", null, null ], [ [ 1.26230424E12, "user5" ], null, 2, 1.26230424E12, "user5", "user5", 323.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user6" ], 1, 1.26230424E12, "user6", null, null ], [ [ 1.26230424E12, "user6" ], null, 2, 1.26230424E12, "user6", "user6", 7.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user7" ], 1, 1.26230424E12, "user7", null, null ], [ [ 1.26230424E12, "user7" ], null, 2, 1.26230424E12, "user7", "user7", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user8" ], 1, 1.26230424E12, "user8", null, null ], [ [ 1.26230424E12, "user8" ], null, 2, 1.26230424E12, "user8", "user8", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user9" ], 1, 1.26230424E12, "user9", null, null ], [ [ 1.26230424E12, "user9" ], null, 2, 1.26230424E12, "user9", "user9", 4.0 ], [ null, [ 1.2623043E12 ], 0, 1.2623043E12, null, null, null ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user1" ], 1, 1.2623043E12, "user1", null, null ], [ [ 1.2623043E12, "user1" ], null, 2, 1.2623043E12, "user1", "user1", 6.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user10" ], 1, 1.2623043E12, "user10", null, null ], [ [ 1.2623043E12, "user10" ], null, 2, 1.2623043E12, "user10", "user10", 8.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user2" ], 1, 1.2623043E12, "user2", null, null ], [ [ 1.2623043E12, "user2" ], null, 2, 1.2623043E12, "user2", "user2", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user3" ], 1, 1.2623043E12, "user3", null, null ], [ [ 1.2623043E12, "user3" ], null, 2, 1.2623043E12, "user3", "user3", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user4" ], 1, 1.2623043E12, "user4", null, null ], [ [ 1.2623043E12, "user4" ], null, 2, 1.2623043E12, "user4", "user4", 5.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user5" ], 1, 1.2623043E12, "user5", null, null ], [ [ 1.2623043E12, "user5" ], null, 2, 1.2623043E12, "user5", "user5", 5.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user6" ], 1, 1.2623043E12, "user6", null, null ], [ [ 1.2623043E12, "user6" ], null, 2, 1.2623043E12, "user6", "user6", 334.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user7" ], 1, 1.2623043E12, "user7", null, null ], [ [ 1.2623043E12, "user7" ], null, 2, 1.2623043E12, "user7", "user7", 4.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user8" ], 1, 1.2623043E12, "user8", null, null ], [ [ 1.2623043E12, "user8" ], null, 2, 1.2623043E12, "user8", "user8", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user9" ], 1, 1.2623043E12, "user9", null, null ], [ [ 1.2623043E12, "user9" ], null, 2, 1.2623043E12, "user9", "user9", 6.0 ], [ null, [ 1.26230436E12 ], 0, 1.26230436E12, null, null, null ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user1" ], 1, 1.26230436E12, "user1", null, null ], [ [ 1.26230436E12, "user1" ], null, 2, 1.26230436E12, "user1", "user1", 12.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user10" ], 1, 1.26230436E12, "user10", null, null ], [ [ 1.26230436E12, "user10" ], null, 2, 1.26230436E12, "user10", "user10", 6.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user2" ], 1, 1.26230436E12, "user2", null, null ], [ [ 1.26230436E12, "user2" ], null, 2, 1.26230436E12, "user2", "user2", 2.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user3" ], 1, 1.26230436E12, "user3", null, null ], [ [ 1.26230436E12, "user3" ], null, 2, 1.26230436E12, "user3", "user3", 4.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user4" ], 1, 1.26230436E12, "user4", null, null ], [ [ 1.26230436E12, "user4" ], null, 2, 1.26230436E12, "user4", "user4", 7.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user5" ], 1, 1.26230436E12, "user5", null, null ], [ [ 1.26230436E12, "user5" ], null, 2, 1.26230436E12, "user5", "user5", 7.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user6" ], 1, 1.26230436E12, "user6", null, null ], [ [ 1.26230436E12, "user6" ], null, 2, 1.26230436E12, "user6", "user6", 9.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user7" ], 1, 1.26230436E12, "user7", null, null ], [ [ 1.26230436E12, "user7" ], null, 2, 1.26230436E12, "user7", "user7", 330.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user8" ], 1, 1.26230436E12, "user8", null, null ], [ [ 1.26230436E12, "user8" ], null, 2, 1.26230436E12, "user8", "user8", 9.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user9" ], 1, 1.26230436E12, "user9", null, null ], [ [ 1.26230436E12, "user9" ], null, 2, 1.26230436E12, "user9", "user9", 7.0 ], [ null, [ 1.26230442E12 ], 0, 1.26230442E12, null, null, null ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user1" ], 1, 1.26230442E12, "user1", null, null ], [ [ 1.26230442E12, "user1" ], null, 2, 1.26230442E12, "user1", "user1", 4.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user10" ], 1, 1.26230442E12, "user10", null, null ], [ [ 1.26230442E12, "user10" ], null, 2, 1.26230442E12, "user10", "user10", 7.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user2" ], 1, 1.26230442E12, "user2", null, null ], [ [ 1.26230442E12, "user2" ], null, 2, 1.26230442E12, "user2", "user2", 6.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user3" ], 1, 1.26230442E12, "user3", null, null ], [ [ 1.26230442E12, "user3" ], null, 2, 1.26230442E12, "user3", "user3", 5.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user4" ], 1, 1.26230442E12, "user4", null, null ], [ [ 1.26230442E12, "user4" ], null, 2, 1.26230442E12, "user4", "user4", 5.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user5" ], 1, 1.26230442E12, "user5", null, null ], [ [ 1.26230442E12, "user5" ], null, 2, 1.26230442E12, "user5", "user5", 8.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user6" ], 1, 1.26230442E12, "user6", null, null ], [ [ 1.26230442E12, "user6" ], null, 2, 1.26230442E12, "user6", "user6", 4.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user7" ], 1, 1.26230442E12, "user7", null, null ], [ [ 1.26230442E12, "user7" ], null, 2, 1.26230442E12, "user7", "user7", 8.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user8" ], 1, 1.26230442E12, "user8", null, null ], [ [ 1.26230442E12, "user8" ], null, 2, 1.26230442E12, "user8", "user8", 335.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user9" ], 1, 1.26230442E12, "user9", null, null ], [ [ 1.26230442E12, "user9" ], null, 2, 1.26230442E12, "user9", "user9", 7.0 ], [ null, [ 1.26230448E12 ], 0, 1.26230448E12, null, null, null ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user1" ], 1, 1.26230448E12, "user1", null, null ], [ [ 1.26230448E12, "user1" ], null, 2, 1.26230448E12, "user1", "user1", 6.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user10" ], 1, 1.26230448E12, "user10", null, null ], [ [ 1.26230448E12, "user10" ], null, 2, 1.26230448E12, "user10", "user10", 4.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user2" ], 1, 1.26230448E12, "user2", null, null ], [ [ 1.26230448E12, "user2" ], null, 2, 1.26230448E12, "user2", "user2", 6.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user3" ], 1, 1.26230448E12, "user3", null, null ], [ [ 1.26230448E12, "user3" ], null, 2, 1.26230448E12, "user3", "user3", 14.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user4" ], 1, 1.26230448E12, "user4", null, null ], [ [ 1.26230448E12, "user4" ], null, 2, 1.26230448E12, "user4", "user4", 4.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user5" ], 1, 1.26230448E12, "user5", null, null ], [ [ 1.26230448E12, "user5" ], null, 2, 1.26230448E12, "user5", "user5", 3.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user6" ], 1, 1.26230448E12, "user6", null, null ], [ [ 1.26230448E12, "user6" ], null, 2, 1.26230448E12, "user6", "user6", 9.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user7" ], 1, 1.26230448E12, "user7", null, null ], [ [ 1.26230448E12, "user7" ], null, 2, 1.26230448E12, "user7", "user7", 8.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user8" ], 1, 1.26230448E12, "user8", null, null ], [ [ 1.26230448E12, "user8" ], null, 2, 1.26230448E12, "user8", "user8", 2.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user9" ], 1, 1.26230448E12, "user9", null, null ], [ [ 1.26230448E12, "user9" ], null, 2, 1.26230448E12, "user9", "user9", 326.0 ], [ null, [ 1.26230454E12 ], 0, 1.26230454E12, null, null, null ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user1" ], 1, 1.26230454E12, "user1", null, null ], [ [ 1.26230454E12, "user1" ], null, 2, 1.26230454E12, "user1", "user1", 12.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user10" ], 1, 1.26230454E12, "user10", null, null ], [ [ 1.26230454E12, "user10" ], null, 2, 1.26230454E12, "user10", "user10", 327.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user2" ], 1, 1.26230454E12, "user2", null, null ], [ [ 1.26230454E12, "user2" ], null, 2, 1.26230454E12, "user2", "user2", 4.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user3" ], 1, 1.26230454E12, "user3", null, null ], [ [ 1.26230454E12, "user3" ], null, 2, 1.26230454E12, "user3", "user3", 5.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user4" ], 1, 1.26230454E12, "user4", null, null ], [ [ 1.26230454E12, "user4" ], null, 2, 1.26230454E12, "user4", "user4", 9.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user5" ], 1, 1.26230454E12, "user5", null, null ], [ [ 1.26230454E12, "user5" ], null, 2, 1.26230454E12, "user5", "user5", 8.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user6" ], 1, 1.26230454E12, "user6", null, null ], [ [ 1.26230454E12, "user6" ], null, 2, 1.26230454E12, "user6", "user6", 4.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user7" ], 1, 1.26230454E12, "user7", null, null ], [ [ 1.26230454E12, "user7" ], null, 2, 1.26230454E12, "user7", "user7", 3.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user8" ], 1, 1.26230454E12, "user8", null, null ], [ [ 1.26230454E12, "user8" ], null, 2, 1.26230454E12, "user8", "user8", 7.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user9" ], 1, 1.26230454E12, "user9", null, null ], [ [ 1.26230454E12, "user9" ], null, 2, 1.26230454E12, "user9", "user9", 6.0 ], [ null, [ 1.2623046E12 ], 0, 1.2623046E12, null, null, null ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user1" ], 1, 1.2623046E12, "user1", null, null ], [ [ 1.2623046E12, "user1" ], null, 2, 1.2623046E12, "user1", "user1", 6.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user10" ], 1, 1.2623046E12, "user10", null, null ], [ [ 1.2623046E12, "user10" ], null, 2, 1.2623046E12, "user10", "user10", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user2" ], 1, 1.2623046E12, "user2", null, null ], [ [ 1.2623046E12, "user2" ], null, 2, 1.2623046E12, "user2", "user2", 1.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user3" ], 1, 1.2623046E12, "user3", null, null ], [ [ 1.2623046E12, "user3" ], null, 2, 1.2623046E12, "user3", "user3", 2.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user4" ], 1, 1.2623046E12, "user4", null, null ], [ [ 1.2623046E12, "user4" ], null, 2, 1.2623046E12, "user4", "user4", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user5" ], 1, 1.2623046E12, "user5", null, null ], [ [ 1.2623046E12, "user5" ], null, 2, 1.2623046E12, "user5", "user5", 2.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user6" ], 1, 1.2623046E12, "user6", null, null ], [ [ 1.2623046E12, "user6" ], null, 2, 1.2623046E12, "user6", "user6", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user7" ], 1, 1.2623046E12, "user7", null, null ], [ [ 1.2623046E12, "user7" ], null, 2, 1.2623046E12, "user7", "user7", 5.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user8" ], 1, 1.2623046E12, "user8", null, null ], [ [ 1.2623046E12, "user8" ], null, 2, 1.2623046E12, "user8", "user8", 6.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user9" ], 1, 1.2623046E12, "user9", null, null ], [ [ 1.2623046E12, "user9" ], null, 2, 1.2623046E12, "user9", "user9", 5.0 ] ],
+    "values" : [ [ null, [ 1.262304E12 ], 0, 1.262304E12, null, null, null ], [ [ 1.262304E12 ], [ 1.262304E12, "user1" ], 1, 1.262304E12, "user1", "user1", null ], [ [ 1.262304E12, "user1" ], null, 2, 1.262304E12, "user1", "user1", 322.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user10" ], 1, 1.262304E12, "user10", "user10", null ], [ [ 1.262304E12, "user10" ], null, 2, 1.262304E12, "user10", "user10", 4.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user2" ], 1, 1.262304E12, "user2", "user2", null ], [ [ 1.262304E12, "user2" ], null, 2, 1.262304E12, "user2", "user2", 1.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user3" ], 1, 1.262304E12, "user3", "user3", null ], [ [ 1.262304E12, "user3" ], null, 2, 1.262304E12, "user3", "user3", 3.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user4" ], 1, 1.262304E12, "user4", "user4", null ], [ [ 1.262304E12, "user4" ], null, 2, 1.262304E12, "user4", "user4", 7.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user5" ], 1, 1.262304E12, "user5", "user5", null ], [ [ 1.262304E12, "user5" ], null, 2, 1.262304E12, "user5", "user5", 3.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user6" ], 1, 1.262304E12, "user6", "user6", null ], [ [ 1.262304E12, "user6" ], null, 2, 1.262304E12, "user6", "user6", 2.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user7" ], 1, 1.262304E12, "user7", "user7", null ], [ [ 1.262304E12, "user7" ], null, 2, 1.262304E12, "user7", "user7", 2.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user8" ], 1, 1.262304E12, "user8", "user8", null ], [ [ 1.262304E12, "user8" ], null, 2, 1.262304E12, "user8", "user8", 1.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user9" ], 1, 1.262304E12, "user9", "user9", null ], [ [ 1.262304E12, "user9" ], null, 2, 1.262304E12, "user9", "user9", 3.0 ], [ null, [ 1.26230406E12 ], 0, 1.26230406E12, null, null, null ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user1" ], 1, 1.26230406E12, "user1", "user1", null ], [ [ 1.26230406E12, "user1" ], null, 2, 1.26230406E12, "user1", "user1", 8.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user10" ], 1, 1.26230406E12, "user10", "user10", null ], [ [ 1.26230406E12, "user10" ], null, 2, 1.26230406E12, "user10", "user10", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user2" ], 1, 1.26230406E12, "user2", "user2", null ], [ [ 1.26230406E12, "user2" ], null, 2, 1.26230406E12, "user2", "user2", 336.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user3" ], 1, 1.26230406E12, "user3", "user3", null ], [ [ 1.26230406E12, "user3" ], null, 2, 1.26230406E12, "user3", "user3", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user4" ], 1, 1.26230406E12, "user4", "user4", null ], [ [ 1.26230406E12, "user4" ], null, 2, 1.26230406E12, "user4", "user4", 7.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user5" ], 1, 1.26230406E12, "user5", "user5", null ], [ [ 1.26230406E12, "user5" ], null, 2, 1.26230406E12, "user5", "user5", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user6" ], 1, 1.26230406E12, "user6", "user6", null ], [ [ 1.26230406E12, "user6" ], null, 2, 1.26230406E12, "user6", "user6", 3.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user7" ], 1, 1.26230406E12, "user7", "user7", null ], [ [ 1.26230406E12, "user7" ], null, 2, 1.26230406E12, "user7", "user7", 3.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user8" ], 1, 1.26230406E12, "user8", "user8", null ], [ [ 1.26230406E12, "user8" ], null, 2, 1.26230406E12, "user8", "user8", 10.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user9" ], 1, 1.26230406E12, "user9", "user9", null ], [ [ 1.26230406E12, "user9" ], null, 2, 1.26230406E12, "user9", "user9", 9.0 ], [ null, [ 1.26230412E12 ], 0, 1.26230412E12, null, null, null ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user1" ], 1, 1.26230412E12, "user1", "user1", null ], [ [ 1.26230412E12, "user1" ], null, 2, 1.26230412E12, "user1", "user1", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user10" ], 1, 1.26230412E12, "user10", "user10", null ], [ [ 1.26230412E12, "user10" ], null, 2, 1.26230412E12, "user10", "user10", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user2" ], 1, 1.26230412E12, "user2", "user2", null ], [ [ 1.26230412E12, "user2" ], null, 2, 1.26230412E12, "user2", "user2", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user3" ], 1, 1.26230412E12, "user3", "user3", null ], [ [ 1.26230412E12, "user3" ], null, 2, 1.26230412E12, "user3", "user3", 327.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user4" ], 1, 1.26230412E12, "user4", "user4", null ], [ [ 1.26230412E12, "user4" ], null, 2, 1.26230412E12, "user4", "user4", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user5" ], 1, 1.26230412E12, "user5", "user5", null ], [ [ 1.26230412E12, "user5" ], null, 2, 1.26230412E12, "user5", "user5", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user6" ], 1, 1.26230412E12, "user6", "user6", null ], [ [ 1.26230412E12, "user6" ], null, 2, 1.26230412E12, "user6", "user6", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user7" ], 1, 1.26230412E12, "user7", "user7", null ], [ [ 1.26230412E12, "user7" ], null, 2, 1.26230412E12, "user7", "user7", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user8" ], 1, 1.26230412E12, "user8", "user8", null ], [ [ 1.26230412E12, "user8" ], null, 2, 1.26230412E12, "user8", "user8", 14.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user9" ], 1, 1.26230412E12, "user9", "user9", null ], [ [ 1.26230412E12, "user9" ], null, 2, 1.26230412E12, "user9", "user9", 6.0 ], [ null, [ 1.26230418E12 ], 0, 1.26230418E12, null, null, null ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user1" ], 1, 1.26230418E12, "user1", "user1", null ], [ [ 1.26230418E12, "user1" ], null, 2, 1.26230418E12, "user1", "user1", 4.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user10" ], 1, 1.26230418E12, "user10", "user10", null ], [ [ 1.26230418E12, "user10" ], null, 2, 1.26230418E12, "user10", "user10", 5.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user2" ], 1, 1.26230418E12, "user2", "user2", null ], [ [ 1.26230418E12, "user2" ], null, 2, 1.26230418E12, "user2", "user2", 7.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user3" ], 1, 1.26230418E12, "user3", "user3", null ], [ [ 1.26230418E12, "user3" ], null, 2, 1.26230418E12, "user3", "user3", 4.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user4" ], 1, 1.26230418E12, "user4", "user4", null ], [ [ 1.26230418E12, "user4" ], null, 2, 1.26230418E12, "user4", "user4", 338.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user5" ], 1, 1.26230418E12, "user5", "user5", null ], [ [ 1.26230418E12, "user5" ], null, 2, 1.26230418E12, "user5", "user5", 6.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user6" ], 1, 1.26230418E12, "user6", "user6", null ], [ [ 1.26230418E12, "user6" ], null, 2, 1.26230418E12, "user6", "user6", 1.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user7" ], 1, 1.26230418E12, "user7", "user7", null ], [ [ 1.26230418E12, "user7" ], null, 2, 1.26230418E12, "user7", "user7", 7.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user8" ], 1, 1.26230418E12, "user8", "user8", null ], [ [ 1.26230418E12, "user8" ], null, 2, 1.26230418E12, "user8", "user8", 5.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user9" ], 1, 1.26230418E12, "user9", "user9", null ], [ [ 1.26230418E12, "user9" ], null, 2, 1.26230418E12, "user9", "user9", 4.0 ], [ null, [ 1.26230424E12 ], 0, 1.26230424E12, null, null, null ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user1" ], 1, 1.26230424E12, "user1", "user1", null ], [ [ 1.26230424E12, "user1" ], null, 2, 1.26230424E12, "user1", "user1", 7.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user10" ], 1, 1.26230424E12, "user10", "user10", null ], [ [ 1.26230424E12, "user10" ], null, 2, 1.26230424E12, "user10", "user10", 5.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user2" ], 1, 1.26230424E12, "user2", "user2", null ], [ [ 1.26230424E12, "user2" ], null, 2, 1.26230424E12, "user2", "user2", 3.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user3" ], 1, 1.26230424E12, "user3", "user3", null ], [ [ 1.26230424E12, "user3" ], null, 2, 1.26230424E12, "user3", "user3", 2.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user4" ], 1, 1.26230424E12, "user4", "user4", null ], [ [ 1.26230424E12, "user4" ], null, 2, 1.26230424E12, "user4", "user4", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user5" ], 1, 1.26230424E12, "user5", "user5", null ], [ [ 1.26230424E12, "user5" ], null, 2, 1.26230424E12, "user5", "user5", 323.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user6" ], 1, 1.26230424E12, "user6", "user6", null ], [ [ 1.26230424E12, "user6" ], null, 2, 1.26230424E12, "user6", "user6", 7.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user7" ], 1, 1.26230424E12, "user7", "user7", null ], [ [ 1.26230424E12, "user7" ], null, 2, 1.26230424E12, "user7", "user7", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user8" ], 1, 1.26230424E12, "user8", "user8", null ], [ [ 1.26230424E12, "user8" ], null, 2, 1.26230424E12, "user8", "user8", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user9" ], 1, 1.26230424E12, "user9", "user9", null ], [ [ 1.26230424E12, "user9" ], null, 2, 1.26230424E12, "user9", "user9", 4.0 ], [ null, [ 1.2623043E12 ], 0, 1.2623043E12, null, null, null ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user1" ], 1, 1.2623043E12, "user1", "user1", null ], [ [ 1.2623043E12, "user1" ], null, 2, 1.2623043E12, "user1", "user1", 6.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user10" ], 1, 1.2623043E12, "user10", "user10", null ], [ [ 1.2623043E12, "user10" ], null, 2, 1.2623043E12, "user10", "user10", 8.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user2" ], 1, 1.2623043E12, "user2", "user2", null ], [ [ 1.2623043E12, "user2" ], null, 2, 1.2623043E12, "user2", "user2", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user3" ], 1, 1.2623043E12, "user3", "user3", null ], [ [ 1.2623043E12, "user3" ], null, 2, 1.2623043E12, "user3", "user3", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user4" ], 1, 1.2623043E12, "user4", "user4", null ], [ [ 1.2623043E12, "user4" ], null, 2, 1.2623043E12, "user4", "user4", 5.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user5" ], 1, 1.2623043E12, "user5", "user5", null ], [ [ 1.2623043E12, "user5" ], null, 2, 1.2623043E12, "user5", "user5", 5.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user6" ], 1, 1.2623043E12, "user6", "user6", null ], [ [ 1.2623043E12, "user6" ], null, 2, 1.2623043E12, "user6", "user6", 334.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user7" ], 1, 1.2623043E12, "user7", "user7", null ], [ [ 1.2623043E12, "user7" ], null, 2, 1.2623043E12, "user7", "user7", 4.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user8" ], 1, 1.2623043E12, "user8", "user8", null ], [ [ 1.2623043E12, "user8" ], null, 2, 1.2623043E12, "user8", "user8", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user9" ], 1, 1.2623043E12, "user9", "user9", null ], [ [ 1.2623043E12, "user9" ], null, 2, 1.2623043E12, "user9", "user9", 6.0 ], [ null, [ 1.26230436E12 ], 0, 1.26230436E12, null, null, null ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user1" ], 1, 1.26230436E12, "user1", "user1", null ], [ [ 1.26230436E12, "user1" ], null, 2, 1.26230436E12, "user1", "user1", 12.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user10" ], 1, 1.26230436E12, "user10", "user10", null ], [ [ 1.26230436E12, "user10" ], null, 2, 1.26230436E12, "user10", "user10", 6.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user2" ], 1, 1.26230436E12, "user2", "user2", null ], [ [ 1.26230436E12, "user2" ], null, 2, 1.26230436E12, "user2", "user2", 2.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user3" ], 1, 1.26230436E12, "user3", "user3", null ], [ [ 1.26230436E12, "user3" ], null, 2, 1.26230436E12, "user3", "user3", 4.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user4" ], 1, 1.26230436E12, "user4", "user4", null ], [ [ 1.26230436E12, "user4" ], null, 2, 1.26230436E12, "user4", "user4", 7.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user5" ], 1, 1.26230436E12, "user5", "user5", null ], [ [ 1.26230436E12, "user5" ], null, 2, 1.26230436E12, "user5", "user5", 7.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user6" ], 1, 1.26230436E12, "user6", "user6", null ], [ [ 1.26230436E12, "user6" ], null, 2, 1.26230436E12, "user6", "user6", 9.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user7" ], 1, 1.26230436E12, "user7", "user7", null ], [ [ 1.26230436E12, "user7" ], null, 2, 1.26230436E12, "user7", "user7", 330.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user8" ], 1, 1.26230436E12, "user8", "user8", null ], [ [ 1.26230436E12, "user8" ], null, 2, 1.26230436E12, "user8", "user8", 9.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user9" ], 1, 1.26230436E12, "user9", "user9", null ], [ [ 1.26230436E12, "user9" ], null, 2, 1.26230436E12, "user9", "user9", 7.0 ], [ null, [ 1.26230442E12 ], 0, 1.26230442E12, null, null, null ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user1" ], 1, 1.26230442E12, "user1", "user1", null ], [ [ 1.26230442E12, "user1" ], null, 2, 1.26230442E12, "user1", "user1", 4.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user10" ], 1, 1.26230442E12, "user10", "user10", null ], [ [ 1.26230442E12, "user10" ], null, 2, 1.26230442E12, "user10", "user10", 7.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user2" ], 1, 1.26230442E12, "user2", "user2", null ], [ [ 1.26230442E12, "user2" ], null, 2, 1.26230442E12, "user2", "user2", 6.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user3" ], 1, 1.26230442E12, "user3", "user3", null ], [ [ 1.26230442E12, "user3" ], null, 2, 1.26230442E12, "user3", "user3", 5.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user4" ], 1, 1.26230442E12, "user4", "user4", null ], [ [ 1.26230442E12, "user4" ], null, 2, 1.26230442E12, "user4", "user4", 5.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user5" ], 1, 1.26230442E12, "user5", "user5", null ], [ [ 1.26230442E12, "user5" ], null, 2, 1.26230442E12, "user5", "user5", 8.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user6" ], 1, 1.26230442E12, "user6", "user6", null ], [ [ 1.26230442E12, "user6" ], null, 2, 1.26230442E12, "user6", "user6", 4.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user7" ], 1, 1.26230442E12, "user7", "user7", null ], [ [ 1.26230442E12, "user7" ], null, 2, 1.26230442E12, "user7", "user7", 8.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user8" ], 1, 1.26230442E12, "user8", "user8", null ], [ [ 1.26230442E12, "user8" ], null, 2, 1.26230442E12, "user8", "user8", 335.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user9" ], 1, 1.26230442E12, "user9", "user9", null ], [ [ 1.26230442E12, "user9" ], null, 2, 1.26230442E12, "user9", "user9", 7.0 ], [ null, [ 1.26230448E12 ], 0, 1.26230448E12, null, null, null ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user1" ], 1, 1.26230448E12, "user1", "user1", null ], [ [ 1.26230448E12, "user1" ], null, 2, 1.26230448E12, "user1", "user1", 6.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user10" ], 1, 1.26230448E12, "user10", "user10", null ], [ [ 1.26230448E12, "user10" ], null, 2, 1.26230448E12, "user10", "user10", 4.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user2" ], 1, 1.26230448E12, "user2", "user2", null ], [ [ 1.26230448E12, "user2" ], null, 2, 1.26230448E12, "user2", "user2", 6.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user3" ], 1, 1.26230448E12, "user3", "user3", null ], [ [ 1.26230448E12, "user3" ], null, 2, 1.26230448E12, "user3", "user3", 14.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user4" ], 1, 1.26230448E12, "user4", "user4", null ], [ [ 1.26230448E12, "user4" ], null, 2, 1.26230448E12, "user4", "user4", 4.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user5" ], 1, 1.26230448E12, "user5", "user5", null ], [ [ 1.26230448E12, "user5" ], null, 2, 1.26230448E12, "user5", "user5", 3.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user6" ], 1, 1.26230448E12, "user6", "user6", null ], [ [ 1.26230448E12, "user6" ], null, 2, 1.26230448E12, "user6", "user6", 9.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user7" ], 1, 1.26230448E12, "user7", "user7", null ], [ [ 1.26230448E12, "user7" ], null, 2, 1.26230448E12, "user7", "user7", 8.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user8" ], 1, 1.26230448E12, "user8", "user8", null ], [ [ 1.26230448E12, "user8" ], null, 2, 1.26230448E12, "user8", "user8", 2.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user9" ], 1, 1.26230448E12, "user9", "user9", null ], [ [ 1.26230448E12, "user9" ], null, 2, 1.26230448E12, "user9", "user9", 326.0 ], [ null, [ 1.26230454E12 ], 0, 1.26230454E12, null, null, null ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user1" ], 1, 1.26230454E12, "user1", "user1", null ], [ [ 1.26230454E12, "user1" ], null, 2, 1.26230454E12, "user1", "user1", 12.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user10" ], 1, 1.26230454E12, "user10", "user10", null ], [ [ 1.26230454E12, "user10" ], null, 2, 1.26230454E12, "user10", "user10", 327.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user2" ], 1, 1.26230454E12, "user2", "user2", null ], [ [ 1.26230454E12, "user2" ], null, 2, 1.26230454E12, "user2", "user2", 4.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user3" ], 1, 1.26230454E12, "user3", "user3", null ], [ [ 1.26230454E12, "user3" ], null, 2, 1.26230454E12, "user3", "user3", 5.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user4" ], 1, 1.26230454E12, "user4", "user4", null ], [ [ 1.26230454E12, "user4" ], null, 2, 1.26230454E12, "user4", "user4", 9.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user5" ], 1, 1.26230454E12, "user5", "user5", null ], [ [ 1.26230454E12, "user5" ], null, 2, 1.26230454E12, "user5", "user5", 8.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user6" ], 1, 1.26230454E12, "user6", "user6", null ], [ [ 1.26230454E12, "user6" ], null, 2, 1.26230454E12, "user6", "user6", 4.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user7" ], 1, 1.26230454E12, "user7", "user7", null ], [ [ 1.26230454E12, "user7" ], null, 2, 1.26230454E12, "user7", "user7", 3.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user8" ], 1, 1.26230454E12, "user8", "user8", null ], [ [ 1.26230454E12, "user8" ], null, 2, 1.26230454E12, "user8", "user8", 7.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user9" ], 1, 1.26230454E12, "user9", "user9", null ], [ [ 1.26230454E12, "user9" ], null, 2, 1.26230454E12, "user9", "user9", 6.0 ], [ null, [ 1.2623046E12 ], 0, 1.2623046E12, null, null, null ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user1" ], 1, 1.2623046E12, "user1", "user1", null ], [ [ 1.2623046E12, "user1" ], null, 2, 1.2623046E12, "user1", "user1", 6.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user10" ], 1, 1.2623046E12, "user10", "user10", null ], [ [ 1.2623046E12, "user10" ], null, 2, 1.2623046E12, "user10", "user10", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user2" ], 1, 1.2623046E12, "user2", "user2", null ], [ [ 1.2623046E12, "user2" ], null, 2, 1.2623046E12, "user2", "user2", 1.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user3" ], 1, 1.2623046E12, "user3", "user3", null ], [ [ 1.2623046E12, "user3" ], null, 2, 1.2623046E12, "user3", "user3", 2.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user4" ], 1, 1.2623046E12, "user4", "user4", null ], [ [ 1.2623046E12, "user4" ], null, 2, 1.2623046E12, "user4", "user4", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user5" ], 1, 1.2623046E12, "user5", "user5", null ], [ [ 1.2623046E12, "user5" ], null, 2, 1.2623046E12, "user5", "user5", 2.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user6" ], 1, 1.2623046E12, "user6", "user6", null ], [ [ 1.2623046E12, "user6" ], null, 2, 1.2623046E12, "user6", "user6", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user7" ], 1, 1.2623046E12, "user7", "user7", null ], [ [ 1.2623046E12, "user7" ], null, 2, 1.2623046E12, "user7", "user7", 5.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user8" ], 1, 1.2623046E12, "user8", "user8", null ], [ [ 1.2623046E12, "user8" ], null, 2, 1.2623046E12, "user8", "user8", 6.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user9" ], 1, 1.2623046E12, "user9", "user9", null ], [ [ 1.2623046E12, "user9" ], null, 2, 1.2623046E12, "user9", "user9", 5.0 ] ],
     "size" : 231,
     "errors" : [ ]
   }, {

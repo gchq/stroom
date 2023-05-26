@@ -15,6 +15,7 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -22,7 +23,6 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TimeRange;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -57,7 +57,6 @@ public final class ResultStoreManager implements Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreManager.class);
 
-    private final TaskContext taskContext;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
@@ -65,12 +64,10 @@ public final class ResultStoreManager implements Clearable {
     private final StoreFactoryRegistry storeFactoryRegistry;
 
     @Inject
-    ResultStoreManager(final TaskContext taskContext,
-                       final TaskContextFactory taskContextFactory,
+    ResultStoreManager(final TaskContextFactory taskContextFactory,
                        final SecurityContext securityContext,
                        final ExecutorProvider executorProvider,
                        final StoreFactoryRegistry storeFactoryRegistry) {
-        this.taskContext = taskContext;
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
@@ -118,7 +115,7 @@ public final class ResultStoreManager implements Clearable {
         }
     }
 
-    private Optional<ResultStore> getIfPresent(final QueryKey key) {
+    public Optional<ResultStore> getIfPresent(final QueryKey key) {
         return Optional.ofNullable(resultStoreMap.get(key));
     }
 
@@ -220,6 +217,94 @@ public final class ResultStoreManager implements Clearable {
         }
     }
 
+    public boolean search(final SearchRequest searchRequest,
+                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(searchRequest);
+            LOGGER.debug("/search called with searchRequest:\n{}", json);
+        }
+
+        SearchRequest modifiedRequest = searchRequest;
+
+        final String userId = securityContext.getUserId();
+        Objects.requireNonNull(userId, "No user is logged in");
+
+        final ResultStore resultStore;
+        if (modifiedRequest.getKey() != null) {
+            final QueryKey queryKey = modifiedRequest.getKey();
+            final Optional<ResultStore> optionalResultStore =
+                    getIfPresent(queryKey);
+
+            resultStore = optionalResultStore.orElseThrow(() ->
+                    new RuntimeException("No active search found for key = " + queryKey));
+
+            // Check user identity.
+            if (!resultStore.getUserId().equals(userId)) {
+                throw new RuntimeException(
+                        "You do not have permission to get the search results associated with this key");
+            }
+
+        } else {
+            // If the query doesn't have a key then this is new.
+            LOGGER.debug(() -> "New query");
+
+            // Get the data source.
+            Objects.requireNonNull(modifiedRequest.getQuery(),
+                    "Query is null");
+            final DocRef dataSourceRef = modifiedRequest.getQuery().getDataSource();
+            if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
+                throw new RuntimeException("No search data source has been specified");
+            }
+
+            // Get a store factory to perform this new search.
+            final Optional<SearchProvider> optionalStoreFactory =
+                    storeFactoryRegistry.getStoreFactory(modifiedRequest.getQuery().getDataSource());
+            final SearchProvider storeFactory = optionalStoreFactory
+                    .orElseThrow(() ->
+                            new RuntimeException("No store factory found for " +
+                                    searchRequest.getQuery().getDataSource().getType()));
+
+
+            // Create a new search UUID.
+            modifiedRequest = addQueryKey(modifiedRequest);
+
+            // Add a param for `currentUser()`
+            modifiedRequest = addCurrentUserParam(userId, modifiedRequest);
+
+            // Add partition time constraints to the query.
+            modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
+
+            final SearchRequest finalModifiedRequest = modifiedRequest;
+            final QueryKey queryKey = finalModifiedRequest.getKey();
+            LOGGER.trace(() -> "get() " + queryKey);
+            try {
+                LOGGER.trace(() -> "create() " + queryKey);
+                LOGGER.debug(() -> "Creating new store for key: " + queryKey);
+                resultStore = storeFactory.createResultStore(finalModifiedRequest);
+                resultStoreMap.put(queryKey, resultStore);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+                throw e;
+            }
+        }
+
+        // Perform search.
+        final SearchRequest finalSearchRequest = modifiedRequest;
+        final Supplier<Boolean> supplier =
+                taskContextFactory.contextResult("Getting search results", taskContext -> {
+                    taskContext.info(() -> "Creating search result");
+                    return securityContext.useAsReadResult(() ->
+                            doSearch(resultStore, finalSearchRequest, resultBuilderMap));
+                });
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
     private SearchRequest addQueryKey(final SearchRequest searchRequest) {
         // Create a new search UUID.
         final String uuid = UUID.randomUUID().toString();
@@ -277,6 +362,14 @@ public final class ResultStoreManager implements Clearable {
         }
 
         return result;
+    }
+
+    private boolean doSearch(final ResultStore resultStore,
+                             final SearchRequest request,
+                             final Map<String, ResultBuilder<?>> resultBuilderMap) {
+        Preconditions.checkNotNull(request);
+        // Create a response from the data found so far, this could be complete/incomplete
+        return resultStore.search(request, resultBuilderMap);
     }
 
     private SearchResponse doSearch(final ResultStore resultStore, final SearchRequest request) {
@@ -470,7 +563,7 @@ public final class ResultStoreManager implements Clearable {
      * Evicts any expired result stores.
      */
     public void evictExpiredElements() {
-        taskContext.info(() -> "Evicting expired search responses");
+        taskContextFactory.current().info(() -> "Evicting expired search responses");
         final Instant now = Instant.now();
         resultStoreMap.forEach((queryKey, resultStore) -> {
             try {
@@ -535,5 +628,9 @@ public final class ResultStoreManager implements Clearable {
             return null;
         }
         return duration.getValueAsStr();
+    }
+
+    public void put(final QueryKey queryKey, final ResultStore resultStore) {
+        resultStoreMap.put(queryKey, resultStore);
     }
 }

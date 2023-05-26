@@ -19,7 +19,8 @@ import javax.ws.rs.core.MediaType;
 @Path(UserPreferencesResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface UserPreferencesResource extends RestResource, DirectRestService {
+public interface UserPreferencesResource
+        extends RestResource, DirectRestService {
 
     String BASE_PATH = "/preferences" + ResourcePaths.V1;
 

@@ -1,7 +1,8 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.cell.info.client.HyperlinkCell;
+import stroom.cell.info.client.CommandLink;
+import stroom.cell.info.client.CommandLinkCell;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
@@ -333,10 +334,18 @@ public class DataGridUtil {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> hyperlinkColumnBuilder(
-            final Function<T_ROW, String> cellExtractor) {
+    public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(
+            final Function<T_ROW, CommandLink> cellExtractor) {
 
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), HyperlinkCell::new);
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), CommandLinkCell::new);
+    }
+
+    public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
+        column.setFieldUpdater((index, object, value) -> {
+            if (value != null && value.getCommand() != null) {
+                value.getCommand().execute();
+            }
+        });
     }
 
     public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(

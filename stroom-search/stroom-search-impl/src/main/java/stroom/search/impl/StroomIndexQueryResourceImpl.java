@@ -16,24 +16,50 @@
 
 package stroom.search.impl;
 
+import stroom.datasource.api.v2.DataSource;
+import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.StroomIndexQueryResource;
-import stroom.query.common.v2.AbstractDataSourceResource;
+import stroom.query.api.v2.DestroyReason;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.ResultStoreManager;
+import stroom.query.common.v2.TerminateDecorator;
+
+import com.codahale.metrics.annotation.Timed;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
-@Singleton
 @AutoLogged
-public class StroomIndexQueryResourceImpl
-        extends AbstractDataSourceResource
-        implements StroomIndexQueryResource {
+public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
+
+    private final Provider<ResultStoreManager> searchResponseCreatorManagerProvider;
 
     @Inject
-    StroomIndexQueryResourceImpl(
+    public StroomIndexQueryResourceImpl(
             final Provider<ResultStoreManager> searchResponseCreatorManagerProvider) {
-        super(searchResponseCreatorManagerProvider);
+        this.searchResponseCreatorManagerProvider = searchResponseCreatorManagerProvider;
+    }
+
+    @Timed
+    @Override
+    public DataSource getDataSource(final DocRef docRef) {
+        return searchResponseCreatorManagerProvider.get().getDataSource(docRef);
+    }
+
+    @Timed
+    @Override
+    public SearchResponse search(final SearchRequest request) {
+        return searchResponseCreatorManagerProvider.get().search(request);
+    }
+
+    @Timed
+    @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Closing Query", decorator = TerminateDecorator.class)
+    public Boolean destroy(final QueryKey queryKey) {
+        return searchResponseCreatorManagerProvider.get().destroy(queryKey, DestroyReason.NO_LONGER_NEEDED);
     }
 }

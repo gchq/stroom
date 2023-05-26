@@ -2,6 +2,8 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.data.store.api.DataException;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexConstants;
@@ -13,9 +15,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.extraction.StreamEventMap.EventSet;
@@ -63,12 +63,13 @@ public class ExtractionDecorator {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
+    private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
     private final QueryKey queryKey;
 
     private final Map<DocRef, PipelineData> pipelineDataMap = new ConcurrentHashMap<>();
     private final StreamEventMap streamEventMap;
     private final StoredDataQueue storedDataQueue;
-    private final Map<DocRef, ExtractionReceiver> receivers;
+    private final Map<DocRef, Receiver> receivers;
 
     ExtractionDecorator(final ExtractionConfig extractionConfig,
                         final ExecutorProvider executorProvider,
@@ -80,6 +81,7 @@ public class ExtractionDecorator {
                         final PipelineStore pipelineStore,
                         final PipelineDataCache pipelineDataCache,
                         final Provider<ExtractionTaskHandler> handlerProvider,
+                        final Provider<ExtractionStateHolder> extractionStateHolderProvider,
                         final QueryKey queryKey) {
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
@@ -91,6 +93,7 @@ public class ExtractionDecorator {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
+        this.extractionStateHolderProvider = extractionStateHolderProvider;
         this.queryKey = queryKey;
 
         // Create a queue to receive values and store them for asynchronous processing.
@@ -110,37 +113,16 @@ public class ExtractionDecorator {
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
 
             // Create a receiver that will send data to all coprocessors.
-            ExtractionReceiver receiver;
+            ValuesConsumer valuesConsumer;
             if (coprocessorSet.size() == 1) {
-                final Coprocessor coprocessor = coprocessorSet.iterator().next();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessor.add(values);
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                valuesConsumer = coprocessorSet.iterator().next();
             } else {
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
             }
 
             // Decorate result with annotations.
-            receiver = receiverDecoratorFactory.create(receiver, query);
-            receivers.put(docRef, receiver);
+            valuesConsumer = receiverDecoratorFactory.create(valuesConsumer, fieldIndex, query);
+            receivers.put(docRef, new Receiver(fieldIndex, valuesConsumer));
         });
 
         // Set the delay to use for extraction of each stream.
@@ -162,7 +144,7 @@ public class ExtractionDecorator {
 
     private Runnable mapStreams(final TaskContext parentContext,
                                 final StoredDataQueue storedDataQueue,
-                                final Map<DocRef, ExtractionReceiver> receivers,
+                                final Map<DocRef, Receiver> receivers,
                                 final Coprocessors coprocessors) {
         // Create an object to make event lists from raw index data.
         final EventFactory eventFactory = new EventFactory(coprocessors.getFieldIndex());
@@ -183,11 +165,11 @@ public class ExtractionDecorator {
                             if (values != null) {
                                 if (!taskContext.isTerminated()) {
                                     try {
-                                        info(taskContext, () -> "" +
+                                        info(taskContext, () ->
                                                 "Creating extraction tasks - stored data queue size: " +
-                                                storedDataQueue.size() +
-                                                " stream event map size: " +
-                                                streamEventMap.size());
+                                                        storedDataQueue.size() +
+                                                        " stream event map size: " +
+                                                        streamEventMap.size());
 
                                         // If we have some values then map them.
                                         SearchProgressLog.increment(queryKey,
@@ -264,25 +246,26 @@ public class ExtractionDecorator {
                              final LongAdder extractionCount,
                              final ErrorConsumer errorConsumer) {
         try {
-            while (true) {
-                final EventSet eventSet = streamEventMap.take();
-                if (!parentContext.isTerminated() && eventSet != null) {
-                    SearchProgressLog.add(queryKey,
-                            SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                            eventSet.size());
+            while (!parentContext.isTerminated()) {
+                taskContextFactory.childContext(
+                        parentContext,
+                        "Extraction Task",
+                        taskContext -> {
+                            final EventSet eventSet = streamEventMap.take();
+                            if (eventSet != null) {
+                                SearchProgressLog.add(queryKey,
+                                        SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                                        eventSet.size());
 
-                    taskContextFactory.childContext(
-                            parentContext,
-                            "Extraction Task",
-                            taskContext ->
-                                    securityContext.useAsRead(() ->
-                                            extractEvents(taskContext,
-                                                    eventSet.getStreamId(),
-                                                    eventSet.getEvents(),
-                                                    extractionCount,
-                                                    errorConsumer))).run();
-                    LOGGER.debug("Completed extraction thread");
-                }
+                                securityContext.useAsRead(() ->
+                                        extractEvents(taskContext,
+                                                eventSet.getStreamId(),
+                                                eventSet.getEvents(),
+                                                extractionCount,
+                                                errorConsumer));
+                            }
+                        }).run();
+                LOGGER.debug("Completed extraction thread");
             }
         } catch (final CompleteException e) {
             LOGGER.debug(() -> "Complete");
@@ -311,9 +294,9 @@ public class ExtractionDecorator {
             try {
                 Meta meta = null;
 
-                for (final Entry<DocRef, ExtractionReceiver> entry : receivers.entrySet()) {
+                for (final Entry<DocRef, Receiver> entry : receivers.entrySet()) {
                     final DocRef docRef = entry.getKey();
-                    final ExtractionReceiver receiver = entry.getValue();
+                    final Receiver receiver = entry.getValue();
 
                     if (docRef != null) {
                         SearchProgressLog.add(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
@@ -325,17 +308,19 @@ public class ExtractionDecorator {
                         // Execute the extraction within a fresh pipeline scope.
                         meta = pipelineScopeRunnable.scopeResult(() -> {
                             final ExtractionTaskHandler handler = handlerProvider.get();
+                            final ExtractionStateHolder extractionStateHolder = extractionStateHolderProvider.get();
+                            extractionStateHolder.setQueryKey(queryKey);
+                            extractionStateHolder.setFieldIndex(receiver.fieldIndex);
+                            extractionStateHolder.setReceiver(receiver.valuesConsumer);
+
                             return handler.extract(
                                     taskContext,
                                     queryKey,
                                     streamId,
                                     eventIds,
                                     docRef,
-                                    receiver,
                                     errorConsumer,
-                                    pipelineData,
-                                    null,
-                                    null);
+                                    pipelineData);
                         });
 
                         extractionCount.add(events.size());
@@ -359,7 +344,7 @@ public class ExtractionDecorator {
                                 () -> "Transferring " + events.size() + " records from stream " + streamId);
                         // Pass raw values to coprocessors that are not requesting values to be extracted.
                         for (final Event event : events) {
-                            receiver.add(event.getValues());
+                            receiver.valuesConsumer.add(event.getValues());
                             extractionCount.increment();
                         }
                     }
@@ -395,5 +380,9 @@ public class ExtractionDecorator {
             // Create the parser.
             return pipelineDataCache.get(pipelineDoc);
         });
+    }
+
+    private record Receiver(FieldIndex fieldIndex, ValuesConsumer valuesConsumer) {
+
     }
 }

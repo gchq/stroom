@@ -28,6 +28,7 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
+import stroom.util.client.Console;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
@@ -967,45 +968,64 @@ public class FlexLayout extends Composite {
                     for (int i = 0; i < tabConfigList.size(); i++) {
                         final TabConfig tabConfig = tabConfigList.get(i);
                         if (tabConfig.visible()) {
-
                             final TabData tabData = tabBar.getTabs().get(visibleTabIndex);
-                            final LinkTab slideTab = (LinkTab) tabBar.getTab(tabData);
-                            final Element tabElement = slideTab.getElement();
 
-                            if (mouseTarget == null) {
-                                // Select the first tab by default.
-                                mouseTarget = new MouseTarget(layoutConfig,
-                                        positionAndSize,
-                                        Pos.TAB,
-                                        tabLayout,
-                                        tabData,
-                                        i,
-                                        slideTab);
-                            }
+                            // This is somewhat confusing but there is a difference between tabs that have been hidden
+                            // by the user and tabs that are not currently visible due to UI size constraints.
+                            if (tabBar.getVisibleTabs().contains(tabData)) {
+                                final LinkTab linkTab = (LinkTab) tabBar.getTab(tabData);
+                                final Element tabElement = linkTab.getElement();
 
-                            if (selecting) {
-                                if (x >= ElementUtil.getClientLeft(tabElement)) {
-                                    // If the mouse position is left or equal to the right-hand side of the tab
-                                    // then this tab might be the one to select.
-                                    mouseTarget = new MouseTarget(layoutConfig,
-                                            positionAndSize,
-                                            Pos.TAB,
-                                            tabLayout,
-                                            tabData,
-                                            i,
-                                            slideTab);
+                                if (selecting) {
+                                    if (x >= ElementUtil.getClientLeft(tabElement) &&
+                                            x <= ElementUtil.getClientRight(tabElement)) {
+                                        // If the mouse position is left or equal to the right-hand side of the tab
+                                        // then this tab might be the one to select.
+                                        mouseTarget = new MouseTarget(layoutConfig,
+                                                positionAndSize,
+                                                Pos.TAB,
+                                                tabLayout,
+                                                tabData,
+                                                i,
+                                                linkTab);
+                                    }
+                                } else if (selection == null || !tabData.equals(selection.tab)) {
+                                    final double clientLeft = ElementUtil.getClientLeft(tabElement);
+                                    final double clientRight = ElementUtil.getClientRight(tabElement);
+//                                    Console.log(tabData.getLabel() +
+//                                            " " +
+//                                            "clientLeft=" +
+//                                            clientLeft +
+//                                            " clientRight=" +
+//                                            clientRight +
+//                                            " x=" +
+//                                            x);
+
+                                    if (x >= clientLeft && x <= clientRight) {
+                                        // If the mouse position is over the tab then we might want to insert before
+                                        // this tab.
+                                        mouseTarget = new MouseTarget(layoutConfig,
+                                                positionAndSize,
+                                                Pos.TAB,
+                                                tabLayout,
+                                                tabData,
+                                                i,
+                                                linkTab);
+//                                        Console.log("tab");
+
+                                    } else if (x > clientRight) {
+                                        // If the mouse position is right of the right-hand side of the tab then we
+                                        // might want to insert the tab we are dragging after the current tab.
+                                        mouseTarget = new MouseTarget(layoutConfig,
+                                                positionAndSize,
+                                                Pos.AFTER_TAB,
+                                                tabLayout,
+                                                tabData,
+                                                i + 1,
+                                                linkTab);
+//                                        Console.log("after tab");
+                                    }
                                 }
-                            } else if (x > ElementUtil.getClientTop(tabElement) &&
-                                    (selection == null || !tabData.equals(selection.tab))) {
-                                // IF the mouse position is right of the right-hand side of the tab then we might
-                                // want to insert the tab we are dragging after the current tab.
-                                mouseTarget = new MouseTarget(layoutConfig,
-                                        positionAndSize,
-                                        Pos.AFTER_TAB,
-                                        tabLayout,
-                                        tabData,
-                                        i + 1,
-                                        slideTab);
                             }
 
                             visibleTabIndex++;
@@ -1032,6 +1052,7 @@ public class FlexLayout extends Composite {
                             ElementUtil.getClientTop(tabElement),
                             5,
                             tabElement.getOffsetHeight());
+                    marker.getElement().addClassName("flexLayout-marker-tab");
                     break;
                 case AFTER_TAB:
                     showMarker(ElementUtil.getClientLeft(tabElement) +
@@ -1040,6 +1061,7 @@ public class FlexLayout extends Composite {
                             ElementUtil.getClientTop(tabElement),
                             5,
                             tabElement.getOffsetHeight());
+                    marker.getElement().addClassName("flexLayout-marker-tab");
                     break;
                 default:
                     hideMarker();
@@ -1121,7 +1143,7 @@ public class FlexLayout extends Composite {
         final Rect outer = ElementUtil.getClientRect(scrollPanel.getElement());
         final Rect inner = new Rect(top, top + height, left, left + width);
         final Rect min = Rect.min(outer, inner);
-
+        marker.getElement().removeClassName("flexLayout-marker-tab");
         marker.show(min);
     }
 

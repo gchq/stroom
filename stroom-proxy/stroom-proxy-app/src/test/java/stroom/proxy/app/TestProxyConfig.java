@@ -153,5 +153,4 @@ class TestProxyConfig {
                 || clazz.isAssignableFrom(Map.class)
                 || clazz.equals(DocRef.class);
     }
-
 }
