@@ -4,10 +4,10 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.AbstractLmdbDb;
-import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
 import stroom.util.logging.LambdaLogger;
@@ -40,14 +40,15 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     private final RefDataProcessingInfoSerde valueSerde;
 
     @Inject
-    public ProcessingInfoDb(@Assisted final LmdbEnv lmdbEnvironment,
+    public ProcessingInfoDb(@Assisted final RefDataLmdbEnv lmdbEnvironment,
                             final ByteBufferPool byteBufferPool,
                             final RefStreamDefinitionSerde keySerde,
                             final RefDataProcessingInfoSerde valueSerde) {
 
-        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        lmdbEnvironment.registerDatabases(this);
     }
 
     public void updateLastAccessedTime(final RefStreamDefinition refStreamDefinition) {
@@ -187,9 +188,13 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                         : Optional.of(Instant.ofEpochMilli(latestLastAccessedTime.get())));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
-        ProcessingInfoDb create(final LmdbEnv lmdbEnvironment);
+        ProcessingInfoDb create(final RefDataLmdbEnv lmdbEnvironment);
     }
 
 }

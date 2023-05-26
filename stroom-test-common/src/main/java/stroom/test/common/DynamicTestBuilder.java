@@ -15,6 +15,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -497,6 +498,12 @@ class DynamicTestBuilder {
                 stringBuilder.append("(")
                         .append(tupleStr)
                         .append(")");
+            } else if (value instanceof final Object[] arr) {
+                stringBuilder.append("[")
+                        .append(Arrays.stream(arr)
+                                .map(this::valueToStr)
+                                .collect(Collectors.joining(", ")))
+                        .append("]");
             } else {
                 String valStr = value.toString();
                 // No point outputting the lambda reference as it doesn't help

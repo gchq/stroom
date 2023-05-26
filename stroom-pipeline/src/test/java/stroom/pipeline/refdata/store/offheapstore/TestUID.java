@@ -31,7 +31,7 @@ class TestUID {
         final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 5);
 
         // Compare two buffers of different capacities
-        final ByteBuffer byteBuffer = getNewUidBuffer();
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(uid1.getBackingBuffer().capacity() * 2);
         UID uid2 = UID.of(5, byteBuffer);
 
         LOGGER.info("uid1: {}", uid1);
@@ -42,6 +42,34 @@ class TestUID {
 
         Assertions.assertThat(uid2)
                 .isEqualTo(uid1);
+
+        Assertions.assertThat(uid2.hashCode())
+                .isEqualTo(uid1.hashCode());
+    }
+
+    @Test
+    void testEquals2() {
+        final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 5);
+
+        // Compare two buffers of different capacities and positions
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(uid1.getBackingBuffer().capacity() * 2);
+        byteBuffer.position(2);
+        byteBuffer.put(new byte[]{0, 0, 0, 5});
+        byteBuffer.flip();
+        byteBuffer.position(2);
+        UID uid2 = UID.wrap(byteBuffer);
+
+        LOGGER.info("uid1: {}", uid1);
+        LOGGER.info("uid2: {}", uid2);
+
+        Assertions.assertThat(uid2.getBackingBuffer())
+                .isEqualByComparingTo(uid1.getBackingBuffer());
+
+        Assertions.assertThat(uid2)
+                .isEqualTo(uid1);
+
+        Assertions.assertThat(uid2.hashCode())
+                .isEqualTo(uid1.hashCode());
     }
 
     @Test
@@ -66,9 +94,35 @@ class TestUID {
                 .isEqualByComparingTo(uid1.getBackingBuffer());
     }
 
+    @Test
+    void testCompare_equal() {
+        final UID uid1 = UID.of(42, getNewUidBuffer());
+        final UID uid2 = UID.of(42, getNewUidBuffer());
+        Assertions.assertThat(uid1.compareTo(uid2))
+                .isEqualTo(0);
+    }
+
+    @Test
+    void testCompare_lessThan() {
+        final UID uid1 = UID.of(41, getNewUidBuffer());
+        final UID uid2 = UID.of(42, getNewUidBuffer());
+        Assertions.assertThat(uid1.compareTo(uid2))
+                .isLessThan(0);
+    }
+
+    @Test
+    void testCompare_greaterThan() {
+        final UID uid1 = UID.of(43, getNewUidBuffer());
+        final UID uid2 = UID.of(42, getNewUidBuffer());
+        Assertions.assertThat(uid1.compareTo(uid2))
+                .isGreaterThan(0);
+    }
+
     ByteBuffer getNewUidBuffer() {
         // Don't use UID capacity for more realistic testing as we are normally using
         // pooled buffers of random sizes
         return ByteBuffer.allocateDirect(10);
     }
+
+
 }

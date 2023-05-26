@@ -30,6 +30,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -97,22 +98,11 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             final String key = getSafeString(functionName, context, arguments, 1);
 
             // Find out if we are going to ignore warnings.
-            boolean ignoreWarnings = false;
-            if (arguments.length > 3) {
-                final Boolean ignore = getSafeBoolean(functionName, context, arguments, 3);
-                if (ignore != null) {
-                    ignoreWarnings = ignore;
-                }
-            }
-
+            boolean ignoreWarnings = arguments.length > 3
+                    && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 3));
             // Find out if we are going to trace the lookup.
-            boolean traceLookup = false;
-            if (arguments.length > 4) {
-                final Boolean trace = getSafeBoolean(functionName, context, arguments, 4);
-                if (trace != null) {
-                    traceLookup = trace;
-                }
-            }
+            final boolean traceLookup = arguments.length > 4
+                    && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 4));
 
             // Make sure we can get the date ok.
             long ms = defaultMs;
@@ -146,8 +136,14 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 if (NullSafe.hasItems(getPipelineReferences())) {
                     // If we have got the date then continue to do the lookup.
                     try {
-                        LOGGER.debug("doLookup for {}", lookupIdentifier);
-                        result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
+                        if (LOGGER.isDebugEnabled()) {
+                            final DurationTimer timer = DurationTimer.start();
+                            result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
+                            LOGGER.debug("doLookup for {}, in {}", lookupIdentifier, timer);
+                        } else {
+                            LOGGER.debug("doLookup for {}", lookupIdentifier);
+                            result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
+                        }
                     } catch (final RuntimeException e) {
                         createLookupFailError(context, lookupIdentifier, e);
                     }

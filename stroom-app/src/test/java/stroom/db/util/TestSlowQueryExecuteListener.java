@@ -126,7 +126,7 @@ public class TestSlowQueryExecuteListener extends AbstractCoreIntegrationTest {
         Assertions.assertThat(names)
                         .containsExactly(JOB_NAME + "_1", JOB_NAME + "_2");
 
-        LOGGER.info("\n{}", AsciiTable.from(names));
+        LOGGER.info("\n{}", AsciiTable.fromCollection(names));
     }
 
     @Test
@@ -164,7 +164,7 @@ public class TestSlowQueryExecuteListener extends AbstractCoreIntegrationTest {
         Assertions.assertThat(names)
                 .containsExactly(JOB_NAME + "_1", JOB_NAME + "_2");
 
-        LOGGER.info("\n{}", AsciiTable.from(names));
+        LOGGER.info("\n{}", AsciiTable.fromCollection(names));
     }
 
     @Test
@@ -196,6 +196,6 @@ public class TestSlowQueryExecuteListener extends AbstractCoreIntegrationTest {
         Assertions.assertThat(names)
                 .containsExactly(JOB_NAME + "_1_modified");
 
-        LOGGER.info("\n{}", AsciiTable.from(names));
+        LOGGER.info("\n{}", AsciiTable.fromCollection(names));
     }
 }

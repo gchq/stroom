@@ -21,14 +21,24 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
+import stroom.test.common.TestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.inject.TypeLiteral;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.nio.ByteBuffer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueStoreMetaSerde> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestValueStoreMetaSerde.class);
 
     @Test
     void testInitialRefCount() {
@@ -58,6 +68,50 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
         doExtractionTest(valueStoreMeta, getSerde()::extractReferenceCount, ValueStoreMeta::getReferenceCount);
     }
 
+    @TestFactory
+    Stream<DynamicTest> testIsLastReference() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(int.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(
+                            StringValue.TYPE_ID,
+                            testCase.getInput());
+                    final ByteBuffer byteBuffer = serialize(valueStoreMeta);
+                    return getSerde().isLastReference(byteBuffer);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(0, true)
+                .addCase(1, true)
+                .addCase(2, false)
+                .addCase(3, false)
+                .addCase(16_000_000, false)
+                .build();
+    }
+
+    @Disabled // Manual perf test
+    @Test
+    void testIsLastReference_perf() {
+        final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(
+                StringValue.TYPE_ID, 2);
+        final ByteBuffer byteBuffer = serialize(valueStoreMeta);
+        final ValueStoreMetaSerde serde = getSerde();
+        final int count = 100_000_000;
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            for (int i = 0; i < count; i++) {
+                final boolean lastReference = serde.isLastReference(byteBuffer);
+            }
+        }, "isLastReference");
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            for (int i = 0; i < count; i++) {
+                final int refCount = serde.extractReferenceCount(byteBuffer);
+                final boolean lastReference = refCount <= 1;
+            }
+        }, "extractReferenceCount");
+    }
+
     @Test
     void testIncrementRefCount() {
         final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
@@ -68,7 +122,6 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
 
         getSerde().serialize(byteBuffer1, valueStoreMeta);
 
-
         final ByteBuffer byteBuffer2 = ByteBuffer.allocate(20);
 
         getSerde().cloneAndIncrementRefCount(byteBuffer1, byteBuffer2);
@@ -77,7 +130,6 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
 
         assertThat(valueStoreMeta2.getReferenceCount())
                 .isEqualTo(valueStoreMeta.getReferenceCount() + 1);
-
 
         final ByteBuffer byteBuffer3 = ByteBuffer.allocate(20);
 
@@ -88,7 +140,6 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
         assertThat(valueStoreMeta3.getReferenceCount())
                 .isEqualTo(valueStoreMeta.getReferenceCount() + 2)
                 .isEqualTo(valueStoreMeta2.getReferenceCount() + 1);
-
     }
 
     @Test
@@ -101,7 +152,6 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
 
         getSerde().serialize(byteBuffer1, valueStoreMeta);
 
-
         final ByteBuffer byteBuffer2 = ByteBuffer.allocate(20);
 
         getSerde().cloneAndDecrementRefCount(byteBuffer1, byteBuffer2);
@@ -110,7 +160,6 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
 
         assertThat(valueStoreMeta2.getReferenceCount())
                 .isEqualTo(valueStoreMeta.getReferenceCount() - 1);
-
 
         final ByteBuffer byteBuffer3 = ByteBuffer.allocate(20);
 
@@ -124,7 +173,7 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
     }
 
     @Override
-    Class<ValueStoreMetaSerde> getSerdeType() {
-        return ValueStoreMetaSerde.class;
+    TypeLiteral<ValueStoreMetaSerde> getSerdeType() {
+        return new TypeLiteral<ValueStoreMetaSerde>(){};
     }
 }

@@ -30,10 +30,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A heap based implementation of the {@link RefDataStore}
@@ -66,14 +64,14 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         return StorageType.ON_HEAP;
     }
 
-    @Override
-    public Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
-
-        return Optional.ofNullable(processingInfoMap.computeIfPresent(
-                refStreamDefinition,
-                (refStreamDef, refDataProcessingInfo) ->
-                        refDataProcessingInfo.updateLastAccessedTime()));
-    }
+//    @Override
+//    public Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
+//
+//        return Optional.ofNullable(processingInfoMap.computeIfPresent(
+//                refStreamDefinition,
+//                (refStreamDef, refDataProcessingInfo) ->
+//                        refDataProcessingInfo.updateLastAccessedTime()));
+//    }
 
     @Override
     public Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition) {
@@ -211,8 +209,15 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+//    @Override
+//    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+//        throw new UnsupportedOperationException("Not yet implemented");
+//    }
+//
     @Override
-    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+    public void consumeEntries(final Predicate<RefStoreEntry> filter,
+                               final Predicate<RefStoreEntry> takeWhile,
+                               final Consumer<RefStoreEntry> entryConsumer) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -319,8 +324,8 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
      * @param effectiveTimeMs
      */
     @Override
-    protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
-                                   final long effectiveTimeMs) {
+    protected RefDataLoader createLoader(final RefStreamDefinition refStreamDefinition,
+                                         final long effectiveTimeMs) {
 
         return new OnHeapRefDataLoader(
                 refStreamDefinition,
@@ -336,5 +341,10 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     public long getSizeOnDisk() {
         // On heap so zero size on disk
         return 0;
+    }
+
+    @Override
+    public String getName() {
+        return "On Heap";
     }
 }
