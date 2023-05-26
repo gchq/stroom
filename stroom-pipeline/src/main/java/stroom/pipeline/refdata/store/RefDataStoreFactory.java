@@ -56,6 +56,13 @@ public class RefDataStoreFactory {
     }
 
     /**
+     * @return A store specific to the named feed.
+     */
+    public RefDataStore getOffHeapStore(final String feedName) {
+        return offHeapRefDataStore.getEffectiveStore(feedName);
+    }
+
+    /**
      * @return A new transient on heap store for use only in the life of a pipeline.
      */
     public RefDataStore createOnHeapStore() {

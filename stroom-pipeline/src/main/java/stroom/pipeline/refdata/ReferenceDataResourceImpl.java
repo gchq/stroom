@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -82,28 +83,11 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                     "Can't parse purgeAge [{}]", purgeAge), e);
         }
 
+        final Query query = buildEventQuery(purgeAge, nodeName);
+
         final String nodeStr = nodeName == null
                 ? "all nodes"
                 : "node " + nodeName;
-        final Builder<Void> andBuilder = And.builder()
-                .addTerm(Term.builder()
-                        .withName("purgeAge")
-                        .withCondition(TermCondition.EQUALS)
-                        .withValue(purgeAge)
-                        .build());
-        if (nodeName != null) {
-            andBuilder.addTerm(Term.builder()
-                    .withName("nodeName")
-                    .withCondition(TermCondition.EQUALS)
-                    .withValue(nodeName)
-                    .build());
-        }
-
-        final Query query = Query.builder()
-                .withAdvanced(AdvancedQuery.builder()
-                        .addAnd(andBuilder.build())
-                        .build())
-                .build();
 
         final Boolean result = eventLoggingServiceProvider.get()
                 .loggedWorkBuilder()
@@ -129,6 +113,91 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                 .getResultAndLog();
 
         return result;
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public boolean purgeByFeedByAge(final String feedName,
+                                    final String purgeAge,
+                                    final String nodeName) {
+        Objects.requireNonNull(feedName);
+
+        StroomDuration purgeAgeDuration;
+        try {
+            purgeAgeDuration = StroomDuration.parse(purgeAge);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "Can't parse purgeAge [{}]", purgeAge), e);
+        }
+
+        final Query query = buildEventQuery(feedName, purgeAge, nodeName);
+
+        final String nodeStr = nodeName == null
+                ? "all nodes"
+                : "node " + nodeName;
+
+        final Boolean result = eventLoggingServiceProvider.get()
+                .loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "purgeByFeedByAge"))
+                .withDescription(LogUtil.message(
+                        "Purging reference data older than {} on {}",
+                        purgeAge, nodeStr))
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addCriteria(Criteria.builder()
+                                .withQuery(query)
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    try {
+                        referenceDataServiceProvider.get()
+                                .purge(feedName, purgeAgeDuration, nodeName);
+                        return true;
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to purgeAge " + purgeAge, e);
+                        throw e;
+                    }
+                })
+                .getResultAndLog();
+
+        return result;
+    }
+
+    private Query buildEventQuery(final String purgeAge,
+                                  final String nodeName) {
+        return buildEventQuery(null, purgeAge, nodeName);
+    }
+
+    private Query buildEventQuery(final String feedName,
+                                  final String purgeAge,
+                                  final String nodeName) {
+        final Builder<Void> andBuilder = And.builder();
+
+        if (feedName != null) {
+            andBuilder.addTerm(Term.builder()
+                    .withName("feedName")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(feedName)
+                    .build());
+        }
+        if (purgeAge != null) {
+                andBuilder.addTerm(Term.builder()
+                    .withName("purgeAge")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(purgeAge)
+                    .build());
+        }
+        if (nodeName != null) {
+            andBuilder.addTerm(Term.builder()
+                    .withName("nodeName")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(nodeName)
+                    .build());
+        }
+        return Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(andBuilder.build())
+                        .build())
+                .build();
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)

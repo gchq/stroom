@@ -268,7 +268,7 @@ public class OffHeapStagingStore implements AutoCloseable {
                 closeAndSwallow(pooledByteBuffer, "pooledByteBuffer"));
 
         stagingLmdbEnv.close();
-        LOGGER.info(() -> "Deleting reference data staging store from " + stagingLmdbEnv.getLocalDir());
+        LOGGER.debug(() -> "Deleting reference data staging store from " + stagingLmdbEnv.getLocalDir());
         stagingLmdbEnv.delete();
     }
 
@@ -306,4 +306,9 @@ public class OffHeapStagingStore implements AutoCloseable {
         final MapDefinition mapDefinition = uidToMapDefinitionMap.get(uid);
         return Objects.requireNonNull(mapDefinition, () -> "We should have a mapDefinition for UID " + uid);
     }
+
+    long getSizeOnDisk() {
+        return stagingLmdbEnv.getSizeOnDisk();
+    }
+
 }

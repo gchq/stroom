@@ -119,8 +119,8 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
         getDelegatingStore().purgeOldData();
 
         for (final RefDataOffHeapStore feedStore : getDelegatingStore().getFeedNameToStoreMap().values()) {
-            LOGGER.info("Dumping contents of store {}", feedStore.getLmdbEnvironment().getLocalDir().getFileName());
-            feedStore.logAllContents(LOGGER::info);
+            LOGGER.debug("Dumping contents of store {}", feedStore.getLmdbEnvironment().getLocalDir().getFileName());
+            feedStore.logAllContents(LOGGER::debug);
         }
 
         // These counts include feed stores and legacy (if present)
@@ -326,7 +326,7 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 null,
                 null,
                 entry -> {
-                    LOGGER.info("k: {}, v: {}, streamId: {}, pipeVer: {}",
+                    LOGGER.debug("k: {}, v: {}, streamId: {}, pipeVer: {}",
                             entry.getKey(),
                             entry.getValue(),
                             entry.getMapDefinition().getRefStreamDefinition().getStreamId(),

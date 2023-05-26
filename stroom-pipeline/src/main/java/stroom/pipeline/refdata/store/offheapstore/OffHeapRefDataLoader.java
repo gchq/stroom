@@ -349,25 +349,27 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         LOGGER.info(LogUtil.inBoxOnNewLine(
                 """
-                        Processed {} reference entries into store '{}' with outcome {}
+                        Processed {} reference entries with outcome {}
+                        Store: {}
                         New entries:                {}
                         Null values ignored:        {}
                         dup-key value updated:      {}
                         dup-key value identical:    {}
                         dup-key entry removed:      {}
                         dup-key ignored:            {}
-                        Map name(s):           {}
-                        Map UID(s):            {}
-                        Stream:                {}
-                        Pipeline name:         {}
-                        Pipeline UUID:         {}
-                        Pipeline version:      {}
-                        Load to staging:       {}
-                        Transfer from staging: {}
-                        Total:                 {}""",
+                        Map name(s):              {}
+                        Map UID(s):               {}
+                        Stream:                   {}
+                        Pipeline name:            {}
+                        Pipeline UUID:            {}
+                        Pipeline version:         {}
+                        Staging environment size: {}
+                        Load to staging:          {}
+                        Transfer from staging:    {}
+                        Total:                    {}""",
                 ModelStringUtil.formatCsv(putsToStagingStoreCounter),
-                refStoreLmdbEnv.getName().orElse("?"),
                 processingState,
+                refStoreLmdbEnv.getName().orElse("?"),
                 Strings.padStart(ModelStringUtil.formatCsv(newEntriesCount), PAD_LENGTH, ' '),
                 Strings.padStart(ModelStringUtil.formatCsv(ignoredNullsCount), PAD_LENGTH, ' '),
                 Strings.padStart(ModelStringUtil.formatCsv(replacedEntriesCount), PAD_LENGTH, ' '),
@@ -380,6 +382,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 Objects.requireNonNullElse(refStreamDefinition.getPipelineDocRef().getName(), "?"),
                 refStreamDefinition.getPipelineDocRef().getUuid(),
                 refStreamDefinition.getPipelineVersion(),
+                ModelStringUtil.formatIECByteSizeString(offHeapStagingStore.getSizeOnDisk()),
                 LogUtil.withPercentage(loadIntoStagingDuration, overalDuration),
                 LogUtil.withPercentage(transferStagedEntriesDuration, overalDuration),
                 overalDuration));
@@ -480,7 +483,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private <K> boolean isAppendableData(final BatchingWriteTxn batchingWriteTxn,
                                          final EntryStoreDb<K> entryStoreDb) {
         // Need to assess if we are appending data onto the end of the DB. This is so we can make
-        // use of the MDB_APPEND put flag
+        // use of the MDB_APPEND put flag. If other loads are happening then it is possible one has loaded entries
+        // since we generated these UIDs, so they are no longer at the head of the dbs.
         final Optional<UID> optMaxUidInDb = entryStoreDb.getMaxUid(batchingWriteTxn.getTxn(), pooledUidBuffer);
         final Set<UID> stagedUids = offHeapStagingStore.getStagedUids();
 
@@ -507,7 +511,14 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 isAppendable = true;
             } else {
                 // Either overwriting a load or another load jumped in ahead of us, e.g. it started after us
-                // but finished staging before us, so we are not appending.
+                // but finished staging before us, so we are not appending. We could consider generating new UIDs
+                // under lock, but the likelihood of a concurrent load is probably minimal so not worth it.
+                LOGGER.warn("Unable to use APPEND mode, so ref load may be a bit slower. " +
+                                "maxUidInDb: {}, minUidInStaging: {}, db: {}, refStreamDefinition: {}",
+                        maxUidInDb.getValue(),
+                        minUidInStaging.getValue(),
+                        entryStoreDb.getClass().getSimpleName(),
+                        refStreamDefinition);
                 isAppendable = false;
             }
         }
@@ -545,7 +556,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     private void transferStagedRangeValueEntries(final BatchingWriteTxn batchingWriteTxn) {
-        final boolean isAppendableData = isAppendableData(batchingWriteTxn, keyValueStoreDb);
+        final boolean isAppendableData = isAppendableData(batchingWriteTxn, rangeStoreDb);
         // NOTE we are looping in key order, not in the order put to this loader
         offHeapStagingStore.forEachRangeValueEntry(entry -> {
             final RangeStoreKey rangeStoreKey = entry.getKey();

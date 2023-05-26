@@ -69,7 +69,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
             .collect(Collectors.joining());
 
     protected static final int REF_STREAM_DEF_COUNT = 2;
-    protected static final int ENTRIES_PER_MAP_DEF = 2;
+    protected static final int ENTRIES_PER_MAP_DEF = 10;
     protected static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @SuppressWarnings("checkstyle:LineLength")

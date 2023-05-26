@@ -35,6 +35,7 @@ public interface ReferenceDataResource extends RestResource {
     String REF_STREAM_INFO_SUB_PATH = "/refStreamInfo";
     String LOOKUP_SUB_PATH = "/lookup";
     String PURGE_BY_AGE_SUB_PATH = "/purgeByAge";
+    String PURGE_BY_FEED_AGE_SUB_PATH = "/purgeByFeedByAge";
     String PURGE_BY_STREAM_SUB_PATH = "/purgeByStream";
     String CLEAR_BUFFER_POOL_PATH = "/clearBufferPool";
     String QUERY_PARAM_NODE_NAME = "nodeName";
@@ -79,6 +80,16 @@ public interface ReferenceDataResource extends RestResource {
             operationId = "purgeReferenceDataByAge")
     boolean purgeByAge(@NotNull @PathParam("purgeAge") final String purgeAge,
                        @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
+
+    @DELETE
+    @Path(PURGE_BY_FEED_AGE_SUB_PATH + "/{feedName}/{purgeAge}")
+    @Operation(
+            summary = "Explicitly delete all entries belonging to a feed that are older than purgeAge." +
+                    "Performed on the named node, or all nodes if null.",
+            operationId = "purgeReferenceDataByAge")
+    boolean purgeByFeedByAge(@NotNull @PathParam("feedName") final String feedName,
+                             @NotNull @PathParam("purgeAge") final String purgeAge,
+                             @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
 
     @DELETE
     @Path(PURGE_BY_STREAM_SUB_PATH + "/{refStreamId}")

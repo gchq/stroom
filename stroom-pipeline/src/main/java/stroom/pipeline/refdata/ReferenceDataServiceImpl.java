@@ -114,6 +114,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 
     private final RefDataStore refDataStore;
+    private final RefDataStoreFactory refDataStoreFactory;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
     private final Provider<ReferenceData> referenceDataProvider;
@@ -140,6 +141,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final WordListProvider wordListProvider,
                                     final DocRefInfoService docRefInfoService) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
+        this.refDataStoreFactory = refDataStoreFactory;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
         this.referenceDataProvider = referenceDataProvider;
@@ -313,12 +315,92 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         });
     }
 
+    @Override
+    public void purge(final String feedName,
+                      final StroomDuration purgeAge,
+                      final String nodeName) {
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+
+            final List<String> nodeNames = getNodeList(nodeName);
+            final Set<String> failedNodes = new ConcurrentSkipListSet<>();
+            final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+            final String nodeNameStr = nodeNames.size() == 1
+                    ? "node " + nodeName
+                    : "all nodes";
+            final String taskName = "Reference Data Purge on "
+                    + nodeNameStr
+                    + " (feed: " + feedName + ", purge age: " + purgeAge.toString() + ")";
+
+            taskContextFactory.context(
+                    taskName,
+                    parentTaskContext -> {
+                        @SuppressWarnings("unchecked") final CompletableFuture<Void>[] futures = nodeNames.stream()
+                                .map(nodeName2 -> {
+
+                                    final Runnable runnable = taskContextFactory.childContext(
+                                            parentTaskContext,
+                                            "Reference Data Purge on node " + nodeName2,
+                                            taskContext -> nodeService.remoteRestCall(
+                                                    nodeName2,
+                                                    () -> ResourcePaths.buildAuthenticatedApiPath(
+                                                            ReferenceDataResource.BASE_PATH,
+                                                            ReferenceDataResource.PURGE_BY_AGE_SUB_PATH,
+                                                            purgeAge.getValueAsStr()),
+                                                    () ->
+                                                            purgeLocally(feedName, purgeAge),
+                                                    SyncInvoker::delete,
+                                                    Collections.singletonMap(
+                                                            ReferenceDataResource.QUERY_PARAM_NODE_NAME,
+                                                            nodeName2)));
+
+                                    return CompletableFuture
+                                            .runAsync(runnable)
+                                            .exceptionally(throwable -> {
+                                                failedNodes.add(nodeName2);
+                                                exception.set(throwable);
+                                                LOGGER.error(
+                                                        "Error purging reference data store on node [{}]: {}. " +
+                                                                "Enable DEBUG for stacktrace",
+                                                        nodeName2,
+                                                        throwable.getMessage());
+                                                LOGGER.debug("Error purging ref data store on node [{}]",
+                                                        nodeName2, throwable);
+                                                return null;
+                                            });
+                                })
+                                .toArray(CompletableFuture[]::new);
+
+                        CompletableFuture.allOf(futures).join();
+
+                        if (!failedNodes.isEmpty()) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Error puring ref data store ({}) on node(s) [{}]. See logs for details",
+                                    purgeAge,
+                                    String.join(",", failedNodes)),
+                                    exception.get());
+                        }
+                    }).run();
+        });
+    }
+
     private void purgeLocally(final StroomDuration purgeAge) {
         LOGGER.logDurationIfDebugEnabled(
                 () ->
                         refDataStore.purgeOldData(purgeAge),
                 LogUtil.message("Performing Purge for entries older than {}", purgeAge));
 
+    }
+
+    private void purgeLocally(final String feedName,
+                              final StroomDuration purgeAge) {
+        LOGGER.logDurationIfDebugEnabled(
+                () -> {
+                    final RefDataStore offHeapStore = refDataStoreFactory.getOffHeapStore(feedName);
+                    Objects.requireNonNull(offHeapStore, () -> "Null ref store for feed " + feedName);
+                    offHeapStore.purgeOldData(purgeAge);
+                },
+                LogUtil.message("Performing Purge for entries older than {} in feed {}", purgeAge, feedName));
     }
 
     @Override

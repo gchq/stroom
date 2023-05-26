@@ -46,6 +46,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.HasHealthCheck;
+import stroom.util.NullSafe;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -552,13 +553,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             if (purgeCounts.refStreamDefsFailedCount > 0) {
                 // One or more ref stream defs failed
                 throw new RuntimeException(LogUtil.message(
-                        "Unable to purge {} ref stream definitions",
-                        purgeCounts.refStreamDefsFailedCount));
+                        "Unable to purge {} ref stream definitions in store {}",
+                        purgeCounts.refStreamDefsFailedCount,
+                        getName()));
             } else if (purgeCounts.refStreamDefsDeletedCount > 0) {
-                LOGGER.info(() -> "Purge completed successfully - " +
-                        buildPurgeInfoString(startTime, purgeCounts));
+                LOGGER.info(() -> LogUtil.message(
+                        "Purge of store {} completed successfully - {}",
+                        getName(),
+                        buildPurgeInfoString(startTime, purgeCounts)));
             } else {
-                LOGGER.info(() -> "Purge completed with no data to purge.");
+                LOGGER.info(() -> LogUtil.message(
+                        "Purge of store {} completed with no data to purge.", getName()));
             }
         } catch (TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
@@ -568,8 +573,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     buildPurgeInfoString(startTime, countsRef.get()));
             throw e;
         } catch (Exception e) {
-            LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
-                    buildPurgeInfoString(startTime, countsRef.get()), e);
+            LOGGER.error(() -> "Purge on store " + getName() + " failed due to "
+                    + e.getMessage() + ". " + buildPurgeInfoString(startTime, countsRef.get()), e);
             throw e;
         }
     }
@@ -1663,7 +1668,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             .orElse(null))
                     .addDetail("Latest lastAccessedTime", lastAccessedTimeRange._2()
                             .map(Instant::toString)
-                            .orElse(null));
+                            .orElse(null))
+                    .addDetail("Total reference entries", getKeyValueEntryCount() + getRangeValueEntryCount());
 
             lmdbEnvironment.doWithReadTxn(txn -> {
                 builder.addDetail("Database entry counts", databaseMap.entrySet().stream()
@@ -1687,6 +1693,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Override
     public String getName() {
         return storeName;
+    }
+
+    public String getFeedName() {
+        return NullSafe.get(lmdbEnvironment, RefDataLmdbEnv::getFeedName);
     }
 
     // --------------------------------------------------------------------------------

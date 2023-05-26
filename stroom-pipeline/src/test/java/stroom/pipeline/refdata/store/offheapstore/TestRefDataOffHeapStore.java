@@ -1369,9 +1369,8 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
             // here to aid debugging problems at low volumes
             if (entryCount < 10) {
-                refDataStore.logAllContents(LOGGER::info);
+                refDataStore.logAllContents(LOGGER::debug);
             }
-
 
             LOGGER.info("-----------------------second-load starts here----------------------------------");
 
