@@ -26,7 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-@Singleton
+@Singleton // The LMDB lib is dealt with statically by LMDB java so only want to initialise it once
 public class LmdbEnvFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvFactory.class);
@@ -42,7 +42,11 @@ public class LmdbEnvFactory {
         this.pathCreator = pathCreator;
         this.tempDirProvider = tempDirProvider;
 
-        initLmdbLibrary(lmdbLibraryConfigProvider.get());
+        // Library config is done via java system props and is static code in LMDBJava so
+        // only want to do it once
+        if (!HAS_LIBRARY_BEEN_CONFIGURED) {
+            configureLibraryUnderLock(lmdbLibraryConfigProvider.get());
+        }
     }
 
     /**
@@ -83,45 +87,47 @@ public class LmdbEnvFactory {
     }
 
     private void initLmdbLibrary(final LmdbLibraryConfig lmdbLibraryConfig) {
-        // Library config is done via java system props and is static code in LMDBJava so
-        // only want to do it once
-        if (!HAS_LIBRARY_BEEN_CONFIGURED) {
-            synchronized (AbstractEnvBuilder.class) {
-                if (!HAS_LIBRARY_BEEN_CONFIGURED) {
-                    configureLibrary(lmdbLibraryConfig);
-                    HAS_LIBRARY_BEEN_CONFIGURED = true;
-                }
-            }
-        }
     }
 
-    private void configureLibrary(final LmdbLibraryConfig lmdbLibraryConfig) {
-        LOGGER.info("Configuring LMDB system library");
+    /**
+     * Relies on this class being a singleton
+     */
+    private synchronized void configureLibraryUnderLock(final LmdbLibraryConfig lmdbLibraryConfig) {
+        if (!HAS_LIBRARY_BEEN_CONFIGURED) {
+            LOGGER.info("Configuring LMDB system library");
 
-        final Path lmdbSystemLibraryPath = Optional.ofNullable(lmdbLibraryConfig.getProvidedSystemLibraryPath())
-                .map(pathCreator::toAppPath)
-                .orElse(null);
+            final Path lmdbSystemLibraryPath = Optional.ofNullable(lmdbLibraryConfig.getProvidedSystemLibraryPath())
+                    .map(pathCreator::toAppPath)
+                    .orElse(null);
 
-        if (lmdbSystemLibraryPath != null) {
-            if (!Files.isReadable(lmdbSystemLibraryPath)) {
-                throw new RuntimeException("Unable to read LMDB system library at " +
-                        lmdbSystemLibraryPath.toAbsolutePath().normalize());
+            if (lmdbSystemLibraryPath != null) {
+                if (!Files.isReadable(lmdbSystemLibraryPath)) {
+                    throw new RuntimeException("Unable to read LMDB system library at " +
+                            lmdbSystemLibraryPath.toAbsolutePath().normalize());
+                }
+                // javax.validation should ensure the path is valid if set
+                final String lmdbNativeLibProp = LmdbLibraryConfig.LMDB_NATIVE_LIB_PROP;
+                System.setProperty(lmdbNativeLibProp, lmdbSystemLibraryPath.toAbsolutePath().normalize().toString());
+                LOGGER.info("Using provided LMDB system library file. Setting prop {} to '{}'",
+                        lmdbNativeLibProp, lmdbSystemLibraryPath);
+            } else {
+                final Path systemLibraryExtractDir = getLibraryExtractDir(lmdbLibraryConfig);
+
+                // LMDB extracts the lib on boot to a unique temp file and should delete on JVM exit,
+                // but just in case clear out any old ones.
+                cleanUpExtractDir(systemLibraryExtractDir);
+
+                // Set the location to extract the bundled LMDB binary to
+                final String lmdbExtractDirProp = LmdbLibraryConfig.LMDB_EXTRACT_DIR_PROP;
+                System.setProperty(
+                        lmdbExtractDirProp,
+                        systemLibraryExtractDir.toAbsolutePath().normalize().toString());
+                LOGGER.info("Bundled LMDB system library binary will be extracted. Setting prop {} to '{}'",
+                        lmdbExtractDirProp, systemLibraryExtractDir);
+                HAS_LIBRARY_BEEN_CONFIGURED = true;
             }
-            // javax.validation should ensure the path is valid if set
-            System.setProperty(
-                    LmdbLibraryConfig.LMDB_NATIVE_LIB_PROP,
-                    lmdbSystemLibraryPath.toAbsolutePath().normalize().toString());
-            LOGGER.info("Using provided LMDB system library file " + lmdbSystemLibraryPath);
         } else {
-            final Path systemLibraryExtractDir = getLibraryExtractDir(lmdbLibraryConfig);
-
-            cleanUpExtractDir(systemLibraryExtractDir);
-
-            // Set the location to extract the bundled LMDB binary to
-            System.setProperty(
-                    LmdbLibraryConfig.LMDB_EXTRACT_DIR_PROP,
-                    systemLibraryExtractDir.toAbsolutePath().normalize().toString());
-            LOGGER.info("Bundled LMDB system library binary will be extracted to " + systemLibraryExtractDir);
+            LOGGER.debug("Another thread beat us to it");
         }
     }
 
