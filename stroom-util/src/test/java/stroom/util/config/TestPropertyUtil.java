@@ -134,27 +134,52 @@ class TestPropertyUtil {
 
     @Test
     void testMerge1_nonNull() {
-        doMergeValueTest("a", "b", "c", true, true, "b");
+        doMergeValueTest("a",
+                "b",
+                "c",
+                true,
+                true,
+                "b");
     }
 
     @Test
     void testMerge2_null_copy() {
-        doMergeValueTest("a", null, "c", true, true, null);
+        doMergeValueTest("a",
+                null,
+                "c",
+                true,
+                true,
+                null);
     }
 
     @Test
     void testMerge2_null_dontCopy() {
-        doMergeValueTest("a", null, "c", false, true, "a");
+        doMergeValueTest("a",
+                null,
+                "c",
+                false,
+                true,
+                "a");
     }
 
     @Test
     void testMerge2_default_copy() {
-        doMergeValueTest("a", "c", "c", true, true, "c");
+        doMergeValueTest("a",
+                "c",
+                "c",
+                true,
+                true,
+                "c");
     }
 
     @Test
     void testMerge2_default_dontCopy() {
-        doMergeValueTest("a", "c", "c", true, false, "a");
+        doMergeValueTest("a",
+                "c",
+                "c",
+                true,
+                false,
+                "a");
     }
 
     @Test
