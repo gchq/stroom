@@ -23,11 +23,7 @@ import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.feed.shared.FeedDoc;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
@@ -35,40 +31,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
-import javax.inject.Provider;
-
 public class AnalyticRuleSettingsPresenter
         extends DocumentEditPresenter<AnalyticRuleSettingsView, AnalyticRuleDoc>
         implements DirtyUiHandlers {
 
-    private final EntityDropDownPresenter feedPresenter;
-
-    private DocRef currentFeed;
-
     @Inject
     public AnalyticRuleSettingsPresenter(final EventBus eventBus,
-                                         final AnalyticRuleSettingsView view,
-                                         final Provider<EditorPresenter> editorPresenterProvider,
-                                         final EntityDropDownPresenter feedPresenter) {
+                                         final AnalyticRuleSettingsView view) {
         super(eventBus, view);
-        this.feedPresenter = feedPresenter;
-
         view.setUiHandlers(this);
-
-        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
-        view.setDestinationFeedView(feedPresenter.getView());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(feedPresenter.addDataSelectionHandler(event -> {
-            if (!Objects.equals(feedPresenter.getSelectedEntityReference(), currentFeed)) {
-                setDirty(true);
-            }
-        }));
     }
 
     @Override
@@ -77,8 +48,6 @@ public class AnalyticRuleSettingsPresenter
         getView().setLanguageVersion(alertRule.getLanguageVersion());
         getView().setAnalyticRuleType(alertRule.getAnalyticRuleType());
         getView().setDataRetention(alertRule.getDataRetention());
-        currentFeed = alertRule.getDestinationFeed();
-        feedPresenter.setSelectedEntityReference(currentFeed);
     }
 
     @Override
@@ -87,7 +56,6 @@ public class AnalyticRuleSettingsPresenter
                 .description(getView().getDescription())
                 .languageVersion(getView().getLanguageVersion())
                 .analyticRuleType(getView().getAnalyticRuleType())
-                .destinationFeed(feedPresenter.getSelectedEntityReference())
                 .dataRetention(getView().getDataRetention())
                 .build();
     }
@@ -115,8 +83,6 @@ public class AnalyticRuleSettingsPresenter
         AnalyticRuleType getAnalyticRuleType();
 
         void setAnalyticRuleType(AnalyticRuleType analyticRuleType);
-
-        void setDestinationFeedView(View view);
 
         SimpleDuration getDataRetention();
 

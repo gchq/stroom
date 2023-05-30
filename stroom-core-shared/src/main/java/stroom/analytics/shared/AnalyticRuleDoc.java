@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -45,10 +47,6 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private final AnalyticRuleType analyticRuleType;
     @JsonProperty
-    private final DocRef destinationFeed;
-    @JsonProperty
-    private final AnalyticRuleProcessSettings processSettings;
-    @JsonProperty
     private final SimpleDuration dataRetention;
 
     public AnalyticRuleDoc() {
@@ -56,8 +54,6 @@ public class AnalyticRuleDoc extends Doc {
         languageVersion = null;
         query = null;
         analyticRuleType = null;
-        destinationFeed = null;
-        processSettings = null;
         dataRetention = null;
     }
 
@@ -74,16 +70,12 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                            @JsonProperty("query") final String query,
                            @JsonProperty("analyticRuleType") AnalyticRuleType analyticRuleType,
-                           @JsonProperty("destinationFeed") final DocRef destinationFeed,
-                           @JsonProperty("processSettings") AnalyticRuleProcessSettings processSettings,
                            @JsonProperty("dataRetention") SimpleDuration dataRetention) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.query = query;
         this.analyticRuleType = analyticRuleType;
-        this.destinationFeed = destinationFeed;
-        this.processSettings = processSettings;
         this.dataRetention = dataRetention;
     }
 
@@ -119,14 +111,6 @@ public class AnalyticRuleDoc extends Doc {
         return analyticRuleType;
     }
 
-    public DocRef getDestinationFeed() {
-        return destinationFeed;
-    }
-
-    public AnalyticRuleProcessSettings getProcessSettings() {
-        return processSettings;
-    }
-
     @JsonIgnore
     public QueryKey getQueryKey() {
         return new QueryKey(getUuid() + " - " + getName());
@@ -152,8 +136,6 @@ public class AnalyticRuleDoc extends Doc {
                 languageVersion == that.languageVersion &&
                 Objects.equals(query, that.query) &&
                 analyticRuleType == that.analyticRuleType &&
-                Objects.equals(destinationFeed, that.destinationFeed) &&
-                Objects.equals(processSettings, that.processSettings) &&
                 Objects.equals(dataRetention, that.dataRetention);
     }
 
@@ -164,8 +146,6 @@ public class AnalyticRuleDoc extends Doc {
                 languageVersion,
                 query,
                 analyticRuleType,
-                destinationFeed,
-                processSettings,
                 dataRetention);
     }
 
@@ -175,9 +155,7 @@ public class AnalyticRuleDoc extends Doc {
                 "description='" + description + '\'' +
                 ", languageVersion=" + languageVersion +
                 ", query='" + query + '\'' +
-                ", alertRuleType=" + analyticRuleType +
-                ", destinationFeed=" + destinationFeed +
-                ", processSettings=" + processSettings +
+                ", analyticRuleType=" + analyticRuleType +
                 ", dataRetention=" + dataRetention +
                 '}';
     }
@@ -196,8 +174,6 @@ public class AnalyticRuleDoc extends Doc {
         private QueryLanguageVersion languageVersion;
         private String query;
         private AnalyticRuleType analyticRuleType;
-        private DocRef destinationFeed;
-        private AnalyticRuleProcessSettings processSettings;
         private SimpleDuration dataRetention;
 
         public Builder() {
@@ -209,8 +185,6 @@ public class AnalyticRuleDoc extends Doc {
             this.languageVersion = doc.languageVersion;
             this.query = doc.query;
             this.analyticRuleType = doc.analyticRuleType;
-            this.destinationFeed = doc.destinationFeed;
-            this.processSettings = doc.processSettings;
             this.dataRetention = doc.dataRetention;
         }
 
@@ -231,16 +205,6 @@ public class AnalyticRuleDoc extends Doc {
 
         public Builder analyticRuleType(final AnalyticRuleType analyticRuleType) {
             this.analyticRuleType = analyticRuleType;
-            return self();
-        }
-
-        public Builder destinationFeed(final DocRef destinationFeed) {
-            this.destinationFeed = destinationFeed;
-            return self();
-        }
-
-        public Builder processSettings(final AnalyticRuleProcessSettings processSettings) {
-            this.processSettings = processSettings;
             return self();
         }
 
@@ -269,8 +233,6 @@ public class AnalyticRuleDoc extends Doc {
                     languageVersion,
                     query,
                     analyticRuleType,
-                    destinationFeed,
-                    processSettings,
                     dataRetention);
         }
     }

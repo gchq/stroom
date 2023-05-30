@@ -17,11 +17,16 @@
 package stroom.analytics;
 
 
+import stroom.analytics.impl.AnalyticNotificationDao;
+import stroom.analytics.impl.AnalyticProcessorFilterDao;
 import stroom.analytics.impl.AnalyticsExecutor;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AnalyticNotificationConfig;
+import stroom.analytics.shared.AnalyticNotificationStreamConfig;
+import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.AnalyticRuleProcessSettings;
 import stroom.analytics.shared.AnalyticRuleType;
+import stroom.analytics.shared.AnalyticNotification;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
@@ -36,7 +41,11 @@ import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
@@ -54,6 +63,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,11 +89,17 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
+    private NodeInfo nodeInfo;
+    @Inject
     private AnalyticRuleStore analyticRuleStore;
     @Inject
     private AnalyticsExecutor analyticsExecutor;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
+    @Inject
+    private AnalyticProcessorFilterDao analyticProcessorFilterDao;
+    @Inject
+    private AnalyticNotificationDao analyticNotificationDao;
 
     private static DocRef detections;
 
@@ -122,21 +138,16 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
                 select EventTime, UserId, count""";
 
         // Create the rule.
-        final AnalyticRuleProcessSettings processSettings = AnalyticRuleProcessSettings.builder()
-                .enabled(true)
-                .timeToWaitForData(SimpleDuration.builder().time(1).timeUnit(TimeUnit.SECONDS).build())
-                .build();
-
         final DocRef alertRuleDocRef = analyticRuleStore.createDocument("Threshold Event Rule");
         AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(alertRuleDocRef);
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticRuleType(AnalyticRuleType.AGGREGATE)
-                .processSettings(processSettings)
-                .destinationFeed(detections)
                 .build();
-        analyticRuleStore.writeDocument(analyticRuleDoc);
+        analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
+        createProcessorFilters(analyticRuleDoc);
+        createNotification(analyticRuleDoc, 1);
 
         // Now run the search process.
         analyticsExecutor.exec();
@@ -177,5 +188,44 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private void createProcessorFilters(final AnalyticRuleDoc analyticRuleDoc) {
+        final AnalyticProcessorFilter filter = AnalyticProcessorFilter.builder()
+                .version(1)
+                .createTimeMs(System.currentTimeMillis())
+                .updateTimeMs(System.currentTimeMillis())
+                .createUser("test")
+                .updateUser("test")
+                .analyticUuid(analyticRuleDoc.getUuid())
+                .enabled(true)
+                .expression(ExpressionOperator.builder().addTerm(MetaFields.FIELD_TYPE,
+                        Condition.EQUALS,
+                        StreamTypeNames.EVENTS).build())
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(Long.MAX_VALUE)
+                .node(nodeInfo.getThisNodeName())
+                .build();
+        analyticProcessorFilterDao.create(filter);
+    }
+
+    private void createNotification(final AnalyticRuleDoc analyticRuleDoc,
+                                    final int timeToWaitSeconds) {
+        final AnalyticNotificationConfig config = AnalyticNotificationStreamConfig.builder()
+                .timeToWaitForData(SimpleDuration.builder().time(timeToWaitSeconds).timeUnit(TimeUnit.SECONDS).build())
+                .destinationFeed(detections)
+                .useSourceFeedIfPossible(true)
+                .build();
+        final AnalyticNotification notification = AnalyticNotification.builder()
+                .version(1)
+                .createTimeMs(System.currentTimeMillis())
+                .updateTimeMs(System.currentTimeMillis())
+                .createUser("test")
+                .updateUser("test")
+                .analyticUuid(analyticRuleDoc.getUuid())
+                .enabled(true)
+                .config(config)
+                .build();
+        analyticNotificationDao.create(notification);
     }
 }

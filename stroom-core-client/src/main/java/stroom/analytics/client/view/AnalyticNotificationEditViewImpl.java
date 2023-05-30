@@ -16,23 +16,22 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter.AnalyticRuleProcessingView;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class AnalyticRuleProcessingViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements AnalyticRuleProcessingView {
+public class AnalyticNotificationEditViewImpl
+        extends ViewImpl
+        implements AnalyticNotificationEditView {
 
     private final Widget widget;
 
@@ -40,15 +39,24 @@ public class AnalyticRuleProcessingViewImpl
     CustomCheckBox enabled;
     @UiField
     DurationPicker timeToWaitForData;
+    @UiField
+    SimplePanel destinationFeed;
+    @UiField
+    CustomCheckBox useSourceFeedIfPossible;
 
     @Inject
-    public AnalyticRuleProcessingViewImpl(final Binder binder) {
+    public AnalyticNotificationEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        enabled.setFocus(true);
     }
 
     @Override
@@ -72,17 +80,22 @@ public class AnalyticRuleProcessingViewImpl
         this.timeToWaitForData.setValue(timeToWaitForData);
     }
 
-    @UiHandler("enabled")
-    public void onEnabled(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+    @Override
+    public void setDestinationFeedView(final View view) {
+        this.destinationFeed.setWidget(view.asWidget());
     }
 
-    @UiHandler("timeToWaitForData")
-    public void onTimeToWaitForData(final ValueChangeEvent<SimpleDuration> event) {
-        getUiHandlers().onDirty();
+    @Override
+    public boolean isUseSourceFeedIfPossible() {
+        return this.useSourceFeedIfPossible.getValue();
     }
 
-    public interface Binder extends UiBinder<Widget, AnalyticRuleProcessingViewImpl> {
+    @Override
+    public void setUseSourceFeedIfPossible(final boolean useSourceFeedIfPossible) {
+        this.useSourceFeedIfPossible.setValue(useSourceFeedIfPossible);
+    }
+
+    public interface Binder extends UiBinder<Widget, AnalyticNotificationEditViewImpl> {
 
     }
 }

@@ -32,24 +32,29 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
 
     private static final TabData QUERY_TAB = new TabDataImpl("Query");
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
+    private static final TabData NOTIFICATIONS_TAB = new TabDataImpl("Notifications");
     private static final TabData PROCESSING_TAB = new TabDataImpl("Processing");
     private final AnalyticQueryEditPresenter queryEditPresenter;
     private final AnalyticRuleSettingsPresenter settingsPresenter;
-    private final AnalyticRuleProcessingPresenter processPresenter;
+    private final AnalyticNotificationsPresenter notificationsPresenter;
+    private final AnalyticProcessingPresenter processPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final AnalyticQueryEditPresenter queryEditPresenter,
                                  final AnalyticRuleSettingsPresenter settingsPresenter,
-                                 final AnalyticRuleProcessingPresenter processPresenter) {
+                                 final AnalyticNotificationsPresenter notificationsPresenter,
+                                 final AnalyticProcessingPresenter processPresenter) {
         super(eventBus, view);
         this.queryEditPresenter = queryEditPresenter;
         this.settingsPresenter = settingsPresenter;
+        this.notificationsPresenter = notificationsPresenter;
         this.processPresenter = processPresenter;
 
         addTab(QUERY_TAB);
         addTab(PROCESSING_TAB);
+        addTab(NOTIFICATIONS_TAB);
         addTab(SETTINGS_TAB);
         selectTab(QUERY_TAB);
     }
@@ -67,6 +72,11 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
                 setDirty(true);
             }
         }));
+        registerHandler(notificationsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
         registerHandler(processPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
                 setDirty(true);
@@ -78,6 +88,8 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     protected void getContent(final TabData tab, final ContentCallback callback) {
         if (QUERY_TAB.equals(tab)) {
             callback.onReady(queryEditPresenter);
+        } else if (NOTIFICATIONS_TAB.equals(tab)) {
+            callback.onReady(notificationsPresenter);
         } else if (SETTINGS_TAB.equals(tab)) {
             callback.onReady(settingsPresenter);
         } else if (PROCESSING_TAB.equals(tab)) {
@@ -91,6 +103,7 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     public void onRead(final DocRef docRef, final AnalyticRuleDoc entity, final boolean readOnly) {
         super.onRead(docRef, entity, readOnly);
         queryEditPresenter.read(docRef, entity, readOnly);
+        notificationsPresenter.read(docRef, entity, readOnly);
         settingsPresenter.read(docRef, entity, readOnly);
         processPresenter.read(docRef, entity, readOnly);
     }
@@ -99,6 +112,7 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc entity) {
         AnalyticRuleDoc modified = entity;
         modified = queryEditPresenter.write(modified);
+        modified = notificationsPresenter.write(modified);
         modified = settingsPresenter.write(modified);
         modified = processPresenter.write(modified);
         return modified;

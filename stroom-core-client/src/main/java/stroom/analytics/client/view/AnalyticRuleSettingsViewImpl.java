@@ -30,12 +30,9 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticRuleSettingsViewImpl
@@ -51,10 +48,6 @@ public class AnalyticRuleSettingsViewImpl
     @UiField
     ItemListBox<AnalyticRuleType> analyticRuleType;
     @UiField
-    FlowPanel aggregateSettings;
-    @UiField
-    SimplePanel destinationFeed;
-    @UiField
     DurationPicker dataRetention;
 
     @Inject
@@ -68,13 +61,10 @@ public class AnalyticRuleSettingsViewImpl
         languageVersion.addSelectionHandler(e -> getUiHandlers().onDirty());
         analyticRuleType.addSelectionHandler(e -> {
             getUiHandlers().onDirty();
-            aggregateSettings.setVisible(AnalyticRuleType.AGGREGATE.equals(analyticRuleType.getSelectedItem()));
         });
 
         analyticRuleType.addItem(AnalyticRuleType.EVENT);
         analyticRuleType.addItem(AnalyticRuleType.AGGREGATE);
-
-        aggregateSettings.setVisible(false);
     }
 
     @Override
@@ -113,12 +103,6 @@ public class AnalyticRuleSettingsViewImpl
     @Override
     public void setAnalyticRuleType(final AnalyticRuleType analyticRuleType) {
         this.analyticRuleType.setSelectedItem(analyticRuleType);
-        aggregateSettings.setVisible(AnalyticRuleType.AGGREGATE.equals(analyticRuleType));
-    }
-
-    @Override
-    public void setDestinationFeedView(final View view) {
-        this.destinationFeed.setWidget(view.asWidget());
     }
 
     @Override
