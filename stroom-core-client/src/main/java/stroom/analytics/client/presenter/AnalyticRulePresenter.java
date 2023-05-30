@@ -53,9 +53,9 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
         this.processPresenter = processPresenter;
 
         addTab(QUERY_TAB);
+        addTab(SETTINGS_TAB);
         addTab(PROCESSING_TAB);
         addTab(NOTIFICATIONS_TAB);
-        addTab(SETTINGS_TAB);
         selectTab(QUERY_TAB);
     }
 

@@ -805,7 +805,7 @@ public class AnalyticsExecutor {
         if (ExpressionUtil.termCount(expressionOperator) == 0) {
             throw new RuntimeException("Unable to process analytic: " +
                     getAnalyticRuleIdentity(analyticRuleDoc) +
-                    " because filter has no meta selected expression");
+                    " because filter has no meta expression");
         }
 
         return findMeta(expressionOperator,
