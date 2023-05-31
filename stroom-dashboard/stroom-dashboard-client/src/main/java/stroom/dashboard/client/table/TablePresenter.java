@@ -828,6 +828,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
+        // Remove all special fields as we will re-add them with the right names if there are any.
+        getTableSettings().getFields().removeIf(Field::isSpecial);
+
         // Get special fields from the current data source.
         final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
         final List<Field> requiredSpecialFields = new ArrayList<>();
@@ -846,9 +849,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             // If the fields we want to make special do exist in the current data source then
             // add them.
             if (requiredSpecialFields.size() > 0) {
-                // Remove all special fields as we will re-add them with the right names if there are any.
-                getTableSettings().getFields().removeIf(Field::isSpecial);
-
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
