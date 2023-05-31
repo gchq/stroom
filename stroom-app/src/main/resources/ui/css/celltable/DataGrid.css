@@ -64,9 +64,7 @@
 
 .dataGridCell {
 	padding: 0 0 0 var(--row__padding--horizontal);
-	vertical-align: middle;
 	overflow: hidden;
-	height: var(--row__height);
 	white-space: nowrap;
 	
 	-moz-user-focus: initial;
@@ -84,8 +82,11 @@
 .dataGridHeader > div,
 .dataGridCell > div {
     display: flex;
+    flex-direction: row;
+    align-items: center;
 	text-overflow: ellipsis;
 	overflow-x: hidden;
+	height: var(--row__height);
 }
 
 .multiline .dataGridHeader > div,
@@ -94,6 +95,7 @@
 	text-overflow: ellipsis;
 	overflow-x: hidden;
 	padding: var(--row__padding--vertical) 0;
+	height: auto;
 }
 
 .dataGridCell .svgCell-button {
