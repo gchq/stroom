@@ -3,6 +3,8 @@ package stroom.meta.impl;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.Status;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 
 import org.slf4j.Logger;
@@ -30,9 +32,7 @@ class StreamAttributeMapUtil {
             map.put(MetaFields.CREATE_TIME.getName(), meta.getCreateMs());
             map.put(MetaFields.EFFECTIVE_TIME.getName(), meta.getEffectiveMs());
             map.put(MetaFields.STATUS_TIME.getName(), meta.getStatusMs());
-            if (meta.getStatus() != null) {
-                map.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
-            }
+            map.put(MetaFields.STATUS.getName(), NullSafe.get(meta.getStatus(), Status::getDisplayValue));
             if (meta.getParentMetaId() != null) {
                 map.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
             }

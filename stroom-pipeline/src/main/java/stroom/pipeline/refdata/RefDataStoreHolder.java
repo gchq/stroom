@@ -41,7 +41,7 @@ class RefDataStoreHolder {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataStoreHolder.class);
 
     private final RefDataStoreFactory refDataStoreFactory;
-    private final RefDataStore offHeapRefDataStore;
+//    private final RefDataStore offHeapRefDataStore;
 
     // Hold the maps that are known to be in each stream, built up as we load each stream.
     // Note this is pipeline scope so exists for the life of the pipeline process.
@@ -52,14 +52,14 @@ class RefDataStoreHolder {
     @Inject
     RefDataStoreHolder(final RefDataStoreFactory refDataStoreFactory) {
         this.refDataStoreFactory = refDataStoreFactory;
-        this.offHeapRefDataStore = refDataStoreFactory.getOffHeapStore();
+//        this.offHeapRefDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
     /**
      * Gets a shared off heap store for long term storage of re-usable reference data
      */
-    RefDataStore getOffHeapRefDataStore() {
-        return offHeapRefDataStore;
+    RefDataStore getOffHeapRefDataStore(final RefStreamDefinition refStreamDefinition) {
+        return refDataStoreFactory.getOffHeapStore(refStreamDefinition);
     }
 
     /**

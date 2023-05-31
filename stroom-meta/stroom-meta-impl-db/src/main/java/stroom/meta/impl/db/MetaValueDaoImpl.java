@@ -223,7 +223,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
         final Map<Long, Map<String, String>> attributeMap = new HashMap<>();
 
         // Get a list of valid data ids.
-        final List<Long> idList = list.parallelStream()
+        final List<Long> idList = list.stream()
                 .map(Meta::getId)
                 .collect(Collectors.toList());
 

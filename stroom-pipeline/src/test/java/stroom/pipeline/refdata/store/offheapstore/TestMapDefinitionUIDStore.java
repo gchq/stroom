@@ -68,15 +68,14 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
         final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
         final UIDSerde uidSerde = new UIDSerde();
         final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
-        mapUidForwardDb = new MapUidForwardDb(lmdbEnv, byteBufferPool, mapDefinitionSerde, uidSerde);
-        mapUidReverseDb = new MapUidReverseDb(lmdbEnv, byteBufferPool, uidSerde, mapDefinitionSerde);
+        mapUidForwardDb = new MapUidForwardDb(refDataLmdbEnv, byteBufferPool, mapDefinitionSerde, uidSerde);
+        mapUidReverseDb = new MapUidReverseDb(refDataLmdbEnv, byteBufferPool, uidSerde, mapDefinitionSerde);
 
         mapDefinitionUIDStore = new MapDefinitionUIDStore(
-                lmdbEnv,
+                refDataLmdbEnv,
                 mapUidForwardDb,
                 mapUidReverseDb);
     }
-
 
     /**
      * Noddy test to verify how LMDB copes with different buffer capacities

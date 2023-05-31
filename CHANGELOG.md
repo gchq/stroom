@@ -13,6 +13,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.20] - 2023-05-30
+
+* Issue **#3485** : Roll lmdb-java back to 0.8.2 to see if it fixes the FFI issue.
+
+
+## [v7.2-beta.19] - 2023-05-30
+
+* Fix inefficient cursor loops in ref data purge. Make other minor performance improvements.
+
+* Issue **#3219** : Change reference loading to use a two stage process to reduce the time the LMDB write transaction is held open for. Change the hashing of string values to be done on bytes rather than on characters which means new loads will not be able to use existing string values as the hashes won't match. This means some duplication of identical strings, but the ones with legacy hashes will eventually be aged out on purge.
+
+* Issue **#3219** : Change reference data to store its data in multiple stores, with one store per reference feed. This should reduce contention when reference data is being loaded, as the load of a reference stream will now only affect lookups on streams in the same feed (assuming it is configured for writes block reads). As existing reference streams are used, they will be copied to the new feed specific stores and marked for purge in the legacy store. If you don't want to migrate existing data you can simply delete the contents of directory 'stroom.referenceData.lmdb.localDir' when stroom is shutdown and reference streams will be loaded on demand as usual.
+
+* Fix Data screen fetching data twice and consequently logging the fetch audit event twice.
+
+* Issue **#3358** : Fix audit events for user preferences screen.
+
+
 ## [v7.2-beta.18] - 2023-05-22
 
 * Issue **#3388** : Fix mouse selection drag scrolling in ace editor.
@@ -5347,7 +5365,9 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.20...HEAD
+[v7.2-beta.20]: https://github.com/gchq/stroom/compare/v7.2-beta.19...v7.2-beta.20
+[v7.2-beta.19]: https://github.com/gchq/stroom/compare/v7.2-beta.18...v7.2-beta.19
 [v7.2-beta.18]: https://github.com/gchq/stroom/compare/v7.2-beta.17...v7.2-beta.18
 [v7.2-beta.17]: https://github.com/gchq/stroom/compare/v7.2-beta.16...v7.2-beta.17
 [v7.2-beta.16]: https://github.com/gchq/stroom/compare/v7.2-beta.15...v7.2-beta.16

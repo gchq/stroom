@@ -23,11 +23,8 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.lmdb.LmdbDb;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
-import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
-import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
@@ -40,19 +37,17 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataLoader.LoaderMode;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb.Factory;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.HasHealthCheck;
+import stroom.util.NullSafe;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -63,18 +58,17 @@ import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
 import com.google.common.util.concurrent.Striped;
+import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.apache.commons.lang3.mutable.MutableLong;
 import org.lmdbjava.CursorIterable;
-import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,14 +82,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -107,29 +100,17 @@ import javax.validation.constraints.NotNull;
  * A lookup is done by creating a key that is the lookup key combined with a {@link MapDefinition}
  * so only an entry matching the lookup key, the map name and the ref stream will be returned.
  */
-@Singleton
 public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
-    private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
-
-    private static final TemporalUnit PROCESSING_INFO_TRUNCATION_UNIT = ChronoUnit.HOURS;
-
-    // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
-    private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
-    private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
-
-    private final LmdbEnvFactory lmdbEnvFactory;
+    private final OffHeapRefDataLoader.Factory offHeapRefDataLoaderFactory;
     private final TaskContextFactory taskContextFactory;
-
-    private final LmdbEnv lmdbEnvironment;
-
+    private final RefDataLmdbEnv lmdbEnvironment;
     // the DBs that make up the store
     private final KeyValueStoreDb keyValueStoreDb;
     private final RangeStoreDb rangeStoreDb;
     private final ProcessingInfoDb processingInfoDb;
-
     // classes that front multiple DBs
     private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
@@ -144,95 +125,80 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final Striped<Lock> refStreamDefStripedReentrantLock;
 
     private final ByteBufferPool byteBufferPool;
+    private final String storeName;
+
 
     @Inject
-    RefDataOffHeapStore(
-            final LmdbEnvFactory lmdbEnvFactory,
-            final Provider<ReferenceDataConfig> referenceDataConfigProvider,
-            final ByteBufferPool byteBufferPool,
-            final Factory keyValueStoreDbFactory,
-            final ValueStoreDb.Factory valueStoreDbFactory,
-            final ValueStoreMetaDb.Factory valueStoreMetaDbFactory,
-            final RangeStoreDb.Factory rangeStoreDbFactory,
-            final MapUidForwardDb.Factory mapUidForwardDbFactory,
-            final MapUidReverseDb.Factory mapUidReverseDbFactory,
-            final RefDataValueConverter refDataValueConverter,
-            final ProcessingInfoDb.Factory processingInfoDbFactory,
-            final TaskContextFactory taskContextFactory) {
+    RefDataOffHeapStore(@Assisted final RefDataLmdbEnv lmdbEnvironment,
+                        final OffHeapRefDataLoader.Factory offHeapRefDataLoaderFactory,
+                        final Provider<ReferenceDataConfig> referenceDataConfigProvider,
+                        final ByteBufferPool byteBufferPool,
+                        final KeyValueStoreDb.Factory keyValueStoreDbFactory,
+                        final RangeStoreDb.Factory rangeStoreDbFactory,
+                        final RefDataValueConverter refDataValueConverter,
+                        final ProcessingInfoDb.Factory processingInfoDbFactory,
+                        final TaskContextFactory taskContextFactory,
+                        final ValueStore.Factory valueStoreFactory,
+                        final MapDefinitionUIDStore.Factory mapDefinitionUIDStoreFactory) {
 
-        this.lmdbEnvFactory = lmdbEnvFactory;
+        this.lmdbEnvironment = lmdbEnvironment;
+        this.offHeapRefDataLoaderFactory = offHeapRefDataLoaderFactory;
         this.referenceDataConfigProvider = referenceDataConfigProvider;
         this.refDataValueConverter = refDataValueConverter;
         this.taskContextFactory = taskContextFactory;
 
-        this.lmdbEnvironment = createEnvironment(referenceDataConfigProvider.get().getLmdbConfig());
-
         // create all the databases
         this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
         this.rangeStoreDb = rangeStoreDbFactory.create(lmdbEnvironment);
-        final ValueStoreDb valueStoreDb = valueStoreDbFactory.create(lmdbEnvironment);
-        final MapUidForwardDb mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
-        final MapUidReverseDb mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
-        final ValueStoreMetaDb valueStoreMetaDb = valueStoreMetaDbFactory.create(lmdbEnvironment);
-
-        // hold all the DBs in a map so we can get at them by name
-        addDbsToMap(
-                keyValueStoreDb,
-                rangeStoreDb,
-                valueStoreDb,
-                mapUidForwardDb,
-                mapUidReverseDb,
-                processingInfoDb,
-                valueStoreMetaDb);
-
-        this.valueStore = new ValueStore(lmdbEnvironment, valueStoreDb, valueStoreMetaDb);
-        this.mapDefinitionUIDStore = new MapDefinitionUIDStore(
-                lmdbEnvironment,
-                mapUidForwardDb,
-                mapUidReverseDb);
-
         this.byteBufferPool = byteBufferPool;
+        this.valueStore = valueStoreFactory.create(lmdbEnvironment);
+        this.mapDefinitionUIDStore = mapDefinitionUIDStoreFactory.create(lmdbEnvironment);
 
         // Need a reasonable number to try and avoid keys that are not equal from using the
         // same stripe
         final int stripesCount = referenceDataConfigProvider.get().getLoadingLockStripes();
         LOGGER.debug("Initialising striped with {} stripes", stripesCount);
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
+        this.storeName = lmdbEnvironment.getName().orElse(null);
     }
 
     private void purgePartialLoads() {
 
         final Instant startTime = Instant.now();
 
-        final Predicate<ByteBuffer> partialLoadProgressPredicate =
+        final Predicate<ByteBuffer> isPurgeablePredicate =
                 RefDataProcessingInfoSerde.createProcessingStatePredicate(
                         ProcessingState.LOAD_IN_PROGRESS,
                         ProcessingState.PURGE_IN_PROGRESS,
-                        ProcessingState.TERMINATED);
+                        ProcessingState.TERMINATED,
+                        ProcessingState.READY_FOR_PURGE);
 
         // Get all the ref stream defs in a partially loaded/purged state
         // It is only in exceptional circumstances that we get streams in this state so the list should
         // not be big.
-        final List<Entry<RefStreamDefinition, RefDataProcessingInfo>> invalidStreams = lmdbEnvironment.getWithReadTxn(
-                readTxn -> getInvalidStreams(readTxn, partialLoadProgressPredicate));
+        final List<Entry<RefStreamDefinition, RefDataProcessingInfo>> purgeableRefStreamDefs =
+                lmdbEnvironment.getWithReadTxn(readTxn -> getInvalidStreams(readTxn, isPurgeablePredicate));
 
-        if (!invalidStreams.isEmpty()) {
+        if (!purgeableRefStreamDefs.isEmpty()) {
             AtomicReference<PurgeCounts> purgeCountsRef = new AtomicReference<>(PurgeCounts.ZERO);
-            for (final Entry<RefStreamDefinition, RefDataProcessingInfo> entry : invalidStreams) {
+            for (final Entry<RefStreamDefinition, RefDataProcessingInfo> entry : purgeableRefStreamDefs) {
                 try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
                     final RefStreamDefinition refStreamDefinition = entry.getKey();
                     final RefDataProcessingInfo refDataProcessingInfo = entry.getValue();
-                    taskContextFactory.current().info(() -> LogUtil.message(
-                            "Purging partially loaded/purged reference stream {}:{} with state {}",
+                    final Supplier<String> msgSupplier = () -> LogUtil.message(
+                            "Purging partially loaded/purged reference stream {}:{} with state {} in store '{}'",
                             refStreamDefinition.getStreamId(),
                             refStreamDefinition.getPartNumber(),
-                            refDataProcessingInfo.getProcessingState()));
+                            refDataProcessingInfo.getProcessingState(),
+                            storeName);
+                    taskContextFactory.current().info(msgSupplier);
+                    LOGGER.info(msgSupplier);
                     processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
 
                     // Need to recheck the state under lock in case it has changed
                     final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
-                            partialLoadProgressPredicate,
+                            isPurgeablePredicate,
                             refStreamDefPooledBuf.getByteBuffer(),
                             refStreamDefinition);
 
@@ -244,13 +210,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             }
 
             LOGGER.info(() -> LogUtil.message(
-                    "Purge of partial loads/purges {}- {}",
+                    "Purge of partial loads/purges {} in store {} - {}",
                     (Thread.currentThread().isInterrupted()
                             ? "interrupted"
-                            : "completed successfully "),
-                    buildPurgeInfoString(startTime, purgeCountsRef.get())));
+                            : "completed successfully"),
+                    buildPurgeInfoString(startTime, purgeCountsRef.get()), storeName));
         } else {
-            LOGGER.info("Completed check for invalid ref loads/purges in {}",
+            LOGGER.info("Completed check for invalid ref loads/purges in store {} in '{}'",
+                    storeName,
                     Duration.between(startTime, Instant.now()));
         }
     }
@@ -287,41 +254,23 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return invalidStreams;
     }
 
-    private LmdbEnv createEnvironment(final ReferenceDataLmdbConfig lmdbConfig) {
-
-        // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
-        // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
-        // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
-        // comes with greater risk of corruption.
-
-        // NOTE on setMapSize() from LMDB author found on https://groups.google.com/forum/#!topic/caffe-users/0RKsTTYRGpQ
-        // On Windows the OS sets the filesize equal to the mapsize. (MacOS requires that too, and allocates
-        // all of the physical space up front, it doesn't support sparse files.) The mapsize should not be
-        // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
-        // set it larger than the amount of free space on the filesystem.
-
-        final LmdbEnv env = lmdbEnvFactory.builder(lmdbConfig)
-                .withMaxDbCount(7)
-                .addEnvFlag(EnvFlags.MDB_NOTLS)
-                .build();
-
-        LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
-        return env;
-    }
-
     @Override
     public StorageType getStorageType() {
         return StorageType.OFF_HEAP;
     }
 
-    private void addDbsToMap(final LmdbDb... lmdbDbs) {
-        for (LmdbDb lmdbDb : lmdbDbs) {
-            this.databaseMap.put(lmdbDb.getDbName(), lmdbDb);
-        }
+    RefDataLmdbEnv getLmdbEnvironment() {
+        return lmdbEnvironment;
     }
 
-    @Override
-    public Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
+    /**
+     * @return True if the store contains no {@link RefDataProcessingInfo} entries.
+     */
+    boolean isEmpty() {
+        return processingInfoDb.getEntryCount() == 0;
+    }
+
+    Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
         // get the current processing info
         final Optional<RefDataProcessingInfo> optProcessingInfo = processingInfoDb.get(refStreamDefinition);
 
@@ -358,6 +307,23 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Override
     public boolean exists(final MapDefinition mapDefinition) {
         return mapDefinitionUIDStore.exists(mapDefinition);
+    }
+
+    /**
+     * @return True if this {@link RefStreamDefinition} exists in the store.
+     */
+    public boolean exists(final RefStreamDefinition refStreamDefinition) {
+        return processingInfoDb.exists(refStreamDefinition);
+    }
+
+    /**
+     * @return True if any {@link RefStreamDefinition}s have been loaded with this stream ID.
+     */
+    boolean exists(final long refStreamId) {
+        return lmdbEnvironment.getWithReadTxn(readTxn ->
+                processingInfoDb.exists(
+                        readTxn,
+                        refStreamDefinition -> refStreamDefinition.getStreamId() == refStreamId));
     }
 
     @Override
@@ -510,9 +476,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purgeOldData() {
-        LOGGER.info("purgeAge in purgeOldData: {}", referenceDataConfigProvider.get().getPurgeAge());
         purgeOldData(Instant.now(), referenceDataConfigProvider.get().getPurgeAge());
-
         // Also clear out any partial loads/purges
         purgePartialLoads();
     }
@@ -520,7 +484,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Override
     public void purgeOldData(final StroomDuration purgeAge) {
         purgeOldData(Instant.now(), purgeAge);
-
         // Also clear out any partial loads/purges
         purgePartialLoads();
     }
@@ -529,11 +492,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public void purge(final long refStreamId, final long partIndex) {
         final TaskContext taskContext = taskContextFactory.current();
         final Instant startTime = Instant.now();
-        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{}",
-                refStreamId, partIndex));
+        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{} in store '{}'",
+                refStreamId, partIndex, storeName));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
-
 
         try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
 
@@ -552,7 +514,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 }
 
                 // Find the next one that is ready for purge
-                // Can just use a stream and for each as that would result in a cursor inside a cursor
+                // Can't just use a stream and for each as that would result in a cursor inside a cursor
                 final Optional<Entry<RefStreamDefinition, RefDataProcessingInfo>> optEntry =
                         lmdbEnvironment.getWithReadTxn(readTxn ->
                                 processingInfoDb.findFirstMatchingKey(
@@ -591,13 +553,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             if (purgeCounts.refStreamDefsFailedCount > 0) {
                 // One or more ref stream defs failed
                 throw new RuntimeException(LogUtil.message(
-                        "Unable to purge {} ref stream definitions",
-                        purgeCounts.refStreamDefsFailedCount));
+                        "Unable to purge {} ref stream definitions in store {}",
+                        purgeCounts.refStreamDefsFailedCount,
+                        getName()));
             } else if (purgeCounts.refStreamDefsDeletedCount > 0) {
-                LOGGER.info(() -> "Purge completed successfully - " +
-                        buildPurgeInfoString(startTime, purgeCounts));
+                LOGGER.info(() -> LogUtil.message(
+                        "Purge of store {} completed successfully - {}",
+                        getName(),
+                        buildPurgeInfoString(startTime, purgeCounts)));
             } else {
-                LOGGER.info(() -> "Purge completed with no data to purge.");
+                LOGGER.info(() -> LogUtil.message(
+                        "Purge of store {} completed with no data to purge.", getName()));
             }
         } catch (TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
@@ -607,10 +573,232 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     buildPurgeInfoString(startTime, countsRef.get()));
             throw e;
         } catch (Exception e) {
-            LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
-                    buildPurgeInfoString(startTime, countsRef.get()), e);
+            LOGGER.error(() -> "Purge on store " + getName() + " failed due to "
+                    + e.getMessage() + ". " + buildPurgeInfoString(startTime, countsRef.get()), e);
             throw e;
         }
+    }
+
+    /**
+     * Migrate the data for refStreamId into destinationStore
+     */
+    void migrateRefStreams(final long refStreamId, final RefDataOffHeapStore destinationStore) {
+        final TaskContext taskContext = taskContextFactory.current();
+        taskContext.info(() -> LogUtil.message("Migrating legacy ref data for reference stream {} into store {}",
+                refStreamId, destinationStore.getName()));
+        final DurationTimer timer = DurationTimer.start();
+        try {
+            final Predicate<RefStreamDefinition> refStreamDefinitionPredicate = refStreamDef ->
+                    refStreamDef.getStreamId() == refStreamId;
+
+            // Initially we scan the whole range but as we find stuff we move the start key
+            final AtomicReference<KeyRange<RefStreamDefinition>> keyRangeRef = new AtomicReference<>(KeyRange.all());
+            boolean wasMatchFound;
+            do {
+                // Allow for task termination
+                if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                    // As we are outside of a txn the interruption is ok and everything will be in
+                    // valid state for when purge is run again. Thus we don't n
+                    throw new TaskTerminatedException();
+                }
+
+                // RefStreamDefinition has variable width serialisation, so we have to scan to find what we are after
+                final Optional<Entry<RefStreamDefinition, RefDataProcessingInfo>> optEntry =
+                        lmdbEnvironment.getWithReadTxn(readTxn ->
+                                processingInfoDb.findFirstMatchingKey(
+                                        readTxn,
+                                        keyRangeRef.get(),
+                                        refStreamDefinitionPredicate));
+
+                if (optEntry.isPresent()) {
+                    wasMatchFound = true;
+                    final RefStreamDefinition refStreamDefinition = optEntry.get().getKey();
+                    LOGGER.debug("refStreamDefinition: {}", refStreamDefinition);
+
+                    // Make the next iteration start just after this entry
+                    keyRangeRef.set(KeyRange.greaterThan(refStreamDefinition));
+
+                    migrateRefStreamDef(refStreamDefinition, destinationStore);
+                } else {
+                    LOGGER.debug("No matching ref stream found");
+                    wasMatchFound = false;
+                }
+            } while (wasMatchFound);
+
+            LOGGER.info("Completed migration of ref stream {} into store {} in {}",
+                    refStreamId, destinationStore.storeName, timer);
+
+        } catch (TaskTerminatedException e) {
+            // Expected behaviour so just rethrow, stopping it being picked up by the other
+            // catch block
+            LOGGER.debug("Migration terminated, refStreamId: " + refStreamId, e);
+            LOGGER.warn("Migration terminated, refStreamId: " + refStreamId);
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error(() -> "Migration of refStreamId " + refStreamId + " failed due to " + e.getMessage());
+            throw e;
+        }
+    }
+
+    private void migrateRefStreamDef(final RefStreamDefinition refStreamDefinition,
+                                     final RefDataOffHeapStore destStore) {
+
+        final DurationTimer timer = DurationTimer.start();
+        // Here just to make code clearer
+        final RefDataOffHeapStore legacyStore = this;
+        // Need to lock both to ensure no one is trying to load the same stream into the dest store
+        // or purge it from the source store. A deadlock is a bit of a worry as we are getting two locks
+        // but this should be the only code that tries to lock the legacy store and a new one.
+        destStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+            LOGGER.debug("Acquired destination lock in {}, refStreamDef: {}", timer, refStreamDefinition);
+            legacyStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+                LOGGER.debug("Acquired source lock in {}, refStreamDef: {}", timer, refStreamDefinition);
+
+                // It is possible another thread beat us to the migration (or loaded it),
+                // so check again for existence
+                final boolean refStreamDefExists = destStore.exists(refStreamDefinition);
+                if (refStreamDefExists) {
+                    LOGGER.debug("refStreamDefinition already exists in destinationStore, nothing to do. " +
+                            "refStreamDefinition: {}", refStreamDefinition);
+                } else {
+                    final Optional<RefDataProcessingInfo> optInfo = processingInfoDb.get(refStreamDefinition);
+                    optInfo.ifPresent(info -> {
+                        destStore.doWithLoaderUnlessComplete(
+                                refStreamDefinition,
+                                info.getEffectiveTimeEpochMs(),
+                                refDataLoader -> {
+                                    final OffHeapRefDataLoader destStoreLoader =
+                                            (OffHeapRefDataLoader) refDataLoader;
+                                    migrateRefStreamDef(refStreamDefinition, destStore, destStoreLoader);
+                                });
+                    });
+                }
+                // Now this stream is all migrated, mark as ready to purge so it is picked up in
+                // purgePartialLoads
+                LOGGER.info("Making ref stream available for purge: {}", refStreamDefinition);
+                legacyStore.setProcessingState(refStreamDefinition, ProcessingState.READY_FOR_PURGE);
+            });
+        });
+    }
+
+    private void migrateRefStreamDef(final RefStreamDefinition refStreamDefinition,
+                                     final RefDataOffHeapStore destStore,
+                                     final OffHeapRefDataLoader destStoreLoader) {
+        LOGGER.debug("Migrating entries for refStreamDefinition: {}", refStreamDefinition);
+        final MutableLong keyValueEntryCount = new MutableLong(0);
+        final MutableLong rangeValueEntryCount = new MutableLong(0);
+        try {
+            // We are pulling data from an existing store, so duplicates have already been
+            // dealt with
+            destStoreLoader.initialise(false, LoaderMode.MIGRATE);
+            final int maxCommits = referenceDataConfigProvider.get().getMaxPutsBeforeCommit();
+
+            try (final PooledByteBuffer uidPooledByteBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer();
+                    final BatchingWriteTxn destBatchingWriteTxn = destStore.lmdbEnvironment
+                            .openBatchingWriteTxn(maxCommits)) {
+
+                final ByteBuffer uidByteBuffer = uidPooledByteBuffer.getByteBuffer();
+
+                // Read txn on source store
+                lmdbEnvironment.doWithReadTxn(sourceReadTxn -> {
+                    final List<MapDefinition> mapDefinitions = mapDefinitionUIDStore.getMapDefinitions(sourceReadTxn,
+                            refStreamDefinition);
+
+                    mapDefinitions.forEach(mapDefinition -> {
+                        final UID mapUid = mapDefinitionUIDStore.getUid(sourceReadTxn, mapDefinition, uidByteBuffer)
+                                .orElseThrow(() ->
+                                        new RuntimeException("No UID for mapDefinition " + mapDefinition));
+
+                        // As far as possible do the migration without any serialisation
+
+                        migrateKeyValueEntries(destStoreLoader,
+                                keyValueEntryCount,
+                                destBatchingWriteTxn,
+                                sourceReadTxn,
+                                mapDefinitions,
+                                mapDefinition,
+                                mapUid);
+
+                        migrateRangeValueEntries(destStoreLoader,
+                                rangeValueEntryCount,
+                                destBatchingWriteTxn,
+                                sourceReadTxn,
+                                mapDefinitions,
+                                mapDefinition,
+                                mapUid);
+                    });
+                });
+                destBatchingWriteTxn.commit();
+            }
+
+            destStoreLoader.completeProcessing(ProcessingState.COMPLETE);
+        } catch (Exception e) {
+            destStoreLoader.completeProcessing(ProcessingState.FAILED);
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private void migrateKeyValueEntries(final OffHeapRefDataLoader destStoreLoader,
+                                        final MutableLong keyValueEntryCount,
+                                        final BatchingWriteTxn destBatchingWriteTxn,
+                                        final Txn<ByteBuffer> readTxn,
+                                        final List<MapDefinition> mapDefinitions,
+                                        final MapDefinition mapDefinition,
+                                        final UID mapUid) {
+        LOGGER.debug("Migrating Key/Value entries for mapDefinition: {}", mapDefinitions);
+        // Loop over all KV entries for this map name in this stream
+        keyValueStoreDb.forEachEntryAsBytes(readTxn, mapUid, keyValBuffers -> {
+            final ByteBuffer keyValueStoreKeyBuffer = keyValBuffers.key();
+            final ByteBuffer valueStoreKeyBuffer = keyValBuffers.val();
+
+            final int typeId = valueStore.getTypeId(readTxn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Every entry should have a corresponding value meta"));
+            final ByteBuffer refDataValueBuffer = valueStore.getAsBytes(readTxn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Every entry should have a corresponding value"));
+
+            destStoreLoader.migrateKeyEntry(
+                    destBatchingWriteTxn,
+                    mapDefinition,
+                    keyValueStoreKeyBuffer,
+                    typeId,
+                    refDataValueBuffer);
+            keyValueEntryCount.increment();
+            destBatchingWriteTxn.commitIfRequired();
+        });
+    }
+
+    private void migrateRangeValueEntries(final OffHeapRefDataLoader destStoreLoader,
+                                          final MutableLong rangeValueEntryCount,
+                                          final BatchingWriteTxn destBatchingWriteTxn,
+                                          final Txn<ByteBuffer> sourceReadTxn,
+                                          final List<MapDefinition> mapDefinitions,
+                                          final MapDefinition mapDefinition,
+                                          final UID mapUid) {
+        LOGGER.debug("Migrating Range/Value entries for mapDefinition: {}", mapDefinitions);
+        // Loop over all range:value entries for this map name in this stream
+        rangeStoreDb.forEachEntryAsBytes(sourceReadTxn, mapUid, keyValBuffers -> {
+            final ByteBuffer rangeStoreKeyBuffer = keyValBuffers.key();
+            final ByteBuffer valueStoreKeyBuffer = keyValBuffers.val();
+
+            final int typeId = valueStore.getTypeId(sourceReadTxn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Every entry should have a corresponding value meta"));
+            final ByteBuffer refDataValueBuffer = valueStore.getAsBytes(sourceReadTxn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Every entry should have a corresponding value"));
+
+            destStoreLoader.migrateRangeEntry(
+                    destBatchingWriteTxn,
+                    mapDefinition,
+                    rangeStoreKeyBuffer,
+                    typeId,
+                    refDataValueBuffer);
+            rangeValueEntryCount.increment();
+            destBatchingWriteTxn.commitIfRequired();
+        });
     }
 
     /**
@@ -620,20 +808,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
     @Override
-    protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
-                                   final long effectiveTimeMs) {
+    protected RefDataLoader createLoader(final RefStreamDefinition refStreamDefinition,
+                                         final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
-        RefDataLoader refDataLoader = new OffHeapRefDataLoader(
-                this,
+        final RefDataLoader refDataLoader = offHeapRefDataLoaderFactory.create(
                 refStreamDefStripedReentrantLock,
-                keyValueStoreDb,
-                rangeStoreDb,
-                valueStore,
-                mapDefinitionUIDStore,
-                processingInfoDb,
-                lmdbEnvironment,
                 refStreamDefinition,
-                effectiveTimeMs);
+                effectiveTimeMs,
+                lmdbEnvironment);
 
         refDataLoader.setCommitInterval(referenceDataConfigProvider.get().getMaxPutsBeforeCommit());
         return refDataLoader;
@@ -654,6 +836,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return processingInfoDb.getEntryCount();
     }
 
+    long getValueStoreCount() {
+        return valueStore.getEntryCount();
+    }
+
     /**
      * Synchronized to prevent to ensure concurrent purge jobs don't clash
      *
@@ -661,13 +847,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      */
     synchronized void purgeOldData(final Instant now, final StroomDuration purgeAge) {
         final TaskContext taskContext = taskContextFactory.current();
-        taskContext.info(() -> "Purging old data");
+        taskContext.info(() -> "Purging old data in store " + storeName);
         final Instant startTime = Instant.now();
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
-
         final Instant purgeCutOffTime = TimeUtils.durationToThreshold(now, purgeAge);
 
-        LOGGER.info("Purging reference data store with purge age {} ({}), cut off time {}",
+        LOGGER.info("Checking ref store '{}' for streams to purge, with purge age: {} ({}), cut off time: {}",
+                storeName,
                 purgeAge,
                 purgeAge.getDuration(),
                 purgeCutOffTime);
@@ -728,8 +914,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             final PurgeCounts purgeCounts = countsRef.get();
             if (purgeCounts.refStreamDefsFailedCount == 0) {
-                LOGGER.info(() -> "Purge completed successfully - " +
-                        buildPurgeInfoString(startTime, purgeCounts));
+                if (purgeCounts.isZero()) {
+                    LOGGER.info("Nothing to purge in store '{}'", storeName);
+                } else {
+                    LOGGER.info(() -> LogUtil.message("Purge completed successfully on store '{}' - {}",
+                            storeName, buildPurgeInfoString(startTime, purgeCounts)));
+                }
             } else {
                 // One or more ref stream defs failed
                 throw new RuntimeException(LogUtil.message(
@@ -894,29 +1084,35 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                                    final BatchingWriteTxn batchingWriteTxn) {
         final TaskContext taskContext = taskContextFactory.current();
 
-        taskContext.info(() -> "Purging reference stream " +
-                refStreamDefinition.getStreamId() + ":" +
-                refStreamDefinition.getPartIndex());
+        taskContext.info(() -> LogUtil.message("Purging reference stream {}:{} in store '{}'",
+                refStreamDefinition.getStreamId(),
+                refStreamDefinition.getPartIndex(),
+                storeName));
 
+        final Duration age = Duration.between(refDataProcessingInfo.getLastAccessedTime(), Instant.now());
         final String refStreamDefStr = LogUtil.message(
                 "stream: {}, " +
+                        "state: {}, " +
+                        "access time: {} (age: {}), " +
+                        "store: '{}'" +
+                        "create time: {}, " +
                         "effective time: {}, " +
                         "pipeline: {}, " +
-                        "pipeline version: {}, " +
-                        "create time: {}, " +
-                        "access time: {}, " +
-                        "state: {}",
+                        "pipeline version: {}",
                 refStreamDefinition.getStreamId(),
+                refDataProcessingInfo.getProcessingState(),
+                refDataProcessingInfo.getLastAccessedTime(),
+                age,
+                storeName,
+                refDataProcessingInfo.getCreateTime(),
                 refDataProcessingInfo.getEffectiveTime(),
                 DocRefUtil.createSimpleDocRefString(refStreamDefinition.getPipelineDocRef()),
-                refStreamDefinition.getPipelineVersion(),
-                refDataProcessingInfo.getCreateTime(),
-                refDataProcessingInfo.getLastAccessedTime(),
-                refDataProcessingInfo.getProcessingState());
+                refStreamDefinition.getPipelineVersion());
 
         LOGGER.info("Purging refStreamDefinition with {}", refStreamDefStr);
 
         RefStreamPurgeCounts refStreamSummaryInfo = RefStreamPurgeCounts.zero();
+        final Instant refStreamStartTime = Instant.now();
         try {
             // mark it is purge in progress, so if we are committing part way through
             // other processes will know it is a partial state.
@@ -943,22 +1139,24 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             batchingWriteTxn.commit();
 
             LOGGER.info("Completed purge of refStreamDefinition with stream {} (" +
-                            "{} maps deleted, {} values deleted, {} values de-referenced)",
+                            "{} maps deleted, {} values deleted, {} values de-referenced) in {}",
                     refStreamDefinition.getStreamId(),
                     refStreamSummaryInfo.mapsDeletedCount,
                     refStreamSummaryInfo.valuesDeletedCount,
-                    refStreamSummaryInfo.valuesDeReferencedCount);
+                    refStreamSummaryInfo.valuesDeReferencedCount,
+                    Duration.between(refStreamStartTime, Instant.now()));
 
         } catch (Exception e) {
             refStreamSummaryInfo = refStreamSummaryInfo.increment(
                     0, 0, 0, false);
 
             LOGGER.error("Failed purge of refStreamDefinition with stream {} (" +
-                            "{} maps deleted, {} values deleted, {} values de-referenced): {}",
+                            "{} maps deleted, {} values deleted, {} values de-referenced) in {}: {}",
                     refStreamDefinition.getStreamId(),
                     refStreamSummaryInfo.mapsDeletedCount,
                     refStreamSummaryInfo.valuesDeletedCount,
                     refStreamSummaryInfo.valuesDeReferencedCount,
+                    Duration.between(refStreamStartTime, Instant.now()),
                     e.getMessage(), e);
 
             try {
@@ -1007,7 +1205,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private RefStreamPurgeCounts purgeRefStreamData(final BatchingWriteTxn batchingWriteTxn,
                                                     final RefStreamDefinition refStreamDefinition) {
 
-        LOGGER.debug("purgeRefStreamData({})", refStreamDefinition);
+        LOGGER.debug("purgeRefStreamData({}), store: '{}'", refStreamDefinition, storeName);
 
         RefStreamPurgeCounts summaryInfo = RefStreamPurgeCounts.zero();
         Optional<UID> optMapUid;
@@ -1030,17 +1228,18 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     LOGGER.debug("Found mapUid {} for refStreamDefinition {}", mapUid, refStreamDefinition);
 
                     final Tuple2<Integer, Integer> dataPurgeCounts = purgeMapData(
-                            batchingWriteTxn, optMapUid.get());
+                            batchingWriteTxn, mapUid);
 
                     summaryInfo = summaryInfo.increment(
                             1,
                             dataPurgeCounts._1(),
                             dataPurgeCounts._2());
 
-                    LOGGER.info("  Purged map {}, {} values deleted, {} values de-referenced",
+                    LOGGER.info("  Purged map {}, {} values deleted, {} values de-referenced, store: '{}'",
                             mapDefinition.getMapName(),
                             dataPurgeCounts._1(),
-                            dataPurgeCounts._2());
+                            dataPurgeCounts._2(),
+                            storeName);
                 } else {
                     LOGGER.debug("No more map definitions to purge for refStreamDefinition {}", refStreamDefinition);
                 }
@@ -1065,7 +1264,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 batchingWriteTxn,
                 mapUid,
                 (writeTxn, keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
-
                     //dereference this value, deleting it if required
                     deReferenceOrDeleteValue(
                             writeTxn,
@@ -1083,7 +1281,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 batchingWriteTxn,
                 mapUid,
                 (writeTxn, rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
-
                     //dereference this value, deleting it if required
                     deReferenceOrDeleteValue(
                             writeTxn,
@@ -1114,7 +1311,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
     }
 
-
     /**
      * Package-private for testing
      */
@@ -1135,58 +1331,68 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      */
     @Override
     public void logAllContents(Consumer<String> logEntryConsumer) {
-        databaseMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(Map.Entry::getValue)
-                .forEach(lmdbDb -> lmdbDb.logDatabaseContents(logEntryConsumer));
-    }
-
-    void logContents(final String dbName) {
-        doWithLmdb(dbName, LmdbDb::logDatabaseContents);
-    }
-
-    void doWithLmdb(final String dbName, final Consumer<LmdbDb> work) {
-        LmdbDb lmdbDb = databaseMap.get(dbName);
-        if (lmdbDb == null) {
-            throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
-        }
-        work.accept(lmdbDb);
-    }
-
-    /**
-     * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
-     */
-    void logAllRawContents(Consumer<String> logEntryConsumer) {
-        databaseMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(Map.Entry::getValue)
-                .forEach(lmdbDb -> lmdbDb.logDatabaseContents(logEntryConsumer));
-    }
-
-    void logRawContents(final String dbName) {
-        doWithLmdb(dbName, LmdbDb::logRawDatabaseContents);
+        lmdbEnvironment.logAllContents(logEntryConsumer);
     }
 
     long getEntryCount(final String dbName) {
-        LmdbDb lmdbDb = databaseMap.get(dbName);
-        if (lmdbDb == null) {
-            throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
-        }
-        return lmdbDb.getEntryCount();
+        return lmdbEnvironment.getEntryCount(dbName);
     }
 
+//    @Override
+//    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+//
+//        // TODO @AT This is all VERY crude. We should only be hitting the other DBs if we are returning
+//        //   a field from them or filtering on one of their fields. Also we should not be scanning over the
+//        //   whole of the kv/rv DBs, instead using start/stop keys built from the query expression
+//
+//        // TODO @AT This is not ideal holding a txn open for the whole query (if the query takes a long time)
+//        //   as read txns prevent writers from writing to reclaimed space in the db, so the store can get quite big.
+//        //   see https://lmdb.readthedocs.io/en/release/#transaction-management
+//
+//        return lmdbEnvironment.getWithReadTxn(readTxn -> {
+//            try (final CursorIterable<ByteBuffer> keyValueDbIterable = keyValueStoreDb.getLmdbDbi().iterate(
+//                    readTxn, KeyRange.all());
+//                    final CursorIterable<ByteBuffer> rangeValueDbIterable = rangeStoreDb.getLmdbDbi().iterate(
+//                            readTxn, KeyRange.all())) {
+//
+//                // Transient caches of some of the low caridinality but high frequency lookups
+//                // Only provides limited performance gains.
+//                final Map<UID, MapDefinition> uidToMapDefMap = new HashMap<>();
+//                final Map<MapDefinition, RefDataProcessingInfo> mapDefToProcessingInfoMap = new HashMap<>();
+//
+//                final Stream<RefStoreEntry> keyValueStream = buildKeyValueStoreEntryStream(
+//                        readTxn,
+//                        keyValueDbIterable,
+//                        uidToMapDefMap,
+//                        mapDefToProcessingInfoMap);
+//
+//                final Stream<RefStoreEntry> rangeValueStream =
+//                        buildRangeValueStoreEntryStream(
+//                                readTxn,
+//                                rangeValueDbIterable,
+//                                uidToMapDefMap,
+//                                mapDefToProcessingInfoMap);
+//
+//                final LongAdder entryCounter = new LongAdder();
+//                final Stream<RefStoreEntry> combinedStream = Stream.concat(keyValueStream, rangeValueStream)
+//                        .peek(entry -> entryCounter.increment());
+//
+//                return LOGGER.logDurationIfDebugEnabled(
+//                        () ->
+//                                streamFunction.apply(combinedStream),
+//                        () ->
+//                                LogUtil.message("Scanned over {} entries", entryCounter.sum()));
+//            }
+//        });
+//    }
+
     @Override
-    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+    public void consumeEntries(final Predicate<RefStoreEntry> predicate,
+                               final Predicate<RefStoreEntry> takeWhile,
+                               final Consumer<RefStoreEntry> entryConsumer) {
+        Objects.requireNonNull(entryConsumer);
 
-        // TODO @AT This is all VERY crude. We should only be hitting the other DBs if we are returning
-        //   a field from them or filtering on one of their fields. Also we should not be scanning over the
-        //   whole of the kv/rv DBs, instead using start/stop keys built from the query expression
-
-        // TODO @AT This is not ideal holding a txn open for the whole query (if the query takes a long time)
-        //   as read txns prevent writers from writing to reclaimed space in the db, so the store can get quite big.
-        //   see https://lmdb.readthedocs.io/en/release/#transaction-management
-
-        return lmdbEnvironment.getWithReadTxn(readTxn -> {
+        lmdbEnvironment.doWithReadTxn(readTxn -> {
             try (final CursorIterable<ByteBuffer> keyValueDbIterable = keyValueStoreDb.getLmdbDbi().iterate(
                     readTxn, KeyRange.all());
                     final CursorIterable<ByteBuffer> rangeValueDbIterable = rangeStoreDb.getLmdbDbi().iterate(
@@ -1210,15 +1416,21 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                 uidToMapDefMap,
                                 mapDefToProcessingInfoMap);
 
-                final LongAdder entryCounter = new LongAdder();
-                final Stream<RefStoreEntry> combinedStream = Stream.concat(keyValueStream, rangeValueStream)
-                        .peek(entry -> entryCounter.increment());
+                final MutableLong entryCounter = new MutableLong();
+                Stream<RefStoreEntry> combinedStream = Stream.concat(keyValueStream, rangeValueStream);
+                if (LOGGER.isDebugEnabled()) {
+                    combinedStream = combinedStream.peek(entry -> entryCounter.increment());
+                }
 
-                return LOGGER.logDurationIfDebugEnabled(
-                        () ->
-                                streamFunction.apply(combinedStream),
-                        () ->
-                                LogUtil.message("Scanned over {} entries", entryCounter.sum()));
+                final DurationTimer timer = DurationTimer.start();
+                if (predicate != null) {
+                    combinedStream = combinedStream.filter(predicate);
+                }
+                if (takeWhile != null) {
+                    combinedStream = combinedStream.takeWhile(predicate);
+                }
+                combinedStream.forEach(entryConsumer);
+                LOGGER.debug("Scanned over {} entries in {}", entryCounter, timer);
             }
         });
     }
@@ -1270,21 +1482,22 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public List<RefStoreEntry> list(final int limit) {
-        return consumeEntryStream(stream -> stream
-                .limit(limit)
-                .collect(Collectors.toList()));
+        return list(limit, null);
     }
 
     @Override
     public List<RefStoreEntry> list(final int limit,
                                     final Predicate<RefStoreEntry> filter) {
 
-        return consumeEntryStream(stream -> stream
-                .filter(filter != null
-                        ? filter
-                        : val -> true)
-                .limit(limit)
-                .collect(Collectors.toList()));
+        final MutableLong consumedCount = new MutableLong(0);
+        final Predicate<RefStoreEntry> takeWhilePredicate = limit > 0 && limit < Integer.MAX_VALUE
+                ? refStoreEntry ->
+                consumedCount.incrementAndGet() <= limit
+                : null;
+
+        final List<RefStoreEntry> list = new ArrayList<>();
+        consumeEntries(filter, takeWhilePredicate, list::add);
+        return list;
     }
 
     @Override
@@ -1387,7 +1600,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int valueReferenceCount = valueStore.getReferenceCount(readTxn, valueStoreKey)
                 .orElse(-1);
 
-        return new RefStoreEntry(mapDefinition, key, value, valueReferenceCount, refDataProcessingInfo);
+        return new RefStoreEntry(
+                lmdbEnvironment.getFeedName(),
+                mapDefinition,
+                key,
+                value,
+                valueReferenceCount,
+                refDataProcessingInfo);
     }
 
     private String getReferenceDataValue(final Txn<ByteBuffer> readTxn,
@@ -1432,8 +1651,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             final ReferenceDataConfig referenceDataConfig = referenceDataConfigProvider.get();
 
-            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this::getSystemInfo)
-                    .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize())
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+                    .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize().toString())
                     .addDetail("Environment max size", referenceDataConfig.getLmdbConfig().getMaxStoreSize())
                     .addDetail("Environment current size",
                             ModelStringUtil.formatIECByteSizeString(getSizeOnDisk()))
@@ -1449,7 +1668,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             .orElse(null))
                     .addDetail("Latest lastAccessedTime", lastAccessedTimeRange._2()
                             .map(Instant::toString)
-                            .orElse(null));
+                            .orElse(null))
+                    .addDetail("Total reference entries", getKeyValueEntryCount() + getRangeValueEntryCount());
 
             lmdbEnvironment.doWithReadTxn(txn -> {
                 builder.addDetail("Database entry counts", databaseMap.entrySet().stream()
@@ -1469,6 +1689,18 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public long getSizeOnDisk() {
         return lmdbEnvironment.getSizeOnDisk();
     }
+
+    @Override
+    public String getName() {
+        return storeName;
+    }
+
+    public String getFeedName() {
+        return NullSafe.get(lmdbEnvironment, RefDataLmdbEnv::getFeedName);
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class PurgeCounts {
 
@@ -1492,6 +1724,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             return ZERO;
         }
 
+        public boolean isZero() {
+            return refStreamDefsDeletedCount == 0
+                    && refStreamDefsFailedCount == 0
+                    && refStreamPurgeCounts.isZero();
+        }
+
         public PurgeCounts increment(final RefStreamPurgeCounts refStreamPurgeCounts) {
             if (refStreamPurgeCounts.isZero()) {
                 return new PurgeCounts(
@@ -1511,6 +1749,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class RefStreamPurgeCounts {
 
@@ -1573,5 +1815,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     && valuesDeletedCount == 0
                     && valuesDeReferencedCount == 0;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface Factory {
+
+        RefDataOffHeapStore create(final RefDataLmdbEnv refDataLmdbEnv);
     }
 }

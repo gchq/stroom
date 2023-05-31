@@ -28,6 +28,8 @@ public class ReferenceDataFields {
             Condition.IS_DOC_REF,
             Condition.EQUALS);
 
+    public static final AbstractField FEED_NAME_FIELD = new TextField(
+            "Feed Name", true, SUPPORTED_STRING_CONDITIONS);
     public static final AbstractField KEY_FIELD = new TextField(
             "Key", true, SUPPORTED_STRING_CONDITIONS);
     public static final AbstractField VALUE_FIELD = new TextField(
@@ -54,6 +56,7 @@ public class ReferenceDataFields {
             "Pipeline Version", false);
 
     public static final List<AbstractField> FIELDS = Arrays.asList(
+            FEED_NAME_FIELD,
             KEY_FIELD,
             VALUE_FIELD,
             VALUE_REF_COUNT_FIELD,
