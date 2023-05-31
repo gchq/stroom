@@ -1,9 +1,13 @@
 package stroom.dropwizard.common;
 
 import stroom.util.NullSafe;
+import stroom.util.config.PropertyUtil;
+import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.PathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -12,17 +16,24 @@ import stroom.util.shared.BuildInfo;
 
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.client.proxy.ProxyConfiguration;
+import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.setup.Environment;
+import io.dropwizard.util.Duration;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
@@ -30,7 +41,20 @@ import javax.ws.rs.client.WebTarget;
 public abstract class AbstractJerseyClientFactory implements JerseyClientFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractJerseyClientFactory.class);
-    // This name is used by dropwizard metrics
+
+    private static final Duration DEFAULT_TIMEOUT = Duration.seconds(0);
+    private static final Duration DEFAULT_CONNECTION_TIMEOUT = Duration.seconds(30);
+    private static final String TLS_PROP_NAME = "tls";
+    private static final String PROXY_PROP_NAME = "proxy";
+
+    private static final Map<JerseyClientName, JerseyClientConfiguration> CONFIG_DEFAULTS_MAP = new EnumMap<>(
+            JerseyClientName.class);
+
+    static {
+        CONFIG_DEFAULTS_MAP.put(JerseyClientName.OPEN_ID, buildOpenIdClientDefaultConfig());
+        CONFIG_DEFAULTS_MAP.put(JerseyClientName.DEFAULT, buildDefaultClientDefaultConfig());
+        CONFIG_DEFAULTS_MAP.put(JerseyClientName.STROOM, buildStroomClientDefaultConfig());
+    }
 
     private final Provider<BuildInfo> buildInfoProvider;
     private final Environment environment;
@@ -45,16 +69,17 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
         this.buildInfoProvider = buildInfoProvider;
         this.environment = environment;
         this.pathCreator = pathCreator;
-        // Build a map of all jersey configs keyed on JerseyClientName. Will only contain names
-        // found in the config file
+        // Build a map of all jersey configs found in the config.yml, keyed on JerseyClientName.
+        // Will only contain names found in the config file. For each one merge in our hard coded default
+        // values.
         configurationMap
                 .forEach((name, jerseyClientConfig) -> {
                     if (jerseyClientConfig != null) {
                         try {
                             final JerseyClientName jerseyClientName = JerseyClientName.valueOf(name.toUpperCase());
 
-                            //
-                            modifyConfig(jerseyClientConfig);
+                            // Merge in any hard coded defaults
+                            modifyConfig(jerseyClientName, jerseyClientConfig);
 
                             configMap.put(jerseyClientName, jerseyClientConfig);
                         } catch (IllegalArgumentException e) {
@@ -64,6 +89,38 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                         }
                     }
                 });
+
+        final boolean isDefaultExplicitlyConfigured = configMap.containsKey(JerseyClientName.DEFAULT);
+
+        // Make sure we have our hard coded config defaults loaded
+        Arrays.stream(JerseyClientName.values())
+                .forEach(jerseyClientName -> {
+                    if (!configMap.containsKey(jerseyClientName)
+                            && CONFIG_DEFAULTS_MAP.containsKey(jerseyClientName)) {
+
+                        final JerseyClientConfiguration defaultConfig = CONFIG_DEFAULTS_MAP.get(
+                                jerseyClientName);
+
+                        // DEFAULT has been set in config so merge its values into the named client config
+                        // that was not set in config.yml
+                        if (!JerseyClientName.DEFAULT.equals(jerseyClientName) && isDefaultExplicitlyConfigured) {
+                            LOGGER.debug("Merging values from DEFAULT into {}", jerseyClientName);
+                            final JerseyClientConfiguration mergedConfig = mergeInStroomDefaults(
+                                    buildDefaultClientDefaultConfig(),
+                                    configMap.get(JerseyClientName.DEFAULT),
+                                    defaultConfig);
+                            configMap.put(jerseyClientName, mergedConfig);
+                        } else {
+                            LOGGER.debug("Config for {} not set in yaml so using hard coded defaults",
+                                    jerseyClientName);
+                            configMap.put(jerseyClientName, CONFIG_DEFAULTS_MAP.get(jerseyClientName));
+                        }
+                    }
+                });
+
+        if (LOGGER.isDebugEnabled()) {
+            logNonDefaultJerseyClientConfig(LOGGER::debug);
+        }
     }
 
     /**
@@ -161,7 +218,86 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
         }
     }
 
-    private void modifyConfig(final JerseyClientConfiguration jerseyClientConfiguration) {
+    private void modifyConfig(final JerseyClientName jerseyClientName,
+                              final JerseyClientConfiguration jerseyClientConfiguration) {
+
+        mergeInStroomDefaults(
+                new JerseyClientConfiguration(),
+                CONFIG_DEFAULTS_MAP.get(jerseyClientName),
+                jerseyClientConfiguration);
+
+        updateUserAgent(jerseyClientConfiguration);
+
+        NullSafe.consume(
+                jerseyClientConfiguration,
+                JerseyClientConfiguration::getTlsConfiguration,
+                tlsConfiguration -> {
+                    modifyPath(tlsConfiguration::getKeyStorePath, tlsConfiguration::setKeyStorePath);
+                    modifyPath(tlsConfiguration::getTrustStorePath, tlsConfiguration::setTrustStorePath);
+                });
+    }
+
+    // Pkg private for testing
+    static <T> T mergeInStroomDefaults(final T vanillaConfig,
+                                       final T stroomDefaultConfig,
+                                       final T actualConfig) {
+        return mergeInStroomDefaults("", vanillaConfig, stroomDefaultConfig, actualConfig);
+    }
+
+    // Pkg private for testing
+    static <T> T mergeInStroomDefaults(final String prefix,
+                                       final T vanillaConfig,
+                                       final T stroomDefaultConfig,
+                                       final T actualConfig) {
+        if (stroomDefaultConfig != null) {
+            final Map<String, Prop> props = PropertyUtil.getProperties(vanillaConfig);
+
+            props.forEach((propName, prop) -> {
+                // Value from the dropwiz class as is
+                final Object vanillaValue = getPropValue(prop, vanillaConfig);
+                // Our hard coded sensible default (may be same as above)
+                final Object stroomDefaultValue = getPropValue(prop, stroomDefaultConfig);
+                // Value from yaml
+                final Object actualValue = getPropValue(prop, actualConfig);
+
+                if (propName.equals(TLS_PROP_NAME)
+                        && (stroomDefaultValue != null || actualValue != null)) {
+                    // tls config is null in vanilla config so if
+                    final Object mergedValue = mergeInStroomDefaults(
+                            TLS_PROP_NAME,
+                            new TlsConfiguration(),
+                            stroomDefaultValue,
+                            actualValue);
+                    prop.setValueOnConfigObject(actualConfig, mergedValue);
+                } else if (propName.equals(PROXY_PROP_NAME)
+                        && (stroomDefaultValue != null || actualValue != null)) {
+                    // proxy (as in a proxy server, not stroom-proxy) config is null in vanilla config
+                    final Object mergedValue = mergeInStroomDefaults(PROXY_PROP_NAME,
+                            new ProxyConfiguration(),
+                            stroomDefaultValue,
+                            actualValue);
+                    prop.setValueOnConfigObject(actualConfig, mergedValue);
+                } else {
+                    if (Objects.equals(vanillaValue, actualValue)
+                            && !Objects.equals(vanillaValue, stroomDefaultValue)) {
+                        // yaml value is same as DW default but stroom has a different default
+                        // so apply that
+                        LOGGER.debug(() ->
+                                LogUtil.message("Changing property {} from {} to stroom default {}",
+                                        prefix + propName, vanillaValue, stroomDefaultValue));
+                        prop.setValueOnConfigObject(actualConfig, stroomDefaultValue);
+                    }
+                }
+            });
+        }
+        return actualConfig;
+    }
+
+    private static Object getPropValue(final Prop prop, final Object obj) {
+        return NullSafe.get(obj, prop::getValueFromConfigObject);
+    }
+
+    private void updateUserAgent(final JerseyClientConfiguration jerseyClientConfiguration) {
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
         jerseyClientConfiguration.getUserAgent()
@@ -172,14 +308,6 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                     LOGGER.debug("Setting jersey client user agent string to [{}]", userAgent2);
                     jerseyClientConfiguration.setUserAgent(Optional.of(userAgent2));
                     return userAgent2;
-                });
-
-        NullSafe.consume(
-                jerseyClientConfiguration,
-                JerseyClientConfiguration::getTlsConfiguration,
-                tlsConfiguration -> {
-                    modifyPath(tlsConfiguration::getKeyStorePath, tlsConfiguration::setKeyStorePath);
-                    modifyPath(tlsConfiguration::getTrustStorePath, tlsConfiguration::setTrustStorePath);
                 });
     }
 
@@ -200,5 +328,110 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
             LOGGER.debug("Changing {} to {}", file, newFile);
             setter.accept(newFile);
         }
+    }
+
+    /**
+     * The config for comms with an OIDC identity provider
+     */
+    static JerseyClientConfiguration buildOpenIdClientDefaultConfig() {
+        final JerseyClientConfiguration jerseyConfig = new JerseyClientConfiguration();
+        // Various OIDC providers don't like gzip encoded requests so turn it off
+        jerseyConfig.setGzipEnabledForRequests(false);
+        setCommonValues(jerseyConfig);
+        return jerseyConfig;
+    }
+
+    /**
+     * The config for stroom internode comms
+     */
+    static JerseyClientConfiguration buildStroomClientDefaultConfig() {
+        final JerseyClientConfiguration jerseyConfig = new JerseyClientConfiguration();
+        jerseyConfig.setMaxThreads(1024);
+        setCommonValues(jerseyConfig);
+        return jerseyConfig;
+    }
+
+    static JerseyClientConfiguration buildDefaultClientDefaultConfig() {
+        final JerseyClientConfiguration jerseyConfig = new JerseyClientConfiguration();
+        setCommonValues(jerseyConfig);
+        return jerseyConfig;
+    }
+
+    private static void setCommonValues(final JerseyClientConfiguration jerseyConfig) {
+        jerseyConfig.setTimeout(DEFAULT_TIMEOUT);
+        jerseyConfig.setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+        jerseyConfig.setConnectionRequestTimeout(DEFAULT_CONNECTION_TIMEOUT);
+    }
+
+    public void logNonDefaultJerseyClientConfig(final Consumer<String> logger) {
+        final JerseyClientConfiguration vanillaConfig = new JerseyClientConfiguration();
+
+        NullSafe.map(configMap).forEach((clientName, jerseyClientConfiguration) -> {
+            final List<PropDiff> differences = listDifferences("", vanillaConfig, jerseyClientConfiguration);
+
+            logger.accept(LogUtil.message(
+                    "Jersey client differences for '{}':\n{}",
+                    clientName,
+                    AsciiTable.builder(differences)
+                            .withColumn(Column.of("Property", PropDiff::name))
+                            .withColumn(Column.of("Default Value", propDiff ->
+                                    Objects.toString(propDiff.defaultValue)))
+                            .withColumn(Column.of("Actual Value", propDiff ->
+                                    Objects.toString(propDiff.value)))
+                            .build()));
+        });
+    }
+
+    private <T> List<PropDiff> listDifferences(final String prefix,
+                                               final T vanillaConfig,
+                                               final T actualConfig) {
+        final Map<String, Prop> defaultProps = PropertyUtil.getProperties(vanillaConfig);
+
+        final List<PropDiff> differences = defaultProps.entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey())
+                .flatMap(entry -> {
+                    final String propName = entry.getKey();
+                    final Prop prop = entry.getValue();
+                    final Object defaultValue = getPropValue(prop, vanillaConfig);
+                    final Object actualValue = getPropValue(prop, actualConfig);
+
+                    if (!Objects.equals(defaultValue, actualValue)) {
+                        if (propName.equals("tls")) {
+                            if (defaultValue == null && actualValue != null) {
+                                return listDifferences("tls.", new TlsConfiguration(), actualValue).stream();
+                            } else if (defaultValue != null) {
+                                return listDifferences("tls.", defaultValue, actualValue).stream();
+                            } else {
+                                return Stream.empty();
+                            }
+                        } else if (propName.equals("proxy")) {
+                            if (defaultValue == null && actualValue != null) {
+                                return listDifferences("proxy.", new ProxyConfiguration(), actualValue).stream();
+                            } else if (defaultValue != null) {
+                                return listDifferences("proxy.", defaultValue, actualValue).stream();
+                            } else {
+                                return Stream.empty();
+                            }
+                        } else {
+                            return Stream.of(new PropDiff(prefix + propName, defaultValue, actualValue));
+                        }
+                    } else {
+                        return Stream.empty();
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        return differences;
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record PropDiff(String name, Object defaultValue, Object value) {
+
     }
 }
