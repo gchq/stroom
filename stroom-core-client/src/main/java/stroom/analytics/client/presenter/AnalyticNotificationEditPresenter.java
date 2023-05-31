@@ -17,6 +17,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.shared.AnalyticNotification;
 import stroom.analytics.shared.AnalyticNotificationConfig;
@@ -24,6 +25,7 @@ import stroom.analytics.shared.AnalyticNotificationResource;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
@@ -78,37 +80,45 @@ public class AnalyticNotificationEditPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
+                .modal(true)
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig.builder()
-                                .timeToWaitForData(getView().getTimeToWaitForData())
-                                .destinationFeed(feedPresenter.getSelectedEntityReference())
-                                .useSourceFeedIfPossible(getView().isUseSourceFeedIfPossible())
-                                .build();
-
-                        final AnalyticNotification updated = notification.copy()
-                                .enabled(getView().isEnabled())
-                                .config(config)
-                                .build();
-
-                        final Rest<AnalyticNotification> rest = restFactory.create();
-                        if (create) {
-                            rest
-                                    .onSuccess(result -> {
-                                        consumer.accept(result);
-                                        e.hide();
-                                    })
-                                    .call(ANALYTIC_NOTIFICATION_RESOURCE)
-                                    .create(updated);
+                        final DocRef feed = feedPresenter.getSelectedEntityReference();
+                        if (feed == null) {
+                            AlertEvent.fireError(this,
+                                    "The destination feed must be set.",
+                                    null);
                         } else {
-                            rest
-                                    .onSuccess(result -> {
-                                        consumer.accept(result);
-                                        e.hide();
-                                    })
-                                    .call(ANALYTIC_NOTIFICATION_RESOURCE)
-                                    .update(updated.getUuid(), updated);
+                            final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig.builder()
+                                    .timeToWaitForData(getView().getTimeToWaitForData())
+                                    .destinationFeed(feed)
+                                    .useSourceFeedIfPossible(getView().isUseSourceFeedIfPossible())
+                                    .build();
+
+                            final AnalyticNotification updated = notification.copy()
+                                    .enabled(getView().isEnabled())
+                                    .config(config)
+                                    .build();
+
+                            final Rest<AnalyticNotification> rest = restFactory.create();
+                            if (create) {
+                                rest
+                                        .onSuccess(result -> {
+                                            consumer.accept(result);
+                                            e.hide();
+                                        })
+                                        .call(ANALYTIC_NOTIFICATION_RESOURCE)
+                                        .create(updated);
+                            } else {
+                                rest
+                                        .onSuccess(result -> {
+                                            consumer.accept(result);
+                                            e.hide();
+                                        })
+                                        .call(ANALYTIC_NOTIFICATION_RESOURCE)
+                                        .update(updated.getUuid(), updated);
+                            }
                         }
 
                     } else {

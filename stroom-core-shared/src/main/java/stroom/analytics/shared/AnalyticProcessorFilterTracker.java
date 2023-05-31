@@ -156,8 +156,40 @@ public class AnalyticProcessorFilterTracker {
             return this;
         }
 
+        public Builder addMetaCount(final long delta) {
+            if (this.metaCount == null) {
+                this.metaCount = 0L;
+            }
+            this.metaCount += delta;
+            return this;
+        }
+
+        public Builder incrementMetaCount() {
+            if (this.metaCount == null) {
+                this.metaCount = 0L;
+            }
+            this.metaCount++;
+            return this;
+        }
+
         public Builder eventCount(final Long eventCount) {
             this.eventCount = eventCount;
+            return this;
+        }
+
+        public Builder addEventCount(final long delta) {
+            if (this.eventCount == null) {
+                this.eventCount = 0L;
+            }
+            this.eventCount += delta;
+            return this;
+        }
+
+        public Builder incrementEventCount() {
+            if (this.eventCount == null) {
+                this.eventCount = 0L;
+            }
+            this.eventCount++;
             return this;
         }
 

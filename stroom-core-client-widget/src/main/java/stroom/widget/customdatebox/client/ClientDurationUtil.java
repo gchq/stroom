@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.widget.customdatebox.client;
 
-public final class ColumnSizeConstants {
+public final class ClientDurationUtil {
 
-    public static final int CHECKBOX_COL = 22;
-    public static final int ICON_COL = 23;
-    public static final int SMALL_COL = 70;
-    public static final int MEDIUM_COL = 100;
-    public static final int BIG_COL = 400;
-    public static final int DATE_COL = 200;
-    public static final int DATE_AND_DURATION_COL = 320;
+    public static native String humanise(final double ms)/*-{
+       return $wnd.moment.duration(ms).humanize();
+    }-*/;
 
-    private ColumnSizeConstants() {
-        // Constants.
-    }
+    public static native String humanise(final double ms, final boolean withSuffix)/*-{
+       return $wnd.moment.duration(ms).humanize(withSuffix);
+    }-*/;
 }

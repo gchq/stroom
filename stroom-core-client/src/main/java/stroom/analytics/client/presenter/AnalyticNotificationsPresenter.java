@@ -25,6 +25,9 @@ import stroom.analytics.shared.AnalyticNotificationState;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.FindAnalyticNotificationCriteria;
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
@@ -35,16 +38,15 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
@@ -67,6 +69,7 @@ public class AnalyticNotificationsPresenter
     private final MultiSelectionModelImpl<AnalyticNotificationRow> selectionModel;
     private final RestFactory restFactory;
     private final Provider<AnalyticNotificationEditPresenter> editProvider;
+    private final DateTimeFormatter dateTimeFormatter;
     private final ButtonView newButton;
     private final ButtonView openButton;
     private final ButtonView deleteButton;
@@ -78,10 +81,12 @@ public class AnalyticNotificationsPresenter
     public AnalyticNotificationsPresenter(final EventBus eventBus,
                                           final PagerView view,
                                           final RestFactory restFactory,
-                                          final Provider<AnalyticNotificationEditPresenter> editProvider) {
+                                          final Provider<AnalyticNotificationEditPresenter> editProvider,
+                                          final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.editProvider = editProvider;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -158,21 +163,31 @@ public class AnalyticNotificationsPresenter
 
     private void initTableColumns() {
         // Enabled.
-        final Column<AnalyticNotificationRow, Boolean> enabledColumn = new Column<AnalyticNotificationRow, Boolean>(new CheckboxCell()) {
+        final Column<AnalyticNotificationRow, TickBoxState> enabledColumn = new Column<AnalyticNotificationRow, TickBoxState>(
+                TickBoxCell.create(false, true)) {
             @Override
-            public Boolean getValue(final AnalyticNotificationRow row) {
+            public TickBoxState getValue(final AnalyticNotificationRow row) {
                 return Optional.ofNullable(row)
                         .map(AnalyticNotificationRow::getAnalyticNotification)
                         .map(AnalyticNotification::isEnabled)
-                        .orElse(null);
+                        .map(TickBoxState::fromBoolean)
+                        .orElse(TickBoxState.UNTICK);
             }
         };
-//        enabledColumn.setFieldUpdater((index, row, value) -> {
-//            row.
-//            row.vgetMask().setRollUpState(fieldPositionNumber, value);
-//
-//            DirtyEvent.fire(StroomStatsStoreCustomMaskListPresenter.this, true);
-//        });
+        enabledColumn.setFieldUpdater((index, row, value) -> {
+            final AnalyticNotification updated = row.getAnalyticNotification().copy()
+                    .enabled(value.toBoolean())
+                    .build();
+
+            final Rest<AnalyticNotification> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        refresh();
+//                        setDirty(true);
+                    })
+                    .call(ANALYTIC_NOTIFICATION_RESOURCE)
+                    .update(updated.getUuid(), updated);
+        });
 
         dataGrid.addResizableColumn(enabledColumn, "Enabled", 100);
 
@@ -240,11 +255,13 @@ public class AnalyticNotificationsPresenter
                 return Optional.ofNullable(row)
                         .map(AnalyticNotificationRow::getAnalyticNotificationState)
                         .map(AnalyticNotificationState::getLastExecutionTime)
-                        .map(ClientDateUtil::toDateString)
+                        .map(dateTimeFormatter::formatWithDuration)
                         .orElse(null);
             }
         };
-        dataGrid.addResizableColumn(lastExecutionColumn, "Last Execution", 300);
+        dataGrid.addResizableColumn(lastExecutionColumn,
+                "Last Execution",
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }
@@ -284,7 +301,7 @@ public class AnalyticNotificationsPresenter
         editor.show(newNotification, notification -> {
             refresh();
 //            selectionModel.setSelected(notification);
-            setDirty(true);
+//            setDirty(true);
         }, true);
     }
 
@@ -294,7 +311,7 @@ public class AnalyticNotificationsPresenter
             editor.show(row.getAnalyticNotification(), notification -> {
                 refresh();
 //                selectionModel.setSelected(row);
-                setDirty(true);
+//                setDirty(true);
             }, false);
         }
     }
@@ -309,7 +326,7 @@ public class AnalyticNotificationsPresenter
                             rest
                                     .onSuccess(r -> {
                                         refresh();
-                                        setDirty(true);
+//                                        setDirty(true);
                                     })
                                     .call(ANALYTIC_NOTIFICATION_RESOURCE)
                                     .delete(selected.getAnalyticNotification().getUuid(),
@@ -321,7 +338,7 @@ public class AnalyticNotificationsPresenter
 
     @Override
     public void onDirty() {
-        setDirty(true);
+//        setDirty(true);
     }
 
     @Override

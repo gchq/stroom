@@ -18,6 +18,8 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -40,7 +42,6 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.cellview.client.Column;
@@ -164,15 +165,15 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerVi
 
     private void addStatFieldColumn(final int fieldPositionNumber, final String fieldname) {
         // Enabled.
-        final Column<MaskHolder, Boolean> rolledUpColumn = new Column<MaskHolder, Boolean>(new CheckboxCell()) {
+        final Column<MaskHolder, TickBoxState> rolledUpColumn = new Column<MaskHolder, TickBoxState>(
+                TickBoxCell.create(false, true)) {
             @Override
-            public Boolean getValue(final MaskHolder row) {
-                return row.getMask().isTagRolledUp(fieldPositionNumber);
+            public TickBoxState getValue(final MaskHolder row) {
+                return TickBoxState.fromBoolean(row.getMask().isTagRolledUp(fieldPositionNumber));
             }
         };
-
         rolledUpColumn.setFieldUpdater((index, row, value) -> {
-            row.getMask().setRollUpState(fieldPositionNumber, value);
+            row.getMask().setRollUpState(fieldPositionNumber, value.toBoolean());
 
             DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
         });

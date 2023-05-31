@@ -320,8 +320,6 @@ class TestAnalytics extends StroomIntegrationTest {
                 .expression(ExpressionOperator.builder().addTerm(MetaFields.FIELD_TYPE,
                         Condition.EQUALS,
                         StreamTypeNames.EVENTS).build())
-                .minMetaCreateTimeMs(0L)
-                .maxMetaCreateTimeMs(Long.MAX_VALUE)
                 .node(nodeInfo.getThisNodeName())
                 .build();
         analyticProcessorFilterDao.create(filter);

@@ -289,7 +289,7 @@ public class ProcessorTaskListPresenter
 
     private String toDateString(final Long ms) {
         if (ms != null) {
-            return dateTimeFormatter.format(ms) + " (" + ms + ")";
+            return dateTimeFormatter.formatWithDuration(ms);
         } else {
             return "";
         }

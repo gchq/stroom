@@ -17,16 +17,20 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
+import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.StringListBox;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,7 +41,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.List;
 
 public class AnalyticProcessingViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<AnalyticProcessingUiHandlers>
         implements AnalyticProcessingView {
 
     private final Widget widget;
@@ -54,6 +58,8 @@ public class AnalyticProcessingViewImpl
     StringListBox node;
     @UiField
     SimplePanel info;
+    @UiField
+    Button refresh;
 
     private String selectedNode;
 
@@ -152,6 +158,15 @@ public class AnalyticProcessingViewImpl
     @UiHandler("node")
     public void onNode(final ValueChangeEvent<String> event) {
         getUiHandlers().onDirty();
+    }
+
+    @UiHandler("refresh")
+    public void onRefreshButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onRefreshProcessingStatus();
+            }
+        }
     }
 
     public interface Binder extends UiBinder<Widget, AnalyticProcessingViewImpl> {

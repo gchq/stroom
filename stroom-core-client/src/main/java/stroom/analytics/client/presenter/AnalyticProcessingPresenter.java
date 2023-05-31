@@ -21,7 +21,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticProcessorFilterResource;
-import stroom.analytics.shared.AnalyticProcessorFilterRow;
 import stroom.analytics.shared.AnalyticProcessorFilterTracker;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.FindAnalyticProcessorFilterCriteria;
@@ -31,7 +30,6 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.meta.shared.MetaFields;
 import stroom.node.client.NodeManager;
@@ -56,7 +54,7 @@ import java.util.Optional;
 
 public class AnalyticProcessingPresenter
         extends DocumentEditPresenter<AnalyticProcessingView, AnalyticRuleDoc>
-        implements DirtyUiHandlers {
+        implements AnalyticProcessingUiHandlers {
 
     private static final AnalyticProcessorFilterResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
             GWT.create(AnalyticProcessorFilterResource.class);
@@ -98,45 +96,59 @@ public class AnalyticProcessingPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(editExpressionPresenter.addDirtyHandler(e -> onDirty(true)));
-    }
-
-    private void read(final AnalyticProcessorFilterRow row) {
-        loadedFilter = Optional.ofNullable(row)
-                .map(AnalyticProcessorFilterRow::getAnalyticProcessorFilter)
-                .orElse(null);
-        read(
-                Optional.ofNullable(loadedFilter)
-                        .orElse(AnalyticProcessorFilter
-                                .builder()
-                                .analyticUuid(analyticRuleUuid)
-                                .minMetaCreateTimeMs(System.currentTimeMillis())
-                                .expression(ExpressionOperator
-                                        .builder()
-                                        .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS)
-                                        .build())
-                                .build())
-        );
-
-        if (row != null) {
-            readTracker(row.getAnalyticProcessorFilterTracker());
-        }
+        registerHandler(editExpressionPresenter.addDirtyHandler(e -> setDirty(true)));
     }
 
     private void read(final AnalyticProcessorFilter filter) {
-        read(
-                filter.isEnabled(),
-                filter.getExpression(),
-                MetaFields.STREAM_STORE_DOC_REF,
-                MetaFields.getAllFields(),
-                filter.getMinMetaCreateTimeMs(),
-                filter.getMaxMetaCreateTimeMs(),
-                filter.getNode());
+        if (filter == null) {
+            AnalyticProcessorFilter newFilter = AnalyticProcessorFilter
+                    .builder()
+                    .analyticUuid(analyticRuleUuid)
+                    .minMetaCreateTimeMs(System.currentTimeMillis())
+                    .expression(ExpressionOperator
+                            .builder()
+                            .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .build())
+                    .build();
+            read(
+                    newFilter.isEnabled(),
+                    newFilter.getExpression(),
+                    MetaFields.STREAM_STORE_DOC_REF,
+                    MetaFields.getAllFields(),
+                    newFilter.getMinMetaCreateTimeMs(),
+                    newFilter.getMaxMetaCreateTimeMs(),
+                    newFilter.getNode());
+
+        } else {
+            loadedFilter = filter;
+            read(
+                    filter.isEnabled(),
+                    filter.getExpression(),
+                    MetaFields.STREAM_STORE_DOC_REF,
+                    MetaFields.getAllFields(),
+                    filter.getMinMetaCreateTimeMs(),
+                    filter.getMaxMetaCreateTimeMs(),
+                    filter.getNode());
+            refreshTracker();
+        }
     }
 
-    private void readTracker(final AnalyticProcessorFilterTracker tracker) {
-        final SafeHtml safeHtml = getInfo(tracker);
-        getView().setInfo(safeHtml);
+    @Override
+    public void onRefreshProcessingStatus() {
+        refreshTracker();
+    }
+
+    private void refreshTracker() {
+        if (loadedFilter != null && loadedFilter.getUuid() != null) {
+            final Rest<AnalyticProcessorFilterTracker> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        final SafeHtml safeHtml = getInfo(result);
+                        getView().setInfo(safeHtml);
+                    })
+                    .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
+                    .getTracker(loadedFilter.getUuid());
+        }
     }
 
     public SafeHtml getInfo(final AnalyticProcessorFilterTracker tracker) {
@@ -160,7 +172,7 @@ public class AnalyticProcessingPresenter
 
     private void addRowDateString(final TableBuilder tb, final String label, final Long ms) {
         if (ms != null) {
-            tb.row(label, dateTimeFormatter.format(ms) + " (" + ms + ")");
+            tb.row(label, dateTimeFormatter.formatWithDuration(ms));
         }
     }
 
@@ -199,7 +211,7 @@ public class AnalyticProcessingPresenter
     private void refresh(final String analyticDocUuid) {
         final FindAnalyticProcessorFilterCriteria criteria = new FindAnalyticProcessorFilterCriteria();
         criteria.setAnalyticDocUuid(analyticDocUuid);
-        final Rest<ResultPage<AnalyticProcessorFilterRow>> rest = restFactory.create();
+        final Rest<ResultPage<AnalyticProcessorFilter>> rest = restFactory.create();
         rest
                 .onSuccess(result -> read(result.getFirst()))
                 .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
@@ -239,7 +251,7 @@ public class AnalyticProcessingPresenter
         return AnalyticRuleDoc.DOCUMENT_TYPE;
     }
 
-    public interface AnalyticProcessingView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
 
         boolean isEnabled();
 

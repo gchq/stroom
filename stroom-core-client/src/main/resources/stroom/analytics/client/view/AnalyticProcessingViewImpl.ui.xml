@@ -9,7 +9,7 @@
         <form:FormGroup identity="analyticProcessingEnabled" label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabled"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingExpression" label="Expression" >
+        <form:FormGroup identity="analyticProcessingExpression" label="Expression">
             <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingMinMetaCreateTimeMs" label="Min Create Time">
@@ -21,11 +21,11 @@
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
             <l:StringListBox ui:field="node"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingInfo" label="Processing Info" addStyleNames="dock-max">
-            <g:SimplePanel ui:field="info" styleName="default-min-sizes dashboard-panel"/>
+        <form:FormGroup identity="analyticProcessingInfo" label="Processing Info">
+            <g:FlowPanel styleName="form">
+                <g:SimplePanel ui:field="info" styleName="default-min-sizes dashboard-panel"/>
+                <g:Button ui:field="refresh" text="Refresh"/>
+            </g:FlowPanel>
         </form:FormGroup>
-<!--        <g:MaxScrollPanel addStyleNames="max dashboard-panel">-->
-<!--            <g:SimplePanel ui:field="info"/>-->
-<!--        </g:MaxScrollPanel>-->
     </g:FlowPanel>
 </ui:UiBinder> 

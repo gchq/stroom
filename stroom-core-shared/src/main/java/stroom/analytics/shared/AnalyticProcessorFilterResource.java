@@ -46,8 +46,8 @@ public interface AnalyticProcessorFilterResource
     @Operation(
             summary = "Find the analytic processor filters for the specified analytic",
             operationId = "findAnalyticProcessorFilters")
-    ResultPage<AnalyticProcessorFilterRow> find(@Parameter(description = "criteria", required = true)
-                                                FindAnalyticProcessorFilterCriteria criteria);
+    ResultPage<AnalyticProcessorFilter> find(@Parameter(description = "criteria", required = true)
+                                             FindAnalyticProcessorFilterCriteria criteria);
 
     @POST
     @Operation(
@@ -72,7 +72,15 @@ public interface AnalyticProcessorFilterResource
             summary = "Delete an analytic processor filter",
             operationId = "updateAnalyticProcessorFilter")
     Boolean delete(@PathParam("uuid")
-                                   String uuid,
-                                   @Parameter(description = "processor filter", required = true)
-                                   AnalyticProcessorFilter processorFilter);
+                   String uuid,
+                   @Parameter(description = "processor filter", required = true)
+                   AnalyticProcessorFilter processorFilter);
+
+    @POST
+    @Path("/tracker")
+    @Operation(
+            summary = "Find the analytic processor filter tracker for the specified filter",
+            operationId = "findAnalyticProcessorFilterTracker")
+    AnalyticProcessorFilterTracker getTracker(@Parameter(description = "filterUuid", required = true)
+                                              String filterUuid);
 }

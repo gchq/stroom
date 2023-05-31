@@ -18,7 +18,6 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticProcessorFilterResource;
-import stroom.analytics.shared.AnalyticProcessorFilterRow;
 import stroom.analytics.shared.AnalyticProcessorFilterTracker;
 import stroom.analytics.shared.FindAnalyticProcessorFilterCriteria;
 import stroom.util.shared.ResultPage;
@@ -42,17 +41,11 @@ class AnalyticProcessorFilterResourceImpl implements AnalyticProcessorFilterReso
     }
 
     @Override
-    public ResultPage<AnalyticProcessorFilterRow> find(final FindAnalyticProcessorFilterCriteria criteria) {
+    public ResultPage<AnalyticProcessorFilter> find(final FindAnalyticProcessorFilterCriteria criteria) {
         final AnalyticProcessorFilterDao analyticProcessorFilterDao = analyticProcessorFilterDaoProvider.get();
-        final AnalyticProcessorFilterTrackerDao analyticProcessorFilterTrackerDao =
-                analyticProcessorFilterTrackerDaoProvider.get();
         final Optional<AnalyticProcessorFilter> optionalFilter =
                 analyticProcessorFilterDao.getByAnalyticUuid(criteria.getAnalyticDocUuid());
-        final List<AnalyticProcessorFilterRow> list = optionalFilter.map(filter -> {
-                    final Optional<AnalyticProcessorFilterTracker> optionalTracker =
-                            analyticProcessorFilterTrackerDao.get(filter.getUuid());
-                    return new AnalyticProcessorFilterRow(filter, optionalTracker.orElse(null));
-                })
+        final List<AnalyticProcessorFilter> list = optionalFilter
                 .map(List::of)
                 .orElse(Collections.emptyList());
         return ResultPage.createCriterialBasedList(list, criteria);
@@ -74,5 +67,12 @@ class AnalyticProcessorFilterResourceImpl implements AnalyticProcessorFilterReso
     public Boolean delete(final String uuid, final AnalyticProcessorFilter processorFilter) {
         final AnalyticProcessorFilterDao analyticProcessorFilterDao = analyticProcessorFilterDaoProvider.get();
         return analyticProcessorFilterDao.delete(processorFilter);
+    }
+
+    @Override
+    public AnalyticProcessorFilterTracker getTracker(final String filterUuid) {
+        final AnalyticProcessorFilterTrackerDao analyticProcessorFilterTrackerDao =
+                analyticProcessorFilterTrackerDaoProvider.get();
+        return analyticProcessorFilterTrackerDao.get(filterUuid).orElse(null);
     }
 }
