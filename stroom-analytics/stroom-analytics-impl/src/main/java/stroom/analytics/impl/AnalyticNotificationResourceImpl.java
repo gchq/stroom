@@ -21,6 +21,8 @@ import stroom.analytics.shared.AnalyticNotificationResource;
 import stroom.analytics.shared.AnalyticNotificationRow;
 import stroom.analytics.shared.AnalyticNotificationState;
 import stroom.analytics.shared.FindAnalyticNotificationCriteria;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+@AutoLogged(OperationType.UNLOGGED)
 class AnalyticNotificationResourceImpl implements AnalyticNotificationResource {
 
     private final Provider<AnalyticNotificationDao> analyticNotificationDaoProvider;

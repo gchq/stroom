@@ -146,9 +146,10 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
-        createNotification(analyticRuleDoc, 1);
+        createNotification(analyticRuleDoc, 0);
 
         // Now run the search process.
+        analyticsExecutor.setAllowUpToDateProcessing(false);
         analyticsExecutor.exec();
         analyticsDataSetup.checkStreamCount(9);
 
@@ -162,17 +163,11 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
             throw new UncheckedIOException(e);
         }
 
-//        // We need to sleep for a bit so that the new data is included in the processing window.
-//        ThreadUtil.sleep(5000);
-
         // Load more data and test again.
         // Add some data.
         final LocalDateTime localDateTime = LocalDateTime.now().minusSeconds(10);
         analyticsDataSetup.addNewData(localDateTime);
         analyticsDataSetup.checkStreamCount(11);
-
-//        // We need to sleep for a bit so that the new data is included in the processing window.
-//        ThreadUtil.sleep(5000);
 
         // Run alert executor.
         analyticsExecutor.exec();

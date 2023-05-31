@@ -153,19 +153,113 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
+export interface AnalyticNotification {
+  analyticUuid?: string;
+  config?: AnalyticNotificationConfig;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+
+  /** @format int32 */
+  version?: number;
+}
+
+export interface AnalyticNotificationConfig {
+  type: string;
+}
+
+export type AnalyticNotificationEmailConfig = AnalyticNotificationConfig & {
+  emailAddress?: string;
+  timeToWaitForData?: SimpleDuration;
+};
+
+export interface AnalyticNotificationRow {
+  analyticNotification?: AnalyticNotification;
+  analyticNotificationState?: AnalyticNotificationState;
+}
+
+export interface AnalyticNotificationState {
+  /** @format int64 */
+  lastExecutionTime?: number;
+  message?: string;
+  notificationUuid?: string;
+}
+
+export type AnalyticNotificationStreamConfig = AnalyticNotificationConfig & {
+  destinationFeed?: DocRef;
+  timeToWaitForData?: SimpleDuration;
+  useSourceFeedIfPossible?: boolean;
+};
+
+export interface AnalyticProcessorFilter {
+  analyticUuid?: string;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
+  expression?: ExpressionOperator;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+  node?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+
+  /** @format int32 */
+  version?: number;
+}
+
+export interface AnalyticProcessorFilterTracker {
+  /** @format int64 */
+  eventCount?: number;
+  filterUuid?: string;
+
+  /** @format int64 */
+  lastEventId?: number;
+
+  /** @format int64 */
+  lastEventTime?: number;
+
+  /** @format int64 */
+  lastMetaId?: number;
+
+  /** @format int64 */
+  lastPollMs?: number;
+
+  /** @format int32 */
+  lastPollTaskCount?: number;
+  message?: string;
+
+  /** @format int64 */
+  metaCount?: number;
+}
+
 export interface AnalyticRuleDoc {
   analyticRuleType?: "EVENT" | "AGGREGATE";
 
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  dataRetention?: SimpleDuration;
   description?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFeed?: DocRef;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
-  processSettings?: AnalyticRuleProcessSettings;
   query?: string;
   type?: string;
 
@@ -174,17 +268,6 @@ export interface AnalyticRuleDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
-}
-
-export interface AnalyticRuleProcessSettings {
-  enabled?: boolean;
-
-  /** @format int64 */
-  maxMetaCreateTimeMs?: number;
-
-  /** @format int64 */
-  minMetaCreateTimeMs?: number;
-  timeToWaitForData?: SimpleDuration;
 }
 
 export interface Annotation {
@@ -1327,6 +1410,22 @@ export interface FilterUsersRequest {
   users?: SimpleUser[];
 }
 
+export interface FindAnalyticNotificationCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindAnalyticProcessorFilterCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindDBTableCriteria {
   pageRequest?: PageRequest;
   sort?: string;
@@ -2270,7 +2369,15 @@ export interface ProcessingInfoResponse {
   effectiveTime?: string;
   lastAccessedTime?: string;
   maps?: Record<string, EntryCounts>;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  processingState?:
+    | "LOAD_IN_PROGRESS"
+    | "PURGE_IN_PROGRESS"
+    | "COMPLETE"
+    | "FAILED"
+    | "TERMINATED"
+    | "PURGE_FAILED"
+    | "STAGED"
+    | "READY_FOR_PURGE";
   refStreamDefinition?: RefStreamDefinition;
 }
 
@@ -2608,10 +2715,19 @@ export interface RefDataProcessingInfo {
 
   /** @format int64 */
   lastAccessedTimeEpochMs?: number;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  processingState?:
+    | "LOAD_IN_PROGRESS"
+    | "PURGE_IN_PROGRESS"
+    | "COMPLETE"
+    | "FAILED"
+    | "TERMINATED"
+    | "PURGE_FAILED"
+    | "STAGED"
+    | "READY_FOR_PURGE";
 }
 
 export interface RefStoreEntry {
+  feedName?: string;
   key?: string;
   mapDefinition?: MapDefinition;
   refDataProcessingInfo?: RefDataProcessingInfo;
@@ -2688,6 +2804,24 @@ export interface ResultPageActivity {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Activity[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageAnalyticNotificationRow {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: AnalyticNotificationRow[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageAnalyticProcessorFilter {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: AnalyticProcessorFilter[];
 }
 
 /**
@@ -2997,7 +3131,7 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ANALYTIC_RULE" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?: "ANALYTIC_RULE" | "ANALYTIC_RULE_UI" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
 }
 
 /**
@@ -4317,7 +4451,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Activities
      * @name ValidateActivity
-     * @summary Create an Activity
+     * @summary Validate an Activity
      * @request POST:/activity/v1/validate
      * @secure
      */
@@ -4377,6 +4511,179 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateActivity: (id: number, data: Activity, params: RequestParams = {}) =>
       this.request<any, Activity>({
         path: `/activity/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  analyticNotification = {
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name CreateAnalyticNotification
+     * @summary Create an analytic notification
+     * @request POST:/analyticNotification/v1
+     * @secure
+     */
+    createAnalyticNotification: (data: AnalyticNotification, params: RequestParams = {}) =>
+      this.request<any, AnalyticNotification>({
+        path: `/analyticNotification/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name FindAnalyticNotifications
+     * @summary Find the analytic notifications for the specified analytic
+     * @request POST:/analyticNotification/v1/find
+     * @secure
+     */
+    findAnalyticNotifications: (data: FindAnalyticNotificationCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageAnalyticNotificationRow>({
+        path: `/analyticNotification/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name UpdateAnalyticNotification
+     * @summary Delete an analytic notification
+     * @request DELETE:/analyticNotification/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticNotification: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/analyticNotification/v1/${uuid}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name UpdateAnalyticNotification1
+     * @summary Update an analytic notification
+     * @request PUT:/analyticNotification/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticNotification1: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
+      this.request<any, AnalyticNotification>({
+        path: `/analyticNotification/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  analyticProcessorFilter = {
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name CreateAnalyticProcessorFilter
+     * @summary Create an analytic processor filter
+     * @request POST:/analyticProcessorFilter/v1
+     * @secure
+     */
+    createAnalyticProcessorFilter: (data: AnalyticProcessorFilter, params: RequestParams = {}) =>
+      this.request<any, AnalyticProcessorFilter>({
+        path: `/analyticProcessorFilter/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name FindAnalyticProcessorFilters
+     * @summary Find the analytic processor filters for the specified analytic
+     * @request POST:/analyticProcessorFilter/v1/find
+     * @secure
+     */
+    findAnalyticProcessorFilters: (data: FindAnalyticProcessorFilterCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageAnalyticProcessorFilter>({
+        path: `/analyticProcessorFilter/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name FindAnalyticProcessorFilterTracker
+     * @summary Find the analytic processor filter tracker for the specified filter
+     * @request POST:/analyticProcessorFilter/v1/tracker
+     * @secure
+     */
+    findAnalyticProcessorFilterTracker: (data: string, params: RequestParams = {}) =>
+      this.request<any, AnalyticProcessorFilterTracker>({
+        path: `/analyticProcessorFilter/v1/tracker`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name UpdateAnalyticProcessorFilter
+     * @summary Delete an analytic processor filter
+     * @request DELETE:/analyticProcessorFilter/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticProcessorFilter: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/analyticProcessorFilter/v1/${uuid}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name UpdateAnalyticProcessorFilter1
+     * @summary Update an analytic processor filter
+     * @request PUT:/analyticProcessorFilter/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticProcessorFilter1: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
+      this.request<any, AnalyticProcessorFilter>({
+        path: `/analyticProcessorFilter/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -8020,6 +8327,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     purgeReferenceDataByAge: (purgeAge: string, query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/refData/v1/purgeByAge/${purgeAge}`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name PurgeReferenceDataByAge1
+     * @summary Explicitly delete all entries belonging to a feed that are older than purgeAge.Performed on the named node, or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}
+     * @secure
+     */
+    purgeReferenceDataByAge1: (
+      feedName: string,
+      purgeAge: string,
+      query?: { nodeName?: string },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, boolean>({
+        path: `/refData/v1/purgeByFeedByAge/${feedName}/${purgeAge}`,
         method: "DELETE",
         query: query,
         secure: true,

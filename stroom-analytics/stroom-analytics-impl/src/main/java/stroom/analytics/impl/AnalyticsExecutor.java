@@ -82,7 +82,7 @@ public class AnalyticsExecutor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticsExecutor.class);
     private static final LocalDateTime BEGINNING_OF_TIME =
             LocalDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneOffset.UTC);
-    private static final int MAX_META_LIST_SIZE = 1000;
+    private static final int DEFAULT_MAX_META_LIST_SIZE = 1000;
 
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final ExecutorProvider executorProvider;
@@ -104,6 +104,9 @@ public class AnalyticsExecutor {
     private final AnalyticNotificationDao analyticNotificationDao;
     private final AnalyticNotificationStateDao analyticNotificationStateDao;
     private final NodeInfo nodeInfo;
+
+    private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
+    private boolean allowUpToDateProcessing = true;
 
 
     private final AnalyticErrorWritingExecutor analyticErrorWritingExecutor;
@@ -523,7 +526,7 @@ public class AnalyticsExecutor {
         }
 
         // Determine if we have processed all of the current data.
-        final boolean uptoDate = metaList.size() < MAX_META_LIST_SIZE;
+        final boolean uptoDate = allowUpToDateProcessing && metaList.size() < maxMetaListSize;
 
         // Now execute notifications.
         executeNotifications(analyticRuleDoc, dataStore, currentDbState, parentTaskContext, uptoDate, startTimeMs);
@@ -843,7 +846,7 @@ public class AnalyticsExecutor {
                 minMetaId,
                 filter.getMinMetaCreateTimeMs(),
                 filter.getMaxMetaCreateTimeMs(),
-                MAX_META_LIST_SIZE);
+                maxMetaListSize);
     }
 
     private List<Meta> findMeta(final ExpressionOperator expression,
@@ -880,6 +883,10 @@ public class AnalyticsExecutor {
         findMetaCriteria.obtainPageRequest().setLength(length);
 
         return metaService.find(findMetaCriteria).getValues();
+    }
+
+    public void setAllowUpToDateProcessing(final boolean allowUpToDateProcessing) {
+        this.allowUpToDateProcessing = allowUpToDateProcessing;
     }
 
     private static class TableResultConsumer implements TableResultBuilder {

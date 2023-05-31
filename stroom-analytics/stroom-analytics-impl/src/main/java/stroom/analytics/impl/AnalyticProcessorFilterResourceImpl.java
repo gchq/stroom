@@ -20,6 +20,8 @@ import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticProcessorFilterResource;
 import stroom.analytics.shared.AnalyticProcessorFilterTracker;
 import stroom.analytics.shared.FindAnalyticProcessorFilterCriteria;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collections;
@@ -28,6 +30,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+@AutoLogged(OperationType.UNLOGGED)
 class AnalyticProcessorFilterResourceImpl implements AnalyticProcessorFilterResource {
 
     private final Provider<AnalyticProcessorFilterDao> analyticProcessorFilterDaoProvider;
