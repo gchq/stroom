@@ -261,7 +261,8 @@ public class AnalyticsExecutor {
                                       final AnalyticProcessorFilterTracker tracker,
                                       final AnalyticProcessorFilterTracker.Builder trackerBuilder,
                                       final TaskContext parentTaskContext) {
-        final List<AnalyticNotification> notifications = analyticNotificationDao.getByAnalyticUuid(analyticRuleDoc.getUuid());
+        final List<AnalyticNotification> notifications =
+                analyticNotificationDao.getByAnalyticUuid(analyticRuleDoc.getUuid());
         for (final AnalyticNotification notification : notifications) {
             if (notification.isEnabled()) {
                 final AnalyticNotificationState analyticNotificationState = getNotificationState(notification);
@@ -537,7 +538,8 @@ public class AnalyticsExecutor {
                                       final TaskContext parentTaskContext,
                                       final boolean upToDate,
                                       final long startTimeMs) {
-        final List<AnalyticNotification> notifications = analyticNotificationDao.getByAnalyticUuid(analyticRuleDoc.getUuid());
+        final List<AnalyticNotification> notifications =
+                analyticNotificationDao.getByAnalyticUuid(analyticRuleDoc.getUuid());
         for (final AnalyticNotification notification : notifications) {
             if (notification.isEnabled()) {
                 final AnalyticNotificationState notificationState = getNotificationState(notification);
@@ -754,7 +756,8 @@ public class AnalyticsExecutor {
 //        return analyticProcessorFilter;
 //    }
 
-    private AnalyticProcessorFilterTracker updateTrackerWithLmdbState(final AnalyticProcessorFilterTracker.Builder trackerBuilder,
+    private AnalyticProcessorFilterTracker updateTrackerWithLmdbState(final AnalyticProcessorFilterTracker.Builder
+                                                                              trackerBuilder,
                                                                       final CurrentDbState currentDbState) {
         if (currentDbState != null) {
             trackerBuilder

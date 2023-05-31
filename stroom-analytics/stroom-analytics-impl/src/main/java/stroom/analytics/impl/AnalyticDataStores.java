@@ -259,9 +259,12 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
                 final Path path = analyticResultStoreDir.resolve(dir);
                 if (Files.isDirectory(path)) {
-                    if (securityContext.isAdmin() || analyticRuleDoc.getCreateUser().equals(securityContext.getUserId())) {
+                    if (securityContext.isAdmin() ||
+                            analyticRuleDoc.getCreateUser().equals(securityContext.getUserId())) {
                         list.add(new ResultStoreInfo(
-                                new SearchRequestSource(SourceType.ANALYTIC_RULE, analyticRuleDoc.getUuid(), null),
+                                new SearchRequestSource(SourceType.ANALYTIC_RULE,
+                                        analyticRuleDoc.getUuid(),
+                                        null),
                                 searchRequest.getKey(),
                                 analyticRuleDoc.getCreateUser(),
                                 analyticRuleDoc.getCreateTimeMs(),

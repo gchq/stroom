@@ -26,7 +26,8 @@ public class AnalyticNotificationStreamConfig extends AnalyticNotificationConfig
     @JsonCreator
     public AnalyticNotificationStreamConfig(@JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                             @JsonProperty("destinationFeed") final DocRef destinationFeed,
-                                            @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
+                                            @JsonProperty("useSourceFeedIfPossible")
+                                                final boolean useSourceFeedIfPossible) {
         this.timeToWaitForData = timeToWaitForData;
         this.destinationFeed = destinationFeed;
         this.useSourceFeedIfPossible = useSourceFeedIfPossible;

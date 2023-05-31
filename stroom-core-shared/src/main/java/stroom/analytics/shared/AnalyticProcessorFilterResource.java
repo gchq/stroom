@@ -53,8 +53,8 @@ public interface AnalyticProcessorFilterResource
     @Operation(
             summary = "Create an analytic processor filter",
             operationId = "createAnalyticProcessorFilter")
-    AnalyticProcessorFilter create(
-            @Parameter(description = "processor filter", required = true) final AnalyticProcessorFilter processorFilter);
+    AnalyticProcessorFilter create(@Parameter(description = "processor filter", required = true)
+                                   final AnalyticProcessorFilter processorFilter);
 
     @PUT
     @Path("/{uuid}")

@@ -35,7 +35,8 @@ class AnalyticProcessorFilterResourceImpl implements AnalyticProcessorFilterReso
 
     @Inject
     AnalyticProcessorFilterResourceImpl(final Provider<AnalyticProcessorFilterDao> analyticProcessorFilterDaoProvider,
-                                        final Provider<AnalyticProcessorFilterTrackerDao> analyticProcessorFilterTrackerDaoProvider) {
+                                        final Provider<AnalyticProcessorFilterTrackerDao>
+                                                analyticProcessorFilterTrackerDaoProvider) {
         this.analyticProcessorFilterDaoProvider = analyticProcessorFilterDaoProvider;
         this.analyticProcessorFilterTrackerDaoProvider = analyticProcessorFilterTrackerDaoProvider;
     }

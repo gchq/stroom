@@ -17,16 +17,16 @@
 package stroom.analytics.client.gin;
 
 import stroom.analytics.client.AnalyticsPlugin;
-import stroom.analytics.client.presenter.AnalyticRulePresenter;
-import stroom.analytics.client.presenter.AnalyticProcessingPresenter;
-import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
-import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter;
-import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AnalyticRuleSettingsView;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
+import stroom.analytics.client.presenter.AnalyticProcessingPresenter;
+import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
+import stroom.analytics.client.presenter.AnalyticRulePresenter;
+import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter;
+import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AnalyticRuleSettingsView;
+import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticRuleSettingsViewImpl;
-import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class AnalyticsModule extends PluginModule {

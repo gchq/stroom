@@ -355,7 +355,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Create an Activity",
+        "summary" : "Validate an Activity",
         "tags" : [ "Activities" ]
       }
     },
@@ -446,6 +446,304 @@
         },
         "summary" : "Update an Activity",
         "tags" : [ "Activities" ]
+      }
+    },
+    "/analyticNotification/v1" : {
+      "post" : {
+        "operationId" : "createAnalyticNotification",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticNotification"
+              }
+            }
+          },
+          "description" : "notification",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalyticNotification"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an analytic notification",
+        "tags" : [ "AnalyticNotifications" ]
+      }
+    },
+    "/analyticNotification/v1/find" : {
+      "post" : {
+        "operationId" : "findAnalyticNotifications",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindAnalyticNotificationCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageAnalyticNotificationRow"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the analytic notifications for the specified analytic",
+        "tags" : [ "AnalyticNotifications" ]
+      }
+    },
+    "/analyticNotification/v1/{uuid}" : {
+      "delete" : {
+        "operationId" : "updateAnalyticNotification",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticNotification"
+              }
+            }
+          },
+          "description" : "notification",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an analytic notification",
+        "tags" : [ "AnalyticNotifications" ]
+      },
+      "put" : {
+        "operationId" : "updateAnalyticNotification_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticNotification"
+              }
+            }
+          },
+          "description" : "notification",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalyticNotification"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an analytic notification",
+        "tags" : [ "AnalyticNotifications" ]
+      }
+    },
+    "/analyticProcessorFilter/v1" : {
+      "post" : {
+        "operationId" : "createAnalyticProcessorFilter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticProcessorFilter"
+              }
+            }
+          },
+          "description" : "processor filter",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalyticProcessorFilter"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an analytic processor filter",
+        "tags" : [ "AnalyticProcessorFilters" ]
+      }
+    },
+    "/analyticProcessorFilter/v1/find" : {
+      "post" : {
+        "operationId" : "findAnalyticProcessorFilters",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindAnalyticProcessorFilterCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageAnalyticProcessorFilter"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the analytic processor filters for the specified analytic",
+        "tags" : [ "AnalyticProcessorFilters" ]
+      }
+    },
+    "/analyticProcessorFilter/v1/tracker" : {
+      "post" : {
+        "operationId" : "findAnalyticProcessorFilterTracker",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "filterUuid",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalyticProcessorFilterTracker"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the analytic processor filter tracker for the specified filter",
+        "tags" : [ "AnalyticProcessorFilters" ]
+      }
+    },
+    "/analyticProcessorFilter/v1/{uuid}" : {
+      "delete" : {
+        "operationId" : "updateAnalyticProcessorFilter",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticProcessorFilter"
+              }
+            }
+          },
+          "description" : "processor filter",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an analytic processor filter",
+        "tags" : [ "AnalyticProcessorFilters" ]
+      },
+      "put" : {
+        "operationId" : "updateAnalyticProcessorFilter_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticProcessorFilter"
+              }
+            }
+          },
+          "description" : "processor filter",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalyticProcessorFilter"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an analytic processor filter",
+        "tags" : [ "AnalyticProcessorFilters" ]
       }
     },
     "/analyticRule/v1/{uuid}" : {
@@ -6294,6 +6592,46 @@
         "tags" : [ "Reference Data" ]
       }
     },
+    "/refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}" : {
+      "delete" : {
+        "operationId" : "purgeReferenceDataByAge_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "feedName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "purgeAge",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Explicitly delete all entries belonging to a feed that are older than purgeAge.Performed on the named node, or all nodes if null.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
     "/refData/v1/purgeByStream/{refStreamId}" : {
       "delete" : {
         "operationId" : "purgeReferenceDataByStream",
@@ -9361,6 +9699,199 @@
           }
         } ]
       },
+      "AnalyticNotification" : {
+        "type" : "object",
+        "properties" : {
+          "analyticUuid" : {
+            "type" : "string"
+          },
+          "config" : {
+            "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AnalyticNotificationConfig" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "AnalyticNotificationEmailConfig" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "emailAddress" : {
+              "type" : "string"
+            },
+            "timeToWaitForData" : {
+              "$ref" : "#/components/schemas/SimpleDuration"
+            }
+          }
+        } ]
+      },
+      "AnalyticNotificationRow" : {
+        "type" : "object",
+        "properties" : {
+          "analyticNotification" : {
+            "$ref" : "#/components/schemas/AnalyticNotification"
+          },
+          "analyticNotificationState" : {
+            "$ref" : "#/components/schemas/AnalyticNotificationState"
+          }
+        }
+      },
+      "AnalyticNotificationState" : {
+        "type" : "object",
+        "properties" : {
+          "lastExecutionTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "notificationUuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AnalyticNotificationStreamConfig" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "destinationFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "timeToWaitForData" : {
+              "$ref" : "#/components/schemas/SimpleDuration"
+            },
+            "useSourceFeedIfPossible" : {
+              "type" : "boolean"
+            }
+          }
+        } ]
+      },
+      "AnalyticProcessorFilter" : {
+        "type" : "object",
+        "properties" : {
+          "analyticUuid" : {
+            "type" : "string"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "node" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AnalyticProcessorFilterTracker" : {
+        "type" : "object",
+        "properties" : {
+          "eventCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "filterUuid" : {
+            "type" : "string"
+          },
+          "lastEventId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastEventTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastMetaId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastPollMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastPollTaskCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "metaCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "AnalyticRuleDoc" : {
         "type" : "object",
         "properties" : {
@@ -9375,11 +9906,11 @@
           "createUser" : {
             "type" : "string"
           },
+          "dataRetention" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
           "description" : {
             "type" : "string"
-          },
-          "destinationFeed" : {
-            "$ref" : "#/components/schemas/DocRef"
           },
           "languageVersion" : {
             "type" : "string",
@@ -9387,9 +9918,6 @@
           },
           "name" : {
             "type" : "string"
-          },
-          "processSettings" : {
-            "$ref" : "#/components/schemas/AnalyticRuleProcessSettings"
           },
           "query" : {
             "type" : "string"
@@ -9409,25 +9937,6 @@
           },
           "version" : {
             "type" : "string"
-          }
-        }
-      },
-      "AnalyticRuleProcessSettings" : {
-        "type" : "object",
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "maxMetaCreateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "minMetaCreateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "timeToWaitForData" : {
-            "$ref" : "#/components/schemas/SimpleDuration"
           }
         }
       },
@@ -11965,6 +12474,54 @@
           }
         }
       },
+      "FindAnalyticNotificationCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "analyticDocUuid" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilterInput" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindAnalyticProcessorFilterCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "analyticDocUuid" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilterInput" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindDBTableCriteria" : {
         "type" : "object",
         "properties" : {
@@ -14109,7 +14666,7 @@
           },
           "processingState" : {
             "type" : "string",
-            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED", "STAGED", "READY_FOR_PURGE" ]
           },
           "refStreamDefinition" : {
             "$ref" : "#/components/schemas/RefStreamDefinition"
@@ -14821,13 +15378,16 @@
           },
           "processingState" : {
             "type" : "string",
-            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED", "STAGED", "READY_FOR_PURGE" ]
           }
         }
       },
       "RefStoreEntry" : {
         "type" : "object",
         "properties" : {
+          "feedName" : {
+            "type" : "string"
+          },
           "key" : {
             "type" : "string"
           },
@@ -14986,6 +15546,36 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Activity"
+            }
+          }
+        }
+      },
+      "ResultPageAnalyticNotificationRow" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnalyticNotificationRow"
+            }
+          }
+        }
+      },
+      "ResultPageAnalyticProcessorFilter" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnalyticProcessorFilter"
             }
           }
         }
@@ -15564,7 +16154,7 @@
           },
           "sourceType" : {
             "type" : "string",
-            "enum" : [ "ANALYTIC_RULE", "DASHBOARD_UI", "QUERY_UI", "API", "BATCH_SEARCH" ]
+            "enum" : [ "ANALYTIC_RULE", "ANALYTIC_RULE_UI", "DASHBOARD_UI", "QUERY_UI", "API", "BATCH_SEARCH" ]
           }
         }
       },

@@ -163,17 +163,18 @@ public class AnalyticNotificationsPresenter
 
     private void initTableColumns() {
         // Enabled.
-        final Column<AnalyticNotificationRow, TickBoxState> enabledColumn = new Column<AnalyticNotificationRow, TickBoxState>(
-                TickBoxCell.create(false, true)) {
-            @Override
-            public TickBoxState getValue(final AnalyticNotificationRow row) {
-                return Optional.ofNullable(row)
-                        .map(AnalyticNotificationRow::getAnalyticNotification)
-                        .map(AnalyticNotification::isEnabled)
-                        .map(TickBoxState::fromBoolean)
-                        .orElse(TickBoxState.UNTICK);
-            }
-        };
+        final Column<AnalyticNotificationRow, TickBoxState> enabledColumn =
+                new Column<AnalyticNotificationRow, TickBoxState>(
+                        TickBoxCell.create(false, true)) {
+                    @Override
+                    public TickBoxState getValue(final AnalyticNotificationRow row) {
+                        return Optional.ofNullable(row)
+                                .map(AnalyticNotificationRow::getAnalyticNotification)
+                                .map(AnalyticNotification::isEnabled)
+                                .map(TickBoxState::fromBoolean)
+                                .orElse(TickBoxState.UNTICK);
+                    }
+                };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             final AnalyticNotification updated = row.getAnalyticNotification().copy()
                     .enabled(value.toBoolean())
@@ -191,60 +192,62 @@ public class AnalyticNotificationsPresenter
 
         dataGrid.addResizableColumn(enabledColumn, "Enabled", 100);
 
-
         // Time to wait for data.
-        final Column<AnalyticNotificationRow, String> delayColumn = new Column<AnalyticNotificationRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final AnalyticNotificationRow row) {
-                return Optional.ofNullable(row)
-                        .map(AnalyticNotificationRow::getAnalyticNotification)
-                        .map(AnalyticNotification::getConfig)
-                        .map(config -> {
-                            if (config instanceof AnalyticNotificationStreamConfig) {
-                                return (AnalyticNotificationStreamConfig) config;
-                            }
-                            return null;
-                        })
-                        .map(AnalyticNotificationStreamConfig::getTimeToWaitForData)
-                        .map(timeToWaitForData ->
-                                timeToWaitForData.getTime() +
-                                        " " +
-                                        timeToWaitForData.getTimeUnit().getDisplayValue())
-                        .orElse(null);
-            }
-        };
+        final Column<AnalyticNotificationRow, String> delayColumn =
+                new Column<AnalyticNotificationRow, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final AnalyticNotificationRow row) {
+                        return Optional.ofNullable(row)
+                                .map(AnalyticNotificationRow::getAnalyticNotification)
+                                .map(AnalyticNotification::getConfig)
+                                .map(config -> {
+                                    if (config instanceof AnalyticNotificationStreamConfig) {
+                                        return (AnalyticNotificationStreamConfig) config;
+                                    }
+                                    return null;
+                                })
+                                .map(AnalyticNotificationStreamConfig::getTimeToWaitForData)
+                                .map(timeToWaitForData ->
+                                        timeToWaitForData.getTime() +
+                                                " " +
+                                                timeToWaitForData.getTimeUnit().getDisplayValue())
+                                .orElse(null);
+                    }
+                };
         dataGrid.addResizableColumn(delayColumn, "Time To Wait", 300);
 
         // Feed.
-        final Column<AnalyticNotificationRow, String> feedColumn = new Column<AnalyticNotificationRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final AnalyticNotificationRow row) {
-                return Optional.ofNullable(row)
-                        .map(AnalyticNotificationRow::getAnalyticNotification)
-                        .map(AnalyticNotification::getConfig)
-                        .map(config -> {
-                            if (config instanceof AnalyticNotificationStreamConfig) {
-                                return (AnalyticNotificationStreamConfig) config;
-                            }
-                            return null;
-                        })
-                        .map(AnalyticNotificationStreamConfig::getDestinationFeed)
-                        .map(DocRef::getName)
-                        .orElse(null);
-            }
-        };
+        final Column<AnalyticNotificationRow, String> feedColumn =
+                new Column<AnalyticNotificationRow, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final AnalyticNotificationRow row) {
+                        return Optional.ofNullable(row)
+                                .map(AnalyticNotificationRow::getAnalyticNotification)
+                                .map(AnalyticNotification::getConfig)
+                                .map(config -> {
+                                    if (config instanceof AnalyticNotificationStreamConfig) {
+                                        return (AnalyticNotificationStreamConfig) config;
+                                    }
+                                    return null;
+                                })
+                                .map(AnalyticNotificationStreamConfig::getDestinationFeed)
+                                .map(DocRef::getName)
+                                .orElse(null);
+                    }
+                };
         dataGrid.addResizableColumn(feedColumn, "Feed", 300);
 
         // Message.
-        final Column<AnalyticNotificationRow, String> messageColumn = new Column<AnalyticNotificationRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final AnalyticNotificationRow row) {
-                return Optional.ofNullable(row)
-                        .map(AnalyticNotificationRow::getAnalyticNotificationState)
-                        .map(AnalyticNotificationState::getMessage)
-                        .orElse(null);
-            }
-        };
+        final Column<AnalyticNotificationRow, String> messageColumn =
+                new Column<AnalyticNotificationRow, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final AnalyticNotificationRow row) {
+                        return Optional.ofNullable(row)
+                                .map(AnalyticNotificationRow::getAnalyticNotificationState)
+                                .map(AnalyticNotificationState::getMessage)
+                                .orElse(null);
+                    }
+                };
         dataGrid.addResizableColumn(messageColumn, "Message", 300);
 
         // Last Execution.

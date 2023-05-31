@@ -36,7 +36,8 @@ class AnalyticNotificationResourceImpl implements AnalyticNotificationResource {
 
     @Inject
     AnalyticNotificationResourceImpl(final Provider<AnalyticNotificationDao> analyticNotificationDaoProvider,
-                                     final Provider<AnalyticNotificationStateDao> analyticNotificationStateDaoProvider) {
+                                     final Provider<AnalyticNotificationStateDao>
+                                             analyticNotificationStateDaoProvider) {
         this.analyticNotificationDaoProvider = analyticNotificationDaoProvider;
         this.analyticNotificationStateDaoProvider = analyticNotificationStateDaoProvider;
     }
