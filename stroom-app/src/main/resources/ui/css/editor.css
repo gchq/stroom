@@ -91,11 +91,21 @@
 }
 
 .ace-tomorrow-night .ace_marker-layer .ace_selection {
-    background: yellow;
+    background: #4A148C; /* purple 900 */
     border: none;
 }
 
 .ace-tomorrow-night .ace_marker-layer .ace_selected-word {
-    background: orange;
+    background: #1A237E; /* indigo 900 */
+    border: none;
+}
+
+.ace-tomorrow-night-eighties .ace_marker-layer .ace_selection {
+    background: #4A148C; /* purple 900 */
+    border: none;
+}
+
+.ace-tomorrow-night-eighties .ace_marker-layer .ace_selected-word {
+    background: #1A237E; /* indigo 900 */
     border: none;
 }
