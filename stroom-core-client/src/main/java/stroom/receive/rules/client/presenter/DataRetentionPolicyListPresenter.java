@@ -67,9 +67,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        // Add a border to the list.
-        getWidget().getElement().addClassName("stroom-border");
-
         initTableColumns();
     }
 

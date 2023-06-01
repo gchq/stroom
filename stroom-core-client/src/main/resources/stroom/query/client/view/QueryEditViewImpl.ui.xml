@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:q="urn:import:stroom.query.client.view"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="DashboardViewImpl max dock-container-vertical DashboardViewImpl">
+    <g:FlowPanel styleName="DashboardViewImpl max dock-container-vertical">
         <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
             <g:FlowPanel styleName="dock-max">
 <!--                <q:NavButtons ui:field="navButtons" addStyleNames="dock-min"/>-->

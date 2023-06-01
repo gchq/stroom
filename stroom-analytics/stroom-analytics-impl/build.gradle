@@ -38,4 +38,5 @@ dependencies {
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.slf4j_api
+    implementation libs.ws_rs_api
 }

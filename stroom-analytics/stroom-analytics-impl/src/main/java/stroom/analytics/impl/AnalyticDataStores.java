@@ -1,7 +1,10 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.FindAnalyticDataShardCriteria;
+import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
@@ -12,19 +15,26 @@ import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.FindResultStoreCriteria;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.AbstractResultStoreConfig;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.Serialisers;
+import stroom.query.common.v2.SizesProvider;
+import stroom.query.common.v2.TableResultCreator;
+import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -46,6 +56,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -66,6 +77,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final Map<AnalyticRuleDoc, AnalyticDataStore> dataStoreCache;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
+    private final SizesProvider sizesProvider;
 
     @Inject
     public AnalyticDataStores(final LmdbEnvFactory lmdbEnvFactory,
@@ -75,7 +87,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                               final Provider<Executor> executorProvider,
                               final NodeInfo nodeInfo,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final SizesProvider sizesProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -83,6 +96,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.executorProvider = executorProvider;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
+        this.sizesProvider = sizesProvider;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -299,6 +313,94 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 return resultRequest.getMappings().get(0);
             }
         }
+        return null;
+    }
+
+    public ResultPage<AnalyticDataShard> findShards(final FindAnalyticDataShardCriteria criteria) {
+        final List<AnalyticDataShard> list = new ArrayList<>();
+
+        final DocRef docRef = DocRef
+                .builder()
+                .type(AnalyticRuleDoc.DOCUMENT_TYPE)
+                .uuid(criteria.getAnalyticDocUuid())
+                .build();
+        try {
+            final AnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
+            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(doc);
+            final String componentId = getComponentId(searchRequest);
+            final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
+            final Path path = analyticResultStoreDir.resolve(dir);
+            if (Files.isDirectory(path)) {
+                if (securityContext.isAdmin() ||
+                        doc.getCreateUser().equals(securityContext.getUserId())) {
+
+                    long createTime = 0;
+                    try {
+                        createTime = Files.getLastModifiedTime(path).to(TimeUnit.MILLISECONDS);
+                    } catch (final IOException e) {
+                        // Ignore.
+                    }
+
+                    list.add(new AnalyticDataShard(
+                            nodeInfo.getThisNodeName(),
+                            FileUtil.getCanonicalPath(path),
+                            createTime,
+                            FileUtil.getByteSize(path)));
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        return new ResultPage<>(list);
+    }
+
+    public Result getData(final GetAnalyticShardDataRequest request) {
+        final DocRef docRef = DocRef
+                .builder()
+                .type(AnalyticRuleDoc.DOCUMENT_TYPE)
+                .uuid(request.getAnalyticDocUuid())
+                .build();
+        try {
+            final AnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
+            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(doc);
+            final String componentId = getComponentId(searchRequest);
+            final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
+            final Path path = analyticResultStoreDir.resolve(dir);
+            if (Files.isDirectory(path)) {
+                final FieldFormatter fieldFormatter =
+                        new FieldFormatter(
+                                new FormatterFactory(searchRequest.getDateTimeSettings()));
+                final TableResultCreator resultCreator = new TableResultCreator(
+                        fieldFormatter,
+                        sizesProvider.getDefaultMaxResultsSizes());
+                final LmdbDataStore lmdbDataStore = createStore(searchRequest);
+                ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
+                final List<TableSettings> mappings = List.of(resultRequest
+                        .getMappings()
+                        .get(0)
+                        .copy()
+                        .aggregateFilter(null)
+                        .build());
+                final TimeFilter timeFilter = DateExpressionParser
+                        .getTimeFilter(
+                                request.getTimeRange(),
+                                request.getDateTimeSettings(),
+                                System.currentTimeMillis());
+                resultRequest = resultRequest
+                        .copy()
+                        .mappings(mappings)
+                        .requestedRange(request.getRequestedRange())
+                        .timeFilter(timeFilter)
+                        .build();
+
+                return resultCreator.create(lmdbDataStore, resultRequest);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw e;
+        }
+
         return null;
     }
 

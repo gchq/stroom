@@ -45,7 +45,8 @@ public class AnalyticsModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(AnalyticNotificationResourceImpl.class)
-                .bind(AnalyticProcessorFilterResourceImpl.class);
+                .bind(AnalyticProcessorFilterResourceImpl.class)
+                .bind(AnalyticDataShardResourceImpl.class);
     }
 
     private static class AnalyticsExecutorRunnable extends RunnableWrapper {

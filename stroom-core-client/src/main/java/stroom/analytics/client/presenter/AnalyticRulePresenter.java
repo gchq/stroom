@@ -34,10 +34,12 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData NOTIFICATIONS_TAB = new TabDataImpl("Notifications");
     private static final TabData PROCESSING_TAB = new TabDataImpl("Processing");
+    private static final TabData SHARDS_TAB = new TabDataImpl("Shards");
     private final AnalyticQueryEditPresenter queryEditPresenter;
     private final AnalyticRuleSettingsPresenter settingsPresenter;
     private final AnalyticNotificationsPresenter notificationsPresenter;
     private final AnalyticProcessingPresenter processPresenter;
+    private final AnalyticDataShardsPresenter analyticDataShardsPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
@@ -45,17 +47,20 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
                                  final AnalyticQueryEditPresenter queryEditPresenter,
                                  final AnalyticRuleSettingsPresenter settingsPresenter,
                                  final AnalyticNotificationsPresenter notificationsPresenter,
-                                 final AnalyticProcessingPresenter processPresenter) {
+                                 final AnalyticProcessingPresenter processPresenter,
+                                 final AnalyticDataShardsPresenter analyticDataShardsPresenter) {
         super(eventBus, view);
         this.queryEditPresenter = queryEditPresenter;
         this.settingsPresenter = settingsPresenter;
         this.notificationsPresenter = notificationsPresenter;
         this.processPresenter = processPresenter;
+        this.analyticDataShardsPresenter = analyticDataShardsPresenter;
 
         addTab(QUERY_TAB);
         addTab(SETTINGS_TAB);
         addTab(PROCESSING_TAB);
         addTab(NOTIFICATIONS_TAB);
+        addTab(SHARDS_TAB);
         selectTab(QUERY_TAB);
     }
 
@@ -94,6 +99,8 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
             callback.onReady(settingsPresenter);
         } else if (PROCESSING_TAB.equals(tab)) {
             callback.onReady(processPresenter);
+        } else if (SHARDS_TAB.equals(tab)) {
+            callback.onReady(analyticDataShardsPresenter);
         } else {
             callback.onReady(null);
         }
@@ -106,6 +113,7 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
         notificationsPresenter.read(docRef, entity, readOnly);
         settingsPresenter.read(docRef, entity, readOnly);
         processPresenter.read(docRef, entity, readOnly);
+        analyticDataShardsPresenter.read(docRef, entity, readOnly);
     }
 
     @Override

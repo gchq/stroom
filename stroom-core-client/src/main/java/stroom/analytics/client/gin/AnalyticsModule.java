@@ -17,6 +17,8 @@
 package stroom.analytics.client.gin;
 
 import stroom.analytics.client.AnalyticsPlugin;
+import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
+import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter;
@@ -24,6 +26,7 @@ import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticPro
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter;
 import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AnalyticRuleSettingsView;
+import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticRuleSettingsViewImpl;
@@ -46,5 +49,8 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(AnalyticNotificationEditPresenter.class,
                 AnalyticNotificationEditView.class,
                 AnalyticNotificationEditViewImpl.class);
+        bindPresenterWidget(AnalyticDataShardsPresenter.class,
+                AnalyticDataShardsView.class,
+                AnalyticDataShardsViewImpl.class);
     }
 }

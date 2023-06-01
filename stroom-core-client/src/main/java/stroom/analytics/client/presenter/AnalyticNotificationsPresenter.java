@@ -92,9 +92,6 @@ public class AnalyticNotificationsPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        // Add a border to the list.
-        getWidget().getElement().addClassName("stroom-border");
-
         newButton = view.addButton(SvgPresets.NEW_ITEM);
         openButton = view.addButton(SvgPresets.EDIT);
         deleteButton = view.addButton(SvgPresets.DELETE);

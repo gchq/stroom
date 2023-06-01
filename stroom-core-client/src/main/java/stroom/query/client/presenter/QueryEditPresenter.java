@@ -56,8 +56,8 @@ public class QueryEditPresenter
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
-    final QueryModel queryModel;
-    TimeRange currentTimeRange = TimeRanges.ALL_TIME;
+    private final QueryModel queryModel;
+    private TimeRange currentTimeRange = TimeRanges.ALL_TIME;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
