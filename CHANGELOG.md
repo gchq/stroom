@@ -13,6 +13,29 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.21] - 2023-05-31
+
+* Issue **#3466** : Improve rule editing and configuration.
+
+* Issue **#3478** : Search result store screen now has close button rather than ok/cancel.
+
+* Issue **#3443** : Delete unused LMDB instances when analytics are deleted.
+
+* Issue **#3480** : Fix menu heights.
+
+* Issue **#3483** : Add sensible hard coded defaults for the jersey HTTP client configuration.
+
+* Issue **#3401** : Add analytic processing and notification settings.
+
+* Issue **#3452** : Make layout constraints dialog modal.
+
+* Issue **#3454** : Fix tickbox target click handling.
+
+* Issue **#3489** : Add suggestion caching to improve UI experience.
+
+* Issue **#3476** : Ensure special fields are removed when dashboard data source is changed.
+
+
 ## [v7.2-beta.20] - 2023-05-30
 
 * Issue **#3485** : Roll lmdb-java back to 0.8.2 to see if it fixes the FFI issue.
@@ -5365,7 +5388,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.21...HEAD
+[v7.2-beta.21]: https://github.com/gchq/stroom/compare/v7.2-beta.20...v7.2-beta.21
 [v7.2-beta.20]: https://github.com/gchq/stroom/compare/v7.2-beta.19...v7.2-beta.20
 [v7.2-beta.19]: https://github.com/gchq/stroom/compare/v7.2-beta.18...v7.2-beta.19
 [v7.2-beta.18]: https://github.com/gchq/stroom/compare/v7.2-beta.17...v7.2-beta.18
