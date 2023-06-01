@@ -2270,7 +2270,15 @@ export interface ProcessingInfoResponse {
   effectiveTime?: string;
   lastAccessedTime?: string;
   maps?: Record<string, EntryCounts>;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  processingState?:
+    | "LOAD_IN_PROGRESS"
+    | "PURGE_IN_PROGRESS"
+    | "COMPLETE"
+    | "FAILED"
+    | "TERMINATED"
+    | "PURGE_FAILED"
+    | "STAGED"
+    | "READY_FOR_PURGE";
   refStreamDefinition?: RefStreamDefinition;
 }
 
@@ -2608,10 +2616,19 @@ export interface RefDataProcessingInfo {
 
   /** @format int64 */
   lastAccessedTimeEpochMs?: number;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  processingState?:
+    | "LOAD_IN_PROGRESS"
+    | "PURGE_IN_PROGRESS"
+    | "COMPLETE"
+    | "FAILED"
+    | "TERMINATED"
+    | "PURGE_FAILED"
+    | "STAGED"
+    | "READY_FOR_PURGE";
 }
 
 export interface RefStoreEntry {
+  feedName?: string;
   key?: string;
   mapDefinition?: MapDefinition;
   refDataProcessingInfo?: RefDataProcessingInfo;
@@ -8020,6 +8037,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     purgeReferenceDataByAge: (purgeAge: string, query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/refData/v1/purgeByAge/${purgeAge}`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name PurgeReferenceDataByAge1
+     * @summary Explicitly delete all entries belonging to a feed that are older than purgeAge.Performed on the named node, or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}
+     * @secure
+     */
+    purgeReferenceDataByAge1: (
+      feedName: string,
+      purgeAge: string,
+      query?: { nodeName?: string },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, boolean>({
+        path: `/refData/v1/purgeByFeedByAge/${feedName}/${purgeAge}`,
         method: "DELETE",
         query: query,
         secure: true,

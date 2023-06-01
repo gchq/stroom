@@ -29,6 +29,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.view.Indicator;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -37,6 +38,8 @@ import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.HasData;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
@@ -48,8 +51,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         HasDirtyHandlers,
@@ -75,10 +82,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     private EditorPresenter codePresenter;
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
+    private EditorPresenter consolePresenter;
 
     private String classification;
     private ClassificationWrapperView inputView;
     private ClassificationWrapperView outputView;
+    private View consoleView;
 
     @Inject
     public ElementPresenter(final EventBus eventBus,
@@ -138,6 +147,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             // We always want to see the output of the element.
             getView().setOutputView(getOutputView());
 
+            updateConsoleView(codeIndicators);
+
             if (!loading) {
                 Scheduler.get().scheduleDeferred(() -> future.setResult(true));
             }
@@ -146,6 +157,22 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         }
 
         return future;
+    }
+
+    public void toggleConsole() {
+        getView().toggleConsoleVisible();
+    }
+
+    private void updateConsoleView(final IndicatorLines indicatorLines) {
+//        GWT.log("updateConsoleView " + indicatorLines);
+        if (indicatorLines != null
+                && indicatorLines.getLocationAgnosticIndicator() != null
+                && !indicatorLines.getLocationAgnosticIndicator().isEmpty()) {
+            getView().setConsoleVisible(true);
+        } else {
+            getView().setConsoleVisible(false);
+        }
+        getView().setConsoleView(getConsoleView());
     }
 
     private void loadEntityRef(final DocRef entityRef, final FutureImpl<Boolean> future) {
@@ -216,7 +243,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                 codePresenter.setText(code);
             }
 
-            codePresenter.setIndicators(codeIndicators);
+//            codePresenter.setIndicators(codeIndicators);
+            setCodeIndicators(codeIndicators);
 
             // Done here to ensure the editor is attached
             codePresenter.getBasicAutoCompletionOption().setAvailable();
@@ -229,10 +257,38 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     }
 
     public void setCodeIndicators(final IndicatorLines codeIndicators) {
+//        GWT.log("Setting codeIndicators " + codeIndicators);
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
             codePresenter.setIndicators(codeIndicators);
+            if (consolePresenter != null) {
+                if (codeIndicators != null) {
+                    final Indicator locationAgnosticIndicator = codeIndicators.getLocationAgnosticIndicator();
+                    if (locationAgnosticIndicator == null || locationAgnosticIndicator.isEmpty()) {
+                        consolePresenter.setText(null);
+                    } else {
+//                        GWT.log("Setting console text");
+                        final StringBuilder stringBuilder = new StringBuilder();
+                        final Map<Severity, Set<StoredError>> errorMap = locationAgnosticIndicator.getErrorMap();
+                        for (final Severity severity : Severity.SEVERITIES) {
+                            final Set<StoredError> storedErrors = errorMap.get(severity);
+                            if (storedErrors != null && !storedErrors.isEmpty()) {
+                                stringBuilder
+                                        .append(storedErrors.stream()
+                                                .map(StoredError::getMessage)
+                                                .filter(msg -> msg != null && !msg.isEmpty())
+                                                .map(msg -> severity + ": " + msg)
+                                                .collect(Collectors.joining("\n")));
+                            }
+                        }
+                        consolePresenter.setText(stringBuilder.toString());
+                    }
+                } else {
+                    consolePresenter.setText(null);
+                }
+            }
         }
+        updateConsoleView(codeIndicators);
     }
 
     public void setInput(final String input,
@@ -278,6 +334,25 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             outputPresenter.getSnippetsOption().setOff();
             outputPresenter.getLiveAutoCompletionOption().setUnavailable();
             outputPresenter.getLiveAutoCompletionOption().setOff();
+        }
+    }
+
+    public void setConsole(final String consoleText,
+                          final int outputStartLineNo,
+                          final boolean formatOutput,
+                          final IndicatorLines outputIndicators) {
+        if (consolePresenter != null) {
+            consolePresenter.setText(consoleText);
+            consolePresenter.getStylesOption().setOn(formatOutput);
+            consolePresenter.setReadOnly(true);
+            consolePresenter.setFirstLineNumber(outputStartLineNo);
+            consolePresenter.setIndicators(outputIndicators);
+            consolePresenter.getBasicAutoCompletionOption().setUnavailable();
+            consolePresenter.getBasicAutoCompletionOption().setOff();
+            consolePresenter.getSnippetsOption().setUnavailable();
+            consolePresenter.getSnippetsOption().setOff();
+            consolePresenter.getLiveAutoCompletionOption().setUnavailable();
+            consolePresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 
@@ -379,29 +454,43 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         return outputView;
     }
 
+    private View getConsoleView() {
+//        GWT.log("Getting console view");
+        if (consolePresenter == null) {
+//            GWT.log("Creating consolePresenter");
+            consolePresenter = editorProvider.get();
+            setCommonEditorOptions(consolePresenter);
+            setReadOnlyEditorOptions(consolePresenter);
+            consolePresenter.getLineNumbersOption().setOff();
+            consolePresenter.getLineWrapOption().setOff();
+            consolePresenter.setMode(AceEditorMode.STROOM_STEPPER);
+            consoleView = consolePresenter.getView();
+        }
+        return consoleView;
+    }
+
     private void setReadOnlyEditorOptions(final EditorPresenter editorPresenter) {
         editorPresenter.setReadOnly(true);
         // Default to wrapped lines as a lot of output is un-formatted xml
-        editorPresenter.getLineWrapOption().setOn(true);
+        editorPresenter.getLineWrapOption().setOn();
 
-        editorPresenter.getFormatAction().setAvailable(false);
+        editorPresenter.getFormatAction().setUnavailable();
     }
 
     private void setCommonEditorOptions(final EditorPresenter editorPresenter) {
         editorPresenter.getIndicatorsOption().setAvailable(true);
-        editorPresenter.getIndicatorsOption().setOn(true);
+        editorPresenter.getIndicatorsOption().setOn();
 
         editorPresenter.getLineNumbersOption().setAvailable(true);
-        editorPresenter.getLineNumbersOption().setOn(true);
+        editorPresenter.getLineNumbersOption().setOn();
 
         editorPresenter.getLineWrapOption().setAvailable(true);
-        editorPresenter.getLineWrapOption().setOn(false);
+        editorPresenter.getLineWrapOption().setOff();
 
         editorPresenter.getShowInvisiblesOption().setAvailable(true);
-        editorPresenter.getShowInvisiblesOption().setOn(false);
+        editorPresenter.getShowInvisiblesOption().setOff();
 
-        editorPresenter.getUseVimBindingsOption().setAvailable(true);
-        editorPresenter.getUseVimBindingsOption().setOn(false);
+        editorPresenter.getUseVimBindingsOption().setAvailable();
     }
 
     public interface ElementView extends View {
@@ -411,5 +500,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         void setInputView(View view);
 
         void setOutputView(View view);
+
+        void setConsoleView(View view);
+
+        void setConsoleVisible(final boolean isVisible);
+
+        void toggleConsoleVisible();
     }
 }

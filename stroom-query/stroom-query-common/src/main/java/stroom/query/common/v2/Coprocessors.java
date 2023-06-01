@@ -68,7 +68,7 @@ public final class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer
     @Override
     public void add(final Val[] values) {
         counter.increment();
-        LOGGER.trace(() -> String.format("data: [%s]", values));
+        LOGGER.trace(() -> String.format("data: [%s]", (Object) values));
         // Give the data array to each of our coprocessors
         coprocessorMap.values().forEach(coprocessor -> coprocessor.add(values));
     }

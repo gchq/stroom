@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.editor.client.view.Indicator;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -96,6 +97,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final Map<String, ElementPresenter> editorMap = new HashMap<>();
     private final PipelineModel pipelineModel;
     private final ButtonView saveButton;
+    private final ButtonView toggleLogPaneButton;
     private boolean foundRecord;
     private boolean showingData;
     private boolean busyTranslating;
@@ -150,6 +152,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 false);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
+        // Create but don't add yet
+        toggleLogPaneButton = leftButtons.createButton(SvgPresets.EXCLAMATION
+                .title("Toggle Log Pane"));
         sourcePresenter.setClassificationUiHandlers(this);
     }
 
@@ -179,6 +184,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             steppingFilterPresenter.show(elements, request.getStepFilterMap(), request::setStepFilterMap);
         }));
         registerHandler(saveButton.addClickHandler(event -> save()));
+        registerHandler(toggleLogPaneButton.addClickHandler(event -> toggleConsole()));
     }
 
     private void getDescendantFilters(final PipelineElement parent,
@@ -211,12 +217,13 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         } else {
             final String elementId = element.getId();
-            ElementPresenter editorPresenter = editorMap.get(elementId);
-            if (editorPresenter == null) {
+            ElementPresenter elementPresenter = editorMap.get(elementId);
+            if (elementPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
                     DirtyEvent.fire(SteppingPresenter.this, true);
                     saveButton.setEnabled(true);
                 };
+                updateToggleConsoleBtn(elementId);
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
@@ -229,30 +236,32 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
 
-                editorPresenter = presenter;
+                elementPresenter = presenter;
             }
 
             // Refresh this editor if it needs it.
-            refreshEditor(editorPresenter, elementId);
+            refreshEditor(elementPresenter, elementId);
 
-            return editorPresenter;
+            return elementPresenter;
         }
     }
 
-    private void refreshEditor(final ElementPresenter editorPresenter, final String elementId) {
-        editorPresenter.load()
+    private void refreshEditor(final ElementPresenter elementPresenter, final String elementId) {
+        elementPresenter.load()
                 .onSuccess(result -> {
-                    if (editorPresenter.isRefreshRequired()) {
-                        editorPresenter.setRefreshRequired(false);
+                    if (elementPresenter.isRefreshRequired()) {
+                        elementPresenter.setRefreshRequired(false);
 
                         // Update code pane.
-                        refreshEditorCodeIndicators(editorPresenter, elementId);
+                        refreshEditorCodeIndicators(elementPresenter, elementId);
 
                         // Update IO data.
-                        refreshEditorIO(editorPresenter, elementId);
+                        refreshEditorIO(elementPresenter, elementId);
                     }
+                    updateToggleConsoleBtn(elementId);
                 })
-                .onFailure(throwable -> AlertEvent.fireError(this, throwable.getMessage(), null));
+                .onFailure(throwable ->
+                        AlertEvent.fireError(this, throwable.getMessage(), null));
     }
 
     private void refreshEditorCodeIndicators(final ElementPresenter editorPresenter, final String elementId) {
@@ -263,8 +272,114 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 final Indicators codeIndicators = elementData.getCodeIndicators();
                 // Always set the indicators for the code pane as errors in the
                 // code pane could be responsible for no record being found.
-                editorPresenter.setCodeIndicators(new IndicatorLines(codeIndicators));
+
+                final IndicatorLines indicatorLines = new IndicatorLines(codeIndicators);
+                editorPresenter.setCodeIndicators(indicatorLines);
             }
+        }
+    }
+
+    private void updateToggleConsoleBtn(final String elementId) {
+        // Only update the code indicators if we have a current result.
+        if (currentResult != null && currentResult.getStepData() != null) {
+            final SharedElementData elementData = currentResult.getStepData().getElementData(elementId);
+            if (elementData != null) {
+                final Indicators codeIndicators = elementData.getCodeIndicators();
+                final Indicators outputIndicators = elementData.getOutputIndicators();
+                final Indicators combinedIndicators = Indicators.combine(codeIndicators, outputIndicators);
+
+                final IndicatorLines indicatorLines = new IndicatorLines(combinedIndicators);
+                final Indicator locationAgnosticIndicator = indicatorLines.getLocationAgnosticIndicator();
+//                updateToggleConsoleBtnVisibility(!locationAgnosticIndicator.isEmpty());
+                updateToggleConsoleBtnVisibility(locationAgnosticIndicator);
+            } else {
+//                updateToggleConsoleBtnVisibility(false);
+                updateToggleConsoleBtnVisibility(null);
+            }
+        } else {
+//            updateToggleConsoleBtnVisibility(false);
+                updateToggleConsoleBtnVisibility(null);
+        }
+    }
+
+//    private void updateToggleConsoleBtnVisibility(final boolean isVisible) {
+//        final boolean hasButton = leftButtons.containsButton(toggleLogPaneButton);
+//        if (isVisible && !hasButton) {
+//            leftButtons.addButton(toggleLogPaneButton);
+//        } else if (!isVisible && hasButton) {
+//            leftButtons.removeButton(toggleLogPaneButton);
+//        }
+//    }
+
+//    private void updateToggleConsoleBtnVisibility(final Indicator indicator) {
+//        leftButtons.removeButton(infoButton);
+//        leftButtons.removeButton(warningsButton);
+//        leftButtons.removeButton(errorsButton);
+//        if (indicator != null) {
+//            final Severity maxSeverity = indicator.getMaxSeverity();
+//            if (maxSeverity != null) {
+//                if (maxSeverity.greaterThanOrEqual(Severity.ERROR)) {
+//                    final int count = indicator.getCount(maxSeverity);
+//                    errorsButton.setTitle("Toggle Error Pane (" + count
+//                            + (maxSeverity.greaterThanOrEqual(Severity.FATAL_ERROR)
+//                            ? " fatal"
+//                            : "")
+//                            + " error"
+//                            + (count > 1
+//                            ? "s"
+//                            : "") + ")");
+//                    leftButtons.addButton(errorsButton);
+//                } else if (maxSeverity.greaterThanOrEqual(Severity.WARNING)) {
+//                    final int count = indicator.getCount(Severity.WARNING);
+//                    warningsButton.setTitle("Toggle Warnings Pane (" + indicator.getCount(Severity.WARNING)
+//                            + " warning"
+//                            + (count > 1
+//                            ? "s"
+//                            : "") + ")");
+//                    leftButtons.addButton(warningsButton);
+//                } else if (maxSeverity.greaterThanOrEqual(Severity.INFO)) {
+//                    final int count = indicator.getCount(Severity.INFO);
+//                    warningsButton.setTitle("Toggle Info Pane (" + indicator.getCount(Severity.INFO)
+//                            + " information message"
+//                            + (count > 1
+//                            ? "s"
+//                            : "") + ")");
+//                    leftButtons.addButton(infoButton);
+//                }
+//            }
+//        }
+//    }
+
+    private void updateToggleConsoleBtnVisibility(final Indicator indicator) {
+        boolean isVisible = false;
+        if (indicator != null) {
+            final Severity maxSeverity = indicator.getMaxSeverity();
+            if (maxSeverity != null) {
+                isVisible = true;
+                final int count = indicator.getCount(maxSeverity);
+                final String plural = count > 1 ? "s" : "";
+                final String type;
+                if (Severity.INFO.equals(maxSeverity)) {
+                    type = "Information Message";
+                } else if (Severity.WARNING.equals(maxSeverity)) {
+                    type = "Warning";
+                } else if (Severity.ERROR.equals(maxSeverity)) {
+                    type = "Error";
+                } else if (Severity.FATAL_ERROR.equals(maxSeverity)) {
+                    type = "Fatal Error";
+                } else {
+                    type = "Message";
+                }
+                final String msg = "Toggle Log Pane ("
+                        + count + " " + type + plural + ")";
+                toggleLogPaneButton.setTitle(msg);
+            }
+        }
+        final boolean hasButton = leftButtons.containsButton(toggleLogPaneButton);
+        if (isVisible && !hasButton) {
+            leftButtons.addButton(toggleLogPaneButton);
+        } else if (!isVisible && hasButton) {
+            leftButtons.removeButton(toggleLogPaneButton);
         }
     }
 
@@ -440,10 +555,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null) {
                 final String elementId = selectedElement.getId();
-                final ElementPresenter editorPresenter = editorMap.get(elementId);
-                if (editorPresenter != null) {
-                    refreshEditor(editorPresenter, elementId);
+                final ElementPresenter elementPresenter = editorMap.get(elementId);
+                if (elementPresenter != null) {
+                    refreshEditor(elementPresenter, elementId);
                 }
+                updateToggleConsoleBtn(elementId);
             }
 
             if (foundRecord) {
@@ -479,19 +595,22 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     sb.append("\n");
                 }
 
-                AlertEvent.fireError(
-                        this,
-                        "Some errors occurred during stepping",
-                        sb.toString(),
-                        null);
+                GWT.log("Some errors occurred during stepping");
+//                AlertEvent.fireError(
+//                        this,
+//                        "Some errors occurred during stepping",
+//                        sb.toString(),
+//                        null);
             } else {
                 fatalErrors = getFatalErrors(result);
                 fatalErrors.ifPresent(errorText -> {
-                    AlertEvent.fireError(
-                            this,
-                            "One or more fatal errors occurred during stepping",
-                            errorText,
-                            null);
+
+                    GWT.log("One or more fatal errors occurred during stepping");
+//                    AlertEvent.fireError(
+//                            this,
+//                            "One or more fatal errors occurred during stepping",
+//                            errorText,
+//                            null);
                 });
             }
         } finally {
@@ -560,6 +679,17 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
                 TaskEndEvent.fire(SteppingPresenter.this);
             });
+        }
+    }
+
+    private void toggleConsole() {
+        final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+        if (selectedElement != null) {
+            final String elementId = selectedElement.getId();
+            final ElementPresenter elementPresenter = editorMap.get(elementId);
+            if (elementPresenter != null) {
+                elementPresenter.toggleConsole();
+            }
         }
     }
 

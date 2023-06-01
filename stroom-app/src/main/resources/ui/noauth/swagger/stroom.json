@@ -6294,6 +6294,46 @@
         "tags" : [ "Reference Data" ]
       }
     },
+    "/refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}" : {
+      "delete" : {
+        "operationId" : "purgeReferenceDataByAge_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "feedName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "purgeAge",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Explicitly delete all entries belonging to a feed that are older than purgeAge.Performed on the named node, or all nodes if null.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
     "/refData/v1/purgeByStream/{refStreamId}" : {
       "delete" : {
         "operationId" : "purgeReferenceDataByStream",
@@ -14109,7 +14149,7 @@
           },
           "processingState" : {
             "type" : "string",
-            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED", "STAGED", "READY_FOR_PURGE" ]
           },
           "refStreamDefinition" : {
             "$ref" : "#/components/schemas/RefStreamDefinition"
@@ -14821,13 +14861,16 @@
           },
           "processingState" : {
             "type" : "string",
-            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED", "STAGED", "READY_FOR_PURGE" ]
           }
         }
       },
       "RefStoreEntry" : {
         "type" : "object",
         "properties" : {
+          "feedName" : {
+            "type" : "string"
+          },
           "key" : {
             "type" : "string"
           },

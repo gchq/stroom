@@ -69,6 +69,17 @@ public class Indicators {
         addAll(indicators);
     }
 
+    public static Indicators combine(final Indicators... indicatorsArr) {
+        final Indicators result = new Indicators();
+
+        if (indicatorsArr != null) {
+            for (final Indicators indicators : indicatorsArr) {
+                result.addAll(indicators);
+            }
+        }
+        return result;
+    }
+
     public Map<Severity, Integer> getErrorCount() {
         return errorCount;
     }

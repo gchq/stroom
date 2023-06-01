@@ -4,41 +4,55 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class IndicatorLines {
 
     private final Indicators indicators;
     private final Map<Integer, Indicator> map;
+    private final Indicator locationAgnosticIndicator;
 
     public IndicatorLines(final Indicators indicators) {
         this.indicators = indicators;
-        map = new HashMap<>();
+        this.map = new HashMap<>();
+        this.locationAgnosticIndicator = new Indicator();
+
         if (indicators != null && indicators.getErrorList() != null) {
             for (final StoredError storedError : indicators.getErrorList()) {
-                int lineNo = 1;
-                if (storedError.getLocation() != null) {
-                    lineNo = storedError.getLocation().getLineNo();
+//                int lineNo = 1;
+                if (storedError.getLocation() != null && storedError.getLocation().getLineNo() > 0) {
+                    map.computeIfAbsent(storedError.getLocation().getLineNo(), k -> new Indicator())
+                            .add(storedError.getSeverity(), storedError);
+//                    lineNo = storedError.getLocation().getLineNo();
+                } else {
+                    locationAgnosticIndicator.add(storedError.getSeverity(), storedError);
                 }
-                if (lineNo <= 0) {
-                    lineNo = 1;
-                }
-
-                map.computeIfAbsent(lineNo, k -> new Indicator()).add(storedError.getSeverity(), storedError);
             }
         }
     }
 
     public Severity getMaxSeverity() {
         if (indicators != null && indicators.getErrorCount() != null) {
+            final List<Severity> severities = new ArrayList<>();
             for (final Severity sev : Severity.SEVERITIES) {
                 final Integer c = indicators.getErrorCount().get(sev);
                 if (c != null && c > 0) {
-                    return sev;
+                    severities.add(sev);
+                    break;
                 }
             }
+            if (locationAgnosticIndicator != null) {
+                final Severity maxSeverity = locationAgnosticIndicator.getMaxSeverity();
+                if (maxSeverity != null) {
+                    severities.add(maxSeverity);
+                }
+            }
+
+            return Severity.getMaxSeverity(severities, null);
         }
         return null;
     }
@@ -70,5 +84,9 @@ public class IndicatorLines {
 
     public Indicator getIndicator(final int lineNo) {
         return map.get(lineNo);
+    }
+
+    public Indicator getLocationAgnosticIndicator() {
+        return locationAgnosticIndicator;
     }
 }
