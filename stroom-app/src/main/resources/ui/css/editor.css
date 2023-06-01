@@ -89,3 +89,13 @@
     font-size: 12px;
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
+
+.ace-tomorrow-night .ace_marker-layer .ace_selection {
+    background: yellow;
+    border: none;
+}
+
+.ace-tomorrow-night .ace_marker-layer .ace_selected-word {
+    background: orange;
+    border: none;
+}
