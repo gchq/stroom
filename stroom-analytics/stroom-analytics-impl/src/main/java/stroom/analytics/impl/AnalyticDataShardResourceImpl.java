@@ -144,7 +144,8 @@ class AnalyticDataShardResourceImpl implements AnalyticDataShardResource {
 //                analyticNotificationDao.getByAnalyticUuid(criteria.getAnalyticDocUuid());
 //        final List<AnalyticNotificationRow> list = new ArrayList<>();
 //        for (final AnalyticNotification notification : notifications) {
-//            final Optional<AnalyticNotificationState> state = analyticNotificationStateDao.get(notification.getUuid());
+//            final Optional<AnalyticNotificationState> state =
+//            analyticNotificationStateDao.get(notification.getUuid());
 //            final AnalyticNotificationRow row = new AnalyticNotificationRow(notification, state.orElse(null));
 //            list.add(row);
 //        }

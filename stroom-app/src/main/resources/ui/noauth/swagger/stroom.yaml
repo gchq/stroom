@@ -310,6 +310,56 @@ paths:
       summary: Update an Activity
       tags:
       - Activities
+  /analyticDataShard/v1/find:
+    post:
+      operationId: findAnalyticDataShards
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindAnalyticDataShardCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageAnalyticDataShard'
+          description: default response
+      summary: Find the analytic data shards for the specified analytic
+      tags:
+      - AnalyticNotifications
+  /analyticDataShard/v1/getData:
+    post:
+      operationId: getShardData
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAnalyticShardDataRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+          description: default response
+      summary: Get the data for the shard
+      tags:
+      - AnalyticNotifications
   /analyticNotification/v1:
     post:
       operationId: createAnalyticNotification
@@ -5857,9 +5907,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                $ref: '#/components/schemas/Suggestions'
           description: default response
       summary: Fetch some suggestions
       tags:
@@ -6694,6 +6742,19 @@ components:
             type: string
           userUuid:
             type: string
+    AnalyticDataShard:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        node:
+          type: string
+        path:
+          type: string
+        size:
+          type: integer
+          format: int64
     AnalyticNotification:
       type: object
       properties:
@@ -8712,6 +8773,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SimpleUser'
+    FindAnalyticDataShardCriteria:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilterInput:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     FindAnalyticNotificationCriteria:
       type: object
       properties:
@@ -9163,6 +9240,19 @@ components:
           - "NULL"
           - NUMBER
           - STRING
+    GetAnalyticShardDataRequest:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
+        path:
+          type: string
+        requestedRange:
+          $ref: '#/components/schemas/OffsetRange'
+        timeRange:
+          $ref: '#/components/schemas/TimeRange'
     GetFeedStatusRequest:
       type: object
       properties:
@@ -10989,6 +11079,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Activity'
+    ResultPageAnalyticDataShard:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticDataShard'
     ResultPageAnalyticNotificationRow:
       type: object
       description: A page of results.
@@ -12189,6 +12289,15 @@ components:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
         oldEntityData:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
+    Suggestions:
+      type: object
+      properties:
+        cacheable:
+          type: boolean
+        list:
+          type: array
+          items:
+            type: string
     Summary:
       type: object
       allOf:
