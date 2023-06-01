@@ -376,12 +376,13 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                         sizesProvider.getDefaultMaxResultsSizes());
                 final LmdbDataStore lmdbDataStore = createStore(searchRequest);
                 ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
-                final List<TableSettings> mappings = List.of(resultRequest
-                        .getMappings()
-                        .get(0)
+                TableSettings tableSettings = resultRequest.getMappings().get(0);
+                tableSettings = tableSettings
                         .copy()
                         .aggregateFilter(null)
-                        .build());
+                        .maxResults(List.of(1000000))
+                        .build();
+                final List<TableSettings> mappings = List.of(tableSettings);
                 final TimeFilter timeFilter = DateExpressionParser
                         .getTimeFilter(
                                 request.getTimeRange(),
