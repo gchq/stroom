@@ -153,6 +153,16 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
+export interface AnalyticDataShard {
+  /** @format int64 */
+  createTimeMs?: number;
+  node?: string;
+  path?: string;
+
+  /** @format int64 */
+  size?: number;
+}
+
 export interface AnalyticNotification {
   analyticUuid?: string;
   config?: AnalyticNotificationConfig;
@@ -1410,6 +1420,14 @@ export interface FilterUsersRequest {
   users?: SimpleUser[];
 }
 
+export interface FindAnalyticDataShardCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindAnalyticNotificationCriteria {
   analyticDocUuid?: string;
   pageRequest?: PageRequest;
@@ -1640,6 +1658,18 @@ export interface FunctionSignature {
   name?: string;
   returnDescription?: string;
   returnType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
+}
+
+export interface GetAnalyticShardDataRequest {
+  analyticDocUuid?: string;
+
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+  path?: string;
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
+  requestedRange?: OffsetRange;
+  timeRange?: TimeRange;
 }
 
 export interface GetFeedStatusRequest {
@@ -2809,6 +2839,15 @@ export interface ResultPageActivity {
 /**
  * A page of results.
  */
+export interface ResultPageAnalyticDataShard {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: AnalyticDataShard[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageAnalyticNotificationRow {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -3574,6 +3613,11 @@ export interface StroomStatsStoreEntityData {
 export interface StroomStatsStoreFieldChangeRequest {
   newEntityData?: StroomStatsStoreEntityData;
   oldEntityData?: StroomStatsStoreEntityData;
+}
+
+export interface Suggestions {
+  cacheable?: boolean;
+  list?: string[];
 }
 
 export type Summary = Marker & { count?: number; expander?: Expander; total?: number };
@@ -4512,6 +4556,51 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, Activity>({
         path: `/activity/v1/${id}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  analyticDataShard = {
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name FindAnalyticDataShards
+     * @summary Find the analytic data shards for the specified analytic
+     * @request POST:/analyticDataShard/v1/find
+     * @secure
+     */
+    findAnalyticDataShards: (
+      data: FindAnalyticDataShardCriteria,
+      query?: { nodeName?: string },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, ResultPageAnalyticDataShard>({
+        path: `/analyticDataShard/v1/find`,
+        method: "POST",
+        query: query,
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name GetShardData
+     * @summary Get the data for the shard
+     * @request POST:/analyticDataShard/v1/getData
+     * @secure
+     */
+    getShardData: (data: GetAnalyticShardDataRequest, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, Result>({
+        path: `/analyticDataShard/v1/getData`,
+        method: "POST",
+        query: query,
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -9523,7 +9612,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchSuggestions: (data: FetchSuggestionsRequest, params: RequestParams = {}) =>
-      this.request<any, string[]>({
+      this.request<any, Suggestions>({
         path: `/suggest/v1`,
         method: "POST",
         body: data,
