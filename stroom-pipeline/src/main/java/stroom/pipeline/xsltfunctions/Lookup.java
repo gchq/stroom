@@ -26,11 +26,27 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import com.google.common.base.Strings;
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.expr.XPathContextMajor;
+import net.sf.saxon.expr.instruct.Actor;
+import net.sf.saxon.expr.instruct.CallTemplate;
+import net.sf.saxon.expr.instruct.TemplateRule;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import javax.inject.Inject;
 
 class Lookup extends AbstractLookup {
@@ -46,11 +62,93 @@ class Lookup extends AbstractLookup {
         super(referenceData, metaHolder, sequenceMakerFactory);
     }
 
+    private void dump(final Object object,
+                      final Set<Object> done,
+                      final int depth) {
+//        CompletableFuture.runAsync(() -> {
+            if (object instanceof Actor) {
+                final Actor actor = (Actor) object;
+                System.out.println("rule location: " + actor.getLocation().getLineNumber() + ":" + actor.getLocation().getColumnNumber());
+            }
+
+            try {
+                final Method[] methods = object.getClass().getMethods();
+
+                // Get values.
+                for (final Method method : methods) {
+                    if (method.getParameterCount() == 0 && method.getName().startsWith("get") && method.trySetAccessible()) {
+                        System.out.println(Strings.padStart("",
+                                depth * 3,
+                                ' ') + object.getClass().getName() + " - " + method.getName());
+                        try {
+                            Object result = method.invoke(object);
+                            if (result != null) {
+                                try {
+                                    if (result.getClass().isPrimitive()) {
+                                        System.out.println(result);
+                                    }
+                                    if (result instanceof Number) {
+                                        final Number number = (Number) result;
+                                        int l = number.intValue();
+                                        if ( l > 2 && l < 1000) {
+                                            System.out.println(l);
+                                        }
+                                    }
+
+                                } catch (final Throwable e) {
+                                }
+                            }
+                        } catch (final Throwable e) {
+                            System.err.println(e.getMessage());
+                        }
+                    }
+                }
+
+                // Recurse.
+                for (final Method method : methods) {
+                    if (method.getParameterCount() == 0 && method.getName().startsWith("get")) {
+                        System.out.println(Strings.padStart("",
+                                depth * 3,
+                                ' ') + object.getClass().getName() + " - " + method.getName());
+                        try {
+                            Object result = method.invoke(object);
+                            if (result != null) {
+                                if (!done.contains(result) && depth < 40) {
+                                    done.add(result);
+                                    dump(result, done, depth + 1);
+                                }
+                            }
+                        } catch (final Throwable e) {
+                            System.err.println(e.getMessage());
+                        }
+                    }
+                }
+            } catch (final Throwable e) {
+                System.err.println(e.getMessage());
+            }
+//        });
+    }
+
     @Override
     protected Sequence doLookup(final XPathContext context,
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) {
+        dump(context, Collections.newSetFromMap(new ConcurrentHashMap<>()), 0);
+
+//        if (context.getCaller() instanceof XPathContextMajor) {
+//            final XPathContextMajor xPathContextMajor = (XPathContextMajor) context.getCaller();
+//            if (xPathContextMajor.getOrigin() instanceof CallTemplate) {
+//                final CallTemplate callTemplate = (CallTemplate) xPathContextMajor.getOrigin();
+//                callTemplate.getTargetTemplate()
+//                System.out.println("rule location: " + callTemplate.getLocation().getLineNumber() + ":" + callTemplate.getLocation().getColumnNumber());
+//            }
+//        }
+
+//        if (context.getCaller().getCurrentTemplateRule().getAction() instanceof TemplateRule) {
+//            final TemplateRule templateRule = (TemplateRule) context.getCaller().getCurrentTemplateRule().getAction();
+//            System.out.println("rule location: " + templateRule.getLineNumber() + ":" + templateRule.getColumnNumber());
+//        }
 
         LOGGER.debug(() -> LogUtil.message("Looking up {}, {}",
                 lookupIdentifier, Instant.ofEpochMilli(lookupIdentifier.getEventTime())));
