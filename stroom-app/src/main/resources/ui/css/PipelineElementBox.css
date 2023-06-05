@@ -31,7 +31,7 @@
 	vertical-align: middle;
 	cursor: pointer;
 	z-index: 2;
-	
+
 	transition: background-color .3s;
 	-webkit-transition: background-color .3s;
 	-moz-transition: background-color .3s;
@@ -57,6 +57,30 @@
 	background-color: var(--pipeline-element-box__background-color--hotspot);
 }
 
+.pipelineElementBox-severityInfo {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--info);
+}
+
+.pipelineElementBox-severityWarn {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--warn);
+}
+
+.pipelineElementBox-severityError {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--error);
+}
+
+.pipelineElementBox-severityFatalError {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--fatal-error);
+}
+
 .pipelineElementBox-image {
 	width: 16px;
 	height: 16px;
@@ -66,4 +90,9 @@
 .pipelineElementBox-label {
 	padding: 0 8px;
 	cursor: pointer;
+	color: var(--pipeline-element-box__text-color);
+}
+
+.pipelineElementBox-backgroundSelected .pipelineElementBox-label  {
+	color: var(--pipeline-element-box__text-color--selected);
 }

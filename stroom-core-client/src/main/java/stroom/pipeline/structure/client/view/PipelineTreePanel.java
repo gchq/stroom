@@ -18,6 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.data.grid.client.MouseHelper;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.util.shared.Severity;
 import stroom.widget.htree.client.ArrowConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -35,6 +36,8 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
+
+import java.util.Map;
 
 public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
@@ -163,5 +166,25 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     public int getTreeHeight() {
         return canvas.getOffsetHeight();
+    }
+
+    public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
+        if (cellRenderer != null) {
+            if (elementIdToSeveritiesMap == null || elementIdToSeveritiesMap.isEmpty()) {
+                cellRenderer.getBoxes().forEach(pipelineElementBox -> {
+                    if (pipelineElementBox != null) {
+                        pipelineElementBox.setSeverity(null);
+                    }
+                });
+            } else {
+                cellRenderer.getBoxes().forEach(pipelineElementBox -> {
+                    if (pipelineElementBox != null) {
+                        pipelineElementBox.setSeverity(
+                                elementIdToSeveritiesMap.get(pipelineElementBox.getItem().getId()));
+                    }
+                });
+            }
+        }
+
     }
 }

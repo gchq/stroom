@@ -25,60 +25,50 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ElementViewImpl extends ViewImpl implements ElementView {
 
-    protected static final int CONSOLE_SIZE = 30;
+    private static final int LOG_PANE_SIZE = 30;
+    private static final double LOG_PANE_SPLIT = 0.15;
+
     private Widget widget;
     private MySplitLayoutPanel layout;
 
     private View code;
     private View input;
     private View output;
-    private View console;
-    private boolean isConsoleVisible = false;
+    private View log;
+    private boolean isLogVisible = false;
 
     @Override
     public Widget asWidget() {
         if (widget == null) {
+            final Widget outputWidget = output.asWidget();
+            final Widget logWidget = log.asWidget();
+            outputWidget.addStyleName("dashboard-panel overflow-hidden");
+            logWidget.addStyleName("dashboard-panel overflow-hidden");
+            layout = new MySplitLayoutPanel();
+
             if (input == null) {
-                final Widget outputWidget = output.asWidget();
-                outputWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout = new MySplitLayoutPanel();
-                final Widget consoleWidget = console.asWidget();
-                consoleWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout.setVSplits("0.80");
-                layout.addSouth(consoleWidget, CONSOLE_SIZE);
-                layout.add(outputWidget);
-            } else if (code == null) {
-                // Create layout.
-                final Widget inputWidget = input.asWidget();
-                final Widget outputWidget = output.asWidget();
-                inputWidget.addStyleName("dashboard-panel overflow-hidden");
-                outputWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout = new MySplitLayoutPanel();
-                layout.setHSplits("0.5");
-                layout.addWest(inputWidget, 200);
-                final Widget consoleWidget = console.asWidget();
-                consoleWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout.setVSplits("0.50,0.15");
-                layout.addSouth(consoleWidget, CONSOLE_SIZE);
-                layout.add(outputWidget);
+                layout.setVSplits(LOG_PANE_SPLIT);
+                layout.addSouth(logWidget, LOG_PANE_SIZE);
             } else {
-                // Create layout.
-                final Widget codeWidget = code.asWidget();
                 final Widget inputWidget = input.asWidget();
-                final Widget outputWidget = output.asWidget();
-                codeWidget.addStyleName("dashboard-panel overflow-hidden");
                 inputWidget.addStyleName("dashboard-panel overflow-hidden");
-                outputWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout = new MySplitLayoutPanel();
-                layout.setHSplits("0.5");
-                layout.addNorth(codeWidget, 200);
-                final Widget consoleWidget = console.asWidget();
-                consoleWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout.setVSplits("0.50,0.15");
-                layout.addSouth(consoleWidget, CONSOLE_SIZE);
-                layout.addWest(inputWidget, 200);
-                layout.add(outputWidget);
+                layout.setHSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT);
+                if (code == null) {
+                    layout.addWest(inputWidget, 200);
+                    layout.setVSplits(0.50, LOG_PANE_SPLIT);
+                    layout.addSouth(logWidget, LOG_PANE_SIZE);
+                } else {
+                    final Widget codeWidget = code.asWidget();
+                    codeWidget.addStyleName("dashboard-panel overflow-hidden");
+                    layout.addNorth(codeWidget, 200);
+                    layout.setVSplits(0.50, LOG_PANE_SPLIT);
+                    layout.addSouth(logWidget, LOG_PANE_SIZE);
+                    layout.addWest(inputWidget, 200);
+                }
             }
+            // Center widget so must be added last
+            layout.add(outputWidget);
+
             widget = layout;
         }
 
@@ -102,20 +92,20 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
     }
 
     @Override
-    public void setConsoleView(final View view) {
-        console = view;
+    public void setLogView(final View view) {
+        log = view;
     }
 
     @Override
-    public void setConsoleVisible(final boolean isVisible) {
-        isConsoleVisible = isVisible;
-        if (layout != null && console != null) {
-            layout.setWidgetHidden(console.asWidget(), !isVisible);
+    public void setLogVisible(final boolean isVisible) {
+        isLogVisible = isVisible;
+        if (layout != null && log != null) {
+            layout.setWidgetHidden(log.asWidget(), !isVisible);
         }
     }
 
     @Override
-    public void toggleConsoleVisible() {
-        setConsoleVisible(!isConsoleVisible);
+    public void toggleLogVisible() {
+        setLogVisible(!isLogVisible);
     }
 }

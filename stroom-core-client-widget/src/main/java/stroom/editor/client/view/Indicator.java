@@ -88,6 +88,13 @@ public class Indicator implements Serializable {
         return errorMap.isEmpty();
     }
 
+    public int size() {
+        return errorMap.values()
+                .stream()
+                .mapToInt(Set::size)
+                .sum();
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();

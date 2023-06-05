@@ -34,6 +34,11 @@ public class StepControlPresenter
         implements StepControlUIHandlers,
         HasChangeFilterHandlers {
 
+    boolean lastFoundStepFirstState = false;
+    boolean lastFoundStepForwardState = false;
+    boolean lastFoundStepBackwardState = false;
+    boolean lastFoundStepLastState = false;
+
     @Inject
     public StepControlPresenter(final EventBus eventBus, final StepControlView view) {
         super(eventBus, view);
@@ -97,6 +102,11 @@ public class StepControlPresenter
                 getView().setStepBackwardEnabled(true);
                 getView().setStepForwardEnabled(false);
                 getView().setStepLastEnabled(false);
+            } else if (stepType == StepType.REFRESH) {
+                getView().setStepFirstEnabled(true);
+                getView().setStepBackwardEnabled(true);
+                getView().setStepForwardEnabled(true);
+                getView().setStepLastEnabled(true);
             }
             getView().setStepRefreshEnabled(showingData);
 

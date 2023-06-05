@@ -20,6 +20,8 @@ import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Indicators;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class ElementData {
     private final String elementId;
     private final PipelineElementType elementType;
@@ -89,8 +91,21 @@ public class ElementData {
         this.outputIndicators = outputIndicators;
     }
 
+    @JsonIgnore
+    public  Indicators getAllIndicators() {
+        return Indicators.combine(outputIndicators, codeIndicators);
+    }
+
     public SharedElementData convertToShared() {
         return new SharedElementData(getInput(), getOutput(), codeIndicators, outputIndicators, formatInput,
                 formatOutput);
+    }
+
+    @Override
+    public String toString() {
+        return "ElementData{" +
+                "elementId='" + elementId + '\'' +
+                ", maxSeverity=" + getAllIndicators().getMaxSeverity() +
+                '}';
     }
 }

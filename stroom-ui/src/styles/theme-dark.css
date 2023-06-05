@@ -68,8 +68,13 @@
     --pipeline-element-box__background-color--selected: #1164a3;
     --pipeline-element-box__background-color--selected--hover: #1164a3;
     --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
-    --pipeline-element-box__text-color: #fff;
+    --pipeline-element-box__text-color: #888;
+    --pipeline-element-box__text-color--selected: #fff;
     --pipeline-element-box__border-color: #a1a1a1;
+    --pipeline-element-box__border-color--info: #378cff;
+    --pipeline-element-box__border-color--warn: yellow;
+    --pipeline-element-box__border-color--error: orangered;
+    --pipeline-element-box__border-color--fatal-error: red;
 
     --link__text-color: #3aaaff;
 
@@ -80,12 +85,12 @@
     --code-editor__border-color: #000;
     --code-editor__border-color--info: #378cff;
     --code-editor__background-color--info: #378cff;
-    --code-editor__border-color--warning: #ffde81;
-    --code-editor__background-color--warning: #ffde81;
-    --code-editor__border-color--error: #ff6c00;
-    --code-editor__background-color--error: #ff6c00;
-    --code-editor__border-color--fatal: #ff0000;
-    --code-editor__background-color--fatal: #ff0000;
+    --code-editor__border-color--warning: yellow;
+    --code-editor__background-color--warning: yellow;
+    --code-editor__border-color--error: orangered;
+    --code-editor__background-color--error: orangered;
+    --code-editor__border-color--fatal: red;
+    --code-editor__background-color--fatal: red;
     --code-editor__background-color--highlight: #1164a3;
 
     --xsdbrowser-box__background-color: #19171d;

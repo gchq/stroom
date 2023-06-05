@@ -30,6 +30,9 @@ public enum Severity implements HasDisplayValue {
     ERROR(3, "ERROR", "Errors"),
     FATAL_ERROR(4, "FATAL", "Fatal Errors");
 
+    /**
+     * Array of severities in descending order of importance, i.e. FATAL_ERROR first
+     */
     public static final Severity[] SEVERITIES = {FATAL_ERROR, ERROR, WARNING, INFO};
 
     /**

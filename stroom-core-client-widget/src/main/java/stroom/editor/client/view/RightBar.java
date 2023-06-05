@@ -54,24 +54,24 @@ public class RightBar extends Composite {
             final String className = target.getClassName();
             if (className != null) {
                 if (className.toUpperCase().contains("codeEditor-marker".toUpperCase())) {
-                        // This is a marker box.
-                        final String lineNo = target.getAttribute("lineno");
-                        if (lineNo != null) {
-                            final int line = Integer.parseInt(lineNo);
-                            if (eventType == Event.ONMOUSEDOWN) {
-                                editor.gotoLine(line);
-                            } else if (eventType == Event.ONMOUSEOVER) {
+                    // This is a marker box.
+                    final String lineNo = target.getAttribute("lineno");
+                    if (lineNo != null) {
+                        final int line = Integer.parseInt(lineNo);
+                        if (eventType == Event.ONMOUSEDOWN) {
+                            editor.gotoLine(line);
+                        } else if (eventType == Event.ONMOUSEOVER) {
 //                                final Element parent = target.cast();
-                                final int x = target.getAbsoluteLeft();
-                                final int y = target.getAbsoluteTop();
-                                final Indicator indicator = indicators.getIndicator(line);
-                                final String msg = indicator.getMaxSeverity().getDisplayValue()
-                                + " at line " + lineNo + ", click to navigate.";
-                                showIndicatorPopup(x, y, true, msg);
-                            } else if (eventType == Event.ONMOUSEOUT) {
-                                indicatorPopup.hide();
-                            }
+                            final int x = target.getAbsoluteLeft();
+                            final int y = target.getAbsoluteTop();
+                            final Indicator indicator = indicators.getIndicator(line);
+                            final String msg = indicator.getMaxSeverity().getDisplayValue()
+                                    + " at line " + lineNo + ", click to navigate.";
+                            showIndicatorPopup(x, y, true, msg);
+                        } else if (eventType == Event.ONMOUSEOUT) {
+                            indicatorPopup.hide();
                         }
+                    }
                 } else if (className.toUpperCase().contains("codeEditor-summary".toUpperCase())) {
                     if (eventType == Event.ONMOUSEOVER) {
                         // This is a summary box.

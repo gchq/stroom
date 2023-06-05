@@ -69,6 +69,7 @@ import com.google.gwt.user.client.Event;
 public class MySplitLayoutPanel extends DockLayoutPanel {
 
     private static final int SPLITTER_SIZE = 6;
+    public static final double HALF_N_HALF_SPLIT = 0.5;
     /**
      * The element that masks the screen so we can catch mouse events over
      * iframes.
@@ -93,8 +94,16 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         hSplits = parseSplits(str);
     }
 
+    public void setHSplits(final double... splits) {
+        hSplits = splits;
+    }
+
     public void setVSplits(final String str) {
         vSplits = parseSplits(str);
+    }
+
+    public void setVSplits(final double... splits) {
+        vSplits = splits;
     }
 
     private double[] parseSplits(final String str) {
@@ -249,6 +258,19 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void setWidgetHidden(Widget widget, boolean hidden) {
+        super.setWidgetHidden(widget, hidden);
+        // If we are hiding a widget then we also need to hide its splitter else you get an
+        // orphaned splitter appearing
+        if (!(widget instanceof Splitter)) {
+            final Splitter associatedSplitter = getAssociatedSplitter(widget);
+            if (associatedSplitter != null) {
+                setWidgetHidden(associatedSplitter, hidden);
+            }
+        }
     }
 
     /**

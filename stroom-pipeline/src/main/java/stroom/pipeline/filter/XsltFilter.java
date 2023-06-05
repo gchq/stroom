@@ -186,7 +186,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                         final CharBuffer sb = new CharBuffer(100);
                         sb.append("There is a problem with the XSLT \"");
                         sb.append(xslt.getName());
-                        sb.append("\", see previous logs for details");
+                        sb.append("\", see log entries for details.");
                         final String msg = sb.toString();
                         throw ProcessException.create(msg);
                     }
