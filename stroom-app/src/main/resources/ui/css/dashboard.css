@@ -225,6 +225,7 @@
 	gap: 5px;
 	cursor: default;
 	z-index: 5;
+	min-height: 26px;
 }
 
 .tabLayout .tabLayout-tabContainer {

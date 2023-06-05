@@ -56,13 +56,19 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgImages;
 import stroom.util.shared.Version;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
+import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
@@ -70,11 +76,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,7 +94,6 @@ public class DashboardPresenter
         implements
         FlexLayoutChangeHandler,
         DocumentTabData,
-        DashboardUiHandlers,
         DashboardContext,
         Consumer<Boolean>,
         HasToolbar {
@@ -121,6 +124,12 @@ public class DashboardPresenter
     private String externalLinkParameters;
     private TimeRange timeRange;
 
+
+    private final InlineSvgToggleButton editModeButton;
+    private final InlineSvgButton addWidgetButton;
+    private final InlineSvgButton setConstraintsButton;
+    private final ButtonPanel editToolbar;
+
     @Inject
     public DashboardPresenter(final EventBus eventBus,
                               final DashboardView view,
@@ -143,12 +152,50 @@ public class DashboardPresenter
         flexLayout.setChangeHandler(this);
         flexLayout.setComponents(components);
         view.setContent(flexLayout);
-        view.setUiHandlers(this);
+
+        editModeButton = new InlineSvgToggleButton();
+        editModeButton.setSvg(SvgImages.EDIT);
+        editModeButton.setTitle("Enter Design Mode");
+
+        addWidgetButton = new InlineSvgButton();
+        addWidgetButton.setSvg(SvgImages.ADD);
+        addWidgetButton.setTitle("Add Component");
+        addWidgetButton.setVisible(false);
+
+        setConstraintsButton = new InlineSvgButton();
+        setConstraintsButton.addStyleName("inline-svg-button__blue");
+        setConstraintsButton.setSvg(SvgImages.MONO_RESIZE);
+        setConstraintsButton.setTitle("Set Constraints");
+        setConstraintsButton.setVisible(false);
+
+
+//                <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
+//            <g:FlowPanel styleName="dock-max">
+//                <g:Button ui:field="designModeButton" text="Enter Design Mode" width="200px"/>
+//            </g:FlowPanel>
+//        </g:FlowPanel>
+//        <g:FlowPanel
+//                styleName="DashboardViewImpl-top DashboardViewImpl-designButtons dock-min dock-container-horizontal">
+//            <g:FlowPanel styleName="dock-min DashboardViewImpl-top-buttons">
+//                <g:Button ui:field="addPanelButton" text="Add Panel"/>
+//                <g:Button ui:field="addInputButton" text="Add Input"/>
+//                <g:Button ui:field="constraintsButton" text="Constraints"/>
+//            </g:FlowPanel>
+//        </g:FlowPanel>
+
+
+        editToolbar = new ButtonPanel();
+        editToolbar.addButton(editModeButton);
+        editToolbar.addButton(addWidgetButton);
+        editToolbar.addButton(setConstraintsButton);
     }
 
     @Override
     public List<Widget> getToolbars() {
-        return Collections.singletonList(queryToolbarPresenter.getWidget());
+        final List<Widget> list = new ArrayList<>();
+        list.add(editToolbar);
+        list.add(queryToolbarPresenter.getWidget());
+        return list;
     }
 
     @Override
@@ -162,6 +209,21 @@ public class DashboardPresenter
                 start();
             }
         }));
+        registerHandler(editModeButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onDesign();
+            }
+        }));
+        registerHandler(addWidgetButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onAdd(e);
+            }
+        }));
+        registerHandler(setConstraintsButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onConstraints();
+            }
+        }));
     }
 
     @Override
@@ -173,18 +235,7 @@ public class DashboardPresenter
         components.removeAll();
     }
 
-    @Override
-    public void onAddPanel(final ClickEvent event) {
-        onAdd(event, ComponentUse.PANEL);
-    }
-
-    @Override
-    public void onAddInput(final ClickEvent event) {
-        onAdd(event, ComponentUse.INPUT);
-    }
-
-    @Override
-    public void onConstraints(final ClickEvent event) {
+    private void onConstraints() {
         final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
             if (!Objects.equals(e.getValue(), layoutConstraints)) {
@@ -200,38 +251,51 @@ public class DashboardPresenter
                 .caption("Set Layout Constraints")
                 .modal(true)
                 .onShow(e -> presenter.getView().focus())
-                .onHide(e -> {
-                    handlerRegistration.removeHandler();
-                })
+                .onHide(e -> handlerRegistration.removeHandler())
                 .fire();
     }
 
-    @Override
-    public void onDesign(final ClickEvent event) {
+    private void onDesign() {
         setDesignMode(!designMode);
     }
 
     private void setDesignMode(final boolean designMode) {
         this.designMode = designMode;
-        getView().setDesignMode(designMode);
+        addWidgetButton.setVisible(designMode);
+        setConstraintsButton.setVisible(designMode);
         layoutPresenter.setDesignMode(designMode);
+        getView().setDesignMode(designMode);
+
+        if (designMode) {
+            editModeButton.setTitle("Exit Design Mode");
+        } else {
+            editModeButton.setTitle("Enter Design Mode");
+        }
     }
 
-    private void onAdd(final ClickEvent event, final ComponentUse componentUse) {
+    private void onAdd(final ClickEvent event) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
                 target.getAbsoluteTop() + target.getClientHeight() + 1);
 
-        final List<Item> menuItems = new ArrayList<>();
+        final List<Item> inputs = new ArrayList<>();
+        final List<Item> panels = new ArrayList<>();
         for (final ComponentType type : components.getComponentTypes()) {
-            if (componentUse.equals(type.getUse())) {
-                menuItems.add(new SimpleMenuItem.Builder()
-                        .text(type.getName())
-                        .command(() -> addNewComponent(type))
-                        .build());
+            final SimpleMenuItem item = new SimpleMenuItem.Builder()
+                    .text(type.getName())
+                    .command(() -> addNewComponent(type))
+                    .build();
+            if (ComponentUse.INPUT.equals(type.getUse())) {
+                inputs.add(item);
+            } else {
+                panels.add(item);
             }
         }
+
+        final List<Item> menuItems = new ArrayList<>();
+        menuItems.add(new SimpleParentMenuItem(1, "Add Panel", panels));
+        menuItems.add(new SimpleParentMenuItem(2, "Add Input", inputs));
 
         ShowMenuEvent
                 .builder()
@@ -332,9 +396,7 @@ public class DashboardPresenter
                     final List<LayoutConfig> children = new ArrayList<>();
                     children.add(tabLayoutConfig);
                     children.add(layoutConfig);
-                    SplitLayoutConfig splitLayoutConfig =
-                            new SplitLayoutConfig(new Size(200, 76), Dimension.Y, children);
-                    layoutConfig = splitLayoutConfig;
+                    layoutConfig = new SplitLayoutConfig(new Size(200, 76), Dimension.Y, children);
                     dashboardConfig.setLayout(layoutConfig);
                 }
 
@@ -448,7 +510,8 @@ public class DashboardPresenter
             }
         }
 
-        getView().setReadOnly(readOnly || embedded);
+        addWidgetButton.setEnabled(!readOnly && !embedded);
+        setConstraintsButton.setEnabled(!readOnly && !embedded);
     }
 
     private Component addComponent(final String type, final ComponentConfig componentConfig) {
@@ -788,13 +851,11 @@ public class DashboardPresenter
         this.customTitle = customTitle;
     }
 
-    public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
+    public interface DashboardView extends View {
 
         void setContent(Widget view);
 
         void setEmbedded(boolean embedded);
-
-        void setReadOnly(boolean readOnly);
 
         void setDesignMode(boolean designMode);
     }
