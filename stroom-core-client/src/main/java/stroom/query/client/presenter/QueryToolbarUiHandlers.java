@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.client.presenter;
+package stroom.query.client.presenter;
+
+import stroom.query.api.v2.TimeRange;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface PipelineSettingsUiHandlers extends UiHandlers {
+public interface QueryToolbarUiHandlers extends UiHandlers {
 
-    void setDirty(boolean dirty);
+    void onTimeRange(TimeRange timeRange);
+
+    void showWarnings();
 }

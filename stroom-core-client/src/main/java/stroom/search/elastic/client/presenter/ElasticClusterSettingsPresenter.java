@@ -40,6 +40,7 @@ import java.util.List;
 public class ElasticClusterSettingsPresenter
         extends DocumentEditPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
         implements ElasticClusterSettingsUiHandlers {
+
     private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);
 
     private final RestFactory restFactory;
@@ -58,7 +59,8 @@ public class ElasticClusterSettingsPresenter
     }
 
     @Override
-    protected void onBind() { }
+    protected void onBind() {
+    }
 
     @Override
     public void onChange() {
@@ -100,8 +102,6 @@ public class ElasticClusterSettingsPresenter
             getView().setApiKeySecret(connectionConfig.getApiKeySecret());
             getView().setSocketTimeoutMillis(connectionConfig.getSocketTimeoutMillis());
         }
-
-        getView().setDescription(cluster.getDescription());
     }
 
     @Override
@@ -115,16 +115,11 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setSocketTimeoutMillis(getView().getSocketTimeoutMillis());
 
         cluster.setConnection(connectionConfig);
-        cluster.setDescription(getView().getDescription().trim());
         return cluster;
     }
 
     public interface ElasticClusterSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticClusterSettingsUiHandlers> {
-
-        String getDescription();
-
-        void setDescription(String description);
 
         List<String> getConnectionUrls();
 

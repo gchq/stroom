@@ -34,8 +34,8 @@
 
 .button-container {
     display: flex;
-    align-items: top;
     margin: 2px;
+    gap: 2px;
 
     /*
     white-space: nowrap;
@@ -999,15 +999,22 @@
     min-height: 25px;
 }
 
-.linkTabPanelViewImpl-left {
-    flex-grow: 0;
-}
-
 .linkTabPanelViewImpl-middle {
     flex-grow: 1;
 }
 
-.linkTabPanelViewImpl-right {
+.toolbarContainer {
+    display: flex;
+}
+
+.toolbar {
+}
+
+.toolbar-left {
+    flex-grow: 0;
+}
+
+.toolbar-right {
     display: flex;
     justify-content: flex-end;
     flex-grow: 0;

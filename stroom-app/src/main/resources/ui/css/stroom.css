@@ -371,39 +371,6 @@ td {
 	background-color: #E7F7FF;
 }
 
-/* TOOLBAR */
-.toolbar {
-	width: 100%;
-	padding: 2px 2px 2px 4px;
-}
-
-.toolbarButton {
-	display: inline-block;
-	_display: inline;
-	cursor: pointer;
-	padding: 3px;
-	background-color: none;
-	border: none;
-	width: 20px;
-	height: 20px;
-}
-
-.toolbarButton-hover { /*	
-	padding: 2px;
-	background-color: var(--control__border-color);
-	border: 1px solid #2291D0;
-*/
-	
-}
-
-.toolbarButton-pressed { /*	
-	padding: 2px;
-	background-color: #2291D0;
-	border: 1px solid black;
-*/
-	
-}
-
 .stroom-main-content-container {
 	height: 100%;
 	padding: 0px;

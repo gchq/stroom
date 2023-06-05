@@ -21,53 +21,76 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticClusterDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final TabContentProvider<ElasticClusterDoc> tabContentProvider = new TabContentProvider<>();
+    private final ElasticClusterSettingsPresenter clusterSettingsPresenter;
+    private final MarkdownEditPresenter markdownEditPresenter;
 
     @Inject
     public ElasticClusterPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenter) {
+            final ElasticClusterSettingsPresenter clusterSettingsPresenter,
+            final MarkdownEditPresenter markdownEditPresenter) {
         super(eventBus, view);
+        this.clusterSettingsPresenter = clusterSettingsPresenter;
+        this.markdownEditPresenter = markdownEditPresenter;
 
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        });
-
-        tabContentProvider.add(SETTINGS, clusterSettingsPresenter);
         addTab(SETTINGS);
+        addTab(DOCUMENTATION);
         selectTab(SETTINGS);
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(clusterSettingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+    }
+
+    @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
+        if (SETTINGS.equals(tab)) {
+            callback.onReady(clusterSettingsPresenter);
+        } else if (DOCUMENTATION.equals(tab)) {
+            callback.onReady(markdownEditPresenter);
+        } else {
+            callback.onReady(null);
+        }
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ElasticClusterDoc cluster, final boolean readOnly) {
-        super.onRead(docRef, cluster, readOnly);
-        tabContentProvider.read(docRef, cluster, readOnly);
+    public void onRead(final DocRef docRef, final ElasticClusterDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
+        clusterSettingsPresenter.read(docRef, doc, readOnly);
+        markdownEditPresenter.setText(doc.getDescription());
+        markdownEditPresenter.setReadOnly(readOnly);
     }
 
     @Override
-    protected ElasticClusterDoc onWrite(final ElasticClusterDoc cluster) {
-        return tabContentProvider.write(cluster);
+    protected ElasticClusterDoc onWrite(ElasticClusterDoc doc) {
+        doc = clusterSettingsPresenter.write(doc);
+        doc.setDescription(markdownEditPresenter.getText());
+        return doc;
     }
 
     @Override

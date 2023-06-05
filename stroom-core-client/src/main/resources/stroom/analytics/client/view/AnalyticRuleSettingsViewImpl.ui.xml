@@ -6,9 +6,6 @@
              xmlns:d="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="analyticRuleSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsLanguageVersion" label="Language Version">
             <item:ItemListBox ui:field="languageVersion" width="400px"/>
         </form:FormGroup>

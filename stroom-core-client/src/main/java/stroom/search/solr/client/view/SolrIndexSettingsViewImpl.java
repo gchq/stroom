@@ -44,9 +44,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         implements SolrIndexSettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
-
-    @UiField
-    TextArea description;
+    ;
     @UiField
     TextBox collection;
     @UiField
@@ -75,7 +73,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         instanceType.addItem(InstanceType.SINGLE_NOOE);
         instanceType.addItem(InstanceType.SOLR_CLOUD);
 
-        description.addKeyDownHandler(e -> fireChange());
         collection.addKeyDownHandler(e -> fireChange());
         instanceType.addSelectionHandler(e -> fireChange());
         solrUrls.addKeyDownHandler(e -> fireChange());
@@ -94,20 +91,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public String getDescription() {
-        return description.getText().trim();
-    }
-
-    @Override
-    public void setDescription(final String description) {
-        if (description == null) {
-            this.description.setText("");
-        } else {
-            this.description.setText(description);
-        }
     }
 
     @Override
@@ -209,7 +192,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         instanceType.setEnabled(!readOnly);
         solrUrls.setEnabled(!readOnly);
         useZk.setEnabled(!readOnly);

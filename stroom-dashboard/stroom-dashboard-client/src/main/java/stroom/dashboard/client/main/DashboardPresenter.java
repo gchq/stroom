@@ -47,14 +47,14 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.shared.DocumentType;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TimeRange;
-import stroom.query.client.presenter.QueryUiHandlers;
-import stroom.query.client.view.QueryButtons;
+import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.svg.client.Icon;
 import stroom.util.shared.Version;
 import stroom.widget.menu.client.presenter.Item;
@@ -74,6 +74,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -86,8 +87,13 @@ import java.util.logging.Logger;
 
 public class DashboardPresenter
         extends DocumentEditPresenter<DashboardView, DashboardDoc>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers,
-        DashboardContext, Consumer<Boolean> {
+        implements
+        FlexLayoutChangeHandler,
+        DocumentTabData,
+        DashboardUiHandlers,
+        DashboardContext,
+        Consumer<Boolean>,
+        HasToolbar {
 
     private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
     private static final String DEFAULT_PARAMS_INPUT = "Params";
@@ -95,6 +101,7 @@ public class DashboardPresenter
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;
     private final Components components;
+    private final QueryToolbarPresenter queryToolbarPresenter;
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
     private String lastLabel;
@@ -119,10 +126,12 @@ public class DashboardPresenter
                               final DashboardView view,
                               final FlexLayout flexLayout,
                               final Components components,
+                              final QueryToolbarPresenter queryToolbarPresenter,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                               final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider) {
         super(eventBus, view);
+        this.queryToolbarPresenter = queryToolbarPresenter;
         this.layoutPresenter = flexLayout;
         this.components = components;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
@@ -135,8 +144,24 @@ public class DashboardPresenter
         flexLayout.setComponents(components);
         view.setContent(flexLayout);
         view.setUiHandlers(this);
+    }
 
-        view.getQueryButtons().setUiHandlers(this);
+    @Override
+    public List<Widget> getToolbars() {
+        return Collections.singletonList(queryToolbarPresenter.getWidget());
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> start()));
+        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
+            if (!Objects.equals(this.timeRange, e.getTimeRange())) {
+                this.timeRange = e.getTimeRange();
+                setDirty(true);
+                start();
+            }
+        }));
     }
 
     @Override
@@ -216,15 +241,6 @@ public class DashboardPresenter
     }
 
     @Override
-    public void onTimeRange(final TimeRange timeRange) {
-        if (!Objects.equals(this.timeRange, timeRange)) {
-            this.timeRange = timeRange;
-            setDirty(true);
-            start();
-        }
-    }
-
-    @Override
     public TimeRange getTimeRange() {
         return timeRange;
     }
@@ -275,7 +291,7 @@ public class DashboardPresenter
             if (dashboardConfig != null) {
                 this.timeRange = dashboardConfig.getTimeRange();
                 if (this.timeRange != null) {
-                    getView().setTimeRange(this.timeRange);
+                    queryToolbarPresenter.setTimeRange(this.timeRange);
                 }
 
                 layoutConfig = dashboardConfig.getLayout();
@@ -459,13 +475,13 @@ public class DashboardPresenter
     }
 
     private void enableQueryButtons() {
-        getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
-        getView().getQueryButtons().setMode(getCombinedMode());
+        queryToolbarPresenter.setEnabled(getQueryableComponents().size() > 0);
+        queryToolbarPresenter.setSearching(getCombinedMode());
     }
 
     @Override
     public void accept(final Boolean mode) {
-        getView().getQueryButtons().setMode(getCombinedMode());
+        queryToolbarPresenter.setSearching(getCombinedMode());
     }
 
     private boolean getCombinedMode() {
@@ -688,8 +704,7 @@ public class DashboardPresenter
         }
     }
 
-    @Override
-    public void start() {
+    private void start() {
         // Get a sub list of components that can be queried.
         final List<Queryable> queryableComponents = getQueryableComponents();
         final boolean combinedMode = getCombinedMode();
@@ -775,8 +790,6 @@ public class DashboardPresenter
 
     public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
 
-        void setTimeRange(TimeRange timeRange);
-
         void setContent(Widget view);
 
         void setEmbedded(boolean embedded);
@@ -784,8 +797,6 @@ public class DashboardPresenter
         void setReadOnly(boolean readOnly);
 
         void setDesignMode(boolean designMode);
-
-        QueryButtons getQueryButtons();
     }
 
     private void addNewComponent(final ComponentType type) {

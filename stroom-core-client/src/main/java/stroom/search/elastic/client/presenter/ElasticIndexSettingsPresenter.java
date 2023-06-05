@@ -133,7 +133,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
-        getView().setDescription(index.getDescription());
         clusterPresenter.setSelectedEntityReference(index.getClusterRef());
         getView().setIndexName(index.getIndexName());
         getView().setSearchSlices(index.getSearchSlices());
@@ -153,7 +152,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
     @Override
     protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
-        index.setDescription(getView().getDescription().trim());
         index.setClusterRef(clusterPresenter.getSelectedEntityReference());
 
         final String indexName = getView().getIndexName().trim();
@@ -174,10 +172,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
     public interface ElasticIndexSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticIndexSettingsUiHandlers> {
-
-        String getDescription();
-
-        void setDescription(String description);
 
         void setClusterView(final View view);
 

@@ -16,75 +16,35 @@
 
 package stroom.query.client.view;
 
-import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.query.client.presenter.QueryEditUiHandlers;
-import stroom.svg.client.SvgImages;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
 public class QueryEditViewImpl
-        extends ViewWithUiHandlers<QueryEditUiHandlers>
+        extends ViewImpl
         implements QueryEditView {
 
     private final Widget widget;
 
-//    @UiField
-//    NavButtons navButtons;
-    @UiField
-    InlineSvgButton warnings;
-    @UiField
-    QueryButtons queryButtons;
     @UiField
     SimplePanel queryEditorContainer;
     @UiField
     SimplePanel tableContainer;
-    @UiField
-    TimeRangeSelector timeRangeSelector;
 
     @Inject
-    public QueryEditViewImpl(final Binder binder,
-                             final UserPreferencesManager userPreferencesManager) {
+    public QueryEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        timeRangeSelector.setUtc(userPreferencesManager.isUtc());
-        warnings.setSvg(SvgImages.WARNING);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void setTimeRange(final TimeRange timeRange) {
-        timeRangeSelector.setValue(timeRange);
-    }
-
-    @Override
-    public TimeRange getTimeRange() {
-        return timeRangeSelector.getValue();
-    }
-
-    @Override
-    public void setWarningsVisible(final boolean show) {
-        warnings.getElement().getStyle().setOpacity(show ? 1 : 0);
-    }
-
-    @Override
-    public QueryButtons getQueryButtons() {
-        return queryButtons;
     }
 
     @Override
@@ -97,20 +57,6 @@ public class QueryEditViewImpl
     public void setTable(final View view) {
         view.asWidget().addStyleName("dashboard-panel overflow-hidden");
         tableContainer.setWidget(view.asWidget());
-    }
-
-    @UiHandler("warnings")
-    public void onWarnings(final ClickEvent event) {
-        if (getUiHandlers() != null && MouseUtil.isPrimary(event)) {
-            getUiHandlers().showWarnings();
-        }
-    }
-
-    @UiHandler("timeRangeSelector")
-    public void onTimeRangeSelector(final ValueChangeEvent<TimeRange> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onTimeRange(event.getValue());
-        }
     }
 
     public interface Binder extends UiBinder<Widget, QueryEditViewImpl> {

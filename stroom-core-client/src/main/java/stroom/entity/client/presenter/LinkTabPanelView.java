@@ -24,7 +24,9 @@ import com.gwtplatform.mvp.client.View;
 
 public interface LinkTabPanelView extends View {
 
-    void addWidgetLeft(Widget widget);
+    void clearToolbar();
+
+    void addToolbar(Widget widget);
 
     TabBar getTabBar();
 

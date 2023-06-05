@@ -124,7 +124,6 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
             getView().setUseZk(connectionConfig.isUseZk());
         }
 
-        getView().setDescription(index.getDescription());
         getView().setCollection(index.getCollection());
 
         if (index.getRetentionExpression() == null) {
@@ -147,7 +146,6 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         connectionConfig.setUseZk(getView().isUseZk());
         index.setSolrConnectionConfig(connectionConfig);
 
-        index.setDescription(getView().getDescription().trim());
         if (getView().getCollection().trim().length() == 0) {
             index.setCollection(null);
         } else {
@@ -160,11 +158,6 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
 
     public interface SolrIndexSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
-
-        String getDescription();
-
-        void setDescription(String description);
-
         String getCollection();
 
         void setCollection(String collection);

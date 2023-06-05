@@ -30,9 +30,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.view.client.presenter.ViewSettingsPresenter.ViewSettingsView;
 import stroom.view.shared.ViewDoc;
 
-import com.google.gwt.event.dom.client.InputEvent;
-import com.google.gwt.event.dom.client.InputHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -68,10 +65,6 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
-
-        // Add listeners for dirty events.
-        final InputHandler inputHandler = event -> setDirty(true);
-        registerHandler(view.getDescription().addDomHandler(inputHandler, InputEvent.getType()));
     }
 
     @Override
@@ -87,7 +80,6 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
     @Override
     protected void onRead(final DocRef docRef, final ViewDoc entity, final boolean readOnly) {
-        getView().getDescription().setText(entity.getDescription());
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
 
@@ -103,7 +95,6 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
     @Override
     protected ViewDoc onWrite(final ViewDoc entity) {
-        entity.setDescription(getView().getDescription().getText().trim());
         entity.setDataSource(dataSourceSelectionPresenter.getSelectedEntityReference());
         entity.setPipeline(pipelineSelectionPresenter.getSelectedEntityReference());
         entity.setFilter(expressionPresenter.write());
@@ -116,8 +107,6 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     }
 
     public interface ViewSettingsView extends View {
-
-        TextArea getDescription();
 
         void setDataSourceSelectionView(View view);
 

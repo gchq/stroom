@@ -48,28 +48,18 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     @UiField
     Button designModeButton;
     @UiField
-    QueryButtons queryButtons;
-    @UiField
     SimplePanel content;
-    @UiField
-    TimeRangeSelector timeRangeSelector;
 
     @Inject
     public DashboardViewImpl(final Binder binder,
                              final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
-        timeRangeSelector.setUtc(userPreferencesManager.isUtc());
         setReadOnly(true);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void setTimeRange(final TimeRange timeRange) {
-        timeRangeSelector.setValue(timeRange);
     }
 
     @Override
@@ -100,11 +90,6 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
             designModeButton.setText("Enter Design Mode");
             widget.removeStyleName("dashboard__designMode");
         }
-    }
-
-    @Override
-    public QueryButtons getQueryButtons() {
-        return queryButtons;
     }
 
     @UiHandler("addPanelButton")
@@ -140,13 +125,6 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
             if (getUiHandlers() != null) {
                 getUiHandlers().onDesign(event);
             }
-        }
-    }
-
-    @UiHandler("timeRangeSelector")
-    public void onTimeRangeSelector(final ValueChangeEvent<TimeRange> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onTimeRange(event.getValue());
         }
     }
 

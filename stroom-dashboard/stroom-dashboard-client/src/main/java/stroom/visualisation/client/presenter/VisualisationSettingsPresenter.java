@@ -30,7 +30,6 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -62,7 +61,6 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
         scriptPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(view.getFunctionName().addKeyDownHandler(keyDownHander));
         registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
         view.setScriptView(scriptPresenter.getView());
@@ -93,7 +91,6 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         editorPresenter.setReadOnly(readOnly);
         editorPresenter.getFormatAction().setAvailable(!readOnly);
 
-        getView().getDescription().setText(visualisation.getDescription());
         getView().getFunctionName().setText(visualisation.getFunctionName());
         scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef());
         editorPresenter.setText(visualisation.getSettings());
@@ -101,7 +98,6 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
 
     @Override
     protected VisualisationDoc onWrite(final VisualisationDoc visualisation) {
-        visualisation.setDescription(getView().getDescription().getText().trim());
         visualisation.setFunctionName(getView().getFunctionName().getText().trim());
         visualisation.setScriptRef(scriptPresenter.getSelectedEntityReference());
         visualisation.setSettings(editorPresenter.getText().trim());
@@ -109,8 +105,6 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
     }
 
     public interface VisualisationSettingsView extends View {
-
-        TextArea getDescription();
 
         TextBox getFunctionName();
 

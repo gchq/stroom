@@ -35,7 +35,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.InputHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -91,7 +90,6 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
         // Add listeners for dirty events.
         final InputHandler inputHandler = event -> setDirty(true);
         final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
-        registerHandler(view.getDescription().addDomHandler(inputHandler, InputEvent.getType()));
         registerHandler(view.getClassification().addDomHandler(inputHandler, InputEvent.getType()));
         registerHandler(view.getReference().addValueChangeHandler(checkHandler));
         registerHandler(view.getDataEncoding().addChangeHandler(event -> {
@@ -126,7 +124,6 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     @Override
     protected void onRead(final DocRef docRef, final FeedDoc feed, final boolean readOnly) {
-        getView().getDescription().setText(feed.getDescription());
         getView().getReference().setValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());
         getView().getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
@@ -137,7 +134,6 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     @Override
     protected FeedDoc onWrite(final FeedDoc feed) {
-        feed.setDescription(getView().getDescription().getText().trim());
         feed.setReference(getView().getReference().getValue());
         feed.setClassification(getView().getClassification().getText());
         feed.setEncoding(ensureEncoding(getView().getDataEncoding().getSelected()));
@@ -161,8 +157,6 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
     }
 
     public interface FeedSettingsView extends View {
-
-        TextArea getDescription();
 
         TextBox getClassification();
 

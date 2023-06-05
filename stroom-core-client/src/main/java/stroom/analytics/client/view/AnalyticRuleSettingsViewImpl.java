@@ -25,12 +25,10 @@ import stroom.item.client.ItemListBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.DurationPicker;
 
-import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -41,8 +39,6 @@ public class AnalyticRuleSettingsViewImpl
 
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField
     ItemListBox<QueryLanguageVersion> languageVersion;
     @UiField
@@ -57,7 +53,6 @@ public class AnalyticRuleSettingsViewImpl
         languageVersion.addItem(QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         languageVersion.addItem(QueryLanguageVersion.SIGMA);
 
-        description.addDomHandler(e -> getUiHandlers().onDirty(), InputEvent.getType());
         languageVersion.addSelectionHandler(e -> getUiHandlers().onDirty());
         analyticRuleType.addSelectionHandler(e -> {
             getUiHandlers().onDirty();
@@ -70,16 +65,6 @@ public class AnalyticRuleSettingsViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public String getDescription() {
-        return description.getValue().trim();
-    }
-
-    @Override
-    public void setDescription(final String description) {
-        this.description.setValue(description);
     }
 
     @Override
@@ -117,7 +102,6 @@ public class AnalyticRuleSettingsViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
     }
 
     @UiHandler("dataRetention")

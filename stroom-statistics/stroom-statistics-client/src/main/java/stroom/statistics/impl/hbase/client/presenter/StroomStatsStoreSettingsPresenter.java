@@ -17,7 +17,6 @@
 
 package stroom.statistics.impl.hbase.client.presenter;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -31,9 +30,6 @@ import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -52,16 +48,6 @@ public class StroomStatsStoreSettingsPresenter
             final StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView view) {
 
         super(eventBus, view);
-
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                DirtyEvent.fire(StroomStatsStoreSettingsPresenter.this, true);
-            }
-        };
-
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
-
         view.setUiHandlers(this);
     }
 
@@ -74,7 +60,6 @@ public class StroomStatsStoreSettingsPresenter
     public void read(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
         getView().onReadOnly(readOnly);
         if (document != null) {
-            getView().getDescription().setText(document.getDescription());
             getView().setStatisticType(document.getStatisticType());
             getView().getEnabled().setValue(document.isEnabled());
             getView().setPrecision(document.getPrecision());
@@ -85,7 +70,6 @@ public class StroomStatsStoreSettingsPresenter
     @Override
     public StroomStatsStoreDoc write(final StroomStatsStoreDoc document) {
         if (document != null) {
-            document.setDescription(getView().getDescription().getText());
             document.setStatisticType(getView().getStatisticType());
             document.setEnabled(getView().getEnabled().getValue());
             document.setPrecision(getView().getPrecision());
@@ -101,8 +85,6 @@ public class StroomStatsStoreSettingsPresenter
 
     public interface StroomStatsStoreSettingsView
             extends View, HasUiHandlers<StroomStatsStoreSettingsUiHandlers>, ReadOnlyChangeHandler {
-
-        TextArea getDescription();
 
         StatisticType getStatisticType();
 

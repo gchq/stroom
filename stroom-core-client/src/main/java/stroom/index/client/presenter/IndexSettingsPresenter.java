@@ -17,7 +17,6 @@
 
 package stroom.index.client.presenter;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -38,9 +37,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -79,13 +75,6 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     @Override
     protected void onBind() {
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        };
-        registerHandler(getView().getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
             if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
                 setDirty(true);
@@ -106,7 +95,6 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     @Override
     protected void onRead(final DocRef docRef, final IndexDoc index, final boolean readOnly) {
-        getView().getDescription().setText(index.getDescription());
         getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
         getView().setShardsPerPartition(index.getShardsPerPartition());
         getView().setPartitionBy(index.getPartitionBy());
@@ -121,7 +109,6 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     @Override
     protected IndexDoc onWrite(final IndexDoc index) {
-        index.setDescription(getView().getDescription().getText().trim());
         index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
         index.setShardsPerPartition(getView().getShardsPerPartition());
         index.setPartitionBy(getView().getPartitionBy());
@@ -167,8 +154,6 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
     }
 
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {
-
-        TextArea getDescription();
 
         int getMaxDocsPerShard();
 

@@ -39,8 +39,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     private final Widget widget;
 
     @UiField
-    TextArea description;
-    @UiField
     TextBox indexName;
     @UiField
     ValueSpinner searchSlices;
@@ -61,7 +59,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     public ElasticIndexSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        description.addKeyDownHandler(e -> fireChange());
         indexName.addKeyDownHandler(e -> fireChange());
         timeField.addKeyDownHandler(e -> fireChange());
 
@@ -83,16 +80,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public String getDescription() {
-        return description.getText().trim();
-    }
-
-    @Override
-    public void setDescription(final String description) {
-        this.description.setText(description);
     }
 
     @Override
@@ -152,7 +139,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         indexName.setEnabled(!readOnly);
         searchSlices.setEnabled(!readOnly);
         searchScrollSize.setEnabled(!readOnly);

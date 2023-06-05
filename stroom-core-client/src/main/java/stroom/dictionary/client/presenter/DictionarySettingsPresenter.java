@@ -17,16 +17,12 @@
 
 package stroom.dictionary.client.presenter;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.shared.XsltDoc;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -42,16 +38,6 @@ public class DictionarySettingsPresenter extends DocumentEditPresenter<Dictionar
         super(eventBus, view);
         this.dictionaryListPresenter = dictionaryListPresenter;
         getView().setImportList(dictionaryListPresenter.getView());
-
-        // Add listeners for dirty events.
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        };
-
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
     }
 
     @Override
@@ -67,20 +53,16 @@ public class DictionarySettingsPresenter extends DocumentEditPresenter<Dictionar
 
     @Override
     protected void onRead(final DocRef docRef, final DictionaryDoc doc, final boolean readOnly) {
-        getView().getDescription().setText(doc.getDescription());
         dictionaryListPresenter.read(docRef, doc, readOnly);
     }
 
     @Override
     protected DictionaryDoc onWrite(DictionaryDoc doc) {
-        doc.setDescription(getView().getDescription().getText().trim());
         doc = dictionaryListPresenter.write(doc);
         return doc;
     }
 
     public interface DictionarySettingsView extends View {
-
-        TextArea getDescription();
 
         void setImportList(View view);
     }

@@ -33,6 +33,19 @@
     display: flex;
 }
 
+.QueryToolbarViewImpl-outer {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-grow: 1;
+}
+
+.QueryToolbarViewImpl-inner {
+    display: flex;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+    justify-content: space-between;
+}
+
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
