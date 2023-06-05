@@ -30,11 +30,11 @@ import stroom.query.client.presenter.TableRow.Cell;
 import stroom.util.shared.Expander;
 import stroom.widget.util.client.ExpanderEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
@@ -364,7 +364,7 @@ public class QueryResultTablePresenter
             @Override
             public SafeHtml getValue(final TableRow row) {
                 if (row == null) {
-                    return null;
+                    return SafeHtmlUtil.NBSP;
                 }
 
                 return row.getValue(field.getId());

@@ -46,16 +46,13 @@
 }
 
 .dataGridHeader {
-	padding: 0 0 0 var(--row__padding--horizontal);
-    vertical-align: middle;
-	text-align: left;
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) 0 var(--row__padding--horizontal);
 	overflow: hidden;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	font-weight: 500;
-    min-height: var(--row__height);
 	cursor: default;
-
-	/*border-bottom: solid 1px var(--header__border-color);*/
+    vertical-align: middle;
 }
 
 .dataGridHeader * {
@@ -63,7 +60,6 @@
 }
 
 .dataGridCell {
-	padding: 0 0 0 var(--row__padding--horizontal);
 	overflow: hidden;
 	white-space: nowrap;
 	
@@ -77,25 +73,27 @@
     -moz-user-select: text;
     -webkit-user-select: text;
     user-select: text;
+
+    vertical-align: middle;
 }
 
 .dataGridHeader > div,
 .dataGridCell > div {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
 	text-overflow: ellipsis;
 	overflow-x: hidden;
-	height: var(--row__height);
+	padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical) var(--row__padding--horizontal);
+}
+
+.dataGridCell-text-measurement {
+    display: inline-block;
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical) var(--row__padding--horizontal);
+    min-height: 10px;
+    opacity: 0;
 }
 
 .multiline .dataGridHeader > div,
 .multiline .dataGridCell > div {
-    display: block;
-	text-overflow: ellipsis;
-	overflow-x: hidden;
-	padding: var(--row__padding--vertical) 0;
-	height: auto;
+	white-space: normal;
 }
 
 .dataGridCell .svgCell-button {

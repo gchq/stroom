@@ -97,6 +97,7 @@ public class PropertyListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
+        dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

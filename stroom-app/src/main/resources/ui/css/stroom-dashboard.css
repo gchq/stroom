@@ -67,7 +67,10 @@
 .stroom-dashboard-table {
 }
 
-.stroom-dashboard-table .dataGridHeader {
+.stroom-dashboard-table .dataGridCell > div {
+	text-overflow: ellipsis;
+	overflow-x: hidden;
+	padding: 0;
 }
 
 .stroom-dashboard-table td {
@@ -78,26 +81,30 @@
 }
 
 .stroom-dashboard-table .cell {
-    display: flex;
-    align-items: center;
-	padding: 0 0 0 var(--row__padding--horizontal);
-	vertical-align: middle;
+	padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical) var(--row__padding--horizontal);
 	overflow: hidden;
-    height: var(--row__height);
 	white-space: nowrap;
     text-overflow: ellipsis;
-    flex-grow: 1;
+}
+
+/* Ensure row selection trumps conditional formatting */
+.stroom-dashboard-table .dataGridSelectedRow .cell {
+	background-color: var(--row__background-color--selected) !important;
+	color: var(--row__text-color--selected) !important;
+}
+.stroom-dashboard-table .dataGridSelectedRow:hover .cell {
+    background-color: var(--row__background-color--selected--hovered) !important;
+}
+.stroom-dashboard-table .dataGridOddRow:focus-within .cell,
+.stroom-dashboard-table .dataGridEvenRow:focus-within .cell {
+    background-color: var(--row__background-color--focussed) !important;
+}
+.stroom-dashboard-table .dataGridSelectedRow:focus-within .cell {
+    background-color: var(--row__background-color--selected--focussed) !important;
 }
 
 .stroom-dashboard-text {
 	width: 100%;
 	height: 100%;
 	padding-top: 18px;
-}
-
-.stroom-dashboard-text-measurement {
-    display: inline-block;
-    padding: 0 0 0 var(--row__padding--horizontal);
-    height: var(--row__height);
-    opacity: 0;
 }
