@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 
 
 class TestGwtNullSafe {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestGwtNullSafe.class);
 
     private final Level1 nullLevel1 = null;
@@ -47,9 +48,13 @@ class TestGwtNullSafe {
     @Test
     void testEquals1() {
         // Null parent
-        Assertions.assertThat(GwtNullSafe.equals(nullLevel1, Level1::getNonNullLevel2, nonNullLevel1.getNonNullLevel2()))
+        Assertions.assertThat(GwtNullSafe.equals(nullLevel1,
+                        Level1::getNonNullLevel2,
+                        nonNullLevel1.getNonNullLevel2()))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1, Level1::getNullLevel2, nonNullLevel1.getNonNullLevel2()))
+        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+                        Level1::getNullLevel2,
+                        nonNullLevel1.getNonNullLevel2()))
                 .isFalse();
         Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, "foobar"))
                 .isFalse();
@@ -883,9 +888,9 @@ class TestGwtNullSafe {
     @TestFactory
     Stream<DynamicTest> testConsume3() {
         final var inputType = new TypeLiteral<Tuple3<
-                        Level1,
-                        Function<Level1, Level2>,
-                        Function<Level2, Long>>>() {
+                Level1,
+                Function<Level1, Level2>,
+                Function<Level2, Long>>>() {
         };
 
         return TestUtil.buildDynamicTestStream()
@@ -1009,7 +1014,9 @@ class TestGwtNullSafe {
                     }
                 }
             }, i + " GwtNullSafe");
-            LOGGER.info("{} GwtNullSafe nanos per iteration: {}", i, (double) totalNanosNullSafe.getValue() / iterations);
+            LOGGER.info("{} GwtNullSafe nanos per iteration: {}",
+                    i,
+                    (double) totalNanosNullSafe.getValue() / iterations);
 
             totalNanosOptional.setValue(0L);
 
