@@ -56,6 +56,8 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -169,6 +171,9 @@ public class AnalyticsExecutor {
                     if (analyticRuleDoc != null) {
                         process(analyticRuleDoc);
                     }
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                 }
@@ -202,6 +207,9 @@ public class AnalyticsExecutor {
                                             trackerBuilder,
                                             parentTaskContext);
                                 }
+                            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                                LOGGER.debug(e::getMessage, e);
+                                throw e;
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                                 disableFilter(analyticRuleDoc, filter, trackerBuilder, e.getMessage());
@@ -281,6 +289,9 @@ public class AnalyticsExecutor {
                                 tracker,
                                 trackerBuilder,
                                 analyticNotificationState);
+                    } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        throw e;
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                         disableNotification(analyticRuleDoc, notification, analyticNotificationState, e.getMessage());
@@ -398,6 +409,9 @@ public class AnalyticsExecutor {
                             break;
                         }
                     }
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                     disableFilter(analyticRuleDoc, filter, trackerBuilder, e.getMessage());
@@ -509,6 +523,9 @@ public class AnalyticsExecutor {
                         trackerBuilder.message("Complete for now");
                         break;
                     }
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                     trackerBuilder.message(e.getMessage());
@@ -556,6 +573,9 @@ public class AnalyticsExecutor {
                             parentTaskContext,
                             upToDate,
                             startTimeMs);
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                     disableNotification(analyticRuleDoc, notification, notificationState, e.getMessage());
@@ -601,6 +621,9 @@ public class AnalyticsExecutor {
                                         currentDbState,
                                         upToDate,
                                         startTimeMs);
+                            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                                LOGGER.debug(e::getMessage, e);
+                                throw e;
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                                 throw e;
@@ -941,6 +964,9 @@ public class AnalyticsExecutor {
                     }
                 }
                 recordConsumer.accept(new Record(rows));
+            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw e;
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
                 throw e;
