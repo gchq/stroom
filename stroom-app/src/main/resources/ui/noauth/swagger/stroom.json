@@ -15441,6 +15441,9 @@
           "createUser" : {
             "type" : "string"
           },
+          "description" : {
+            "type" : "string"
+          },
           "fields" : {
             "type" : "array",
             "items" : {

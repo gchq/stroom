@@ -44,7 +44,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         implements SolrIndexSettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
-    ;
+
     @UiField
     TextBox collection;
     @UiField

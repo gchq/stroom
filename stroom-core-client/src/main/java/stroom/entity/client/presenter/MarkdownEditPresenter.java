@@ -128,10 +128,9 @@ public class MarkdownEditPresenter
     }
 
     public native String getHtml(final String markdown) /*-{
-        var converter = new $wnd.showdown.Converter(),
-        html      = converter.makeHtml(markdown);
-        return html;
-	}-*/;
+        var converter = new $wnd.showdown.Converter();
+        return converter.makeHtml(markdown);
+    }-*/;
 
     public interface MarkdownEditView extends View {
 
