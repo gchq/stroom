@@ -51,7 +51,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
                          final Provider<MetaPresenter> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -85,9 +85,9 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     }
 
     @Override
-    public void onRead(final DocRef docRef, final FeedDoc feed) {
-        super.onRead(docRef, feed);
-        tabContentProvider.read(docRef, feed);
+    public void onRead(final DocRef docRef, final FeedDoc feed, final boolean readOnly) {
+        super.onRead(docRef, feed, readOnly);
+        tabContentProvider.read(docRef, feed, readOnly);
     }
 
     @Override
@@ -100,12 +100,6 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
             metaPresenter.refreshData();
         }
         return feed;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

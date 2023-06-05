@@ -81,9 +81,9 @@ public class ProcessorInfoBuilder {
 
             final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
             if (tracker != null) {
-                addRowDateString(tb, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
-                addRowDateString(tb, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
-                addRowDateString(tb, "Stream Create Ms", tracker.getMetaCreateMs());
+                addRowDateString(tb, "Min Stream Create Time", tracker.getMinMetaCreateMs());
+                addRowDateString(tb, "Max Stream Create Time", tracker.getMaxMetaCreateMs());
+                addRowDateString(tb, "Stream Create Time", tracker.getMetaCreateMs());
                 tb.row(SafeHtmlUtil.from("Stream Create %"),
                         SafeHtmlUtil.from(tracker.getTrackerStreamCreatePercentage()));
                 addRowDateString(tb, "Last Poll", tracker.getLastPollMs());
@@ -107,7 +107,7 @@ public class ProcessorInfoBuilder {
 
     private void addRowDateString(final TableBuilder tb, final String label, final Long ms) {
         if (ms != null) {
-            tb.row(label, dateTimeFormatter.format(ms) + " (" + ms + ")");
+            tb.row(label, dateTimeFormatter.formatWithDuration(ms));
         }
     }
 

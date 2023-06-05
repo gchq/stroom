@@ -3,6 +3,7 @@ package stroom.preferences.client;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.widget.customdatebox.client.ClientDurationUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -15,6 +16,17 @@ public class DateTimeFormatter {
     @Inject
     public DateTimeFormatter(final UserPreferencesManager userPreferencesManager) {
         this.userPreferencesManager = userPreferencesManager;
+    }
+
+    public String formatWithDuration(final Long ms) {
+        if (ms == null) {
+            return null;
+        }
+
+        return format(ms) +
+                " (" +
+                ClientDurationUtil.humanise(-(System.currentTimeMillis() - ms), true) +
+                ")";
     }
 
     public String format(final Long ms) {

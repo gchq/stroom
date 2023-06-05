@@ -21,6 +21,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
@@ -82,12 +83,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 pathCreator,
                 tempDirProvider,
                 () -> lmdbLibraryConfig);
+        final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig());
 
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
                 serialisers,
-                lmdbEnvFactory,
+                lmdbEnvBuilder,
                 resultStoreConfig,
                 queryKey,
                 componentId,
@@ -185,7 +187,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final AbstractResultStoreConfig resultStoreConfig = new AnalyticResultStoreConfig();
-        final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings("test");
+        final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(
                         queryKey,

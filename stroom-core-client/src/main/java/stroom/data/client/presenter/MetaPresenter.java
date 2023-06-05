@@ -417,10 +417,10 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     }
 
     @Override
-    public void read(final DocRef docRef, final Object entity) {
-        if (entity instanceof FeedDoc) {
+    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
+        if (document instanceof FeedDoc) {
             setFeedCriteria(docRef);
-        } else if (entity instanceof PipelineDoc) {
+        } else if (document instanceof PipelineDoc) {
             setPipelineCriteria(docRef);
         } else if (docRef != null) {
             setFolderCriteria(docRef);

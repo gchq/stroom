@@ -18,6 +18,7 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStoreSettings;
@@ -95,7 +96,7 @@ public class EventSearchTaskHandler {
                         task.getKey(),
                         Collections.singletonList(settings),
                         modifiedQuery.getParams(),
-                        DataStoreSettings.createBasicSearchResultStoreSettings());
+                        DataStoreSettings.createBasicSearchResultStoreSettings(SourceType.BATCH_SEARCH));
                 final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
                 // Create the search result collector.

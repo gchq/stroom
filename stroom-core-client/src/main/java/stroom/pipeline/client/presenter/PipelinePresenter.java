@@ -59,7 +59,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
                              final Provider<ProcessorPresenter> processorPresenter,
                              final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider,
                              final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -112,22 +112,17 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     }
 
     @Override
-    public void onRead(final DocRef docRef, final PipelineDoc pipelineDoc) {
-        super.onRead(docRef, pipelineDoc);
-        tabContentProvider.read(docRef, pipelineDoc);
+    public void onRead(final DocRef docRef, final PipelineDoc pipelineDoc, final boolean readOnly) {
+        super.onRead(docRef, pipelineDoc, readOnly);
+        tabContentProvider.read(docRef, pipelineDoc, readOnly);
+
+        allowProcessorUpdates = hasManageProcessorsPermission && !readOnly;
+        updatePermissions();
     }
 
     @Override
     protected PipelineDoc onWrite(final PipelineDoc pipelineDoc) {
         return tabContentProvider.write(pipelineDoc);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
-        allowProcessorUpdates = hasManageProcessorsPermission && !readOnly;
-        updatePermissions();
     }
 
     private void updatePermissions() {

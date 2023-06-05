@@ -22,7 +22,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -31,68 +30,100 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
+    private static final TabData QUERY_TAB = new TabDataImpl("Query");
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
+    private static final TabData NOTIFICATIONS_TAB = new TabDataImpl("Notifications");
     private static final TabData PROCESSING_TAB = new TabDataImpl("Processing");
+    private static final TabData SHARDS_TAB = new TabDataImpl("Shards");
+    private final AnalyticQueryEditPresenter queryEditPresenter;
     private final AnalyticRuleSettingsPresenter settingsPresenter;
-    private final AnalyticRuleProcessingPresenter processPresenter;
+    private final AnalyticNotificationsPresenter notificationsPresenter;
+    private final AnalyticProcessingPresenter processPresenter;
+    private final AnalyticDataShardsPresenter analyticDataShardsPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
+                                 final AnalyticQueryEditPresenter queryEditPresenter,
                                  final AnalyticRuleSettingsPresenter settingsPresenter,
-                                 final AnalyticRuleProcessingPresenter processPresenter,
-                                 final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                                 final AnalyticNotificationsPresenter notificationsPresenter,
+                                 final AnalyticProcessingPresenter processPresenter,
+                                 final AnalyticDataShardsPresenter analyticDataShardsPresenter) {
+        super(eventBus, view);
+        this.queryEditPresenter = queryEditPresenter;
         this.settingsPresenter = settingsPresenter;
+        this.notificationsPresenter = notificationsPresenter;
         this.processPresenter = processPresenter;
+        this.analyticDataShardsPresenter = analyticDataShardsPresenter;
 
-        settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        });
-        processPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        });
-
+        addTab(QUERY_TAB);
         addTab(SETTINGS_TAB);
         addTab(PROCESSING_TAB);
-        selectTab(SETTINGS_TAB);
+        addTab(NOTIFICATIONS_TAB);
+        addTab(SHARDS_TAB);
+        selectTab(QUERY_TAB);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+        registerHandler(settingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+        registerHandler(notificationsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+        registerHandler(processPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
     }
 
     @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS_TAB.equals(tab)) {
+        if (QUERY_TAB.equals(tab)) {
+            callback.onReady(queryEditPresenter);
+        } else if (NOTIFICATIONS_TAB.equals(tab)) {
+            callback.onReady(notificationsPresenter);
+        } else if (SETTINGS_TAB.equals(tab)) {
             callback.onReady(settingsPresenter);
         } else if (PROCESSING_TAB.equals(tab)) {
             callback.onReady(processPresenter);
+        } else if (SHARDS_TAB.equals(tab)) {
+            callback.onReady(analyticDataShardsPresenter);
         } else {
             callback.onReady(null);
         }
     }
 
     @Override
-    public void onRead(final DocRef docRef, final AnalyticRuleDoc entity) {
-        super.onRead(docRef, entity);
-        settingsPresenter.read(docRef, entity);
-        processPresenter.read(docRef, entity);
+    public void onRead(final DocRef docRef, final AnalyticRuleDoc entity, final boolean readOnly) {
+        super.onRead(docRef, entity, readOnly);
+        queryEditPresenter.read(docRef, entity, readOnly);
+        notificationsPresenter.read(docRef, entity, readOnly);
+        settingsPresenter.read(docRef, entity, readOnly);
+        processPresenter.read(docRef, entity, readOnly);
+        analyticDataShardsPresenter.read(docRef, entity, readOnly);
     }
 
     @Override
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc entity) {
         AnalyticRuleDoc modified = entity;
+        modified = queryEditPresenter.write(modified);
+        modified = notificationsPresenter.write(modified);
         modified = settingsPresenter.write(modified);
         modified = processPresenter.write(modified);
         return modified;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        settingsPresenter.onReadOnly(readOnly);
-        processPresenter.onReadOnly(readOnly);
     }
 
     @Override

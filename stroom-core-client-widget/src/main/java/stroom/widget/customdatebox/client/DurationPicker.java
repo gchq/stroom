@@ -67,8 +67,13 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
 
     @Override
     public void setValue(final SimpleDuration value) {
-        time.setValue(value.getTime());
-        timeUnit.setSelectedItem(value.getTimeUnit());
+        if (value != null) {
+            time.setValue(value.getTime());
+            timeUnit.setSelectedItem(value.getTimeUnit());
+        } else {
+            time.setValue(1);
+            timeUnit.setSelectedItem(TimeUnit.DAYS);
+        }
     }
 
     @Override

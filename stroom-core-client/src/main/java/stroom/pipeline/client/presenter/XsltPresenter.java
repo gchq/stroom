@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -42,15 +41,13 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     private final Provider<EditorPresenter> editorPresenterProvider;
 
     private EditorPresenter codePresenter;
-    private boolean readOnly = true;
 
     @Inject
     public XsltPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final XsltSettingsPresenter settingsPresenter,
-                         final Provider<EditorPresenter> editorPresenterProvider,
-                         final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                         final Provider<EditorPresenter> editorPresenterProvider) {
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
 
@@ -77,11 +74,13 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     }
 
     @Override
-    public void onRead(final DocRef docRef, final XsltDoc xslt) {
-        super.onRead(docRef, xslt);
-        settingsPresenter.read(docRef, xslt);
+    public void onRead(final DocRef docRef, final XsltDoc xslt, final boolean readOnly) {
+        super.onRead(docRef, xslt, readOnly);
+        settingsPresenter.read(docRef, xslt, readOnly);
         if (codePresenter != null) {
             codePresenter.setText(xslt.getData());
+            codePresenter.setReadOnly(readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
         }
     }
 
@@ -95,17 +94,6 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (codePresenter != null) {
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-        }
-    }
-
-    @Override
     public String getType() {
         return XsltDoc.DOCUMENT_TYPE;
     }
@@ -116,8 +104,8 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
             codePresenter.setMode(AceEditorMode.XML);
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
+            codePresenter.setReadOnly(isReadOnly());
+            codePresenter.getFormatAction().setAvailable(!isReadOnly());
             if (getEntity() != null && getEntity().getData() != null) {
                 codePresenter.setText(getEntity().getData());
             }

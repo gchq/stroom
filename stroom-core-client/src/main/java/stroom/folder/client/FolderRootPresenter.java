@@ -90,7 +90,7 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements Docume
     }
 
     public void read() {
-        tabContentProvider.read(ExplorerConstants.SYSTEM_DOC_REF, null);
+        tabContentProvider.read(ExplorerConstants.SYSTEM_DOC_REF, null, true);
     }
 
     @Override

@@ -26,7 +26,6 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.shared.DocumentType;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -42,26 +41,20 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType, HasSave {
 
-    private final List<TabData> tabs = new ArrayList<>();
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
     private TabData selectedTab;
     private String lastLabel;
     private ButtonPanel leftButtons;
-    private ButtonPanel rightButtons;
     private PresenterWidget<?> currentContent;
     private DocRef docRef;
 
     public DocumentEditTabPresenter(final EventBus eventBus,
-                                    final V view,
-                                    final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                                    final V view) {
+        super(eventBus, view);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
         saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
@@ -89,7 +82,6 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     public ButtonView addButtonLeft(final Preset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
-//            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
             addWidgetLeft(leftButtons);
         }
 
@@ -98,17 +90,12 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
 
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);
-        tabs.add(tab);
     }
 
     protected abstract void getContent(TabData tab, ContentCallback callback);
 
     public void addWidgetLeft(final Widget widget) {
         getView().addWidgetLeft(widget);
-    }
-
-    public void addWidgetRight(final Widget widget) {
-        getView().addWidgetRight(widget);
     }
 
     public void selectTab(final TabData tab) {
@@ -152,8 +139,13 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D entity) {
+    protected void onRead(final DocRef docRef, final D entity, final boolean readOnly) {
         this.docRef = docRef;
+        saveButton.setEnabled(isDirty());
+        saveAsButton.setEnabled(true);
+        if (readOnly) {
+            saveButton.setTitle("Save is not available as this document is read only");
+        }
     }
 
     @Override
@@ -176,17 +168,9 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        saveButton.setEnabled(isDirty());
-        saveAsButton.setEnabled(true);
-        if (readOnly) {
-            saveButton.setTitle("Save is not available as this document is read only");
-        }
-    }
+    public void onDirty(final boolean dirty) {
+        super.onDirty(dirty);
 
-    @Override
-    public void onDirtyChange() {
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();

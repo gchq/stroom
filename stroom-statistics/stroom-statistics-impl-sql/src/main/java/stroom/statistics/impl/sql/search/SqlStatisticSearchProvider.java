@@ -179,7 +179,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         // Create coprocessors.
         final Coprocessors coprocessors =
                 coprocessorsFactory.create(modifiedSearchRequest,
-                        DataStoreSettings.createBasicSearchResultStoreSettings());
+                        DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
         final ResultStore resultStore = resultStoreFactory.create(
                 searchRequest.getSearchRequestSource(),
                 coprocessors);

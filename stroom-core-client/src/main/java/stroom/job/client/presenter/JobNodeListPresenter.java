@@ -304,13 +304,13 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             public String getValue(final JobNode row) {
                 final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
                 if (jobNodeInfo != null) {
-                    return dateTimeFormatter.format(jobNodeInfo.getLastExecutedTime());
+                    return dateTimeFormatter.formatWithDuration(jobNodeInfo.getLastExecutedTime());
                 } else {
                     return "?";
                 }
             }
         };
-        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_COL);
+        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

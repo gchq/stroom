@@ -23,7 +23,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
@@ -43,8 +43,8 @@ import com.gwtplatform.mvp.client.View;
 
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
-        StatisticsDataSourceSettingsUiHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<StatisticStoreDoc>, HasDocumentWrite<StatisticStoreDoc>, HasDirtyHandlers,
+        StatisticsDataSourceSettingsUiHandlers {
 
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view) {
@@ -68,31 +68,27 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
-        if (statisticsDataSource != null) {
-            getView().getDescription().setText(statisticsDataSource.getDescription());
-            getView().setStatisticType(statisticsDataSource.getStatisticType());
-            getView().getEnabled().setValue(statisticsDataSource.isEnabled());
-            getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(statisticsDataSource.getPrecision()));
-            getView().setRollUpType(statisticsDataSource.getRollUpType());
-        }
-    }
-
-    @Override
-    public StatisticStoreDoc write(final StatisticStoreDoc statisticsDataSource) {
-        if (statisticsDataSource != null) {
-            statisticsDataSource.setDescription(getView().getDescription().getText());
-            statisticsDataSource.setStatisticType(getView().getStatisticType());
-            statisticsDataSource.setEnabled(getView().getEnabled().getValue());
-            statisticsDataSource.setPrecision(getView().getPrecision().columnInterval());
-            statisticsDataSource.setRollUpType(getView().getRollUpType());
-        }
-        return statisticsDataSource;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
+    public void read(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
         getView().onReadOnly(readOnly);
+        if (document != null) {
+            getView().getDescription().setText(document.getDescription());
+            getView().setStatisticType(document.getStatisticType());
+            getView().getEnabled().setValue(document.isEnabled());
+            getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(document.getPrecision()));
+            getView().setRollUpType(document.getRollUpType());
+        }
+    }
+
+    @Override
+    public StatisticStoreDoc write(final StatisticStoreDoc document) {
+        if (document != null) {
+            document.setDescription(getView().getDescription().getText());
+            document.setStatisticType(getView().getStatisticType());
+            document.setEnabled(getView().getEnabled().getValue());
+            document.setPrecision(getView().getPrecision().columnInterval());
+            document.setRollUpType(getView().getRollUpType());
+        }
+        return document;
     }
 
     @Override

@@ -20,7 +20,7 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.main.DashboardSettingsPresenter.DashboardSettingsView;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.InputHandler;
@@ -29,7 +29,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class DashboardSettingsPresenter extends DocumentSettingsPresenter<DashboardSettingsView, DashboardDoc> {
+public class DashboardSettingsPresenter extends DocumentEditPresenter<DashboardSettingsView, DashboardDoc> {
 
     @Inject
     public DashboardSettingsPresenter(final EventBus eventBus,
@@ -42,7 +42,7 @@ public class DashboardSettingsPresenter extends DocumentSettingsPresenter<Dashbo
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final DashboardDoc doc) {
+    protected void onRead(final DocRef docRef, final DashboardDoc doc, final boolean readOnly) {
         getView().getDescription().setText(doc.getDescription());
     }
 

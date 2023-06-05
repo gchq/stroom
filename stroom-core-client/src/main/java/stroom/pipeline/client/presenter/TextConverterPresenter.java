@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -42,15 +41,13 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     private final Provider<EditorPresenter> editorPresenterProvider;
 
     private EditorPresenter codePresenter;
-    private boolean readOnly = true;
 
     @Inject
     public TextConverterPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
                                   final TextConverterSettingsPresenter settingsPresenter,
-                                  final Provider<EditorPresenter> editorPresenterProvider,
-                                  final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                                  final Provider<EditorPresenter> editorPresenterProvider) {
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
 
@@ -80,11 +77,13 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    public void onRead(final DocRef docRef, final TextConverterDoc textConverter) {
-        super.onRead(docRef, textConverter);
-        settingsPresenter.read(docRef, textConverter);
+    public void onRead(final DocRef docRef, final TextConverterDoc textConverter, final boolean readOnly) {
+        super.onRead(docRef, textConverter, readOnly);
+        settingsPresenter.read(docRef, textConverter, readOnly);
         if (codePresenter != null) {
             codePresenter.setText(textConverter.getData());
+            codePresenter.setReadOnly(readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
         }
     }
 
@@ -98,17 +97,6 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (codePresenter != null) {
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-        }
-    }
-
-    @Override
     public String getType() {
         return TextConverterDoc.DOCUMENT_TYPE;
     }
@@ -119,8 +107,8 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
             codePresenter.setMode(AceEditorMode.XML);
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
+            codePresenter.setReadOnly(isReadOnly());
+            codePresenter.getFormatAction().setAvailable(!isReadOnly());
             if (getEntity() != null && getEntity().getData() != null) {
                 codePresenter.setText(getEntity().getData());
             }

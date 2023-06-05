@@ -19,7 +19,7 @@ package stroom.kafka.client.presenter;
 
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.kafka.client.presenter.KafkaConfigSettingsPresenter.KafkaConfigSettingsView;
 import stroom.kafka.shared.KafkaConfigDoc;
 
@@ -30,7 +30,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class KafkaConfigSettingsPresenter extends DocumentSettingsPresenter<KafkaConfigSettingsView, KafkaConfigDoc> {
+public class KafkaConfigSettingsPresenter extends DocumentEditPresenter<KafkaConfigSettingsView, KafkaConfigDoc> {
 
     @Inject
     public KafkaConfigSettingsPresenter(final EventBus eventBus, final KafkaConfigSettingsView view) {
@@ -54,7 +54,7 @@ public class KafkaConfigSettingsPresenter extends DocumentSettingsPresenter<Kafk
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final KafkaConfigDoc doc) {
+    protected void onRead(final DocRef docRef, final KafkaConfigDoc doc, final boolean readOnly) {
         getView().getDescription().setText(doc.getDescription());
     }
 

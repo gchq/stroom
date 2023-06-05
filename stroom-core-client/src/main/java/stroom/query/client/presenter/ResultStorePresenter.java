@@ -91,10 +91,14 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
                     }
                 }
 
-                tb.row(TableCell.header("Search Process Lifespan", 2));
-                addLifespan(tb, resultStoreInfo.getSearchProcessLifespan());
-                tb.row(TableCell.header("Store Lifespan", 2));
-                addLifespan(tb, resultStoreInfo.getStoreLifespan());
+                if (resultStoreInfo.getSearchProcessLifespan() != null) {
+                    tb.row(TableCell.header("Search Process Lifespan", 2));
+                    addLifespan(tb, resultStoreInfo.getSearchProcessLifespan());
+                }
+                if (resultStoreInfo.getStoreLifespan() != null) {
+                    tb.row(TableCell.header("Store Lifespan", 2));
+                    addLifespan(tb, resultStoreInfo.getStoreLifespan());
+                }
             }
 
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
@@ -116,7 +120,7 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
 
         final PopupSize popupSize = PopupSize.resizable(1000, 600);
         ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .caption("Search Result Stores")
 //                .onShow(e -> getView().focus())

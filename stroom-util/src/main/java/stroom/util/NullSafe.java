@@ -44,6 +44,42 @@ public class NullSafe {
     }
 
     /**
+     * @return True if all values in the array are null or the array itself is null
+     */
+    public static <T> boolean allNull(final T... vals) {
+        if (vals == null) {
+            return true;
+        } else {
+            boolean allNull = true;
+            for (final T val : vals) {
+                if (val != null) {
+                    allNull = false;
+                    break;
+                }
+            }
+            return allNull;
+        }
+    }
+
+    /**
+     * @return True if the array itself is non-null and all values in the array are non-null
+     */
+    public static <T> boolean allNonNull(final T... vals) {
+        if (vals == null) {
+            return false;
+        } else {
+            boolean allNonNull = true;
+            for (final T val : vals) {
+                if (val == null) {
+                    allNonNull = false;
+                    break;
+                }
+            }
+            return allNonNull;
+        }
+    }
+
+    /**
      * Allows you to safely compare a grandchild property of val1 to other.
      * @return False if val1 is null or if val1's child property is null,
      * else whether the grandchild property of val1 is equal to other
@@ -67,46 +103,26 @@ public class NullSafe {
 
     /**
      * Return first non-null value or an empty {@link Optional} if all are null
+     * <p>
+     * Alias for {@link NullSafe#coalesce(T[])}
      */
-    public static <T> Optional<T> coalesce(final T val1, final T val2) {
-        return val1 != null
-                ? Optional.of(val1)
-                : (val2 != null
-                        ? Optional.of(val2)
-                        : Optional.empty());
+    public static <T> Optional<T> firstNonNull(final T... vals) {
+        return coalesce(vals);
     }
 
     /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */
-    public static <T> Optional<T> coalesce(final T val1, final T val2, final T val3) {
-        return val1 != null
-                ? Optional.of(val1)
-                : (val2 != null
-                        ? Optional.of(val2)
-                        : (val3 != null
-                                ? Optional.of(val3)
-                                : Optional.empty()));
+    public static <T> Optional<T> coalesce(final T... vals) {
+        if (vals != null) {
+            for (final T val : vals) {
+                if (val != null) {
+                    return Optional.of(val);
+                }
+            }
+        }
+        return Optional.empty();
     }
-
-    /**
-     * Return first non-null value or an empty {@link Optional} if all are null
-     */
-    public static <T> Optional<T> coalesce(final T val1,
-                                           final T val2,
-                                           final T val3,
-                                           final T val4) {
-        return val1 != null
-                ? Optional.of(val1)
-                : (val2 != null
-                        ? Optional.of(val2)
-                        : (val3 != null
-                                ? Optional.of(val3)
-                                : (val4 != null
-                                        ? Optional.of(val4)
-                                        : Optional.empty())));
-    }
-
 
     /**
      * @return True if str is null or blank

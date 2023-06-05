@@ -25,9 +25,10 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.query.client.presenter.QueryDocSuperPresenter;
+import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
+import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -42,16 +43,17 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
-    private final Provider<QueryDocSuperPresenter> editorProvider;
+    private final Provider<QueryDocPresenter> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public QueryPlugin(final EventBus eventBus,
-                       final Provider<QueryDocSuperPresenter> editorProvider,
+                       final Provider<QueryDocPresenter> editorProvider,
                        final RestFactory restFactory,
                        final ContentManager contentManager,
-                       final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                       final DocumentPluginEventManager entityPluginEventManager,
+                       final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }

@@ -28,7 +28,7 @@ import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
-import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.QueryKey;
@@ -37,6 +37,7 @@ import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -126,8 +127,8 @@ public class LmdbDataStore implements DataStore {
     private final StoredValueKeyFactory storedValueKeyFactory;
 
 
-    LmdbDataStore(final Serialisers serialisers,
-                  final LmdbEnvFactory lmdbEnvFactory,
+    public LmdbDataStore(final Serialisers serialisers,
+                  final SimpleEnvBuilder lmdbEnvBuilder,
                   final AbstractResultStoreConfig resultStoreConfig,
                   final QueryKey queryKey,
                   final String componentId,
@@ -178,8 +179,7 @@ public class LmdbDataStore implements DataStore {
                 lmdbRowKeyFactory);
         maxPutsBeforeCommit = resultStoreConfig.getMaxPutsBeforeCommit();
 
-        this.lmdbEnv = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig())
-                .withSubDirectory(dataStoreSettings.getSubDirectory())
+        this.lmdbEnv = lmdbEnvBuilder
                 .withMaxDbCount(1)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
@@ -718,24 +718,7 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public long getByteSize() {
-        final AtomicLong total = new AtomicLong();
-        try {
-            final Path dir = lmdbEnv.getLocalDir();
-            try (final Stream<Path> stream = Files.walk(dir)) {
-                stream.forEach(path -> {
-                    try {
-                        if (Files.isRegularFile(path)) {
-                            total.addAndGet(Files.size(path));
-                        }
-                    } catch (final IOException e) {
-                        LOGGER.debug(e::getMessage, e);
-                    }
-                });
-            }
-        } catch (final IOException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
-        return total.get();
+        return FileUtil.getByteSize(lmdbEnv.getLocalDir());
     }
 
     @Override
@@ -836,6 +819,10 @@ public class LmdbDataStore implements DataStore {
 
     public void delete(final DeleteCommand deleteCommand) {
         put(deleteCommand);
+    }
+
+    public QueryKey getQueryKey() {
+        return queryKey;
     }
 
     private static class LmdbData implements Data {

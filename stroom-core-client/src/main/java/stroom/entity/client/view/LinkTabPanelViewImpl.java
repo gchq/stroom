@@ -33,8 +33,6 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
     @UiField
     FlowPanel left;
     @UiField
-    FlowPanel right;
-    @UiField
     TabBar tabBar;
     @UiField
     LayerContainer layerContainer;
@@ -52,11 +50,6 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
     @Override
     public void addWidgetLeft(final Widget widget) {
         left.add(widget);
-    }
-
-    @Override
-    public void addWidgetRight(final Widget widget) {
-        right.add(widget);
     }
 
     @Override

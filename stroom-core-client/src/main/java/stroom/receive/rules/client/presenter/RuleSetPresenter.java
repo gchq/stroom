@@ -24,7 +24,6 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -45,10 +44,9 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     @Inject
     public RuleSetPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final ClientSecurityContext securityContext,
                             final Provider<RuleSetSettingsPresenter> settingsPresenterProvider,
                             final Provider<FieldListPresenter> fieldListPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -71,8 +69,8 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ReceiveDataRules dataReceiptPolicy) {
-        super.onRead(docRef, dataReceiptPolicy);
+    public void onRead(final DocRef docRef, final ReceiveDataRules dataReceiptPolicy, final boolean readOnly) {
+        super.onRead(docRef, dataReceiptPolicy, readOnly);
         if (dataReceiptPolicy.getFields() == null) {
             dataReceiptPolicy.setFields(new ArrayList<>());
         }
@@ -80,18 +78,12 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
             dataReceiptPolicy.setRules(new ArrayList<>());
         }
 
-        tabContentProvider.read(docRef, dataReceiptPolicy);
+        tabContentProvider.read(docRef, dataReceiptPolicy, readOnly);
     }
 
     @Override
     protected ReceiveDataRules onWrite(ReceiveDataRules dataReceiptPolicy) {
         return tabContentProvider.write(dataReceiptPolicy);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

@@ -22,7 +22,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -41,9 +40,8 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
-                                  final VisualisationSettingsPresenter settingsPresenter,
-                                  final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                                  final VisualisationSettingsPresenter settingsPresenter) {
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
 
         settingsPresenter.addDirtyHandler(event -> {
@@ -66,22 +64,16 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    public void onRead(final DocRef docRef, final VisualisationDoc visualisation) {
-        super.onRead(docRef, visualisation);
+    public void onRead(final DocRef docRef, final VisualisationDoc visualisation, final boolean readOnly) {
+        super.onRead(docRef, visualisation, readOnly);
         loadCount++;
-        settingsPresenter.read(docRef, visualisation);
+        settingsPresenter.read(docRef, visualisation, readOnly);
 
         if (loadCount > 1) {
             // Remove the visualisation function from the cache so dashboards
             // reload it.
             ClearFunctionCacheEvent.fire(this, docRef);
         }
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        settingsPresenter.onReadOnly(readOnly);
     }
 
     @Override

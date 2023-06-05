@@ -26,8 +26,6 @@ public interface LinkTabPanelView extends View {
 
     void addWidgetLeft(Widget widget);
 
-    void addWidgetRight(Widget widget);
-
     TabBar getTabBar();
 
     LayerContainer getLayerContainer();

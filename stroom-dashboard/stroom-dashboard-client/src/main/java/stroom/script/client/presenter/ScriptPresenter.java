@@ -25,7 +25,6 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -44,7 +43,6 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     private final Provider<EditorPresenter> editorPresenterProvider;
 
     private EditorPresenter codePresenter;
-    private boolean readOnly = true;
 
     private int loadCount;
 
@@ -52,9 +50,8 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     public ScriptPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
                            final ScriptSettingsPresenter settingsPresenter,
-                           final ClientSecurityContext securityContext,
                            final Provider<EditorPresenter> editorPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
 
@@ -81,10 +78,10 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ScriptDoc script) {
-        super.onRead(docRef, script);
+    public void onRead(final DocRef docRef, final ScriptDoc script, final boolean readOnly) {
+        super.onRead(docRef, script, readOnly);
         loadCount++;
-        settingsPresenter.read(docRef, script);
+        settingsPresenter.read(docRef, script, readOnly);
 
         if (codePresenter != null && script.getData() != null) {
             codePresenter.setText(script.getData());
@@ -99,6 +96,11 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
             // function cache so that scripts are requested again if needed.
             ClearFunctionCacheEvent.fire(this);
         }
+
+        if (codePresenter != null) {
+            codePresenter.setReadOnly(readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
+        }
     }
 
     @Override
@@ -108,17 +110,6 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
             script.setData(codePresenter.getText());
         }
         return script;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (codePresenter != null) {
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-        }
     }
 
     @Override
@@ -132,8 +123,8 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
             codePresenter.setMode(AceEditorMode.JAVASCRIPT);
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
+            codePresenter.setReadOnly(isReadOnly());
+            codePresenter.getFormatAction().setAvailable(!isReadOnly());
             if (getEntity() != null && getEntity().getData() != null) {
                 codePresenter.setText(getEntity().getData());
             }

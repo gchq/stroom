@@ -128,7 +128,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings(modifiedSearchRequest));
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
@@ -308,7 +308,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
                 result = elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
 
-                    // Flatten the mappings, which are keyed by index, into a deduplicated list
+                    // Flatten the mappings, which are keyed by index, into a de-duplicated list
                     final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>((o1, o2) -> {
                         if (Objects.equals(o1, o2)) {
                             return 0;

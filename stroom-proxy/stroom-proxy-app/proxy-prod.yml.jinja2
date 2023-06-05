@@ -135,8 +135,6 @@ logging:
 # jerseyClients are used for making feed status and content sync REST calls
 jerseyClients:
   default:
-    timeout: "10s"
-    connectionTimeout: "10s"
     tls:
       {% if distribution == "docker" %}
       verifyHostname: {{ true | envVar('REST_CLIENT_VERIFY_HOSTNAME') }}

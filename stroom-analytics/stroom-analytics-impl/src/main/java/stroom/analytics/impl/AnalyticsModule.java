@@ -18,7 +18,10 @@ package stroom.analytics.impl;
 
 import stroom.analytics.api.AlertManager;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -38,6 +41,12 @@ public class AnalyticsModule extends AbstractModule {
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
                         .advanced(true));
+        GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
+
+        RestResourcesBinder.create(binder())
+                .bind(AnalyticNotificationResourceImpl.class)
+                .bind(AnalyticProcessorFilterResourceImpl.class)
+                .bind(AnalyticDataShardResourceImpl.class);
     }
 
     private static class AnalyticsExecutorRunnable extends RunnableWrapper {

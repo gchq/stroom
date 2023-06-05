@@ -50,14 +50,6 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
 
     protected abstract void getContent(TabData tab, ContentCallback callback);
 
-    public void addWidgetLeft(final Widget widget) {
-        getView().addWidgetLeft(widget);
-    }
-
-    public void addWidgetRight(final Widget widget) {
-        getView().addWidgetRight(widget);
-    }
-
     public void selectTab(final TabData tab) {
         TaskStartEvent.fire(LinkTabPanelPresenter.this);
         Scheduler.get().scheduleDeferred(() -> {

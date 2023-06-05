@@ -31,8 +31,8 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.TimePartition;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ResultStore;
@@ -228,29 +228,20 @@ class AsyncSearchTaskHandler {
         Long partitionTo = null;
 
         if (timeRange != null) {
+            final TimeFilter timeFilter = DateExpressionParser
+                    .getTimeFilter(timeRange, task.getDateTimeSettings(), task.getNow());
+
             if (timeRange.getFrom() != null && !timeRange.getFrom().isBlank()) {
-                final long ms = getMs(timeRange.getFrom(), task.getDateTimeSettings(), task.getNow());
-                final TimePartition timePartition = timePartitionFactory.create(indexDoc, ms);
+                final TimePartition timePartition = timePartitionFactory.create(indexDoc, timeFilter.getFrom());
                 partitionFrom = timePartition.getPartitionFromTime();
             }
             if (timeRange.getTo() != null && !timeRange.getTo().isBlank()) {
-                final long ms = getMs(timeRange.getTo(), task.getDateTimeSettings(), task.getNow());
-                final TimePartition timePartition = timePartitionFactory.create(indexDoc, ms);
+                final TimePartition timePartition = timePartitionFactory.create(indexDoc, timeFilter.getTo());
                 partitionTo = timePartition.getPartitionToTime();
             }
         }
         final Range<Long> range = new Range<>(partitionFrom, partitionTo);
         findIndexShardCriteria.setPartitionTimeRange(range);
-    }
-
-    private Long getMs(final String expression,
-                       final DateTimeSettings dateTimeSettings,
-                       final long nowEpochMilli) {
-        return DateExpressionParser.parse(
-                        expression,
-                        dateTimeSettings,
-                        nowEpochMilli)
-                .map(time -> time.toInstant().toEpochMilli()).orElse(null);
     }
 
     private void awaitCompletionAndTerminate(final ResultStore resultCollector,

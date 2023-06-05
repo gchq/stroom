@@ -23,7 +23,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -40,6 +39,7 @@ import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -95,7 +95,6 @@ class TestSearchResultCreation {
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
                 SearchResultStoreConfig::new,
-                AnalyticResultStoreConfig::new,
                 pathCreator,
                 () -> executorService);
     }
@@ -125,7 +124,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -244,7 +243,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -259,7 +258,7 @@ class TestSearchResultCreation {
         // Perform final payload transfer.
         while (!coprocessors.getCompletionState().isComplete()) {
             transferPayloads(coprocessors, coprocessors2);
-            Thread.sleep(500);
+            ThreadUtil.sleep(500);
         }
 
         // Ensure the target coprocessors get a chance to add the data from the payloads.
@@ -317,7 +316,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -334,7 +333,7 @@ class TestSearchResultCreation {
         // Perform final payload transfer.
         while (!coprocessors.getCompletionState().isComplete()) {
             transferPayloads(coprocessors, coprocessors2);
-            Thread.sleep(500);
+            ThreadUtil.sleep(500);
         }
 
         // Ensure the target coprocessors get a chance to add the data from the payloads.
@@ -392,7 +391,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -404,7 +403,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);

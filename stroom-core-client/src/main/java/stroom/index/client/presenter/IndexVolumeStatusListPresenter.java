@@ -72,9 +72,6 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        // Add a border to the list.
-        getWidget().getElement().addClassName("stroom-border");
-
         initTableColumns();
     }
 

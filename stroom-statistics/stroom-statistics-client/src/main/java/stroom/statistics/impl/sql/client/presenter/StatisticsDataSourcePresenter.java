@@ -22,7 +22,6 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.widget.tab.client.presenter.TabData;
@@ -46,9 +45,8 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
             final LinkTabPanelView view,
             final Provider<StatisticsDataSourceSettingsPresenter> statisticsDataSourceSettingsPresenter,
             final Provider<StatisticsFieldListPresenter> statisticsFieldListPresenter,
-            final Provider<StatisticsCustomMaskListPresenter> statisticsCustomMaskListPresenter,
-            final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+            final Provider<StatisticsCustomMaskListPresenter> statisticsCustomMaskListPresenter) {
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -74,15 +72,15 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     }
 
     @Override
-    public void onRead(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
-        super.onRead(docRef, statisticsDataSource);
+    public void onRead(final DocRef docRef, final StatisticStoreDoc statisticsDataSource, final boolean readOnly) {
+        super.onRead(docRef, statisticsDataSource, readOnly);
         if (statisticsDataSource != null) {
             if (statisticsDataSource.getConfig() == null) {
                 statisticsDataSource.setConfig(new StatisticsDataSourceData());
             }
         }
 
-        tabContentProvider.read(docRef, statisticsDataSource);
+        tabContentProvider.read(docRef, statisticsDataSource, readOnly);
 
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other
@@ -93,12 +91,6 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     @Override
     protected StatisticStoreDoc onWrite(final StatisticStoreDoc statisticsDataSource) {
         return tabContentProvider.write(statisticsDataSource);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

@@ -157,7 +157,7 @@ public class SolrSearchProvider implements SearchProvider {
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings(modifiedSearchRequest));
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";

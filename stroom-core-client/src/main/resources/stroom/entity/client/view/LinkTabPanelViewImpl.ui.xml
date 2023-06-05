@@ -7,7 +7,6 @@
             <g:FlowPanel styleName="linkTabPanelViewImpl">
                 <g:FlowPanel ui:field="left" styleName="linkTabPanelViewImpl-left"/>
                 <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>
-                <g:FlowPanel ui:field="right" styleName="linkTabPanelViewImpl-right"/>
             </g:FlowPanel>
         </g:SimplePanel>
         <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>

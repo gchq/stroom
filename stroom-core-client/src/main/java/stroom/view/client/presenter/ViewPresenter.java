@@ -22,7 +22,6 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -40,9 +39,8 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
     @Inject
     public ViewPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
-                         final ClientSecurityContext securityContext,
                          final Provider<ViewSettingsPresenter> settingsPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -64,20 +62,14 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ViewDoc view) {
-        super.onRead(docRef, view);
-        tabContentProvider.read(docRef, view);
+    public void onRead(final DocRef docRef, final ViewDoc view, final boolean readOnly) {
+        super.onRead(docRef, view, readOnly);
+        tabContentProvider.read(docRef, view, readOnly);
     }
 
     @Override
     protected ViewDoc onWrite(final ViewDoc view) {
         return tabContentProvider.write(view);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

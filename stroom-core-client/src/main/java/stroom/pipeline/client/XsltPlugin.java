@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
+import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -50,8 +51,9 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
                       final Provider<XsltPresenter> editorProvider,
                       final RestFactory restFactory,
                       final ContentManager contentManager,
-                      final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                      final DocumentPluginEventManager entityPluginEventManager,
+                      final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }

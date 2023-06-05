@@ -3,8 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:item="urn:import:stroom.item.client"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client"
->
+             xmlns:d="urn:import:stroom.widget.customdatebox.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="analyticRuleSettingsDescription" label="Description">
             <g:TextArea ui:field="description" width="400px"/>
@@ -12,16 +12,11 @@
         <form:FormGroup identity="analyticRuleSettingsLanguageVersion" label="Language Version">
             <item:ItemListBox ui:field="languageVersion" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticRuleSettingsQuery" label="Query">
-            <g:SimplePanel ui:field="query" width="800px" height="600px" addStyleNames="stroom-control"/>
-        </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsAlertRuleType" label="Alert Rule Type">
             <l:ItemListBox ui:field="analyticRuleType"/>
         </form:FormGroup>
-        <g:FlowPanel ui:field="aggregateSettings" styleName="form">
-            <form:FormGroup identity="analyticRuleSettingsDestinationFeed" label="Destination Feed For Alerts">
-                <g:SimplePanel ui:field="destinationFeed"/>
-            </form:FormGroup>
-        </g:FlowPanel>
+        <form:FormGroup identity="analyticRuleSettingsDataRetention" label="Time To Keep Data In The Store">
+            <d:DurationPicker ui:field="dataRetention"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

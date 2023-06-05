@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -42,9 +41,8 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     public SolrIndexPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
                               final Provider<SolrIndexSettingsPresenter> indexSettingsPresenter,
-                              final Provider<SolrIndexFieldListPresenter> indexFieldListPresenter,
-                              final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                              final Provider<SolrIndexFieldListPresenter> indexFieldListPresenter) {
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -65,15 +63,9 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    public void onRead(final DocRef docRef, final SolrIndexDoc index) {
-        super.onRead(docRef, index);
-        tabContentProvider.read(docRef, index);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+    public void onRead(final DocRef docRef, final SolrIndexDoc index, final boolean readOnly) {
+        super.onRead(docRef, index, readOnly);
+        tabContentProvider.read(docRef, index, readOnly);
     }
 
     @Override

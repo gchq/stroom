@@ -1713,7 +1713,6 @@ button.main-menu svg {
 }
 
 .functionSignatureTable {
-    white-space: nowrap;
     user-select: text;
 }
 
@@ -1728,8 +1727,8 @@ button.main-menu svg {
 
 .functionSignatureTable td {
     padding-right: var(--row__gap--horizontal);
+    white-space: normal;
 }
-
 
 .nodePingBar-outer {
     padding-left: .25em;

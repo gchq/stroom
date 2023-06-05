@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.index.shared.IndexDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -44,9 +43,8 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
                           final LinkTabPanelView view,
                           final Provider<IndexSettingsPresenter> indexSettingsPresenter,
                           final Provider<IndexFieldListPresenter> indexFieldListPresenter,
-                          final Provider<IndexShardPresenter> indexShardPresenter,
-                          final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                          final Provider<IndexShardPresenter> indexShardPresenter) {
+        super(eventBus, view);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -69,15 +67,9 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     }
 
     @Override
-    public void onRead(final DocRef docRef, final IndexDoc index) {
-        super.onRead(docRef, index);
-        tabContentProvider.read(docRef, index);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+    public void onRead(final DocRef docRef, final IndexDoc index, final boolean readOnly) {
+        super.onRead(docRef, index, readOnly);
+        tabContentProvider.read(docRef, index, readOnly);
     }
 
     @Override
