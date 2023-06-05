@@ -21,6 +21,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
 import stroom.svg.client.SvgImages;
 import stroom.widget.button.client.ButtonPanel;
@@ -36,27 +37,31 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.Collections;
 import java.util.List;
-import javax.inject.Provider;
 
 public class MarkdownEditPresenter
         extends MyPresenterWidget<MarkdownEditView>
         implements HasDirtyHandlers, HasToolbar {
 
     private final EditorPresenter codePresenter;
+    private final HtmlPresenter htmlPresenter;
+    private final InlineSvgToggleButton editModeButton;
     private boolean reading;
     private boolean readOnly = true;
+    private boolean editMode;
     private final ButtonPanel toolbar;
 
     @Inject
     public MarkdownEditPresenter(final EventBus eventBus,
                                  final MarkdownEditView view,
-                                 final Provider<EditorPresenter> editorPresenterProvider) {
+                                 final EditorPresenter editorPresenter,
+                                 final HtmlPresenter htmlPresenter) {
         super(eventBus, view);
-        this.codePresenter = editorPresenterProvider.get();
+        this.codePresenter = editorPresenter;
+        this.htmlPresenter = htmlPresenter;
         codePresenter.setMode(AceEditorMode.MARKDOWN);
-        view.setEditor(codePresenter.getView());
+        view.setView(htmlPresenter.getView());
 
-        final InlineSvgToggleButton editModeButton = new InlineSvgToggleButton();
+        editModeButton = new InlineSvgToggleButton();
         editModeButton.setSvg(SvgImages.EDIT);
         editModeButton.setTitle("Edit");
         editModeButton.setEnabled(true);
@@ -67,6 +72,9 @@ public class MarkdownEditPresenter
 
     @Override
     public List<Widget> getToolbars() {
+        if (readOnly) {
+            return Collections.emptyList();
+        }
         return Collections.singletonList(toolbar);
     }
 
@@ -75,6 +83,17 @@ public class MarkdownEditPresenter
         super.onBind();
         registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        registerHandler(editModeButton.addClickHandler(e -> {
+            if (!readOnly) {
+                this.editMode = !this.editMode;
+                if (editMode) {
+                    getView().setView(codePresenter.getView());
+                } else {
+                    htmlPresenter.setHtml(getHtml(codePresenter.getText()));
+                    getView().setView(htmlPresenter.getView());
+                }
+            }
+        }));
     }
 
     private void setDirty(final boolean dirty) {
@@ -92,20 +111,30 @@ public class MarkdownEditPresenter
         return codePresenter.getText();
     }
 
-    public void setText(final String text) {
+    public void setText(String text) {
+        if (text == null) {
+            text = "";
+        }
+
         reading = true;
         codePresenter.setText(text);
         reading = false;
+
+        htmlPresenter.setHtml(getHtml(text));
     }
 
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
     }
 
+    public native String getHtml(final String markdown) /*-{
+        var converter = new $wnd.showdown.Converter(),
+        html      = converter.makeHtml(markdown);
+        return html;
+	}-*/;
+
     public interface MarkdownEditView extends View {
 
-        void setEditor(View view);
-
-        void setEditMode(boolean editMode);
+        void setView(View view);
     }
 }

@@ -44,14 +44,9 @@ public class MarkdownEditViewImpl extends ViewImpl implements MarkdownEditView {
     }
 
     @Override
-    public void setEditor(final View view) {
-        view.asWidget().addStyleName("dashboard-panel overflow-hidden");
+    public void setView(final View view) {
+        view.asWidget().addStyleName("dashboard-panel");
         editorContainer.setWidget(view.asWidget());
-    }
-
-    @Override
-    public void setEditMode(final boolean editMode) {
-
     }
 
     public interface Binder extends UiBinder<Widget, MarkdownEditViewImpl> {
