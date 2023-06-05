@@ -13,6 +13,7 @@ import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.FindResultStoreCriteria;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -21,6 +22,7 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.AbstractResultStoreConfig;
@@ -395,7 +397,23 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                         .timeFilter(timeFilter)
                         .build();
 
-                return resultCreator.create(lmdbDataStore, resultRequest);
+                Result result = resultCreator
+                        .create(lmdbDataStore, resultRequest);
+
+                // If we get no results and the offset > 0 then reset range and query again.
+                if (result instanceof final TableResult tableResult) {
+                    if (resultRequest.getRequestedRange().getOffset() > 0 &&
+                            tableResult.getRows().size() == 0) {
+                        resultRequest = resultRequest
+                                .copy()
+                                .requestedRange(new OffsetRange(0L, request.getRequestedRange().getLength()))
+                                .build();
+                        result = resultCreator
+                                .create(lmdbDataStore, resultRequest);
+                    }
+                }
+
+                return result;
             }
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);

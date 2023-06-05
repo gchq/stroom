@@ -122,7 +122,6 @@ public class DashboardPresenter
 
     private ResultStoreInfo resultStoreInfo;
     private String externalLinkParameters;
-    private TimeRange timeRange;
 
 
     private final InlineSvgToggleButton editModeButton;
@@ -203,11 +202,8 @@ public class DashboardPresenter
         super.onBind();
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> start()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
-            if (!Objects.equals(this.timeRange, e.getTimeRange())) {
-                this.timeRange = e.getTimeRange();
-                setDirty(true);
-                start();
-            }
+            setDirty(true);
+            start();
         }));
         registerHandler(editModeButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
@@ -306,7 +302,7 @@ public class DashboardPresenter
 
     @Override
     public TimeRange getTimeRange() {
-        return timeRange;
+        return queryToolbarPresenter.getTimeRange();
     }
 
     @Override
@@ -353,10 +349,7 @@ public class DashboardPresenter
 
             final DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
             if (dashboardConfig != null) {
-                this.timeRange = dashboardConfig.getTimeRange();
-                if (this.timeRange != null) {
-                    queryToolbarPresenter.setTimeRange(this.timeRange);
-                }
+                queryToolbarPresenter.setTimeRange(dashboardConfig.getTimeRange());
 
                 layoutConfig = dashboardConfig.getLayout();
                 layoutConstraints = dashboardConfig.getLayoutConstraints();
@@ -567,7 +560,7 @@ public class DashboardPresenter
         }
 
         final DashboardConfig dashboardConfig = new DashboardConfig();
-        dashboardConfig.setTimeRange(timeRange);
+        dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
         dashboardConfig.setComponents(componentDataList);
         dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
         dashboardConfig.setLayoutConstraints(layoutConstraints);

@@ -70,12 +70,16 @@ public class QueryToolbarPresenter
         if (!currentTimeRange.equals(timeRange)) {
             currentTimeRange = timeRange;
             TimeRangeChangeEvent.fire(this, timeRange);
-            start();
         }
     }
 
     public void setTimeRange(final TimeRange timeRange) {
-        getView().setTimeRange(timeRange);
+        if (timeRange == null) {
+            currentTimeRange = TimeRanges.ALL_TIME;
+        } else {
+            currentTimeRange = timeRange;
+        }
+        getView().setTimeRange(currentTimeRange);
     }
 
     @Override
