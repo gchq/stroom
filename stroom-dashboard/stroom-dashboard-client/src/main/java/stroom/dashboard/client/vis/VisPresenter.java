@@ -39,7 +39,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeThemeEvent;
 import stroom.editor.client.presenter.CurrentTheme;
-import stroom.preferences.client.Themes;
+import stroom.ui.config.shared.Themes;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;

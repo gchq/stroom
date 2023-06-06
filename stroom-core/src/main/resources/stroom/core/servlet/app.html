@@ -29,7 +29,9 @@
     <script type="text/javascript" src="script/moment/moment.min.js" charset="utf-8"></script>
     <script type="text/javascript" src="script/moment/moment-timezone-with-data.min.js" charset="utf-8"></script>
     <script type="text/javascript" src="script/showdown/showdown.min.js" charset="utf-8"></script>
-    <script type="text/javascript" src="script/prismjs/prism.js" charset="utf-8"></script>
+    <!-- data-manual attr set to stop prismjs from trying to highlight all on page load as there will
+    never be anything on the page at load time. Instead we call prismjs programmatically -->
+    <script type="text/javascript" src="script/prismjs/prism.js" data-manual charset="utf-8"></script>
     <script type="text/javascript" src="script/global-resize-observer.js" charset="utf-8"></script>
 
     <script type="text/javascript" src="stroom/ace/ace.js" charset="utf-8"></script>
@@ -56,7 +58,7 @@
     <body class="stroom-body" oncontextmenu="@ON_CONTEXT_MENU@">
       <!-- Add history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
-    
+
     <div class="stroom-background">
     </div>
     <div id="loading">
@@ -72,9 +74,9 @@
         </div>
 	  </div>
 	</div>
-	
+
 	<img id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px" src="images/logo.svg" />
-  
+
     <noscript>
       <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color:white; border: 1px solid red; padding: 4px; font-family: sans-serif">
         Your web browser must have JavaScript enabled

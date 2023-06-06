@@ -20,13 +20,17 @@ package stroom.entity.client.presenter;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.editor.client.presenter.ChangeThemeEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.svg.client.SvgImages;
+import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgToggleButton;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,6 +46,8 @@ public class MarkdownEditPresenter
         extends MyPresenterWidget<MarkdownEditView>
         implements HasDirtyHandlers, HasToolbar {
 
+    private static final String PRISM_LIGHT_THEME_CLASS_NAME = "stroom-light-theme";
+
     private final EditorPresenter codePresenter;
     private final HtmlPresenter htmlPresenter;
     private final InlineSvgToggleButton editModeButton;
@@ -49,16 +55,22 @@ public class MarkdownEditPresenter
     private boolean readOnly = true;
     private boolean editMode;
     private final ButtonPanel toolbar;
+    private final Element htmlPresenterElement;
+    private final UserPreferencesManager userPreferencesManager;
+
 
     @Inject
     public MarkdownEditPresenter(final EventBus eventBus,
                                  final MarkdownEditView view,
                                  final EditorPresenter editorPresenter,
-                                 final HtmlPresenter htmlPresenter) {
+                                 final HtmlPresenter htmlPresenter,
+                                 final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view);
         this.codePresenter = editorPresenter;
         this.htmlPresenter = htmlPresenter;
+        this.userPreferencesManager = userPreferencesManager;
         htmlPresenter.getWidget().addStyleName("markdown");
+        htmlPresenterElement = htmlPresenter.getWidget().getElement();
         codePresenter.setMode(AceEditorMode.MARKDOWN);
         view.setView(htmlPresenter.getView());
 
@@ -69,6 +81,10 @@ public class MarkdownEditPresenter
 
         toolbar = new ButtonPanel();
         toolbar.addButton(editModeButton);
+
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
+            updatePrismTheme();
+        }));
     }
 
     @Override
@@ -90,7 +106,7 @@ public class MarkdownEditPresenter
                 if (editMode) {
                     getView().setView(codePresenter.getView());
                 } else {
-                    htmlPresenter.setHtml(getHtml(codePresenter.getText()));
+                    setMarkdownOnHtmlPresenter(codePresenter.getText());
                     getView().setView(htmlPresenter.getView());
                 }
             }
@@ -112,26 +128,68 @@ public class MarkdownEditPresenter
         return codePresenter.getText();
     }
 
-    public void setText(String text) {
-        if (text == null) {
-            text = "";
+    public void setText(String rawMarkdown) {
+        if (rawMarkdown == null) {
+            rawMarkdown = "";
         }
 
         reading = true;
-        codePresenter.setText(text);
+        codePresenter.setText(rawMarkdown);
         reading = false;
+        setMarkdownOnHtmlPresenter(rawMarkdown);
 
-        htmlPresenter.setHtml(getHtml(text));
+    }
+
+    private void setMarkdownOnHtmlPresenter(final String rawMarkdown) {
+        updatePrismTheme();
+        htmlPresenter.setHtml(convertMarkdownToHtml(rawMarkdown));
+        applyPrismSyntaxHighlighting();
+    }
+
+    private void updatePrismTheme() {
+        // We have two prism css files, each with a baked in theme. The standard
+        // un-edited one is a dark theme. The non-standard one that adds in additional
+        // class selectivity is for light themes.
+        final ThemeType themeType = userPreferencesManager.geCurrentThemeType();
+        switch (themeType) {
+            case DARK:
+                htmlPresenterElement.removeClassName(PRISM_LIGHT_THEME_CLASS_NAME);
+                break;
+            case LIGHT:
+                htmlPresenterElement.addClassName(PRISM_LIGHT_THEME_CLASS_NAME);
+                break;
+            default:
+                throw new RuntimeException("Unexpected theme type " + themeType);
+        }
     }
 
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
     }
 
-    public native String getHtml(final String markdown) /*-{
+    /**
+     * Use ShowdownJS to convert markdown text into HTML. Enable support for
+     * markdown tables.
+     */
+    public native String convertMarkdownToHtml(final String markdown) /*-{
         var converter = new $wnd.showdown.Converter();
+        converter.setOption('tables', true);
         return converter.makeHtml(markdown);
     }-*/;
+
+    /**
+     * This will run the prismjs code to tokenise the content of fenced blocks which
+     * are in within pre/code. ShowdownJS will have set the appropriate language class on the
+     * code tag so then the prism css can style all the tokens.
+     */
+    public native void applyPrismSyntaxHighlighting() /*-{
+        var element = this.@stroom.entity.client.presenter.MarkdownEditPresenter::htmlPresenterElement;
+        $wnd.Prism.highlightAllUnder(element);
+    }-*/;
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface MarkdownEditView extends View {
 

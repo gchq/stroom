@@ -1,0 +1,156 @@
+/*
+********************************************************************************
+
+                                **** IMPORTANT ****
+
+This is a Stroom specific edited version of the prismjs css for stroom's light theme.
+Download the css in non-minified form using the link below (which gets the prism
+default light theme) and then edit it.
+
+This one is not minified to make it easier to add in the stroom class name.
+********************************************************************************
+*/
+
+
+/* PrismJS 1.29.0
+https://prismjs.com/download.html?#themes=prism&languages=markup+css+clike+javascript+bash+csv+powershell+properties+regex+sql+toml */
+/**
+ * prism.js default theme for JavaScript, CSS and HTML
+ * Based on dabblet (http://dabblet.com)
+ * @author Lea Verou
+ */
+
+.stroom-light-theme code[class*="language-"],
+.stroom-light-theme pre[class*="language-"] {
+	color: black;
+	background: none;
+	text-shadow: 0 1px white;
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: 1em;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+.stroom-light-theme pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,
+.stroom-light-theme code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+.stroom-light-theme pre[class*="language-"]::selection, pre[class*="language-"] ::selection,
+.stroom-light-theme code[class*="language-"]::selection, code[class*="language-"] ::selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+@media print {
+	.stroom-light-theme code[class*="language-"],
+	.stroom-light-theme pre[class*="language-"] {
+		text-shadow: none;
+	}
+}
+
+/* Code blocks */
+.stroom-light-theme pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+}
+
+.stroom-light-theme :not(pre) > code[class*="language-"],
+.stroom-light-theme pre[class*="language-"] {
+	background: #f5f2f0;
+}
+
+/* Inline code */
+.stroom-light-theme :not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.stroom-light-theme .token.comment,
+.stroom-light-theme .token.prolog,
+.stroom-light-theme .token.doctype,
+.stroom-light-theme .token.cdata {
+	color: slategray;
+}
+
+.stroom-light-theme .token.punctuation {
+	color: #999;
+}
+
+.stroom-light-theme .token.namespace {
+	opacity: .7;
+}
+
+.stroom-light-theme .token.property,
+.stroom-light-theme .token.tag,
+.stroom-light-theme .token.boolean,
+.stroom-light-theme .token.number,
+.stroom-light-theme .token.constant,
+.stroom-light-theme .token.symbol,
+.stroom-light-theme .token.deleted {
+	color: #905;
+}
+
+.stroom-light-theme .token.selector,
+.stroom-light-theme .token.attr-name,
+.stroom-light-theme .token.string,
+.stroom-light-theme .token.char,
+.stroom-light-theme .token.builtin,
+.stroom-light-theme .token.inserted {
+	color: #690;
+}
+
+.stroom-light-theme .token.operator,
+.stroom-light-theme .token.entity,
+.stroom-light-theme .token.url,
+.stroom-light-theme .language-css .token.string,
+.stroom-light-theme .style .token.string {
+	color: #9a6e3a;
+	/* This background color was intended by the author of this theme. */
+	background: hsla(0, 0%, 100%, .5);
+}
+
+.stroom-light-theme .token.atrule,
+.stroom-light-theme .token.attr-value,
+.stroom-light-theme .token.keyword {
+	color: #07a;
+}
+
+.stroom-light-theme .token.function,
+.stroom-light-theme .token.class-name {
+	color: #DD4A68;
+}
+
+.stroom-light-theme .token.regex,
+.stroom-light-theme .token.important,
+.stroom-light-theme .token.variable {
+	color: #e90;
+}
+
+.stroom-light-theme .token.important,
+.stroom-light-theme .token.bold {
+	font-weight: bold;
+}
+.stroom-light-theme .token.italic {
+	font-style: italic;
+}
+
+.stroom-light-theme .token.entity {
+	cursor: help;
+}

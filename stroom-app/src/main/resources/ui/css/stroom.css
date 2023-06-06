@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/** 
+/**
  * Styles for standard HTML elements
  */
 html,body {
@@ -24,11 +24,11 @@ html,body {
 	background: white;
 	color: var(--text-color);
 	direction: ltr;
-	
+
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
-	user-select: none;	
+	user-select: none;
 }
 
 html,body,div,span,table,tbody,tr,th,td,b,p,h1,h2,h3,h4 {
@@ -133,6 +133,10 @@ p {
 td {
 	vertical-align: top;
 	font-size: 1px;
+}
+
+hr {
+    border-top: 1px solid var(--text-color);
 }
 
 /**
@@ -345,7 +349,7 @@ td {
 }
 
 .logout {
-	
+
 }
 
 .pageContentContainer {
@@ -393,7 +397,7 @@ td {
 
 .headerWrapper {
 	border-bottom: 1px solid var(--border-color) !important;
-	/*	
+	/*
 	background: #93c2f1 url(../images/hborder.png) repeat-x 0px -1463px
 		!important;
 */
@@ -449,7 +453,7 @@ td {
 }
 
 .stroom-TabBar .gwt-TabBarRest {
-	
+
 }
 
 .stroom-TabBar .gwt-TabBarRest-wrapper {
@@ -470,7 +474,7 @@ td {
 
 .stroom-TabBar .gwt-TabBarItem-selected {
 	cursor: default;
-	/*	
+	/*
 	background: #93c2f1 url(../images/hborder.png) repeat-x 0px -1463px;
 */
 	background: #dfeaf8 url(../images/header.png) repeat-x;

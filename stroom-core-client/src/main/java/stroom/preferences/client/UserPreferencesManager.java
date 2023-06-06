@@ -4,6 +4,8 @@ import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentTheme;
+import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 
@@ -113,6 +115,10 @@ public class UserPreferencesManager {
 
     public UserPreferences getCurrentPreferences() {
         return currentPreferences;
+    }
+
+    public ThemeType geCurrentThemeType() {
+        return Themes.getThemeType(currentPreferences.getTheme());
     }
 
     public List<String> getThemes() {
