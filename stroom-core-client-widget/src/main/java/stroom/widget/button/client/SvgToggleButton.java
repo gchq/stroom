@@ -30,9 +30,7 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
         this.onPreset = onPreset;
         this.offPreset = offPreset;
 
-        addClickHandler(event -> {
-            toggleState();
-        });
+        addClickHandler(event -> toggleState());
     }
 
     @Override
@@ -52,11 +50,12 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
     @Override
     public void setState(final boolean isOn) {
         if (this.isOn != isOn) {
-            final Preset newState = isOn
-                    ? onPreset
-                    : offPreset;
             this.isOn = isOn;
-            super.setSvgPreset(newState);
+            if (isOn) {
+                super.toggleSvgPreset(offPreset, onPreset);
+            } else {
+                super.toggleSvgPreset(onPreset, offPreset);
+            }
         }
     }
 
