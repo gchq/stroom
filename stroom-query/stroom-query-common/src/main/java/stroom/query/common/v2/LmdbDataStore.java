@@ -547,8 +547,15 @@ public class LmdbDataStore implements DataStore {
 
                     } else {
                         // We do not expect a key collision here.
-                        LOGGER.debug(() -> "Unexpected collision");
-                        throw new RuntimeException("Unexpected collision");
+                        final String message = "Unexpected collision (" +
+                                "key factory=" +
+                                keyFactory.getClass().getSimpleName() +
+                                ", " +
+                                "lmdbRowKeyFactory=" +
+                                lmdbRowKeyFactory.getClass().getSimpleName() +
+                                ")";
+                        LOGGER.debug(message);
+                        throw new RuntimeException(message);
                     }
                 }
 
