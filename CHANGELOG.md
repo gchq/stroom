@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.23] - 2023-06-05
+
+* Issue **#2197** : Add markdown documentation editor.
+
+* Issue **#3495** : Stop task termination on shutdown from disabling rules.
+
+* Make SQL migration script V07_02_00_001__analytics.sql idempotent. If you are migrating from a previous 7.2 BETA, you will need to delete the schema history entry for this script else stroom will not boot, probably this but check your own table `delete from analytics_schema_history where installed_rank = 2;`. No material change to the table structure.
+
+* Issue **#3496** : Fix wrapping.
+
+* Issue **#3497** : Fix dialog heading wrapping.
+
+* Issue **#3499** : Fix rule shard query.
+
+
 ## [v7.2-beta.22] - 2023-06-01
 
 * Issue **#3492** : Fix multiline list display for error pane.
@@ -5399,7 +5414,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.22...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.23...HEAD
+[v7.2-beta.23]: https://github.com/gchq/stroom/compare/v7.2-beta.22...v7.2-beta.23
 [v7.2-beta.22]: https://github.com/gchq/stroom/compare/v7.2-beta.21...v7.2-beta.22
 [v7.2-beta.21]: https://github.com/gchq/stroom/compare/v7.2-beta.20...v7.2-beta.21
 [v7.2-beta.20]: https://github.com/gchq/stroom/compare/v7.2-beta.19...v7.2-beta.20

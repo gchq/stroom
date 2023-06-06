@@ -22,7 +22,6 @@ import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.Visu
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -34,8 +33,6 @@ public class VisualisationSettingsViewImpl extends ViewImpl
 
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField
     TextBox functionName;
     @UiField
@@ -51,11 +48,6 @@ public class VisualisationSettingsViewImpl extends ViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public TextArea getDescription() {
-        return description;
     }
 
     @Override
@@ -75,7 +67,6 @@ public class VisualisationSettingsViewImpl extends ViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         functionName.setEnabled(!readOnly);
     }
 

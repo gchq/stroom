@@ -38,8 +38,6 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
 
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField(provided = true)
     ItemListBox<StatisticType> statisticType;
     @UiField(provided = true)
@@ -115,11 +113,6 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
     }
 
     @Override
-    public TextArea getDescription() {
-        return description;
-    }
-
-    @Override
     public CustomCheckBox getEnabled() {
         return enabled;
     }
@@ -156,7 +149,6 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         statisticType.setEnabled(!readOnly);
         precision.setEnabled(!readOnly);
         rollUpType.setEnabled(!readOnly);

@@ -19,14 +19,17 @@ package stroom.query.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import javax.inject.Inject;
 
-public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, QueryDoc> {
+public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, QueryDoc> implements HasToolbar {
 
     private final QueryEditPresenter queryEditPresenter;
 
@@ -35,6 +38,11 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                  final QueryEditPresenter queryEditPresenter) {
         super(eventBus, queryEditPresenter.getView());
         this.queryEditPresenter = queryEditPresenter;
+    }
+
+    @Override
+    public List<Widget> getToolbars() {
+        return queryEditPresenter.getToolbars();
     }
 
     @Override

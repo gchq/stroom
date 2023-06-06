@@ -34,8 +34,8 @@
 
 .button-container {
     display: flex;
-    align-items: top;
     margin: 2px;
+    gap: 2px;
 
     /*
     white-space: nowrap;
@@ -165,18 +165,6 @@
 }
 
 /* Close button */
-/*
-.curveTab .curveTab-close {
-    background-image: url("../images/tabs/close.png");
-    width: 12px;
-    height: 12px;
-    -moz-user-select: none;
-    cursor: pointer;
-    margin: 2px 6px 0 4px;
-    z-index: 0;
-    background-repeat: no-repeat;
-}
-*/
 .curveTab .curveTab-close {
     display: flex;
     opacity: 0;
@@ -999,15 +987,22 @@
     min-height: 25px;
 }
 
-.linkTabPanelViewImpl-left {
-    flex-grow: 0;
-}
-
 .linkTabPanelViewImpl-middle {
     flex-grow: 1;
 }
 
-.linkTabPanelViewImpl-right {
+.toolbarContainer {
+    display: flex;
+}
+
+.toolbar {
+}
+
+.toolbar-left {
+    flex-grow: 0;
+}
+
+.toolbar-right {
     display: flex;
     justify-content: flex-end;
     flex-grow: 0;
@@ -1544,6 +1539,10 @@ button.main-menu svg {
 
 .navigation-header-button > .inline-svg-button {
     overflow: visible;
+}
+
+.inline-svg-button__blue {
+    color: #2196f3;
 }
 
 /*

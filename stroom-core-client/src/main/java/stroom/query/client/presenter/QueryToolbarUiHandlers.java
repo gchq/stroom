@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.query.client.presenter;
 
 import stroom.query.api.v2.TimeRange;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface DashboardUiHandlers extends UiHandlers {
-    void onAddPanel(ClickEvent event);
-
-    void onAddInput(ClickEvent event);
-
-    void onConstraints(ClickEvent event);
-
-    void onDesign(ClickEvent event);
+public interface QueryToolbarUiHandlers extends UiHandlers {
 
     void onTimeRange(TimeRange timeRange);
+
+    void showWarnings();
 }

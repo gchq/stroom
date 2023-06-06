@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -35,11 +36,13 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     private static final TabData NOTIFICATIONS_TAB = new TabDataImpl("Notifications");
     private static final TabData PROCESSING_TAB = new TabDataImpl("Processing");
     private static final TabData SHARDS_TAB = new TabDataImpl("Shards");
+    private static final TabData DOCUMENTATION_TAB = new TabDataImpl("Documentation");
     private final AnalyticQueryEditPresenter queryEditPresenter;
     private final AnalyticRuleSettingsPresenter settingsPresenter;
     private final AnalyticNotificationsPresenter notificationsPresenter;
     private final AnalyticProcessingPresenter processPresenter;
     private final AnalyticDataShardsPresenter analyticDataShardsPresenter;
+    private final MarkdownEditPresenter markdownEditPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
@@ -48,19 +51,22 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
                                  final AnalyticRuleSettingsPresenter settingsPresenter,
                                  final AnalyticNotificationsPresenter notificationsPresenter,
                                  final AnalyticProcessingPresenter processPresenter,
-                                 final AnalyticDataShardsPresenter analyticDataShardsPresenter) {
+                                 final AnalyticDataShardsPresenter analyticDataShardsPresenter,
+                                 final MarkdownEditPresenter markdownEditPresenter) {
         super(eventBus, view);
         this.queryEditPresenter = queryEditPresenter;
         this.settingsPresenter = settingsPresenter;
         this.notificationsPresenter = notificationsPresenter;
         this.processPresenter = processPresenter;
         this.analyticDataShardsPresenter = analyticDataShardsPresenter;
+        this.markdownEditPresenter = markdownEditPresenter;
 
         addTab(QUERY_TAB);
         addTab(SETTINGS_TAB);
         addTab(PROCESSING_TAB);
         addTab(NOTIFICATIONS_TAB);
         addTab(SHARDS_TAB);
+        addTab(DOCUMENTATION_TAB);
         selectTab(QUERY_TAB);
     }
 
@@ -87,6 +93,11 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
                 setDirty(true);
             }
         }));
+        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
     }
 
     @Override
@@ -101,6 +112,8 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
             callback.onReady(processPresenter);
         } else if (SHARDS_TAB.equals(tab)) {
             callback.onReady(analyticDataShardsPresenter);
+        } else if (DOCUMENTATION_TAB.equals(tab)) {
+            callback.onReady(markdownEditPresenter);
         } else {
             callback.onReady(null);
         }
@@ -114,6 +127,8 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
         settingsPresenter.read(docRef, entity, readOnly);
         processPresenter.read(docRef, entity, readOnly);
         analyticDataShardsPresenter.read(docRef, entity, readOnly);
+        markdownEditPresenter.setText(entity.getDescription());
+        markdownEditPresenter.setReadOnly(readOnly);
     }
 
     @Override
@@ -123,6 +138,7 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
         modified = notificationsPresenter.write(modified);
         modified = settingsPresenter.write(modified);
         modified = processPresenter.write(modified);
+        modified = modified.copy().description(markdownEditPresenter.getText()).build();
         return modified;
     }
 

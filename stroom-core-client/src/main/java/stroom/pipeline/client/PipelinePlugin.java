@@ -29,7 +29,6 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
-import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.shared.Processor;
 import stroom.security.client.api.ClientSecurityContext;
 
@@ -75,8 +74,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             //            highlight(docRef);
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-            pipelinePresenter.getContent(PipelinePresenter.PROCESSORS,
-                    content -> ((ProcessorPresenter) content).refresh(event.getProcessorFilter()));
+            pipelinePresenter.getProcessorPresenter().refresh(event.getProcessorFilter());
         }));
     }
 

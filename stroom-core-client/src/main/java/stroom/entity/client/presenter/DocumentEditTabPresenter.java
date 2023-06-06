@@ -33,6 +33,7 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.Scheduler;
@@ -48,18 +49,21 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     private final ButtonView saveAsButton;
     private TabData selectedTab;
     private String lastLabel;
-    private ButtonPanel leftButtons;
+    protected final ButtonPanel toolbar;
     private PresenterWidget<?> currentContent;
     private DocRef docRef;
 
     public DocumentEditTabPresenter(final EventBus eventBus,
                                     final V view) {
         super(eventBus, view);
-
-        saveButton = addButtonLeft(SvgPresets.SAVE);
-        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
+        saveButton = SvgButton.create(SvgPresets.SAVE);
+        saveAsButton = SvgButton.create(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
+
+        toolbar = new ButtonPanel();
+        toolbar.addButton(saveButton);
+        toolbar.addButton(saveAsButton);
 
         registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(saveAsButton.addClickHandler(event -> saveAs()));
@@ -79,24 +83,11 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         }
     }
 
-    public ButtonView addButtonLeft(final Preset preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            addWidgetLeft(leftButtons);
-        }
-
-        return leftButtons.addButton(preset);
-    }
-
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);
     }
 
     protected abstract void getContent(TabData tab, ContentCallback callback);
-
-    public void addWidgetLeft(final Widget widget) {
-        getView().addWidgetLeft(widget);
-    }
 
     public void selectTab(final TabData tab) {
         TaskStartEvent.fire(DocumentEditTabPresenter.this);
@@ -108,6 +99,20 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
 
                         // Set the content.
                         getView().getLayerContainer().show((Layer) currentContent);
+
+                        // Update the buttons.
+                        if (currentContent instanceof HasToolbar) {
+                            getView().clearToolbar();
+                            getView().addToolbar(toolbar);
+
+                            final HasToolbar hasToolbar = (HasToolbar) currentContent;
+                            for (final Widget widget : hasToolbar.getToolbars()) {
+                                getView().addToolbar(widget);
+                            }
+                        } else {
+                            getView().clearToolbar();
+                            getView().addToolbar(toolbar);
+                        }
 
                         // Update the selected tab.
                         getView().getTabBar().selectTab(tab);

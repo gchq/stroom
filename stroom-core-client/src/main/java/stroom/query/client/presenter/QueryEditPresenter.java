@@ -17,7 +17,6 @@
 
 package stroom.query.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -25,43 +24,42 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.query.client.view.QueryButtons;
-import stroom.query.client.view.TimeRanges;
 import stroom.view.client.presenter.IndexLoader;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
-        implements QueryEditUiHandlers, QueryUiHandlers, HasDirtyHandlers {
+        implements HasDirtyHandlers, HasToolbar {
 
-    private List<String> currentWarnings;
+    private final QueryToolbarPresenter queryToolbarPresenter;
     EditorPresenter codePresenter;
     private final QueryResultTablePresenter tablePresenter;
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
     private final QueryModel queryModel;
-    private TimeRange currentTimeRange = TimeRanges.ALL_TIME;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
                               final QueryEditView view,
+                              final QueryToolbarPresenter queryToolbarPresenter,
                               final Provider<EditorPresenter> editorPresenterProvider,
                               final QueryResultTablePresenter tablePresenter,
                               final RestFactory restFactory,
@@ -69,6 +67,7 @@ public class QueryEditPresenter
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
                               final ResultStoreModel resultStoreModel) {
         super(eventBus, view);
+        this.queryToolbarPresenter = queryToolbarPresenter;
         this.tablePresenter = tablePresenter;
 
         queryModel = new QueryModel(
@@ -78,7 +77,6 @@ public class QueryEditPresenter
                 resultStoreModel,
                 tablePresenter);
         queryModel.addErrorListener(this::setErrors);
-        getView().setWarningsVisible(false);
         //        queryModel.addComponent("table", tablePresenter);
 
         codePresenter = editorPresenterProvider.get();
@@ -86,8 +84,11 @@ public class QueryEditPresenter
 
         view.setQueryEditor(codePresenter.getView());
         view.setTable(tablePresenter.getView());
-        view.getQueryButtons().setUiHandlers(this);
-        view.setUiHandlers(this);
+    }
+
+    @Override
+    public List<Widget> getToolbars() {
+        return Collections.singletonList(queryToolbarPresenter.getWidget());
     }
 
     @Override
@@ -97,6 +98,8 @@ public class QueryEditPresenter
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
         registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
+        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
@@ -120,45 +123,8 @@ public class QueryEditPresenter
     }
 
     public void setErrors(final List<String> errors) {
-        currentWarnings = errors;
-        getView().setWarningsVisible(currentWarnings != null && !currentWarnings.isEmpty());
+        queryToolbarPresenter.setErrors(errors);
     }
-
-    @Override
-    public void showWarnings() {
-        if (currentWarnings != null && !currentWarnings.isEmpty()) {
-            final String msg = currentWarnings.size() == 1
-                    ? ("The following warning was created while running this search:")
-                    : ("The following " + currentWarnings.size()
-                            + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentWarnings);
-            AlertEvent.fireWarn(this, msg, errors, null);
-        }
-    }
-
-    @Override
-    public void onTimeRange(final TimeRange timeRange) {
-        if (!currentTimeRange.equals(timeRange)) {
-            currentTimeRange = timeRange;
-//        setTimeRange(timeRange);
-            start();
-        }
-    }
-
-//    private void setTimeRange(final TimeRange timeRange) {
-////        getEntity().dashboardContext.setTimeRange(timeRange);
-//        getView().setTimeRange(timeRange);
-//    }
-
-    @Override
-    public void start() {
-        run(true, true);
-    }
-
-//    @Override
-//    public void stop() {
-//        searchModel.stop();
-//    }
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
@@ -187,7 +153,7 @@ public class QueryEditPresenter
         queryModel.startNewSearch(
                 codePresenter.getText(),
                 null, //getDashboardContext().getCombinedParams(),
-                currentTimeRange,
+                queryToolbarPresenter.getTimeRange(),
                 incremental,
                 storeHistory,
                 null);
@@ -203,9 +169,8 @@ public class QueryEditPresenter
             codePresenter.setText(query);
             reading = false;
         }
-        getView().getQueryButtons().setEnabled(true);
-        getView().getQueryButtons().setMode(false);
-        getView().setTimeRange(currentTimeRange);
+        queryToolbarPresenter.setEnabled(true);
+        queryToolbarPresenter.setSearching(false);
 
         codePresenter.setReadOnly(readOnly);
         codePresenter.getFormatAction().setAvailable(!readOnly);
@@ -226,15 +191,7 @@ public class QueryEditPresenter
         this.queryModel.setSourceType(sourceType);
     }
 
-    public interface QueryEditView extends View, HasUiHandlers<QueryEditUiHandlers> {
-
-        void setWarningsVisible(boolean show);
-
-        QueryButtons getQueryButtons();
-
-        TimeRange getTimeRange();
-
-        void setTimeRange(TimeRange timeRange);
+    public interface QueryEditView extends View {
 
         void setQueryEditor(View view);
 

@@ -24,12 +24,24 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.stream.StreamSupport;
 
+import java.util.List;
+
 public class ButtonPanel extends FlowPanel {
 
     private boolean vertical;
 
     public ButtonPanel() {
         setStyleName("button-container");
+    }
+
+    public void addButton(final ButtonView view) {
+        add(view.asWidget());
+    }
+
+    public void addButtons(final List<ButtonView> buttons) {
+        for (final ButtonView buttonView : buttons) {
+            addButton(buttonView);
+        }
     }
 
     public ButtonView addButton(final Preset preset) {

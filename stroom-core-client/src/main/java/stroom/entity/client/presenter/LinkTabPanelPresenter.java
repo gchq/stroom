@@ -22,18 +22,13 @@ import stroom.task.client.TaskStartEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPanelView> implements Refreshable {
 
-    private final List<TabData> tabs = new ArrayList<>();
     private TabData selectedTab;
     private PresenterWidget<?> currentContent;
 
@@ -45,7 +40,6 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
 
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);
-        tabs.add(tab);
     }
 
     protected abstract void getContent(TabData tab, ContentCallback callback);

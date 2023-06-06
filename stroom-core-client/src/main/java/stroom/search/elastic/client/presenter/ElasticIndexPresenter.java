@@ -21,57 +21,84 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticIndexDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final TabContentProvider<ElasticIndexDoc> tabContentProvider = new TabContentProvider<>();
+    private final ElasticIndexSettingsPresenter indexSettingsPresenter;
+    private final ElasticIndexFieldListPresenter indexFieldListPresenter;
+    private final MarkdownEditPresenter markdownEditPresenter;
 
     @Inject
     public ElasticIndexPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<ElasticIndexSettingsPresenter> indexSettingsPresenter,
-            final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenter) {
+            final ElasticIndexSettingsPresenter indexSettingsPresenter,
+            final ElasticIndexFieldListPresenter indexFieldListPresenter,
+            final MarkdownEditPresenter markdownEditPresenter) {
         super(eventBus, view);
+        this.indexSettingsPresenter = indexSettingsPresenter;
+        this.indexFieldListPresenter = indexFieldListPresenter;
+        this.markdownEditPresenter = markdownEditPresenter;
 
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        });
-
-        tabContentProvider.add(SETTINGS, indexSettingsPresenter);
-        tabContentProvider.add(FIELDS, indexFieldListPresenter);
         addTab(SETTINGS);
         addTab(FIELDS);
+        addTab(DOCUMENTATION);
         selectTab(SETTINGS);
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(indexSettingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+    }
+
+    @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
+        if (SETTINGS.equals(tab)) {
+            callback.onReady(indexSettingsPresenter);
+        } else if (FIELDS.equals(tab)) {
+            callback.onReady(indexFieldListPresenter);
+        } else if (DOCUMENTATION.equals(tab)) {
+            callback.onReady(markdownEditPresenter);
+        } else {
+            callback.onReady(null);
+        }
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
-        super.onRead(docRef, index, readOnly);
-        tabContentProvider.read(docRef, index, readOnly);
+    public void onRead(final DocRef docRef, final ElasticIndexDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
+        indexSettingsPresenter.read(docRef, doc, readOnly);
+        indexFieldListPresenter.read(docRef, doc, readOnly);
+        markdownEditPresenter.setText(doc.getDescription());
+        markdownEditPresenter.setReadOnly(readOnly);
     }
 
     @Override
-    protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
-        return tabContentProvider.write(index);
+    protected ElasticIndexDoc onWrite(ElasticIndexDoc doc) {
+        doc = indexSettingsPresenter.write(doc);
+        doc.setDescription(markdownEditPresenter.getText());
+        return doc;
     }
 
     @Override

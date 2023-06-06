@@ -267,22 +267,15 @@ public class DataRetentionImpactPresenter
         registerHandler(filterButton.addClickHandler(event ->
                 openFilterPresenter()));
 
-        registerHandler(flatNestedToggleButton.addClickHandler(
-                onClickedEvent -> {
-                    // Get the user's rules without our default one
-                    isTableNested = false;
-                    refreshVisibleData();
-                },
-                offClickedEvent -> {
-                    isTableNested = true;
-                    refreshVisibleData();
-                }));
-
+        registerHandler(flatNestedToggleButton.addClickHandler(e -> {
+            // Get the user's rules without our default one
+            isTableNested = flatNestedToggleButton.getState();
+            refreshVisibleData();
+        }));
         registerHandler(expandAllButton.addClickHandler(event -> {
             treeAction.expandAll();
             refreshVisibleData();
         }));
-
         registerHandler(collapseAllButton.addClickHandler(event -> {
             treeAction.collapseAll();
             refreshVisibleData();

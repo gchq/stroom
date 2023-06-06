@@ -21,7 +21,7 @@
     --text-color--disabled: #666;
     --border-color: #14161b;
 
-    --header__border-color: transparent;//#35373b;
+    --header__border-color: transparent;
     --row__background-color--even: #15161b;
     --row__background-color--odd: #22252c;
     --row__background-color--hovered: rgb(45, 47, 53);
@@ -49,8 +49,8 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
 
-    --icon-button__background-color--on: #262a32;
-    --icon-button__border-color--on: #444;
+    --icon-button__background-color--on: #632676;
+    --icon-button__border-color--on: var(--purple-a400);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
     --navigation-icon-button__background-color--on: #262a32;

@@ -1,27 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:q="urn:import:stroom.query.client.view"
-             xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="DashboardViewImpl max dock-container-vertical">
-        <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
-            <g:FlowPanel styleName="dock-max">
-<!--                <q:NavButtons ui:field="navButtons" addStyleNames="dock-min"/>-->
-            </g:FlowPanel>
-            <g:FlowPanel styleName="DashboardViewImpl-top-buttons dock-min dock-container-horizontal">
-                <q:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
-                <b:InlineSvgButton ui:field="warnings" title="Show Warnings" />
-                <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
-            </g:FlowPanel>
-        </g:FlowPanel>
-        <g:MySplitLayoutPanel styleName="max">
-            <g:north size="400">
-                <g:SimplePanel ui:field="queryEditorContainer" styleName="max control__padding-right"/>
-            </g:north>
-            <g:center>
-                <g:SimplePanel ui:field="tableContainer"
-                               styleName="max control__padding-right control__padding-bottom"/>
-            </g:center>
-        </g:MySplitLayoutPanel>
-    </g:FlowPanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:MySplitLayoutPanel styleName="DashboardViewImpl max">
+        <g:north size="400">
+            <g:SimplePanel ui:field="queryEditorContainer" styleName="max control__padding-right"/>
+        </g:north>
+        <g:center>
+            <g:SimplePanel ui:field="tableContainer"
+                           styleName="max control__padding-right control__padding-bottom"/>
+        </g:center>
+    </g:MySplitLayoutPanel>
 </ui:UiBinder>

@@ -95,6 +95,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -709,7 +710,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             @Override
             public SafeHtml getValue(final TableRow row) {
                 if (row == null) {
-                    return null;
+                    return SafeHtmlUtil.NBSP;
                 }
 
                 return row.getValue(field.getId());

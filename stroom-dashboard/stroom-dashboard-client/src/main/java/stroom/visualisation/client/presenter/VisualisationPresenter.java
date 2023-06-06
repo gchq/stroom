@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -31,43 +32,61 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, VisualisationDoc> {
 
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     private final VisualisationSettingsPresenter settingsPresenter;
+    private final MarkdownEditPresenter markdownEditPresenter;
 
     private int loadCount;
 
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
-                                  final VisualisationSettingsPresenter settingsPresenter) {
+                                  final VisualisationSettingsPresenter settingsPresenter,
+                                  final MarkdownEditPresenter markdownEditPresenter) {
         super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
+        this.markdownEditPresenter = markdownEditPresenter;
 
-        settingsPresenter.addDirtyHandler(event -> {
+        addTab(SETTINGS);
+        addTab(DOCUMENTATION);
+        selectTab(SETTINGS);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(settingsPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
                 setDirty(true);
             }
-        });
-
-        addTab(SETTINGS_TAB);
-        selectTab(SETTINGS_TAB);
+        }));
+        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
     }
 
     @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS_TAB.equals(tab)) {
+        if (SETTINGS.equals(tab)) {
             callback.onReady(settingsPresenter);
+        } else if (DOCUMENTATION.equals(tab)) {
+            callback.onReady(markdownEditPresenter);
         } else {
             callback.onReady(null);
         }
     }
 
     @Override
-    public void onRead(final DocRef docRef, final VisualisationDoc visualisation, final boolean readOnly) {
-        super.onRead(docRef, visualisation, readOnly);
+    public void onRead(final DocRef docRef, final VisualisationDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
         loadCount++;
-        settingsPresenter.read(docRef, visualisation, readOnly);
+        settingsPresenter.read(docRef, doc, readOnly);
+        markdownEditPresenter.setText(doc.getDescription());
+        markdownEditPresenter.setReadOnly(readOnly);
 
         if (loadCount > 1) {
             // Remove the visualisation function from the cache so dashboards
@@ -77,8 +96,10 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    protected VisualisationDoc onWrite(final VisualisationDoc visualisation) {
-        return settingsPresenter.write(visualisation);
+    protected VisualisationDoc onWrite(VisualisationDoc doc) {
+        doc = settingsPresenter.write(doc);
+        doc.setDescription(markdownEditPresenter.getText());
+        return doc;
     }
 
     @Override

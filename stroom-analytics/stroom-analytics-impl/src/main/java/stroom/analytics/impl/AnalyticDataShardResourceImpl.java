@@ -124,49 +124,4 @@ class AnalyticDataShardResourceImpl implements AnalyticDataShardResource {
             }
         }
     }
-
-    //    private final Provider<AnalyticNotificationDao> analyticNotificationDaoProvider;
-//    private final Provider<AnalyticNotificationStateDao> analyticNotificationStateDaoProvider;
-//
-//    @Inject
-//    AnalyticDataShardResourceImpl(final Provider<AnalyticNotificationDao> analyticNotificationDaoProvider,
-//                                  final Provider<AnalyticNotificationStateDao>
-//                                             analyticNotificationStateDaoProvider) {
-//        this.analyticNotificationDaoProvider = analyticNotificationDaoProvider;
-//        this.analyticNotificationStateDaoProvider = analyticNotificationStateDaoProvider;
-//    }
-//
-//    @Override
-//    public ResultPage<AnalyticNotificationRow> find(final FindAnalyticNotificationCriteria criteria) {
-//        final AnalyticNotificationDao analyticNotificationDao = analyticNotificationDaoProvider.get();
-//        final AnalyticNotificationStateDao analyticNotificationStateDao = analyticNotificationStateDaoProvider.get();
-//        final List<AnalyticNotification> notifications =
-//                analyticNotificationDao.getByAnalyticUuid(criteria.getAnalyticDocUuid());
-//        final List<AnalyticNotificationRow> list = new ArrayList<>();
-//        for (final AnalyticNotification notification : notifications) {
-//            final Optional<AnalyticNotificationState> state =
-//            analyticNotificationStateDao.get(notification.getUuid());
-//            final AnalyticNotificationRow row = new AnalyticNotificationRow(notification, state.orElse(null));
-//            list.add(row);
-//        }
-//        return ResultPage.createCriterialBasedList(list, criteria);
-//    }
-//
-//    @Override
-//    public AnalyticNotification create(final AnalyticNotification notification) {
-//        final AnalyticNotificationDao analyticNotificationDao = analyticNotificationDaoProvider.get();
-//        return analyticNotificationDao.create(notification);
-//    }
-//
-//    @Override
-//    public AnalyticNotification update(final String uuid, final AnalyticNotification notification) {
-//        final AnalyticNotificationDao analyticNotificationDao = analyticNotificationDaoProvider.get();
-//        return analyticNotificationDao.update(notification);
-//    }
-//
-//    @Override
-//    public Boolean delete(final String uuid, final AnalyticNotification notification) {
-//        final AnalyticNotificationDao analyticNotificationDao = analyticNotificationDaoProvider.get();
-//        return analyticNotificationDao.delete(notification);
-//    }
 }

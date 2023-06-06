@@ -44,7 +44,6 @@ public class AnalyticRuleSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc alertRule, final boolean readOnly) {
-        getView().setDescription(alertRule.getDescription());
         getView().setLanguageVersion(alertRule.getLanguageVersion());
         getView().setAnalyticRuleType(alertRule.getAnalyticRuleType());
         getView().setDataRetention(alertRule.getDataRetention());
@@ -53,7 +52,6 @@ public class AnalyticRuleSettingsPresenter
     @Override
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc alertRule) {
         return alertRule.copy()
-                .description(getView().getDescription())
                 .languageVersion(getView().getLanguageVersion())
                 .analyticRuleType(getView().getAnalyticRuleType())
                 .dataRetention(getView().getDataRetention())
@@ -71,10 +69,6 @@ public class AnalyticRuleSettingsPresenter
     }
 
     public interface AnalyticRuleSettingsView extends View, HasUiHandlers<DirtyUiHandlers> {
-
-        String getDescription();
-
-        void setDescription(final String description);
 
         QueryLanguageVersion getLanguageVersion();
 

@@ -25,7 +25,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -56,8 +55,8 @@ public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHand
         }
     }
 
-    public void setMode(final boolean mode) {
-        if (mode) {
+    public void setSearching(final boolean searching) {
+        if (searching) {
             start.addStyleName("QueryButtons-button stop");
             start.removeStyleName("QueryButtons-button play");
             start.setSvg(SvgImages.MONO_STOP);

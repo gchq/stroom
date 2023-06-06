@@ -223,7 +223,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                         final int colNo = resizeHandle.getColNo();
 
                         final Element tempDiv = DOM.createDiv();
-                        tempDiv.setClassName("stroom-dashboard-text-measurement");
+                        tempDiv.setClassName("dataGridCell-text-measurement");
 
                         RootPanel.get().getElement().appendChild(tempDiv);
 

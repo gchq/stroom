@@ -2717,6 +2717,7 @@ export interface ReceiveDataRules {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  description?: string;
   fields?: AbstractField[];
   name?: string;
   rules?: ReceiveDataRule[];

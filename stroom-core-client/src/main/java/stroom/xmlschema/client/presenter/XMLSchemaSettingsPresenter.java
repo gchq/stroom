@@ -26,7 +26,6 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,8 +44,6 @@ public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaS
                 setDirty(true);
             }
         };
-
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(view.getNamespaceURI().addKeyDownHandler(keyDownHander));
         registerHandler(view.getSystemId().addKeyDownHandler(keyDownHander));
         registerHandler(view.getSchemaGroup().addKeyDownHandler(keyDownHander));
@@ -60,7 +57,6 @@ public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaS
 
     @Override
     public void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema, final boolean readOnly) {
-        getView().getDescription().setText(xmlSchema.getDescription());
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
         getView().getSystemId().setText(xmlSchema.getSystemId());
         getView().getSchemaGroup().setText(xmlSchema.getSchemaGroup());
@@ -69,7 +65,6 @@ public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaS
 
     @Override
     public XmlSchemaDoc onWrite(final XmlSchemaDoc xmlSchema) {
-        xmlSchema.setDescription(getView().getDescription().getText().trim());
         xmlSchema.setNamespaceURI(getView().getNamespaceURI().getText().trim());
         xmlSchema.setSystemId(getView().getSystemId().getText());
         xmlSchema.setSchemaGroup(getView().getSchemaGroup().getText());
@@ -78,8 +73,6 @@ public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaS
     }
 
     public interface XMLSchemaSettingsView extends View {
-
-        TextArea getDescription();
 
         TextBox getNamespaceURI();
 

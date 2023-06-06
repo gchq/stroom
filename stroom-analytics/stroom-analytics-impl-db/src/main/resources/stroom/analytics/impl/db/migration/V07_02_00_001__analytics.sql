@@ -17,10 +17,12 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
+-- --------------------------------------------------
+
 --
 -- Create the table
 --
-CREATE TABLE `analytic_processor_filter` (
+CREATE TABLE IF NOT EXISTS `analytic_processor_filter` (
   `uuid` varchar(255) NOT NULL,
   `version` int NOT NULL,
   `create_time_ms` bigint NOT NULL,
@@ -33,10 +35,9 @@ CREATE TABLE `analytic_processor_filter` (
   `max_meta_create_time_ms` bigint DEFAULT NULL,
   `node` varchar(255) NOT NULL,
   `enabled` tinyint NOT NULL DEFAULT '0',
-  PRIMARY KEY (`uuid`)
+  PRIMARY KEY (`uuid`),
+  KEY `analytic_processor_filter_analytic_uuid_idx` (`analytic_uuid`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-
-CREATE INDEX analytic_processor_filter_analytic_uuid_idx ON analytic_processor_filter (analytic_uuid);
 
 CREATE TABLE IF NOT EXISTS `analytic_processor_filter_tracker` (
   `fk_analytic_processor_filter_uuid` varchar(255) NOT NULL,
@@ -49,11 +50,12 @@ CREATE TABLE IF NOT EXISTS `analytic_processor_filter_tracker` (
   `event_count` bigint DEFAULT NULL,
   `message` longtext DEFAULT NULL,
   PRIMARY KEY (`fk_analytic_processor_filter_uuid`),
-  CONSTRAINT `fk_analytic_processor_filter_uuid` FOREIGN KEY (`fk_analytic_processor_filter_uuid`) REFERENCES `analytic_processor_filter` (`uuid`)
+  CONSTRAINT `fk_analytic_processor_filter_uuid`
+    FOREIGN KEY (`fk_analytic_processor_filter_uuid`)
+    REFERENCES `analytic_processor_filter` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
-
-CREATE TABLE `analytic_notification` (
+CREATE TABLE IF NOT EXISTS `analytic_notification` (
   `uuid` varchar(255) NOT NULL,
   `version` int NOT NULL,
   `create_time_ms` bigint NOT NULL,
@@ -63,19 +65,22 @@ CREATE TABLE `analytic_notification` (
   `analytic_uuid` varchar(255) NOT NULL,
   `config` longtext DEFAULT NULL,
   `enabled` tinyint NOT NULL DEFAULT '0',
-  PRIMARY KEY (`uuid`)
+  PRIMARY KEY (`uuid`),
+  KEY `analytic_notification_analytic_uuid_idx` (`analytic_uuid`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
-CREATE INDEX analytic_notification_analytic_uuid_idx ON analytic_notification (analytic_uuid);
-
-CREATE TABLE `analytic_notification_state` (
+CREATE TABLE IF NOT EXISTS `analytic_notification_state` (
   `fk_analytic_notification_uuid` varchar(255) NOT NULL,
   `last_execution_time` bigint DEFAULT NULL,
   `message` longtext DEFAULT NULL,
   PRIMARY KEY (`fk_analytic_notification_uuid`),
-  CONSTRAINT `fk_analytic_notification_uuid` FOREIGN KEY (`fk_analytic_notification_uuid`) REFERENCES `analytic_notification` (`uuid`)
+  CONSTRAINT `fk_analytic_notification_uuid`
+    FOREIGN KEY (`fk_analytic_notification_uuid`)
+    REFERENCES `analytic_notification` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
--- vim: set shiftwidth=4 tabstop=4 expandtab:
+-- vim: set shiftwidth=2 tabstop=2 expandtab:

@@ -27,6 +27,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.entity.client.presenter.HasToolbar;
 import stroom.main.client.event.UrlQueryParameterChangeEvent;
 import stroom.main.client.event.UrlQueryParameterChangeEvent.UrlQueryParameterChangeHandler;
 
@@ -34,6 +35,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
@@ -44,12 +46,13 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
 public class DashboardMainPresenter
         extends MyPresenter<DashboardMainView, DashboardMainProxy>
-        implements UrlQueryParameterChangeHandler {
+        implements UrlQueryParameterChangeHandler, HasToolbar {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final String SHOW_DASHBOARD_ACTION = "open-dashboard";
@@ -77,6 +80,11 @@ public class DashboardMainPresenter
                         "has unsaved changes. Are you sure you want to close it?");
             }
         });
+    }
+
+    @Override
+    public List<Widget> getToolbars() {
+        return dashboardPresenter.getToolbars();
     }
 
     private void onLoadSuccess(final DashboardDoc dashboard, final boolean readOnly) {

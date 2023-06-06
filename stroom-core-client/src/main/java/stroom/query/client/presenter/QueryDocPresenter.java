@@ -21,59 +21,77 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.query.shared.QueryDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class QueryDocPresenter
         extends DocumentEditTabPresenter<LinkTabPanelView, QueryDoc> {
 
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData QUERY_TAB = new TabDataImpl("Query");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final TabContentProvider<QueryDoc> tabContentProvider = new TabContentProvider<>();
     private final QueryDocEditPresenter queryEditPresenter;
+    private final MarkdownEditPresenter markdownEditPresenter;
 
     @Inject
     public QueryDocPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final Provider<QuerySettingsPresenter> settingsPresenterProvider,
-                             final Provider<QueryDocEditPresenter> queryDocPresenterProvider) {
+                             final QueryDocEditPresenter queryDocPresenter,
+                             final MarkdownEditPresenter markdownEditPresenter) {
         super(eventBus, view);
-        queryEditPresenter = queryDocPresenterProvider.get();
-
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        });
+        this.queryEditPresenter = queryDocPresenter;
+        this.markdownEditPresenter = markdownEditPresenter;
 
         addTab(QUERY_TAB);
-        tabContentProvider.add(QUERY_TAB, () -> queryEditPresenter);
-        addTab(SETTINGS_TAB);
-        tabContentProvider.add(SETTINGS_TAB, settingsPresenterProvider);
+        addTab(DOCUMENTATION);
         selectTab(QUERY_TAB);
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+    }
+
+    @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
+        if (QUERY_TAB.equals(tab)) {
+            callback.onReady(queryEditPresenter);
+        } else if (DOCUMENTATION.equals(tab)) {
+            callback.onReady(markdownEditPresenter);
+        } else {
+            callback.onReady(null);
+        }
     }
 
     @Override
-    public void onRead(final DocRef docRef, final QueryDoc queryDoc, final boolean readOnly) {
-        super.onRead(docRef, queryDoc, readOnly);
-        tabContentProvider.read(docRef, queryDoc, readOnly);
+    public void onRead(final DocRef docRef, final QueryDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
+        queryEditPresenter.read(docRef, doc, readOnly);
+        markdownEditPresenter.setText(doc.getDescription());
+        markdownEditPresenter.setReadOnly(readOnly);
     }
 
     @Override
-    protected QueryDoc onWrite(final QueryDoc queryDoc) {
-        return tabContentProvider.write(queryDoc);
+    protected QueryDoc onWrite(final QueryDoc doc) {
+        QueryDoc modified = doc;
+        modified = queryEditPresenter.write(modified);
+        modified.setDescription(markdownEditPresenter.getText());
+        return modified;
     }
 
     @Override
