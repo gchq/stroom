@@ -19,6 +19,7 @@ package stroom.search.impl;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.task.shared.TaskId;
 
@@ -38,6 +39,8 @@ public class ClusterSearchTask implements Serializable {
     @JsonProperty
     private final String taskName;
     @JsonProperty
+    private final SearchRequestSource searchRequestSource;
+    @JsonProperty
     private final QueryKey key;
     @JsonProperty
     private final Query query;
@@ -53,6 +56,7 @@ public class ClusterSearchTask implements Serializable {
     @JsonCreator
     public ClusterSearchTask(@JsonProperty("sourceTaskId") final TaskId sourceTaskId,
                              @JsonProperty("taskName") final String taskName,
+                             @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
                              @JsonProperty("key") final QueryKey key,
                              @JsonProperty("query") final Query query,
                              @JsonProperty("shards") final List<Long> shards,
@@ -61,6 +65,7 @@ public class ClusterSearchTask implements Serializable {
                              @JsonProperty("now") final long now) {
         this.sourceTaskId = sourceTaskId;
         this.taskName = taskName;
+        this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.query = query;
         this.shards = shards;
@@ -75,6 +80,10 @@ public class ClusterSearchTask implements Serializable {
 
     public String getTaskName() {
         return taskName;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public QueryKey getKey() {

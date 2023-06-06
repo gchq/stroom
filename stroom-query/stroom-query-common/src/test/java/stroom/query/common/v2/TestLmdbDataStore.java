@@ -29,6 +29,7 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -88,6 +89,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
+                SearchRequestSource.createBasic(),
                 serialisers,
                 lmdbEnvBuilder,
                 resultStoreConfig,

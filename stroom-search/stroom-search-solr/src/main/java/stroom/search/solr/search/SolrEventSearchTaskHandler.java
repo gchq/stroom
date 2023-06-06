@@ -18,7 +18,6 @@ package stroom.search.solr.search;
 
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStoreSettings;
@@ -100,10 +99,11 @@ public class SolrEventSearchTaskHandler {
                     nowEpochMilli);
 
             final Coprocessors coprocessors = coprocessorsFactory.create(
+                    task.getSearchRequestSource(),
                     task.getKey(),
                     Collections.singletonList(settings),
                     modifiedQuery.getParams(),
-                    DataStoreSettings.createBasicSearchResultStoreSettings(SourceType.BATCH_SEARCH));
+                    DataStoreSettings.createBasicSearchResultStoreSettings());
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create the search result store.

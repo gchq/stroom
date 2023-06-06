@@ -152,8 +152,9 @@ public class LuceneSearchProvider implements SearchProvider {
 
         // Create a handler for search results.
         final DataStoreSettings dataStoreSettings = DataStoreSettings
-                .createBasicSearchResultStoreSettings(searchRequest);
+                .createBasicSearchResultStoreSettings();
         final Coprocessors coprocessors = coprocessorsFactory.create(
+                modifiedSearchRequest.getSearchRequestSource(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
@@ -162,6 +163,7 @@ public class LuceneSearchProvider implements SearchProvider {
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                modifiedSearchRequest.getSearchRequestSource(),
                 modifiedSearchRequest.getKey(),
                 searchName,
                 query,

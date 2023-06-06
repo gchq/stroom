@@ -56,6 +56,7 @@ public class RemoteNodeSearch implements NodeSearch {
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
                 taskContext.getTaskId(),
                 "Cluster Search",
+                task.getSearchRequestSource(),
                 task.getKey(),
                 query,
                 shards,

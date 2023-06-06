@@ -249,8 +249,14 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory
                 .builder(storeConfig.getLmdbConfig())
                 .withSubDirectory(subDirectory);
+        final SearchRequestSource searchRequestSource = SearchRequestSource
+                .builder()
+                .sourceType(SourceType.ANALYTIC_RULE)
+                .componentId(componentId)
+                .build();
 
         return new LmdbDataStore(
+                searchRequestSource,
                 new Serialisers(storeConfig),
                 lmdbEnvBuilder,
                 storeConfig,

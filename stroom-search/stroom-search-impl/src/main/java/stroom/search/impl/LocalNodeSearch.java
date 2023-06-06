@@ -45,6 +45,7 @@ public class LocalNodeSearch implements NodeSearch {
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
                 parentContext.getTaskId(),
                 "Cluster Search",
+                task.getSearchRequestSource(),
                 task.getKey(),
                 query,
                 shards,
@@ -72,9 +73,9 @@ public class LocalNodeSearch implements NodeSearch {
                             clusterSearchTask.getTaskName(),
                             TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext ->
-                            clusterSearchTaskHandler.search(taskContext,
-                                    clusterSearchTask,
-                                    coprocessors)).run();
+                                    clusterSearchTaskHandler.search(taskContext,
+                                            clusterSearchTask,
+                                            coprocessors)).run();
 
                 } else {
                     throw new SearchException("No coprocessors were created");

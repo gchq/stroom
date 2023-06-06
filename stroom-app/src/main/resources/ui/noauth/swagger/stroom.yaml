@@ -7311,6 +7311,8 @@ components:
           format: int64
         query:
           $ref: '#/components/schemas/Query'
+        searchRequestSource:
+          $ref: '#/components/schemas/SearchRequestSource'
         settings:
           type: array
           items:

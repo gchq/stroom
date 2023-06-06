@@ -7,6 +7,7 @@ import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ public class TestValueSerialisation {
         final ValueReferenceIndex valueReferenceIndex = compiledFields.getValueReferenceIndex();
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFieldArray, false);
         KeyFactoryConfigImpl keyFactoryConfig =
-                new KeyFactoryConfigImpl(compiledFieldArray, compiledDepths, DataStoreSettings.builder().build());
+                new KeyFactoryConfigImpl(SourceType.ANALYTIC_RULE, compiledFieldArray, compiledDepths);
         final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         final KeyFactory keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final LmdbRowValueFactory lmdbRowValueFactory =

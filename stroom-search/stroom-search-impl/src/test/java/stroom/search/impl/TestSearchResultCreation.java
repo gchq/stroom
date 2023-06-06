@@ -19,6 +19,7 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
@@ -121,10 +122,11 @@ class TestSearchResultCreation {
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
+                DataStoreSettings.createBasicSearchResultStoreSettings());
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -228,6 +230,7 @@ class TestSearchResultCreation {
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -240,10 +243,11 @@ class TestSearchResultCreation {
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -301,6 +305,7 @@ class TestSearchResultCreation {
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -313,10 +318,11 @@ class TestSearchResultCreation {
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -388,10 +394,11 @@ class TestSearchResultCreation {
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -400,10 +407,11 @@ class TestSearchResultCreation {
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);

@@ -125,10 +125,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
         // Create a handler for search results.
         final Coprocessors coprocessors = coprocessorsFactory.create(
+                modifiedSearchRequest.getSearchRequestSource(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings(modifiedSearchRequest));
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
