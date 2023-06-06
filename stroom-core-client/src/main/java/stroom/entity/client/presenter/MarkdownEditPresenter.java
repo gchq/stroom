@@ -58,6 +58,7 @@ public class MarkdownEditPresenter
         super(eventBus, view);
         this.codePresenter = editorPresenter;
         this.htmlPresenter = htmlPresenter;
+        htmlPresenter.getWidget().addStyleName("markdown");
         codePresenter.setMode(AceEditorMode.MARKDOWN);
         view.setView(htmlPresenter.getView());
 
