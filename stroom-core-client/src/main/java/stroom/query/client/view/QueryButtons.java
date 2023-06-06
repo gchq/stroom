@@ -17,6 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.query.client.presenter.QueryUiHandlers;
+import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.client.SvgImages;
 import stroom.widget.button.client.InlineSvgButton;
 
@@ -29,7 +30,9 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
-public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHandlers> {
+public class QueryButtons
+        extends Composite
+        implements HasUiHandlers<QueryUiHandlers>, SearchStateListener {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -55,7 +58,8 @@ public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHand
         }
     }
 
-    public void setSearching(final boolean searching) {
+    @Override
+    public void onSearching(final boolean searching) {
         if (searching) {
             start.addStyleName("QueryButtons-button stop");
             start.removeStyleName("QueryButtons-button play");

@@ -34,7 +34,11 @@ import java.util.List;
 
 public class QueryToolbarPresenter
         extends MyPresenterWidget<QueryToolbarView>
-        implements QueryToolbarUiHandlers, QueryUiHandlers {
+        implements
+        QueryToolbarUiHandlers,
+        QueryUiHandlers,
+        SearchStateListener,
+        SearchErrorListener {
 
     private List<String> currentWarnings;
     private TimeRange currentTimeRange = TimeRanges.ALL_TIME;
@@ -48,7 +52,8 @@ public class QueryToolbarPresenter
         view.getQueryButtons().setUiHandlers(this);
     }
 
-    public void setErrors(final List<String> errors) {
+    @Override
+    public void onError(final List<String> errors) {
         currentWarnings = errors;
         getView().setWarningsVisible(currentWarnings != null && !currentWarnings.isEmpty());
     }
@@ -87,8 +92,9 @@ public class QueryToolbarPresenter
         StartQueryEvent.fire(this);
     }
 
-    public void setSearching(final boolean searching) {
-        getView().getQueryButtons().setSearching(searching);
+    @Override
+    public void onSearching(final boolean searching) {
+        getView().getQueryButtons().onSearching(searching);
     }
 
     public void setEnabled(final boolean enabled) {

@@ -76,8 +76,8 @@ public class QueryEditPresenter
                 dateTimeSettingsFactory,
                 resultStoreModel,
                 tablePresenter);
-        queryModel.addErrorListener(this::setErrors);
-        //        queryModel.addComponent("table", tablePresenter);
+        queryModel.addSearchErrorListener(queryToolbarPresenter);
+        queryModel.addSearchStateListener(queryToolbarPresenter);
 
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
@@ -120,10 +120,6 @@ public class QueryEditPresenter
 
     public void onClose() {
         queryModel.reset(DestroyReason.TAB_CLOSE);
-    }
-
-    public void setErrors(final List<String> errors) {
-        queryToolbarPresenter.setErrors(errors);
     }
 
     private void run(final boolean incremental,
@@ -170,7 +166,7 @@ public class QueryEditPresenter
             reading = false;
         }
         queryToolbarPresenter.setEnabled(true);
-        queryToolbarPresenter.setSearching(false);
+        queryToolbarPresenter.onSearching(false);
 
         codePresenter.setReadOnly(readOnly);
         codePresenter.getFormatAction().setAvailable(!readOnly);

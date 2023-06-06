@@ -31,11 +31,6 @@
 	z-index: 4;
 }
 
-.QueryButtons-button svg {
-	width: 20px;
-	height: 20px;
-}
-
 .DashboardViewImpl-top .QueryButtons-button svg {
 	width: 20px;
 	height: 20px;
