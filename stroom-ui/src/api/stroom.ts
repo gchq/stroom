@@ -524,6 +524,7 @@ export interface ClusterSearchTask {
 
   /** The query terms for the search */
   query?: Query;
+  searchRequestSource?: SearchRequestSource;
   settings?: CoprocessorSettings[];
   shards?: number[];
   sourceTaskId?: TaskId;
