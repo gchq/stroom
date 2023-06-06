@@ -30,6 +30,7 @@ import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -70,7 +71,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Override
-    DataStore create(final QueryKey queryKey,
+    DataStore create(final SearchRequestSource searchRequestSource,
+                     final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
                      final AbstractResultStoreConfig resultStoreConfig,
@@ -89,7 +91,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
-                SearchRequestSource.createBasic(),
+                searchRequestSource,
                 serialisers,
                 lmdbEnvBuilder,
                 resultStoreConfig,
@@ -190,8 +192,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final AbstractResultStoreConfig resultStoreConfig = new AnalyticResultStoreConfig();
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
+        final SearchRequestSource searchRequestSource = SearchRequestSource
+                .builder()
+                .sourceType(SourceType.ANALYTIC_RULE)
+                .build();
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(
+                        searchRequestSource,
                         queryKey,
                         "0",
                         tableSettings,
@@ -234,6 +241,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         // Try and open the datastore again.
         LmdbDataStore dataStore2 = (LmdbDataStore)
                 create(
+                        searchRequestSource,
                         queryKey,
                         "0",
                         tableSettings,

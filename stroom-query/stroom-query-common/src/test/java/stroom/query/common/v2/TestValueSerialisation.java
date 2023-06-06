@@ -29,7 +29,7 @@ public class TestValueSerialisation {
         final ValueReferenceIndex valueReferenceIndex = compiledFields.getValueReferenceIndex();
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFieldArray, false);
         KeyFactoryConfigImpl keyFactoryConfig =
-                new KeyFactoryConfigImpl(SourceType.ANALYTIC_RULE, compiledFieldArray, compiledDepths);
+                new KeyFactoryConfigImpl(SourceType.DASHBOARD_UI, compiledFieldArray, compiledDepths);
         final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         final KeyFactory keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final LmdbRowValueFactory lmdbRowValueFactory =
