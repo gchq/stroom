@@ -143,6 +143,11 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     }
 
     @Override
+    public void onClose() {
+        queryEditPresenter.onClose();
+    }
+
+    @Override
     public String getType() {
         return AnalyticRuleDoc.DOCUMENT_TYPE;
     }
