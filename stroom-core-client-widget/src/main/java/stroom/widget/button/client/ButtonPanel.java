@@ -50,12 +50,8 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    public void addButton(final ButtonView buttonView) {
-        add((Widget) buttonView);
-    }
-
     public void removeButton(final ButtonView buttonView) {
-        remove((Widget) buttonView);
+        remove(buttonView.asWidget());
     }
 
     public ToggleButtonView addToggleButton(final Preset primaryPreset,

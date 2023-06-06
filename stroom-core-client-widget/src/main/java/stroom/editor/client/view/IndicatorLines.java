@@ -4,8 +4,6 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
-import com.google.gwt.core.client.GWT;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,16 +47,16 @@ public class IndicatorLines {
                 if (storedError.getLocation() != null && storedError.getLocation().getLineNo() > 0) {
                     map.computeIfAbsent(storedError.getLocation().getLineNo(), k -> new Indicator())
                             .add(storedError.getSeverity(), storedError);
-                    GWT.log("map(25) after add:\n>> " + map.get(25));
+//                    GWT.log("map(25) after add:\n>> " + map.get(25));
 //                    lineNo = storedError.getLocation().getLineNo();
                 } else {
                     locationAgnosticIndicator.add(storedError.getSeverity(), storedError);
-                    GWT.log("locationAgnosticIndicator after add:\n>> " + locationAgnosticIndicator);
+//                    GWT.log("locationAgnosticIndicator after add:\n>> " + locationAgnosticIndicator);
                 }
             }
         }
-        GWT.log("map(25) at end of ctor2:\n>> " + map.get(25));
-        GWT.log("locationAgnosticIndicator at end of ctor2:\n>> " + locationAgnosticIndicator);
+//        GWT.log("map(25) at end of ctor2:\n>> " + map.get(25));
+//        GWT.log("locationAgnosticIndicator at end of ctor2:\n>> " + locationAgnosticIndicator);
     }
 
     public boolean isEmpty() {

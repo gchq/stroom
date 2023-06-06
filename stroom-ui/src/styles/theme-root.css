@@ -71,9 +71,11 @@
     --pipeline-element-box__text-color: #888;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
+    --pipeline-element-box__border-color--selected: #777;
     --pipeline-element-box__border-color--warn: yellow;
     --pipeline-element-box__border-color--error: orangered;
     --pipeline-element-box__border-color--fatal-error: red;
+    --pipeline-element-box__border-color--fatal-error-dark: #c60000;
 
     --link__text-color: #0000AA;
 
