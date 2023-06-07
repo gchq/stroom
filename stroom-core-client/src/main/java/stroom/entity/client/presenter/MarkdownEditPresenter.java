@@ -173,7 +173,10 @@ public class MarkdownEditPresenter
      */
     public native String convertMarkdownToHtml(final String markdown) /*-{
         var converter = new $wnd.showdown.Converter();
+        converter.setOption('openLinksInNewWindow', true);
+        converter.setOption('strikethrough', true);
         converter.setOption('tables', true);
+        converter.setOption('tasklists', true);
         return converter.makeHtml(markdown);
     }-*/;
 

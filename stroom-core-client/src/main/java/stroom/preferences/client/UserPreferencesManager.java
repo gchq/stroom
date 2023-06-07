@@ -4,9 +4,9 @@ import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentTheme;
+import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
-import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 
 import com.google.gwt.core.client.GWT;

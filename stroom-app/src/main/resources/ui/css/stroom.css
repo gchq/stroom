@@ -135,10 +135,6 @@ td {
 	font-size: 1px;
 }
 
-hr {
-    border-top: 1px solid var(--text-color);
-}
-
 /**
  * Styles for basic Stroom components
  */
