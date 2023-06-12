@@ -31,8 +31,8 @@ public class AnalyticFields {
     public static final DateField TIME_FIELD = new DateField(TIME);
 
     public static final TextField NAME_FIELD = new TextField(NAME);
-    public static final DateField UUID_FIELD = new DateField(UUID);
-    public static final DateField VALUE_FIELD = new DateField(VALUE);
+    public static final TextField UUID_FIELD = new TextField(UUID);
+    public static final TextField VALUE_FIELD = new TextField(VALUE);
 
     static {
         FIELDS.add(TIME_FIELD);

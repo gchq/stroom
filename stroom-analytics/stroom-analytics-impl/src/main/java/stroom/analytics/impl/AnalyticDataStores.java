@@ -146,7 +146,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     }
 
     String getAnalyticStoreDir(final QueryKey queryKey,
-                                       final String componentId) {
+                               final String componentId) {
         final String uuid = queryKey.getUuid() + "_" + componentId;
         // Make safe for the file system.
         return uuid.replaceAll("[^A-Za-z0-9]", "_");
