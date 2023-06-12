@@ -1,5 +1,9 @@
 /* CSS for Showdown/Prism rendered markdown i.e MarkdownEditPresenter */
 
+.markdown-container {
+  overflow-y: scroll;
+}
+
 .markdown {
   --markdown-tbl__border-color: var(--border-color);
   --markdown-heading__color: var(--heading-color);
