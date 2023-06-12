@@ -6840,7 +6840,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ClusterSearchTask"
+                "$ref" : "#/components/schemas/NodeSearchTask"
               }
             }
           }
@@ -10575,46 +10575,6 @@
           }
         }
       },
-      "ClusterSearchTask" : {
-        "type" : "object",
-        "properties" : {
-          "dateTimeSettings" : {
-            "$ref" : "#/components/schemas/DateTimeSettings"
-          },
-          "key" : {
-            "$ref" : "#/components/schemas/QueryKey"
-          },
-          "now" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "query" : {
-            "$ref" : "#/components/schemas/Query"
-          },
-          "searchRequestSource" : {
-            "$ref" : "#/components/schemas/SearchRequestSource"
-          },
-          "settings" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CoprocessorSettings"
-            }
-          },
-          "shards" : {
-            "type" : "array",
-            "items" : {
-              "type" : "integer",
-              "format" : "int64"
-            }
-          },
-          "sourceTaskId" : {
-            "$ref" : "#/components/schemas/TaskId"
-          },
-          "taskName" : {
-            "type" : "string"
-          }
-        }
-      },
       "ComponentConfig" : {
         "type" : "object",
         "properties" : {
@@ -14204,6 +14164,50 @@
           "version" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "NodeSearchTask" : {
+        "type" : "object",
+        "properties" : {
+          "dateTimeSettings" : {
+            "$ref" : "#/components/schemas/DateTimeSettings"
+          },
+          "key" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          },
+          "now" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "query" : {
+            "$ref" : "#/components/schemas/Query"
+          },
+          "searchRequestSource" : {
+            "$ref" : "#/components/schemas/SearchRequestSource"
+          },
+          "settings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CoprocessorSettings"
+            }
+          },
+          "shards" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "sourceTaskId" : {
+            "$ref" : "#/components/schemas/TaskId"
+          },
+          "taskName" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "LUCENE", "ANALYTICS" ]
           }
         }
       },
