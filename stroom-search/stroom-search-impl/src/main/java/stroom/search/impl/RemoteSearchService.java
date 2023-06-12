@@ -1,8 +1,8 @@
 package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -37,7 +37,7 @@ public class RemoteSearchService {
     private final CoprocessorsFactory coprocessorsFactory;
     private final SecurityContext securityContext;
 
-    private Coprocessors coprocessors;
+    private CoprocessorsImpl coprocessors;
 
     @Inject
     public RemoteSearchService(final RemoteSearchResults remoteSearchResults,
@@ -80,7 +80,7 @@ public class RemoteSearchService {
                         DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
                 remoteSearchResultFactory.setCoprocessors(coprocessors);
 
-                if (coprocessors != null && coprocessors.size() > 0) {
+                if (coprocessors != null && coprocessors.isPresent()) {
                     final NodeSearchTaskHandler nodeSearchTaskHandler =
                             nodeSearchTaskHandlers.get(nodeSearchTask.getType());
                     final CountDownLatch countDownLatch = new CountDownLatch(1);

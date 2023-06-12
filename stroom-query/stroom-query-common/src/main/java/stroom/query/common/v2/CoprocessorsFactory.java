@@ -59,8 +59,8 @@ public class CoprocessorsFactory {
         return coprocessorSettings;
     }
 
-    public Coprocessors create(final SearchRequest searchRequest,
-                               final DataStoreSettings dataStoreSettings) {
+    public CoprocessorsImpl create(final SearchRequest searchRequest,
+                                   final DataStoreSettings dataStoreSettings) {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
         return create(
                 searchRequest.getSearchRequestSource(),
@@ -70,11 +70,11 @@ public class CoprocessorsFactory {
                 dataStoreSettings);
     }
 
-    public Coprocessors create(final SearchRequestSource searchRequestSource,
-                               final QueryKey queryKey,
-                               final List<CoprocessorSettings> coprocessorSettingsList,
-                               final List<Param> params,
-                               final DataStoreSettings dataStoreSettings) {
+    public CoprocessorsImpl create(final SearchRequestSource searchRequestSource,
+                                   final QueryKey queryKey,
+                                   final List<CoprocessorSettings> coprocessorSettingsList,
+                                   final List<Param> params,
+                                   final DataStoreSettings dataStoreSettings) {
         // Create a field index map.
         final FieldIndex fieldIndex = new FieldIndex();
 
@@ -128,7 +128,7 @@ public class CoprocessorsFactory {
                     new HashSet<>()).add(coprocessor);
         });
 
-        return new Coprocessors(
+        return new CoprocessorsImpl(
                 Collections.unmodifiableMap(coprocessorMap),
                 Collections.unmodifiableMap(componentIdCoprocessorMap),
                 Collections.unmodifiableMap(extractionPipelineCoprocessorMap),

@@ -44,7 +44,7 @@ public class LocalNodeSearch implements NodeSearch {
         try {
             LOGGER.debug(() -> "startSearch " + nodeSearchTask);
             securityContext.useAsRead(() -> {
-                if (coprocessors != null && coprocessors.size() > 0) {
+                if (coprocessors != null && coprocessors.isPresent()) {
                     final NodeSearchTaskHandler nodeSearchTaskHandler =
                             nodeSearchTaskHandlers.get(nodeSearchTask.getType());
 

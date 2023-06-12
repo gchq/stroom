@@ -25,8 +25,8 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -124,7 +124,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .createSettings(modifiedSearchRequest);
 
         // Create a handler for search results.
-        final Coprocessors coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
