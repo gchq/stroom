@@ -3716,6 +3716,18 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_EDIT = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <path style=\"fill:currentColor\"\n" +
+            "          d=\"M491 1536l91-91-235-235-91 91v107h128v128h107zm523-928q0-22-22-22-1" +
+            "0 0-17 7l-542 542q-7 7-7 17 0 22 22 22 10 0 17-7l542-542q7-7 7-17zm-54-192l416 4" +
+            "16-832 832h-416v-416zm683 96q0 53-37 90l-166 166-416-416 166-165q36-38 90-38 53 " +
+            "0 91 38l235 234q37 39 37 91z\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_ELLIPSES = "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\"" +
