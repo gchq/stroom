@@ -21,20 +21,9 @@ import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.index.impl.IndexShardService;
-import stroom.index.impl.IndexStore;
-import stroom.index.impl.TimePartitionFactory;
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.TimePartition;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.TimeFilter;
-import stroom.query.api.v2.TimeRange;
-import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -46,11 +35,8 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Range;
-import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -60,15 +46,13 @@ import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-class AsyncSearchTaskHandler {
+class FederatedSearchTaskHandler {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FederatedSearchTaskHandler.class);
 
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search");
 
     private final TargetNodeSetFactory targetNodeSetFactory;
-    private final IndexStore indexStore;
-    private final IndexShardService indexShardService;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
     private final SecurityContext securityContext;
@@ -78,23 +62,17 @@ class AsyncSearchTaskHandler {
     private final Provider<LocalNodeSearch> localNodeSearchProvider;
     private final Provider<RemoteNodeSearch> remoteNodeSearchProvider;
 
-    private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
-
     @Inject
-    AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
-                           final IndexStore indexStore,
-                           final IndexShardService indexShardService,
-                           final TaskManager taskManager,
-                           final ClusterTaskTerminator clusterTaskTerminator,
-                           final SecurityContext securityContext,
-                           final ExecutorProvider executorProvider,
-                           final TaskContextFactory taskContextFactory,
-                           final NodeInfo nodeInfo,
-                           final Provider<LocalNodeSearch> localNodeSearchProvider,
-                           final Provider<RemoteNodeSearch> remoteNodeSearchProvider) {
+    FederatedSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
+                               final TaskManager taskManager,
+                               final ClusterTaskTerminator clusterTaskTerminator,
+                               final SecurityContext securityContext,
+                               final ExecutorProvider executorProvider,
+                               final TaskContextFactory taskContextFactory,
+                               final NodeInfo nodeInfo,
+                               final Provider<LocalNodeSearch> localNodeSearchProvider,
+                               final Provider<RemoteNodeSearch> remoteNodeSearchProvider) {
         this.targetNodeSetFactory = targetNodeSetFactory;
-        this.indexStore = indexStore;
-        this.indexShardService = indexShardService;
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
         this.securityContext = securityContext;
@@ -105,13 +83,14 @@ class AsyncSearchTaskHandler {
         this.remoteNodeSearchProvider = remoteNodeSearchProvider;
     }
 
-    public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
+    public void exec(final TaskContext parentContext,
+                     final FederatedSearchTask task,
+                     final NodeTaskCreator nodeTaskCreator) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ResultStore resultCollector = task.getResultStore();
 
             if (!parentContext.isTerminated()) {
                 final String sourceNode = targetNodeSetFactory.getSourceNode();
-                final Map<String, List<Long>> shardMap = new HashMap<>();
 
                 // Create an async call that will terminate the whole task if the coprocessors decide they have enough
                 // data.
@@ -119,45 +98,27 @@ class AsyncSearchTaskHandler {
                         executorProvider.get());
 
                 try {
-                    // Get the nodes that we are going to send the search request
-                    // to.
-                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
                     parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
-                    // Get a list of search index shards to look through.
-                    final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
-                    findIndexShardCriteria.getIndexUuidSet().add(query.getDataSource().getUuid());
-                    // Only non deleted indexes.
-                    findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
-                    // Order by partition name and key.
-                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
-                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
-
-                    // Set the partition time range.
-                    setPartitionTimeRange(findIndexShardCriteria, task, query);
-
-                    final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
-
-                    // Build a map of nodes that will deal with each set of shards.
-                    for (final IndexShard indexShard : indexShards.getValues()) {
-                        if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
-                            resultCollector.onFailure(indexShard.getNodeName(),
-                                    new SearchException("Attempt to search an index shard marked as corrupt: id=" +
-                                            indexShard.getId() +
-                                            "."));
-                        } else {
-                            final String nodeName = indexShard.getNodeName();
-                            shardMap.computeIfAbsent(nodeName, k -> new ArrayList<>()).add(indexShard.getId());
-                        }
+                    // Make sure we have been given a query.
+                    if (query.getExpression() == null) {
+                        throw new SearchException("Search expression has not been set");
                     }
+
+                    // Get the cluster tasks we want to execute.
+                    final Map<String, NodeSearchTask> nodeSearchTasks =
+                            nodeTaskCreator.createNodeSearchTasks(task, query, parentContext);
+
+                    // Get the nodes that we are going to send the search request to.
+                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
 
                     // Start remote cluster search execution.
                     final Executor executor = executorProvider.get(THREAD_POOL);
                     final List<CompletableFuture<Void>> futures = new ArrayList<>();
-                    for (final Entry<String, List<Long>> entry : shardMap.entrySet()) {
+                    for (final Entry<String, NodeSearchTask> entry : nodeSearchTasks.entrySet()) {
                         final String nodeName = entry.getKey();
-                        final List<Long> shards = entry.getValue();
+                        final NodeSearchTask nodeSearchTask = entry.getValue();
                         if (targetNodes.contains(nodeName)) {
                             final Runnable runnable = taskContextFactory.childContext(
                                     parentContext,
@@ -171,9 +132,8 @@ class AsyncSearchTaskHandler {
                                         }
                                         nodeSearch.searchNode(sourceNode,
                                                 nodeName,
-                                                shards,
                                                 task,
-                                                query,
+                                                nodeSearchTask,
                                                 taskContext);
                                     });
                             final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
@@ -214,39 +174,9 @@ class AsyncSearchTaskHandler {
         }));
     }
 
-    private void setPartitionTimeRange(final FindIndexShardCriteria findIndexShardCriteria,
-                                       final AsyncSearchTask task,
-                                       final Query query) {
-        // Get the index doc.
-        final IndexDoc indexDoc = indexStore.readDocument(query.getDataSource());
-        if (indexDoc == null) {
-            throw new SearchException("Index not found");
-        }
-
-        final TimeRange timeRange = query.getTimeRange();
-        Long partitionFrom = null;
-        Long partitionTo = null;
-
-        if (timeRange != null) {
-            final TimeFilter timeFilter = DateExpressionParser
-                    .getTimeFilter(timeRange, task.getDateTimeSettings(), task.getNow());
-
-            if (timeRange.getFrom() != null && !timeRange.getFrom().isBlank()) {
-                final TimePartition timePartition = timePartitionFactory.create(indexDoc, timeFilter.getFrom());
-                partitionFrom = timePartition.getPartitionFromTime();
-            }
-            if (timeRange.getTo() != null && !timeRange.getTo().isBlank()) {
-                final TimePartition timePartition = timePartitionFactory.create(indexDoc, timeFilter.getTo());
-                partitionTo = timePartition.getPartitionToTime();
-            }
-        }
-        final Range<Long> range = new Range<>(partitionFrom, partitionTo);
-        findIndexShardCriteria.setPartitionTimeRange(range);
-    }
-
     private void awaitCompletionAndTerminate(final ResultStore resultCollector,
                                              final TaskContext parentContext,
-                                             final AsyncSearchTask task) {
+                                             final FederatedSearchTask task) {
         // Wait for the result collector to complete.
         try {
             resultCollector.awaitCompletion();
@@ -261,7 +191,7 @@ class AsyncSearchTaskHandler {
         }
     }
 
-    public void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
+    public void terminateTasks(final FederatedSearchTask task, final TaskId taskId) {
         securityContext.asProcessingUser(() -> {
             // Terminate this task.
             taskManager.terminate(taskId);

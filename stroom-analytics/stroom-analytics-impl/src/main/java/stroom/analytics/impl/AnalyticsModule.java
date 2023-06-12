@@ -17,8 +17,12 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AlertManager;
+import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.common.v2.HasResultStoreInfo;
+import stroom.query.common.v2.SearchProvider;
+import stroom.search.impl.NodeSearchTaskHandlerProvider;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
@@ -47,6 +51,16 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(AnalyticNotificationResourceImpl.class)
                 .bind(AnalyticProcessorFilterResourceImpl.class)
                 .bind(AnalyticDataShardResourceImpl.class);
+
+        // Live federated search provision.
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(AnalyticsSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
+                .addBinding(AnalyticsSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), HasDataSourceDocRefs.class)
+                .addBinding(AnalyticsSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), NodeSearchTaskHandlerProvider.class)
+                .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);
     }
 
     private static class AnalyticsExecutorRunnable extends RunnableWrapper {

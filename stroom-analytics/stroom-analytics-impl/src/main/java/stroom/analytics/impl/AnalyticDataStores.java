@@ -145,7 +145,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         }
     }
 
-    private String getAnalyticStoreDir(final QueryKey queryKey,
+    String getAnalyticStoreDir(final QueryKey queryKey,
                                        final String componentId) {
         final String uuid = queryKey.getUuid() + "_" + componentId;
         // Make safe for the file system.
@@ -178,7 +178,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return expectedDirs;
     }
 
-    private Set<AnalyticRuleDoc> getCurrentRules() {
+    Set<AnalyticRuleDoc> getCurrentRules() {
         final Set<AnalyticRuleDoc> currentRules = new HashSet<>();
         final List<DocRef> docRefList = analyticRuleStore.list();
         for (final DocRef docRef : docRefList) {
@@ -207,7 +207,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         });
     }
 
-    private LmdbDataStore createStore(final SearchRequest searchRequest) {
+    LmdbDataStore createStore(final SearchRequest searchRequest) {
         final DocRef dataSource = searchRequest.getQuery().getDataSource();
         if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
             LOGGER.error("Rule needs to reference a view");
@@ -306,7 +306,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return new ResultPage<>(list);
     }
 
-    private String getComponentId(final SearchRequest searchRequest) {
+    String getComponentId(final SearchRequest searchRequest) {
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
             if (resultRequest.getMappings() != null && resultRequest.getMappings().size() > 0) {
                 return resultRequest.getComponentId();
@@ -427,6 +427,10 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         }
 
         return null;
+    }
+
+    public Path getAnalyticResultStoreDir() {
+        return analyticResultStoreDir;
     }
 
     public record AnalyticDataStore(SearchRequest searchRequest, LmdbDataStore lmdbDataStore) {

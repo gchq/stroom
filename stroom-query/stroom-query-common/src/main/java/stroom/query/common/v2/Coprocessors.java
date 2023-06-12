@@ -12,6 +12,7 @@ import stroom.util.logging.LogUtil;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,7 +69,7 @@ public final class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer
     @Override
     public void add(final Val[] values) {
         counter.increment();
-        LOGGER.trace(() -> String.format("data: [%s]", values));
+        LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
         // Give the data array to each of our coprocessors
         coprocessorMap.values().forEach(coprocessor -> coprocessor.add(values));
     }
