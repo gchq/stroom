@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.24] - 2023-06-06
+
+* Issue **#3490** : Fix LMDB row key for analytics.
+
+* Issue **#3488** : Change default index shard sorting to be by partition and not node.
+
+* Issue **#3473** : Add debug to diagnose issue if it returns.
+
+* Issue **#3503** : Show all errors on top search toolbar.
+
+
 ## [v7.2-beta.23] - 2023-06-05
 
 * Issue **#2197** : Add markdown documentation editor.
@@ -5414,7 +5425,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.23...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.24...HEAD
+[v7.2-beta.24]: https://github.com/gchq/stroom/compare/v7.2-beta.23...v7.2-beta.24
 [v7.2-beta.23]: https://github.com/gchq/stroom/compare/v7.2-beta.22...v7.2-beta.23
 [v7.2-beta.22]: https://github.com/gchq/stroom/compare/v7.2-beta.21...v7.2-beta.22
 [v7.2-beta.21]: https://github.com/gchq/stroom/compare/v7.2-beta.20...v7.2-beta.21

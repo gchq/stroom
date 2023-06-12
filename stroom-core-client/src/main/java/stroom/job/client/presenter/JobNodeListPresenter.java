@@ -282,7 +282,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             final Rest<JobNode> rest = restFactory.create();
             rest.call(JOB_NODE_RESOURCE).setTaskLimit(row.getId(), value.intValue());
         });
-        dataGrid.addColumn(maxColumn, "Max", 59);
+        dataGrid.addColumn(maxColumn, "Max", 62);
 
         // Cur.
         final Column<JobNode, String> curColumn = new Column<JobNode, String>(new TextCell()) {
