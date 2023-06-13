@@ -90,7 +90,7 @@ public class AnalyticDataShardsPresenter
 
     private void update() {
         queryToolbarPresenter.setEnabled(true);
-        queryToolbarPresenter.setSearching(false);
+        queryToolbarPresenter.onSearching(false);
         final AnalyticDataShard selected = analyticDataShardListPresenter.getSelectionModel().getSelected();
         if (selected == null) {
             tablePresenter.reset();
@@ -103,16 +103,16 @@ public class AnalyticDataShardsPresenter
                             selected.getPath(),
                             dateTimeSettingsFactory.getDateTimeSettings());
 
-            queryToolbarPresenter.setSearching(true);
+            queryToolbarPresenter.onSearching(true);
             final Rest<Result> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
                         tablePresenter.setData(result);
-                        queryToolbarPresenter.setSearching(false);
+                        queryToolbarPresenter.onSearching(false);
                     })
                     .onFailure(t -> {
-                        setErrors(Collections.singletonList(t.getMessage()));
-                        queryToolbarPresenter.setSearching(false);
+                        queryToolbarPresenter.onError(Collections.singletonList(t.getMessage()));
+                        queryToolbarPresenter.onSearching(false);
                     })
                     .call(ANALYTIC_DATA_SHARD_RESOURCE)
                     .getData(selected.getNode(), request);
@@ -123,10 +123,6 @@ public class AnalyticDataShardsPresenter
     public void read(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
         this.analyticRuleUuid = docRef.getUuid();
         analyticDataShardListPresenter.read(docRef);
-    }
-
-    public void setErrors(final List<String> errors) {
-        queryToolbarPresenter.setErrors(errors);
     }
 
     public interface AnalyticDataShardsView extends View {

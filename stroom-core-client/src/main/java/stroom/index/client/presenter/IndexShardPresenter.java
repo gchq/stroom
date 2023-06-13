@@ -99,15 +99,10 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                queryCriteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                dataProvider.refresh();
-            }
-        });
+        // Sort by partition ascending by default.
+        queryCriteria.setSort(FindIndexShardCriteria.FIELD_PARTITION);
 
+        dataGrid = new MyDataGrid<>();
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;
@@ -142,6 +137,14 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
                 }
             }));
         }
+
+        registerHandler(dataGrid.addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                queryCriteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
+                dataProvider.refresh();
+            }
+        }));
     }
 
     private void enableButtons() {
@@ -294,13 +297,17 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addPartitionColumn() {
-        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+        final OrderByColumn<IndexShard, String> col = new OrderByColumn<IndexShard, String>(
                 new TextCell(), FindIndexShardCriteria.FIELD_PARTITION, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getPartition();
             }
-        }, FindIndexShardCriteria.FIELD_PARTITION, 100);
+        };
+        dataGrid.addResizableColumn(col, FindIndexShardCriteria.FIELD_PARTITION, 100);
+
+        // Sort by partition ascending by default.
+        //  dataGrid.getColumnSortList().push(col); // Uncomment if we want visual indication.
     }
 
     private void addPathColumn() {

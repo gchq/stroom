@@ -276,7 +276,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
-                if (currentSearchModel.isSearching()) {
+                if (currentSearchModel.isPolling()) {
                     ConfirmEvent.fire(TablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
                                     "Note that these may be incomplete.",
@@ -1071,7 +1071,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
             currentRequestCount--;
             getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.getMode());
+            getView().setRefreshing(currentSearchModel.isSearching());
         });
     }
 

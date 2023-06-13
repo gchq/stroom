@@ -2,6 +2,8 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
@@ -39,9 +41,13 @@ class EventSearchImpl implements EventSearch {
                                           final long maxEvents,
                                           final long maxEventsPerStream,
                                           final BiConsumer<EventRefs, Throwable> consumer) {
-
+        final SearchRequestSource searchRequestSource = SearchRequestSource
+                .builder()
+                .sourceType(SourceType.BATCH_SEARCH)
+                .build();
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());
         final EventSearchTask eventSearchTask = new EventSearchTask(
+                searchRequestSource,
                 key,
                 query,
                 minEvent,

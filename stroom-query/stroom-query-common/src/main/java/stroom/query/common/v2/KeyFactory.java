@@ -7,7 +7,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.util.Set;
 
-public interface KeyFactory {
+public interface KeyFactory extends UniqueIdProvider {
 
     /**
      * Write a key to an output.
@@ -40,11 +40,4 @@ public interface KeyFactory {
      * @return The bytes of a key encoded into a string.
      */
     String encode(Key key, ErrorConsumer errorConsumer);
-
-    /**
-     * Create a unique id.
-     *
-     * @return A unique id.
-     */
-    long getUniqueId();
 }

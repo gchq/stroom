@@ -121,7 +121,7 @@ class SearchableSearchProvider implements SearchProvider {
             // Create a handler for search results.
             final Coprocessors coprocessors =
                     coprocessorsFactory.create(modifiedSearchRequest,
-                            DataStoreSettings.createBasicSearchResultStoreSettings(searchRequest));
+                            DataStoreSettings.createBasicSearchResultStoreSettings());
 
             return buildStore(taskContext,
                     modifiedSearchRequest,

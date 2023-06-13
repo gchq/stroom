@@ -338,7 +338,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
             }
             currentRequestCount--;
             getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.getMode());
+            getView().setRefreshing(currentSearchModel.isSearching());
         });
     }
 

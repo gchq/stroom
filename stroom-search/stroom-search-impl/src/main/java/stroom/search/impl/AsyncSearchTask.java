@@ -19,6 +19,7 @@ package stroom.search.impl;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.ResultStore;
 
@@ -28,6 +29,7 @@ import java.util.List;
 
 public class AsyncSearchTask {
 
+    private final SearchRequestSource searchRequestSource;
     private final QueryKey key;
     private final String searchName;
     private final Query query;
@@ -38,18 +40,24 @@ public class AsyncSearchTask {
 
     private transient volatile ResultStore resultStore;
 
-    public AsyncSearchTask(final QueryKey key,
+    public AsyncSearchTask(final SearchRequestSource searchRequestSource,
+                           final QueryKey key,
                            final String searchName,
                            final Query query,
                            @JsonProperty("settings") final List<CoprocessorSettings> settings,
                            final DateTimeSettings dateTimeSettings,
                            final long now) {
+        this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.searchName = searchName;
         this.query = query;
         this.settings = settings;
         this.dateTimeSettings = dateTimeSettings;
         this.now = now;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public QueryKey getKey() {

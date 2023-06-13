@@ -55,6 +55,8 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.client.presenter.SearchErrorListener;
+import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgImages;
 import stroom.util.shared.Version;
@@ -85,7 +87,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -95,8 +96,9 @@ public class DashboardPresenter
         FlexLayoutChangeHandler,
         DocumentTabData,
         DashboardContext,
-        Consumer<Boolean>,
-        HasToolbar {
+        HasToolbar,
+        SearchStateListener,
+        SearchErrorListener {
 
     private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
     private static final String DEFAULT_PARAMS_INPUT = "Params";
@@ -519,7 +521,8 @@ public class DashboardPresenter
             // Set params on the component if it needs them.
             if (component instanceof Queryable) {
                 final Queryable queryable = (Queryable) component;
-                queryable.addModeListener(this);
+                queryable.addSearchStateListener(this);
+                queryable.addSearchErrorListener(this);
             }
 
             component.read(componentConfig);
@@ -532,23 +535,29 @@ public class DashboardPresenter
 
     private void enableQueryButtons() {
         queryToolbarPresenter.setEnabled(getQueryableComponents().size() > 0);
-        queryToolbarPresenter.setSearching(getCombinedMode());
+        queryToolbarPresenter.onSearching(getCombinedSearchState());
     }
 
-    @Override
-    public void accept(final Boolean mode) {
-        queryToolbarPresenter.setSearching(getCombinedMode());
-    }
-
-    private boolean getCombinedMode() {
+    private boolean getCombinedSearchState() {
         final List<Queryable> queryableComponents = getQueryableComponents();
         boolean combinedMode = false;
         for (final Queryable queryable : queryableComponents) {
-            if (queryable.getMode()) {
+            if (queryable.getSearchState()) {
                 combinedMode = true;
             }
         }
         return combinedMode;
+    }
+
+    private List<String> getCombinedErrors() {
+        final List<String> errors = new ArrayList<>();
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        for (final Queryable queryable : queryableComponents) {
+            if (queryable.getCurrentErrors() != null) {
+                errors.addAll(queryable.getCurrentErrors());
+            }
+        }
+        return errors;
     }
 
     @Override
@@ -750,7 +759,8 @@ public class DashboardPresenter
                     if (component != null) {
                         if (component instanceof Queryable) {
                             final Queryable queryable = (Queryable) component;
-                            queryable.removeModeListener(this);
+                            queryable.removeSearchStateListener(this);
+                            queryable.removeSearchErrorListener(this);
                         }
                         components.remove(tabConfig.getId(), true);
                         enableQueryButtons();
@@ -763,7 +773,7 @@ public class DashboardPresenter
     private void start() {
         // Get a sub list of components that can be queried.
         final List<Queryable> queryableComponents = getQueryableComponents();
-        final boolean combinedMode = getCombinedMode();
+        final boolean combinedMode = getCombinedSearchState();
 
         if (combinedMode) {
             for (final Queryable queryable : getQueryableComponents()) {
@@ -1033,6 +1043,16 @@ public class DashboardPresenter
             totalHeight += size.getHeight();
         }
         return totalHeight;
+    }
+
+    @Override
+    public void onSearching(final boolean searching) {
+        queryToolbarPresenter.onSearching(getCombinedSearchState());
+    }
+
+    @Override
+    public void onError(final List<String> errors) {
+        queryToolbarPresenter.onError(getCombinedErrors());
     }
 }
 

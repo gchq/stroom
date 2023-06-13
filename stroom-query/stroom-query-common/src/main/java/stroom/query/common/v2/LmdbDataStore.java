@@ -32,6 +32,8 @@ import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -53,10 +55,7 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,7 +71,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 import javax.inject.Provider;
 
 public class LmdbDataStore implements DataStore {
@@ -127,17 +125,18 @@ public class LmdbDataStore implements DataStore {
     private final StoredValueKeyFactory storedValueKeyFactory;
 
 
-    public LmdbDataStore(final Serialisers serialisers,
-                  final SimpleEnvBuilder lmdbEnvBuilder,
-                  final AbstractResultStoreConfig resultStoreConfig,
-                  final QueryKey queryKey,
-                  final String componentId,
-                  final TableSettings tableSettings,
-                  final FieldIndex fieldIndex,
-                  final Map<String, String> paramMap,
-                  final DataStoreSettings dataStoreSettings,
-                  final Provider<Executor> executorProvider,
-                  final ErrorConsumer errorConsumer) {
+    public LmdbDataStore(final SearchRequestSource searchRequestSource,
+                         final Serialisers serialisers,
+                         final SimpleEnvBuilder lmdbEnvBuilder,
+                         final AbstractResultStoreConfig resultStoreConfig,
+                         final QueryKey queryKey,
+                         final String componentId,
+                         final TableSettings tableSettings,
+                         final FieldIndex fieldIndex,
+                         final Map<String, String> paramMap,
+                         final DataStoreSettings dataStoreSettings,
+                         final Provider<Executor> executorProvider,
+                         final ErrorConsumer errorConsumer) {
         this.serialisers = serialisers;
         this.maxResults = dataStoreSettings.getMaxResults();
         this.queryKey = queryKey;
@@ -147,7 +146,12 @@ public class LmdbDataStore implements DataStore {
         this.errorConsumer = errorConsumer;
 
         // Add stream id and event id fields if we need them.
-        if (dataStoreSettings.isRequireStreamIdValue() && dataStoreSettings.isRequireEventIdValue()) {
+        final SourceType sourceType =
+                Optional.ofNullable(searchRequestSource)
+                        .map(SearchRequestSource::getSourceType)
+                        .orElse(SourceType.DASHBOARD_UI);
+        if (sourceType.isRequireStreamIdValue() &&
+                sourceType.isRequireEventIdValue()) {
             streamIdFieldIndex = fieldIndex.getStreamIdFieldIndex();
             eventIdFieldIndex = fieldIndex.getEventIdFieldIndex();
             storeLatestEventReference = true;
@@ -164,7 +168,7 @@ public class LmdbDataStore implements DataStore {
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledFieldArray, modifiedTableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFieldArray);
-        keyFactoryConfig = new KeyFactoryConfigImpl(this.compiledFieldArray, compiledDepths, dataStoreSettings);
+        keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledFieldArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         valHasher = new ValHasher(serialisers.getOutputFactory(), errorConsumer);
         lmdbRowKeyFactory = LmdbRowKeyFactoryFactory.create(keyFactory, keyFactoryConfig, compiledDepths, valHasher);
@@ -543,8 +547,15 @@ public class LmdbDataStore implements DataStore {
 
                     } else {
                         // We do not expect a key collision here.
-                        LOGGER.debug(() -> "Unexpected collision");
-                        throw new RuntimeException("Unexpected collision");
+                        final String message = "Unexpected collision (" +
+                                "key factory=" +
+                                keyFactory.getClass().getSimpleName() +
+                                ", " +
+                                "lmdbRowKeyFactory=" +
+                                lmdbRowKeyFactory.getClass().getSimpleName() +
+                                ")";
+                        LOGGER.debug(message);
+                        throw new RuntimeException(message);
                     }
                 }
 

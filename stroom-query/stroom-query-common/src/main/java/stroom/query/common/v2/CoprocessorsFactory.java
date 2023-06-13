@@ -8,6 +8,7 @@ import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 
 import java.util.ArrayList;
@@ -62,13 +63,15 @@ public class CoprocessorsFactory {
                                final DataStoreSettings dataStoreSettings) {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
         return create(
+                searchRequest.getSearchRequestSource(),
                 searchRequest.getKey(),
                 coprocessorSettingsList,
                 searchRequest.getQuery().getParams(),
                 dataStoreSettings);
     }
 
-    public Coprocessors create(final QueryKey queryKey,
+    public Coprocessors create(final SearchRequestSource searchRequestSource,
+                               final QueryKey queryKey,
                                final List<CoprocessorSettings> coprocessorSettingsList,
                                final List<Param> params,
                                final DataStoreSettings dataStoreSettings) {
@@ -86,6 +89,7 @@ public class CoprocessorsFactory {
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
                 final Coprocessor coprocessor = create(
+                        searchRequestSource,
                         queryKey,
                         coprocessorSettings,
                         fieldIndex,
@@ -132,7 +136,8 @@ public class CoprocessorsFactory {
                 errorConsumer);
     }
 
-    private Coprocessor create(final QueryKey queryKey,
+    private Coprocessor create(final SearchRequestSource searchRequestSource,
+                               final QueryKey queryKey,
                                final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
@@ -142,6 +147,7 @@ public class CoprocessorsFactory {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
             final DataStore dataStore = create(
+                    searchRequestSource,
                     queryKey,
                     String.valueOf(tableCoprocessorSettings.getCoprocessorId()),
                     tableSettings,
@@ -158,7 +164,8 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private DataStore create(final QueryKey queryKey,
+    private DataStore create(final SearchRequestSource searchRequestSource,
+                             final QueryKey queryKey,
                              final String componentId,
                              final TableSettings tableSettings,
                              final FieldIndex fieldIndex,
@@ -177,6 +184,7 @@ public class CoprocessorsFactory {
                         .storeSize(storeSizes).build();
 
         return dataStoreFactory.create(
+                searchRequestSource,
                 queryKey,
                 componentId,
                 tableSettings,

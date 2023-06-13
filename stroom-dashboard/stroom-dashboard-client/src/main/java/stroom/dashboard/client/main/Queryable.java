@@ -17,16 +17,24 @@
 package stroom.dashboard.client.main;
 
 import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.client.presenter.SearchErrorListener;
+import stroom.query.client.presenter.SearchStateListener;
 
-import java.util.function.Consumer;
+import java.util.List;
 
 public interface Queryable {
 
-    void addModeListener(Consumer<Boolean> consumer);
+    void addSearchStateListener(SearchStateListener listener);
 
-    void removeModeListener(Consumer<Boolean> consumer);
+    void removeSearchStateListener(SearchStateListener listener);
 
-    boolean getMode();
+    void addSearchErrorListener(SearchErrorListener listener);
+
+    void removeSearchErrorListener(SearchErrorListener listener);
+
+    boolean getSearchState();
+
+    List<String> getCurrentErrors();
 
     void start();
 

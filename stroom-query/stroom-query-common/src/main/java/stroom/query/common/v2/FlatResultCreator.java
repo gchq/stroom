@@ -29,6 +29,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -89,7 +90,7 @@ public class FlatResultCreator implements ResultCreator {
                         : Collections.emptyList();
                 final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
                 final DataStoreSettings dataStoreSettings = DataStoreSettings
-                        .createBasicSearchResultStoreSettings(searchRequest)
+                        .createBasicSearchResultStoreSettings()
                         .copy()
                         .maxResults(maxResults)
                         .storeSize(Sizes.create(Integer.MAX_VALUE))
@@ -99,6 +100,7 @@ public class FlatResultCreator implements ResultCreator {
                 mappers.add(new Mapper(
                         dataStoreFactory,
                         dataStoreSettings,
+                        searchRequest.getSearchRequestSource(),
                         searchRequest.getKey(),
                         componentId,
                         parent,
@@ -385,6 +387,7 @@ public class FlatResultCreator implements ResultCreator {
 
         Mapper(final DataStoreFactory dataStoreFactory,
                final DataStoreSettings dataStoreSettings,
+               final SearchRequestSource searchRequestSource,
                final QueryKey queryKey,
                final String componentId,
                final TableSettings parent,
@@ -419,6 +422,7 @@ public class FlatResultCreator implements ResultCreator {
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
             dataStore = dataStoreFactory.create(
+                    searchRequestSource,
                     queryKey,
                     componentId,
                     child,

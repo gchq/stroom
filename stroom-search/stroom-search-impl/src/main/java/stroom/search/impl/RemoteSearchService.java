@@ -74,6 +74,7 @@ public class RemoteSearchService {
                 }
 
                 coprocessors = coprocessorsFactory.create(
+                        clusterSearchTask.getSearchRequestSource(),
                         clusterSearchTask.getKey(),
                         clusterSearchTask.getSettings(),
                         query.getParams(),
