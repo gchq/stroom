@@ -141,7 +141,9 @@ public class UserPreferencesManager {
     }
 
     public List<String> getEditorThemes() {
-        return Arrays.stream(AceEditorTheme.values()).map(AceEditorTheme::getName).collect(Collectors.toList());
+        return Arrays.stream(AceEditorTheme.values())
+                .map(AceEditorTheme::getName)
+                .collect(Collectors.toList());
     }
 
     public boolean isUtc() {
