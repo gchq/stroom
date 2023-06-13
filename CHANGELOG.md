@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.27] - 2023-06-13
+
+* Issue **#3304** : Make analytic results searchable.
+
+
 ## [v7.2-beta.26] - 2023-06-13
 
 * Add support for syntax highlighting fenced blocks in markdown documentation.
@@ -5445,7 +5450,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.26...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.27...HEAD
+[v7.2-beta.27]: https://github.com/gchq/stroom/compare/v7.2-beta.26...v7.2-beta.27
 [v7.2-beta.26]: https://github.com/gchq/stroom/compare/v7.2-beta.25...v7.2-beta.26
 [v7.2-beta.25]: https://github.com/gchq/stroom/compare/v7.2-beta.24...v7.2-beta.25
 [v7.2-beta.24]: https://github.com/gchq/stroom/compare/v7.2-beta.23...v7.2-beta.24
