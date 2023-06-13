@@ -74,8 +74,9 @@ public class ValueReferenceIndex {
     }
 
     public StoredValues read(final ByteBuffer byteBuffer) {
+        final ByteBuffer copy = byteBuffer.duplicate();
         try {
-            try (final MyByteBufferInput input = new MyByteBufferInput(byteBuffer.duplicate())) {
+            try (final MyByteBufferInput input = new MyByteBufferInput(byteBuffer)) {
                 return read(input);
             }
         } catch (final RuntimeException e) {
@@ -87,8 +88,8 @@ public class ValueReferenceIndex {
             sb.append("\n");
             sb.append("Byte Buffer:\n");
 
-            final byte[] bytes = new byte[byteBuffer.remaining()];
-            byteBuffer.duplicate().get(bytes);
+            final byte[] bytes = new byte[copy.remaining()];
+            copy.get(bytes);
 
             sb.append(Arrays.toString(bytes));
             sb.append("\n");

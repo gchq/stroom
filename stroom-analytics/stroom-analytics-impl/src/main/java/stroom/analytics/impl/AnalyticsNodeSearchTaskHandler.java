@@ -17,6 +17,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.api.AnnotationFields;
 import stroom.dashboard.expression.v1.DateUtil;
@@ -63,12 +64,11 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -88,8 +88,6 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final AnalyticDataStores analyticDataStores;
-    private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
-
 
     private final LongAdder hitCount = new LongAdder();
     private final LongAdder extractionCount = new LongAdder();
@@ -102,15 +100,13 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                    final ExecutorProvider executorProvider,
                                    final Executor executor,
                                    final TaskContextFactory taskContextFactory,
-                                   final AnalyticDataStores analyticDataStores,
-                                   final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
+                                   final AnalyticDataStores analyticDataStores) {
         this.annotationsDecoratorFactory = annotationsDecoratorFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.analyticDataStores = analyticDataStores;
-        this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
     }
 
     @Override
@@ -220,16 +216,17 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                    final AbstractField[] fieldArray,
                                    final ExpressionMatcher expressionMatcher) {
         try {
-            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(doc);
-            final String componentId = analyticDataStores.getComponentId(searchRequest);
-            final String dir = analyticDataStores.getAnalyticStoreDir(searchRequest.getKey(),
-                    componentId);
-            final Path path = analyticDataStores.getAnalyticResultStoreDir().resolve(dir);
-            if (!parentContext.isTerminated() && Files.isDirectory(path)) {
+
+            final Optional<AnalyticDataStore> optionalAnalyticDataStore = analyticDataStores.getIfExists(doc);
+            if (!parentContext.isTerminated() && optionalAnalyticDataStore.isPresent()) {
+                final AnalyticDataStore analyticDataStore = optionalAnalyticDataStore.get();
+                final SearchRequest searchRequest = analyticDataStore.getSearchRequest();
+                final LmdbDataStore lmdbDataStore = analyticDataStore.getLmdbDataStore();
+
                 try {
-                    final LmdbDataStore lmdbDataStore = analyticDataStores.createStore(searchRequest);
                     ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
                     TableSettings tableSettings = resultRequest.getMappings().get(0);
+
                     tableSettings = tableSettings
                             .copy()
                             .maxResults(List.of(1000000))

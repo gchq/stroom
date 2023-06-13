@@ -16,7 +16,7 @@ public class AnalyticFields {
     public static final String ANALYTICS_STORE_TYPE = "Analytics";
     public static final DocRef ANALYTICS_DOC_REF = DocRef.builder()
             .type(ANALYTICS_STORE_TYPE)
-            .uuid("0")
+            .uuid(ANALYTICS_STORE_TYPE)
             .name(ANALYTICS_STORE_TYPE)
             .build();
 
