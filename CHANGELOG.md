@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.26] - 2023-06-13
+
+* Add support for syntax highlighting fenced blocks in markdown documentation.
+
+* Issue **#3506** : Make time picker and query buttons available from dashboards opened from links.
+
+* Issue **#3505** : Add debug.
+
+
 ## [v7.2-beta.25] - 2023-06-12
 
 * Issue **#3512** : Increase col width to remove ellipsis.
@@ -5436,7 +5445,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.25...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.26...HEAD
+[v7.2-beta.26]: https://github.com/gchq/stroom/compare/v7.2-beta.25...v7.2-beta.26
 [v7.2-beta.25]: https://github.com/gchq/stroom/compare/v7.2-beta.24...v7.2-beta.25
 [v7.2-beta.24]: https://github.com/gchq/stroom/compare/v7.2-beta.23...v7.2-beta.24
 [v7.2-beta.23]: https://github.com/gchq/stroom/compare/v7.2-beta.22...v7.2-beta.23
