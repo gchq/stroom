@@ -19,6 +19,10 @@
 
     --text-color: #151515;
     --text-color--disabled: #666;
+    /* Headings, e.g. in markdown documentation, info tooltips, meta info */
+    --heading-color: var(--blue-700);
+    /* <code> blocks, e.g. in markdown */
+    --code-color: var(--pink-700);
     --border-color: transparent; /*#c5cde2;*/
 
     --header__border-color: #dddddd;
@@ -33,7 +37,7 @@
 
     --menu-separator__color: #bfbfbf;
 
-    --tooltip__background-color: #ffd;
+    --tooltip__background-color: var(--grey-300);
     --tooltip__text-color: #000;
 
     --button__background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
@@ -87,6 +91,10 @@
     --code-editor__border-color--fatal: #444444;
     --code-editor__background-color--fatal: #000000;
     --code-editor__background-color--highlight: yellow;
+    --code-editor-menu-option__color--on: green;
+    --code-editor-menu-option__color--on--selected: #00e500;
+    --code-editor-menu-option__color--off: red;
+    --code-editor-menu-option__color--off--selected: #ff5959;
 
     --xsdbrowser-box__background-color: white;
     --xsdbrowser-box__border-color: #404e60;
@@ -239,4 +247,6 @@
     --vis-series-label__background-color: rgba(255,255,255,0.87);
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
+
+    --iframe__border-color: #C5CDE2;
 }

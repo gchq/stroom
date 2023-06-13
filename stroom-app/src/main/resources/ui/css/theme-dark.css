@@ -17,8 +17,13 @@
     --focus-border--secondary: var(--pink-500);
     --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 
+    /* Main body text colour in the app */
     --text-color: #abb0b6;
     --text-color--disabled: #666;
+    /* Headings, e.g. in markdown documentation, info tooltips, meta info */
+    --heading-color: var(--blue-300);
+    /* <code> blocks, e.g. in markdown */
+    --code-color: var(--pink-300);
     --border-color: #14161b;
 
     --header__border-color: transparent;
@@ -34,7 +39,7 @@
     --menu-separator__color: rgb(255 255 255 / 20%);
 
     --tooltip__background-color: #1a1d21;
-    --tooltip__text-color: #fff;
+    --tooltip__text-color: var(--text-color);
 
     --button__background-image: none;
     --button__background-color: #333436;
@@ -239,4 +244,6 @@
     --vis-series-label__background-color: rgba(0,0,0,0.87);
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
+
+    --iframe__border-color: var(--control__border-color);
 }

@@ -18,24 +18,27 @@ package stroom.iframe.client.view;
 
 import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
+import stroom.iframe.client.presenter.IFramePresenter.SandboxOption;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.IFrameElement;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> implements IFrameView {
 
     private static final String DEFAULT_TITLE = "Loading...";
+    private static final String SOURCE_DOC_ATTRIBUTE = "srcdoc";
+    private static final String SANDBOX_ATTRIBUTE = "sandbox";
 
     private final SimplePanel panel = new SimplePanel();
     private final Frame frame = new Frame();
@@ -45,8 +48,8 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
 
     @Inject
     public IFrameViewImpl() {
-        setFrameStyle(frame.getElement().getStyle());
-        setPanelStyle(panel.getElement().getStyle());
+        panel.getElement().addClassName("iframe-panel");
+        frame.getElement().addClassName("iframe-frame");
 
         panel.setWidget(frame);
 
@@ -68,29 +71,42 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
         Scheduler.get().scheduleFixedDelay(updateTitleCommand, 1000);
     }
 
-    private void setFrameStyle(final Style style) {
-        style.setWidth(100, Unit.PCT);
-        style.setHeight(100, Unit.PCT);
-        style.setBorderStyle(BorderStyle.NONE);
-    }
-
-    private void setPanelStyle(final Style style) {
-        style.setWidth(100, Unit.PCT);
-        style.setHeight(100, Unit.PCT);
-        style.setBorderWidth(1, Unit.PX);
-        style.setBorderStyle(BorderStyle.SOLID);
-        style.setBorderColor("#C5CDE2");
-    }
-
     @Override
     public Widget asWidget() {
         return panel;
     }
 
     @Override
+    public void setId(final String id) {
+        frame.getElement().setId(id);
+    }
+
+    @Override
     public void setUrl(final String url) {
         lastTitle = url;
         frame.setUrl(url);
+    }
+
+    @Override
+    public void setSrcDoc(final String html) {
+        frame.getElement().setAttribute(SOURCE_DOC_ATTRIBUTE, html);
+    }
+
+    @Override
+    public void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions) {
+        final Element element = frame.getElement();
+        if (isEnabled) {
+            // allow-popups so links work, e.g linking to external sites. Sandbox prevents any script execution.
+            final String optionsStr = sandboxOptions == null
+                    ? ""
+                    : Arrays.stream(sandboxOptions)
+                            .map(SandboxOption::getOption)
+                            .collect(Collectors.joining(" "));
+
+            element.setAttribute(SANDBOX_ATTRIBUTE, optionsStr);
+        } else if (element.hasAttribute(SANDBOX_ATTRIBUTE)) {
+            element.removeAttribute(SANDBOX_ATTRIBUTE);
+        }
     }
 
     public void setCustomTitle(final String customTitle) {

@@ -90,6 +90,22 @@
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 
+.editor-menu-option-on {
+  color: var(--code-editor-menu-option__color--on);
+}
+
+.cellTableSelectedRowCell .editor-menu-option-on {
+  color: var(--code-editor-menu-option__color--on--selected);
+}
+
+.editor-menu-option-off {
+  color: var(--code-editor-menu-option__color--off);
+}
+
+.cellTableSelectedRowCell .editor-menu-option-off {
+  color: var(--code-editor-menu-option__color--off--selected);
+}
+
 .ace-tomorrow-night .ace_marker-layer .ace_selection {
     background: #4A148C; /* purple 900 */
     border: none;
