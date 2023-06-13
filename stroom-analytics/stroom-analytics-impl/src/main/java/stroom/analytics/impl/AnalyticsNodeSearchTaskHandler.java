@@ -23,6 +23,7 @@ import stroom.dashboard.expression.v1.DateUtil;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValDate;
+import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
@@ -248,7 +249,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                             .build();
 
                     final TableResultConsumer tableResultConsumer = new TableResultConsumer(
-                            doc, fieldArray, timeFilter, hitCount, valuesConsumer, expression, expressionMatcher);
+                            doc, fieldArray, hitCount, valuesConsumer, expression, expressionMatcher);
                     final FieldFormatter fieldFormatter =
                             new FieldFormatter(new FormatterFactory(null));
                     final TableResultCreator resultCreator = new TableResultCreator(
@@ -292,7 +293,6 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
         private FieldIndex fieldIndex;
         private final AbstractField[] requestedFields;
-        private final TimeFilter timeFilter;
         private final LongAdder hitCount;
         private final ValuesConsumer consumer;
 
@@ -303,14 +303,12 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
         public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
                                    final AbstractField[] requestedFields,
-                                   final TimeFilter timeFilter,
                                    final LongAdder hitCount,
                                    final ValuesConsumer consumer,
                                    final ExpressionOperator expression,
                                    final ExpressionMatcher expressionMatcher) {
             this.analyticRuleDoc = analyticRuleDoc;
             this.requestedFields = requestedFields;
-            this.timeFilter = timeFilter;
             this.hitCount = hitCount;
             this.consumer = consumer;
             this.expression = expression;
@@ -341,53 +339,51 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         @Override
         public TableResultConsumer addRow(final Row row) {
             try {
-                boolean inTime = false;
                 Long time = null;
                 final int timeFieldPos = fieldIndex.getTimeFieldPos();
                 if (timeFieldPos != -1) {
                     time = DateUtil.parseNormalDateTimeString(row.getValues().get(timeFieldPos));
-                    if (time >= timeFilter.getFrom() && time <= timeFilter.getTo()) {
-                        inTime = true;
-                    }
                 }
 
-                if (inTime) {
-                    // Get value.
-                    final StringBuilder sb = new StringBuilder();
-                    for (int j = 0; j < fields.size(); j++) {
-                        final Field f = fields.get(j);
-                        if (sb.length() > 0) {
-                            sb.append(", ");
-                        }
-                        sb.append(f.getName());
-                        sb.append(": ");
-                        sb.append(row.getValues().get(j));
+                // Get value.
+                final StringBuilder sb = new StringBuilder();
+                for (int j = 0; j < fields.size(); j++) {
+                    final Field f = fields.get(j);
+                    if (sb.length() > 0) {
+                        sb.append(", ");
                     }
-                    final String value = sb.toString();
+                    sb.append(f.getName());
+                    sb.append(": ");
+                    sb.append(row.getValues().get(j));
+                }
+                final String value = sb.toString();
 
-                    final Map<String, Object> attributeMap = new HashMap<>();
-                    attributeMap.put(AnalyticFields.NAME_FIELD.getName(), analyticRuleDoc.getName());
-                    attributeMap.put(AnalyticFields.UUID_FIELD.getName(), analyticRuleDoc.getUuid());
-                    attributeMap.put(AnalyticFields.TIME_FIELD.getName(), time);
-                    attributeMap.put(AnalyticFields.VALUE_FIELD.getName(), value);
+                final Map<String, Object> attributeMap = new HashMap<>();
+                attributeMap.put(AnalyticFields.NAME_FIELD.getName(), analyticRuleDoc.getName());
+                attributeMap.put(AnalyticFields.UUID_FIELD.getName(), analyticRuleDoc.getUuid());
+                attributeMap.put(AnalyticFields.TIME_FIELD.getName(), time);
+                attributeMap.put(AnalyticFields.VALUE_FIELD.getName(), value);
 
-                    if (expressionMatcher.match(attributeMap, expression)) {
-                        hitCount.increment();
-                        final Val[] values = new Val[requestedFields.length];
-                        for (int i = 0; i < requestedFields.length; i++) {
-                            final AbstractField field = requestedFields[i];
-                            if (field.equals(AnalyticFields.NAME_FIELD)) {
-                                values[i] = ValString.create(analyticRuleDoc.getName());
-                            } else if (field.equals(AnalyticFields.UUID_FIELD)) {
-                                values[i] = ValString.create(analyticRuleDoc.getUuid());
-                            } else if (field.equals(AnalyticFields.TIME_FIELD)) {
+                if (expressionMatcher.match(attributeMap, expression)) {
+                    hitCount.increment();
+                    final Val[] values = new Val[requestedFields.length];
+                    for (int i = 0; i < requestedFields.length; i++) {
+                        final AbstractField field = requestedFields[i];
+                        if (field.equals(AnalyticFields.NAME_FIELD)) {
+                            values[i] = ValString.create(analyticRuleDoc.getName());
+                        } else if (field.equals(AnalyticFields.UUID_FIELD)) {
+                            values[i] = ValString.create(analyticRuleDoc.getUuid());
+                        } else if (field.equals(AnalyticFields.TIME_FIELD)) {
+                            if (time == null) {
+                                values[i] = ValNull.INSTANCE;
+                            } else {
                                 values[i] = ValDate.create(time);
-                            } else if (field.equals(AnalyticFields.VALUE_FIELD)) {
-                                values[i] = ValString.create(value);
                             }
+                        } else if (field.equals(AnalyticFields.VALUE_FIELD)) {
+                            values[i] = ValString.create(value);
                         }
-                        consumer.add(values);
                     }
+                    consumer.add(values);
                 }
 
             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
