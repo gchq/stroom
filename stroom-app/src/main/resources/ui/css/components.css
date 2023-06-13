@@ -1434,7 +1434,7 @@ button.main-menu svg {
     height: 42px;
     justify-content: center;
 }
-
+/*
 .stroom-theme-dark .navigation-menu-button,
 .navigation-title-bar .navigation-menu-button {
     color: white;
@@ -1445,7 +1445,7 @@ button.main-menu svg {
     width: 16px;
     height: 16px;
 }
-
+*/
 /*
 .stroom-theme-dark .navigation-menu-button {
     background-image: url("../images/menu-white.svg");
