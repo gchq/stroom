@@ -164,7 +164,6 @@ public class DashboardPresenter
         addWidgetButton.setVisible(false);
 
         setConstraintsButton = new InlineSvgButton();
-        setConstraintsButton.addStyleName("inline-svg-button__blue");
         setConstraintsButton.setSvg(SvgImages.MONO_RESIZE);
         setConstraintsButton.setTitle("Set Constraints");
         setConstraintsButton.setVisible(false);

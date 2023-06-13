@@ -99,9 +99,13 @@
     border: thin solid var(--navigation-icon-button__border-color--on);
 }
 
-.navigation .icon-button .face,
-.navigation-menu-button.icon-button .face {
+.navigation .icon-button .face {
     color: var(--navigation__text-color);
+}
+
+.navigation-menu-button.icon-button .face,
+.navigation-menu-button {
+    color: var(--button__text-color);
 }
 
 /* Fab buttons */

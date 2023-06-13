@@ -1533,32 +1533,6 @@ button.main-menu svg {
     justify-content: flex-end;
 }
 
-.navigation-header-button {
-    color: rgba(255,255,255,.8);
-}
-
-.navigation-header-button > .inline-svg-button {
-    overflow: visible;
-}
-
-.inline-svg-button__blue {
-    color: #2196f3;
-}
-
-/*
-.stroom-theme-dark .navigation-header-button-add {
-   background-image: url("../images/add-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-button-delete {
-   background-image: url("../images/delete-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-button-filter {
-   background-image: url("../images/filter-white.svg");
-}
-*/
-
 
 
 
