@@ -91,6 +91,10 @@
     --code-editor__border-color--fatal: #444444;
     --code-editor__background-color--fatal: #000000;
     --code-editor__background-color--highlight: yellow;
+    --code-editor-menu-option__color--on: green;
+    --code-editor-menu-option__color--on--selected: #00e500;
+    --code-editor-menu-option__color--off: red;
+    --code-editor-menu-option__color--off--selected: #ff5959;
 
     --xsdbrowser-box__background-color: white;
     --xsdbrowser-box__border-color: #404e60;
