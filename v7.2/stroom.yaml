@@ -12724,6 +12724,8 @@ components:
           $ref: '#/components/schemas/ActivityConfig'
         defaultMaxResults:
           type: string
+        helpSubPathDocumentation:
+          type: string
         helpSubPathExpressions:
           type: string
         helpSubPathJobs:
