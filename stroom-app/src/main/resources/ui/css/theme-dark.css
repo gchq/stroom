@@ -244,4 +244,6 @@
     --vis-series-label__background-color: rgba(0,0,0,0.87);
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
+
+    --iframe__border-color: var(--control__border-color);
 }

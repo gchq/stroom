@@ -1,13 +1,16 @@
 /* CSS for Showdown/Prism rendered markdown i.e MarkdownEditPresenter */
 
-.markdown-container {
-  overflow-y: scroll;
-}
-
 .markdown {
+  --markdown-background__color: var(--dashboard-panel__background-color);
   --markdown-tbl__border-color: var(--border-color);
   --markdown-heading__color: var(--heading-color);
   --markdown-accent__color: var(--heading-color);
+}
+
+.markdown-container {
+  overflow-y: scroll;
+  background-color: var(--markdown-background__color);
+  white-space: normal !important;
 }
 
 .markdown h1,

@@ -49,6 +49,10 @@ public class MarkdownEditViewImpl extends ViewImpl implements MarkdownEditView {
         editorContainer.setWidget(view.asWidget());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, MarkdownEditViewImpl> {
 
     }

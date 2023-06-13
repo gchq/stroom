@@ -24,9 +24,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.IFrameElement;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -51,8 +48,8 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
 
     @Inject
     public IFrameViewImpl() {
-        setFrameStyle(frame.getElement().getStyle());
-        setPanelStyle(panel.getElement().getStyle());
+        panel.getElement().addClassName("iframe-panel");
+        frame.getElement().addClassName("iframe-frame");
 
         panel.setWidget(frame);
 
@@ -72,20 +69,6 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
             return updateTitle && customTitle == null;
         };
         Scheduler.get().scheduleFixedDelay(updateTitleCommand, 1000);
-    }
-
-    private void setFrameStyle(final Style style) {
-        style.setWidth(100, Unit.PCT);
-        style.setHeight(100, Unit.PCT);
-        style.setBorderStyle(BorderStyle.NONE);
-    }
-
-    private void setPanelStyle(final Style style) {
-        style.setWidth(100, Unit.PCT);
-        style.setHeight(100, Unit.PCT);
-        style.setBorderWidth(1, Unit.PX);
-        style.setBorderStyle(BorderStyle.SOLID);
-        style.setBorderColor("#C5CDE2");
     }
 
     @Override

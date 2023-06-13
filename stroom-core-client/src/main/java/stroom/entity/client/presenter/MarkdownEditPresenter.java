@@ -30,15 +30,13 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.svg.client.SvgImages;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -70,8 +68,6 @@ public class MarkdownEditPresenter
     private boolean reading;
     private boolean readOnly = true;
     private boolean editMode;
-    // We need to hold onto this in case the user changes the theme
-//    private String rawMarkdown = "";
 
     @Inject
     public MarkdownEditPresenter(final EventBus eventBus,
@@ -85,16 +81,14 @@ public class MarkdownEditPresenter
         this.iFramePresenter = iFramePresenter;
         this.uiConfigCache = uiConfigCache;
         this.userPreferencesManager = userPreferencesManager;
-//        htmlPresenter.getWidget().addStyleName("markdown");
         codePresenter.setMode(AceEditorMode.MARKDOWN);
 
-//        iFramePresenter.setUrl("markdown-preview.html");
+        // Markdown is mostly wordy content so wrap long lines to make it easier for the user.
+        codePresenter.getLineWrapOption().setOn();
+
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
-
-//        view.setView(htmlPresenter.getView());
-        view.setView(iFramePresenter.getView());
-
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
+        view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
         editModeButton.setSvg(SvgImages.EDIT);
@@ -105,14 +99,8 @@ public class MarkdownEditPresenter
         toolbar.addButton(editModeButton);
         helpButton = toolbar.addButton(SvgPresets.HELP.title("Documentation help"));
 
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
-//            updatePrismTheme();
-//            final String html = getMarkdownHtmlElement().getInnerHTML();
-//            GWT.log("--------------------------------------------------------");
-//            GWT.log("html: " + html);
-//            setMarkdownOnIFramePresenter(html);
-            updateMarkdownOnIFramePresenter();
-        }));
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
+                updateMarkdownOnIFramePresenter()));
     }
 
     @Override
@@ -192,121 +180,39 @@ public class MarkdownEditPresenter
                         null));
     }
 
-//    private String setMarkdownOnHtmlPresenter(final String rawMarkdown) {
-//        this.rawMarkdown = rawMarkdown == null
-//                ? ""
-//                : rawMarkdown;
-////        updatePrismTheme();
-//        // Convert raw mark
-////        DOM.createDiv()
-//        final String html = convertMarkdownToHtml(rawMarkdown);
-////        markdownElement.setInnerHTML(htmlBeforePrism);
-////        htmlPresenter.setHtml();
-////        applyPrismSyntaxHighlighting();
-//
-//        return html;
-////        return getMarkdownHtmlElement().getInnerHTML();
-////        return htmlPresenter.getView().asWidget().getElement().getInnerHTML();
-//    }
-
-//    private void refreshMarkdownOnIFramePresenter() {
-//        setMarkdownOnIFramePresenter(rawMarkdown);
-//    }
-
     private void updateMarkdownOnIFramePresenter() {
         final String rawMarkdown = codePresenter.getText();
-        final String html = convertMarkdownToHtml(rawMarkdown == null
+        final String markdownAsHtml = convertMarkdownToHtml(rawMarkdown == null
                 ? ""
                 : rawMarkdown);
-//        final String html = setMarkdownOnHtmlPresenter(rawMarkdown);
-        // <iframe src="data:text/html;base64,BASE64_GOES_HERE" sandbox=""></iframe>
 
-        final String theme = userPreferencesManager.getCurrentPreferences().getTheme();
-        final String themeClass = Themes.getClassName(theme);
+        final String currentPreferenceClasses = userPreferencesManager.getCurrentPreferenceClasses();
         final String prismThemeClassName = getPrismThemeClassName();
 
-//        GWT.log("theme: " + theme + " themeClass: " + themeClass + " prismThemeClassName: " + prismThemeClassName);
-//        GWT.log("html: " + html);
-//        GWT.log("--------------------------------------------------------------------------------");
+        // No point using SafeHtmlBuilder as we have no choice but to use un-escaped and untrusted HTML
+        // but the html used in a sandboxed iframe for protection.
+        final String iFrameHtmlContent = new StringBuilder()
+                .append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+                .append("<!DOCTYPE html>")
+                .append("<html class=\"")
+                .append(SafeHtmlUtil.from(currentPreferenceClasses).asString())
+                .append("\">")
+                .append("<head>")
+                .append("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">")
+                .append("<link rel=\"stylesheet\" href=\"css/app.css\" type=\"text/css\" />")
+                .append("</head>")
+                .append("<body>")
+                .append("<div class=\"max info-page markdown-container markdown ")
+                .append(SafeHtmlUtil.from(prismThemeClassName).asString())
+                .append("\">")
+                .append(markdownAsHtml)
+                .append("</div>")
+                .append("</body>")
+                .append("</html>")
+                .toString();
 
-        final SafeHtml safeHtml = new SafeHtmlBuilder()
-                .appendHtmlConstant("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-                .appendHtmlConstant("<!DOCTYPE html>")
-                .appendHtmlConstant("<html onload=\"console.log('xxxxxxxxxx')\" class=\"")
-                .appendEscaped(themeClass)
-                .appendHtmlConstant("\">")
-                .appendHtmlConstant("<head>")
-                .appendHtmlConstant("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">")
-                .appendHtmlConstant("<link rel=\"stylesheet\" href=\"css/app.css\" type=\"text/css\" />")
-                .appendHtmlConstant("</head>")
-                .appendHtmlConstant("<body>")
-                .appendHtmlConstant("<div class=\"max info-page markdown-container markdown ")
-                .appendEscaped(prismThemeClassName)
-                .appendHtmlConstant("\">")
-                .appendHtmlConstant(html)
-                .appendHtmlConstant("</div>")
-                .appendHtmlConstant("</body>")
-                .appendHtmlConstant("</html>")
-                        .toSafeHtml();
-
-//        final String base64Html = base64encode(safeHtml.asString());
-
-//        final String base64Html = BaseEncoding.base64().encode(safeHtml.asString().getBytes(StandardCharsets.UTF_8));
-//        final String base64Html = Base64Utils.toBase64(safeHtml.asString().getBytes(StandardCharsets.UTF_8));
-
-//        iFramePresenter.setUrl("data:text/html;base64," + base64Html);
-//        GWT.log("html: " + safeHtml.asString());
-
-//        setHtmlInIFrame(html, MARKDOWN_FRAME_ID);
-//        GWT.log("Setting srcdoc");
-        iFramePresenter.setSrcDoc(safeHtml.asString());
-//        GWT.log("Done setting srcdoc");
-
-//        final Document document = Window.doc
-//        final HeadElement headElement = document.createHeadElement();
-//        document.crea
-//        final ScriptElement scriptElement = document.createScriptElement("script/prismjs/prism.js");
-//        final LinkElement linkElement = document.createLinkElement();
-//        linkElement.setRel("stylesheet");
-//        linkElement.setHref("css/app.css");
-//        headElement.appendChild(linkElement);
-//        headElement.appendChild(scriptElement);
-//
-//        document.appendChild(headElement);
-//
-//        updatePrismTheme();
-//        htmlPresenter.setHtml(convertMarkdownToHtml(rawMarkdown));
-//        applyPrismSyntaxHighlighting();
+        iFramePresenter.setSrcDoc(iFrameHtmlContent);
     }
-
-//    private Element getMarkdownHtmlElement() {
-////        return htmlPresenter.getWidget().getElement();
-//        return markdownElement;
-//    }
-
-//    private boolean updatePrismTheme() {
-//        // We have two prism css files, each with a baked in theme. The standard
-//        // un-edited one is a dark theme. The non-standard one that adds in additional
-//        // class selectivity is for light themes.
-//        final ThemeType themeType = userPreferencesManager.geCurrentThemeType();
-//        GWT.log("changing theme type to " + themeType);
-//        if (!Objects.equals(currentThemeType, themeType)) {
-//            switch (themeType) {
-//                case DARK:
-//                    getMarkdownHtmlElement().removeClassName(PRISM_LIGHT_THEME_CLASS_NAME);
-//                    break;
-//                case LIGHT:
-//                    getMarkdownHtmlElement().addClassName(PRISM_LIGHT_THEME_CLASS_NAME);
-//                    break;
-//                default:
-//                    throw new RuntimeException("Unexpected theme type " + themeType);
-//            }
-//            currentThemeType = themeType;
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
 
     private String getPrismThemeClassName() {
         final ThemeType themeType = userPreferencesManager.geCurrentThemeType();
@@ -340,36 +246,20 @@ public class MarkdownEditPresenter
 
         // Only need to involve prism if showdown has set a language-XXX class
         if (/language-/.test(markdownAsHtml)) {
-            // Transient div just so we can tokenise any code blocks into lots of spans with
-            // appropriate classes for the syntax highlight type.
+            // Transient div just so we can tokenise the existing html
             var markdownDiv = $doc.createElement("div");
             markdownDiv.innerHTML = markdownAsHtml;
+
+            // This will run the prismjs code to tokenise the content of fenced blocks which
+            // are within pre/code. It will surround the different bits of syntax with appropriately classed
+            // span tags. ShowdownJS will have set the appropriate language class on the
+            // code tag so then the prism css can style all the created spans.
             $wnd.Prism.highlightAllUnder(markdownDiv);
             markdownAsHtml = markdownDiv.innerHTML;
         }
         return markdownAsHtml;
     }-*/;
 
-    /**
-     * This will run the prismjs code to tokenise the content of fenced blocks which
-     * are in within pre/code. ShowdownJS will have set the appropriate language class on the
-     * code tag so then the prism css can style all the tokens.
-     */
-//    public native void applyPrismSyntaxHighlighting() /*-{
-//        var element = this.@stroom.entity.client.presenter.MarkdownEditPresenter::getMarkdownHtmlElement()();
-//        $wnd.Prism.highlightAllUnder(element);
-//    }-*/;
-
-//    public native void setHtmlInIFrame(final String frameId, final String html) /*-{
-//        var markdownFrame = $doc.getElementById(frameId);
-//        if (markdownFrame) {
-//            markdownFrame.contentWindow.postMessage(html, '*');
-//        }
-//    }-*/;
-
-//    private static native String base64encode(String plainText) /*-{
-//      return window.btoa(plainText);
-//    }-*/;
 
     // --------------------------------------------------------------------------------
 
