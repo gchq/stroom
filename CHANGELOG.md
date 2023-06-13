@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.25] - 2023-06-12
+
+* Issue **#3512** : Increase col width to remove ellipsis.
+
+* Issue **#3511** : Increase col width to remove ellipsis.
+
+* Issue **#3304** : Make analytic results searchable.
+
+* Issue **#3508** : Change toggle button.
+
+
 ## [v7.2-beta.24] - 2023-06-06
 
 * Issue **#3490** : Fix LMDB row key for analytics.
@@ -5425,7 +5436,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.24...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.25...HEAD
+[v7.2-beta.25]: https://github.com/gchq/stroom/compare/v7.2-beta.24...v7.2-beta.25
 [v7.2-beta.24]: https://github.com/gchq/stroom/compare/v7.2-beta.23...v7.2-beta.24
 [v7.2-beta.23]: https://github.com/gchq/stroom/compare/v7.2-beta.22...v7.2-beta.23
 [v7.2-beta.22]: https://github.com/gchq/stroom/compare/v7.2-beta.21...v7.2-beta.22

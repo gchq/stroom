@@ -51,7 +51,7 @@ public class ResultStore {
     private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
     private final SearchRequestSource searchRequestSource;
     private final Set<String> highlights = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Coprocessors coprocessors;
+    private final CoprocessorsImpl coprocessors;
     private final String userId;
     private final Instant creationTime;
     private volatile Instant lastAccessTime;
@@ -65,7 +65,7 @@ public class ResultStore {
     public ResultStore(final SearchRequestSource searchRequestSource,
                        final SizesProvider sizesProvider,
                        final String userId,
-                       final Coprocessors coprocessors,
+                       final CoprocessorsImpl coprocessors,
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings) {
         this.searchRequestSource = searchRequestSource;

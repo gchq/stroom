@@ -37,8 +37,8 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
 
     @Timed
     @Override
-    public Boolean start(final ClusterSearchTask clusterSearchTask) {
-        return remoteSearchServiceProvider.get().start(clusterSearchTask);
+    public Boolean start(final NodeSearchTask nodeSearchTask) {
+        return remoteSearchServiceProvider.get().start(nodeSearchTask);
     }
 
     @Timed

@@ -91,7 +91,7 @@ public class MarkdownEditPresenter
         view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
-        editModeButton.setSvg(SvgImages.EDIT);
+        editModeButton.setSvg(SvgImages.MONO_EDIT);
         editModeButton.setTitle("Edit");
         editModeButton.setEnabled(true);
 

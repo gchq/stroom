@@ -1434,7 +1434,7 @@ button.main-menu svg {
     height: 42px;
     justify-content: center;
 }
-
+/*
 .stroom-theme-dark .navigation-menu-button,
 .navigation-title-bar .navigation-menu-button {
     color: white;
@@ -1445,7 +1445,7 @@ button.main-menu svg {
     width: 16px;
     height: 16px;
 }
-
+*/
 /*
 .stroom-theme-dark .navigation-menu-button {
     background-image: url("../images/menu-white.svg");
@@ -1532,32 +1532,6 @@ button.main-menu svg {
     margin-top: 0;
     justify-content: flex-end;
 }
-
-.navigation-header-button {
-    color: rgba(255,255,255,.8);
-}
-
-.navigation-header-button > .inline-svg-button {
-    overflow: visible;
-}
-
-.inline-svg-button__blue {
-    color: #2196f3;
-}
-
-/*
-.stroom-theme-dark .navigation-header-button-add {
-   background-image: url("../images/add-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-button-delete {
-   background-image: url("../images/delete-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-button-filter {
-   background-image: url("../images/filter-white.svg");
-}
-*/
 
 
 
@@ -1769,7 +1743,7 @@ button.main-menu svg {
     display: flex;
     position: absolute;
     right: 5px;
-    top: 6px;
+    top: 5px;
 }
 
 .findCell {

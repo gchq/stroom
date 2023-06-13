@@ -512,25 +512,6 @@ export interface ClusterNodeInfoItem {
   nodeName?: string;
 }
 
-export interface ClusterSearchTask {
-  /** The client date/time settings */
-  dateTimeSettings?: DateTimeSettings;
-
-  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
-  key?: QueryKey;
-
-  /** @format int64 */
-  now?: number;
-
-  /** The query terms for the search */
-  query?: Query;
-  searchRequestSource?: SearchRequestSource;
-  settings?: CoprocessorSettings[];
-  shards?: number[];
-  sourceTaskId?: TaskId;
-  taskName?: string;
-}
-
 export interface ComponentConfig {
   id?: string;
   name?: string;
@@ -2133,6 +2114,26 @@ export interface Node {
 
   /** @format int32 */
   version?: number;
+}
+
+export interface NodeSearchTask {
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  key?: QueryKey;
+
+  /** @format int64 */
+  now?: number;
+
+  /** The query terms for the search */
+  query?: Query;
+  searchRequestSource?: SearchRequestSource;
+  settings?: CoprocessorSettings[];
+  shards?: number[];
+  sourceTaskId?: TaskId;
+  taskName?: string;
+  type?: "LUCENE" | "ANALYTICS";
 }
 
 export interface NodeSetJobsEnabledRequest {
@@ -8532,7 +8533,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/remoteSearch/v1/start
      * @secure
      */
-    startRemoteSearch: (data: ClusterSearchTask, params: RequestParams = {}) =>
+    startRemoteSearch: (data: NodeSearchTask, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/remoteSearch/v1/start`,
         method: "POST",

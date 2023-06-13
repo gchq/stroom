@@ -41,7 +41,8 @@
 
 .QueryToolbarViewImpl-inner {
     display: flex;
-    gap: var(--control__gap--horizontal);
+    gap: 2px;
+    margin-right: 5px;
     align-items: center;
     justify-content: space-between;
 }

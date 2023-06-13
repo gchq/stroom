@@ -21,7 +21,9 @@ import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -66,13 +68,37 @@ public class CommonAlertPresenter
             getView().setError(event.getMessage());
         }
 
-        getView().setDetail(event.getDetail());
+        final SafeHtml detail = event.getDetail();
+        final int height;
+        if (detail == null || detail.asString().trim().length() == 0) {
+            height = 200;
+        } else {
+            height = 500;
+        }
+
+        getView().setDetail(detail);
+
+        final PopupSize popupSize = PopupSize.builder()
+                .width(Size
+                        .builder()
+                        .initial(600)
+                        .min(200)
+                        .resizable(true)
+                        .build())
+                .height(Size
+                        .builder()
+                        .initial(height)
+                        .min(200)
+                        .resizable(true)
+                        .build())
+                .build();
 
         if (event instanceof ConfirmEvent) {
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .caption("Confirm")
                     .modal(true)
+                    .popupSize(popupSize)
                     .onHide(this)
                     .fire();
         } else {
@@ -80,6 +106,7 @@ public class CommonAlertPresenter
                     .popupType(PopupType.CLOSE_DIALOG)
                     .caption("Alert")
                     .modal(true)
+                    .popupSize(popupSize)
                     .onHide(this)
                     .fire();
         }

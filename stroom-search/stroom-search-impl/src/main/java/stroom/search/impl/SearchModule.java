@@ -48,10 +48,13 @@ public class SearchModule extends AbstractModule {
         bind(DataStoreFactory.class).to(LmdbDataStoreFactory.class);
         bind(SizesProvider.class).to(SizesProviderImpl.class);
 
+        // Lucene federated search.
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(LuceneSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
                 .addBinding(LuceneSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), NodeSearchTaskHandlerProvider.class)
+                .addBinding(LuceneNodeSearchTaskHandlerProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ResultStoreManager.class);
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(ResultStoreManager.class);

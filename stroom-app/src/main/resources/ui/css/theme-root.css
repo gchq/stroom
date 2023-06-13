@@ -53,10 +53,12 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #aaa;
 
-    --icon-button__background-color--on: rgba(0,0,0,.05);
-    --icon-button__border-color--on: rgba(0,0,0,.1);
+    --icon-button__background-color--on: var(--blue-500);
+    --icon-button__border-color--on: rgba(0, 0, 0, 0.2);
+    --icon-button__color--on: var(--white);
     --icon-button__background-color--hover: rgba(0,0,0,.05);
     --icon-button__border-color--hover: transparent;
+    --icon-button__color: var(--blue-500);
     --navigation-icon-button__background-color--on: rgba(10,36,65,.4);
     --navigation-icon-button__border-color--on: var(--blue-500-rgb);
     --navigation-icon-button__background-color--hover: rgba(10,36,65,.4);
