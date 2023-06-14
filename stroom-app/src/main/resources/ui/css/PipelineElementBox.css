@@ -81,7 +81,7 @@
 	border: 2px solid var(--pipeline-element-box__border-color--fatal-error);
     box-shadow: 0 0 8px var(--pipeline-element-box__border-color--fatal-error);
     animation-name: fatal-glow;
-    animation-duration: 2s;
+    animation-duration: 1.5s;
     animation-delay: -1s;
     animation-iteration-count: infinite;
     animation-timing-function: cubic-bezier(0.46, 0.02, 0.5, 0.99);
