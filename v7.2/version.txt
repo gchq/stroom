@@ -1,1 +1,1 @@
-v7.2-beta.27-open-id-1
+v7.2-beta.30
