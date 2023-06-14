@@ -68,7 +68,7 @@
     --pipeline-element-box__background-color--selected: #1164a3;
     --pipeline-element-box__background-color--selected--hover: #276fb0;
     --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
-    --pipeline-element-box__text-color: #888;
+    --pipeline-element-box__text-color: #c1c1fc1;
     --pipeline-element-box__text-color--selected: #fff;
     --pipeline-element-box__border-color: #777;
     --pipeline-element-box__border-color--selected: #a1a1a1;

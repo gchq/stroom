@@ -1,8 +1,6 @@
-package stroom.util.client;
+package stroom.util.shared;
 
 import stroom.test.common.TestUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
@@ -34,8 +32,6 @@ import java.util.stream.Stream;
 
 
 class TestGwtNullSafe {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestGwtNullSafe.class);
 
     private final Level1 nullLevel1 = null;
     private final Level1 nonNullLevel1 = new Level1();
@@ -989,59 +985,46 @@ class TestGwtNullSafe {
     void testPerformanceVsOptional() {
         final int iterations = 100_000_000;
         final Level5 otherLevel5 = new Level5(-1);
-        LOGGER.info("Iterations: {}", iterations);
         MutableLong totalNanosNullSafe = new MutableLong(0);
         MutableLong totalNanosOptional = new MutableLong(0);
         for (int i = 0; i < 3; i++) {
             totalNanosNullSafe.setValue(0L);
 
-            LOGGER.logDurationIfInfoEnabled(() -> {
-                for (int j = 0; j < iterations; j++) {
-                    // Ensure we have a different object each time
-                    final Level1 level1 = new Level1(j);
-                    final long startNanos = System.nanoTime();
-                    final Level5 val = GwtNullSafe.getOrElse(
-                            level1,
-                            Level1::getNonNullLevel2,
-                            Level2::getNonNullLevel3,
-                            Level3::getNonNullLevel4,
-                            Level4::getNonNullLevel5,
-                            otherLevel5);
-                    totalNanosNullSafe.add(System.nanoTime() - startNanos);
-                    Objects.requireNonNull(val);
-                    if (!val.toString().equals(j + ":" + 5)) {
-                        throw new RuntimeException("Invalid: " + val);
-                    }
+            for (int j = 0; j < iterations; j++) {
+                // Ensure we have a different object each time
+                final Level1 level1 = new Level1(j);
+                final long startNanos = System.nanoTime();
+                final Level5 val = GwtNullSafe.getOrElse(
+                        level1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        Level3::getNonNullLevel4,
+                        Level4::getNonNullLevel5,
+                        otherLevel5);
+                totalNanosNullSafe.add(System.nanoTime() - startNanos);
+                Objects.requireNonNull(val);
+                if (!val.toString().equals(j + ":" + 5)) {
+                    throw new RuntimeException("Invalid: " + val);
                 }
-            }, i + " GwtNullSafe");
-            LOGGER.info("{} GwtNullSafe nanos per iteration: {}",
-                    i,
-                    (double) totalNanosNullSafe.getValue() / iterations);
+            }
 
             totalNanosOptional.setValue(0L);
 
-            LOGGER.logDurationIfInfoEnabled(() -> {
-                for (int j = 0; j < iterations; j++) {
-                    final Level1 level1 = new Level1(j);
-                    final long startNanos = System.nanoTime();
-                    final Level5 val = Optional.ofNullable(level1)
-                            .map(Level1::getNonNullLevel2)
-                            .map(Level2::getNonNullLevel3)
-                            .map(Level3::getNonNullLevel4)
-                            .map(Level4::getNonNullLevel5)
-                            .orElse(otherLevel5);
-                    totalNanosOptional.add(System.nanoTime() - startNanos);
-                    Objects.requireNonNull(val);
-                    if (!val.toString().equals(j + ":" + 5)) {
-                        throw new RuntimeException("Invalid: " + val);
-                    }
+            for (int j = 0; j < iterations; j++) {
+                final Level1 level1 = new Level1(j);
+                final long startNanos = System.nanoTime();
+                final Level5 val = Optional.ofNullable(level1)
+                        .map(Level1::getNonNullLevel2)
+                        .map(Level2::getNonNullLevel3)
+                        .map(Level3::getNonNullLevel4)
+                        .map(Level4::getNonNullLevel5)
+                        .orElse(otherLevel5);
+                totalNanosOptional.add(System.nanoTime() - startNanos);
+                Objects.requireNonNull(val);
+                if (!val.toString().equals(j + ":" + 5)) {
+                    throw new RuntimeException("Invalid: " + val);
                 }
-            }, i + " Optional");
-            LOGGER.info("{} Optional nanos per iteration: {}", i, (double) totalNanosOptional.getValue() / iterations);
-
-            LOGGER.info("NullSafe/Optional : {}",
-                    (double) totalNanosNullSafe.getValue() / totalNanosOptional.getValue());
-            LOGGER.info("--------------------------------");
+            }
         }
     }
 

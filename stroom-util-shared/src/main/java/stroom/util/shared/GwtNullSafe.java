@@ -1,4 +1,4 @@
-package stroom.util.client;
+package stroom.util.shared;
 
 import stroom.util.shared.time.SimpleDuration;
 

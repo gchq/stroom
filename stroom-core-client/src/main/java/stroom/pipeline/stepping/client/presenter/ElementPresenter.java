@@ -37,7 +37,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
-import stroom.util.client.GwtNullSafe;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasData;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;

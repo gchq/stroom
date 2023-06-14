@@ -16,6 +16,8 @@
 
 package stroom.pipeline.shared.stepping;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -101,8 +103,8 @@ public class SteppingResult {
     }
 
     public boolean hasActiveFilter() {
-        return stepFilterMap != null
-                && stepFilterMap.values()
+        return GwtNullSafe.map(stepFilterMap)
+                .values()
                 .stream()
                 .anyMatch(SteppingFilterSettings::isActive);
     }

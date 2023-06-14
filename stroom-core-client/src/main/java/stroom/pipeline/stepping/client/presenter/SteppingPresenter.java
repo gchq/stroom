@@ -46,6 +46,7 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.svg.client.Preset;
+import stroom.svg.client.SvgImages;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -55,6 +56,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -97,7 +99,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final Map<String, ElementPresenter> elementPresenterMap = new HashMap<>();
     private final PipelineModel pipelineModel;
     private final ButtonView saveButton;
-    private final ButtonView toggleLogPaneButton;
+    private final InlineSvgToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean showingData;
     private boolean busyTranslating;
@@ -154,8 +156,12 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
         // Create but don't add yet
-        toggleLogPaneButton = leftButtons.createButton(SvgPresets.EXCLAMATION
-                .title("Toggle Log Pane"));
+        toggleLogPaneButton = new InlineSvgToggleButton();
+        toggleLogPaneButton.setSvg(SvgImages.EXCLAMATION);
+        toggleLogPaneButton.setOn();
+        toggleLogPaneButton.setTitle("Toggle Log Pane");
+        leftButtons.addButton(toggleLogPaneButton);
+
         sourcePresenter.setClassificationUiHandlers(this);
     }
 
