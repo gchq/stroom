@@ -37,6 +37,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
+import stroom.util.client.GwtNullSafe;
 import stroom.util.shared.HasData;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -55,11 +56,12 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements
@@ -205,74 +207,53 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
 //                    + indicatorsMap.get(IndicatorType.OUTPUT).getLocationAgnosticIndicator());
 //        }
 
-        return indicatorsMap.entrySet()
+        final List<LogPaneEntry> logPaneEntries = new ArrayList<>();
+
+        indicatorsMap.entrySet()
                 .stream()
                 .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
-                .map(entry -> {
-                    final String type = editorCount > 1
-                            ? entry.getKey().displayName.toLowerCase()
+                .forEach(entry -> {
+                    final IndicatorType paneType = editorCount > 1
+                            ? entry.getKey()
                             : null;
-                    return indicatorLinesToString(
-                            type,
-                            entry.getValue());
-                })
+                    final IndicatorLines indicatorLines = entry.getValue();
+                    final Indicator locationAgnosticIndicator = indicatorLines.getLocationAgnosticIndicator();
+                    if (locationAgnosticIndicator != null && !locationAgnosticIndicator.isEmpty()) {
+                        final Map<Severity, Set<StoredError>> errorMap = locationAgnosticIndicator.getErrorMap();
+                        errorMap.forEach((severity, storedErrors) -> {
+                            for (final StoredError storedError : storedErrors) {
+                                logPaneEntries.add(new LogPaneEntry(
+                                        paneType,
+                                        severity,
+                                        null,
+                                        storedError.getLocation(),
+                                        storedError.getMessage()));
+                            }
+                        });
+                    }
+
+                    for (final Integer lineNumber : GwtNullSafe.collection(indicatorLines.getLineNumbers())) {
+                        final Indicator lineSpecificIndicator = indicatorLines.getIndicator(lineNumber);
+                        if (lineSpecificIndicator != null && !lineSpecificIndicator.isEmpty()) {
+                            final Map<Severity, Set<StoredError>> errorMap = lineSpecificIndicator.getErrorMap();
+                            errorMap.forEach((severity, storedErrors) -> {
+                                for (final StoredError storedError : storedErrors) {
+                                    logPaneEntries.add(new LogPaneEntry(
+                                            paneType,
+                                            severity,
+                                            lineNumber,
+                                            storedError.getLocation(),
+                                            storedError.getMessage()));
+                                }
+                            });
+                        }
+                    }
+                });
+
+        return logPaneEntries.stream()
+                .sorted()
+                .map(LogPaneEntry::toString)
                 .collect(Collectors.joining("\n"));
-    }
-
-    private String indicatorLinesToString(final String type, final IndicatorLines indicatorLines) {
-
-        Objects.requireNonNull(indicatorLines);
-        final List<String> lines = new ArrayList<>();
-        final Indicator locationAgnosticIndicator = indicatorLines.getLocationAgnosticIndicator();
-//        GWT.log("indicatorLinesToString() " + type + " - " + locationAgnosticIndicator);
-
-        if (locationAgnosticIndicator != null && !locationAgnosticIndicator.isEmpty()) {
-//            GWT.log("indicatorLinesToString() Adding locationAgnosticIndicator:\n>> " + locationAgnosticIndicator);
-            addIndicator(lines, type, null, locationAgnosticIndicator);
-        }
-
-        for (final Integer lineNumber : indicatorLines.getLineNumbers()) {
-            final Indicator lineSpecificIndicator = indicatorLines.getIndicator(lineNumber);
-            if (lineSpecificIndicator != null && !lineSpecificIndicator.isEmpty()) {
-//                GWT.log("indicatorLinesToString() Adding lineSpecificIndicator:\n>> " + lineSpecificIndicator);
-                addIndicator(lines, type, lineNumber, lineSpecificIndicator);
-            }
-        }
-        final String str = String.join("\n", lines);
-//        GWT.log("indicatorLinesToString() str:\n>> " + str);
-        return str;
-    }
-
-    private void addIndicator(final List<String> lines,
-                              final String type,
-                              final Integer lineNo,
-                              final Indicator indicator) {
-//        GWT.log(type + " " + lineNo + " " + indicator);
-
-        final Map<Severity, Set<StoredError>> errorMap = indicator.getErrorMap();
-        for (final Severity severity : Severity.SEVERITIES) {
-            final Set<StoredError> storedErrors = errorMap.get(severity);
-            if (storedErrors != null && !storedErrors.isEmpty()) {
-                storedErrors.stream()
-                        .map(storedError -> {
-                            final Location location = storedError.getLocation();
-                            // Some msgs have no location or line/col numbers of -1 so replace with '?'
-                            // to make it clear to user that location is unknown
-                            final String locationStr = location != null
-                                    ? location.toString().replace("-1", "?")
-                                    : "?:?:?";
-                            // Some step elements can have msgs from multiple panes so include the pane name
-                            final String typeStr = type != null
-                                    ? "(" + type + " pane) - "
-                                    : "";
-                            return storedError.getSeverity() + ": "
-                                    + typeStr + "["
-                                    + locationStr + "] "
-                                    + storedError.getMessage();
-                        })
-                        .forEach(lines::add);
-            }
-        }
     }
 
     private boolean haveIndicators() {
@@ -386,78 +367,16 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
 
     private void setIndicatorsOnEditor(final IndicatorType indicatorType,
                                        final IndicatorLines indicatorLines) {
-//        GWT.log("------------------vvvvvvvvvvvvv-------------------------");
-
         if (indicatorLines == null || indicatorLines.isEmpty()) {
-//            GWT.log("Removing type " + indicatorType);
             indicatorsMap.remove(indicatorType);
         } else {
             indicatorsMap.put(indicatorType, indicatorLines);
-//            GWT.log("setIndicatorsOnEditor() put indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                    + indicatorLines.getLocationAgnosticIndicator());
-//            GWT.log("setIndicatorsOnEditor() get1 indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                    + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator());
-
-//            GWT.log("setIndicatorsOnEditor() indicatorLines1(type: "
-//                    + indicatorType + ", count: "
-//                    + indicatorLines.getLocationAgnosticIndicator().size() + "):\n>> "
-//                    + indicatorLines.getLocationAgnosticIndicator());
         }
-
-//        if (indicatorsMap.get(indicatorType) != null) {
-//            GWT.log("setIndicatorsOnEditor() get2 indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                    + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator());
-//            GWT.log("count: " + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator().size());
-//        }
-//        if (indicatorLines != null) {
-//            GWT.log("setIndicatorsOnEditor() indicatorLines2(type: "
-//                    + indicatorType + ", count: "
-//                    + indicatorLines.getLocationAgnosticIndicator().size() + "):\n>> "
-//                    + indicatorLines.getLocationAgnosticIndicator());
-//        }
 
         final EditorPresenter editorPresenter = presenterMap.get(indicatorType);
-//        if (indicatorLines != null) {
-//            GWT.log("setIndicatorsOnEditor() indicatorLines3(type: "
-//                    + indicatorType + ", count: "
-//                    + indicatorLines.getLocationAgnosticIndicator().size() + "):\n>> "
-//                    + indicatorLines.getLocationAgnosticIndicator());
-//        }
         if (editorPresenter != null) {
-//            if (indicatorsMap.get(indicatorType) != null) {
-//                GWT.log("setIndicatorsOnEditor() get3 indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                        + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator());
-//                GWT.log("count: " + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator().size());
-//            }
-
-//            if (indicatorLines != null) {
-//                GWT.log("setIndicatorsOnEditor() indicatorLines4(type: "
-//                        + indicatorType + ", count: "
-//                        + indicatorLines.getLocationAgnosticIndicator().size() + "):\n>> "
-//                        + indicatorLines.getLocationAgnosticIndicator());
-//            }
-
             editorPresenter.setIndicators(indicatorLines);
-
-//            if (indicatorLines != null) {
-//                GWT.log("setIndicatorsOnEditor() indicatorLines5(type: "
-//                        + indicatorType + ", count: "
-//                        + indicatorLines.getLocationAgnosticIndicator().size() + "):\n>> "
-//                        + indicatorLines.getLocationAgnosticIndicator());
-//            }
-
-//            if (indicatorsMap.get(indicatorType) != null) {
-//                GWT.log("setIndicatorsOnEditor() get4 indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                        + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator());
-//                GWT.log("count: " + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator().size());
-//            }
         }
-//        if (indicatorsMap.get(indicatorType) != null) {
-//            GWT.log("setIndicatorsOnEditor() get5 indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                    + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator());
-//            GWT.log("count: " + indicatorsMap.get(indicatorType).getLocationAgnosticIndicator().size());
-//        }
-//        GWT.log("-------------------^^^^^^^^^^^^------------------------");
         updateLogView();
     }
 
@@ -474,8 +393,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             }
 
             inputPresenter.setFirstLineNumber(inputStartLineNo);
-//            inputPresenter.setIndicators(inputIndicators);
-
             inputPresenter.getBasicAutoCompletionOption().setUnavailable();
             inputPresenter.getBasicAutoCompletionOption().setOff();
             inputPresenter.getSnippetsOption().setUnavailable();
@@ -499,7 +416,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             }
 
             outputPresenter.setFirstLineNumber(outputStartLineNo);
-//            outputPresenter.setIndicators(outputIndicators);
 
             outputPresenter.getBasicAutoCompletionOption().setUnavailable();
             outputPresenter.getBasicAutoCompletionOption().setOff();
@@ -511,25 +427,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             updateLogView();
         }
     }
-
-//    public void setConsole(final String consoleText,
-//                          final int outputStartLineNo,
-//                          final boolean formatOutput,
-//                          final IndicatorLines outputIndicators) {
-//        if (consolePresenter != null) {
-//            consolePresenter.setText(consoleText);
-//            consolePresenter.getStylesOption().setOn(formatOutput);
-//            consolePresenter.setReadOnly(true);
-//            consolePresenter.setFirstLineNumber(outputStartLineNo);
-//            consolePresenter.setIndicators(outputIndicators);
-//            consolePresenter.getBasicAutoCompletionOption().setUnavailable();
-//            consolePresenter.getBasicAutoCompletionOption().setOff();
-//            consolePresenter.getSnippetsOption().setUnavailable();
-//            consolePresenter.getSnippetsOption().setOff();
-//            consolePresenter.getLiveAutoCompletionOption().setUnavailable();
-//            consolePresenter.getLiveAutoCompletionOption().setOff();
-//        }
-//    }
 
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
@@ -701,11 +598,14 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     // --------------------------------------------------------------------------------
 
 
-    private enum IndicatorType {
+    enum IndicatorType {
         CODE("Code"),
         INPUT("Input"),
         OUTPUT("Output"),
         ;
+
+        private static final Comparator<IndicatorType> COMPARATOR = Comparator.nullsFirst(
+                Comparator.comparing(Function.identity()));
 
         private final String displayName;
 
@@ -714,4 +614,79 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    static class LogPaneEntry implements Comparable<LogPaneEntry> {
+
+        private final IndicatorType paneType;
+        private final Severity severity;
+        private final Integer lineNumber;
+        private final Location location;
+        private final String message;
+
+        private static final Comparator<LogPaneEntry> SEVERITY_COMPARATOR = Comparator.nullsLast(
+                Comparator.comparing(LogPaneEntry::getSeverity, Severity.HIGH_TO_LOW_COMPARATOR));
+        private static final Comparator<LogPaneEntry> TYPE_COMPARATOR = Comparator.comparing(
+                LogPaneEntry::getPaneType, IndicatorType.COMPARATOR);
+        private static final Comparator<LogPaneEntry> COMPARATOR = SEVERITY_COMPARATOR
+                .thenComparing(TYPE_COMPARATOR)
+                .thenComparing(LogPaneEntry::getLineNumber,
+                        Comparator.nullsFirst(Integer::compareTo));
+
+        LogPaneEntry(final IndicatorType paneType,
+                             final Severity severity,
+                             final Integer lineNumber,
+                             final Location location,
+                             final String message) {
+            this.paneType = paneType;
+            this.severity = severity;
+            this.lineNumber = lineNumber;
+            this.location = location;
+            this.message = message;
+        }
+
+        Integer getLineNumber() {
+            return lineNumber;
+        }
+
+        IndicatorType getPaneType() {
+            return paneType;
+        }
+
+        Severity getSeverity() {
+            return severity;
+        }
+
+        Location getLocation() {
+            return location;
+        }
+
+        String getMessage() {
+            return message;
+        }
+
+        @Override
+        public String toString() {
+            // Some msgs have no location or line/col numbers of -1 so replace with '?'
+            // to make it clear to user that location is unknown
+            final String locationStr = location != null
+                    ? location.toString().replace("-1", "?")
+                    : "?:?:?";
+            // Some step elements can have msgs from multiple panes so include the pane name
+            final String typeStr = paneType != null
+                    ? "(" + paneType.displayName + " pane) - "
+                    : "";
+            return severity + ": "
+                    + typeStr + "["
+                    + locationStr + "] "
+                    + message;
+        }
+
+        @Override
+        public int compareTo(final LogPaneEntry o) {
+            return COMPARATOR.compare(this, o);
+        }
+    }
 }

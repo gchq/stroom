@@ -311,6 +311,15 @@ public class GwtNullSafe {
     }
 
     /**
+     * Returns the passed list if it is non-null else returns an empty list.
+     */
+    public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
+        return collection != null
+                ? collection
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed set if it is non-null else returns an empty set.
      */
     public static <S extends Set<T>, T> Set<T> set(final S set) {

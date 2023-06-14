@@ -55,13 +55,13 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
                 layout.setHSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT);
                 if (code == null) {
                     layout.addWest(inputWidget, 200);
-                    layout.setVSplits(0.50, LOG_PANE_SPLIT);
+                    layout.setVSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT, LOG_PANE_SPLIT);
                     layout.addSouth(logWidget, LOG_PANE_SIZE);
                 } else {
                     final Widget codeWidget = code.asWidget();
                     codeWidget.addStyleName("dashboard-panel overflow-hidden");
                     layout.addNorth(codeWidget, 200);
-                    layout.setVSplits(0.50, LOG_PANE_SPLIT);
+                    layout.setVSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT, LOG_PANE_SPLIT);
                     layout.addSouth(logWidget, LOG_PANE_SIZE);
                     layout.addWest(inputWidget, 200);
                 }
@@ -101,6 +101,7 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
         isLogVisible = isVisible;
         if (layout != null && log != null) {
             layout.setWidgetHidden(log.asWidget(), !isVisible);
+            layout.setVSplits();
         }
     }
 

@@ -19,6 +19,7 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.editor.client.event.ChangeFilterEvent;
 import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
 import stroom.editor.client.event.HasChangeFilterHandlers;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 
@@ -34,10 +35,12 @@ public class StepControlPresenter
         implements StepControlUIHandlers,
         HasChangeFilterHandlers {
 
-    boolean lastFoundStepFirstState = false;
-    boolean lastFoundStepForwardState = false;
-    boolean lastFoundStepBackwardState = false;
-    boolean lastFoundStepLastState = false;
+    private boolean lastFoundStepFirstState = false;
+    private boolean lastFoundStepForwardState = false;
+    private boolean lastFoundStepBackwardState = false;
+    private boolean lastFoundStepLastState = false;
+
+    private StepLocation endLocation = null;
 
     @Inject
     public StepControlPresenter(final EventBus eventBus, final StepControlView view) {
@@ -77,10 +80,25 @@ public class StepControlPresenter
 
     public void setEnabledButtons(final boolean justStepped,
                                   final StepType stepType,
-                                  final boolean tasksSelected,
                                   final boolean showingData,
                                   final boolean foundRecord,
-                                  final boolean hasFatal) {
+                                  final boolean hasFatal,
+                                  final boolean isFiltered,
+                                  final StepLocation stepLocation) {
+
+        // See if we are on the first record
+        final boolean isFirstRecord = stepLocation != null
+                && stepLocation.getPartIndex() == 0
+                && stepLocation.getRecordIndex() == 0;
+        // If a filter is in place the end record is a variable concept
+        final boolean isLastRecord = !isFiltered
+                && stepLocation != null
+                && endLocation != null
+                && stepLocation.getPartIndex() == endLocation.getPartIndex()
+                && stepLocation.getRecordIndex() == endLocation.getRecordIndex();
+        final boolean canStepFurtherBack = foundRecord && !hasFatal && !isFirstRecord;
+        final boolean canStepFurtherForward = foundRecord && !hasFatal && !isLastRecord;
+
         if (justStepped) {
             if (stepType == StepType.FIRST) {
                 getView().setStepFirstEnabled(false);
@@ -88,29 +106,34 @@ public class StepControlPresenter
                 getView().setStepForwardEnabled(true);
                 getView().setStepLastEnabled(true);
             } else if (stepType == StepType.BACKWARD) {
-                getView().setStepFirstEnabled(foundRecord && !hasFatal);
-                getView().setStepBackwardEnabled(foundRecord && !hasFatal);
+                getView().setStepFirstEnabled(canStepFurtherBack);
+                getView().setStepBackwardEnabled(canStepFurtherBack);
                 getView().setStepForwardEnabled(true);
                 getView().setStepLastEnabled(true);
             } else if (stepType == StepType.FORWARD) {
+                if (endLocation == null && !isFiltered && !foundRecord) {
+                    endLocation = stepLocation;
+                }
                 getView().setStepFirstEnabled(true);
                 getView().setStepBackwardEnabled(true);
-                getView().setStepForwardEnabled(foundRecord && !hasFatal);
-                getView().setStepLastEnabled(foundRecord && !hasFatal);
+                getView().setStepForwardEnabled(canStepFurtherForward);
+                getView().setStepLastEnabled(canStepFurtherForward);
             } else if (stepType == StepType.LAST) {
+                // Record the end location for future now that we know it.
+                if (endLocation == null && !isFiltered && foundRecord) {
+                    endLocation = stepLocation;
+                }
                 getView().setStepFirstEnabled(true);
                 getView().setStepBackwardEnabled(true);
                 getView().setStepForwardEnabled(false);
                 getView().setStepLastEnabled(false);
             } else if (stepType == StepType.REFRESH) {
-                getView().setStepFirstEnabled(true);
-                getView().setStepBackwardEnabled(true);
-                getView().setStepForwardEnabled(true);
-                getView().setStepLastEnabled(true);
+                getView().setStepFirstEnabled(!isFirstRecord);
+                getView().setStepBackwardEnabled(!isFirstRecord);
+                getView().setStepForwardEnabled(!isLastRecord);
+                getView().setStepLastEnabled(!isLastRecord);
             }
-            getView().setStepRefreshEnabled(showingData);
-
-        } else if (tasksSelected) {
+        } else {
             if (stepType == null || stepType == StepType.BACKWARD) {
                 getView().setStepFirstEnabled(showingData);
                 getView().setStepBackwardEnabled(showingData);
@@ -127,16 +150,8 @@ public class StepControlPresenter
                 getView().setStepForwardEnabled(showingData);
                 getView().setStepLastEnabled(showingData);
             }
-            getView().setStepRefreshEnabled(showingData);
-
-        } else {
-            // There are no tasks selected so disable the buttons.
-            getView().setStepFirstEnabled(false);
-            getView().setStepBackwardEnabled(false);
-            getView().setStepForwardEnabled(false);
-            getView().setStepLastEnabled(false);
-            getView().setStepRefreshEnabled(showingData);
         }
+        getView().setStepRefreshEnabled(showingData);
     }
 
     @Override

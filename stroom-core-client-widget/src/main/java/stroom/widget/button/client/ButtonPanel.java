@@ -22,9 +22,8 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.stream.StreamSupport;
-
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 public class ButtonPanel extends FlowPanel {
 

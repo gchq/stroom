@@ -100,6 +100,13 @@ public class SteppingResult {
         return stepFilterMap;
     }
 
+    public boolean hasActiveFilter() {
+        return stepFilterMap != null
+                && stepFilterMap.values()
+                .stream()
+                .anyMatch(SteppingFilterSettings::isActive);
+    }
+
     public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
         this.stepFilterMap = stepFilterMap;
     }

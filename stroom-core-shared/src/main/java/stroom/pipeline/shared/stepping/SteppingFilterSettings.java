@@ -84,14 +84,8 @@ public class SteppingFilterSettings {
 
     @JsonIgnore
     public boolean isActive() {
-        if (skipToSeverity != null) {
-            return true;
-        }
-
-        if (skipToOutput != null) {
-            return true;
-        }
-
-        return filters != null && filters.size() > 0;
+        return skipToSeverity != null
+                || skipToOutput != null
+                || (filters != null && !filters.isEmpty());
     }
 }

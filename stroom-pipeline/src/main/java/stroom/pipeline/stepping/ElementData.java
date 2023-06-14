@@ -56,6 +56,10 @@ public class ElementData {
         this.input = input;
     }
 
+    public boolean isFormatInput() {
+        return formatInput;
+    }
+
     public void setFormatInput(final boolean formatInput) {
         this.formatInput = formatInput;
     }
@@ -69,6 +73,10 @@ public class ElementData {
 
     public void setOutput(final Object output) {
         this.output = output;
+    }
+
+    public boolean isFormatOutput() {
+        return formatOutput;
     }
 
     public void setFormatOutput(final boolean formatOutput) {

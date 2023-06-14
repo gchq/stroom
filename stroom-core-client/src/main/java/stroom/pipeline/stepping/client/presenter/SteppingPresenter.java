@@ -146,10 +146,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         stepControlPresenter.setEnabledButtons(
                 false,
                 request.getStepType(),
-                true,
                 showingData,
                 foundRecord,
-                false);
+                false,
+                false,
+                null);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
         // Create but don't add yet
@@ -216,8 +217,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
     private PresenterWidget<?> getContent(final PipelineElement element) {
         if (PipelineModel.SOURCE_ELEMENT.getElementType().equals(element.getElementType())) {
+            updateToggleConsoleBtn(null);
             return sourcePresenter;
-
         } else {
             final String elementId = element.getId();
             ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
@@ -622,10 +623,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             stepControlPresenter.setEnabledButtons(
                     true,
                     request.getStepType(),
-                    true,
                     showingData,
                     foundRecord,
-                    fatalErrors.isPresent());
+                    fatalErrors.isPresent(),
+                    result.hasActiveFilter(),
+                    result.getStepLocation());
             busyTranslating = false;
         }
     }
