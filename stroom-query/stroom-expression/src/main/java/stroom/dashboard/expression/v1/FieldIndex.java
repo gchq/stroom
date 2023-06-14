@@ -82,15 +82,15 @@ public class FieldIndex {
         posToField.forEach(consumer);
     }
 
-    public int getWindowTimeFieldPos() {
-        final int pos = getTimeFieldPos();
+    public int getWindowTimeFieldIndex() {
+        final int pos = getTimeFieldIndex();
         if (pos == -1) {
             throw new RuntimeException("Cannot apply window when there is no time field");
         }
         return pos;
     }
 
-    public int getTimeFieldPos() {
+    public int getTimeFieldIndex() {
         if (timeFieldPos == null) {
             timeFieldPos =
                     Optional.ofNullable(getPos(DEFAULT_TIME_FIELD_NAME))
