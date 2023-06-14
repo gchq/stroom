@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.28] - 2023-06-14
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+
 ## [v7.2-beta.27] - 2023-06-13
 
 * Issue **#3304** : Make analytic results searchable.
@@ -5450,7 +5455,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.27...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.28...HEAD
+[v7.2-beta.28]: https://github.com/gchq/stroom/compare/v7.2-beta.27...v7.2-beta.28
 [v7.2-beta.27]: https://github.com/gchq/stroom/compare/v7.2-beta.26...v7.2-beta.27
 [v7.2-beta.26]: https://github.com/gchq/stroom/compare/v7.2-beta.25...v7.2-beta.26
 [v7.2-beta.25]: https://github.com/gchq/stroom/compare/v7.2-beta.24...v7.2-beta.25
