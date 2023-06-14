@@ -23,19 +23,19 @@ import stroom.query.client.ExpressionTreeViewImpl;
 import stroom.query.client.QueryPlugin;
 import stroom.query.client.ResultStorePlugin;
 import stroom.query.client.presenter.QueryDocPresenter;
-import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
-import stroom.query.client.presenter.QueryDocSettingsPresenter;
-import stroom.query.client.presenter.QueryDocSettingsPresenter.QueryDocSettingsView;
-import stroom.query.client.presenter.QueryDocSuperPresenter;
+import stroom.query.client.presenter.QueryEditPresenter;
+import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
+import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.ResultStorePresenter;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
-import stroom.query.client.view.QueryDocSettingsViewImpl;
-import stroom.query.client.view.QueryDocViewImpl;
+import stroom.query.client.view.QueryEditViewImpl;
 import stroom.query.client.view.QueryResultTableViewImpl;
+import stroom.query.client.view.QueryToolbarViewImpl;
 import stroom.query.client.view.ResultStoreSettingsViewImpl;
 import stroom.query.client.view.ResultStoreViewImpl;
 
@@ -46,16 +46,16 @@ public class QueryModule extends PluginModule {
         bindPlugin(QueryPlugin.class);
         bindPlugin(ResultStorePlugin.class);
 
-        bind(QueryDocSuperPresenter.class);
+        bind(QueryDocPresenter.class);
 
         bindPresenterWidget(
-                QueryDocPresenter.class,
-                QueryDocView.class,
-                QueryDocViewImpl.class);
+                QueryToolbarPresenter.class,
+                QueryToolbarView.class,
+                QueryToolbarViewImpl.class);
         bindPresenterWidget(
-                QueryDocSettingsPresenter.class,
-                QueryDocSettingsView.class,
-                QueryDocSettingsViewImpl.class);
+                QueryEditPresenter.class,
+                QueryEditView.class,
+                QueryEditViewImpl.class);
         bindPresenterWidget(
                 QueryResultTablePresenter.class,
                 QueryResultTableView.class,

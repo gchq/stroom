@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultBuilder;
@@ -41,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class SearchResponseCreator {
 
@@ -124,7 +122,7 @@ public class SearchResponseCreator {
                 final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
 
                 // Block and wait for the store to notify us of its completion/termination, or if the wait is too long
-                // we will timeout
+                // we will time out
                 LOGGER.debug(() -> "Waiting: effectiveTimeout=" + effectiveTimeout);
                 didSearchComplete = store.awaitCompletion(effectiveTimeout.toMillis(), TimeUnit.MILLISECONDS);
                 LOGGER.debug(() -> "Finished waiting: effectiveTimeout=" +
@@ -152,7 +150,7 @@ public class SearchResponseCreator {
             }
         }
 
-        // We will only get here if the search is complete or it is an incremental search in which case we don't care
+        // We will only get here if the search is complete, or it is an incremental search in which case we don't care
         // about completion state. Therefore, assemble whatever results we currently have
         try {
             // Get completion state before we get results.
@@ -213,7 +211,7 @@ public class SearchResponseCreator {
                 final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
 
                 // Block and wait for the store to notify us of its completion/termination, or if the wait is too long
-                // we will timeout
+                // we will time out
                 LOGGER.debug(() -> "Waiting: effectiveTimeout=" + effectiveTimeout);
                 didSearchComplete = store.awaitCompletion(effectiveTimeout.toMillis(), TimeUnit.MILLISECONDS);
                 LOGGER.debug(() -> "Finished waiting: effectiveTimeout=" +
@@ -235,7 +233,7 @@ public class SearchResponseCreator {
             }
         }
 
-        // We will only get here if the search is complete or it is an incremental search in which case we don't care
+        // We will only get here if the search is complete, or it is an incremental search in which case we don't care
         // about completion state. Therefore, assemble whatever results we currently have
         try {
             LOGGER.logDurationIfTraceEnabled(() ->
@@ -263,7 +261,7 @@ public class SearchResponseCreator {
                     .map(Result::getErrors)
                     .filter(Objects::nonNull)
                     .flatMap(Collection::stream)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
 
         return errors.isEmpty()
@@ -370,10 +368,9 @@ public class SearchResponseCreator {
             try {
                 final ResultCreator resultCreator = getResultCreator(
                         dataStore.getSerialisers(),
-                        searchRequest.getKey(),
+                        searchRequest,
                         componentId,
-                        resultRequest,
-                        searchRequest.getDateTimeSettings());
+                        resultRequest);
                 if (resultCreator != null) {
                     result = resultCreator.create(dataStore, resultRequest);
                 }
@@ -395,10 +392,9 @@ public class SearchResponseCreator {
             try {
                 final ResultCreator resultCreator = getResultCreator(
                         dataStore.getSerialisers(),
-                        searchRequest.getKey(),
+                        searchRequest,
                         componentId,
-                        resultRequest,
-                        searchRequest.getDateTimeSettings());
+                        resultRequest);
                 if (resultCreator != null) {
                     resultCreator.create(dataStore, resultRequest, resultBuilder);
                 }
@@ -409,24 +405,23 @@ public class SearchResponseCreator {
     }
 
     private ResultCreator getResultCreator(final Serialisers serialisers,
-                                           final QueryKey queryKey,
+                                           final SearchRequest searchRequest,
                                            final String componentId,
-                                           final ResultRequest resultRequest,
-                                           final DateTimeSettings dateTimeSettings) {
+                                           final ResultRequest resultRequest) {
         return cachedResultCreators.computeIfAbsent(componentId, k -> {
             ResultCreator resultCreator;
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                     final FieldFormatter fieldFormatter =
                             new FieldFormatter(
-                                    new FormatterFactory(dateTimeSettings));
+                                    new FormatterFactory(searchRequest.getDateTimeSettings()));
                     resultCreator = new TableResultCreator(
                             fieldFormatter,
                             sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(
                             new MapDataStoreFactory(() -> serialisers),
-                            queryKey,
+                            searchRequest,
                             componentId,
                             resultRequest,
                             null,

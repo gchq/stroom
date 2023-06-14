@@ -79,7 +79,6 @@ public class StoredValueKeyFactory {
 
         } else {
             // This item will not be grouped.
-//            final long uniqueId = keyFactory.getUniqueId();
             return parentKey.resolve(timeMs, 0);
         }
     }
@@ -93,7 +92,6 @@ public class StoredValueKeyFactory {
 
         } else {
             // This item will not be grouped.
-//            final long uniqueId = keyFactory.getUniqueId();
             return parentKey.resolve(getTimeMs(storedValues), 0);
         }
     }

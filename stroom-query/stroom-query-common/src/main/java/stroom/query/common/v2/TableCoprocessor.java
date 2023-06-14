@@ -23,7 +23,7 @@ import stroom.query.api.v2.TableSettings;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public class TableCoprocessor implements Coprocessor {
+public class TableCoprocessor implements Coprocessor, HasCompletionState {
 
     private final TableSettings tableSettings;
     private final DataStore dataStore;

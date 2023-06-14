@@ -18,6 +18,7 @@ package stroom.ui.config.shared;
 
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
+import stroom.ui.config.shared.Themes.ThemeType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,6 +35,12 @@ import javax.inject.Singleton;
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class UserPreferences {
+
+    public static final String DEFAULT_THEME = Themes.THEME_NAME_DARK;
+    public static final EditorKeyBindings DEFAULT_EDITOR_KEY_BINDINGS = EditorKeyBindings.STANDARD;
+    public static final String DEFAULT_EDITOR_THEME_LIGHT = "chrome";
+    public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night";
+    public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
     @JsonProperty
     @JsonPropertyDescription("The theme to use, e.g. `light`, `dark`")
@@ -80,7 +87,7 @@ public class UserPreferences {
         this.editorTheme = editorTheme;
         this.editorKeyBindings = editorKeyBindings != null
                 ? editorKeyBindings
-                : Builder.DEFAULT_EDITOR_KEY_BINDINGS;
+                : DEFAULT_EDITOR_KEY_BINDINGS;
         this.density = density;
         this.font = font;
         this.fontSize = fontSize;
@@ -163,6 +170,18 @@ public class UserPreferences {
         return new Builder(this);
     }
 
+    public static String getDefaultEditorTheme(final String themeName) {
+        final ThemeType themeType = Themes.getThemeType(themeName);
+        switch (themeType) {
+            case DARK:
+                return DEFAULT_EDITOR_THEME_DARK;
+            case LIGHT:
+                return DEFAULT_EDITOR_THEME_LIGHT;
+            default:
+                throw new RuntimeException("Unknown theme name '" + themeName + "'");
+        }
+    }
+
 
     //--------------------------------------------------------------------------------
 
@@ -196,10 +215,6 @@ public class UserPreferences {
 
     public static final class Builder {
 
-        public static final EditorKeyBindings DEFAULT_EDITOR_KEY_BINDINGS = EditorKeyBindings.STANDARD;
-        public static final String DEFAULT_EDITOR_THEME = "chrome";
-        public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night";
-        public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
         private String theme;
         private String editorTheme;
@@ -211,8 +226,8 @@ public class UserPreferences {
         private TimeZone timeZone;
 
         private Builder() {
-            theme = "Dark";
-            editorTheme = DEFAULT_EDITOR_THEME_DARK;
+            theme = DEFAULT_THEME;
+            editorTheme = getDefaultEditorTheme(DEFAULT_THEME);
             editorKeyBindings = DEFAULT_EDITOR_KEY_BINDINGS;
             density = "Default";
             font = "Roboto";

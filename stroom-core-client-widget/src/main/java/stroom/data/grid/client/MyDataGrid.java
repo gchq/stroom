@@ -55,6 +55,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     public static final DefaultResources RESOURCES = GWT.create(DefaultResources.class);
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
+    private static final String MULTI_LINE = "multiline";
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
@@ -108,6 +109,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             setKeyboardSelectionHandler(event -> {
             });
             getRowContainer().getStyle().setCursor(Cursor.POINTER);
+        }
+    }
+
+    public void setMultiLine(final boolean multiLine) {
+        if (multiLine) {
+            addStyleName(MULTI_LINE);
+        } else {
+            removeStyleName(MULTI_LINE);
         }
     }
 
@@ -214,7 +223,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                         final int colNo = resizeHandle.getColNo();
 
                         final Element tempDiv = DOM.createDiv();
-                        tempDiv.setClassName("stroom-dashboard-text-measurement");
+                        tempDiv.setClassName("dataGridCell-text-measurement");
 
                         RootPanel.get().getElement().appendChild(tempDiv);
 

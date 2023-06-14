@@ -62,6 +62,15 @@ var StroomQueryHighlightRules = function() {
             token : "keyword.operator", // Between
             regex : "between"
         }, {
+            token : "constant.numeric", // date
+            regex : "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z?"
+        }, {
+            token : "constant.numeric", // date
+            regex : "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z?"
+        }, {
+            token : "constant.numeric", // date
+            regex : "[0-9]{4}-[0-9]{2}-[0-9]{2}Z?"
+        }, {
             token : "constant.numeric", // float
             regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
         }, {

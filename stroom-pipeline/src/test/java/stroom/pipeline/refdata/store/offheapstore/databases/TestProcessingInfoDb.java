@@ -46,7 +46,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     @BeforeEach
     void setup() {
         processingInfoDb = new ProcessingInfoDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new RefStreamDefinitionSerde(),
                 new RefDataProcessingInfoSerde());

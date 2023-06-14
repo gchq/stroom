@@ -200,7 +200,7 @@ public final class PropertyUtil {
     }
 
     /**
-     * Builds a map of property names to a {@link Prop} object that provides access to the getter/setter.
+     * Builds a map of property name to {@link Prop} object that provides access to the getter/setter.
      * Only includes public properties, not package private
      */
     public static <T> ObjectInfo<T> getObjectInfo(final ObjectMapper objectMapper,

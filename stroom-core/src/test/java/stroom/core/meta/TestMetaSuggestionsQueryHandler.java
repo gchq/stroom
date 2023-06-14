@@ -153,6 +153,6 @@ class TestMetaSuggestionsQueryHandler {
                         .map(name -> DocRef.builder().name(name).build())
                         .collect(Collectors.toList()));
 
-        return queryHandler.getSuggestions(request);
+        return queryHandler.getSuggestions(request).getList();
     }
 }

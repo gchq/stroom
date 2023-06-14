@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +49,7 @@ class TestKeyValueStoreDb extends AbstractStoreDbTest {
     @BeforeEach
     void setup() {
         keyValueStoreDb = new KeyValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new KeyValueStoreKeySerde(),
                 new ValueStoreKeySerde());
@@ -154,6 +156,61 @@ class TestKeyValueStoreDb extends AbstractStoreDbTest {
         lmdbEnv.doWithReadTxn(readTxn -> {
             final long entryCount = keyValueStoreDb.getEntryCount(uid2, readTxn);
             assertThat(entryCount).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void testGetMaxUid() {
+
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 0);
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 1);
+        final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 2);
+
+        final KeyValueStoreKey keyValueStoreKey11 = new KeyValueStoreKey(uid1, "key11");
+        final KeyValueStoreKey keyValueStoreKey12 = new KeyValueStoreKey(uid1, "key12");
+        final KeyValueStoreKey keyValueStoreKey21 = new KeyValueStoreKey(uid2, "key21");
+        final KeyValueStoreKey keyValueStoreKey22 = new KeyValueStoreKey(uid2, "key22");
+        final KeyValueStoreKey keyValueStoreKey31 = new KeyValueStoreKey(uid3, "key31");
+
+        final ValueStoreKey valueStoreKey11 = new ValueStoreKey(11, (short) 11);
+        final ValueStoreKey valueStoreKey12 = new ValueStoreKey(12, (short) 12);
+        final ValueStoreKey valueStoreKey21 = new ValueStoreKey(21, (short) 21);
+        final ValueStoreKey valueStoreKey22 = new ValueStoreKey(22, (short) 22);
+        final ValueStoreKey valueStoreKey31 = new ValueStoreKey(31, (short) 31);
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            keyValueStoreDb.put(writeTxn, keyValueStoreKey11, valueStoreKey11, false);
+            keyValueStoreDb.put(writeTxn, keyValueStoreKey12, valueStoreKey12, false);
+            keyValueStoreDb.put(writeTxn, keyValueStoreKey21, valueStoreKey21, false);
+            keyValueStoreDb.put(writeTxn, keyValueStoreKey22, valueStoreKey22, false);
+            keyValueStoreDb.put(writeTxn, keyValueStoreKey31, valueStoreKey31, false);
+
+            assertThat(keyValueStoreDb.getEntryCount(writeTxn)).isEqualTo(5);
+        });
+
+        keyValueStoreDb.logRawDatabaseContents();
+
+        lmdbEnv.doWithReadTxn(readTxn -> {
+            try (PooledByteBuffer pooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer()) {
+                final Optional<UID> optMaxUid = keyValueStoreDb.getMaxUid(readTxn, pooledKeyBuffer);
+                assertThat(optMaxUid)
+                        .hasValue(uid3);
+            }
+        });
+    }
+
+    @Test
+    void testGetMaxUid_empty() {
+
+        // Empty DB
+        keyValueStoreDb.logRawDatabaseContents();
+
+        lmdbEnv.doWithReadTxn(readTxn -> {
+            try (PooledByteBuffer pooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer()) {
+                final Optional<UID> optMaxUid = keyValueStoreDb.getMaxUid(readTxn, pooledKeyBuffer);
+                assertThat(optMaxUid)
+                        .isEmpty();
+            }
         });
     }
 

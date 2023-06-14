@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.SearchRequestSource.SourceType;
+
 public class KeyFactoryConfigImpl implements KeyFactoryConfig {
 
     public static final String DEFAULT_TIME_FIELD_NAME = "__time__";
@@ -8,14 +10,14 @@ public class KeyFactoryConfigImpl implements KeyFactoryConfig {
     private int timeFieldIndex = -1;
     private boolean addTimeToKey;
 
-    public KeyFactoryConfigImpl(final CompiledField[] compiledFields,
-                                final CompiledDepths compiledDepths,
-                                final DataStoreSettings dataStoreSettings) {
+    public KeyFactoryConfigImpl(final SourceType sourceType,
+                                final CompiledField[] compiledFields,
+                                final CompiledDepths compiledDepths) {
         boolean timeGrouped = false;
 
         for (int i = 0; i < compiledFields.length; i++) {
             final CompiledField field = compiledFields[i];
-            if (dataStoreSettings.isRequireTimeValue() &&
+            if (sourceType.isRequireTimeValue() &&
                     DEFAULT_TIME_FIELD_NAME.equalsIgnoreCase(field.getField().getName())) {
                 timeFieldIndex = i;
                 if (field.getGroupDepth() >= 0) {
@@ -26,7 +28,7 @@ public class KeyFactoryConfigImpl implements KeyFactoryConfig {
 
         for (int i = 0; i < compiledFields.length; i++) {
             final CompiledField field = compiledFields[i];
-            if (dataStoreSettings.isRequireTimeValue() &&
+            if (sourceType.isRequireTimeValue() &&
                     FALLBACK_TIME_FIELD_NAME.equalsIgnoreCase(field.getField().getName())) {
                 if (field.getGroupDepth() >= 0) {
                     if (!timeGrouped) {
@@ -45,7 +47,7 @@ public class KeyFactoryConfigImpl implements KeyFactoryConfig {
             timeFieldIndex = -1;
         }
 
-        if (dataStoreSettings.isRequireTimeValue() && timeFieldIndex == -1) {
+        if (sourceType.isRequireTimeValue() && timeFieldIndex == -1) {
             throw new RuntimeException("Time field required but not found.");
         }
     }
@@ -58,9 +60,5 @@ public class KeyFactoryConfigImpl implements KeyFactoryConfig {
     @Override
     public boolean addTimeToKey() {
         return addTimeToKey;
-    }
-
-    public void setAddTimeToKey(final boolean addTimeToKey) {
-        this.addTimeToKey = addTimeToKey;
     }
 }

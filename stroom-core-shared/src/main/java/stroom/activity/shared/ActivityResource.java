@@ -89,7 +89,7 @@ public interface ActivityResource extends RestResource, DirectRestService, Fetch
     @POST
     @Path("/validate")
     @Operation(
-            summary = "Create an Activity",
+            summary = "Validate an Activity",
             operationId = "validateActivity")
     ActivityValidationResult validate(@Parameter(description = "activity", required = true) final Activity activity);
 

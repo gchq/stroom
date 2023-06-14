@@ -25,8 +25,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
@@ -46,8 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasDocumentWrite<StroomStatsStoreDoc>, HasDirtyHandlers {
 
     private final MyDataGrid<StatisticField> dataGrid;
     private final MultiSelectionModelImpl<StatisticField> selectionModel;
@@ -240,27 +238,24 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     }
 
     @Override
-    public void read(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        if (stroomStatsStoreEntity != null) {
-            stroomStatsStoreEntityData = stroomStatsStoreEntity.getConfig();
+    public void read(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
+        if (document != null) {
+            stroomStatsStoreEntityData = document.getConfig();
 
             if (customMaskListPresenter != null) {
-                customMaskListPresenter.read(docRef, stroomStatsStoreEntity);
+                customMaskListPresenter.read(docRef, document, readOnly);
             }
             refresh();
         }
     }
 
     @Override
-    public StroomStatsStoreDoc write(final StroomStatsStoreDoc entity) {
-        entity.setConfig(stroomStatsStoreEntityData);
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
+    public StroomStatsStoreDoc write(final StroomStatsStoreDoc document) {
+        document.setConfig(stroomStatsStoreEntityData);
+        return document;
     }
 
     @Override

@@ -10,8 +10,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchTaskProgress;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -119,7 +119,7 @@ class SearchableSearchProvider implements SearchProvider {
             final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             // Create a handler for search results.
-            final Coprocessors coprocessors =
+            final CoprocessorsImpl coprocessors =
                     coprocessorsFactory.create(modifiedSearchRequest,
                             DataStoreSettings.createBasicSearchResultStoreSettings());
 
@@ -134,7 +134,7 @@ class SearchableSearchProvider implements SearchProvider {
     private ResultStore buildStore(final TaskContext parentTaskContext,
                                    final SearchRequest searchRequest,
                                    final Searchable searchable,
-                                   final Coprocessors coprocessors,
+                                   final CoprocessorsImpl coprocessors,
                                    final ExpressionOperator expression) {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);

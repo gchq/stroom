@@ -27,6 +27,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.entity.client.presenter.HasToolbar;
 import stroom.main.client.event.UrlQueryParameterChangeEvent;
 import stroom.main.client.event.UrlQueryParameterChangeEvent.UrlQueryParameterChangeHandler;
 
@@ -34,6 +35,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
@@ -44,12 +46,13 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
 public class DashboardMainPresenter
         extends MyPresenter<DashboardMainView, DashboardMainProxy>
-        implements UrlQueryParameterChangeHandler {
+        implements UrlQueryParameterChangeHandler, HasToolbar {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final String SHOW_DASHBOARD_ACTION = "open-dashboard";
@@ -79,7 +82,12 @@ public class DashboardMainPresenter
         });
     }
 
-    private void onLoadSuccess(final DashboardDoc dashboard) {
+    @Override
+    public List<Widget> getToolbars() {
+        return dashboardPresenter.getToolbars();
+    }
+
+    private void onLoadSuccess(final DashboardDoc dashboard, final boolean readOnly) {
         if (dashboard == null) {
             AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
 
@@ -87,7 +95,7 @@ public class DashboardMainPresenter
             setInSlot(CONTENT, dashboardPresenter);
             forceReveal();
 
-            dashboardPresenter.read(DocRefUtil.create(dashboard), dashboard);
+            dashboardPresenter.read(DocRefUtil.create(dashboard), dashboard, readOnly);
             Window.setTitle(dashboardPresenter.getLabel());
         }
     }
@@ -130,7 +138,7 @@ public class DashboardMainPresenter
                 final DocRef docRef = new DocRef(type, uuid);
                 final Rest<DashboardDoc> rest = restFactory.create();
                 rest
-                        .onSuccess(this::onLoadSuccess)
+                        .onSuccess(doc -> onLoadSuccess(doc, true))
                         .onFailure(this::onLoadFailure)
                         .call(DASHBOARD_RESOURCE)
                         .fetch(docRef.getUuid());

@@ -423,6 +423,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.pipeline.refdata.ReferenceDataStagingLmdbConfig getReferenceDataStagingLmdbConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.pipeline.refdata.ReferenceDataStagingLmdbConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.processor.impl.ProcessorConfig getProcessorConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

@@ -29,6 +29,7 @@ import stroom.util.logging.LogUtil;
 import com.google.common.base.Preconditions;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -43,6 +44,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -76,10 +78,15 @@ import java.util.stream.StreamSupport;
  * @param <K> The class of the database keys
  * @param <V> The class of the database values
  */
-public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
+public abstract class AbstractLmdbDb<K, V>
+        implements LmdbDb {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdbDb.class);
+    private static final PutFlags[] NO_OVERWRITE = new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
+    private static final PutFlags[] NO_OVERWRITE_AND_APPEND = new PutFlags[]{
+            PutFlags.MDB_NOOVERWRITE,
+            PutFlags.MDB_APPEND};
 
     private final Serde<K> keySerde;
     private final Serde<V> valueSerde;
@@ -398,7 +405,8 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
                 final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
 
-            final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(startKeyPooledBuffer,
+            final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(
+                    startKeyPooledBuffer,
                     stopKeyPooledBuffer,
                     keyRange);
             forEachEntryAsBytes(txn, serialisedKeyRange, keyVal -> {
@@ -406,11 +414,22 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 keyValueTupleConsumer.accept(deSerialisedKeyValue);
             });
         }
-
     }
 
     /**
-     * Apply the passes entryConsumer for each entry found in the keyRange. The consumer works on
+     * Apply the passes entryConsumer for all entries in key order
+     */
+    public void forEachEntry(final Txn<ByteBuffer> txn,
+                             final Consumer<Entry<K, V>> keyValueTupleConsumer) {
+
+        forEachEntryAsBytes(txn, keyVal -> {
+            final Entry<K, V> deSerialisedKeyValue = deserializeKeyVal(keyVal);
+            keyValueTupleConsumer.accept(deSerialisedKeyValue);
+        });
+    }
+
+    /**
+     * Apply the passed entryConsumer for each entry found in the keyRange. The consumer works on
      * the raw bytes of the entry.
      */
     public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
@@ -422,6 +441,15 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 entryConsumer.accept(keyVal);
             }
         }
+    }
+
+    /**
+     * Apply the passed entryConsumer for all entries. The consumer works on
+     * the raw bytes of the entry.
+     */
+    public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
+                                    final Consumer<CursorIterable.KeyVal<ByteBuffer>> entryConsumer) {
+        forEachEntryAsBytes(txn, KeyRange.all(), entryConsumer);
     }
 
     /**
@@ -441,6 +469,28 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             serializeKey(keyBuffer, key);
             return exists(txn, keyBuffer);
         }
+    }
+
+    /**
+     * Scans over all entries till it finds a match, so not recommended for use on big tables.
+     * De-serialises each key as it goes.
+     * Intended for use when it is not possible to test a key without di-serialisation, e.g. when
+     * variable width serialisation is used.
+     * @return True if any entry exists that matches keyPredicate.
+     */
+    public boolean exists(final Txn<ByteBuffer> txn, final Predicate<K> keyPredicate) {
+        Objects.requireNonNull(keyPredicate);
+        boolean wasMatchFound = false;
+        try (CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+            for (final KeyVal<ByteBuffer> keyValBuffer : iterable) {
+                final K key = deserializeKey(keyValBuffer.key());
+                if (keyPredicate.test(key)) {
+                    wasMatchFound = true;
+                    break;
+                }
+            }
+        }
+        return wasMatchFound;
     }
 
     /**
@@ -481,10 +531,40 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         });
     }
 
+    /**
+     * @param writeTxn
+     * @param key
+     * @param value
+     * @param overwriteExisting If true it will overwrite an existing entry with the same key. If false will
+     *                          not do anything if an existing entry exists. If the database has
+     *                          {@link DbiFlags#MDB_DUPSORT} set then you need to set this to true
+     *                          to put multiple values for the same key.
+     * @return
+     */
     public PutOutcome put(final Txn<ByteBuffer> writeTxn,
                           final K key,
                           final V value,
                           final boolean overwriteExisting) {
+        return put(writeTxn, key, value, overwriteExisting, false);
+    }
+
+    /**
+     * @param writeTxn
+     * @param key
+     * @param value
+     * @param overwriteExisting If true it will overwrite an existing entry with the same key. If false will
+     *                          not do anything if an existing entry exists. If the database has
+     *                          {@link DbiFlags#MDB_DUPSORT} set then you need to set this to true
+     *                          to put multiple values for the same key.
+     * @param isAppending       Set this to true if you are sure the key is going on the end of the DB.
+     *                          Speeds up the put.
+     * @return
+     */
+    public PutOutcome put(final Txn<ByteBuffer> writeTxn,
+                          final K key,
+                          final V value,
+                          final boolean overwriteExisting,
+                          final boolean isAppending) {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer();
                 final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 
@@ -498,19 +578,36 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     writeTxn,
                     keyBuffer,
                     valueBuffer,
-                    overwriteExisting);
+                    overwriteExisting,
+                    isAppending);
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
         }
     }
 
+    public PutOutcome put(final K key,
+                          final V value,
+                          final boolean overwriteExisting) {
+        return lmdbEnvironment.getWithWriteTxn(writeTxn -> {
+            try {
+                final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting, false);
+                return putOutcome;
+            } catch (RuntimeException e) {
+                throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
+            }
+        });
+    }
+
     /**
      * This will fail if you are already inside a txn.
      */
-    public PutOutcome put(final K key, final V value, final boolean overwriteExisting) {
+    public PutOutcome put(final K key,
+                          final V value,
+                          final boolean overwriteExisting,
+                          final boolean isAppending) {
         return lmdbEnvironment.getWithWriteTxn(writeTxn -> {
             try {
-                final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting);
+                final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting, isAppending);
                 return putOutcome;
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
@@ -522,13 +619,25 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                           final ByteBuffer keyBuffer,
                           final ByteBuffer valueBuffer,
                           final boolean overwriteExisting) {
+        return put(writeTxn, keyBuffer, valueBuffer, overwriteExisting, false);
+    }
+
+    public PutOutcome put(final Txn<ByteBuffer> writeTxn,
+                          final ByteBuffer keyBuffer,
+                          final ByteBuffer valueBuffer,
+                          final boolean overwriteExisting,
+                          final boolean isAppending) {
         try {
             boolean didPutSucceed;
 
             // First try with nooverwrite flag so the put will fail if the key exists
-            // For use cases with heavy updates to existing entries this two step put is not ideal,
+            // For use cases with heavy updates to existing entries this two-step put is not ideal,
             // we would need some kind of flag to indicate if we care about what was there before or not.
-            didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
+            // If we know the puts are in key order then using MDB_APPEND speeds up the puts a lot.
+            final PutFlags[] initialPutFlags = isAppending
+                    ? NO_OVERWRITE_AND_APPEND
+                    : NO_OVERWRITE;
+            didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, initialPutFlags);
 
             final PutOutcome putOutcome;
             if (didPutSucceed) {
@@ -536,7 +645,8 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             } else {
                 // Already have an entry for this key
                 if (overwriteExisting) {
-                    // now try again without the overwrite flag set
+                    // Now try again without the overwrite flag set
+                    // Can't use MDB_APPEND here as we know there is an existing value, which would make lmdb barf
                     didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer);
 
                     putOutcome = didPutSucceed
@@ -724,6 +834,23 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     }
 
     /**
+     * Drops all data in the database.
+     */
+    public void drop() {
+        lmdbEnvironment.doWithWriteTxn(this::drop);
+    }
+
+    /**
+     * Drops all data in the database.
+     *
+     * @param writeTxn
+     */
+    public void drop(final Txn<ByteBuffer> writeTxn) {
+        LOGGER.debug("Dropping all data in database {}", dbName);
+        lmdbDbi.drop(writeTxn);
+    }
+
+    /**
      * This will fail if you are already inside a txn.
      */
     public void deleteAll(final Collection<K> keys) {
@@ -840,7 +967,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             return keySerde.deserialize(keyBuffer);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error de-serialising key buffer [{}]: {}",
-                    ByteBufferUtils.byteBufferToHex(keyBuffer), e.getMessage()));
+                    ByteBufferUtils.byteBufferToHex(keyBuffer), e.getMessage()), e);
         }
     }
 
@@ -849,7 +976,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             return valueSerde.deserialize(valueBuffer);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error de-serialising value buffer [{}]: {}",
-                    ByteBufferUtils.byteBufferToHex(valueBuffer), e.getMessage()));
+                    ByteBufferUtils.byteBufferToHex(valueBuffer), e.getMessage()), e);
         }
     }
 
@@ -862,7 +989,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             keySerde.serialize(keyBuffer, key);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error serialising key [{}]: {}",
-                    key, e.getMessage()));
+                    key, e.getMessage()), e);
         }
     }
 
@@ -871,7 +998,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             valueSerde.serialize(valueBuffer, value);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error serialising value [{}]: {}",
-                    value, e.getMessage()));
+                    value, e.getMessage()), e);
         }
     }
 

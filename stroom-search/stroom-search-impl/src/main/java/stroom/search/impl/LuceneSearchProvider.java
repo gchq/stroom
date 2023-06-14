@@ -31,8 +31,8 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -66,7 +66,8 @@ public class LuceneSearchProvider implements SearchProvider {
     private final ResultStoreFactory resultStoreFactory;
     private final TaskContextFactory taskContextFactory;
     private final ExecutorProvider executorProvider;
-    private final LuceneSearchExecutor luceneSearchExecutor;
+    private final FederatedSearchExecutor federatedSearchExecutor;
+    private final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator;
 
     @Inject
     public LuceneSearchProvider(final IndexStore indexStore,
@@ -77,7 +78,8 @@ public class LuceneSearchProvider implements SearchProvider {
                                 final ResultStoreFactory resultStoreFactory,
                                 final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider,
-                                final LuceneSearchExecutor luceneSearchExecutor) {
+                                final FederatedSearchExecutor federatedSearchExecutor,
+                                final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator) {
         this.indexStore = indexStore;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
@@ -86,7 +88,8 @@ public class LuceneSearchProvider implements SearchProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.taskContextFactory = taskContextFactory;
         this.executorProvider = executorProvider;
-        this.luceneSearchExecutor = luceneSearchExecutor;
+        this.federatedSearchExecutor = federatedSearchExecutor;
+        this.luceneNodeSearchTaskCreator = luceneNodeSearchTaskCreator;
     }
 
     @Override
@@ -151,15 +154,19 @@ public class LuceneSearchProvider implements SearchProvider {
                 .createSettings(modifiedSearchRequest);
 
         // Create a handler for search results.
-        final Coprocessors coprocessors = coprocessorsFactory.create(
+        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                .createBasicSearchResultStoreSettings();
+        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                modifiedSearchRequest.getSearchRequestSource(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                dataStoreSettings);
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+        final FederatedSearchTask federatedSearchTask = new FederatedSearchTask(
+                modifiedSearchRequest.getSearchRequestSource(),
                 modifiedSearchRequest.getKey(),
                 searchName,
                 query,
@@ -173,7 +180,7 @@ public class LuceneSearchProvider implements SearchProvider {
                 coprocessors);
         resultStore.addHighlights(highlights);
 
-        luceneSearchExecutor.start(asyncSearchTask, resultStore);
+        federatedSearchExecutor.start(federatedSearchTask, resultStore, luceneNodeSearchTaskCreator);
 
         return resultStore;
     }

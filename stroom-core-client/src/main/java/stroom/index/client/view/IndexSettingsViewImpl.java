@@ -29,7 +29,6 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -41,8 +40,6 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField
     ValueSpinner maxDocsPerShard;
     @UiField(provided = true)
@@ -118,11 +115,6 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     }
 
     @Override
-    public TextArea getDescription() {
-        return description;
-    }
-
-    @Override
     public int getMaxDocsPerShard() {
         return this.maxDocsPerShard.getIntValue();
     }
@@ -189,7 +181,6 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         maxDocsPerShard.setEnabled(!readOnly);
         partitionBy.setEnabled(!readOnly);
         partitionSize.setEnabled(!readOnly);

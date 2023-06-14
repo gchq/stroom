@@ -46,15 +46,15 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     private final Provider<FolderRootPresenter> editorProvider;
     private final ClientSecurityContext securityContext;
 
-    private FolderRootPresenter presenter;
+//    private FolderRootPresenter presenter;
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus,
                             final Provider<FolderRootPresenter> editorProvider,
-                            final ClientSecurityContext securityContext,
                             final ContentManager contentManager,
-                            final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                            final DocumentPluginEventManager entityPluginEventManager,
+                            final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.contentManager = contentManager;
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;

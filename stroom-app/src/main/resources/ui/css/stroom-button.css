@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+ .icon-button-group {
+     display: flex;
+ }
+
 .icon-button {
     display: flex;
     position: relative;
@@ -23,7 +27,6 @@
     margin: 0;
     border: none;
     align-items: center;
-    color: var(--text-color);
     outline: none;
     background-color: transparent;
 	cursor: pointer;
@@ -39,22 +42,6 @@
     border-radius: .25rem;
 }
 
-/*
-* FOCUS BEHAVIOUR
-*/
-.icon-button:focus-visible {
-  box-shadow: var(--focus-shadow);
-}
-
-.icon-button:focus-visible .background {
-  border: thin solid var(--focus-border) !important;
-}
-
-
-
-
-
-
 .icon-button:hover .background {
     background-color: var(--icon-button__background-color--hover);
     border: thin solid var(--icon-button__border-color--hover);
@@ -65,14 +52,8 @@
     border: thin solid var(--icon-button__border-color--on);
 }
 
-.navigation .icon-button:hover .background {
-    background-color: var(--navigation-icon-button__background-color--hover);
-    border: thin solid var(--navigation-icon-button__border-color--hover);
-}
-
-.navigation .icon-button.on .background {
-    background-color: var(--navigation-icon-button__background-color--on);
-    border: thin solid var(--navigation-icon-button__border-color--on);
+.icon-button.on .face {
+    color: var(--icon-button__color--on);
 }
 
 .icon-button.disabled {
@@ -90,15 +71,44 @@
     display: flex;
     align-items: center;
     flex-direction: column;
+    color: var(--icon-button__color);
 }
-
-
 
 .icon-button svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
+/* FOCUS BEHAVIOUR */
+.icon-button:focus-visible {
+  box-shadow: var(--focus-shadow);
+}
+
+.icon-button:focus-visible .background {
+  border: thin solid var(--focus-border) !important;
+}
+
+/* Navigation buttons */
+.navigation .icon-button:hover .background {
+    background-color: var(--navigation-icon-button__background-color--hover);
+    border: thin solid var(--navigation-icon-button__border-color--hover);
+}
+
+.navigation .icon-button.on .background {
+    background-color: var(--navigation-icon-button__background-color--on);
+    border: thin solid var(--navigation-icon-button__border-color--on);
+}
+
+.navigation .icon-button .face {
+    color: var(--navigation__text-color);
+}
+
+.navigation-menu-button.icon-button .face,
+.navigation-menu-button {
+    color: var(--button__text-color);
+}
+
+/* Fab buttons */
 .stroom-button-fab {
 	display: inline-block;
 	border: none;
@@ -143,8 +153,4 @@
 	left: 1px;
 	top: 1px;
 	box-shadow: none;
-}
-
-.icon-button-group {
-    display: flex;
 }

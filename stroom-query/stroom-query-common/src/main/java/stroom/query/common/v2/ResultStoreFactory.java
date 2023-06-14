@@ -29,7 +29,7 @@ public final class ResultStoreFactory {
      * @param store The underlying store to use for creating the search responses.
      */
     public ResultStore create(final SearchRequestSource searchRequestSource,
-                              final Coprocessors coprocessors) {
+                              final CoprocessorsImpl coprocessors) {
         final String userId = securityContext.getUserId();
         Objects.requireNonNull(userId, "No user is logged in");
 

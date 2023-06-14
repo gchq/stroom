@@ -41,5 +41,5 @@ public interface SuggestionsResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Fetch some suggestions",
             operationId = "fetchSuggestions")
-    List<String> fetch(@Parameter(description = "request", required = true) FetchSuggestionsRequest request);
+    Suggestions fetch(@Parameter(description = "request", required = true) FetchSuggestionsRequest request);
 }

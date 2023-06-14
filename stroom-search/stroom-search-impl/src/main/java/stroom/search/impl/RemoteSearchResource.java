@@ -47,7 +47,7 @@ public interface RemoteSearchResource extends RestResource {
     @Operation(
             summary = "Start a search",
             operationId = "startRemoteSearch")
-    Boolean start(ClusterSearchTask clusterSearchTask);
+    Boolean start(NodeSearchTask nodeSearchTask);
 
     @GET
     @Path(POLL_PATH_PART)

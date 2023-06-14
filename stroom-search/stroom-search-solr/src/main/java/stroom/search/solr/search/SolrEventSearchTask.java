@@ -18,9 +18,11 @@ package stroom.search.solr.search;
 
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.common.v2.EventRef;
 
 public class SolrEventSearchTask {
+    private final SearchRequestSource searchRequestSource;
     private final QueryKey key;
     private final Query query;
     private final EventRef minEvent;
@@ -29,13 +31,15 @@ public class SolrEventSearchTask {
     private final long maxEvents;
     private final long maxEventsPerStream;
 
-    public SolrEventSearchTask(final QueryKey key,
+    public SolrEventSearchTask(final SearchRequestSource searchRequestSource,
+                               final QueryKey key,
                                final Query query,
                                final EventRef minEvent,
                                final EventRef maxEvent,
                                final long maxStreams,
                                final long maxEvents,
                                final long maxEventsPerStream) {
+        this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.query = query;
         this.minEvent = minEvent;
@@ -43,6 +47,10 @@ public class SolrEventSearchTask {
         this.maxStreams = maxStreams;
         this.maxEvents = maxEvents;
         this.maxEventsPerStream = maxEventsPerStream;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public QueryKey getKey() {

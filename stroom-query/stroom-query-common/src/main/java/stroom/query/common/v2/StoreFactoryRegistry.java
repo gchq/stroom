@@ -2,9 +2,6 @@ package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -13,10 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@SuppressWarnings("unused")
 public class StoreFactoryRegistry {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StoreFactoryRegistry.class);
 
     private final Map<String, SearchProvider> dataSourceProviders = new ConcurrentHashMap<>();
 

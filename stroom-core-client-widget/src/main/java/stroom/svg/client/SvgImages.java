@@ -174,6 +174,17 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String ANALYTIC_RULE = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <path style=\"fill:#ff8f00\"\n" +
+            "          d=\"M1333 566q18 20 7 44l-540 1157q-13 25-42 25-4 0-14-2-17-5-25.5-19t-" +
+            "4.5-30l197-808-406 101q-4 1-12 1-18 0-31-11-18-15-13-39l201-825q4-14 16-23t28-9h" +
+            "328q19 0 32 12.5t13 29.5q0 8-5 18l-171 463 396-98q8-2 12-2 19 0 34 15z\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String ANNOTATIONS_INDEX = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 20" +
@@ -1557,14 +1568,15 @@ public class SvgImages {
             "";
 
     public static String FILE = "" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">\n" +
-            "    <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Lice" +
-            "nse - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1" +
-            ", Code: MIT License) -->\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
-            "          d=\"M369.9 97.9L286 14C277 5 264.8-.1 252.1-.1H48C21.5 0 0 21.5 0 48v41" +
-            "6c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V131.9c0-12.7-5.1-25-14.1-34zM332" +
-            ".1 128H256V51.9l76.1 76.1zM48 464V48h160v104c0 13.3 10.7 24 24 24h104v288H48z\"/>\n" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
+            "/2000/svg\">\n" +
+            "    <path\n" +
+            "            style=\"fill:#2196f3\"\n" +
+            "            d=\"M1596 380q28 28 48 76t20 88v1152q0 40-28 68t-68 28h-1344q-40 0-68" +
+            "-28t-28-68v-1600q0-40 28-68t68-28h896q40 0 88 20t76 48zm-444-244v376h376q-10-29-" +
+            "22-41l-313-313q-12-12-41-22zm384 1528v-1024h-416q-40 0-68-28t-28-68v-416h-768v15" +
+            "36h1280z\"/>\n" +
             "</svg>\n" +
             "";
 
@@ -1727,12 +1739,16 @@ public class SvgImages {
             "";
 
     public static String FOLDER = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
-            "          d=\"M1728 608v704q0 92-66 158t-158 66h-1216q-92 0-158-66t-66-158v-960q0" +
-            "-92 66-158t158-66h320q92 0 158 66t66 158v32h672q92 0 158 66t66 158z\"/>\n" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
+            "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
+            "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
+            " 1792\">\n" +
+            " <path fill=\"#2196f3\" d=\"m1617.9 701.64v610.84q0 79.825-57.266 137.09-57.266 57." +
+            "266-137.09 57.266h-1055.1q-79.825 0-137.09-57.266-57.266-57.266-57.266-137.09v-8" +
+            "32.96q0-79.825 57.266-137.09 57.266-57.266 137.09-57.266h277.65q79.825 0 137.09 " +
+            "57.266 57.266 57.266 57.266 137.09v27.765h583.07q79.825 0 137.09 57.266 57.266 5" +
+            "7.266 57.266 137.09z\"/>\n" +
             "</svg>\n" +
             "";
 
@@ -3700,6 +3716,18 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_EDIT = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <path style=\"fill:currentColor\"\n" +
+            "          d=\"M491 1536l91-91-235-235-91 91v107h128v128h107zm523-928q0-22-22-22-1" +
+            "0 0-17 7l-542 542q-7 7-7 17 0 22 22 22 10 0 17-7l542-542q7-7 7-17zm-54-192l416 4" +
+            "16-832 832h-416v-416zm683 96q0 53-37 90l-166 166-416-416 166-165q36-38 90-38 53 " +
+            "0 91 38l235 234q37 39 37 91z\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_ELLIPSES = "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\"" +
@@ -3897,6 +3925,24 @@ public class SvgImages {
             "3333L682.666667 572.16v149.76M213.333333 810.666667a85.333333 85.333333 0 0 1 85" +
             ".333334-85.333334 85.333333 85.333333 0 0 1 85.333333 85.333334 85.333333 85.333" +
             "333 0 0 1-85.333333 85.333333 85.333333 85.333333 0 0 1-85.333334-85.333333z\"/>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String MONO_RESIZE = "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"4 4 23 23\">\n" +
+            "    <path style=\"fill: currentColor\" d=\"M 5 5 L 5 6 L 5 7 L 6 7 L 7 7 L 7 6 L 7 " +
+            "5 L 6 5 L 5 5 z M 9 5 L 9 7 L 11 7 L 11 5 L 9 5 z M 13 5 L 13 7 L 15 7 L 15 5 L " +
+            "13 5 z M 17 5 L 17 7 L 19 7 L 19 5 L 17 5 z M 21 5 L 21 7 L 23 7 L 23 5 L 21 5 z" +
+            " M 25 5 L 25 6 L 25 7 L 26 7 L 27 7 L 27 6 L 27 5 L 26 5 L 25 5 z M 5 9 L 5 11 L" +
+            " 7 11 L 7 9 L 5 9 z M 25 9 L 25 11 L 27 11 L 27 9 L 25 9 z M 14 11 L 14 13 L 17." +
+            "5625 13 L 13.5625 17 L 7 17 L 5 17 L 5 18 L 5 19 L 5 21 L 5 23 L 5 25 L 5 26 L 5" +
+            " 27 L 6 27 L 7 27 L 14 27 L 15 27 L 15 26 L 15 18.4375 L 19 14.4375 L 19 18 L 21" +
+            " 18 L 21 12 L 21 11 L 20 11 L 14 11 z M 5 13 L 5 15 L 7 15 L 7 13 L 5 13 z M 25 " +
+            "13 L 25 15 L 27 15 L 27 13 L 25 13 z M 25 17 L 25 19 L 27 19 L 27 17 L 25 17 z M" +
+            " 7 19 L 13 19 L 13 25 L 7 25 L 7 23 L 7 21 L 7 19 z M 25 21 L 25 23 L 27 23 L 27" +
+            " 21 L 25 21 z M 17 25 L 17 27 L 19 27 L 19 25 L 17 25 z M 21 25 L 21 27 L 23 27 " +
+            "L 23 25 L 21 25 z M 25 25 L 25 26 L 25 27 L 26 27 L 27 27 L 27 26 L 27 25 L 26 2" +
+            "5 L 25 25 z\"/>\n" +
             "</svg>\n" +
             "";
 

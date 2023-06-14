@@ -16,11 +16,12 @@
 
 package stroom.widget.button.client;
 
-public class InlineSvgToggleButton extends InlineSvgButton implements ButtonView {
+public class InlineSvgToggleButton extends InlineSvgButton implements ToggleButtonView {
 
     private boolean on;
 
-    public void setOn(final boolean on) {
+    @Override
+    public void setState(final boolean on) {
         this.on = on;
         if (on) {
             getElement().addClassName("on");
@@ -29,13 +30,14 @@ public class InlineSvgToggleButton extends InlineSvgButton implements ButtonView
         }
     }
 
-    public boolean isOn() {
+    @Override
+    public boolean getState() {
         return on;
     }
 
     @Override
     void onClick() {
-        setOn(!this.on);
+        setState(!this.on);
         super.onClick();
     }
 }

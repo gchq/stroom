@@ -29,8 +29,8 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
-import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.shared.Processor;
+import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -53,8 +53,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                           final Provider<PipelinePresenter> editorProvider,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
-                          final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                          final DocumentPluginEventManager entityPluginEventManager,
+                          final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
@@ -73,8 +74,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             //            highlight(docRef);
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-            pipelinePresenter.getContent(PipelinePresenter.PROCESSORS,
-                    content -> ((ProcessorPresenter) content).refresh(event.getProcessorFilter()));
+            pipelinePresenter.getProcessorPresenter().refresh(event.getProcessorFilter());
         }));
     }
 

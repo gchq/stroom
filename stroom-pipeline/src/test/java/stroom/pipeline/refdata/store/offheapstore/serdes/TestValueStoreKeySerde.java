@@ -3,6 +3,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -68,7 +69,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
     }
 
     @Override
-    Class<ValueStoreKeySerde> getSerdeType() {
-        return ValueStoreKeySerde.class;
+    TypeLiteral<ValueStoreKeySerde> getSerdeType() {
+        return new TypeLiteral<ValueStoreKeySerde>(){};
     }
 }

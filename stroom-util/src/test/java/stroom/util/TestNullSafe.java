@@ -99,6 +99,59 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testAllNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(NullSafe::allNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(new String[]{null}, true)
+                .addCase(new String[]{null, null}, true)
+                .addCase(new String[]{null, null, null}, true)
+                .addCase(new String[]{"foo", null, null}, false)
+                .addCase(new String[]{null, "foo", null}, false)
+                .addCase(new String[]{null, null, "foo"}, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAllNonNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(NullSafe::allNonNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(new String[]{null}, false)
+                .addCase(new String[]{null, null}, false)
+                .addCase(new String[]{null, null, null}, false)
+                .addCase(new String[]{"foo", null, null}, false)
+                .addCase(new String[]{null, "foo", null}, false)
+                .addCase(new String[]{null, "foo", "foo"}, false)
+                .addCase(new String[]{"1", "2", "3"}, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testFirstNonNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withSingleArgTestFunction(NullSafe::firstNonNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Optional.empty())
+                .addCase(new String[]{null}, Optional.empty())
+                .addCase(new String[]{null, null}, Optional.empty())
+                .addCase(new String[]{null, null, null}, Optional.empty())
+                .addCase(new String[]{"foo", null, null}, Optional.of("foo"))
+                .addCase(new String[]{null, "foo", null}, Optional.of("foo"))
+                .addCase(new String[]{null, "foo", "bar"}, Optional.of("foo"))
+                .addCase(new String[]{"1", "2", "3"}, Optional.of("1"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testCoalesce_twoValues() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, String.class)
@@ -738,7 +791,7 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testStream() {
+    Stream<DynamicTest> testStream_collection() {
         final AtomicInteger counter = new AtomicInteger(0);
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<String>>() {
@@ -755,6 +808,26 @@ class TestNullSafe {
                 .addCase(null, Tuple.of(0, Collections.emptyList()))
                 .addCase(Collections.emptyList(), Tuple.of(0, Collections.emptyList()))
                 .addCase(List.of("foo", "bar"), Tuple.of(2, List.of("foo", "bar")))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testStream_array() {
+        final AtomicInteger counter = new AtomicInteger(0);
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withWrappedOutputType(new TypeLiteral<Tuple2<Integer, List<String>>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final List<String> newList = NullSafe.stream(testCase.getInput())
+                            .peek(item -> counter.incrementAndGet())
+                            .toList();
+                    return Tuple.of(counter.get(), newList);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, Tuple.of(0, Collections.emptyList()))
+                .addCase(new String[0], Tuple.of(0, Collections.emptyList()))
+                .addCase(new String[]{"foo", "bar"}, Tuple.of(2, List.of("foo", "bar")))
                 .build();
     }
 
@@ -823,6 +896,19 @@ class TestNullSafe {
                 .addCase(null, StroomDuration.ZERO)
                 .addCase(StroomDuration.ZERO, StroomDuration.ZERO)
                 .addCase(StroomDuration.ofSeconds(5), StroomDuration.ofSeconds(5))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsTrue() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Boolean.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> NullSafe.isTrue(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(false, false)
+                .addCase(true, true)
                 .build();
     }
 

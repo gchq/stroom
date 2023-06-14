@@ -15,6 +15,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -507,6 +508,12 @@ class DynamicTestBuilder {
                 stringBuilder.append("(")
                         .append(tupleContentsStr)
                         .append(")");
+            } else if (value instanceof final Object[] arr) {
+                stringBuilder.append("[")
+                        .append(Arrays.stream(arr)
+                                .map(this::valueToStr)
+                                .collect(Collectors.joining(", ")))
+                        .append("]");
             } else if (value.toString().contains("$$Lambda")) {
                 // Not sure if there is anything useful we can show for the lambda so just do this
                 stringBuilder.append("lambda");

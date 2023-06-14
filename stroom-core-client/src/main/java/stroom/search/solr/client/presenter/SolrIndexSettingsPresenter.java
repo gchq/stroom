@@ -22,7 +22,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
@@ -45,7 +45,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 
-public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIndexSettingsView, SolrIndexDoc>
+public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
         implements SolrIndexSettingsUiHandlers {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
@@ -114,7 +114,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final SolrIndexDoc index) {
+    protected void onRead(final DocRef docRef, final SolrIndexDoc index, final boolean readOnly) {
         final SolrConnectionConfig connectionConfig = index.getSolrConnectionConfig();
         if (connectionConfig != null) {
             getView().setInstanceType(connectionConfig.getInstanceType());
@@ -124,7 +124,6 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
             getView().setUseZk(connectionConfig.isUseZk());
         }
 
-        getView().setDescription(index.getDescription());
         getView().setCollection(index.getCollection());
 
         if (index.getRetentionExpression() == null) {
@@ -147,7 +146,6 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         connectionConfig.setUseZk(getView().isUseZk());
         index.setSolrConnectionConfig(connectionConfig);
 
-        index.setDescription(getView().getDescription().trim());
         if (getView().getCollection().trim().length() == 0) {
             index.setCollection(null);
         } else {
@@ -160,11 +158,6 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
 
     public interface SolrIndexSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
-
-        String getDescription();
-
-        void setDescription(String description);
-
         String getCollection();
 
         void setCollection(String collection);

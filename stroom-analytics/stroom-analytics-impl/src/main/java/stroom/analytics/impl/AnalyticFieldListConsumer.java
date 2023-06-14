@@ -102,4 +102,8 @@ public class AnalyticFieldListConsumer implements Consumer<List<FieldValue>> {
 
         return false;
     }
+
+    public long getEventId() {
+        return eventId;
+    }
 }

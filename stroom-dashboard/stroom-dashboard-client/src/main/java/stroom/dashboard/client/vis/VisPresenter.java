@@ -39,7 +39,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeThemeEvent;
 import stroom.editor.client.presenter.CurrentTheme;
-import stroom.preferences.client.Themes;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -47,6 +46,7 @@ import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
+import stroom.ui.config.shared.Themes;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisFunction;
@@ -338,7 +338,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
             }
             currentRequestCount--;
             getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.getMode());
+            getView().setRefreshing(currentSearchModel.isSearching());
         });
     }
 

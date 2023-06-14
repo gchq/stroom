@@ -34,8 +34,8 @@
 
 .button-container {
     display: flex;
-    align-items: top;
     margin: 2px;
+    gap: 2px;
 
     /*
     white-space: nowrap;
@@ -165,18 +165,6 @@
 }
 
 /* Close button */
-/*
-.curveTab .curveTab-close {
-    background-image: url("../images/tabs/close.png");
-    width: 12px;
-    height: 12px;
-    -moz-user-select: none;
-    cursor: pointer;
-    margin: 2px 6px 0 4px;
-    z-index: 0;
-    background-repeat: no-repeat;
-}
-*/
 .curveTab .curveTab-close {
     display: flex;
     opacity: 0;
@@ -999,15 +987,22 @@
     min-height: 25px;
 }
 
-.linkTabPanelViewImpl-left {
-    flex-grow: 0;
-}
-
 .linkTabPanelViewImpl-middle {
     flex-grow: 1;
 }
 
-.linkTabPanelViewImpl-right {
+.toolbarContainer {
+    display: flex;
+}
+
+.toolbar {
+}
+
+.toolbar-left {
+    flex-grow: 0;
+}
+
+.toolbar-right {
     display: flex;
     justify-content: flex-end;
     flex-grow: 0;
@@ -1439,7 +1434,7 @@ button.main-menu svg {
     height: 42px;
     justify-content: center;
 }
-
+/*
 .stroom-theme-dark .navigation-menu-button,
 .navigation-title-bar .navigation-menu-button {
     color: white;
@@ -1450,7 +1445,7 @@ button.main-menu svg {
     width: 16px;
     height: 16px;
 }
-
+*/
 /*
 .stroom-theme-dark .navigation-menu-button {
     background-image: url("../images/menu-white.svg");
@@ -1538,28 +1533,6 @@ button.main-menu svg {
     justify-content: flex-end;
 }
 
-.navigation-header-button {
-    color: rgba(255,255,255,.8);
-}
-
-.navigation-header-button > .inline-svg-button {
-    overflow: visible;
-}
-
-/*
-.stroom-theme-dark .navigation-header-button-add {
-   background-image: url("../images/add-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-button-delete {
-   background-image: url("../images/delete-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-button-filter {
-   background-image: url("../images/filter-white.svg");
-}
-*/
-
 
 
 
@@ -1639,7 +1612,7 @@ button.main-menu svg {
 .timeRange-selector {
     color: var(--link__text-color);
     cursor: pointer;
-    font-size: 1.1em;
+    font-size: var(--font-size-14);
 }
 
 .timeRange-selector:hover {
@@ -1683,15 +1656,21 @@ button.main-menu svg {
     user-select: text;
 }
 
+.infoTable code {
+    color: var(--code-color);
+}
+
 .infoTable tr {
     height: 10px;
 }
 
 .infoTable th {
-    color: #1e88e5;
+    color: var(--heading-color);
     font-weight: bold;
     font-size: 125%;
-    height: 2em;
+    height: 2.5em;
+    vertical-align: bottom;
+    padding-bottom: 0.3em;
 }
 
 .infoTable th, .infoTable td {
@@ -1713,7 +1692,6 @@ button.main-menu svg {
 }
 
 .functionSignatureTable {
-    white-space: nowrap;
     user-select: text;
 }
 
@@ -1728,8 +1706,8 @@ button.main-menu svg {
 
 .functionSignatureTable td {
     padding-right: var(--row__gap--horizontal);
+    white-space: normal;
 }
-
 
 .nodePingBar-outer {
     padding-left: .25em;
@@ -1765,7 +1743,7 @@ button.main-menu svg {
     display: flex;
     position: absolute;
     right: 5px;
-    top: 6px;
+    top: 5px;
 }
 
 .findCell {

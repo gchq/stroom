@@ -17,15 +17,12 @@ public class MultiValuesReceiverFactory {
 
     private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
     private final Provider<AlertWriter> alertWriterProvider;
-    private final AggregateRuleValuesConsumerFactory aggregateRuleValuesConsumerFactory;
 
     @Inject
     public MultiValuesReceiverFactory(final Provider<ExtractionStateHolder> extractionStateHolderProvider,
-                                      final Provider<AlertWriter> alertWriterProvider,
-                                      final AggregateRuleValuesConsumerFactory aggregateRuleValuesConsumerFactory) {
+                                      final Provider<AlertWriter> alertWriterProvider) {
         this.extractionStateHolderProvider = extractionStateHolderProvider;
         this.alertWriterProvider = alertWriterProvider;
-        this.aggregateRuleValuesConsumerFactory = aggregateRuleValuesConsumerFactory;
     }
 
     public MultiValuesConsumer create(final RuleConfig ruleConfig,

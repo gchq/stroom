@@ -26,7 +26,6 @@ import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -36,8 +35,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
 
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField
     TextBox classification;
     @UiField
@@ -59,11 +56,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public TextArea getDescription() {
-        return description;
     }
 
     @Override
@@ -98,7 +90,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         classification.setEnabled(!readOnly);
         dataEncoding.setEnabled(!readOnly);
         contextEncoding.setEnabled(!readOnly);
