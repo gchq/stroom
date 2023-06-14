@@ -18,39 +18,40 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class LuceneSearchExecutor {
+public class FederatedSearchExecutor {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneSearchExecutor.class);
-    private static final String TASK_NAME = "AsyncSearchTask";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FederatedSearchExecutor.class);
+    private static final String TASK_NAME = "FederatedSearchTask";
 
     private final NodeInfo nodeInfo;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
+    private final Provider<FederatedSearchTaskHandler> federatedSearchTaskHandlerProvider;
     private final TaskManager taskManager;
 
     @Inject
-    LuceneSearchExecutor(final NodeInfo nodeInfo,
-                         final Executor executor,
-                         final TaskContextFactory taskContextFactory,
-                         final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                         final TaskManager taskManager) {
+    FederatedSearchExecutor(final NodeInfo nodeInfo,
+                            final Executor executor,
+                            final TaskContextFactory taskContextFactory,
+                            final Provider<FederatedSearchTaskHandler> federatedSearchTaskHandlerProvider,
+                            final TaskManager taskManager) {
         this.nodeInfo = nodeInfo;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
+        this.federatedSearchTaskHandlerProvider = federatedSearchTaskHandlerProvider;
         this.taskManager = taskManager;
     }
 
-    public void start(final AsyncSearchTask asyncSearchTask,
-                      final ResultStore resultStore) {
+    public void start(final FederatedSearchTask federatedSearchTask,
+                      final ResultStore resultStore,
+                      final NodeTaskCreator nodeTaskCreator) {
         // Tell the task where results will be collected.
-        asyncSearchTask.setResultStore(resultStore);
+        federatedSearchTask.setResultStore(resultStore);
 
         // Start asynchronous search execution.
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             final AtomicBoolean destroyed = new AtomicBoolean();
-            final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
+            final FederatedSearchTaskHandler federatedSearchTaskHandler = federatedSearchTaskHandlerProvider.get();
 
             final SearchProcess searchProcess = new SearchProcess() {
                 @Override
@@ -73,7 +74,7 @@ public class LuceneSearchExecutor {
                 @Override
                 public void onTerminate() {
                     destroyed.set(true);
-                    asyncSearchTaskHandler.terminateTasks(asyncSearchTask, taskContext.getTaskId());
+                    federatedSearchTaskHandler.terminateTasks(federatedSearchTask, taskContext.getTaskId());
                 }
             };
 
@@ -82,7 +83,7 @@ public class LuceneSearchExecutor {
 
             // Don't begin execution if we have been asked to complete already.
             if (!destroyed.get()) {
-                asyncSearchTaskHandler.exec(taskContext, asyncSearchTask);
+                federatedSearchTaskHandler.exec(taskContext, federatedSearchTask, nodeTaskCreator);
             }
         });
 

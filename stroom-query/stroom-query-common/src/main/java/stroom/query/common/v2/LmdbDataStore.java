@@ -118,9 +118,7 @@ public class LmdbDataStore implements DataStore {
 
 
     private final int maxPutsBeforeCommit;
-    private boolean storeLatestEventReference;
-    private int streamIdFieldIndex = -1;
-    private int eventIdFieldIndex = -1;
+    private final CurrentDbStateFactory currentDbStateFactory;
 
     private final StoredValueKeyFactory storedValueKeyFactory;
 
@@ -145,17 +143,14 @@ public class LmdbDataStore implements DataStore {
         this.producePayloads = dataStoreSettings.isProducePayloads();
         this.errorConsumer = errorConsumer;
 
-        // Add stream id and event id fields if we need them.
+        // Ensure we have a source type.
         final SourceType sourceType =
                 Optional.ofNullable(searchRequestSource)
                         .map(SearchRequestSource::getSourceType)
                         .orElse(SourceType.DASHBOARD_UI);
-        if (sourceType.isRequireStreamIdValue() &&
-                sourceType.isRequireEventIdValue()) {
-            streamIdFieldIndex = fieldIndex.getStreamIdFieldIndex();
-            eventIdFieldIndex = fieldIndex.getEventIdFieldIndex();
-            storeLatestEventReference = true;
-        }
+
+        // Create a factory that makes DB state objects.
+        currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
 
         this.windowSupport = new WindowSupport(tableSettings);
         final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
@@ -268,7 +263,7 @@ public class LmdbDataStore implements DataStore {
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
         // Get a reference to the current event so we can keep track of what we have stored data for.
-        final CurrentDbState currentDbState = createCurrentDbState(values);
+        final CurrentDbState currentDbState = currentDbStateFactory.createCurrentDbState(values);
 
         Key parentKey = Key.ROOT_KEY;
         long parentGroupHash = 0;
@@ -746,21 +741,6 @@ public class LmdbDataStore implements DataStore {
         return fieldIndex;
     }
 
-    private CurrentDbState createCurrentDbState(final Val[] values) {
-        if (storeLatestEventReference) {
-            if (streamIdFieldIndex >= 0 && eventIdFieldIndex >= 0) {
-                final Val streamId = values[streamIdFieldIndex];
-                final Val eventId = values[eventIdFieldIndex];
-                final Val eventTime = values[fieldIndex.getWindowTimeFieldPos()];
-
-                if (streamId != null && eventId != null) {
-                    return new CurrentDbState(streamId.toLong(), eventId.toLong(), eventTime.toLong());
-                }
-            }
-        }
-        return null;
-    }
-
     private void putCurrentDbState(final BatchingWriteTxn writeTxn, final CurrentDbState currentDbState) {
         if (currentDbState != null) {
             final ByteBuffer keyBuffer = LmdbRowKeyFactoryFactory.DB_STATE_KEY;
@@ -782,7 +762,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private synchronized CurrentDbState getCurrentDbState() {
-        if (!storeLatestEventReference) {
+        if (!currentDbStateFactory.isStoreLatestEventReference()) {
             return null;
         }
 
@@ -1105,6 +1085,16 @@ public class LmdbDataStore implements DataStore {
 
         @Override
         public Val getValue(final int index, final boolean evaluateChildren) {
+            if (index >= cachedValues.length) {
+                try {
+                    throw new ArrayIndexOutOfBoundsException("Attempt to get value for unknown field index");
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(Arrays.toString(data.compiledFields));
+                    throw e;
+                }
+            }
+
             Val val = cachedValues[index];
             if (val == null) {
                 val = createValue(index);

@@ -13,6 +13,36 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.28] - 2023-06-14
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+
+## [v7.2-beta.27] - 2023-06-13
+
+* Issue **#3304** : Make analytic results searchable.
+
+
+## [v7.2-beta.26] - 2023-06-13
+
+* Add support for syntax highlighting fenced blocks in markdown documentation.
+
+* Issue **#3506** : Make time picker and query buttons available from dashboards opened from links.
+
+* Issue **#3505** : Add debug.
+
+
+## [v7.2-beta.25] - 2023-06-12
+
+* Issue **#3512** : Increase col width to remove ellipsis.
+
+* Issue **#3511** : Increase col width to remove ellipsis.
+
+* Issue **#3304** : Make analytic results searchable.
+
+* Issue **#3508** : Change toggle button.
+
+
 ## [v7.2-beta.24] - 2023-06-06
 
 * Issue **#3490** : Fix LMDB row key for analytics.
@@ -5425,7 +5455,11 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.24...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.28...HEAD
+[v7.2-beta.28]: https://github.com/gchq/stroom/compare/v7.2-beta.27...v7.2-beta.28
+[v7.2-beta.27]: https://github.com/gchq/stroom/compare/v7.2-beta.26...v7.2-beta.27
+[v7.2-beta.26]: https://github.com/gchq/stroom/compare/v7.2-beta.25...v7.2-beta.26
+[v7.2-beta.25]: https://github.com/gchq/stroom/compare/v7.2-beta.24...v7.2-beta.25
 [v7.2-beta.24]: https://github.com/gchq/stroom/compare/v7.2-beta.23...v7.2-beta.24
 [v7.2-beta.23]: https://github.com/gchq/stroom/compare/v7.2-beta.22...v7.2-beta.23
 [v7.2-beta.22]: https://github.com/gchq/stroom/compare/v7.2-beta.21...v7.2-beta.22

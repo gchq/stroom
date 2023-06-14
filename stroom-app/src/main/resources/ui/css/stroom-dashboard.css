@@ -36,15 +36,15 @@
 	height: 20px;
 }
 
-.QueryButtons-button.play:enabled svg {
+.QueryButtons-button.play svg {
     color: #4caf50;
 }
 
-.QueryButtons-button.pause:enabled svg {
+.QueryButtons-button.pause svg {
     color: #2196f3;
 }
 
-.QueryButtons-button.stop:enabled svg {
+.QueryButtons-button.stop svg {
     color: #d32f2f;
 }
 

@@ -1,6 +1,6 @@
 package stroom.search.impl;
 
-import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskManager;
@@ -21,7 +21,7 @@ class RemoteSearchResultFactory {
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
-    private volatile Coprocessors coprocessors;
+    private volatile CoprocessorsImpl coprocessors;
     private volatile TaskId taskId;
     private volatile boolean destroy;
     private volatile boolean started;
@@ -84,7 +84,7 @@ class RemoteSearchResultFactory {
         });
     }
 
-    public void setCoprocessors(final Coprocessors coprocessors) {
+    public void setCoprocessors(final CoprocessorsImpl coprocessors) {
         this.coprocessors = coprocessors;
     }
 

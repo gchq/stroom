@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.query.api.v2.ResultStoreInfo;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -112,5 +113,26 @@ public class DashboardSuperPresenter
     @Override
     public String getType() {
         return DashboardDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public String getLabel() {
+        return dashboardPresenter.getLabel();
+    }
+
+    public void setParamsFromLink(final String params) {
+        dashboardPresenter.setParamsFromLink(params);
+    }
+
+    public void setCustomTitle(final String customTitle) {
+        dashboardPresenter.setCustomTitle(customTitle);
+    }
+
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        dashboardPresenter.setQueryOnOpen(queryOnOpen);
+    }
+
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        dashboardPresenter.setResultStoreInfo(resultStoreInfo);
     }
 }

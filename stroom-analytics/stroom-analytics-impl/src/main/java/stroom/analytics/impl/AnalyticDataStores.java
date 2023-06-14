@@ -55,6 +55,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -178,7 +179,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return expectedDirs;
     }
 
-    private Set<AnalyticRuleDoc> getCurrentRules() {
+    Set<AnalyticRuleDoc> getCurrentRules() {
         final Set<AnalyticRuleDoc> currentRules = new HashSet<>();
         final List<DocRef> docRefList = analyticRuleStore.list();
         for (final DocRef docRef : docRefList) {
@@ -205,6 +206,28 @@ public class AnalyticDataStores implements HasResultStoreInfo {
             final LmdbDataStore lmdbDataStore = createStore(searchRequest);
             return new AnalyticDataStore(searchRequest, lmdbDataStore);
         });
+    }
+
+    public Optional<AnalyticDataStore> getIfExists(final AnalyticRuleDoc analyticRuleDoc) {
+        AnalyticDataStore analyticDataStore = dataStoreCache.get(analyticRuleDoc);
+        if (analyticDataStore == null) {
+            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
+            final String componentId = getComponentId(searchRequest);
+            final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
+            final Path path = getAnalyticResultStoreDir().resolve(dir);
+            if (Files.isDirectory(path)) {
+                analyticDataStore = dataStoreCache.computeIfAbsent(analyticRuleDoc, k -> {
+                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
+                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                        LOGGER.error("Rule needs to reference a view");
+                        throw new RuntimeException("Rule needs to reference a view");
+                    }
+                    final LmdbDataStore lmdbDataStore = createStore(searchRequest);
+                    return new AnalyticDataStore(searchRequest, lmdbDataStore);
+                });
+            }
+        }
+        return Optional.ofNullable(analyticDataStore);
     }
 
     private LmdbDataStore createStore(final SearchRequest searchRequest) {
@@ -371,18 +394,18 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .build();
         try {
             final AnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
-            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(doc);
-            final String componentId = getComponentId(searchRequest);
-            final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
-            final Path path = analyticResultStoreDir.resolve(dir);
-            if (Files.isDirectory(path)) {
+            final Optional<AnalyticDataStore> optionalAnalyticDataStore = getIfExists(doc);
+            if (optionalAnalyticDataStore.isPresent()) {
+                final AnalyticDataStore analyticDataStore = optionalAnalyticDataStore.get();
+                final SearchRequest searchRequest = analyticDataStore.searchRequest;
+                final LmdbDataStore lmdbDataStore = analyticDataStore.lmdbDataStore;
+
                 final FieldFormatter fieldFormatter =
                         new FieldFormatter(
                                 new FormatterFactory(searchRequest.getDateTimeSettings()));
                 final TableResultCreator resultCreator = new TableResultCreator(
                         fieldFormatter,
                         sizesProvider.getDefaultMaxResultsSizes());
-                final LmdbDataStore lmdbDataStore = createStore(searchRequest);
                 ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
                 TableSettings tableSettings = resultRequest.getMappings().get(0);
                 tableSettings = tableSettings
@@ -429,7 +452,17 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return null;
     }
 
-    public record AnalyticDataStore(SearchRequest searchRequest, LmdbDataStore lmdbDataStore) {
+    private Path getAnalyticResultStoreDir() {
+        return analyticResultStoreDir;
+    }
 
+    public record AnalyticDataStore(SearchRequest searchRequest, LmdbDataStore lmdbDataStore) {
+        public SearchRequest getSearchRequest() {
+            return searchRequest;
+        }
+
+        public LmdbDataStore getLmdbDataStore() {
+            return lmdbDataStore;
+        }
     }
 }

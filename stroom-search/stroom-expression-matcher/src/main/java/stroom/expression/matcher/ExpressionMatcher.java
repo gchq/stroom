@@ -30,10 +30,10 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class ExpressionMatcher {
@@ -43,8 +43,8 @@ public class ExpressionMatcher {
     private final Map<String, AbstractField> fieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
-    private final Map<DocRef, String[]> wordMap = new HashMap<>();
-    private final Map<String, Pattern> patternMap = new HashMap<>();
+    private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
+    private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;
     private final long nowEpochMilli;
 

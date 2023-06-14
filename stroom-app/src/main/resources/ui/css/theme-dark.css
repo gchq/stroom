@@ -17,8 +17,13 @@
     --focus-border--secondary: var(--pink-500);
     --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 
+    /* Main body text colour in the app */
     --text-color: #abb0b6;
     --text-color--disabled: #666;
+    /* Headings, e.g. in markdown documentation, info tooltips, meta info */
+    --heading-color: var(--blue-300);
+    /* <code> blocks, e.g. in markdown */
+    --code-color: var(--pink-300);
     --border-color: #14161b;
 
     --header__border-color: transparent;
@@ -33,8 +38,12 @@
 
     --menu-separator__color: rgb(255 255 255 / 20%);
 
+    --tooltip__background-color: #1a1d21;
+    --tooltip__text-color: var(--text-color);
+    /*
     --tooltip__background-color: #adadad;
     --tooltip__text-color: #000;
+    */
 
     --button__background-image: none;
     --button__background-color: #333436;
@@ -49,10 +58,12 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
 
-    --icon-button__background-color--on: #632676;
-    --icon-button__border-color--on: var(--purple-a400);
+    --icon-button__background-color--on: var(--blue-500);
+    --icon-button__border-color--on: var(--black);
+    --icon-button__color--on: var(--white);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
+    --icon-button__color: var(--blue-500);
     --navigation-icon-button__background-color--on: #262a32;
     --navigation-icon-button__border-color--on: #444;
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
@@ -246,4 +257,6 @@
     --vis-series-label__background-color: rgba(0,0,0,0.87);
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
+
+    --iframe__border-color: var(--control__border-color);
 }

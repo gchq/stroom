@@ -155,7 +155,7 @@ public class DashboardPresenter
         view.setContent(flexLayout);
 
         editModeButton = new InlineSvgToggleButton();
-        editModeButton.setSvg(SvgImages.EDIT);
+        editModeButton.setSvg(SvgImages.MONO_EDIT);
         editModeButton.setTitle("Enter Design Mode");
 
         addWidgetButton = new InlineSvgButton();
@@ -164,7 +164,6 @@ public class DashboardPresenter
         addWidgetButton.setVisible(false);
 
         setConstraintsButton = new InlineSvgButton();
-        setConstraintsButton.addStyleName("inline-svg-button__blue");
         setConstraintsButton.setSvg(SvgImages.MONO_RESIZE);
         setConstraintsButton.setTitle("Set Constraints");
         setConstraintsButton.setVisible(false);

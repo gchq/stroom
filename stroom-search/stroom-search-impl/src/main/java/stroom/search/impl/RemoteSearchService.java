@@ -1,8 +1,8 @@
 package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -24,7 +24,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class RemoteSearchService {
 
@@ -34,39 +33,39 @@ public class RemoteSearchService {
     private final TaskManager taskManager;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider;
+    private final NodeSearchTaskHandlers nodeSearchTaskHandlers;
     private final CoprocessorsFactory coprocessorsFactory;
     private final SecurityContext securityContext;
 
-    private Coprocessors coprocessors;
+    private CoprocessorsImpl coprocessors;
 
     @Inject
     public RemoteSearchService(final RemoteSearchResults remoteSearchResults,
                                final TaskManager taskManager,
                                final ExecutorProvider executorProvider,
                                final TaskContextFactory taskContextFactory,
-                               final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider,
+                               final NodeSearchTaskHandlers nodeSearchTaskHandlers,
                                final CoprocessorsFactory coprocessorsFactory,
                                final SecurityContext securityContext) {
         this.remoteSearchResults = remoteSearchResults;
         this.taskManager = taskManager;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.clusterSearchTaskHandlerProvider = clusterSearchTaskHandlerProvider;
+        this.nodeSearchTaskHandlers = nodeSearchTaskHandlers;
         this.coprocessorsFactory = coprocessorsFactory;
         this.securityContext = securityContext;
     }
 
-    public Boolean start(final ClusterSearchTask clusterSearchTask) {
-        LOGGER.debug(() -> "startSearch " + clusterSearchTask);
+    public Boolean start(final NodeSearchTask nodeSearchTask) {
+        LOGGER.debug(() -> "startSearch " + nodeSearchTask);
         final RemoteSearchResultFactory remoteSearchResultFactory
                 = new RemoteSearchResultFactory(taskManager, securityContext);
-        remoteSearchResults.put(clusterSearchTask.getKey().getUuid(), remoteSearchResultFactory);
+        remoteSearchResults.put(nodeSearchTask.getKey().getUuid(), remoteSearchResultFactory);
 
         // Create coprocessors.
         securityContext.useAsRead(() -> {
             try {
-                final Query query = clusterSearchTask.getQuery();
+                final Query query = nodeSearchTask.getQuery();
 
                 // Make sure we have been given a query.
                 if (query.getExpression() == null) {
@@ -74,30 +73,30 @@ public class RemoteSearchService {
                 }
 
                 coprocessors = coprocessorsFactory.create(
-                        clusterSearchTask.getSearchRequestSource(),
-                        clusterSearchTask.getKey(),
-                        clusterSearchTask.getSettings(),
+                        nodeSearchTask.getSearchRequestSource(),
+                        nodeSearchTask.getKey(),
+                        nodeSearchTask.getSettings(),
                         query.getParams(),
                         DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
                 remoteSearchResultFactory.setCoprocessors(coprocessors);
 
-                if (coprocessors != null && coprocessors.size() > 0) {
-                    final ClusterSearchTaskHandler clusterSearchTaskHandler =
-                            clusterSearchTaskHandlerProvider.get();
+                if (coprocessors != null && coprocessors.isPresent()) {
+                    final NodeSearchTaskHandler nodeSearchTaskHandler =
+                            nodeSearchTaskHandlers.get(nodeSearchTask.getType());
                     final CountDownLatch countDownLatch = new CountDownLatch(1);
                     final Runnable runnable = taskContextFactory.context(
-                            clusterSearchTask.getTaskName(),
+                            nodeSearchTask.getTaskName(),
                             TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
                                 try {
-                                    taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
+                                    taskContext.getTaskId().setParentId(nodeSearchTask.getSourceTaskId());
                                     remoteSearchResultFactory.setTaskId(taskContext.getTaskId());
                                     remoteSearchResultFactory.setStarted(true);
                                     countDownLatch.countDown();
 
-                                    clusterSearchTaskHandler.search(
+                                    nodeSearchTaskHandler.search(
                                             taskContext,
-                                            clusterSearchTask,
+                                            nodeSearchTask,
                                             coprocessors);
 
                                 } catch (final RuntimeException e) {
@@ -115,7 +114,7 @@ public class RemoteSearchService {
                                         // the queue and send laST payloads etc.
                                         while (!coprocessors.getCompletionState().awaitCompletion(1,
                                                 TimeUnit.SECONDS)) {
-                                            clusterSearchTaskHandler.updateInfo();
+                                            nodeSearchTaskHandler.updateInfo();
                                         }
                                     } catch (final InterruptedException e) {
                                         LOGGER.trace(e::getMessage, e);

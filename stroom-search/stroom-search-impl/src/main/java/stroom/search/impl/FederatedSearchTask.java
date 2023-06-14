@@ -21,65 +21,39 @@ import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.task.shared.TaskId;
+import stroom.query.common.v2.ResultStore;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
 import java.util.List;
 
-@JsonInclude(Include.NON_NULL)
-public class ClusterSearchTask implements Serializable {
+public class FederatedSearchTask {
 
-    @JsonProperty
-    private final TaskId sourceTaskId;
-    @JsonProperty
-    private final String taskName;
-    @JsonProperty
     private final SearchRequestSource searchRequestSource;
-    @JsonProperty
     private final QueryKey key;
-    @JsonProperty
+    private final String searchName;
     private final Query query;
     @JsonProperty
-    private final List<Long> shards;
-    @JsonProperty
     private final List<CoprocessorSettings> settings;
-    @JsonProperty
     private final DateTimeSettings dateTimeSettings;
-    @JsonProperty
     private final long now;
 
-    @JsonCreator
-    public ClusterSearchTask(@JsonProperty("sourceTaskId") final TaskId sourceTaskId,
-                             @JsonProperty("taskName") final String taskName,
-                             @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
-                             @JsonProperty("key") final QueryKey key,
-                             @JsonProperty("query") final Query query,
-                             @JsonProperty("shards") final List<Long> shards,
-                             @JsonProperty("settings") final List<CoprocessorSettings> settings,
-                             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
-                             @JsonProperty("now") final long now) {
-        this.sourceTaskId = sourceTaskId;
-        this.taskName = taskName;
+    private transient volatile ResultStore resultStore;
+
+    public FederatedSearchTask(final SearchRequestSource searchRequestSource,
+                               final QueryKey key,
+                               final String searchName,
+                               final Query query,
+                               @JsonProperty("settings") final List<CoprocessorSettings> settings,
+                               final DateTimeSettings dateTimeSettings,
+                               final long now) {
         this.searchRequestSource = searchRequestSource;
         this.key = key;
+        this.searchName = searchName;
         this.query = query;
-        this.shards = shards;
         this.settings = settings;
         this.dateTimeSettings = dateTimeSettings;
         this.now = now;
-    }
-
-    public TaskId getSourceTaskId() {
-        return sourceTaskId;
-    }
-
-    public String getTaskName() {
-        return taskName;
     }
 
     public SearchRequestSource getSearchRequestSource() {
@@ -90,12 +64,12 @@ public class ClusterSearchTask implements Serializable {
         return key;
     }
 
-    public Query getQuery() {
-        return query;
+    public String getSearchName() {
+        return searchName;
     }
 
-    public List<Long> getShards() {
-        return shards;
+    public Query getQuery() {
+        return query;
     }
 
     public List<CoprocessorSettings> getSettings() {
@@ -108,5 +82,13 @@ public class ClusterSearchTask implements Serializable {
 
     public long getNow() {
         return now;
+    }
+
+    public ResultStore getResultStore() {
+        return resultStore;
+    }
+
+    public void setResultStore(final ResultStore resultStore) {
+        this.resultStore = resultStore;
     }
 }

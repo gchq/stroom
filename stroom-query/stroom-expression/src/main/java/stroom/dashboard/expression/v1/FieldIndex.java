@@ -40,9 +40,9 @@ public class FieldIndex {
     private final Map<Integer, String> posToField = new TreeMap<>();
     private int index;
 
-    private int windowTimeFieldPos = -2;
-    private int streamIdFieldIndex = -2;
-    private int eventIdFieldIndex = -2;
+    private Integer timeFieldPos;
+    private Integer streamIdFieldIndex;
+    private Integer eventIdFieldIndex;
 
     public static FieldIndex forFields(final String... fieldNames) {
         final FieldIndex instance = new FieldIndex();
@@ -82,19 +82,26 @@ public class FieldIndex {
         posToField.forEach(consumer);
     }
 
-    public int getWindowTimeFieldPos() {
-        if (windowTimeFieldPos == -2) {
-            windowTimeFieldPos = Optional.ofNullable(getPos(DEFAULT_TIME_FIELD_NAME))
-                    .or(() -> Optional.ofNullable(getPos(FALLBACK_TIME_FIELD_NAME)))
-                    .orElseThrow(() ->
-                            new RuntimeException("Cannot apply window when there is no time field"));
+    public int getWindowTimeFieldIndex() {
+        final int pos = getTimeFieldIndex();
+        if (pos == -1) {
+            throw new RuntimeException("Cannot apply window when there is no time field");
         }
-        return windowTimeFieldPos;
+        return pos;
     }
 
+    public int getTimeFieldIndex() {
+        if (timeFieldPos == null) {
+            timeFieldPos =
+                    Optional.ofNullable(getPos(DEFAULT_TIME_FIELD_NAME))
+                            .or(() -> Optional.ofNullable(getPos(FALLBACK_TIME_FIELD_NAME)))
+                            .orElse(-1);
+        }
+        return timeFieldPos;
+    }
 
     public int getStreamIdFieldIndex() {
-        if (streamIdFieldIndex == -2) {
+        if (streamIdFieldIndex == null) {
             streamIdFieldIndex =
                     Optional.ofNullable(getPos(DEFAULT_STREAM_ID_FIELD_NAME))
                             .or(() -> Optional.ofNullable(
@@ -110,7 +117,7 @@ public class FieldIndex {
     }
 
     public int getEventIdFieldIndex() {
-        if (eventIdFieldIndex == -2) {
+        if (eventIdFieldIndex == null) {
             eventIdFieldIndex =
                     Optional.ofNullable(getPos(DEFAULT_EVENT_ID_FIELD_NAME))
                             .or(() -> Optional.ofNullable(
