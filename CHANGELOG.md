@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.27-open-id-1] - 2023-06-14
+
 * Issue **#3304** : Make analytic results searchable.
 
 * Add support for syntax highlighting fenced blocks in markdown documentation.
@@ -88,6 +90,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Fix Data screen fetching data twice and consequently logging the fetch audit event twice.
 
 * Issue **#3358** : Fix audit events for user preferences screen.
+
 
 ## [v7.2-beta.18-open-id-1] - 2023-05-24
 
@@ -5461,7 +5464,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.18-open-id-1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.27-open-id-1...HEAD
+[v7.2-beta.27-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.18-open-id-1...v7.2-beta.27-open-id-1
 [v7.2-beta.18-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-7...v7.2-beta.18-open-id-1
 [v7.2-beta.10-open-id-7]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-6...v7.2-beta.10-open-id-7
 [v7.2-beta.10-open-id-6]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-5...v7.2-beta.10-open-id-6
