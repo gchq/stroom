@@ -120,6 +120,11 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
+    public String getHelpUrlDocumentation() {
+        return uiConfig.getHelpUrlDocumentation();
+    }
+
+    @JsonIgnore
     public ThemeConfig getTheme() {
         return uiConfig.getTheme();
     }

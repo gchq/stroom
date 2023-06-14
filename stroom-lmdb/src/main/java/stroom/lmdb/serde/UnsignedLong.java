@@ -3,16 +3,24 @@ package stroom.lmdb.serde;
 import java.util.Objects;
 
 /**
- * Represents an unsigned long that fits in length bytes
+ * Represents an unsigned long that fits in length bytes. If a length of 8
+ * is used then it can only represent numbers up to {@link Long#MAX_VALUE}.
+ * See {@link UnsignedBytesInstances} for max values for different byte lengths.
  */
 public class UnsignedLong {
 
     private final long value;
-    private final int length;
+    private final UnsignedBytes unsignedBytes;
+
+    public UnsignedLong(final long value, final UnsignedBytes unsignedBytes) {
+        this.unsignedBytes = Objects.requireNonNull(unsignedBytes);
+        checkLowerBound(value);
+        checkUpperBound(value);
+        this.value = value;
+    }
 
     public UnsignedLong(final long value, final int length) {
-        this.value = value;
-        this.length = length;
+        this(value, UnsignedBytesInstances.ofLength(length));
     }
 
     public static UnsignedLong of(final long value) {
@@ -23,16 +31,56 @@ public class UnsignedLong {
         return new UnsignedLong(value, length);
     }
 
+    public static UnsignedLong of(final long value, final UnsignedBytes unsignedBytes) {
+        return new UnsignedLong(value, unsignedBytes);
+    }
+
+    public UnsignedLong increment() {
+        final long newVal = value + 1;
+        checkUpperBound(newVal);
+        return new UnsignedLong(newVal, unsignedBytes);
+    }
+
+    public UnsignedLong increment(final long delta) {
+        final long newVal = value + delta;
+        checkUpperBound(newVal);
+        return new UnsignedLong(newVal, unsignedBytes);
+    }
+
+    public UnsignedLong decrement() {
+        final long newVal = value - 1;
+        checkLowerBound(newVal);
+        return new UnsignedLong(newVal, unsignedBytes);
+    }
+
+    public UnsignedLong decrement(final long delta) {
+        final long newVal = value - delta;
+        checkLowerBound(newVal);
+        return new UnsignedLong(newVal, unsignedBytes);
+    }
+
+    private void checkLowerBound(final long value) {
+        if (value < 0) {
+            throw new IllegalArgumentException("value must be >= zero");
+        }
+    }
+
+    private void checkUpperBound(final long value) {
+        if (value > unsignedBytes.getMaxVal()) {
+            throw new IllegalArgumentException("value must be <= " + unsignedBytes.getMaxVal());
+        }
+    }
+
     public long getValue() {
         return value;
     }
 
     public int getLength() {
-        return length;
+        return unsignedBytes.length();
     }
 
     public UnsignedBytes getUnsignedBytes() {
-        return UnsignedBytesInstances.ofLength(length);
+        return this.unsignedBytes;
     }
 
     @Override
@@ -44,19 +92,16 @@ public class UnsignedLong {
             return false;
         }
         final UnsignedLong that = (UnsignedLong) o;
-        return value == that.value;
+        return value == that.value && unsignedBytes.equals(that.unsignedBytes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(value, unsignedBytes);
     }
 
     @Override
     public String toString() {
-        return "UnsignedLong{" +
-                "value=" + value +
-                ", length=" + length +
-                '}';
+        return value + " (byte len: " + unsignedBytes.length() + ")";
     }
 }

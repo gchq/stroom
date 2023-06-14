@@ -282,7 +282,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             final Rest<JobNode> rest = restFactory.create();
             rest.call(JOB_NODE_RESOURCE).setTaskLimit(row.getId(), value.intValue());
         });
-        dataGrid.addColumn(maxColumn, "Max", 59);
+        dataGrid.addColumn(maxColumn, "Max", 62);
 
         // Cur.
         final Column<JobNode, String> curColumn = new Column<JobNode, String>(new TextCell()) {
@@ -304,13 +304,13 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             public String getValue(final JobNode row) {
                 final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
                 if (jobNodeInfo != null) {
-                    return dateTimeFormatter.format(jobNodeInfo.getLastExecutedTime());
+                    return dateTimeFormatter.formatWithDuration(jobNodeInfo.getLastExecutedTime());
                 } else {
                     return "?";
                 }
             }
         };
-        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_COL);
+        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

@@ -19,6 +19,8 @@ package stroom.widget.button.client;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.View;
 
 public interface ButtonView extends HasClickHandlers, HasMouseDownHandlers, Focus {
 
@@ -31,4 +33,12 @@ public interface ButtonView extends HasClickHandlers, HasMouseDownHandlers, Focu
     void setVisible(boolean visible);
 
     void setTitle(String title);
+
+    /**
+     * Retrieves this view as a {@link Widget} so that it can be inserted within
+     * the DOM.
+     *
+     * @return This view as a DOM object.
+     */
+    Widget asWidget();
 }

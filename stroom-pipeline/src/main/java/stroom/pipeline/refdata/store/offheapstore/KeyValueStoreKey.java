@@ -37,6 +37,10 @@ public class KeyValueStoreKey {
         return mapUid;
     }
 
+    public KeyValueStoreKey withMapUid(final UID newMapUid) {
+        return new KeyValueStoreKey(newMapUid, key);
+    }
+
     public String getKey() {
         return key;
     }

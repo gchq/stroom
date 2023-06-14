@@ -80,6 +80,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private final String helpSubPathExpressions;
 
     @JsonProperty
+    @JsonPropertyDescription("The sub-path for the help page for documentation. Appended to helpUrl.")
+    private final String helpSubPathDocumentation;
+
+    @JsonProperty
     private final ThemeConfig theme;
 
     @JsonProperty
@@ -126,11 +130,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         maintenanceMessage = null;
         defaultMaxResults = "1000000,100,10,1";
         process = new ProcessConfig();
-        helpUrl = "https://gchq.github.io/stroom-docs/7.0/docs";
+        helpUrl = "https://gchq.github.io/stroom-docs/7.2/docs";
         helpSubPathJobs = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/jobs/";
         helpSubPathQuickFilter = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/finding-things/";
         helpSubPathProperties = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/properties/";
         helpSubPathExpressions = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/expressions/";
+        helpSubPathDocumentation = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/content/documentation/";
         theme = new ThemeConfig();
         query = new QueryConfig();
         namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
@@ -154,6 +159,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("helpSubPathQuickFilter") final String helpSubPathQuickFilter,
                     @JsonProperty("helpSubPathProperties") final String helpSubPathProperties,
                     @JsonProperty("helpSubPathExpressions") final String helpSubPathExpressions,
+                    @JsonProperty("helpSubPathDocumentation") final String helpSubPathDocumentation,
                     @JsonProperty("theme") final ThemeConfig theme,
                     @JsonProperty("query") final QueryConfig query,
                     @JsonProperty("namePattern") final String namePattern,
@@ -173,6 +179,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.helpSubPathQuickFilter = helpSubPathQuickFilter;
         this.helpSubPathProperties = helpSubPathProperties;
         this.helpSubPathExpressions = helpSubPathExpressions;
+        this.helpSubPathDocumentation = helpSubPathDocumentation;
         this.theme = theme;
         this.query = query;
         this.namePattern = namePattern;
@@ -224,6 +231,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return helpSubPathExpressions;
     }
 
+    public String getHelpSubPathDocumentation() {
+        return helpSubPathDocumentation;
+    }
+
     private String appendHelpPath(final String subPath) {
         if (helpUrl == null) {
             // No point appending a path to a null url
@@ -266,6 +277,14 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     @JsonIgnore
     public String getHelpUrlExpressions() {
         return appendHelpPath(helpSubPathExpressions);
+    }
+
+    /**
+     * @return The URL for the documentation page in the help site.
+     */
+    @JsonIgnore
+    public String getHelpUrlDocumentation() {
+        return appendHelpPath(helpSubPathDocumentation);
     }
 
     public ThemeConfig getTheme() {
@@ -327,6 +346,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(helpSubPathQuickFilter, uiConfig.helpSubPathQuickFilter)
                 && Objects.equals(helpSubPathProperties, uiConfig.helpSubPathProperties)
                 && Objects.equals(helpSubPathExpressions, uiConfig.helpSubPathExpressions)
+                && Objects.equals(helpSubPathDocumentation, uiConfig.helpSubPathDocumentation)
                 && Objects.equals(theme, uiConfig.theme)
                 && Objects.equals(query, uiConfig.query)
                 && Objects.equals(namePattern, uiConfig.namePattern)
@@ -350,6 +370,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 helpSubPathQuickFilter,
                 helpSubPathProperties,
                 helpSubPathExpressions,
+                helpSubPathDocumentation,
                 theme,
                 query,
                 namePattern,
@@ -374,6 +395,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", helpSubPathQuickFilter='" + helpSubPathQuickFilter + '\'' +
                 ", helpSubPathProperties='" + helpSubPathProperties + '\'' +
                 ", helpSubPathExpressions='" + helpSubPathExpressions + '\'' +
+                ", helpSubPathDocumentation='" + helpSubPathDocumentation + '\'' +
                 ", theme=" + theme +
                 ", query=" + query +
                 ", namePattern='" + namePattern + '\'' +

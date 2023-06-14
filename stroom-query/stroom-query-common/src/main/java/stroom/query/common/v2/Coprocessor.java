@@ -32,14 +32,6 @@ public interface Coprocessor extends ValuesConsumer {
     void clear();
 
     /**
-     * Get the completion state associated with receiving all search results and having added them to the store
-     * successfully.
-     *
-     * @return The search completion state for the data store.
-     */
-    CompletionState getCompletionState();
-
-    /**
      * Read items from the supplied input and transfer them to the data store.
      *
      * @param input The input to read.

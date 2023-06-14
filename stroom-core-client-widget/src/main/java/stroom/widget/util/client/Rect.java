@@ -1,5 +1,7 @@
 package stroom.widget.util.client;
 
+import com.google.gwt.dom.client.Element;
+
 import java.util.Objects;
 
 public class Rect {
@@ -8,6 +10,13 @@ public class Rect {
     private final double bottom;
     private final double left;
     private final double right;
+
+    public Rect(final Element element) {
+        this.top = element.getAbsoluteTop();
+        this.bottom = element.getAbsoluteBottom();
+        this.left = element.getAbsoluteLeft();
+        this.right = element.getAbsoluteRight();
+    }
 
     public Rect(final double top,
                 final double bottom,

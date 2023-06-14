@@ -28,7 +28,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -66,8 +65,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PropertyListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDirtyHandlers, ReadOnlyChangeHandler {
+public class PropertyListPresenter
+        extends MyPresenterWidget<PagerView>
+        implements HasDirtyHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -97,6 +97,7 @@ public class PropertyListPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
+        dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
@@ -114,12 +115,12 @@ public class PropertyListPresenter extends MyPresenterWidget<PagerView>
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(selectionModel.getSelected());
+                onEdit(selectionModel.getSelected(), readOnly);
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                onEdit(selectionModel.getSelected());
+                onEdit(selectionModel.getSelected(), readOnly);
             }
         }));
     }
@@ -307,6 +308,11 @@ public class PropertyListPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+    }
+
     public void setPipeline(final PipelineDoc pipelineDoc) {
         this.pipelineDoc = pipelineDoc;
     }
@@ -344,7 +350,7 @@ public class PropertyListPresenter extends MyPresenterWidget<PagerView>
         return property;
     }
 
-    private void onEdit(final PipelineProperty property) {
+    private void onEdit(final PipelineProperty property, final boolean readOnly) {
         if (!readOnly && property != null) {
             // Get the current value for this property.
             PipelineProperty localProperty = getActualProperty(pipelineModel.getPipelineData().getAddedProperties(),
@@ -488,12 +494,6 @@ public class PropertyListPresenter extends MyPresenterWidget<PagerView>
         } else {
             editButton.setTitle("Edit Property");
         }
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
     }
 
     private void setDirty(final boolean dirty) {

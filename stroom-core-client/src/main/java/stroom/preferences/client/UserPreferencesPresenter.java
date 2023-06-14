@@ -24,7 +24,6 @@ import stroom.query.api.v2.TimeZone;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.ui.config.shared.UserPreferences.Builder;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -39,7 +38,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 public final class UserPreferencesPresenter
@@ -88,11 +86,7 @@ public final class UserPreferencesPresenter
         if (!beforeTheme.equals(afterTheme) || after.getEditorTheme() == null) {
             // If the UI theme has changed, select an appropriate theme based on whether a light or dark theme
             // was selected
-            if (afterTheme.toLowerCase(Locale.ROOT).contains("dark")) {
-                return Builder.DEFAULT_EDITOR_THEME_DARK;
-            } else {
-                return Builder.DEFAULT_EDITOR_THEME;
-            }
+            return UserPreferences.getDefaultEditorTheme(afterTheme);
         } else {
             // No UI theme change, so accept the user's selection
             return after.getEditorTheme();

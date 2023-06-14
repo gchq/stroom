@@ -32,7 +32,7 @@ public class LmdbRowKeyFactoryFactory {
                 key.equals(LmdbRowKeyFactoryFactory.DB_STATE_KEY);
     }
 
-    public static LmdbRowKeyFactory create(final KeyFactory keyFactory,
+    public static LmdbRowKeyFactory create(final UniqueIdProvider uniqueIdProvider,
                                            final KeyFactoryConfig keyFactoryConfig,
                                            final CompiledDepths compiledDepths,
                                            final ValHasher valHasher) {
@@ -43,21 +43,21 @@ public class LmdbRowKeyFactoryFactory {
                 if (compiledDepths.hasGroup()) {
                     return new FlatTimeGroupedLmdbRowKeyFactory();
                 } else {
-                    return new FlatTimeUngroupedLmdbRowKeyFactory(keyFactory);
+                    return new FlatTimeUngroupedLmdbRowKeyFactory(uniqueIdProvider);
                 }
             } else {
                 if (compiledDepths.hasGroup()) {
                     return new FlatGroupedLmdbRowKeyFactory();
                 } else {
-                    return new FlatUngroupedLmdbRowKeyFactory(keyFactory);
+                    return new FlatUngroupedLmdbRowKeyFactory(uniqueIdProvider);
                 }
             }
         } else {
             if (keyFactoryConfig.addTimeToKey()) {
-                return new NestedTimeGroupedLmdbRowKeyFactory(keyFactory, compiledDepths, valHasher);
+                return new NestedTimeGroupedLmdbRowKeyFactory(uniqueIdProvider, compiledDepths, valHasher);
 
             } else {
-                return new NestedGroupedLmdbRowKeyFactory(keyFactory, compiledDepths, valHasher);
+                return new NestedGroupedLmdbRowKeyFactory(uniqueIdProvider, compiledDepths, valHasher);
             }
         }
     }
@@ -69,7 +69,7 @@ public class LmdbRowKeyFactoryFactory {
     /**
      * Creates a flat group key. <GROUP_HASH>
      */
-    private static class FlatGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
+    static class FlatGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
         private static final int KEY_LENGTH = Long.BYTES;
 
@@ -115,14 +115,14 @@ public class LmdbRowKeyFactoryFactory {
     /**
      * Creates a flat unique key. <UNIQUE_ID>
      */
-    private static class FlatUngroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
+    static class FlatUngroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
         private static final int KEY_LENGTH = Long.BYTES;
 
-        private final KeyFactory keyFactory;
+        private final UniqueIdProvider uniqueIdProvider;
 
-        public FlatUngroupedLmdbRowKeyFactory(final KeyFactory keyFactory) {
-            this.keyFactory = keyFactory;
+        public FlatUngroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider) {
+            this.uniqueIdProvider = uniqueIdProvider;
         }
 
         @Override
@@ -131,13 +131,13 @@ public class LmdbRowKeyFactoryFactory {
                                  final long groupHash,
                                  final long timeMs) {
             final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(KEY_LENGTH);
-            byteBuffer.putLong(keyFactory.getUniqueId());
+            byteBuffer.putLong(uniqueIdProvider.getUniqueId());
             return byteBuffer.flip();
         }
 
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
-            lmdbKV.getRowKey().putLong(0, keyFactory.getUniqueId());
+            lmdbKV.getRowKey().putLong(0, uniqueIdProvider.getUniqueId());
             return lmdbKV;
         }
 
@@ -168,7 +168,7 @@ public class LmdbRowKeyFactoryFactory {
     /**
      * Creates a flat time based group key. <TIME_MS><GROUP_HASH>
      */
-    private static class FlatTimeGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
+    static class FlatTimeGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
         private static final int KEY_LENGTH = Long.BYTES + Long.BYTES;
 
@@ -222,14 +222,14 @@ public class LmdbRowKeyFactoryFactory {
     /**
      * Creates flat time based unique key. <TIME_MS><UNIQUE_ID>
      */
-    private static class FlatTimeUngroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
+    static class FlatTimeUngroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
         private static final int KEY_LENGTH = Long.BYTES + Long.BYTES;
 
-        private final KeyFactory keyFactory;
+        private final UniqueIdProvider uniqueIdProvider;
 
-        public FlatTimeUngroupedLmdbRowKeyFactory(final KeyFactory keyFactory) {
-            this.keyFactory = keyFactory;
+        public FlatTimeUngroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider) {
+            this.uniqueIdProvider = uniqueIdProvider;
         }
 
         @Override
@@ -239,13 +239,13 @@ public class LmdbRowKeyFactoryFactory {
                                  final long timeMs) {
             final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(KEY_LENGTH);
             byteBuffer.putLong(timeMs);
-            byteBuffer.putLong(keyFactory.getUniqueId());
+            byteBuffer.putLong(uniqueIdProvider.getUniqueId());
             return byteBuffer.flip();
         }
 
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
-            lmdbKV.getRowKey().putLong(Long.BYTES, keyFactory.getUniqueId());
+            lmdbKV.getRowKey().putLong(Long.BYTES, uniqueIdProvider.getUniqueId());
             return lmdbKV;
         }
 
@@ -284,7 +284,7 @@ public class LmdbRowKeyFactoryFactory {
     /**
      * Creates a nested group key. <DEPTH><PARENT_GROUP_HASH><GROUP_HASH>
      */
-    public static class NestedGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
+    static class NestedGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
         private static final int SHORT_KEY_LENGTH = Byte.BYTES + Long.BYTES;
         private static final int LONG_KEY_LENGTH = Byte.BYTES + Long.BYTES + Long.BYTES;
@@ -302,14 +302,14 @@ public class LmdbRowKeyFactoryFactory {
             ZERO_DEPTH_KEY_RANGE = KeyRange.closedOpen(start, stop);
         }
 
-        private final KeyFactory keyFactory;
+        private final UniqueIdProvider uniqueIdProvider;
         private final CompiledDepths compiledDepths;
         private final ValHasher valHasher;
 
-        public NestedGroupedLmdbRowKeyFactory(final KeyFactory keyFactory,
+        public NestedGroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider,
                                               final CompiledDepths compiledDepths,
                                               final ValHasher valHasher) {
-            this.keyFactory = keyFactory;
+            this.uniqueIdProvider = uniqueIdProvider;
             this.compiledDepths = compiledDepths;
             this.valHasher = valHasher;
         }
@@ -333,7 +333,7 @@ public class LmdbRowKeyFactoryFactory {
                 byteBuffer = ByteBuffer.allocateDirect(LONG_KEY_LENGTH);
                 byteBuffer.put((byte) depth);
                 byteBuffer.putLong(parentGroupHash);
-                byteBuffer.putLong(keyFactory.getUniqueId());
+                byteBuffer.putLong(uniqueIdProvider.getUniqueId());
             } else {
                 // Create a child group key. <DEPTH><PARENT_GROUP_HASH><GROUP_HASH>
                 byteBuffer = ByteBuffer.allocateDirect(LONG_KEY_LENGTH);
@@ -347,9 +347,9 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
-            if (!isGroup(getDepth(lmdbKV))) {
+            if (isDetailLevel(getDepth(lmdbKV))) {
                 // Create a child unique key. <DEPTH><PARENT_GROUP_HASH><UNIQUE_ID>
-                lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, keyFactory.getUniqueId());
+                lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, uniqueIdProvider.getUniqueId());
             }
 
             return lmdbKV;
@@ -415,7 +415,7 @@ public class LmdbRowKeyFactoryFactory {
     /**
      * Creates a nested time based group key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><GROUP_HASH>
      */
-    private static class NestedTimeGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
+    static class NestedTimeGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
         private static final int SHORT_KEY_LENGTH = Byte.BYTES + Long.BYTES + Long.BYTES;
         private static final int LONG_KEY_LENGTH = Byte.BYTES + Long.BYTES + Long.BYTES + Long.BYTES;
@@ -435,14 +435,14 @@ public class LmdbRowKeyFactoryFactory {
             ZERO_DEPTH_KEY_RANGE = KeyRange.closedOpen(start, stop);
         }
 
-        private final KeyFactory keyFactory;
+        private final UniqueIdProvider uniqueIdProvider;
         private final CompiledDepths compiledDepths;
         private final ValHasher valHasher;
 
-        public NestedTimeGroupedLmdbRowKeyFactory(final KeyFactory keyFactory,
+        public NestedTimeGroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider,
                                                   final CompiledDepths compiledDepths,
                                                   final ValHasher valHasher) {
-            this.keyFactory = keyFactory;
+            this.uniqueIdProvider = uniqueIdProvider;
             this.compiledDepths = compiledDepths;
             this.valHasher = valHasher;
         }
@@ -469,7 +469,7 @@ public class LmdbRowKeyFactoryFactory {
                 byteBuffer.put((byte) depth);
                 byteBuffer.putLong(timeMs);
                 byteBuffer.putLong(parentGroupHash);
-                byteBuffer.putLong(keyFactory.getUniqueId());
+                byteBuffer.putLong(uniqueIdProvider.getUniqueId());
             } else {
                 // Create a time based child group key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><GROUP_HASH>
                 byteBuffer = ByteBuffer.allocateDirect(LONG_KEY_LENGTH);
@@ -485,8 +485,8 @@ public class LmdbRowKeyFactoryFactory {
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
             // If this isn't a group key then make it unique.
-            if (!isGroup(getDepth(lmdbKV))) {
-                lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, keyFactory.getUniqueId());
+            if (isDetailLevel(getDepth(lmdbKV))) {
+                lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, uniqueIdProvider.getUniqueId());
             }
             return lmdbKV;
         }

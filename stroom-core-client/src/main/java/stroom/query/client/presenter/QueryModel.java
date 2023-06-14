@@ -36,7 +36,6 @@ import com.google.gwt.core.client.GWT;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class QueryModel {
 
@@ -56,12 +55,12 @@ public class QueryModel {
     private QueryKey currentQueryKey;
     private QueryContext currentQueryContext;
     private QuerySearchRequest currentSearch;
-    private Boolean mode = false;
     private boolean searching;
+    private boolean polling;
+    private SourceType sourceType = SourceType.QUERY_UI;
 
-    private final List<Consumer<Boolean>> modeListeners = new ArrayList<>();
-    private final List<Consumer<List<String>>> errorListeners = new ArrayList<>();
-
+    private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
+    private final List<SearchErrorListener> errorListeners = new ArrayList<>();
 
     public QueryModel(final RestFactory restFactory,
                       final IndexLoader indexLoader,
@@ -89,14 +88,14 @@ public class QueryModel {
         GWT.log("SearchModel - stop()");
 
         terminate(currentNode, currentQueryKey);
-        setMode(false);
+        setSearching(false);
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
         tablePresenter.endSearch();
 
         // Stop polling.
-        searching = false;
+        polling = false;
     }
 
     /**
@@ -111,14 +110,14 @@ public class QueryModel {
         currentQueryKey = null;
         currentNode = null;
 
-        setMode(false);
+        setSearching(false);
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
         tablePresenter.endSearch();
 
         // Stop polling.
-        searching = false;
+        polling = false;
         currentSearch = null;
     }
 
@@ -187,7 +186,7 @@ public class QueryModel {
                 .searchRequestSource(
                         SearchRequestSource
                                 .builder()
-                                .sourceType(SourceType.QUERY_UI)
+                                .sourceType(sourceType)
                                 .ownerDocUuid(queryUuid)
                                 .build())
                 .query(query)
@@ -201,7 +200,7 @@ public class QueryModel {
 //            final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
 //            if (dataSourceRef != null && expression != null) {
             // Let the query presenter know search is active.
-            setMode(true);
+            setSearching(true);
 
             // Reset all result components and tell them that search is
             // starting.
@@ -209,7 +208,7 @@ public class QueryModel {
             tablePresenter.startSearch();
 
             // Start polling.
-            searching = true;
+            polling = true;
             poll(storeHistory);
 //            }
         }
@@ -308,7 +307,7 @@ public class QueryModel {
     private void poll(final boolean storeHistory) {
         final QueryKey queryKey = currentQueryKey;
         final QuerySearchRequest search = currentSearch;
-        if (search != null && searching) {
+        if (search != null && polling) {
 //            final List<ComponentResultRequest> requests = new ArrayList<>();
 //            for (final Entry<String, ResultConsumer> entry : componentMap.entrySet()) {
 //                final ResultConsumer resultComponent = entry.getValue();
@@ -349,7 +348,7 @@ public class QueryModel {
                                 GWT.log(e.getMessage());
                             }
 
-                            if (searching) {
+                            if (polling) {
                                 poll(false);
                             }
                         } else {
@@ -362,13 +361,13 @@ public class QueryModel {
                         try {
                             if (search == currentSearch) {
                                 setErrors(Collections.singletonList(throwable.toString()));
-                                searching = false;
+                                polling = false;
                             }
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
 
-                        if (searching) {
+                        if (polling) {
                             poll(false);
                         }
                     })
@@ -428,24 +427,24 @@ public class QueryModel {
 
         if (response.isComplete()) {
             // Let the query presenter know search is inactive.
-            setMode(false);
+            setSearching(false);
 
             // If we have completed search then stop the task spinner.
-            searching = false;
+            polling = false;
         }
     }
 
     private void setErrors(final List<String> errors) {
-        errorListeners.forEach(listener -> listener.accept(errors));
+        errorListeners.forEach(listener -> listener.onError(errors));
     }
 
-    public Boolean getMode() {
-        return mode;
+    public boolean isSearching() {
+        return searching;
     }
 
-    private void setMode(final Boolean mode) {
-        this.mode = mode;
-        modeListeners.forEach(listener -> listener.accept(mode));
+    private void setSearching(final boolean searching) {
+        this.searching = searching;
+        searchStateListeners.forEach(listener -> listener.onSearching(searching));
     }
 
 
@@ -482,20 +481,25 @@ public class QueryModel {
 //        componentMap.remove(componentId);
 //        this.componentMap = componentMap;
 //    }
-//
-//    public void addModeListener(final Consumer<Boolean> consumer) {
-//        modeListeners.add(consumer);
-//    }
-//
-//    public void removeModeListener(final Consumer<Boolean> consumer) {
-//        modeListeners.remove(consumer);
-//    }
-//
-    public void addErrorListener(final Consumer<List<String>> consumer) {
-        errorListeners.add(consumer);
+
+
+    public void addSearchStateListener(final SearchStateListener listener) {
+        searchStateListeners.add(listener);
     }
-//
-//    public void removeErrorListener(final Consumer<List<String>> consumer) {
-//        errorListeners.remove(consumer);
-//    }
+
+    public void removeSearchStateListener(final SearchStateListener listener) {
+        searchStateListeners.remove(listener);
+    }
+
+    public void addSearchErrorListener(final SearchErrorListener listener) {
+        errorListeners.add(listener);
+    }
+
+    public void removeSearchErrorListener(final SearchErrorListener listener) {
+        errorListeners.remove(listener);
+    }
+
+    public void setSourceType(final SourceType sourceType) {
+        this.sourceType = sourceType;
+    }
 }

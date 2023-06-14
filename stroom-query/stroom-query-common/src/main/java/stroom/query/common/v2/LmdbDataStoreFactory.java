@@ -5,7 +5,9 @@ import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -36,25 +38,20 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private final LmdbEnvFactory lmdbEnvFactory;
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
-    private final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider;
     private final Provider<Executor> executorProvider;
     private final Path searchResultStoreDir;
-    private final Path analyticResultStoreDir;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
-                                final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                                 final PathCreator pathCreator,
                                 final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
-        this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.executorProvider = executorProvider;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
-        this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
         // As search result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
@@ -62,7 +59,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final QueryKey queryKey,
+    public DataStore create(final SearchRequestSource searchRequestSource,
+                            final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
@@ -84,45 +82,24 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     dataStoreSettings);
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
-            final DataStoreSettings modifiedDataStoreSettings =
-                    dataStoreSettings.copy().subDirectory(subDirectory).build();
+            final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory
+                    .builder(resultStoreConfig.getLmdbConfig())
+                    .withSubDirectory(subDirectory);
 
             return new LmdbDataStore(
+                    searchRequestSource,
                     new Serialisers(resultStoreConfig),
-                    lmdbEnvFactory,
+                    lmdbEnvBuilder,
                     resultStoreConfig,
                     queryKey,
                     componentId,
                     tableSettings,
                     fieldIndex,
                     paramMap,
-                    modifiedDataStoreSettings,
+                    dataStoreSettings,
                     executorProvider,
                     errorConsumer);
         }
-    }
-
-    public LmdbDataStore createAnalyticLmdbDataStore(final QueryKey queryKey,
-                                                     final String componentId,
-                                                     final TableSettings tableSettings,
-                                                     final FieldIndex fieldIndex,
-                                                     final Map<String, String> paramMap,
-                                                     final DataStoreSettings dataStoreSettings,
-                                                     final ErrorConsumer errorConsumer) {
-
-        final AnalyticResultStoreConfig storeConfig = analyticStoreConfigProvider.get();
-        return new LmdbDataStore(
-                new Serialisers(storeConfig),
-                lmdbEnvFactory,
-                storeConfig,
-                queryKey,
-                componentId,
-                tableSettings,
-                fieldIndex,
-                paramMap,
-                dataStoreSettings,
-                executorProvider,
-                errorConsumer);
     }
 
     private Path getLocalDir(final AbstractResultStoreConfig resultStoreConfig,

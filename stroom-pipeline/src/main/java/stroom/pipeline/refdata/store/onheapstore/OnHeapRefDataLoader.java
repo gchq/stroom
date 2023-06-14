@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.onheapstore;
 
 import stroom.lmdb.PutOutcome;
+import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -9,6 +10,10 @@ import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValue;
+import stroom.pipeline.refdata.store.StagingValueOutputStream;
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -17,6 +22,7 @@ import stroom.util.shared.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -51,6 +57,9 @@ class OnHeapRefDataLoader implements RefDataLoader {
     private int successfulPutsCounter = 0;
     private Instant startTime = Instant.EPOCH;
     private LoaderState currentLoaderState = LoaderState.NEW;
+
+    private KeyPutOutcomeHandler keyPutOutcomeHandler = null;
+    private RangePutOutcomeHandler rangePutOutcomeHandler = null;
 
     private enum LoaderState {
         NEW,
@@ -99,6 +108,11 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;
+    }
+
+    @Override
+    public void markPutsComplete() {
+        LOGGER.trace("markPutsComplete() called");
     }
 
     @Override
@@ -161,9 +175,9 @@ class OnHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public PutOutcome put(final MapDefinition mapDefinition,
-                          final String key,
-                          final RefDataValue refDataValue) {
+    public void put(final MapDefinition mapDefinition,
+                    final String key,
+                    final StagingValue refDataValue) {
 
         checkCurrentState(LoaderState.INITIALISED);
         final KeyValueMapKey mapKey = new KeyValueMapKey(mapDefinition, key);
@@ -181,13 +195,17 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, key, refDataValue, keyValueMap.size()));
-        return putOutcome;
+
+        NullSafe.consume(keyPutOutcomeHandler, handler -> handler.handleOutcome(
+                () -> mapDefinition,
+                key,
+                putOutcome));
     }
 
     @Override
-    public PutOutcome put(final MapDefinition mapDefinition,
+    public void put(final MapDefinition mapDefinition,
                           final Range<Long> keyRange,
-                          final RefDataValue refDataValue) {
+                          final StagingValue refDataValue) {
 
         checkCurrentState(LoaderState.INITIALISED);
         // ensure we have a sub map for our mapDef
@@ -207,7 +225,21 @@ class OnHeapRefDataLoader implements RefDataLoader {
                 Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
                         .map(NavigableMap::size)
                         .orElse(0)));
-        return putOutcome;
+
+        NullSafe.consume(rangePutOutcomeHandler, handler -> handler.handleOutcome(
+                () -> mapDefinition,
+                keyRange,
+                putOutcome));
+    }
+
+    @Override
+    public void setKeyPutOutcomeHandler(final KeyPutOutcomeHandler keyPutOutcomeHandler) {
+        this.keyPutOutcomeHandler = keyPutOutcomeHandler;
+    }
+
+    @Override
+    public void setRangePutOutcomeHandler(final RangePutOutcomeHandler rangePutOutcomeHandler) {
+        this.rangePutOutcomeHandler = rangePutOutcomeHandler;
     }
 
     private void recordPut(final MapDefinition mapDefinition, final boolean wasValuePut) {
@@ -286,26 +318,65 @@ class OnHeapRefDataLoader implements RefDataLoader {
                                                   final boolean overwriteExisting) {
         final boolean keyExists = map.containsKey(key);
         final PutOutcome putOutcome;
+        final RefDataValue refDataValueCopy = convertToOnHeap(refDataValue);
         if (keyExists) {
             if (!overwriteExisting) {
                 putOutcome = PutOutcome.failed();
             } else {
-                if (refDataValue instanceof NullValue) {
+                if (refDataValueCopy.isNullValue()) {
                     map.remove(key);
                     putOutcome = PutOutcome.replacedEntry();
                 } else {
-                    putOutcome = putWithOutcome(map, key, refDataValue, true);
+                    putOutcome = putWithOutcome(map, key, refDataValueCopy, true);
                 }
             }
         } else {
-            if (refDataValue instanceof NullValue) {
+            if (refDataValueCopy.isNullValue()) {
                 putOutcome = PutOutcome.success();
             } else {
-                putOutcome = putWithOutcome(map, key, refDataValue, overwriteExisting);
+                putOutcome = putWithOutcome(map, key, refDataValueCopy, overwriteExisting);
             }
 
         }
         return putOutcome;
+    }
+
+    private RefDataValue convertToOnHeap(final RefDataValue refDataValue) {
+        Objects.requireNonNull(refDataValue);
+        RefDataValue newRefDataValue = refDataValue;
+        // Ensure nulls are consistent
+        if (newRefDataValue.isNullValue() && !(newRefDataValue instanceof NullValue)) {
+            newRefDataValue = NullValue.getInstance();
+        }
+
+        if (newRefDataValue instanceof StagingValueOutputStream) {
+
+            final StagingValueOutputStream stagingValueOutputStream = (StagingValueOutputStream) newRefDataValue;
+            final int typeId = stagingValueOutputStream.getTypeId();
+
+            return switch (typeId) {
+                case NullValue.TYPE_ID -> NullValue.getInstance();
+                case StringValue.TYPE_ID -> new StringValue(stagingValueOutputStream);
+                case FastInfosetValue.TYPE_ID -> new FastInfosetValue(stagingValueOutputStream);
+                default -> throw new RuntimeException("Unexpected type " + typeId);
+            };
+        }
+
+        if (refDataValue instanceof FastInfosetValue) {
+            // FastInfosetValue may contain a buffer that is reused, so we need to copy
+            // it into a new heap buffer
+            LOGGER.debug("Copying fastInfosetValue to a heap based buffer");
+            final FastInfosetValue fastInfosetValue = (FastInfosetValue) refDataValue;
+            newRefDataValue = fastInfosetValue.copy(() ->
+                    ByteBuffer.allocate(fastInfosetValue.size()));
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Returning a {}, {}",
+                    newRefDataValue.getClass().getSimpleName(), newRefDataValue);
+        }
+
+        return newRefDataValue;
     }
 
     private <K, V> PutOutcome putWithOutcome(final Map<K, V> map,

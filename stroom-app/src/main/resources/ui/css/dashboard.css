@@ -33,6 +33,20 @@
     display: flex;
 }
 
+.QueryToolbarViewImpl-outer {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-grow: 1;
+}
+
+.QueryToolbarViewImpl-inner {
+    display: flex;
+    gap: 2px;
+    margin-right: 5px;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
@@ -212,6 +226,7 @@
 	gap: 5px;
 	cursor: default;
 	z-index: 5;
+	min-height: 26px;
 }
 
 .tabLayout .tabLayout-tabContainer {

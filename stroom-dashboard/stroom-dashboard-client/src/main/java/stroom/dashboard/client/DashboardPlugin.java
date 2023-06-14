@@ -21,7 +21,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.dashboard.client.event.ReopenResultStoreEvent;
-import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
@@ -36,6 +35,7 @@ import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskStartEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -56,20 +56,18 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private final Provider<DashboardSuperPresenter> dashboardSuperPresenterProvider;
-    private final Provider<DashboardPresenter> dashboardPresenterProvider;
     private final RestFactory restFactory;
     private String currentUuid;
 
     @Inject
     public DashboardPlugin(final EventBus eventBus,
                            final Provider<DashboardSuperPresenter> dashboardSuperPresenterProvider,
-                           final Provider<DashboardPresenter> dashboardPresenterProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
-                           final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                           final DocumentPluginEventManager entityPluginEventManager,
+                           final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.dashboardSuperPresenterProvider = dashboardSuperPresenterProvider;
-        this.dashboardPresenterProvider = dashboardPresenterProvider;
         this.restFactory = restFactory;
 
         registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
@@ -107,7 +105,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
-            final DashboardPresenter presenter = dashboardPresenterProvider.get();
+            final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
             presenter.setParamsFromLink(params);
             presenter.setCustomTitle(title);
             presenter.setQueryOnOpen(queryOnOpen);
@@ -167,7 +165,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
-            final DashboardPresenter presenter = dashboardPresenterProvider.get();
+            final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
             presenter.setResultStoreInfo(resultStoreInfo);
 
             // Load the document and show the tab.

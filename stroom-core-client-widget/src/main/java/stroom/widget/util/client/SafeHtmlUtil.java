@@ -4,7 +4,11 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+import java.util.function.Function;
+
 public class SafeHtmlUtil {
+
+    public static final SafeHtml NBSP = SafeHtmlUtils.fromSafeConstant("&nbsp;");
 
     private SafeHtmlUtil() {
     }

@@ -648,7 +648,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     /**
      * Set or unset read-only mode.
      *
-     * @param readOnly true if editor should be set to readonly, false if the
+     * @param readOnly true if editor should be set to readOnly, false if the
      *                 editor should be set to read-write
      */
     public native void setReadOnly(boolean readOnly) /*-{

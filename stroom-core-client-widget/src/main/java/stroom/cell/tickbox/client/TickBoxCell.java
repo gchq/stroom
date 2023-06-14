@@ -115,10 +115,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             final String type = event.getType();
 
 //            GWT.log(type);
-            if (clickable &&
+            if (clickable && isTickBox(event) &&
                     ((BrowserEvents.MOUSEDOWN.equals(type) && MouseUtil.isPrimary(event)) ||
-                            (BrowserEvents.KEYDOWN.equals(type) &&
-                                    KeyBinding.getAction(event) == Action.SELECT))) {
+                            (BrowserEvents.KEYDOWN.equals(type) && KeyBinding.getAction(event) == Action.SELECT))) {
                 event.preventDefault();
 
                 TickBoxState state = value;
@@ -158,6 +157,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                 }
             }
         }
+    }
+
+    private boolean isTickBox(final NativeEvent event) {
+        boolean isTickBox = false;
+        Element element = event.getEventTarget().cast();
+        for (int i = 0; i < 4 && !isTickBox && element != null; i++) {
+            final String className = element.getClassName();
+            try {
+                isTickBox = className != null && className.contains("tickBox");
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
+            element = element.getParentElement();
+        }
+        return isTickBox;
     }
 
     @Override

@@ -93,7 +93,7 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
 
     public void read(final DocRef docRef) {
         this.docRef = docRef;
-        tabContentProvider.read(docRef, null);
+        tabContentProvider.read(docRef, null, true);
     }
 
     @Override

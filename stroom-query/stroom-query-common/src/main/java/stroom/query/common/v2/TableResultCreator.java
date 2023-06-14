@@ -33,6 +33,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -262,9 +263,14 @@ public class TableResultCreator implements ResultCreator {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
-                final Val val = item.getValue(i, true);
-                final String string = fieldFormatter.format(field, val);
-                stringValues.add(string);
+                try {
+                    final Val val = item.getValue(i, true);
+                    final String string = fieldFormatter.format(field, val);
+                    stringValues.add(string);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(LogUtil.message("Error getting field value for field {} at index {}", field, i), e);
+                    throw e;
+                }
             }
 
             return Row.builder()

@@ -18,10 +18,6 @@ package stroom.widget.button.client;
 
 import stroom.svg.client.Preset;
 
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
 
     private final Preset onPreset;
@@ -34,9 +30,7 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
         this.onPreset = onPreset;
         this.offPreset = offPreset;
 
-        addClickHandler(event -> {
-            toggleState();
-        });
+        addClickHandler(event -> toggleState());
     }
 
     @Override
@@ -53,49 +47,24 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
         return new SvgToggleButton(onPreset, offPreset);
     }
 
+    @Override
     public void setState(final boolean isOn) {
         if (this.isOn != isOn) {
-            final Preset newState = isOn
-                    ? onPreset
-                    : offPreset;
             this.isOn = isOn;
-            super.setSvgPreset(newState);
+            if (isOn) {
+                super.toggleSvgPreset(offPreset, onPreset);
+            } else {
+                super.toggleSvgPreset(onPreset, offPreset);
+            }
         }
     }
 
-    public boolean isOn() {
+    @Override
+    public boolean getState() {
         return isOn;
-    }
-
-    public boolean isOff() {
-        return !isOn;
     }
 
     private void toggleState() {
         setState(!isOn);
-    }
-
-    public HandlerRegistration addClickHandler(final ClickHandler onClickedHandler,
-                                               final ClickHandler offClickedHandler) {
-        return super.addClickHandler(event -> {
-            // The state will already have been toggled in toggleState by this point so
-            // need to do the opposite
-            if (isOn) {
-                offClickedHandler.onClick(event);
-            } else {
-                onClickedHandler.onClick(event);
-            }
-        });
-    }
-
-    public HandlerRegistration addMouseDownHandler(final MouseDownHandler onMouseDownedHandler,
-                                                   final MouseDownHandler offMouseDownedHandler) {
-        return super.addMouseDownHandler(event -> {
-            if (isOn) {
-                onMouseDownedHandler.onMouseDown(event);
-            } else {
-                offMouseDownedHandler.onMouseDown(event);
-            }
-        });
     }
 }

@@ -13,6 +13,82 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3304** : Make analytic results searchable.
+
+* Add support for syntax highlighting fenced blocks in markdown documentation.
+
+* Issue **#3506** : Make time picker and query buttons available from dashboards opened from links.
+
+* Issue **#3505** : Add debug.
+
+* Issue **#3512** : Increase col width to remove ellipsis.
+
+* Issue **#3511** : Increase col width to remove ellipsis.
+
+* Issue **#3304** : Make analytic results searchable.
+
+* Issue **#3508** : Change toggle button.
+
+* Issue **#3490** : Fix LMDB row key for analytics.
+
+* Issue **#3488** : Change default index shard sorting to be by partition and not node.
+
+* Issue **#3473** : Add debug to diagnose issue if it returns.
+
+* Issue **#3503** : Show all errors on top search toolbar.
+
+* Issue **#2197** : Add markdown documentation editor.
+
+* Issue **#3495** : Stop task termination on shutdown from disabling rules.
+
+* Make SQL migration script V07_02_00_001__analytics.sql idempotent. If you are migrating from a previous 7.2 BETA, you will need to delete the schema history entry for this script else stroom will not boot, probably this but check your own table `delete from analytics_schema_history where installed_rank = 2;`. No material change to the table structure.
+
+* Issue **#3496** : Fix wrapping.
+
+* Issue **#3497** : Fix dialog heading wrapping.
+
+* Issue **#3499** : Fix rule shard query.
+
+* Issue **#3492** : Fix multiline list display for error pane.
+
+* Issue **#3480** : Fix menu item text wrapping.
+
+* Issue **#3493** : Improve ctrl+f highlighting in ACE editor.
+
+* Issue **#3401** : Add analytic data shard page.
+
+* Issue **#3466** : Improve rule editing and configuration.
+
+* Issue **#3478** : Search result store screen now has close button rather than ok/cancel.
+
+* Issue **#3443** : Delete unused LMDB instances when analytics are deleted.
+
+* Issue **#3480** : Fix menu heights.
+
+* Issue **#3483** : Add sensible hard coded defaults for the jersey HTTP client configuration.
+
+* Issue **#3401** : Add analytic processing and notification settings.
+
+* Issue **#3452** : Make layout constraints dialog modal.
+
+* Issue **#3454** : Fix tickbox target click handling.
+
+* Issue **#3489** : Add suggestion caching to improve UI experience.
+
+* Issue **#3476** : Ensure special fields are removed when dashboard data source is changed.
+
+* Issue **#3485** : Roll lmdb-java back to 0.8.2 to see if it fixes the FFI issue.
+
+* Fix inefficient cursor loops in ref data purge. Make other minor performance improvements.
+
+* Issue **#3219** : Change reference loading to use a two stage process to reduce the time the LMDB write transaction is held open for. Change the hashing of string values to be done on bytes rather than on characters which means new loads will not be able to use existing string values as the hashes won't match. This means some duplication of identical strings, but the ones with legacy hashes will eventually be aged out on purge.
+
+* Issue **#3219** : Change reference data to store its data in multiple stores, with one store per reference feed. This should reduce contention when reference data is being loaded, as the load of a reference stream will now only affect lookups on streams in the same feed (assuming it is configured for writes block reads). As existing reference streams are used, they will be copied to the new feed specific stores and marked for purge in the legacy store. If you don't want to migrate existing data you can simply delete the contents of directory 'stroom.referenceData.lmdb.localDir' when stroom is shutdown and reference streams will be loaded on demand as usual.
+
+* Fix Data screen fetching data twice and consequently logging the fetch audit event twice.
+
+* Issue **#3358** : Fix audit events for user preferences screen.
+
 ## [v7.2-beta.18-open-id-1] - 2023-05-24
 
 * No change. Releasing with correct tag.

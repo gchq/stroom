@@ -489,7 +489,8 @@ public class ReferenceData {
                 if (mapAvailability.isLookupRequired()) {
                     // Stream is known to hold the map we are trying to hit, or we don't yet know the
                     // contents so have to do the lookup in case.
-                    final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore();
+                    final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore(
+                            refStreamDefinition);
 
                     // load the ref stream into the store if not already there
                     final boolean isRefStreamAvailableForLookups = ensureRefStreamAvailability(

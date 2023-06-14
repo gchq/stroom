@@ -26,6 +26,7 @@ import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableResult;
@@ -498,6 +499,7 @@ abstract class AbstractDataStoreTest {
 
     DataStore create(final TableSettings tableSettings, final DataStoreSettings dataStoreSettings) {
         return create(
+                SearchRequestSource.createBasic(),
                 new QueryKey(UUID.randomUUID().toString()),
                 "0",
                 tableSettings,
@@ -505,7 +507,8 @@ abstract class AbstractDataStoreTest {
                 dataStoreSettings);
     }
 
-    abstract DataStore create(QueryKey queryKey,
+    abstract DataStore create(SearchRequestSource searchRequestSource,
+                              QueryKey queryKey,
                               String componentId,
                               TableSettings tableSettings,
                               AbstractResultStoreConfig resultStoreConfig,

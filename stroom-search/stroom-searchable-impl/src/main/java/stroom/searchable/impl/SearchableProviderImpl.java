@@ -1,7 +1,7 @@
 package stroom.searchable.impl;
 
 import stroom.docref.DocRef;
-import stroom.explorer.api.ExplorerDecorator;
+import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 
@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class SearchableProviderImpl implements SearchableProvider, ExplorerDecorator {
+class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs {
 
     private final Set<Searchable> searchables;
 
@@ -23,7 +23,7 @@ class SearchableProviderImpl implements SearchableProvider, ExplorerDecorator {
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return searchables.stream()
                 .map(Searchable::getDocRef)
                 .filter(Objects::nonNull)

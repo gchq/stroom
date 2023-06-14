@@ -24,8 +24,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
@@ -52,8 +51,7 @@ import java.util.List;
 
 public class RuleSetSettingsPresenter
         extends MyPresenterWidget<RuleSetSettingsView>
-        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+        implements HasDocumentRead<ReceiveDataRules>, HasDocumentWrite<ReceiveDataRules>, HasDirtyHandlers {
 
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
@@ -305,10 +303,13 @@ public class RuleSetSettingsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final ReceiveDataRules policy) {
-        if (policy != null) {
-            this.fields = policy.getFields();
-            this.rules = policy.getRules();
+    public void read(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        updateButtons();
+
+        if (document != null) {
+            this.fields = document.getFields();
+            this.rules = document.getRules();
             listPresenter.getSelectionModel().clear();
             setDirty(false);
             update();
@@ -316,14 +317,8 @@ public class RuleSetSettingsPresenter
     }
 
     @Override
-    public ReceiveDataRules write(final ReceiveDataRules entity) {
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        updateButtons();
+    public ReceiveDataRules write(final ReceiveDataRules document) {
+        return document;
     }
 
     private void update() {

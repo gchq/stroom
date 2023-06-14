@@ -48,8 +48,8 @@ public abstract class AbstractRefDataStore implements RefDataStore {
      * should be used in a try with resources block to ensure any transactions are closed, e.g.
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
-    protected abstract RefDataLoader loader(RefStreamDefinition refStreamDefinition,
-                                            long effectiveTimeMs);
+    protected abstract RefDataLoader createLoader(RefStreamDefinition refStreamDefinition,
+                                                  long effectiveTimeMs);
 
 
     @Override
@@ -58,7 +58,7 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                                               final Consumer<RefDataLoader> work) {
 
         final boolean result;
-        try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
+        try (RefDataLoader refDataLoader = createLoader(refStreamDefinition, effectiveTimeMs)) {
             // we now hold the lock for this RefStreamDefinition so re-test the completion state
 
             final Optional<ProcessingState> optLoadState = getLoadState(refStreamDefinition);
@@ -82,7 +82,8 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                 // If we get here then the data was not loaded when we checked before getting the lock,
                 // so we waited for the lock and in the meantime another stream did the load.
                 // Thus, we can drop out.
-                LOGGER.info("Reference Data is already loaded for {}, so doing nothing", refStreamDefinition);
+                LOGGER.info("Reference Data is already successfully loaded for {}, so doing nothing",
+                        refStreamDefinition);
                 result = false;
             } else {
                 // Ref stream not in the store or a previous load was terminated part way through so
@@ -143,5 +144,10 @@ public abstract class AbstractRefDataStore implements RefDataStore {
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

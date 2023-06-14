@@ -31,7 +31,6 @@ public class RangeStoreKey {
     private final UID mapUid;
     private final Range<Long> keyRange;
 
-
     public RangeStoreKey(final UID mapUid, final Range<Long> keyRange) {
         this.mapUid = Objects.requireNonNull(mapUid);
         this.keyRange = Objects.requireNonNull(keyRange);
@@ -46,6 +45,10 @@ public class RangeStoreKey {
 
     public Range<Long> getKeyRange() {
         return keyRange;
+    }
+
+    public RangeStoreKey withMapUid(final UID newMapUid) {
+        return new RangeStoreKey(newMapUid, keyRange);
     }
 
     @Override

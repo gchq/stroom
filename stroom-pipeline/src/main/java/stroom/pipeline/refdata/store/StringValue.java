@@ -17,16 +17,36 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.store.offheapstore.serdes.StringValueSerde;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
+
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class StringValue implements RefDataValue {
 
+    /**
+     * MUST not change this else it is stored in the ref store. MUST be unique over all
+     * {@link RefDataValue} impls.
+     */
     public static final int TYPE_ID = 0;
 
     private final String value;
+    private volatile Long valueHash = null;
 
     public StringValue(final String value) {
         this.value = value;
+    }
+
+    public StringValue(final StagingValue stagingValue) {
+        final int typeId = stagingValue.getTypeId();
+        if (TYPE_ID != typeId) {
+            throw new RuntimeException(LogUtil.message("Expecting type {}, got {}", FastInfosetValue.TYPE_ID, typeId));
+        }
+        final ByteBuffer valueBuffer = stagingValue.getValueBuffer();
+        this.value = StringValueSerde.extractValue(valueBuffer);
+        this.valueHash = stagingValue.getValueHashCode();
     }
 
     public static StringValue of(String value) {
@@ -56,12 +76,23 @@ public class StringValue implements RefDataValue {
 
     @Override
     public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
-        return valueStoreHashAlgorithm.hash(value);
+        // Lazily compute the hash and hold for future use.
+        // This will mostly be used during a load which is single threaded so no need to
+        // avoid a synch at the risk of getting the same hash value twice.
+        if (valueHash == null) {
+            valueHash = valueStoreHashAlgorithm.hash(value);
+        }
+        return valueHash;
     }
 
     @Override
     public int getTypeId() {
         return TYPE_ID;
+    }
+
+    @Override
+    public boolean isNullValue() {
+        return NullSafe.isBlankString(value);
     }
 
     @Override

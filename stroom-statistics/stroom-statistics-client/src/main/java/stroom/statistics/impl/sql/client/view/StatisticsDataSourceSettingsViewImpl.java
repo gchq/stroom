@@ -35,8 +35,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         implements StatisticsDataSourceSettingsView {
 
     private final Widget widget;
-    @UiField
-    TextArea description;
     @UiField(provided = true)
     ItemListBox<StatisticType> statisticType;
     @UiField(provided = true)
@@ -106,11 +104,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     }
 
     @Override
-    public TextArea getDescription() {
-        return description;
-    }
-
-    @Override
     public CustomCheckBox getEnabled() {
         return enabled;
     }
@@ -147,7 +140,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         statisticType.setEnabled(!readOnly);
         precision.setEnabled(!readOnly);
         rollUpType.setEnabled(!readOnly);

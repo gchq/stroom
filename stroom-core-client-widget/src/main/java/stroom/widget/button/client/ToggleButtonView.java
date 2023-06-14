@@ -16,43 +16,9 @@
 
 package stroom.widget.button.client;
 
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-
-public interface ToggleButtonView {
-
-    boolean isEnabled();
-
-    void setEnabled(boolean enabled);
-
-    boolean isVisible();
-
-    void setVisible(boolean visible);
-
-    void setTitle(String title);
+public interface ToggleButtonView extends ButtonView {
 
     void setState(final boolean isOn);
 
-    boolean isOn();
-
-    boolean isOff();
-
-    /**
-     * @param onClickedHandler  The handler that will be invoked when the button is clicked while
-     *                          the ON face is showing.
-     * @param offClickedHandler The handler that will be invoked when the button is clicked while
-     *                          the OFF face is showing.
-     */
-    HandlerRegistration addClickHandler(final ClickHandler onClickedHandler,
-                                        final ClickHandler offClickedHandler);
-
-    /**
-     * @param onMouseDownedHandler  The handler that will be invoked when the button is mouse-downed while
-     *                              the ON face is showing.
-     * @param offMouseDownedHandler The handler that will be invoked when the button is mouse-downed while
-     *                              the OFF face is showing.
-     */
-    HandlerRegistration addMouseDownHandler(final MouseDownHandler onMouseDownedHandler,
-                                            final MouseDownHandler offMouseDownedHandler);
+    boolean getState();
 }

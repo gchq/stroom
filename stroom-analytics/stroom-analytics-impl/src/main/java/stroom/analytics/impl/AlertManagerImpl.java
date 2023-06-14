@@ -20,8 +20,6 @@ import stroom.analytics.api.AlertDefinition;
 import stroom.analytics.api.AlertManager;
 import stroom.analytics.api.AlertProcessor;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.AnalyticRuleProcessSettings;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -38,16 +36,13 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.shared.QueryContext;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchConfig;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.view.impl.ViewStore;
-import stroom.view.shared.ViewDoc;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -170,8 +165,8 @@ public class AlertManagerImpl implements AlertManager {
             rules = new HashMap<>();
             // Add the special folder rules.
             addSpecialFolderRules(rules);
-            // Add rules based on alert rule entities.
-            addAnalyticRules(rules);
+//            // Add rules based on alert rule entities.
+//            addAnalyticRules(rules);
 
             currentRules = rules;
             lastCacheUpdateTimeMs = Instant.now();
@@ -315,53 +310,53 @@ public class AlertManagerImpl implements AlertManager {
             }
         }
     }
-
-    private void addAnalyticRules(final Map<DocRef, List<RuleConfig>> indexToRules) {
-        final AnalyticRuleStore analyticRuleStore = analyticRuleStoreProvider.get();
-        final List<DocRef> list = analyticRuleStore.list();
-        for (final DocRef docRef : list) {
-            try {
-                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
-                addAnalyticRule(analyticRuleDoc, indexToRules);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-    }
-
-    private void addAnalyticRule(final AnalyticRuleDoc alertRule,
-                                 final Map<DocRef, List<RuleConfig>> indexToRules) {
-        final AnalyticRuleProcessSettings processSettings = alertRule.getProcessSettings();
-        if (processSettings != null && processSettings.isEnabled()) {
-            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(alertRule);
-
-            // If the datasource is a view then resolve underlying data source and extraction.
-            DocRef dataSource = searchRequest.getQuery().getDataSource();
-            DocRef extractionPipeline = null;
-            if (dataSource != null) {
-                if (ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                    final ViewDoc viewDoc = viewStoreProvider.get().readDocument(dataSource);
-                    if (viewDoc != null) {
-                        dataSource = viewDoc.getDataSource();
-                        extractionPipeline = viewDoc.getPipeline();
-                    }
-                }
-
-                final QueryContext queryContext = QueryContext.builder().build();
-                ExpressionOperator expression = searchRequest.getQuery().getExpression();
-
-                if (extractionPipeline != null) {
-                    final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
-                    final AnalyticRuleConfig rule = new AnalyticRuleConfig(
-                            alertRule,
-                            queryContext,
-                            expression,
-                            extractionPipeline,
-                            tableSettings,
-                            searchRequest);
-                    indexToRules.computeIfAbsent(dataSource, k -> new ArrayList<>()).add(rule);
-                }
-            }
-        }
-    }
+//
+//    private void addAnalyticRules(final Map<DocRef, List<RuleConfig>> indexToRules) {
+//        final AnalyticRuleStore analyticRuleStore = analyticRuleStoreProvider.get();
+//        final List<DocRef> list = analyticRuleStore.list();
+//        for (final DocRef docRef : list) {
+//            try {
+//                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+//                addAnalyticRule(analyticRuleDoc, indexToRules);
+//            } catch (final RuntimeException e) {
+//                LOGGER.error(e.getMessage(), e);
+//            }
+//        }
+//    }
+//
+//    private void addAnalyticRule(final AnalyticRuleDoc alertRule,
+//                                 final Map<DocRef, List<RuleConfig>> indexToRules) {
+//        final AnalyticRuleProcessSettings processSettings = alertRule.getProcessSettings();
+//        if (processSettings != null && processSettings.isEnabled()) {
+//            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(alertRule);
+//
+//            // If the datasource is a view then resolve underlying data source and extraction.
+//            DocRef dataSource = searchRequest.getQuery().getDataSource();
+//            DocRef extractionPipeline = null;
+//            if (dataSource != null) {
+//                if (ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+//                    final ViewDoc viewDoc = viewStoreProvider.get().readDocument(dataSource);
+//                    if (viewDoc != null) {
+//                        dataSource = viewDoc.getDataSource();
+//                        extractionPipeline = viewDoc.getPipeline();
+//                    }
+//                }
+//
+//                final QueryContext queryContext = QueryContext.builder().build();
+//                ExpressionOperator expression = searchRequest.getQuery().getExpression();
+//
+//                if (extractionPipeline != null) {
+//                    final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
+//                    final AnalyticRuleConfig rule = new AnalyticRuleConfig(
+//                            alertRule,
+//                            queryContext,
+//                            expression,
+//                            extractionPipeline,
+//                            tableSettings,
+//                            searchRequest);
+//                    indexToRules.computeIfAbsent(dataSource, k -> new ArrayList<>()).add(rule);
+//                }
+//            }
+//        }
+//    }
 }

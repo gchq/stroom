@@ -19,21 +19,19 @@ package stroom.xmlschema.client.presenter;
 
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class XMLSchemaSettingsPresenter
-        extends DocumentSettingsPresenter<XMLSchemaSettingsView, XmlSchemaDoc> {
+public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaSettingsView, XmlSchemaDoc> {
 
     @Inject
     public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view) {
@@ -46,8 +44,6 @@ public class XMLSchemaSettingsPresenter
                 setDirty(true);
             }
         };
-
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(view.getNamespaceURI().addKeyDownHandler(keyDownHander));
         registerHandler(view.getSystemId().addKeyDownHandler(keyDownHander));
         registerHandler(view.getSchemaGroup().addKeyDownHandler(keyDownHander));
@@ -60,8 +56,7 @@ public class XMLSchemaSettingsPresenter
     }
 
     @Override
-    public void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema) {
-        getView().getDescription().setText(xmlSchema.getDescription());
+    public void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema, final boolean readOnly) {
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
         getView().getSystemId().setText(xmlSchema.getSystemId());
         getView().getSchemaGroup().setText(xmlSchema.getSchemaGroup());
@@ -70,7 +65,6 @@ public class XMLSchemaSettingsPresenter
 
     @Override
     public XmlSchemaDoc onWrite(final XmlSchemaDoc xmlSchema) {
-        xmlSchema.setDescription(getView().getDescription().getText().trim());
         xmlSchema.setNamespaceURI(getView().getNamespaceURI().getText().trim());
         xmlSchema.setSystemId(getView().getSystemId().getText());
         xmlSchema.setSchemaGroup(getView().getSchemaGroup().getText());
@@ -79,8 +73,6 @@ public class XMLSchemaSettingsPresenter
     }
 
     public interface XMLSchemaSettingsView extends View {
-
-        TextArea getDescription();
 
         TextBox getNamespaceURI();
 

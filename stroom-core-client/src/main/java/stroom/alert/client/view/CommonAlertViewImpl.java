@@ -22,6 +22,7 @@ import stroom.widget.util.client.MouseUtil;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
@@ -35,7 +36,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     private static final int MAX_MESSAGE_LENGTH = 1000;
 
-    private final SimplePanel container = new SimplePanel();
+    private final FlowPanel layout = new FlowPanel();
     private final SimplePanel image = new SimplePanel();
     private final HTML message = new HTML();
     private final Hyperlink showHideDetail = new Hyperlink();
@@ -44,21 +45,19 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Inject
     public CommonAlertViewImpl() {
-        final HorizontalPanel layout = new HorizontalPanel();
-        container.add(layout);
-
-        layout.add(image);
-        final VerticalPanel messageArea = new VerticalPanel();
-        layout.add(messageArea);
-
+        final FlowPanel messageArea = new FlowPanel();
+        messageArea.setStyleName("alert-message-area");
         messageArea.add(message);
         messageArea.add(showHideDetail);
         messageArea.add(detail);
 
-        layout.addStyleName("alert-table");
-        message.addStyleName("alert-message");
+        message.setStyleName("alert-message");
         showHideDetail.addStyleName("alert-showHide");
-        detail.addStyleName("alert-detail");
+        detail.setStyleName("alert-detail");
+
+        layout.setStyleName("alert-layout");
+        layout.add(image);
+        layout.add(messageArea);
 
         showHideDetail.setVisible(false);
         setDetailVisible(false);
@@ -76,7 +75,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Override
     public Widget asWidget() {
-        return container;
+        return layout;
     }
 
     @Override

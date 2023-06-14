@@ -21,69 +21,87 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
-import stroom.security.client.api.ClientSecurityContext;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.query.api.v2.ResultStoreInfo;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
+
 public class DashboardSuperPresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc> {
+        extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc>
+        implements HasToolbar {
 
     private static final TabData DASHBOARD = new TabDataImpl("Dashboard");
-    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final TabContentProvider<DashboardDoc> tabContentProvider = new TabContentProvider<>();
     private final DashboardPresenter dashboardPresenter;
+    private final MarkdownEditPresenter markdownEditPresenter;
 
     @Inject
     public DashboardSuperPresenter(final EventBus eventBus,
                                    final LinkTabPanelView view,
-                                   final ClientSecurityContext securityContext,
-                                   final Provider<DashboardSettingsPresenter> settingsPresenterProvider,
-                                   final Provider<DashboardPresenter> dashboardPresenterProvider) {
-        super(eventBus, view, securityContext);
-        dashboardPresenter = dashboardPresenterProvider.get();
-
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        });
+                                   final DashboardPresenter dashboardPresenter,
+                                   final MarkdownEditPresenter markdownEditPresenter) {
+        super(eventBus, view);
+        this.dashboardPresenter = dashboardPresenter;
+        this.markdownEditPresenter = markdownEditPresenter;
 
         addTab(DASHBOARD);
-        tabContentProvider.add(DASHBOARD, () -> dashboardPresenter);
-
-        addTab(SETTINGS);
-        tabContentProvider.add(SETTINGS, settingsPresenterProvider);
-
+        addTab(DOCUMENTATION);
         selectTab(DASHBOARD);
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dashboardPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+    }
+
+    @Override
+    public List<Widget> getToolbars() {
+        return dashboardPresenter.getToolbars();
+    }
+
+    @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
+        if (DASHBOARD.equals(tab)) {
+            callback.onReady(dashboardPresenter);
+        } else if (DOCUMENTATION.equals(tab)) {
+            callback.onReady(markdownEditPresenter);
+        } else {
+            callback.onReady(null);
+        }
     }
 
     @Override
-    public void onRead(final DocRef docRef, final DashboardDoc feed) {
-        super.onRead(docRef, feed);
-        tabContentProvider.read(docRef, feed);
+    public void onRead(final DocRef docRef, final DashboardDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
+        dashboardPresenter.read(docRef, doc, readOnly);
+        markdownEditPresenter.setText(doc.getDescription());
+        markdownEditPresenter.setReadOnly(readOnly);
     }
 
     @Override
-    protected DashboardDoc onWrite(DashboardDoc feed) {
-        return tabContentProvider.write(feed);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+    protected DashboardDoc onWrite(DashboardDoc doc) {
+        doc = dashboardPresenter.write(doc);
+        doc.setDescription(markdownEditPresenter.getText());
+        return doc;
     }
 
     @Override
@@ -95,5 +113,26 @@ public class DashboardSuperPresenter
     @Override
     public String getType() {
         return DashboardDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public String getLabel() {
+        return dashboardPresenter.getLabel();
+    }
+
+    public void setParamsFromLink(final String params) {
+        dashboardPresenter.setParamsFromLink(params);
+    }
+
+    public void setCustomTitle(final String customTitle) {
+        dashboardPresenter.setCustomTitle(customTitle);
+    }
+
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        dashboardPresenter.setQueryOnOpen(queryOnOpen);
+    }
+
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        dashboardPresenter.setResultStoreInfo(resultStoreInfo);
     }
 }

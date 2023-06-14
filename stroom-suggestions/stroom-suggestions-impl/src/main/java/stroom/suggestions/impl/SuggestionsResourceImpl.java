@@ -19,6 +19,7 @@ package stroom.suggestions.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.Suggestions;
 import stroom.query.shared.SuggestionsResource;
 import stroom.suggestions.api.SuggestionsService;
 
@@ -37,7 +38,7 @@ class SuggestionsResourceImpl implements SuggestionsResource {
     }
 
     @Override
-    public List<String> fetch(final FetchSuggestionsRequest request) {
+    public Suggestions fetch(final FetchSuggestionsRequest request) {
 
         // Pretty sure we don't want auditing on this given that it gets
         // hit on each keystroke

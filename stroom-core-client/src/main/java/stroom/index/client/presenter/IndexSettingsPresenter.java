@@ -17,11 +17,10 @@
 
 package stroom.index.client.presenter;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
@@ -38,9 +37,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -50,7 +46,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc>
+public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsView, IndexDoc>
         implements IndexSettingsUiHandlers {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
@@ -79,13 +75,6 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
 
     @Override
     protected void onBind() {
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        };
-        registerHandler(getView().getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
             if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
                 setDirty(true);
@@ -105,8 +94,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final IndexDoc index) {
-        getView().getDescription().setText(index.getDescription());
+    protected void onRead(final DocRef docRef, final IndexDoc index, final boolean readOnly) {
         getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
         getView().setShardsPerPartition(index.getShardsPerPartition());
         getView().setPartitionBy(index.getPartitionBy());
@@ -121,7 +109,6 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
 
     @Override
     protected IndexDoc onWrite(final IndexDoc index) {
-        index.setDescription(getView().getDescription().getText().trim());
         index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
         index.setShardsPerPartition(getView().getShardsPerPartition());
         index.setPartitionBy(getView().getPartitionBy());
@@ -167,8 +154,6 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
     }
 
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {
-
-        TextArea getDescription();
 
         int getMaxDocsPerShard();
 
