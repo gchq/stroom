@@ -127,6 +127,8 @@ public class SteppingFilterPresenter extends
 
     private void addXPathFilter() {
         final XPathFilter xPathFilter = new XPathFilter();
+        xPathFilter.setMatchType(XPathFilter.DEFAULT_MATCH_TYPE);
+
         final HidePopupRequestEvent.Handler handler = e -> {
             if (e.isOk()) {
                 xPathFilterPresenter.write();
