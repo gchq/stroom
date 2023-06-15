@@ -145,11 +145,6 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @Override
-    protected InputSource getInputSource(final InputSource inputSource) {
-        return inputSource;
-    }
-
-    @Override
     public void endProcessing() {
         try {
             super.endProcessing();
