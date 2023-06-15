@@ -2162,7 +2162,8 @@ export interface Prop {
 }
 
 export interface PropertyPath {
-  parts?: string[];
+  leafPart?: string;
+  parentParts?: string[];
 }
 
 /**
