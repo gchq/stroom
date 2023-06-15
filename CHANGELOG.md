@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.26] - 2023-06-15
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+
+* Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
+
+
 ## [v7.0.25] - 2023-03-17
 
 * Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
@@ -4837,7 +4844,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.25...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.26...HEAD
+[v7.0.26]: https://github.com/gchq/stroom/compare/v7.0.25...v7.0.26
 [v7.0.25]: https://github.com/gchq/stroom/compare/v7.0.24...v7.0.25
 [v7.0.24]: https://github.com/gchq/stroom/compare/v7.0.23...v7.0.24
 [v7.0.23]: https://github.com/gchq/stroom/compare/v7.0.22...v7.0.23
