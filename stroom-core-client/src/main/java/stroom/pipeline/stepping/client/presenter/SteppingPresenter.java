@@ -323,12 +323,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     private void updateToggleConsoleBtnVisibility(final IndicatorLines indicatorLines, final String elementId) {
-        // Remove any previous buttons
-//        for (final InlineSvgToggleButton btn : elementLogPaneStateMap.values()) {
-//            if (leftButtons.containsButton(btn)) {
-//                leftButtons.remove(btn);
-//            }
-//        }
         final Severity maxSeverity = GwtNullSafe.get(indicatorLines, IndicatorLines::getMaxSeverity);
         boolean isButtonVisible = maxSeverity != null;
 
@@ -339,20 +333,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 && currentElementPresenter != null
                 && currentElementPresenter.getDesiredLogPanVisibility();
 
-//            InlineSvgToggleButton toggleLogPaneButton = elementLogPaneStateMap.get(elementId);
-//            if (toggleLogPaneButton == null) {
-//                // Create but don't add yet
-//                final InlineSvgToggleButton btn = new InlineSvgToggleButton();
-//                btn.setSvg(SvgImages.EXCLAMATION);
-//                btn.setState(isButtonVisible);
-//                btn.setTitle("Toggle Log Pane");
-//
-//                registerHandler(btn.addClickHandler(event ->
-//                        setLogPaneVisibility(btn.isOn())));
-//
-//                elementLogPaneStateMap.put(elementId, btn);
-//                toggleLogPaneButton = btn;
-//            }
         setLogPaneVisibility(isLogPaneVisible);
 
         if (maxSeverity != null) {
@@ -402,32 +382,13 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
                 elementPresenter.setInput(input, 1, elementData.isFormatInput(), null);
 
-//                if (output.length() == 0 && outputIndicators != null && outputIndicators.getMaxSeverity() != null) {
-//                    elementPresenter.setOutput(
-//                            outputIndicators.toString(),
-//                            1,
-//                            false,
-//                            null);
-//                } else {
-                // Don't try and format text output.
                 elementPresenter.setOutput(
                         output,
                         1,
                         elementData.isFormatOutput(),
                         new IndicatorLines(outputIndicators));
-//                }
             } else {
                 elementPresenter.clearAllIndicators();
-                // // if we didn't find a record then it could be the input that
-                // is
-                // // responsible. Show any error that has been created..
-                // if (inputIndicators != null && inputIndicators.hasSummary())
-                // {
-                // editorPresenter.setInputIndicators(inputIndicators);
-                // } else if (outputIndicators != null
-                // && outputIndicators.hasSummary()) {
-                // editorPresenter.setOutputIndicators(outputIndicators);
-                // }
             }
         } else {
 //            GWT.log("currentResult is null, not updating");
@@ -569,12 +530,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
         }
         return GwtNullSafe.get(steppingResult, SteppingResult::getStepData);
-//        return GwtNullSafe.get(
-//                currentResult,
-//                currentResult2 -> currentResult2.isFoundRecord()
-//                        ? currentResult2
-//                        : lastFoundResult,
-//                SteppingResult::getStepData);
     }
 
     private void updateElementSeverities() {
@@ -661,23 +616,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     sb.append(err);
                     sb.append("\n");
                 }
-
-//                GWT.log("Some errors occurred during stepping");
-//                AlertEvent.fireError(
-//                        this,
-//                        "Some errors occurred during stepping",
-//                        sb.toString(),
-//                        null);
             } else {
                 fatalErrors = getFatalErrors(result);
                 fatalErrors.ifPresent(errorText -> {
-
-//                    GWT.log("One or more fatal errors occurred during stepping");
-//                    AlertEvent.fireError(
-//                            this,
-//                            "One or more fatal errors occurred during stepping",
-//                            errorText,
-//                            null);
                 });
             }
         } finally {
