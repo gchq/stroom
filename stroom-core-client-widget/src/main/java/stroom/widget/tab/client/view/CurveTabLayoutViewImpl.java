@@ -64,7 +64,7 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
             }
         };
         widget = binder.createAndBindUi(this);
-        menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+        menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU.getSvg());
         menu.getElement().setTitle(HIDE_SIDEBAR);
         menuVisible = true;
     }
@@ -103,11 +103,11 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     void onMenu(final ClickEvent event) {
         if (menuVisible) {
             menuVisible = false;
-            menu.getElement().setInnerHTML(SvgImages.MONO_SHOW_MENU);
+            menu.getElement().setInnerHTML(SvgImages.MONO_SHOW_MENU.getSvg());
             menu.getElement().setTitle(SHOW_SIDEBAR);
         } else {
             menuVisible = true;
-            menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+            menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU.getSvg());
             menu.getElement().setTitle(HIDE_SIDEBAR);
         }
         getUiHandlers().maximise();

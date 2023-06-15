@@ -58,7 +58,7 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
         }, KeyDownEvent.getType());
         widget.getElement().setTabIndex(0);
 
-        button.getElement().setInnerHTML(SvgImages.MONO_ELLIPSES);
+        button.getElement().setInnerHTML(SvgImages.MONO_ELLIPSES.getSvg());
     }
 
     @Override

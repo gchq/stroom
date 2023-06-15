@@ -91,6 +91,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
     private EditorPresenter logPresenter;
+    private boolean desiredLogPanVisibility = true;
 
     private String classification;
     private ClassificationWrapperView inputView;
@@ -168,8 +169,16 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         return future;
     }
 
-    public void toggleLogVisibility() {
-        getView().toggleLogVisible();
+    public void setDesiredLogPanVisibility(final boolean desiredLogPanVisibility) {
+        this.desiredLogPanVisibility = desiredLogPanVisibility;
+    }
+
+    public void setLogPaneVisibility(final boolean isVisible) {
+        getView().setLogVisible(isVisible);
+    }
+
+    public boolean getDesiredLogPanVisibility() {
+        return desiredLogPanVisibility;
     }
 
     private void updateLogView() {
@@ -590,8 +599,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         void setLogView(View view);
 
         void setLogVisible(final boolean isVisible);
-
-        void toggleLogVisible();
     }
 
 

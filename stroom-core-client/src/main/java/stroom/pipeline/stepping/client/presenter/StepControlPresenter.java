@@ -35,11 +35,6 @@ public class StepControlPresenter
         implements StepControlUIHandlers,
         HasChangeFilterHandlers {
 
-    private boolean lastFoundStepFirstState = false;
-    private boolean lastFoundStepForwardState = false;
-    private boolean lastFoundStepBackwardState = false;
-    private boolean lastFoundStepLastState = false;
-
     private StepLocation endLocation = null;
 
     @Inject
@@ -92,6 +87,7 @@ public class StepControlPresenter
                 && stepLocation.getRecordIndex() == 0;
         // If a filter is in place the end record is a variable concept
         final boolean isLastRecord = !isFiltered
+                && !hasFatal // if hasFatal then
                 && stepLocation != null
                 && endLocation != null
                 && stepLocation.getPartIndex() == endLocation.getPartIndex()
@@ -111,18 +107,13 @@ public class StepControlPresenter
                 getView().setStepForwardEnabled(true);
                 getView().setStepLastEnabled(true);
             } else if (stepType == StepType.FORWARD) {
-                if (endLocation == null && !isFiltered && !foundRecord) {
-                    endLocation = stepLocation;
-                }
+                markEndLocation(foundRecord, hasFatal, isFiltered, stepLocation);
                 getView().setStepFirstEnabled(true);
                 getView().setStepBackwardEnabled(true);
                 getView().setStepForwardEnabled(canStepFurtherForward);
                 getView().setStepLastEnabled(canStepFurtherForward);
             } else if (stepType == StepType.LAST) {
-                // Record the end location for future now that we know it.
-                if (endLocation == null && !isFiltered && foundRecord) {
-                    endLocation = stepLocation;
-                }
+                markEndLocation(foundRecord, hasFatal, isFiltered, stepLocation);
                 getView().setStepFirstEnabled(true);
                 getView().setStepBackwardEnabled(true);
                 getView().setStepForwardEnabled(false);
@@ -152,6 +143,16 @@ public class StepControlPresenter
             }
         }
         getView().setStepRefreshEnabled(showingData);
+    }
+
+    private void markEndLocation(final boolean foundRecord,
+                                 final boolean hasFatal,
+                                 final boolean isFiltered,
+                                 final StepLocation stepLocation) {
+        // Record the end location for future now that we know it.
+        if (endLocation == null && !isFiltered && !hasFatal && !foundRecord) {
+            endLocation = stepLocation;
+        }
     }
 
     @Override

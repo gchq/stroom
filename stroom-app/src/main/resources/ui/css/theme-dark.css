@@ -60,7 +60,7 @@
 
     --icon-button__background-color--on: var(--blue-500);
     --icon-button__border-color--on: var(--black);
-    --icon-button__color--on: var(--white);
+    --icon-button__color--on: var(--app__background);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
     --icon-button__color: var(--blue-500);

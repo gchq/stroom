@@ -54,9 +54,9 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
                 inputWidget.addStyleName("dashboard-panel overflow-hidden");
                 layout.setHSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT);
                 if (code == null) {
-                    layout.addWest(inputWidget, 200);
-                    layout.setVSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT, LOG_PANE_SPLIT);
+                    layout.setVSplits(LOG_PANE_SPLIT);
                     layout.addSouth(logWidget, LOG_PANE_SIZE);
+                    layout.addWest(inputWidget, 200);
                 } else {
                     final Widget codeWidget = code.asWidget();
                     codeWidget.addStyleName("dashboard-panel overflow-hidden");
@@ -68,6 +68,8 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
             }
             // Center widget so must be added last
             layout.add(outputWidget);
+
+            layout.setWidgetHidden(logWidget, true);
 
             widget = layout;
         }
@@ -103,10 +105,5 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
             layout.setWidgetHidden(log.asWidget(), !isVisible);
             layout.setVSplits();
         }
-    }
-
-    @Override
-    public void toggleLogVisible() {
-        setLogVisible(!isLogVisible);
     }
 }

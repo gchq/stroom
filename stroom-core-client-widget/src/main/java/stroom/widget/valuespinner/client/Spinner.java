@@ -124,13 +124,13 @@ public class Spinner implements HasHandlers {
 
     public Spinner() {
         this.initialSpeed = INITIAL_SPEED;
-        incrementArrow.getElement().setInnerHTML(SvgImages.MONO_ARROW_UP);
+        incrementArrow.getElement().setInnerHTML(SvgImages.MONO_ARROW_UP.getSvg());
         incrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
         incrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
         incrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
         incrementArrow.addDomHandler(mouseOutHandler, MouseOutEvent.getType());
         incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
-        decrementArrow.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
+        decrementArrow.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN.getSvg());
         decrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
         decrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
         decrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());

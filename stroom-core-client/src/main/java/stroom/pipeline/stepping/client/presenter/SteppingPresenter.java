@@ -51,6 +51,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.DataRange;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -77,6 +78,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -97,6 +99,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final RestFactory restFactory;
     private final Map<String, ElementPresenter> elementPresenterMap = new HashMap<>();
+    private final Map<String, InlineSvgToggleButton> elementLogPaneStateMap = new HashMap<>();
     private final PipelineModel pipelineModel;
     private final ButtonView saveButton;
     private final InlineSvgToggleButton toggleLogPaneButton;
@@ -109,6 +112,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
     private Meta meta;
     private String classification;
+    private ElementPresenter currentElementPresenter = null;
 
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
@@ -190,7 +194,12 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             steppingFilterPresenter.show(elements, request.getStepFilterMap(), request::setStepFilterMap);
         }));
         registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(toggleLogPaneButton.addClickHandler(event -> toggleConsole()));
+        registerHandler(toggleLogPaneButton.addClickHandler(event -> {
+            if (currentElementPresenter != null) {
+                currentElementPresenter.setDesiredLogPanVisibility(toggleLogPaneButton.isOn());
+                currentElementPresenter.setLogPaneVisibility(toggleLogPaneButton.isOn());
+            }
+        }));
     }
 
     private PipelineElement getSelectedPipeElement() {
@@ -259,18 +268,10 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private void refreshEditor(final ElementPresenter elementPresenter, final String elementId) {
         elementPresenter.load()
                 .onSuccess(result -> {
-//                    if (true || elementPresenter.isRefreshRequired()) {
-//                        elementPresenter.setRefreshRequired(false);
-//                        GWT.log(elementId + " - Refreshing");
-
                     // Update code pane.
                     refreshEditorCodeIndicators(elementPresenter, elementId);
-
                     // Update IO data.
                     refreshEditorIO(elementPresenter, elementId);
-//                    } else {
-//                        GWT.log(elementId + " - Refresh not required");
-//                    }
                     updateToggleConsoleBtn(elementId);
                 })
                 .onFailure(throwable ->
@@ -278,26 +279,15 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     private void refreshEditorCodeIndicators(final ElementPresenter elementPresenter, final String elementId) {
+        final SharedStepData stepData = getEffectiveStepData();
         // Only update the code indicators if we have a current result.
-        if (currentResult != null && currentResult.getStepData() != null) {
-            final SharedElementData elementData = currentResult.getStepData().getElementData(elementId);
+        if (stepData != null) {
+            final SharedElementData elementData = stepData.getElementData(elementId);
             if (elementData != null) {
                 final Indicators codeIndicators = elementData.getCodeIndicators();
-//                GWT.log("codeIndicators: " + codeIndicators);
-//                GWT.log("codeIndicators.errorList:\n"
-//                        + (codeIndicators != null && codeIndicators.getErrorList() != null
-//                        ? codeIndicators.getErrorList().stream()
-//                        .map(storedError -> ">> " + storedError)
-//                        .collect(Collectors.joining("\n"))
-//                        : null));
                 // Always set the indicators for the code pane as errors in the
                 // code pane could be responsible for no record being found.
-
                 final IndicatorLines indicatorLines = new IndicatorLines(codeIndicators);
-//                GWT.log("indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                        + indicatorLines.getLocationAgnosticIndicator());
-//                GWT.log("indicatorLines.getIndicator(25):\n>> "
-//                        + indicatorLines.getIndicator(25));
 
                 elementPresenter.setCodeIndicators(indicatorLines);
             } else {
@@ -309,9 +299,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     private void updateToggleConsoleBtn(final String elementId) {
+        final SharedStepData stepData = getEffectiveStepData();
+
         // Only update the code indicators if we have a current result.
-        if (currentResult != null && currentResult.getStepData() != null) {
-            final SharedElementData elementData = currentResult.getStepData().getElementData(elementId);
+        if (stepData != null) {
+            final SharedElementData elementData = stepData.getElementData(elementId);
             if (elementData != null) {
                 final Indicators codeIndicators = elementData.getCodeIndicators();
                 final Indicators outputIndicators = elementData.getOutputIndicators();
@@ -321,55 +313,88 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 //                GWT.log(elementId + " - Output indicators: " + outputIndicators);
 //                GWT.log(elementId + " - Code indicators: " + codeIndicators);
 //                GWT.log(elementId + " - Combined indicatorLines: " + indicatorLines);
-                updateToggleConsoleBtnVisibility(indicatorLines);
+                updateToggleConsoleBtnVisibility(indicatorLines, elementId);
             } else {
-                updateToggleConsoleBtnVisibility(null);
+                updateToggleConsoleBtnVisibility(null, elementId);
             }
         } else {
-            updateToggleConsoleBtnVisibility(null);
+            updateToggleConsoleBtnVisibility(null, elementId);
         }
     }
 
-    private void updateToggleConsoleBtnVisibility(final IndicatorLines indicatorLines) {
-        boolean isVisible = false;
-        if (indicatorLines != null) {
-            final Severity maxSeverity = indicatorLines.getMaxSeverity();
-            if (maxSeverity != null) {
-                isVisible = true;
-                final int count = indicatorLines.getCount(maxSeverity);
-                final String plural = count > 1
-                        ? "s"
-                        : "";
-                final String type;
-                if (Severity.INFO.equals(maxSeverity)) {
-                    type = "Information Message";
-                } else if (Severity.WARNING.equals(maxSeverity)) {
-                    type = "Warning";
-                } else if (Severity.ERROR.equals(maxSeverity)) {
-                    type = "Error";
-                } else if (Severity.FATAL_ERROR.equals(maxSeverity)) {
-                    type = "Fatal Error";
-                } else {
-                    type = "Message";
-                }
-                final String msg = "Toggle Log Pane ("
-                        + count + " " + type + plural + ")";
-                toggleLogPaneButton.setTitle(msg);
+    private void updateToggleConsoleBtnVisibility(final IndicatorLines indicatorLines, final String elementId) {
+        // Remove any previous buttons
+//        for (final InlineSvgToggleButton btn : elementLogPaneStateMap.values()) {
+//            if (leftButtons.containsButton(btn)) {
+//                leftButtons.remove(btn);
+//            }
+//        }
+        final Severity maxSeverity = GwtNullSafe.get(indicatorLines, IndicatorLines::getMaxSeverity);
+        boolean isButtonVisible = maxSeverity != null;
+
+        if (elementId != null) {
+            currentElementPresenter = elementPresenterMap.get(elementId);
+        }
+        boolean isLogPaneVisible = isButtonVisible
+                && currentElementPresenter != null
+                && currentElementPresenter.getDesiredLogPanVisibility();
+
+//            InlineSvgToggleButton toggleLogPaneButton = elementLogPaneStateMap.get(elementId);
+//            if (toggleLogPaneButton == null) {
+//                // Create but don't add yet
+//                final InlineSvgToggleButton btn = new InlineSvgToggleButton();
+//                btn.setSvg(SvgImages.EXCLAMATION);
+//                btn.setState(isButtonVisible);
+//                btn.setTitle("Toggle Log Pane");
+//
+//                registerHandler(btn.addClickHandler(event ->
+//                        setLogPaneVisibility(btn.isOn())));
+//
+//                elementLogPaneStateMap.put(elementId, btn);
+//                toggleLogPaneButton = btn;
+//            }
+        setLogPaneVisibility(isLogPaneVisible);
+
+        if (maxSeverity != null) {
+            final int count = indicatorLines.getCount(maxSeverity);
+            final String plural = count > 1
+                    ? "s"
+                    : "";
+            final String type;
+            if (Severity.INFO.equals(maxSeverity)) {
+                type = "Information Message";
+            } else if (Severity.WARNING.equals(maxSeverity)) {
+                type = "Warning";
+            } else if (Severity.ERROR.equals(maxSeverity)) {
+                type = "Error";
+            } else if (Severity.FATAL_ERROR.equals(maxSeverity)) {
+                type = "Fatal Error";
+            } else {
+                type = "Message";
             }
+            final String msg = "Toggle Log Pane ("
+                    + count + " " + type + plural + ")";
+            toggleLogPaneButton.setTitle(msg);
         }
 
         final boolean hasButton = leftButtons.containsButton(toggleLogPaneButton);
-        if (isVisible && !hasButton) {
+        if (isButtonVisible && !hasButton) {
             leftButtons.addButton(toggleLogPaneButton);
-        } else if (!isVisible && hasButton) {
+        } else if (!isButtonVisible && hasButton) {
             leftButtons.removeButton(toggleLogPaneButton);
+        }
+        // Now set the button state based on the desired state from the presenter
+        if (isButtonVisible) {
+            toggleLogPaneButton.setState(isLogPaneVisible);
         }
     }
 
     private void refreshEditorIO(final ElementPresenter elementPresenter, final String elementId) {
 
-        if (currentResult != null) {
-            final SharedElementData elementData = currentResult.getStepData().getElementData(elementId);
+        final SharedStepData stepData = getEffectiveStepData();
+
+        if (stepData != null) {
+            final SharedElementData elementData = stepData.getElementData(elementId);
             if (elementData != null) {
                 final Indicators outputIndicators = elementData.getOutputIndicators();
                 final String input = notNull(elementData.getInput());
@@ -377,20 +402,20 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
                 elementPresenter.setInput(input, 1, elementData.isFormatInput(), null);
 
-                if (output.length() == 0 && outputIndicators != null && outputIndicators.getMaxSeverity() != null) {
-                    elementPresenter.setOutput(
-                            outputIndicators.toString(),
-                            1,
-                            false,
-                            null);
-                } else {
-                    // Don't try and format text output.
-                    elementPresenter.setOutput(
-                            output,
-                            1,
-                            elementData.isFormatOutput(),
-                            new IndicatorLines(outputIndicators));
-                }
+//                if (output.length() == 0 && outputIndicators != null && outputIndicators.getMaxSeverity() != null) {
+//                    elementPresenter.setOutput(
+//                            outputIndicators.toString(),
+//                            1,
+//                            false,
+//                            null);
+//                } else {
+                // Don't try and format text output.
+                elementPresenter.setOutput(
+                        output,
+                        1,
+                        elementData.isFormatOutput(),
+                        new IndicatorLines(outputIndicators));
+//                }
             } else {
                 elementPresenter.clearAllIndicators();
                 // // if we didn't find a record then it could be the input that
@@ -523,10 +548,40 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
+    private SharedStepData getEffectiveStepData() {
+        final SteppingResult steppingResult;
+        if (currentResult == null) {
+            steppingResult = null;
+        } else {
+            if (currentResult.isFoundRecord()) {
+                steppingResult = currentResult;
+            } else {
+                if (lastFoundResult != null
+                        && Objects.equals(currentResult.getStepLocation(), lastFoundResult.getStepLocation())
+                        && GwtNullSafe.isEmptyCollection(currentResult.getGeneralErrors())
+                        && !GwtNullSafe.test(currentResult.getStepData(), SharedStepData::hasIndicators)) {
+                    // Same location as last time and no errors/indicators in the curr result, so just display
+                    // the last one.
+                    steppingResult = lastFoundResult;
+                } else {
+                    steppingResult = currentResult;
+                }
+            }
+        }
+        return GwtNullSafe.get(steppingResult, SteppingResult::getStepData);
+//        return GwtNullSafe.get(
+//                currentResult,
+//                currentResult2 -> currentResult2.isFoundRecord()
+//                        ? currentResult2
+//                        : lastFoundResult,
+//                SteppingResult::getStepData);
+    }
+
     private void updateElementSeverities() {
-        final SharedStepData stepData = currentResult != null
-                ? currentResult.getStepData()
-                : null;
+        // If we have not found a record then we have hit the end or run out of filter matches
+        // so are still on the last result, thus show the messages based on what it was before.
+        final SharedStepData stepData = getEffectiveStepData();
+
         if (stepData != null && stepData.getElementMap() != null) {
             final Map<String, Severity> elementIdToSeveritiesMap = stepData.getElementMap()
                     .entrySet()
@@ -697,13 +752,13 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    private void toggleConsole() {
+    private void setLogPaneVisibility(final boolean isVisible) {
         final PipelineElement selectedElement = getSelectedPipeElement();
         if (selectedElement != null) {
             final String elementId = selectedElement.getId();
             final ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
             if (elementPresenter != null) {
-                elementPresenter.toggleLogVisibility();
+                elementPresenter.setLogPaneVisibility(isVisible);
             }
         }
     }

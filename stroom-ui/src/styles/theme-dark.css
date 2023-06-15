@@ -58,10 +58,12 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
 
-    --icon-button__background-color--on: #632676;
-    --icon-button__border-color--on: var(--purple-a400);
+    --icon-button__background-color--on: var(--blue-500);
+    --icon-button__border-color--on: var(--black);
+    --icon-button__color--on: var(--app__background);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
+    --icon-button__color: var(--blue-500);
     --navigation-icon-button__background-color--on: #262a32;
     --navigation-icon-button__border-color--on: #444;
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
@@ -77,7 +79,7 @@
     --pipeline-element-box__background-color--selected: #1164a3;
     --pipeline-element-box__background-color--selected--hover: #276fb0;
     --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
-    --pipeline-element-box__text-color: #888;
+    --pipeline-element-box__text-color: #c1c1fc1;
     --pipeline-element-box__text-color--selected: #fff;
     --pipeline-element-box__border-color: #777;
     --pipeline-element-box__border-color--selected: #a1a1a1;
@@ -255,4 +257,6 @@
     --vis-series-label__background-color: rgba(0,0,0,0.87);
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
+
+    --iframe__border-color: var(--control__border-color);
 }

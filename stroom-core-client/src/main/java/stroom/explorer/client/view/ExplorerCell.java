@@ -62,10 +62,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
                         break;
                     case OPEN:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
                         break;
                     case CLOSED:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
