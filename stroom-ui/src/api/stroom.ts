@@ -3149,6 +3149,8 @@ export interface SearchApiKeyRequest {
  * A request for new search or a follow up request for more data for an existing iterative search
  */
 export interface SearchRequest {
+  dateTimeLocale?: string;
+
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
 
@@ -3694,6 +3696,7 @@ export interface TableSettings {
    * @example 1000,10,1
    */
   maxResults?: number[];
+  modelVersion?: string;
 
   /** TODO */
   queryId: string;
@@ -3858,6 +3861,7 @@ export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
   defaultMaxResults?: string;
+  helpSubPathDocumentation?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;
   helpSubPathProperties?: string;

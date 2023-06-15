@@ -11497,6 +11497,9 @@ components:
       description: A request for new search or a follow up request for more data for
         an existing iterative search
       properties:
+        dateTimeLocale:
+          type: string
+          writeOnly: true
         dateTimeSettings:
           $ref: '#/components/schemas/DateTimeSettings'
         incremental:
@@ -12488,6 +12491,9 @@ components:
               level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
               1 and 1 at level 2. In the absence of this field system defaults will
               apply
+        modelVersion:
+          type: string
+          writeOnly: true
         queryId:
           type: string
           description: TODO
@@ -12723,6 +12729,8 @@ components:
         activity:
           $ref: '#/components/schemas/ActivityConfig'
         defaultMaxResults:
+          type: string
+        helpSubPathDocumentation:
           type: string
         helpSubPathExpressions:
           type: string
