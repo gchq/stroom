@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.27] - 2023-06-15
+
+* Fix failing build.
+
+
 ## [v7.0.26] - 2023-06-15
 
 * Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
@@ -4844,7 +4849,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.26...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.27...HEAD
+[v7.0.27]: https://github.com/gchq/stroom/compare/v7.0.26...v7.0.27
 [v7.0.26]: https://github.com/gchq/stroom/compare/v7.0.25...v7.0.26
 [v7.0.25]: https://github.com/gchq/stroom/compare/v7.0.24...v7.0.25
 [v7.0.24]: https://github.com/gchq/stroom/compare/v7.0.23...v7.0.24
