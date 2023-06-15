@@ -141,8 +141,26 @@ public final class SearchRequest {
             @JsonProperty("query") final Query query,
             @JsonProperty("resultRequests") final List<ResultRequest> resultRequests,
             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
+            @JsonProperty("dateTimeLocale") final String dateTimeLocale, // deprecated dateTimeLocale.
             @JsonProperty("incremental") final Boolean incremental,
             @JsonProperty("timeout") final Long timeout) {
+        this.searchRequestSource = searchRequestSource;
+        this.key = key;
+        this.query = query;
+        this.resultRequests = resultRequests;
+        this.dateTimeSettings = dateTimeSettings;
+        this.incremental = incremental;
+        this.timeout = timeout;
+    }
+
+    public SearchRequest(
+            final SearchRequestSource searchRequestSource,
+            final QueryKey key,
+            final Query query,
+            final List<ResultRequest> resultRequests,
+            final DateTimeSettings dateTimeSettings,
+            final Boolean incremental,
+            final Long timeout) {
         this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.query = query;
