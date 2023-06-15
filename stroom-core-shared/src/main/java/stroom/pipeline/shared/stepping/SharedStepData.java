@@ -21,7 +21,6 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,7 +57,6 @@ public class SharedStepData {
         return elementMap.get(elementId);
     }
 
-    @JsonIgnore
     public boolean hasIndicators() {
         return GwtNullSafe.map(getElementMap())
                 .values()
