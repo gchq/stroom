@@ -149,9 +149,6 @@ public class LmdbDataStore implements DataStore {
                         .map(SearchRequestSource::getSourceType)
                         .orElse(SourceType.DASHBOARD_UI);
 
-        // Create a factory that makes DB state objects.
-        currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
-
         this.windowSupport = new WindowSupport(tableSettings);
         final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
         final List<Field> fields = modifiedTableSettings.getFields();
@@ -200,6 +197,9 @@ public class LmdbDataStore implements DataStore {
         executorProvider.get().execute(this::transfer);
 
         storedValueKeyFactory = new StoredValueKeyFactory(compiledDepths, compiledFieldArray, keyFactoryConfig);
+
+        // Create a factory that makes DB state objects.
+        currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
     }
 
     /**

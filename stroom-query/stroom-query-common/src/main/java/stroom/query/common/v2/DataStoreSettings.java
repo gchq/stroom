@@ -65,10 +65,10 @@ public class DataStoreSettings {
             return false;
         }
         final DataStoreSettings that = (DataStoreSettings) o;
-        return producePayloads == that.producePayloads
-                && storeLatestEventReference == that.storeLatestEventReference
-                && Objects.equals(maxResults, that.maxResults)
-                && Objects.equals(storeSize, that.storeSize);
+        return producePayloads == that.producePayloads &&
+                storeLatestEventReference == that.storeLatestEventReference &&
+                Objects.equals(maxResults, that.maxResults) &&
+                Objects.equals(storeSize, that.storeSize);
     }
 
     @Override
