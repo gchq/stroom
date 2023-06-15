@@ -97,6 +97,35 @@ public final class TableSettings {
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
 
+    @Schema(description = "IGNORE: UI use only",
+            hidden = true)
+    @JsonProperty("modelVersion")
+    @Deprecated
+    private String modelVersion;
+
+    public TableSettings(
+            final String queryId,
+            final List<Field> fields,
+            final Window window,
+            final ExpressionOperator valueFilter,
+            final ExpressionOperator aggregateFilter,
+            final Boolean extractValues,
+            final DocRef extractionPipeline,
+            final List<Integer> maxResults,
+            final Boolean showDetail,
+            final List<ConditionalFormattingRule> conditionalFormattingRules) {
+        this.queryId = queryId;
+        this.fields = fields;
+        this.window = window;
+        this.valueFilter = valueFilter;
+        this.aggregateFilter = aggregateFilter;
+        this.extractValues = extractValues;
+        this.extractionPipeline = extractionPipeline;
+        this.maxResults = maxResults;
+        this.showDetail = showDetail;
+        this.conditionalFormattingRules = conditionalFormattingRules;
+    }
+
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public TableSettings(
@@ -109,8 +138,8 @@ public final class TableSettings {
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
-                    conditionalFormattingRules) {
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("modelVersion") final String modelVersion) { // deprecated modelVersion.
         this.queryId = queryId;
         this.fields = fields;
         this.window = window;
@@ -121,6 +150,7 @@ public final class TableSettings {
         this.maxResults = maxResults;
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
+        this.modelVersion = modelVersion;
     }
 
     public String getQueryId() {
