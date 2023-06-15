@@ -30,7 +30,9 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class PipelineElementRenderer
         implements CellRenderer2<PipelineElement>, NodeExtentProvider<PipelineElement> {
@@ -38,17 +40,24 @@ public final class PipelineElementRenderer
     private final PipelineElementBoxFactory pipelineElementBoxFactory;
     private final FlowPanel panel;
     private final List<PipelineElementBox> boxes = new ArrayList<>();
+
+    // Cache the PipelineElementBox objects so we don't need to keep creating them.
+    // This avoids flickr as we can just change their style rather than creating new and adding style.
+    private final Map<String, PipelineElementBox> elementIdToBoxMap = new HashMap<>();
     private SelectionModel<PipelineElement> selectionModel;
 
-    public PipelineElementRenderer(final FlowPanel panel, final PipelineElementBoxFactory pipelineElementBoxFactory) {
+    public PipelineElementRenderer(final FlowPanel panel,
+                                   final PipelineElementBoxFactory pipelineElementBoxFactory) {
         this.panel = panel;
         this.pipelineElementBoxFactory = pipelineElementBoxFactory;
     }
 
     @Override
-    public void render(final TreeLayout<PipelineElement> treeLayout, final Bounds bounds, final PipelineElement item) {
-        final boolean selected = selectionModel != null && selectionModel.isSelected(item);
-        final PipelineElementBox pipelineElementBox = pipelineElementBoxFactory.create(item);
+    public void render(final TreeLayout<PipelineElement> treeLayout,
+                       final Bounds bounds,
+                       final PipelineElement pipelineElement) {
+        final boolean selected = selectionModel != null && selectionModel.isSelected(pipelineElement);
+        final PipelineElementBox pipelineElementBox = createBox(pipelineElement);
         pipelineElementBox.setSelected(selected);
 
         final Style style = pipelineElementBox.getElement().getStyle();
@@ -63,13 +72,23 @@ public final class PipelineElementRenderer
     public Dimension getExtents(final PipelineElement pipelineElement) {
         double width = 0;
         double height = 0;
-        final PipelineElementBox pipelineElementBox = pipelineElementBoxFactory.create(pipelineElement);
+        final PipelineElementBox pipelineElementBox = createBox(pipelineElement);
         RootPanel.get().add(pipelineElementBox);
         width += pipelineElementBox.getElement().getScrollWidth();
         height += pipelineElementBox.getElement().getScrollHeight();
         RootPanel.get().remove(pipelineElementBox);
 
         return new Dimension(width, height);
+    }
+
+    private PipelineElementBox createBox(final PipelineElement pipelineElement) {
+        if (pipelineElement == null) {
+            return null;
+        } else {
+            return elementIdToBoxMap.computeIfAbsent(
+                    pipelineElement.getId(),
+                    k -> pipelineElementBoxFactory.create(pipelineElement));
+        }
     }
 
     public void clear() {

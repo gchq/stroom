@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,16 +70,34 @@ public class Indicators {
         addAll(indicators);
     }
 
+    public static Indicators combine(final Indicators... indicatorsArr) {
+        final Indicators result = new Indicators();
+        if (indicatorsArr != null) {
+            for (final Indicators indicators : indicatorsArr) {
+                if (indicators != null) {
+                    result.addAll(indicators);
+                }
+            }
+        }
+        return result;
+    }
+
     public Map<Severity, Integer> getErrorCount() {
-        return errorCount;
+        return errorCount != null
+                ? errorCount
+                : Collections.emptyMap();
     }
 
     public Set<StoredError> getUniqueErrorSet() {
-        return uniqueErrorSet;
+        return uniqueErrorSet != null
+                ? uniqueErrorSet
+                : Collections.emptySet();
     }
 
     public List<StoredError> getErrorList() {
-        return errorList;
+        return errorList != null
+                ? errorList
+                : Collections.emptyList();
     }
 
     /**
@@ -140,5 +159,10 @@ public class Indicators {
         final StringBuilder sb = new StringBuilder();
         append(sb);
         return sb.toString();
+    }
+
+    @JsonIgnore
+    public boolean isEmpty() {
+        return errorList == null || errorList.isEmpty();
     }
 }

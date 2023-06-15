@@ -70,6 +70,9 @@
 .svgIcon-error {
   background-image: url("../images/error.svg");
 }
+.svgIcon-exclamation {
+  background-image: url("../images/exclamation.svg");
+}
 .svgIcon-explorer {
   background-image: url("../images/explorer.svg");
 }

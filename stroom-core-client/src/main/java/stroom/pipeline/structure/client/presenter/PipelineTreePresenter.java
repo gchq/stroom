@@ -24,6 +24,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -36,6 +37,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Map;
 
 public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
         implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
@@ -144,6 +147,10 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         return getView().getTreeHeight();
     }
 
+    public void setElementSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
+        getView().setSeverities(elementIdToSeveritiesMap);
+    }
+
     public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
 
         void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);
@@ -157,5 +164,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         void setAllowNullSelection(boolean allowNullSelection);
 
         int getTreeHeight();
+
+        void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap);
     }
 }

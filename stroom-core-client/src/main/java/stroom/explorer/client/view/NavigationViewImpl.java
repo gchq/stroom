@@ -67,13 +67,13 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
         final Element logoImage = DOM.createDiv();
         logoImage.setClassName("navigation-logo-image");
-        logoImage.setInnerHTML(SvgImages.MONO_LOGO);
+        logoImage.setInnerHTML(SvgImages.MONO_LOGO.getSvg());
 
         logo.getElement().appendChild(logoImage);
 
         final Element mainMenuButtonImage = DOM.createDiv();
         mainMenuButtonImage.setClassName("main-menu");
-        mainMenuButtonImage.setInnerHTML(SvgImages.MONO_MENU);
+        mainMenuButtonImage.setInnerHTML(SvgImages.MONO_MENU.getSvg());
         mainMenuButton.getElement().appendChild(mainMenuButtonImage);
 
         uiConfigCache.get()

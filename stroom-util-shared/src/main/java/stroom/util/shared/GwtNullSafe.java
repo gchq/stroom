@@ -1,10 +1,7 @@
-package stroom.util;
+package stroom.util.shared;
 
-import stroom.util.logging.DurationTimer;
 import stroom.util.shared.time.SimpleDuration;
-import stroom.util.time.StroomDuration;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,12 +17,16 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
+ * <p>
+ * This is pretty much a copy of NullSafe but with things GWT doesn't emulate removed
+ * or implemented in a different way.
+ * </p>
  * Utility methods for safely getting properties (or properties of properties of ...) from
  * a value with protection from null values anywhere in the chain.
  */
-public class NullSafe {
+public class GwtNullSafe {
 
-    private NullSafe() {
+    private GwtNullSafe() {
     }
 
     /**
@@ -40,42 +41,6 @@ public class NullSafe {
         } else {
             final T2 val2 = getter.apply(val1);
             return Objects.equals(val2, other);
-        }
-    }
-
-    /**
-     * @return True if all values in the array are null or the array itself is null
-     */
-    public static <T> boolean allNull(final T... vals) {
-        if (vals == null) {
-            return true;
-        } else {
-            boolean allNull = true;
-            for (final T val : vals) {
-                if (val != null) {
-                    allNull = false;
-                    break;
-                }
-            }
-            return allNull;
-        }
-    }
-
-    /**
-     * @return True if the array itself is non-null and all values in the array are non-null
-     */
-    public static <T> boolean allNonNull(final T... vals) {
-        if (vals == null) {
-            return false;
-        } else {
-            boolean allNonNull = true;
-            for (final T val : vals) {
-                if (val == null) {
-                    allNonNull = false;
-                    break;
-                }
-            }
-            return allNonNull;
         }
     }
 
@@ -103,32 +68,60 @@ public class NullSafe {
 
     /**
      * Return first non-null value or an empty {@link Optional} if all are null
-     * <p>
-     * Alias for {@link NullSafe#coalesce(T[])}
      */
-    public static <T> Optional<T> firstNonNull(final T... vals) {
-        return coalesce(vals);
+    public static <T> Optional<T> coalesce(final T val1, final T val2) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : Optional.empty());
     }
 
     /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */
-    public static <T> Optional<T> coalesce(final T... vals) {
-        if (vals != null) {
-            for (final T val : vals) {
-                if (val != null) {
-                    return Optional.of(val);
-                }
-            }
-        }
-        return Optional.empty();
+    public static <T> Optional<T> coalesce(final T val1, final T val2, final T val3) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : (val3 != null
+                                ? Optional.of(val3)
+                                : Optional.empty()));
     }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T val1,
+                                           final T val2,
+                                           final T val3,
+                                           final T val4) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : (val3 != null
+                                ? Optional.of(val3)
+                                : (val4 != null
+                                        ? Optional.of(val4)
+                                        : Optional.empty())));
+    }
+
 
     /**
      * @return True if str is null or blank
      */
     public static boolean isBlankString(final String str) {
-        return str == null || str.isBlank();
+        // GWT doesn't emulate String::isBlank
+        if (str != null && !str.isEmpty()) {
+            for (final char chr : str.toCharArray()) {
+                if (!Character.isWhitespace(chr)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -190,7 +183,7 @@ public class NullSafe {
             return true;
         } else {
             final String str = Objects.requireNonNull(stringGetter).apply(value);
-            return str == null || str.isBlank();
+            return str == null || isBlankString(str);
         }
     }
 
@@ -318,6 +311,15 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed list if it is non-null else returns an empty list.
+     */
+    public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
+        return collection != null
+                ? collection
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed set if it is non-null else returns an empty set.
      */
     public static <S extends Set<T>, T> Set<T> set(final S set) {
@@ -345,39 +347,12 @@ public class NullSafe {
     }
 
     /**
-     * Returns the passed stroomDuration if it is non-null else returns a ZERO {@link StroomDuration}
-     */
-    public static StroomDuration duration(final StroomDuration stroomDuration) {
-        return stroomDuration != null
-                ? stroomDuration
-                : StroomDuration.ZERO;
-    }
-
-    /**
      * Returns the passed duration if it is non-null else returns a ZERO {@link SimpleDuration}
      */
     public static SimpleDuration duration(final SimpleDuration duration) {
         return duration != null
                 ? duration
                 : SimpleDuration.ZERO;
-    }
-
-    /**
-     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
-     */
-    public static Duration duration(final Duration duration) {
-        return duration != null
-                ? duration
-                : Duration.ZERO;
-    }
-
-    /**
-     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
-     */
-    public static DurationTimer durationTimer(final DurationTimer durationTimer) {
-        return durationTimer != null
-                ? durationTimer
-                : DurationTimer.ZERO;
     }
 
     /**
@@ -401,7 +376,7 @@ public class NullSafe {
     public static <T1, R> R getOrElse(final T1 value,
                                       final Function<T1, R> getter,
                                       final R other) {
-        return Objects.requireNonNullElse(get(value, getter), other);
+        return requireNonNullElse(get(value, getter), other);
     }
 
     public static <T1> String toStringOrElse(final T1 value,
@@ -420,7 +395,7 @@ public class NullSafe {
     public static <T1, R> R getOrElseGet(final T1 value,
                                          final Function<T1, R> getter,
                                          final Supplier<R> otherSupplier) {
-        return Objects.requireNonNullElseGet(get(value, getter), otherSupplier);
+        return requireNonNullElseGet(get(value, getter), otherSupplier);
     }
 
     /**
@@ -536,14 +511,14 @@ public class NullSafe {
                                           final Function<T1, T2> getter1,
                                           final Function<T2, R> getter2,
                                           final R other) {
-        return Objects.requireNonNullElse(get(value, getter1, getter2), other);
+        return requireNonNullElse(get(value, getter1, getter2), other);
     }
 
     public static <T1, T2, R> R getOrElseGet(final T1 value,
                                              final Function<T1, T2> getter1,
                                              final Function<T2, R> getter2,
                                              final Supplier<R> otherSupplier) {
-        return Objects.requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
+        return requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
     }
 
     public static <T1, T2, R> Optional<R> getAsOptional(final T1 value,
@@ -655,7 +630,7 @@ public class NullSafe {
                                               final Function<T2, T3> getter2,
                                               final Function<T3, R> getter3,
                                               final R other) {
-        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3), other);
+        return requireNonNullElse(get(value, getter1, getter2, getter3), other);
     }
 
     public static <T1, T2, T3, R> R getOrElseGet(final T1 value,
@@ -663,7 +638,7 @@ public class NullSafe {
                                                  final Function<T2, T3> getter2,
                                                  final Function<T3, R> getter3,
                                                  final Supplier<R> otherSupplier) {
-        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
+        return requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
     }
 
     public static <T1, T2, T3, R> Optional<R> getAsOptional(final T1 value,
@@ -770,7 +745,7 @@ public class NullSafe {
                                                   final Function<T3, T4> getter3,
                                                   final Function<T4, R> getter4,
                                                   final R other) {
-        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
+        return requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
     }
 
     public static <T1, T2, T3, T4, R> R getOrElseGet(final T1 value,
@@ -779,7 +754,7 @@ public class NullSafe {
                                                      final Function<T3, T4> getter3,
                                                      final Function<T4, R> getter4,
                                                      final Supplier<R> otherSupplier) {
-        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
+        return requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
     }
 
     @SuppressWarnings("unused")
@@ -890,4 +865,22 @@ public class NullSafe {
             return other;
         }
     }
+
+    /**
+     * GWT currently doesn't emulate requireNonNullElse
+     */
+    public static <T> T requireNonNullElse(T obj, T other) {
+        return (obj != null) ? obj : Objects.requireNonNull(other, "other");
+    }
+
+    /**
+     * GWT currently doesn't emulate requireNonNullElse
+     */
+    public static <T> T requireNonNullElseGet(T obj, Supplier<? extends T> supplier) {
+        return (obj != null) ? obj
+                : Objects.requireNonNull(
+                        Objects.requireNonNull(supplier, "supplier").get(),
+                        "supplier.get()");
+    }
+
 }

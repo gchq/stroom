@@ -29,6 +29,8 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 public class XPathFilter {
 
+    public static final MatchType DEFAULT_MATCH_TYPE = MatchType.EXISTS;
+
     @JsonProperty
     private String path;
     @JsonProperty
@@ -113,6 +115,10 @@ public class XPathFilter {
             uniqueValues.clear();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum MatchType implements HasDisplayValue {
         EXISTS("exists", false),
