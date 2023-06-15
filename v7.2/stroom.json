@@ -16266,6 +16266,9 @@
         "type" : "object",
         "description" : "A request for new search or a follow up request for more data for an existing iterative search",
         "properties" : {
+          "dateTimeLocale" : {
+            "type" : "string"
+          },
           "dateTimeSettings" : {
             "$ref" : "#/components/schemas/DateTimeSettings"
           },
