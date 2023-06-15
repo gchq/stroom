@@ -8,7 +8,11 @@ import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.FileUtil;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
+import io.dropwizard.jackson.Jackson;
+import io.dropwizard.jersey.validation.Validators;
+import io.dropwizard.setup.Environment;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -42,11 +46,19 @@ public class BootstrapTestModule extends AbstractModule {
     public BootstrapTestModule() {
         final ConfigHolder configHolder = new ConfigHolderImpl();
         final Config config = new Config(configHolder.getBootStrapConfig());
+        // TODO: 15/06/2023 This will get replaced by new Environment("TestEnvironment") in the merge up
+        //  as that ctor doesn't exist in 7.0
+        final Environment environment = new Environment(
+                "Test Environment",
+                Jackson.newObjectMapper(),
+                Validators.newValidatorFactory().getValidator(),
+                new MetricRegistry(),
+                ClassLoader.getSystemClassLoader());
 
         // Delegate to the normal BootStrapModule but use different Db and AppConfig modules
         bootStrapModule = new BootStrapModule(
                 config,
-                null,
+                environment,
                 configHolder,
                 DbTestModule::new,
                 AppConfigTestModule::new);
