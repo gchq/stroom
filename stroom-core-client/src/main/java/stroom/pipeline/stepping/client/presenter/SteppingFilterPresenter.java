@@ -61,6 +61,7 @@ public class SteppingFilterPresenter extends
     private final ButtonView editXPath;
     private final ButtonView removeXPath;
 
+    // elementId => SteppingFilterSettings
     private Map<String, SteppingFilterSettings> settingsMap;
     private String currentElementId;
 

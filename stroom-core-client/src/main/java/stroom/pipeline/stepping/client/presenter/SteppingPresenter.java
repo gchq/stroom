@@ -98,8 +98,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final RestFactory restFactory;
+    // elementId => ElementPresenter
     private final Map<String, ElementPresenter> elementPresenterMap = new HashMap<>();
-    private final Map<String, InlineSvgToggleButton> elementLogPaneStateMap = new HashMap<>();
     private final PipelineModel pipelineModel;
     private final ButtonView saveButton;
     private final InlineSvgToggleButton toggleLogPaneButton;
@@ -191,7 +191,15 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         registerHandler(stepControlPresenter.addChangeFilterHandler(event -> {
             final List<String> elements = new ArrayList<>();
             getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
-            steppingFilterPresenter.show(elements, request.getStepFilterMap(), request::setStepFilterMap);
+
+            steppingFilterPresenter.show(
+                    elements,
+                    request.getStepFilterMap(),
+                    stepFilterMap -> {
+                        pipelineModel.setStepFilters(stepFilterMap);
+                        request.setStepFilterMap(stepFilterMap);
+                        pipelineTreePresenter.getView().refresh();
+                    });
         }));
         registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(toggleLogPaneButton.addClickHandler(event -> {

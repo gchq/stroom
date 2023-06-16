@@ -16,8 +16,12 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
 import com.google.gwt.core.client.GWT;
@@ -26,6 +30,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -38,6 +43,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private static final String SEVERITY_WARN_CLASS = BASE_CLASS + "-severityWarn";
     private static final String SEVERITY_ERROR_CLASS = BASE_CLASS + "-severityError";
     private static final String SEVERITY_FATAL_ERROR_CLASS = BASE_CLASS + "-severityFatalError";
+    private static final String BULLET = "•";
 
     private static final Map<String, String> severityNameToClassMap = new HashMap<>();
 
@@ -49,6 +55,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     private final PipelineElement pipelineElement;
+    private final Widget filterIcon;
 
     public PipelineElementBox(final PipelineElement pipelineElement, final Icon icon) {
         GWT.log("Creating pipe element " + pipelineElement.getId());
@@ -68,6 +75,11 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
         background.add(label);
 
+        filterIcon = SvgPresets.FILTER_GREEN.asWidget();
+        filterIcon.addStyleName(BASE_CLASS + "-filterImage");
+        background.add(filterIcon);
+        updateFilterState();
+
         initWidget(background);
     }
 
@@ -79,6 +91,72 @@ public class PipelineElementBox extends Box<PipelineElement> {
     @Override
     public void showHotspot(final boolean show) {
         toggleClass(HOTSPOT_CLASS, show);
+    }
+
+    private void updateFilterState() {
+
+        if (pipelineElement != null && pipelineElement.hasActiveFilters()) {
+            filterIcon.addStyleName(BASE_CLASS + "-filterOn");
+            filterIcon.removeStyleName(BASE_CLASS + "-filterOff");
+            filterIcon.setTitle(buildFilterIconTitle());
+        } else {
+            filterIcon.addStyleName(BASE_CLASS + "-filterOff");
+            filterIcon.removeStyleName(BASE_CLASS + "-filterOn");
+            filterIcon.setTitle(null);
+        }
+    }
+
+    private String buildFilterIconTitle() {
+        return GwtNullSafe.get(
+                pipelineElement,
+                PipelineElement::getSteppingFilterSettings,
+                filterSettings -> {
+                    final Severity skipToSeverity = filterSettings.getSkipToSeverity();
+                    final OutputState skipToOutput = filterSettings.getSkipToOutput();
+                    final List<XPathFilter> xPathFilters = GwtNullSafe.list(filterSettings.getFilters());
+                    if (skipToSeverity != null || skipToOutput != null || !xPathFilters.isEmpty()) {
+                        final StringBuilder sb = new StringBuilder();
+                        sb.append("Has active stepping filters:");
+
+                        if (skipToSeverity != null) {
+                            sb.append("\n  ")
+                                    .append(BULLET)
+                                    .append(" Jump to ")
+                                    .append(skipToSeverity);
+                        }
+
+                        if (skipToOutput != null) {
+                            final String outputStateStr = OutputState.EMPTY.equals(skipToOutput)
+                                    ? "empty"
+                                    : "non-empty";
+
+                            sb.append("\n  ")
+                                    .append(BULLET)
+                                    .append(" Jump to ")
+                                    .append(outputStateStr)
+                                    .append(" output");
+                        }
+                        final int xPathFilterCount = xPathFilters.size();
+                        if (xPathFilterCount == 1) {
+                            sb.append("\n  ")
+                                    .append(BULLET)
+                                    .append(" XPath filter");
+                        } else if (xPathFilterCount > 1) {
+                            sb.append("\n  ")
+                                    .append(BULLET)
+                                    .append(" ")
+                                    .append(xPathFilterCount)
+                                    .append(" XPath filters");
+                        }
+                        return sb.toString();
+                    } else {
+                        return null;
+                    }
+                });
+    }
+
+    public void refresh() {
+        updateFilterState();
     }
 
     private void toggleClass(final String className, final boolean isSet) {
