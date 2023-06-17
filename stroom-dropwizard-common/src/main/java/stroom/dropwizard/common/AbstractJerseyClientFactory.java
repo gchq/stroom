@@ -361,6 +361,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
         jerseyConfig.setTimeout(DEFAULT_TIMEOUT);
         jerseyConfig.setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
         jerseyConfig.setConnectionRequestTimeout(DEFAULT_CONNECTION_TIMEOUT);
+//        jerseyConfig.setTlsConfiguration(new TlsConfiguration());
     }
 
     public void logNonDefaultJerseyClientConfig(final Consumer<String> logger) {
