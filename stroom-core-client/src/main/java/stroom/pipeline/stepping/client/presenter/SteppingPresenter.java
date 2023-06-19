@@ -46,7 +46,7 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.svg.client.Preset;
-import stroom.svg.client.SvgImages;
+import stroom.svg.client.SvgImage;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -161,7 +161,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         saveButton = addButtonLeft(SvgPresets.SAVE);
         // Create but don't add yet
         toggleLogPaneButton = new InlineSvgToggleButton();
-        toggleLogPaneButton.setSvg(SvgImages.EXCLAMATION);
+        toggleLogPaneButton.setSvg(SvgImage.EXCLAMATION);
         toggleLogPaneButton.setOn();
         toggleLogPaneButton.setTitle("Toggle Log Pane");
         leftButtons.addButton(toggleLogPaneButton);

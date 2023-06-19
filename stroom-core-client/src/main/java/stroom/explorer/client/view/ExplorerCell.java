@@ -5,7 +5,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.svg.client.SvgImages;
+import stroom.svg.client.SvgImage;
 import stroom.svg.client.SvgPresets;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -62,10 +62,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
                         break;
                     case OPEN:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.MONO_ARROW_DOWN.getSvg());
                         break;
                     case CLOSED:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.MONO_ARROW_RIGHT.getSvg());
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());

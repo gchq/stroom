@@ -58,7 +58,7 @@ import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgImages;
+import stroom.svg.client.SvgImage;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgButton;
@@ -155,16 +155,16 @@ public class DashboardPresenter
         view.setContent(flexLayout);
 
         editModeButton = new InlineSvgToggleButton();
-        editModeButton.setSvg(SvgImages.MONO_EDIT);
+        editModeButton.setSvg(SvgImage.MONO_EDIT);
         editModeButton.setTitle("Enter Design Mode");
 
         addWidgetButton = new InlineSvgButton();
-        addWidgetButton.setSvg(SvgImages.ADD);
+        addWidgetButton.setSvg(SvgImage.ADD);
         addWidgetButton.setTitle("Add Component");
         addWidgetButton.setVisible(false);
 
         setConstraintsButton = new InlineSvgButton();
-        setConstraintsButton.setSvg(SvgImages.MONO_RESIZE);
+        setConstraintsButton.setSvg(SvgImage.MONO_RESIZE);
         setConstraintsButton.setTitle("Set Constraints");
         setConstraintsButton.setVisible(false);
 

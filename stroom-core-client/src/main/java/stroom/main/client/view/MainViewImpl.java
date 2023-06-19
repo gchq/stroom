@@ -19,7 +19,7 @@ package stroom.main.client.view;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.main.client.presenter.MainUiHandlers;
-import stroom.svg.client.SvgImages;
+import stroom.svg.client.SvgImage;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
@@ -67,7 +67,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
-        menu.setSvg(SvgImages.MONO_THREE_DOTS_VERTICAL);
+        menu.setSvg(SvgImage.MONO_THREE_DOTS_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 

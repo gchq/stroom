@@ -16,7 +16,7 @@
 
 package stroom.widget.button.client;
 
-import stroom.svg.client.SvgImages;
+import stroom.svg.client.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -65,7 +65,7 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
         setEnabled(true);
     }
 
-    public void setSvg(final SvgImages svgImage) {
+    public void setSvg(final SvgImage svgImage) {
         // Puts a class on the button that is specific to the svg file, so we
         // can do custom styling of the button bases on the svg it uses.
         final String newSvgClassName = svgImage.getCssClass();

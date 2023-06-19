@@ -17,7 +17,7 @@
 package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.VisPresenter.VisView;
-import stroom.svg.client.SvgImages;
+import stroom.svg.client.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
@@ -26,7 +26,6 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -63,7 +62,7 @@ public class VisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
 
         final InlineSvgButton pause = new InlineSvgButton();
         pause.addStyleName("dashboardVis-pause");
-        pause.setSvg(SvgImages.MONO_PAUSE);
+        pause.setSvg(SvgImage.MONO_PAUSE);
         pause.setTitle("Resume Update");
 
         widget = new FlowPanel() {
