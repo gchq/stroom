@@ -12,7 +12,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.Map;
-
 import javax.ws.rs.client.Client;
 
 import static org.assertj.core.api.Assertions.assertThat;
