@@ -101,6 +101,8 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                         final JerseyClientConfiguration defaultConfig = CONFIG_DEFAULTS_MAP.get(
                                 jerseyClientName);
 
+                        LOGGER.debug("Creating config with name: {}", jerseyClientName);
+
                         // DEFAULT has been set in config so merge its values into the named client config
                         // that was not set in config.yml
                         if (!JerseyClientName.DEFAULT.equals(jerseyClientName) && isDefaultExplicitlyConfigured) {
@@ -258,24 +260,44 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                 // Our hard coded sensible default (may be same as above)
                 final Object stroomDefaultValue = getPropValue(prop, stroomDefaultConfig);
                 // Value from yaml
-                final Object actualValue = getPropValue(prop, actualConfig);
+                Object actualValue = getPropValue(prop, actualConfig);
+                LOGGER.debug("Prop: {}.{}\nVanilla: {}\nStroom Default: {}\nActual: {}",
+                        prefix, propName, vanillaValue, stroomDefaultValue, actualValue);
 
                 if (propName.equals(TLS_PROP_NAME)
                         && (stroomDefaultValue != null || actualValue != null)) {
-                    // tls config is null in vanilla config so if
-                    final Object mergedValue = mergeInStroomDefaults(
-                            TLS_PROP_NAME,
-                            new TlsConfiguration(),
-                            stroomDefaultValue,
-                            actualValue);
+                    if (vanillaValue != null) {
+                        throw new RuntimeException("Expecting vanilla config to be null. " +
+                                "Have DropWizard changed their default config");
+                    }
+                    final Object mergedValue;
+                    if (stroomDefaultValue != null && actualValue == null) {
+                        mergedValue = stroomDefaultValue;
+                    } else {
+                        // tls config is null in vanilla config
+                        mergedValue = mergeInStroomDefaults(
+                                TLS_PROP_NAME,
+                                new TlsConfiguration(),
+                                stroomDefaultValue,
+                                actualValue);
+                    }
                     prop.setValueOnConfigObject(actualConfig, mergedValue);
                 } else if (propName.equals(PROXY_PROP_NAME)
                         && (stroomDefaultValue != null || actualValue != null)) {
-                    // proxy (as in a proxy server, not stroom-proxy) config is null in vanilla config
-                    final Object mergedValue = mergeInStroomDefaults(PROXY_PROP_NAME,
-                            new ProxyConfiguration(),
-                            stroomDefaultValue,
-                            actualValue);
+                    if (vanillaValue != null) {
+                        throw new RuntimeException("Expecting vanilla config to be null. " +
+                                "Have DropWizard changed their default config");
+                    }
+                    final Object mergedValue;
+                    if (stroomDefaultValue != null && actualValue == null) {
+                        mergedValue = stroomDefaultValue;
+                    } else {
+                        // proxy (as in a proxy server, not stroom-proxy) config is null in vanilla config
+                        mergedValue = mergeInStroomDefaults(PROXY_PROP_NAME,
+                                new ProxyConfiguration(),
+                                stroomDefaultValue,
+                                actualValue);
+                    }
                     prop.setValueOnConfigObject(actualConfig, mergedValue);
                 } else {
                     if (Objects.equals(vanillaValue, actualValue)
