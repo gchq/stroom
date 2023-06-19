@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.32] - 2023-06-19
+
+* Issue **#3528** : Fix null pointer exception when booting proxy with a non-null TlsConfiguration.
+
+* Issue **#3509** : Add field, function, statement picker.
+
+
 ## [v7.2-beta.31] - 2023-06-15
 
 * Issue **#3482** : Add a log pane to the stepper to show all the info/warn/error/fatal messages in one place. Add button to toggle the new log pane. Add coloured border to pipeline elements in the stepper to indicate the presence of INFO/WARN/ERROR/FATAL messages.
@@ -5476,7 +5483,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.31...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.32...HEAD
+[v7.2-beta.32]: https://github.com/gchq/stroom/compare/v7.2-beta.31...v7.2-beta.32
 [v7.2-beta.31]: https://github.com/gchq/stroom/compare/v7.2-beta.30...v7.2-beta.31
 [v7.2-beta.30]: https://github.com/gchq/stroom/compare/v7.2-beta.29...v7.2-beta.30
 [v7.2-beta.29]: https://github.com/gchq/stroom/compare/v7.2-beta.28...v7.2-beta.29
