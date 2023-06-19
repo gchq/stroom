@@ -189,16 +189,26 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addChangeFilterHandler(event -> {
-            final List<String> elements = new ArrayList<>();
+            final List<PipelineElement> elements = new ArrayList<>();
             getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
+//            GWT.log("elements: \n" + GwtNullSafe.stream(elements)
+//                    .map(PipelineElement::toString)
+//                    .map(str -> "  " + str)
+//                    .collect(Collectors.joining("\n")));
 
+            // Make a note of the selected element as it is lost on refresh
+            final PipelineElement selectedObject = pipelineTreePresenter.getSelectionModel()
+                    .getSelectedObject();
             steppingFilterPresenter.show(
                     elements,
+                    getSelectedPipeElement(),
                     request.getStepFilterMap(),
                     stepFilterMap -> {
                         pipelineModel.setStepFilters(stepFilterMap);
                         request.setStepFilterMap(stepFilterMap);
+                        // Need to refresh the view in case any elements need to reflect active filters
                         pipelineTreePresenter.getView().refresh();
+                        pipelineTreePresenter.getSelectionModel().setSelected(selectedObject, true);
                     });
         }));
         registerHandler(saveButton.addClickHandler(event -> save()));
@@ -216,13 +226,13 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
     private void getDescendantFilters(final PipelineElement parent,
                                       final Map<PipelineElement, List<PipelineElement>> childMap,
-                                      final List<String> descendants) {
+                                      final List<PipelineElement> descendants) {
         final List<PipelineElement> children = childMap.get(parent);
-        if (children != null && children.size() > 0) {
+        if (GwtNullSafe.hasItems(children)) {
             for (final PipelineElement child : children) {
                 final PipelineElementType type = child.getElementType();
                 if (type.hasRole(PipelineElementType.VISABILITY_STEPPING)) {
-                    descendants.add(child.getId());
+                    descendants.add(child);
                 }
                 getDescendantFilters(child, childMap, descendants);
             }

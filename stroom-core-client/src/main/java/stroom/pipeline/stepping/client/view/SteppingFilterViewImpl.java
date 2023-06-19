@@ -29,6 +29,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.function.Consumer;
+
 public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterView {
 
     private final Widget widget;
@@ -41,6 +43,10 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     @UiField
     SimplePanel xPathList;
 
+    private Consumer<Severity> skipToErrorsValueConsumer;
+
+    private Consumer<OutputState> skipToOutputValueConsumer;
+
     @Inject
     public SteppingFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -50,10 +56,20 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
         skipToErrors.addItem(Severity.WARNING.getDisplayValue());
         skipToErrors.addItem(Severity.ERROR.getDisplayValue());
         skipToErrors.addItem(Severity.FATAL_ERROR.getDisplayValue());
+        skipToErrors.addChangeHandler(event -> {
+            if (skipToErrorsValueConsumer != null) {
+                skipToErrorsValueConsumer.accept(getSkipToErrors());
+            }
+        });
 
         skipToOutput.addItem("");
         skipToOutput.addItem(OutputState.NOT_EMPTY.getDisplayValue());
         skipToOutput.addItem(OutputState.EMPTY.getDisplayValue());
+        skipToOutput.addChangeHandler(event -> {
+            if (skipToOutputValueConsumer != null) {
+                skipToOutputValueConsumer.accept(getSkipToOutput());
+            }
+        });
     }
 
     @Override
@@ -92,6 +108,11 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     }
 
     @Override
+    public void setSkipToErrorsChangeHandler(final Consumer<Severity> skipToErrorsValueConsumer) {
+        this.skipToErrorsValueConsumer = skipToErrorsValueConsumer;
+    }
+
+    @Override
     public OutputState getSkipToOutput() {
         final int index = skipToOutput.getSelectedIndex();
         if (index <= 0) {
@@ -112,6 +133,11 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
         } else if (OutputState.EMPTY.equals(value)) {
             skipToOutput.setSelectedIndex(2);
         }
+    }
+
+    @Override
+    public void setSkipToOutputChangeHandler(final Consumer<OutputState> skipToOutputValueConsumer) {
+        this.skipToOutputValueConsumer = skipToOutputValueConsumer;
     }
 
     @Override

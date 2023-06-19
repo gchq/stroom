@@ -91,6 +91,10 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
                 .fire();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface XPathFilterView extends View, Focus {
 
         String getXPath();

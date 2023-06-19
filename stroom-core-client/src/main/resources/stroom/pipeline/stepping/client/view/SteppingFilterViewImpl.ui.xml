@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:MySplitLayoutPanel styleName="steppingFilterViewImpl  max">
-        <g:west size="220">
+        <g:west size="245">
             <g:MaxScrollPanel styleName="max navigation">
                 <g:SimplePanel ui:field="elementChooser"/>
             </g:MaxScrollPanel>
@@ -24,4 +24,4 @@
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

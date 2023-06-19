@@ -24,7 +24,6 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -58,7 +57,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private final Widget filterIcon;
 
     public PipelineElementBox(final PipelineElement pipelineElement, final Icon icon) {
-        GWT.log("Creating pipe element " + pipelineElement.getId());
+//        GWT.log("Creating pipe element " + pipelineElement.getId());
         this.pipelineElement = pipelineElement;
 
         final FlowPanel background = new FlowPanel();
@@ -183,12 +182,12 @@ public class PipelineElementBox extends Box<PipelineElement> {
         final String classAttr = getElement().getClassName();
         for (final String severityClassName : severityNameToClassMap.values()) {
             if (!severityClassName.equals(newClassName) && classAttr.contains(severityClassName)) {
-                GWT.log("Un-setting " + this.pipelineElement.getId() + " from " + severity);
+//                GWT.log("Un-setting " + this.pipelineElement.getId() + " from " + severity);
                 getElement().removeClassName(severityClassName);
             }
         }
         if (newClassName != null && !classAttr.contains(newClassName)) {
-            GWT.log("Setting " + this.pipelineElement.getId() + " to " + severity);
+//            GWT.log("Setting " + this.pipelineElement.getId() + " to " + severity);
             getElement().addClassName(newClassName);
         }
         setSeverityHoverTip(severity);

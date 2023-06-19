@@ -158,4 +158,13 @@ public class PipelineElement implements Comparable<PipelineElement> {
     public String toString() {
         return "id=" + id + ", type=" + type;
     }
+
+    /**
+     * E.g.
+     * <pre>{@code CombinedParser 'myCombinedParser'}</pre>
+     */
+    @JsonIgnore
+    public String getDisplayName() {
+        return type + "'" + id + "'";
+    }
 }

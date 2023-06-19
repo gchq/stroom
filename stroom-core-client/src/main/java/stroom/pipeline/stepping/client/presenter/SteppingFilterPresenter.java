@@ -18,9 +18,14 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.data.table.client.MyCellTable;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
@@ -30,7 +35,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.BasicSelectionEventManager;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -46,23 +50,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SteppingFilterPresenter extends
         MyPresenterWidget<SteppingFilterView> {
 
+    protected static final String BASE_CLASS = "pipelineElementChooser";
     private final XPathListPresenter xPathListPresenter;
     private final XPathFilterPresenter xPathFilterPresenter;
     private List<XPathFilter> xPathFilters;
 
-    private final SingleSelectionModel<String> elementSelectionModel = new SingleSelectionModel<>();
-    private final CellTable<String> elementChooser;
+    private final SingleSelectionModel<PipelineElement> elementSelectionModel = new SingleSelectionModel<>();
+    private final CellTable<PipelineElement> elementChooser;
     private final ButtonView addXPath;
     private final ButtonView editXPath;
     private final ButtonView removeXPath;
 
     // elementId => SteppingFilterSettings
     private Map<String, SteppingFilterSettings> settingsMap;
+    private Map<String, PipelineElement> elementIdToElementMap;
     private String currentElementId;
 
     @Inject
@@ -83,21 +92,54 @@ public class SteppingFilterPresenter extends
         editXPath.setEnabled(false);
         removeXPath.setEnabled(false);
 
-
         elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
+        elementChooser.getElement().addClassName(BASE_CLASS);
 
-        // Text.
-        final Column<String, SafeHtml> textColumn = new Column<String, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final String string) {
-                final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
-                builder.appendEscaped(string);
-                builder.appendHtmlConstant("</div>");
-                return builder.toSafeHtml();
-            }
-        };
+        // Pipe element icon column
+        final Column<PipelineElement, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(false,
+                        (PipelineElement pipelineElement) -> {
+                            final PipelineElementType pipelineElementType = GwtNullSafe.get(
+                                    pipelineElement,
+                                    PipelineElement::getElementType);
+                            if (pipelineElementType != null && pipelineElementType.getIcon() != null) {
+                                return new Preset(
+                                        pipelineElementType.getIcon(),
+                                        pipelineElementType.getType(),
+                                        true);
+                            } else {
+                                return null;
+                            }
+                        })
+                .withStyleName(BASE_CLASS + "-iconCell")
+                .build();
+        elementChooser.addColumn(iconColumn);
+
+        // Pipe element ID column
+        final Column<PipelineElement, SafeHtml> textColumn = DataGridUtil.htmlColumnBuilder(
+                        (PipelineElement pipelineElement) -> {
+                            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                            final String className = pipelineElement.hasActiveFilters()
+                                    ? BASE_CLASS + "-filterOn"
+                                    : BASE_CLASS + "-filerOff";
+                            builder.appendHtmlConstant("<div class=\"" + className + "\">");
+                            builder.appendEscaped(pipelineElement.getId());
+                            builder.appendHtmlConstant("</div>");
+                            return builder.toSafeHtml();
+                        })
+                .withStyleName(BASE_CLASS + "-textCell")
+                .build();
         elementChooser.addColumn(textColumn);
+
+        // Pipe element has active filter icon column
+        final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(false,
+                        (PipelineElement pipelineElement) ->
+                                pipelineElement.hasActiveFilters()
+                                        ? SvgPresets.FILTER_GREEN.title("Has active filter(s)")
+                                        : null)
+                .withStyleName(BASE_CLASS + "-filterIconCell")
+                .build();
+        elementChooser.addColumn(filterIconColumn);
+
         elementChooser.setSelectionModel(elementSelectionModel, new BasicSelectionEventManager<>(elementChooser));
 
         getView().setElementChooser(elementChooser);
@@ -124,6 +166,28 @@ public class SteppingFilterPresenter extends
         registerHandler(removeXPath.addClickHandler(e -> removeXPathFilter()));
         registerHandler(elementSelectionModel.addSelectionChangeHandler(e ->
                 update(elementSelectionModel.getSelectedObject())));
+
+        getView().setSkipToErrorsChangeHandler(severity -> {
+            if (currentElementId != null) {
+                final PipelineElement pipelineElement = elementIdToElementMap.get(currentElementId);
+                if (pipelineElement.getSteppingFilterSettings() == null) {
+                    pipelineElement.setSteppingFilterSettings(new SteppingFilterSettings());
+                }
+                pipelineElement.getSteppingFilterSettings().setSkipToSeverity(severity);
+                elementChooser.redraw();
+            }
+        });
+
+        getView().setSkipToOutputChangeHandler(outputState -> {
+            if (currentElementId != null) {
+                final PipelineElement pipelineElement = elementIdToElementMap.get(currentElementId);
+                if (pipelineElement.getSteppingFilterSettings() == null) {
+                    pipelineElement.setSteppingFilterSettings(new SteppingFilterSettings());
+                }
+                pipelineElement.getSteppingFilterSettings().setSkipToOutput(outputState);
+                elementChooser.redraw();
+            }
+        });
     }
 
     private void addXPathFilter() {
@@ -167,9 +231,12 @@ public class SteppingFilterPresenter extends
         }
     }
 
-    public void show(final List<String> elements,
+    public void show(final List<PipelineElement> elements,
+                     final PipelineElement selectedElement,
                      final Map<String, SteppingFilterSettings> map,
                      final Consumer<Map<String, SteppingFilterSettings>> consumer) {
+        this.elementIdToElementMap = GwtNullSafe.stream(elements)
+                .collect(Collectors.toMap(PipelineElement::getId, Function.identity()));
         currentElementId = null;
         if (map != null) {
             settingsMap = new HashMap<>(map);
@@ -178,17 +245,33 @@ public class SteppingFilterPresenter extends
         }
         elementChooser.setRowData(0, elements);
         elementChooser.setRowCount(elements.size());
+
         if (elements.size() > 0) {
-            final String elementId = elements.get(0);
-            elementSelectionModel.setSelected(elementId, true);
-            update(elementId);
+            PipelineElement element = null;
+            int selectedRow = 0;
+            for (int i = 0; i < elements.size(); i++) {
+                final PipelineElement elm = elements.get(i);
+                if (Objects.equals(elm, selectedElement)) {
+                    element = elm;
+                    selectedRow = i;
+                }
+            }
+            if (element == null) {
+                element = elements.get(0);
+            }
+
+            // Distinction between the item that is selected and the one that has focus while
+            // moving focus up/down with the keyboard
+            elementSelectionModel.setSelected(element, true);
+            elementChooser.setKeyboardSelectedRow(selectedRow, true);
+            update(element);
         }
 
         final PopupSize popupSize = PopupSize.resizable(850, 550);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Change Filters")
+                .caption("Change Stepping Filters")
                 .onShow(e -> elementChooser.setFocus(true))
                 .onHideRequest(e -> {
                     if (e.isOk()) {
@@ -200,7 +283,8 @@ public class SteppingFilterPresenter extends
                 .fire();
     }
 
-    private void update(final String elementId) {
+    private void update(final PipelineElement element) {
+        final String elementId = GwtNullSafe.get(element, PipelineElement::getId);
         if (currentElementId != null) {
             final SteppingFilterSettings settings = new SteppingFilterSettings();
             settings.setSkipToSeverity(getView().getSkipToErrors());
@@ -210,7 +294,7 @@ public class SteppingFilterPresenter extends
         }
 
         if (elementId != null && !elementId.equals(currentElementId)) {
-            SteppingFilterSettings settings = settingsMap.get(elementId);
+            SteppingFilterSettings settings = settingsMap.get(element.getId());
             if (settings == null) {
                 settings = new SteppingFilterSettings();
             }
@@ -227,6 +311,10 @@ public class SteppingFilterPresenter extends
         currentElementId = elementId;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface SteppingFilterView extends View {
 
         void setElementChooser(Widget widget);
@@ -235,9 +323,13 @@ public class SteppingFilterPresenter extends
 
         void setSkipToErrors(Severity severity);
 
+        void setSkipToErrorsChangeHandler(final Consumer<Severity> skipToErrorsValueConsumer);
+
         OutputState getSkipToOutput();
 
         void setSkipToOutput(OutputState skipToOutput);
+
+        void setSkipToOutputChangeHandler(final Consumer<OutputState> skipToOutputValueConsumer);
 
         void setXPathList(View view);
     }
