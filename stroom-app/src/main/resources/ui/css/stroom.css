@@ -582,7 +582,8 @@ input:-webkit-autofill:active {
 	outline: none;
 	background-color: var(--control__background-color) !important;
 	color: var(--control__text-color) !important;
-	-webkit-box-shadow: 0 0 0px 1000px var(--control__background-color) inset;
+	-webkit-box-shadow: 0 0 0px 30px var(--control__background-color) inset;
+	-webkit-text-fill-color: var(--control__text-color) !important;
 	transition: background-color 5000s ease-in-out 0s;
 	transition: color 5000s ease-in-out 0s;
 }
@@ -881,3 +882,5 @@ textarea.clipboardCopy {
   border-style: solid;
   border-color: solid;
 }
+
+

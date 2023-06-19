@@ -9,7 +9,7 @@ server:
     - type: http
       port: ${STROOM_PROXY_ADMIN_PORT:-8091}
       useForwardedHeaders: true
-
+  detailedJsonProcessingExceptionMapper: true
   requestLog:
     appenders:
       - type: file

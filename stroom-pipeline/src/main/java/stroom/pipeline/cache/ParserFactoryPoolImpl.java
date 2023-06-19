@@ -50,6 +50,7 @@ class ParserFactoryPoolImpl
         implements ParserFactoryPool, EntityEvent.Handler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
+    private static final String ELEMENT_ID = ParserFactoryPool.class.getSimpleName();
 
     private final DSChooser dsChooser;
 
@@ -75,7 +76,9 @@ class ParserFactoryPoolImpl
 
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
         final LocationFactory locationFactory = new DefaultLocationFactory();
-        final ErrorHandler errorHandler = new ErrorHandlerAdaptor(getClass().getSimpleName(), locationFactory,
+        final ErrorHandler errorHandler = new ErrorHandlerAdaptor(
+                ELEMENT_ID,
+                locationFactory,
                 errorReceiver);
         ParserFactory parserFactory = null;
 
@@ -107,7 +110,7 @@ class ParserFactoryPoolImpl
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
+            errorReceiver.log(Severity.FATAL_ERROR, null, ELEMENT_ID, e.getMessage(), e);
         }
 
         return new StoredParserFactory(parserFactory, errorReceiver);

@@ -77,6 +77,24 @@ public class Indicator implements Serializable {
         return null;
     }
 
+    public int getCount(final Severity severity) {
+        final Set<StoredError> storedErrors = errorMap.get(severity);
+        return storedErrors != null
+                ? storedErrors.size()
+                : 0;
+    }
+
+    public boolean isEmpty() {
+        return errorMap.isEmpty();
+    }
+
+    public int size() {
+        return errorMap.values()
+                .stream()
+                .mapToInt(Set::size)
+                .sum();
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();

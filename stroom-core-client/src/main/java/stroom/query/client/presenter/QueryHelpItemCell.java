@@ -40,9 +40,9 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
             if (item.hasChildren()) {
                 final boolean open = openItems.contains(item);
                 if (open) {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
+                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
                 } else {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
+                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
                 }
             } else {
                 expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");

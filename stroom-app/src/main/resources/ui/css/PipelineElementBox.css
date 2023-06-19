@@ -22,7 +22,6 @@
 	background-color: var(--pipeline-element-box__background-color);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 	color: var(--pipeline-element-box__text-color);
-/* 	background-image: linear-gradient(#f5f9fd, #e1ebf8); */
 	border-radius: 50px;
 	padding: 5px 5px 5px 10px;
 	display: flex;
@@ -31,7 +30,7 @@
 	vertical-align: middle;
 	cursor: pointer;
 	z-index: 2;
-	
+
 	transition: background-color .3s;
 	-webkit-transition: background-color .3s;
 	-moz-transition: background-color .3s;
@@ -46,6 +45,7 @@
 .pipelineElementBox-backgroundSelected {
 	background-color: var(--pipeline-element-box__background-color--selected);
 	background-image: none;
+	border-color: var(--pipeline-element-box__border-color--selected);
 }
 
 .pipelineElementBox-backgroundSelected:hover {
@@ -57,6 +57,52 @@
 	background-color: var(--pipeline-element-box__background-color--hotspot);
 }
 
+.pipelineElementBox-severityInfo {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--info);
+}
+
+.pipelineElementBox-severityWarn {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--warn);
+}
+
+.pipelineElementBox-severityError {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--error);
+}
+
+.pipelineElementBox-severityFatalError {
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+	border: 2px solid var(--pipeline-element-box__border-color--fatal-error);
+    box-shadow: 0 0 8px var(--pipeline-element-box__border-color--fatal-error);
+    animation-name: fatal-glow;
+    animation-duration: 1.5s;
+    animation-delay: -1s;
+    animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0.46, 0.02, 0.5, 0.99);
+}
+
+/* For fatal errors give make the box shadow expand/contract for a glowing effect */
+@keyframes fatal-glow {
+  0% {
+	border-color: var(--pipeline-element-box__border-color--fatal-error);
+    box-shadow: 0 0 8px var(--pipeline-element-box__border-color--fatal-error);
+  }
+  50% {
+	border-color: var(--pipeline-element-box__border-color--fatal-error-dark);
+    box-shadow: 0 0 1px var(--pipeline-element-box__border-color--fatal-error);
+  }
+  100% {
+	border-color: var(--pipeline-element-box__border-color--fatal-error);
+    box-shadow: 0 0 8px var(--pipeline-element-box__border-color--fatal-error);
+  }
+}
+
 .pipelineElementBox-image {
 	width: 16px;
 	height: 16px;
@@ -66,4 +112,9 @@
 .pipelineElementBox-label {
 	padding: 0 8px;
 	cursor: pointer;
+	color: var(--pipeline-element-box__text-color);
+}
+
+.pipelineElementBox-backgroundSelected .pipelineElementBox-label  {
+	color: var(--pipeline-element-box__text-color--selected);
 }

@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.31] - 2023-06-15
+
+* Issue **#3482** : Add a log pane to the stepper to show all the info/warn/error/fatal messages in one place. Add button to toggle the new log pane. Add coloured border to pipeline elements in the stepper to indicate the presence of INFO/WARN/ERROR/FATAL messages.
+
+* Issue **#3519** : Fix search API compatibility.
+
+* Issue **#3518** : Allow users to select the rendered markdown documentation content in the browser.
+
+* Issue **#3522** : Change the default stroom/proxy config files to set `detailedJsonProcessingExceptionMapper: true` so REST clients see the reason for a 400 Bad Request and it is also included in the app logs when using the Jersey logging feature logger.
+
+
 ## [v7.2-beta.30] - 2023-06-14
 
 * Issue **#3305** : Fix index out of bounds exception.
@@ -5465,7 +5476,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.30...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.31...HEAD
+[v7.2-beta.31]: https://github.com/gchq/stroom/compare/v7.2-beta.30...v7.2-beta.31
 [v7.2-beta.30]: https://github.com/gchq/stroom/compare/v7.2-beta.29...v7.2-beta.30
 [v7.2-beta.29]: https://github.com/gchq/stroom/compare/v7.2-beta.28...v7.2-beta.29
 [v7.2-beta.28]: https://github.com/gchq/stroom/compare/v7.2-beta.27...v7.2-beta.28

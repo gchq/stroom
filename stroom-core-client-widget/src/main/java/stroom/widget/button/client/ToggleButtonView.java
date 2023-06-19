@@ -20,5 +20,33 @@ public interface ToggleButtonView extends ButtonView {
 
     void setState(final boolean isOn);
 
+    /**
+     * Alias for {@link ToggleButtonView#setState(boolean)} with true as the value.
+     */
+    default void setOn() {
+        setState(true);
+    }
+
+    /**
+     * Alias for {@link ToggleButtonView#setState(boolean)} with false as the value.
+     */
+    default void setOff() {
+        setState(false);
+    }
+
     boolean getState();
+
+    /**
+     * @return Alias for {@link ToggleButtonView#getState()}
+     */
+    default boolean isOn() {
+        return getState();
+    }
+
+    /**
+     * @return Alias for NOT {@link ToggleButtonView#getState()}
+     */
+    default boolean isOff() {
+        return !getState();
+    }
 }

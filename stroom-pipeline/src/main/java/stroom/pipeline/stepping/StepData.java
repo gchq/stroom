@@ -19,10 +19,13 @@ package stroom.pipeline.stepping;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.SharedStepData;
+import stroom.util.NullSafe;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class StepData {
 
@@ -48,5 +51,14 @@ public class StepData {
         }
 
         return new SharedStepData(sourceLocation, map);
+    }
+
+    @Override
+    public String toString() {
+        return NullSafe.map(elementMap).values()
+                .stream()
+                .map(data -> data.getElementId() + ":" + Objects.requireNonNullElse(
+                        data.getAllIndicators().getMaxSeverity(), "-"))
+                .collect(Collectors.joining(", "));
     }
 }
