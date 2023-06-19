@@ -1817,6 +1817,9 @@ button.main-menu svg {
   min-width: 200px;
 }
 
+.pipelineElementChooser-textCell.pipelineElementChooser-filterOn div {
+}
+
 .pipelineElementChooser-filterIconCell .svgIcon {
   width: 20px;
   /* Height is a bit of a hack to match padding on text cell, but won't be right for different
@@ -1825,4 +1828,11 @@ button.main-menu svg {
   background-size: 14px 14px;
   background-repeat: no-repeat;
   background-position: center;
+}
+
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOn .svgIcon {
+}
+
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff .svgIcon {
+  visibility: hidden;
 }

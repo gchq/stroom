@@ -35,8 +35,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.BasicSelectionEventManager;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
@@ -53,7 +51,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class SteppingFilterPresenter extends
         MyPresenterWidget<SteppingFilterView> {
@@ -71,7 +68,7 @@ public class SteppingFilterPresenter extends
 
     // elementId => SteppingFilterSettings
     private Map<String, SteppingFilterSettings> settingsMap;
-    private Map<String, PipelineElement> elementIdToElementMap;
+    private Map<String, Boolean> elementIdToHasActiveFilterMap = new HashMap<>();
     private String currentElementId;
 
     @Inject
@@ -114,29 +111,26 @@ public class SteppingFilterPresenter extends
                 .build();
         elementChooser.addColumn(iconColumn);
 
+        final Function<PipelineElement, String> filterActiveStyleFunc = pipelineElement ->
+                GwtNullSafe.isTrue(elementIdToHasActiveFilterMap.get(pipelineElement.getId()))
+                        ? BASE_CLASS + "-filterOn"
+                        : BASE_CLASS + "-filterOff";
+
         // Pipe element ID column
-        final Column<PipelineElement, SafeHtml> textColumn = DataGridUtil.htmlColumnBuilder(
-                        (PipelineElement pipelineElement) -> {
-                            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                            final String className = pipelineElement.hasActiveFilters()
-                                    ? BASE_CLASS + "-filterOn"
-                                    : BASE_CLASS + "-filerOff";
-                            builder.appendHtmlConstant("<div class=\"" + className + "\">");
-                            builder.appendEscaped(pipelineElement.getId());
-                            builder.appendHtmlConstant("</div>");
-                            return builder.toSafeHtml();
-                        })
+        final Column<PipelineElement, String> textColumn = DataGridUtil.textColumnBuilder(
+                        PipelineElement::getId)
                 .withStyleName(BASE_CLASS + "-textCell")
+                .withConditionalStyleName(filterActiveStyleFunc)
                 .build();
         elementChooser.addColumn(textColumn);
 
-        // Pipe element has active filter icon column
-        final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(false,
+        // Pipe element has active filter icon column (only visible if active filter)
+        final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(
+                        false,
                         (PipelineElement pipelineElement) ->
-                                pipelineElement.hasActiveFilters()
-                                        ? SvgPresets.FILTER_GREEN.title("Has active filter(s)")
-                                        : null)
+                                SvgPresets.FILTER_GREEN.title("Has active filter(s)"))
                 .withStyleName(BASE_CLASS + "-filterIconCell")
+                .withConditionalStyleName(filterActiveStyleFunc)
                 .build();
         elementChooser.addColumn(filterIconColumn);
 
@@ -166,28 +160,10 @@ public class SteppingFilterPresenter extends
         registerHandler(removeXPath.addClickHandler(e -> removeXPathFilter()));
         registerHandler(elementSelectionModel.addSelectionChangeHandler(e ->
                 update(elementSelectionModel.getSelectedObject())));
-
-        getView().setSkipToErrorsChangeHandler(severity -> {
-            if (currentElementId != null) {
-                final PipelineElement pipelineElement = elementIdToElementMap.get(currentElementId);
-                if (pipelineElement.getSteppingFilterSettings() == null) {
-                    pipelineElement.setSteppingFilterSettings(new SteppingFilterSettings());
-                }
-                pipelineElement.getSteppingFilterSettings().setSkipToSeverity(severity);
-                elementChooser.redraw();
-            }
-        });
-
-        getView().setSkipToOutputChangeHandler(outputState -> {
-            if (currentElementId != null) {
-                final PipelineElement pipelineElement = elementIdToElementMap.get(currentElementId);
-                if (pipelineElement.getSteppingFilterSettings() == null) {
-                    pipelineElement.setSteppingFilterSettings(new SteppingFilterSettings());
-                }
-                pipelineElement.getSteppingFilterSettings().setSkipToOutput(outputState);
-                elementChooser.redraw();
-            }
-        });
+        getView().setSkipToErrorsChangeHandler(severity ->
+                updateLocalActiveFilterState());
+        getView().setSkipToOutputChangeHandler(outputState ->
+                updateLocalActiveFilterState());
     }
 
     private void addXPathFilter() {
@@ -200,6 +176,7 @@ public class SteppingFilterPresenter extends
                 xPathFilters.add(xPathFilter);
 
                 xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
+                updateLocalActiveFilterState();
             }
             e.hide();
         };
@@ -228,20 +205,24 @@ public class SteppingFilterPresenter extends
             xPathFilters.removeAll(list);
             xPathListPresenter.refresh();
             xPathListPresenter.getSelectionModel().clear();
+            updateLocalActiveFilterState();
         }
     }
 
     public void show(final List<PipelineElement> elements,
                      final PipelineElement selectedElement,
-                     final Map<String, SteppingFilterSettings> map,
+                     final Map<String, SteppingFilterSettings> settingsMap,
                      final Consumer<Map<String, SteppingFilterSettings>> consumer) {
-        this.elementIdToElementMap = GwtNullSafe.stream(elements)
-                .collect(Collectors.toMap(PipelineElement::getId, Function.identity()));
         currentElementId = null;
-        if (map != null) {
-            settingsMap = new HashMap<>(map);
+        if (settingsMap != null) {
+            this.settingsMap = new HashMap<>(settingsMap);
+            // Initialise our local view of elements with active filters based on persisted state
+            settingsMap.forEach((elementId, filterSettings) ->
+                    elementIdToHasActiveFilterMap.put(
+                            elementId,
+                            GwtNullSafe.test(filterSettings, SteppingFilterSettings::hasActiveFilters)));
         } else {
-            settingsMap = new HashMap<>();
+            this.settingsMap = new HashMap<>();
         }
         elementChooser.setRowData(0, elements);
         elementChooser.setRowCount(elements.size());
@@ -276,15 +257,26 @@ public class SteppingFilterPresenter extends
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         update(null);
-                        consumer.accept(settingsMap);
+                        consumer.accept(this.settingsMap);
                     }
                     e.hide();
                 })
                 .fire();
     }
 
+    private void updateLocalActiveFilterState() {
+        if (currentElementId != null) {
+            final boolean hasActiveFilters = getView().getSkipToErrors() != null
+                    || getView().getSkipToOutput() != null
+                    || xPathListPresenter.getDataProvider().getList()
+                    .stream()
+                    .anyMatch(Objects::nonNull);
+            elementIdToHasActiveFilterMap.put(currentElementId, hasActiveFilters);
+            elementChooser.redraw();
+        }
+    }
+
     private void update(final PipelineElement element) {
-        final String elementId = GwtNullSafe.get(element, PipelineElement::getId);
         if (currentElementId != null) {
             final SteppingFilterSettings settings = new SteppingFilterSettings();
             settings.setSkipToSeverity(getView().getSkipToErrors());
@@ -293,6 +285,7 @@ public class SteppingFilterPresenter extends
             settingsMap.put(currentElementId, settings);
         }
 
+        final String elementId = GwtNullSafe.get(element, PipelineElement::getId);
         if (elementId != null && !elementId.equals(currentElementId)) {
             SteppingFilterSettings settings = settingsMap.get(element.getId());
             if (settings == null) {
