@@ -1520,36 +1520,6 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/fetchTimeZones:
-    get:
-      operationId: fetchTimeZones
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Fetch time zone data from the server
-      tags:
-      - Dashboards
-  /dashboard/v1/functions:
-    get:
-      operationId: fetchDashboardFunctions
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FunctionSignature'
-          description: default response
-      summary: Fetch all expression functions
-      tags:
-      - Dashboards
   /dashboard/v1/search/{nodeName}:
     post:
       operationId: dashboardSearch
@@ -1847,6 +1817,26 @@ paths:
             schema:
               $ref: '#/components/schemas/DocRef'
         description: dataSourceRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+          description: default response
+      summary: Fetch data source fields
+      tags:
+      - Data Sources
+  /dataSource/v1/fetchFieldsFromQuery:
+    post:
+      operationId: fetchDataSourceFieldsFromQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: query
         required: true
       responses:
         default:
@@ -4384,7 +4374,7 @@ paths:
       - Queries
   /query/v1/fetchTimeZones:
     get:
-      operationId: fetchTimeZones_1
+      operationId: fetchTimeZones
       responses:
         default:
           content:
@@ -4395,6 +4385,21 @@ paths:
                   type: string
           description: default response
       summary: Fetch time zone data from the server
+      tags:
+      - Queries
+  /query/v1/functions:
+    get:
+      operationId: fetchFunctions
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FunctionSignature'
+          description: default response
+      summary: Fetch all expression functions
       tags:
       - Queries
   /query/v1/search/{nodeName}:
@@ -4421,6 +4426,21 @@ paths:
                 $ref: '#/components/schemas/DashboardSearchResponse'
           description: default response
       summary: Perform a new search or get new results
+      tags:
+      - Queries
+  /query/v1/structure:
+    get:
+      operationId: fetchStructureElements
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StructureElement'
+          description: default response
+      summary: Fetch all structure element descriptions
       tags:
       - Queries
   /query/v1/validateQuery:
@@ -6311,6 +6331,21 @@ paths:
       summary: Deletes the user with the supplied UUID
       tags:
       - Authorisation
+  /view/v1/list:
+    get:
+      operationId: listViews
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: default response
+      summary: Fetch view names
+      tags:
+      - Views
   /view/v1/{uuid}:
     get:
       operationId: fetchView
@@ -7788,6 +7823,8 @@ components:
       type: object
       properties:
         defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
+        docRef:
           $ref: '#/components/schemas/DocRef'
         fields:
           type: array
@@ -12300,6 +12337,13 @@ components:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
         oldEntityData:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
+    StructureElement:
+      type: object
+      properties:
+        description:
+          type: string
+        title:
+          type: string
     Suggestions:
       type: object
       properties:
