@@ -26,7 +26,7 @@ public class SearchableDual implements Searchable {
 
     private static final List<AbstractField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 
-    private static final DataSource DATA_SOURCE = DataSource.builder().fields(FIELDS).build();
+    private static final DataSource DATA_SOURCE = DataSource.builder().docRef(DOC_REF).fields(FIELDS).build();
 
     @Override
     public DocRef getDocRef() {

@@ -1803,3 +1803,68 @@ button.main-menu svg {
 }
 
 
+
+/*
+.queryHelpItemCell {
+    padding: 5px;
+    min-width: 200px;
+}
+
+.queryHelpItem-heading {
+    font-size: var(--font-size-14);
+    font-weight: 500;
+}
+
+.queryHelpItem-functionCategory {
+    font-size: var(--font-size-12);
+    font-weight: 500;
+}
+
+.queryHelpItem-function {
+    text-decoration: italic;
+}
+*/
+
+
+
+
+ .queryHelpTree {
+    width: 100%;
+ }
+
+.queryHelpTree-container {
+    overflow: auto;
+    display: flex;
+    flex-grow: 1;
+    height: 0;
+}
+
+.queryHelpItemCell {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: var(--row__gap--horizontal);
+}
+
+.queryHelpItemCell-expander {
+	display: flex;
+}
+
+.queryHelpItemCell-expander svg {
+    width: .7rem;
+    height: .7rem;
+}
+
+.queryHelpItemCell-text {
+	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
+	white-space: nowrap;
+}
+
+ .queryHelpTree .cellTableCell {
+    display: flex;
+    align-items: center;
+ }
+
+.queryHelp-details {
+    padding: 5px;
+}

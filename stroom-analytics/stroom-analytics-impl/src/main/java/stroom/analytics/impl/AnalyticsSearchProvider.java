@@ -20,6 +20,7 @@ package stroom.analytics.impl;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
@@ -67,6 +68,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> DataSource
                 .builder()
+                .docRef(docRef)
                 .fields(AnalyticFields.getFields())
                 .build());
     }

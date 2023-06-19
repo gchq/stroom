@@ -96,6 +96,7 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     public DataSource getDataSource() {
         return DataSource
                 .builder()
+                .docRef(ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF)
                 .fields(ProcessorTaskFields.getFields())
                 .build();
     }

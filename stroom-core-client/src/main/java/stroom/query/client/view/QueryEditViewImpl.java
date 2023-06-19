@@ -33,6 +33,8 @@ public class QueryEditViewImpl
     private final Widget widget;
 
     @UiField
+    SimplePanel queryHelpContainer;
+    @UiField
     SimplePanel queryEditorContainer;
     @UiField
     SimplePanel tableContainer;
@@ -45,6 +47,11 @@ public class QueryEditViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setQueryHelp(final View view) {
+        queryHelpContainer.setWidget(view.asWidget());
     }
 
     @Override

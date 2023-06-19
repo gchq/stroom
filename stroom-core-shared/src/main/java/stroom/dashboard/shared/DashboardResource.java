@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -41,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DashboardResource extends RestResource, DirectRestService, FetchWithUuid<DashboardDoc> {
+
     String BASE_PATH = "/dashboard" + ResourcePaths.V1;
 
     String DOWNLOAD_SEARCH_RESULTS_PATH_PATH = "/downloadSearchResults";
@@ -77,7 +77,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             operationId = "downloadDashboardQuery")
     ResourceGeneration downloadQuery(
             @Parameter(description = "downloadQueryRequest", required = true)
-                    DashboardSearchRequest request);
+            DashboardSearchRequest request);
 
     @POST
     @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
@@ -104,18 +104,4 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
 //            operationId = "dashboardDestroySearch")
 //    Boolean destroy(
 //            @Parameter(description = "request", required = true) DestroySearchRequest request);
-
-    @GET
-    @Path("/fetchTimeZones")
-    @Operation(
-            summary = "Fetch time zone data from the server",
-            operationId = "fetchTimeZones")
-    List<String> fetchTimeZones();
-
-    @GET
-    @Path("/functions")
-    @Operation(
-            summary = "Fetch all expression functions",
-            operationId = "fetchDashboardFunctions")
-    List<FunctionSignature> fetchFunctions();
 }

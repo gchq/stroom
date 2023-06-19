@@ -88,6 +88,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
 
         return DataSource
                 .builder()
+                .docRef(docRef)
                 .fields(fields)
                 .build();
     }

@@ -20,9 +20,11 @@ import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -54,6 +56,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -428,5 +431,24 @@ class QueryServiceImpl implements QueryService {
         final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
         ids.sort(Comparator.naturalOrder());
         return ids;
+    }
+
+    @Override
+    public DataSource getDataSource(final DocRef dataSourceRef) {
+        return dataSourceResolver.resolveDataSource(dataSourceRef);
+    }
+
+    @Override
+    public DataSource getDataSource(final String query) {
+        final AtomicReference<DataSource> ref = new AtomicReference<>();
+        try {
+            SearchRequestBuilder.extractDataSourceNameOnly(query, dataSourceName -> {
+                final DataSource dataSource = dataSourceResolver.resolveDataSource(dataSourceName);
+                ref.set(dataSource);
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return ref.get();
     }
 }
