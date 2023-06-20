@@ -13,7 +13,7 @@
 
 
 .stroom-theme-dark {
-    --icon-colour__foreground: var(--control__text-color);
+    --icon-colour__foreground: var(--white);
     --icon-colour__blue: var(--blue-500);
     --icon-colour__grey: #ccc;
     --icon-colour__xml-background: #ce93d8;

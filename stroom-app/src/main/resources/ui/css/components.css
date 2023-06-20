@@ -1709,7 +1709,7 @@ button.main-menu svg {
 }
 
 .find-buttons .icon-button .face {
-    color: var(--icon-colour__foreground);
+    color: var(--control__text-color);
 }
 
 .findCell {

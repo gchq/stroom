@@ -125,7 +125,7 @@ public class NavigationPresenter
         filter.setEnabled(true);
 
         find = new InlineSvgButton();
-        find.setSvg(SvgImage.SEARCH);
+        find.setSvg(SvgImage.FIND);
         find.getElement().addClassName("navigation-header-button find");
         find.setTitle("Find Content");
         find.setEnabled(true);
