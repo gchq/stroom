@@ -72,6 +72,7 @@ public final class PipelineElementRenderer
     public Dimension getExtents(final PipelineElement pipelineElement) {
         double width = 0;
         double height = 0;
+
         final PipelineElementBox pipelineElementBox = createBox(pipelineElement);
         RootPanel.get().add(pipelineElementBox);
         width += pipelineElementBox.getElement().getScrollWidth();
@@ -85,9 +86,12 @@ public final class PipelineElementRenderer
         if (pipelineElement == null) {
             return null;
         } else {
-            return elementIdToBoxMap.computeIfAbsent(
+            final PipelineElementBox pipelineElementBox = elementIdToBoxMap.computeIfAbsent(
                     pipelineElement.getId(),
                     k -> pipelineElementBoxFactory.create(pipelineElement));
+            // Refresh any styling on the box based on the PipelineElement state
+            pipelineElementBox.refresh();
+            return pipelineElementBox;
         }
     }
 

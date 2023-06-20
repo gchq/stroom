@@ -1533,18 +1533,6 @@ button.main-menu svg {
     justify-content: flex-end;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 .form-control {
   background-color: var(--control__background-color);
   border-color: var(--control__border-color);
@@ -1594,6 +1582,24 @@ button.main-menu svg {
     display: flex;
     margin-bottom: 0;
     flex-direction: column;
+}
+
+
+.form-group:not(:first-child) {
+    margin-top: 0.3em;
+}
+
+/* The invalid-feedback divs add a 0.25em margin-top even when empty so removing it pending
+   us doing something with client side validation */
+.form-group .invalid-feedback {
+    margin-top: 0;
+}
+
+.form-heading {
+    font-weight: 500;
+    font-size: var(--font-size-19);
+    color: var(--form-group__label-color);
+    margin-bottom: 0.3em;
 }
 
 .settingsPresenter .layerContainer-container {
@@ -1802,7 +1808,40 @@ button.main-menu svg {
     opacity: .5;
 }
 
+.pipelineElementChooser-iconCell .svgIcon {
+    width: 22px;
+    /* Height is a bit of a hack to match padding on text cell, but won't be right for different
+       font sizes or densities */
+    height: 26px;
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
 
+.pipelineElementChooser-textCell {
+    padding: 5px;
+    min-width: 200px;
+}
+
+.pipelineElementChooser-textCell.pipelineElementChooser-filterOn div {
+}
+
+.pipelineElementChooser-filterIconCell .svgIcon {
+    width: 20px;
+    /* Height is a bit of a hack to match padding on text cell, but won't be right for different
+       font sizes or densities */
+    height: 26px;
+    background-size: 14px 14px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOn .svgIcon {
+}
+
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff .svgIcon {
+    visibility: hidden;
+}
 
 /*
 .queryHelpItemCell {

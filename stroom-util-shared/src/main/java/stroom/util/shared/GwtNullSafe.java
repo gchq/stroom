@@ -877,7 +877,8 @@ public class GwtNullSafe {
      * GWT currently doesn't emulate requireNonNullElse
      */
     public static <T> T requireNonNullElseGet(T obj, Supplier<? extends T> supplier) {
-        return (obj != null) ? obj
+        return (obj != null)
+                ? obj
                 : Objects.requireNonNull(
                         Objects.requireNonNull(supplier, "supplier").get(),
                         "supplier.get()");

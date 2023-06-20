@@ -151,6 +151,10 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         getView().setSeverities(elementIdToSeveritiesMap);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
 
         void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);

@@ -41,6 +41,7 @@ import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
@@ -58,6 +59,10 @@ import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -98,8 +103,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final RestFactory restFactory;
+    // elementId => ElementPresenter
     private final Map<String, ElementPresenter> elementPresenterMap = new HashMap<>();
-    private final Map<String, InlineSvgToggleButton> elementLogPaneStateMap = new HashMap<>();
     private final PipelineModel pipelineModel;
     private final ButtonView saveButton;
     private final InlineSvgToggleButton toggleLogPaneButton;
@@ -115,7 +120,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private ElementPresenter currentElementPresenter = null;
 
     @Inject
-    public SteppingPresenter(final EventBus eventBus, final SteppingView view,
+    public SteppingPresenter(final EventBus eventBus,
+                             final SteppingView view,
                              final PipelineTreePresenter pipelineTreePresenter,
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
@@ -189,9 +195,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addChangeFilterHandler(event -> {
-            final List<String> elements = new ArrayList<>();
-            getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
-            steppingFilterPresenter.show(elements, request.getStepFilterMap(), request::setStepFilterMap);
+            showChangeFiltersDialog();
         }));
         registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(toggleLogPaneButton.addClickHandler(event -> {
@@ -200,6 +204,105 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 currentElementPresenter.setLogPaneVisibility(toggleLogPaneButton.isOn());
             }
         }));
+
+        registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
+            final PipelineElement selectedPipeElement = getSelectedPipeElement();
+            if (!PipelineModel.SOURCE_ELEMENT.getId().equals(selectedPipeElement.getId())) {
+                final List<Item> menuItems = buildContextMenu();
+                if (GwtNullSafe.hasItems(menuItems)) {
+                    showMenu(menuItems, event.getPopupPosition());
+                }
+            }
+        }));
+    }
+
+    private void showChangeFiltersDialog() {
+        final List<PipelineElement> elements = new ArrayList<>();
+        getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
+//            GWT.log("elements: \n" + GwtNullSafe.stream(elements)
+//                    .map(PipelineElement::toString)
+//                    .map(str -> "  " + str)
+//                    .collect(Collectors.joining("\n")));
+
+        // Make a note of the selected element as it is lost on refresh
+        final PipelineElement selectedObject = pipelineTreePresenter.getSelectionModel()
+                .getSelectedObject();
+        steppingFilterPresenter.show(
+                elements,
+                getSelectedPipeElement(),
+                request.getStepFilterMap(),
+                stepFilterMap -> {
+                    pipelineModel.setStepFilters(stepFilterMap);
+                    request.setStepFilterMap(stepFilterMap);
+                    // Need to refresh the view in case any elements need to reflect active filters
+                    pipelineTreePresenter.getView().refresh();
+                    pipelineTreePresenter.getSelectionModel().setSelected(selectedObject, true);
+                });
+    }
+
+    private List<Item> buildContextMenu() {
+        final List<Item> menuItems = new ArrayList<>();
+
+        final boolean isClearFiltersOnSelectedEnabled = GwtNullSafe.test(
+                getSelectedPipeElement(),
+                PipelineElement::hasActiveFilters);
+
+        final List<PipelineElement> elements = new ArrayList<>();
+        getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
+        final boolean isClearAllFiltersEnabled = elements.stream()
+                .anyMatch(PipelineElement::hasActiveFilters);
+
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(0)
+                .icon(SvgPresets.EDIT)
+                .text("Manage step filters")
+                .enabled(true)
+                .command(this::showChangeFiltersDialog)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(0)
+                .icon(SvgPresets.DELETE)
+                .text("Clear step filters on this element")
+                .enabled(isClearFiltersOnSelectedEnabled)
+                .command(this::clearFiltersOnSelected)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(0)
+                .icon(SvgPresets.DELETE)
+                .text("Clear step filters on all elements")
+                .enabled(isClearAllFiltersEnabled)
+                .command(this::clearAllFilters)
+                .build());
+
+        return menuItems;
+    }
+
+    private void clearAllFilters() {
+        GwtNullSafe.map(request.getStepFilterMap())
+                .values()
+                .forEach(SteppingFilterSettings::clearAllFilters);
+        pipelineTreePresenter.getView().refresh();
+    }
+
+    private void clearFiltersOnSelected() {
+        final PipelineElement selectedPipeElement = getSelectedPipeElement();
+        if (selectedPipeElement != null && request.getStepFilterMap() != null) {
+            final SteppingFilterSettings steppingFilterSettings = request.getStepFilterMap()
+                    .get(selectedPipeElement.getId());
+            if (steppingFilterSettings != null) {
+                steppingFilterSettings.clearAllFilters();
+            }
+        }
+        pipelineTreePresenter.getView().refresh();
+    }
+
+    private void showMenu(final List<Item> menuItems,
+                          final PopupPosition popupPosition) {
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     private PipelineElement getSelectedPipeElement() {
@@ -208,13 +311,13 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
     private void getDescendantFilters(final PipelineElement parent,
                                       final Map<PipelineElement, List<PipelineElement>> childMap,
-                                      final List<String> descendants) {
+                                      final List<PipelineElement> descendants) {
         final List<PipelineElement> children = childMap.get(parent);
-        if (children != null && children.size() > 0) {
+        if (GwtNullSafe.hasItems(children)) {
             for (final PipelineElement child : children) {
                 final PipelineElementType type = child.getElementType();
                 if (type.hasRole(PipelineElementType.VISABILITY_STEPPING)) {
-                    descendants.add(child.getId());
+                    descendants.add(child);
                 }
                 getDescendantFilters(child, childMap, descendants);
             }
@@ -708,6 +811,10 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface SteppingView extends View {
 
