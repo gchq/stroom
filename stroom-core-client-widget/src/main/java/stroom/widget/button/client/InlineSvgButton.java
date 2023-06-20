@@ -66,15 +66,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
     }
 
     public void setSvg(final SvgImage svgImage) {
-        // Puts a class on the button that is specific to the svg file, so we
-        // can do custom styling of the button bases on the svg it uses.
-        final String newSvgClassName = svgImage.getCssClass();
-        if (this.svgClassName != null) {
-            getElement().replaceClassName(this.svgClassName, newSvgClassName);
-        } else {
-            getElement().addClassName(newSvgClassName);
-        }
-        this.svgClassName = newSvgClassName;
         face.setInnerHTML(svgImage.getSvg());
     }
 

@@ -1635,7 +1635,7 @@ public enum SvgImage {
             "     height=\"1792\"\n" +
             "     viewBox=\"0 0 1792 1792\"\n" +
             "     version=\"1.1\">\n" +
-            "    <path style=\"fill:#2196f3;fill-opacity:1;stroke-width:3.09787\"\n" +
+            "    <path style=\"fill:currentColor;fill-opacity:1;stroke-width:3.09787\"\n" +
             "          d=\"m 896,1689.0561 a 793.05621,793.05621 0 1 0 0,-1586.1122 793.05621," +
             "793.05621 0 1 0 0,1586.1122 z\"/>\n" +
             "    <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com Lice" +
@@ -5771,9 +5771,5 @@ public enum SvgImage {
 
     public String getSvg() {
         return svg;
-    }
-
-    public String getCssClass() {
-        return "svg-image-" + name().toLowerCase().replace("_", "-");
     }
 }

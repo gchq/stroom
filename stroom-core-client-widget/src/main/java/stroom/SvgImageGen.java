@@ -176,11 +176,11 @@ public class SvgImageGen {
                 .append("\n")
                 .append("    public String getSvg() {\n")
                 .append("        return svg;\n")
-                .append("    }\n")
-                .append("\n")
-                .append("    public String getCssClass() {\n")
-                .append("        return \"svg-image-\" + name().toLowerCase().replace(\"_\", \"-\");\n")
                 .append("    }\n");
+//                .append("\n");
+//                .append("    public String getCssClass() {\n")
+//                .append("        return \"svg-image-\" + name().toLowerCase().replace(\"_\", \"-\");\n")
+//                .append("    }\n");
 
 //        for (final Entry<String, String> entry : entries.entrySet()) {
 //            sb.append("    public static String ");

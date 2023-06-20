@@ -17,13 +17,13 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.svg.client.Icon;
+import stroom.svg.client.SvgImage;
 import stroom.util.shared.Severity;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.SimplePanel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     private final PipelineElement pipelineElement;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final Icon icon) {
+    public PipelineElementBox(final PipelineElement pipelineElement, final SvgImage icon) {
         GWT.log("Creating pipe element " + pipelineElement.getId());
         this.pipelineElement = pipelineElement;
 
@@ -61,8 +61,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
         label.addStyleName(BASE_CLASS + "-label");
 
         if (icon != null) {
-            final Widget image = icon.asWidget();
-            image.addStyleName(BASE_CLASS + "-image");
+            final SimplePanel image = new SimplePanel();
+            image.getElement().setInnerHTML(icon.getSvg());
+            image.addStyleName("svgIcon " + BASE_CLASS + "-image");
             background.add(image);
         }
 
