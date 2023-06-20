@@ -22,6 +22,7 @@ import stroom.util.shared.Severity;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -34,6 +35,8 @@ import java.util.function.Consumer;
 public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterView {
 
     private final Widget widget;
+    @UiField
+    Label nameLabel;
     @UiField
     SimplePanel elementChooser;
     @UiField
@@ -80,6 +83,11 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     @Override
     public void setElementChooser(final Widget view) {
         elementChooser.setWidget(view);
+    }
+
+    @Override
+    public void setName(final String name) {
+        nameLabel.setText(name);
     }
 
     @Override

@@ -82,6 +82,12 @@ public class SteppingFilterSettings {
         }
     }
 
+    public void clearAllFilters() {
+        skipToSeverity = null;
+        skipToOutput = null;
+        filters.clear();
+    }
+
     @JsonIgnore
     public boolean hasActiveFilters() {
         return skipToSeverity != null

@@ -68,7 +68,7 @@ public class SteppingFilterPresenter extends
 
     // elementId => SteppingFilterSettings
     private Map<String, SteppingFilterSettings> settingsMap;
-    private Map<String, Boolean> elementIdToHasActiveFilterMap = new HashMap<>();
+    private final Map<String, Boolean> elementIdToHasActiveFilterMap = new HashMap<>();
     private String currentElementId;
 
     @Inject
@@ -81,11 +81,11 @@ public class SteppingFilterPresenter extends
         this.xPathFilterPresenter = xPathFilterProvider;
 
         addXPath = xPathListPresenter.addButton(SvgPresets.ADD);
-        addXPath.setTitle("Add XPath");
+        addXPath.setTitle("Add XPath Filter");
         editXPath = xPathListPresenter.addButton(SvgPresets.EDIT);
-        editXPath.setTitle("Edit XPath");
+        editXPath.setTitle("Edit XPath Filter");
         removeXPath = xPathListPresenter.addButton(SvgPresets.REMOVE);
-        removeXPath.setTitle("Delete XPath");
+        removeXPath.setTitle("Delete XPath Filter");
         editXPath.setEnabled(false);
         removeXPath.setEnabled(false);
 
@@ -252,7 +252,7 @@ public class SteppingFilterPresenter extends
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Change Stepping Filters")
+                .caption("Change Step Filters")
                 .onShow(e -> elementChooser.setFocus(true))
                 .onHideRequest(e -> {
                     if (e.isOk()) {
@@ -291,6 +291,7 @@ public class SteppingFilterPresenter extends
             if (settings == null) {
                 settings = new SteppingFilterSettings();
             }
+            getView().setName(element.getDisplayName());
             getView().setSkipToErrors(settings.getSkipToSeverity());
             getView().setSkipToOutput(settings.getSkipToOutput());
 
@@ -311,6 +312,8 @@ public class SteppingFilterPresenter extends
     public interface SteppingFilterView extends View {
 
         void setElementChooser(Widget widget);
+
+        void setName(final String name);
 
         Severity getSkipToErrors();
 

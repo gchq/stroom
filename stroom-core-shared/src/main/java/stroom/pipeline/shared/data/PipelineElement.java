@@ -165,6 +165,6 @@ public class PipelineElement implements Comparable<PipelineElement> {
      */
     @JsonIgnore
     public String getDisplayName() {
-        return type + "'" + id + "'";
+        return type + " '" + id + "'";
     }
 }
