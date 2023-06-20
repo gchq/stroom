@@ -20,13 +20,8 @@ import stroom.svg.client.Preset;
 
 public class SvgButton extends InlineSvgButton {
 
-    private SvgButton() {
+    public SvgButton() {
         super();
-    }
-
-    @Override
-    public void focus() {
-        getElement().focus();
     }
 
     public static SvgButton create(final Preset preset) {

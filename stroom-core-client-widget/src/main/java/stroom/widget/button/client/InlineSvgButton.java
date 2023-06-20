@@ -46,8 +46,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
      */
     private boolean allowClickPropagation;
 
-    private String svgClassName = null;
-
     public InlineSvgButton() {
         super(Document.get().createPushButtonElement());
 

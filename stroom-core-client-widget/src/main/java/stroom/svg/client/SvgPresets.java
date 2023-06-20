@@ -46,7 +46,6 @@ public final class SvgPresets {
     public static final Preset HELP = enabled(SvgImage.HELP, "Help");
     public static final Preset HISTORY = disabled(SvgImage.HISTORY, "History");
     public static final Preset INFO = enabled(SvgImage.INFO, "Info");
-    public static final Preset KEY = enabled(SvgImage.KEY, "API Keys");
     public static final Preset MOVE = disabled(SvgImage.MOVE, "Move");
     public static final Preset NEW_ITEM = enabled(SvgImage.ADD, "New");
     public static final Preset OPEN = disabled(SvgImage.OPEN, "Open");
@@ -81,12 +80,6 @@ public final class SvgPresets {
     public static final Preset STEP_FORWARD_BLUE = disabled(SvgImage.STEP_FORWARD, "Forward");
     public static final Preset FAST_FORWARD_BLUE = disabled(SvgImage.FAST_FORWARD, "Last");
     public static final Preset REFRESH_BLUE = enabled(SvgImage.REFRESH, "Refresh");
-
-    public static final Preset FILTER_GREEN = enabled(SvgImage.FILTER, "Filter");
-    public static final Preset FAST_BACKWARD_GREEN = disabled(SvgImage.FAST_BACKWARD, "First");
-    public static final Preset STEP_BACKWARD_GREEN = disabled(SvgImage.STEP_BACKWARD, "Backward");
-    public static final Preset STEP_FORWARD_GREEN = disabled(SvgImage.STEP_FORWARD, "Forward");
-    public static final Preset FAST_FORWARD_GREEN = disabled(SvgImage.FAST_FORWARD, "Last");
     public static final Preset REFRESH_GREEN = enabled(SvgImage.REFRESH, "Refresh");
 
     private SvgPresets() {
