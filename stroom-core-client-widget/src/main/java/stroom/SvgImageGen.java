@@ -48,18 +48,41 @@ public class SvgImageGen {
                     String fileName = f.getFileName().toString();
                     if (fileName.toLowerCase(Locale.ROOT).endsWith(".svg")) {
                         final Path relative = rawImagesPath.relativize(f);
-                        final Path output = imagesPath.resolve(relative);
+
+                        final StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < relative.getNameCount(); i++) {
+                            if (sb.length() > 0) {
+                                sb.append("_");
+                            }
+                            sb.append(relative.getName(i));
+                        }
+                        final String formatted = formatFileName(sb.toString());
+                        final Path output = imagesPath.resolve(formatted);
                         Files.createDirectories(output.getParent());
 
                         String xml = Files.readString(f, StandardCharsets.UTF_8);
-                        xml = xml.replaceAll("#2196f3", "currentColor");
+//                        xml = xml.replaceAll("#2196f0", "currentColor");
+                        xml = xml.replaceAll("#2196f4", "var(--icon-colour__xsd-background)");
+                        xml = xml.replaceAll("#aed581", "var(--icon-colour__xsl-background)");
+                        xml = xml.replaceAll("#ce93d8", "var(--icon-colour__xml-background)");
+                        xml = xml.replaceAll("#4A4B4C", "var(--icon-colour__grey)");
+                        xml = xml.replaceAll("#010101", "currentColor");//"var(--icon-colour__foreground)");
 
-                        Files.writeString(output, xml);
+                        if (Files.exists(output)) {
+                            System.err.println("File exists: " + output);
+                        } else {
+                            Files.writeString(output, xml);
+                        }
                     } else if (fileName.toLowerCase(Locale.ROOT).endsWith(".png")) {
                         final Path relative = rawImagesPath.relativize(f);
                         final Path output = imagesPath.resolve(relative);
                         Files.createDirectories(output.getParent());
-                        Files.copy(f, output);
+
+                        if (Files.exists(output)) {
+                            System.err.println("File exists: " + output);
+                        } else {
+                            Files.copy(f, output);
+                        }
                     }
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -69,7 +92,6 @@ public class SvgImageGen {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-
 
 
         final Map<String, String> entries = new HashMap<>();
@@ -89,9 +111,7 @@ public class SvgImageGen {
 
                         final String existing = entries.get(fileName);
                         if (existing != null) {
-                            if (!existing.equals(xml)) {
-                                System.out.println("Clashing name: " + fileName);
-                            }
+                            System.out.println("Clashing name: " + fileName);
                         } else {
                             entries.put(fileName, xml);
                         }
@@ -192,12 +212,24 @@ public class SvgImageGen {
 
     static void deleteDirectory(Path directoryToBeDeleted) {
         try {
-            Files.walk(directoryToBeDeleted)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
+            if (Files.isDirectory(directoryToBeDeleted)) {
+                Files.walk(directoryToBeDeleted)
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    static String formatFileName(String fileName) {
+        fileName = fileName.replaceAll("([a-z])([A-Z])", "$1_$2");
+        fileName = fileName.toLowerCase(Locale.ROOT);
+        fileName = fileName.replaceAll("[^a-z0-9.]", "_");
+        fileName = fileName.replaceAll("_+", "_");
+        fileName = fileName.replaceAll("^_+", "");
+        fileName = fileName.replaceAll("_+$", "");
+        return fileName;
     }
 }

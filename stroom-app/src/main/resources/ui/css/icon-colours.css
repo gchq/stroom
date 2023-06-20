@@ -1,5 +1,5 @@
 :root {
-    --icon-colour: var(--black);
+    --icon-colour__foreground: var(--black);
     --icon-colour__blue: var(--blue-500);
     --icon-colour__grey: #4A4B4C;
     --icon-colour__xml-background: #ce93d8;
@@ -13,7 +13,7 @@
 
 
 .stroom-theme-dark {
-    --icon-colour: var(--white);
+    --icon-colour__foreground: var(--control__text-color);
     --icon-colour__blue: var(--blue-500);
     --icon-colour__grey: #ccc;
     --icon-colour__xml-background: #ce93d8;

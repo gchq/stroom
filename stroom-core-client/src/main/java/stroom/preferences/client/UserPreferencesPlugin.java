@@ -55,7 +55,7 @@ public class UserPreferencesPlugin extends Plugin {
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()
                         .priority(1)
-                        .icon(SvgImage.SETTINGS_BLUE)
+                        .icon(SvgImage.SETTINGS)
                         .text("Preferences")
                         .command(() -> preferencesPresenterProvider.get().show())
                         .build());

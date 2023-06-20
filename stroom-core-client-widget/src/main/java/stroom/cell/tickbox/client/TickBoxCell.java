@@ -242,7 +242,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             switch (value) {
                 case TICK:
                     className = TICK;
-                    svg = SafeHtmlUtils.fromTrustedString(SvgImage.MONO_TICK.getSvg());
+                    svg = SafeHtmlUtils.fromTrustedString(SvgImage.TICK.getSvg());
                     break;
                 case HALF_TICK:
                     className = HALF_TICK;

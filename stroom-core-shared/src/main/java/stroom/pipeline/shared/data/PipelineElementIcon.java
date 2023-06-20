@@ -28,7 +28,7 @@ public enum PipelineElementIcon {
     RECORD_COUNT,
     RECORD_OUTPUT,
     REFERENCE_DATA,
-    SEARCH,
+    SEARCH_OUTPUT,
     XML_SEARCH,
     SOLR,
     SPLIT,

@@ -94,7 +94,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
         close = new InlineSvgButton();
         close.addStyleName("tabLayout-closeButton");
-        close.setSvg(SvgImage.MONO_CLOSE);
+        close.setSvg(SvgImage.CLOSE);
         close.setTitle("Close");
         buttons.add(close);
 

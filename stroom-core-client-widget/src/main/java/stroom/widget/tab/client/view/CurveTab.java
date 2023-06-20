@@ -63,7 +63,7 @@ public class CurveTab extends AbstractTab {
 
         close = DOM.createDiv();
         close.setClassName("curveTab-close");
-        close.setInnerHTML(SvgImage.MONO_TAB_CLOSE.getSvg());
+        close.setInnerHTML(SvgImage.TAB_CLOSE.getSvg());
         element.appendChild(close);
 
         setElement(element);

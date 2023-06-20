@@ -35,7 +35,7 @@ import org.xml.sax.SAXException;
 import javax.inject.Inject;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET}, icon = PipelineElementIcon.SEARCH)
+        PipelineElementType.ROLE_TARGET}, icon = PipelineElementIcon.SEARCH_OUTPUT)
 public class SearchResultOutputFilter extends AbstractXMLFilter {
 
     private static final String RECORD = "record";

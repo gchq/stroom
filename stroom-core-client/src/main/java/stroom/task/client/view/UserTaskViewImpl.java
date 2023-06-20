@@ -55,7 +55,7 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
         widget = binder.createAndBindUi(this);
         layout.setCellWidth(terminate, "18px");
         layout.setCellVerticalAlignment(terminate, HorizontalPanel.ALIGN_MIDDLE);
-        terminate.getElement().setInnerHTML(SvgImage.STOP_RED.getSvg());
+        terminate.getElement().setInnerHTML(SvgImage.STOP.getSvg());
     }
 
     @Override

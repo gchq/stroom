@@ -1109,7 +1109,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgImage.LOCKED_AMBER)
+                .icon(SvgImage.LOCKED)
                 .text("Permissions")
                 .enabled(enabled)
                 .command(command)

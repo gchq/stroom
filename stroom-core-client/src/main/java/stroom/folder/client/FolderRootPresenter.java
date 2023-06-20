@@ -103,7 +103,7 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements Docume
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.SYSTEM;
+        return SvgImage.DOCUMENT_SYSTEM;
     }
 
     @Override

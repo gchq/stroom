@@ -43,7 +43,7 @@ public class QueryButtons
 
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
-        start.setSvg(SvgImage.MONO_PLAY);
+        start.setSvg(SvgImage.PLAY);
     }
 
     @Override
@@ -63,12 +63,12 @@ public class QueryButtons
         if (searching) {
             start.addStyleName("QueryButtons-button stop");
             start.removeStyleName("QueryButtons-button play");
-            start.setSvg(SvgImage.MONO_STOP);
+            start.setSvg(SvgImage.STOP);
             start.setTitle("Stop Query");
         } else {
             start.addStyleName("QueryButtons-button play");
             start.removeStyleName("QueryButtons-button stop");
-            start.setSvg(SvgImage.MONO_PLAY);
+            start.setSvg(SvgImage.PLAY);
             start.setTitle("Execute Query");
         }
     }

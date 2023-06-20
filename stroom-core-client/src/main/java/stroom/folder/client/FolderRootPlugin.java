@@ -150,7 +150,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.SYSTEM;
+        return SvgImage.DOCUMENT_SYSTEM;
     }
 
     @Override

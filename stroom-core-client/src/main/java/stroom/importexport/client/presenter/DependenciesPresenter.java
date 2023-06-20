@@ -283,7 +283,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                     // with the explorer context menus.
                     typeToSvgMap.putIfAbsent(
                             "Searchable",
-                            SvgImage.SEARCHABLE);
+                            SvgImage.DOCUMENT_SEARCHABLE);
                 })
                 .call(EXPLORER_RESOURCE)
                 .fetchDocumentTypes();

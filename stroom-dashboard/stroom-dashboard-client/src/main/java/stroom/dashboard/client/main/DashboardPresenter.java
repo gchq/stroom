@@ -153,7 +153,7 @@ public class DashboardPresenter
         view.setContent(flexLayout);
 
         editModeButton = new InlineSvgToggleButton();
-        editModeButton.setSvg(SvgImage.MONO_EDIT);
+        editModeButton.setSvg(SvgImage.EDIT);
         editModeButton.setTitle("Enter Design Mode");
 
         addWidgetButton = new InlineSvgButton();
@@ -833,7 +833,7 @@ public class DashboardPresenter
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.DASHBOARD;
+        return SvgImage.DOCUMENT_DASHBOARD;
     }
 
     @Override

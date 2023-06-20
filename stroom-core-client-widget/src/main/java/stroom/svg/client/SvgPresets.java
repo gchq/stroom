@@ -29,18 +29,15 @@ public final class SvgPresets {
     public static final Preset CLOSE = disabled(SvgImage.CLOSE, "Close");
     public static final Preset COPY = disabled(SvgImage.COPY, "Copy");
     public static final Preset DELETE = disabled(SvgImage.DELETE, "Delete");
-    public static final Preset DELETED = enabled(SvgImage.DELETED, "Deleted");
-    public static final Preset DEPENDENCIES = enabled(SvgImage.DEPENDENCIES, "Dependencies");
+    public static final Preset DELETED = enabled(SvgImage.DELETE, "Deleted");
     public static final Preset DISABLE = disabled(SvgImage.DISABLE, "Disable");
     public static final Preset DOWN = disabled(SvgImage.DOWN, "Down");
     public static final Preset DOWNLOAD = disabled(SvgImage.DOWNLOAD, "Download");
     public static final Preset EDIT = disabled(SvgImage.EDIT, "Edit");
     public static final Preset ELLIPSES_HORIZONTAL = enabled(SvgImage.ELLIPSES_HORIZONTAL, "Actions...");
     public static final Preset ERROR = enabled(SvgImage.ERROR, "Error");
-    public static final Preset EXPLORER = enabled(SvgImage.EXPLORER, "Explorer");
     public static final Preset FATAL = enabled(SvgImage.FATAL, "Fatal");
     public static final Preset FAVOURITES = disabled(SvgImage.FAVOURITES, "Favourites");
-    public static final Preset FEED = enabled(SvgImage.FEED, "Feed");
     public static final Preset FIELD = enabled(SvgImage.FIELD, "Field");
     public static final Preset FILE = enabled(SvgImage.FILE, "File");
     public static final Preset FILTER = enabled(SvgImage.FILTER, "Filter");
@@ -57,12 +54,12 @@ public final class SvgPresets {
     public static final Preset PROCESS = disabled(SvgImage.PROCESS, "Process");
     public static final Preset PROPERTIES = enabled(SvgImage.PROPERTIES, "Properties");
     public static final Preset REMOVE = disabled(SvgImage.REMOVE, "Remove");
-    public static final Preset RUN = enabled(SvgImage.PLAY_GREEN, "Run");
-    public static final Preset STOP = enabled(SvgImage.STOP_RED, "Stop");
+    public static final Preset RUN = enabled(SvgImage.PLAY, "Run");
+    public static final Preset STOP = enabled(SvgImage.STOP, "Stop");
     public static final Preset SAVE = disabled(SvgImage.SAVE, "Save");
     public static final Preset SAVE_AS = disabled(SvgImage.SAVEAS, "Save As");
     public static final Preset SETTINGS = enabled(SvgImage.SETTINGS, "Settings");
-    public static final Preset SETTINGS_BLUE = enabled(SvgImage.SETTINGS_BLUE, "Settings");
+    public static final Preset SETTINGS_BLUE = enabled(SvgImage.SETTINGS, "Settings");
     public static final Preset SHARD_FLUSH = disabled(SvgImage.SHARD_FLUSH, "Flush Selected Shards");
     public static final Preset TABLE = enabled(SvgImage.TABLE, "Table");
     public static final Preset TABLE_NESTED = enabled(SvgImage.TABLE_NESTED, "Nested Table");
@@ -76,7 +73,7 @@ public final class SvgPresets {
     public static final Preset COLLAPSE_UP = enabled(SvgImage.COLLAPSE_UP, "Collapse");
     public static final Preset EXPAND_DOWN = enabled(SvgImage.EXPAND_DOWN, "Expand");
 
-    public static final Preset LOCKED_AMBER = enabled(SvgImage.LOCKED_AMBER, "Locked");
+    public static final Preset LOCKED_AMBER = enabled(SvgImage.LOCKED, "Locked");
 
 
     public static final Preset FAST_BACKWARD_BLUE = disabled(SvgImage.FAST_BACKWARD, "First");
@@ -85,12 +82,12 @@ public final class SvgPresets {
     public static final Preset FAST_FORWARD_BLUE = disabled(SvgImage.FAST_FORWARD, "Last");
     public static final Preset REFRESH_BLUE = enabled(SvgImage.REFRESH, "Refresh");
 
-    public static final Preset FILTER_GREEN = enabled(SvgImage.FILTER_GREEN, "Filter");
-    public static final Preset FAST_BACKWARD_GREEN = disabled(SvgImage.FAST_BACKWARD_GREEN, "First");
-    public static final Preset STEP_BACKWARD_GREEN = disabled(SvgImage.STEP_BACKWARD_GREEN, "Backward");
-    public static final Preset STEP_FORWARD_GREEN = disabled(SvgImage.STEP_FORWARD_GREEN, "Forward");
-    public static final Preset FAST_FORWARD_GREEN = disabled(SvgImage.FAST_FORWARD_GREEN, "Last");
-    public static final Preset REFRESH_GREEN = enabled(SvgImage.REFRESH_GREEN, "Refresh");
+    public static final Preset FILTER_GREEN = enabled(SvgImage.FILTER, "Filter");
+    public static final Preset FAST_BACKWARD_GREEN = disabled(SvgImage.FAST_BACKWARD, "First");
+    public static final Preset STEP_BACKWARD_GREEN = disabled(SvgImage.STEP_BACKWARD, "Backward");
+    public static final Preset STEP_FORWARD_GREEN = disabled(SvgImage.STEP_FORWARD, "Forward");
+    public static final Preset FAST_FORWARD_GREEN = disabled(SvgImage.FAST_FORWARD, "Last");
+    public static final Preset REFRESH_GREEN = enabled(SvgImage.REFRESH, "Refresh");
 
     private SvgPresets() {
         // Utility class.

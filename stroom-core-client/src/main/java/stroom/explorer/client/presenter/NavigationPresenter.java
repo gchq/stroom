@@ -113,19 +113,19 @@ public class NavigationPresenter
         add.setEnabled(false);
 
         delete = new InlineSvgButton();
-        delete.setSvg(SvgImage.MONO_DELETE);
+        delete.setSvg(SvgImage.DELETE);
         delete.getElement().addClassName("navigation-header-button delete");
         delete.setTitle("Delete");
         delete.setEnabled(false);
 
         filter = new InlineSvgButton();
-        filter.setSvg(SvgImage.MONO_FILTER);
+        filter.setSvg(SvgImage.FILTER);
         filter.getElement().addClassName("navigation-header-button filter");
         filter.setTitle("Filter");
         filter.setEnabled(true);
 
         find = new InlineSvgButton();
-        find.setSvg(SvgImage.MONO_SEARCH);
+        find.setSvg(SvgImage.SEARCH);
         find.getElement().addClassName("navigation-header-button find");
         find.setTitle("Find Content");
         find.setEnabled(true);

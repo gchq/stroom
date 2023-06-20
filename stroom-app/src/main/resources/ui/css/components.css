@@ -1708,6 +1708,10 @@ button.main-menu svg {
     top: 5px;
 }
 
+.find-buttons .icon-button .face {
+    color: var(--icon-colour__foreground);
+}
+
 .findCell {
 }
 
@@ -1829,4 +1833,8 @@ button.main-menu svg {
 
 .queryHelp-details {
     padding: 5px;
+}
+
+.stepping-buttons .icon-button .face {
+    color: #4caf50;
 }

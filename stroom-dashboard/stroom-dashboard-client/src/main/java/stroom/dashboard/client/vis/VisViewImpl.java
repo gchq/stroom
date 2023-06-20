@@ -62,7 +62,7 @@ public class VisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
 
         final InlineSvgButton pause = new InlineSvgButton();
         pause.addStyleName("dashboardVis-pause");
-        pause.setSvg(SvgImage.MONO_PAUSE);
+        pause.setSvg(SvgImage.PAUSE);
         pause.setTitle("Resume Update");
 
         widget = new FlowPanel() {

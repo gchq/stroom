@@ -63,9 +63,9 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     private SvgButton createButton(final Preset svgIcon, final String title) {
         final SvgButton button = SvgButton.create(svgIcon);
         button.setTitle(title);
-        final Style style = button.getElement().getStyle();
-        style.setPadding(1, Style.Unit.PX);
-        style.setFloat(Style.Float.RIGHT);
+//        final Style style = button.getElement().getStyle();
+//        style.setPadding(1, Style.Unit.PX);
+//        style.setFloat(Style.Float.RIGHT);
         return button;
     }
 

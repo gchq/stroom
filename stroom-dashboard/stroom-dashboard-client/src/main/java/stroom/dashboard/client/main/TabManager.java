@@ -182,7 +182,7 @@ public class TabManager {
     private Item createSettingsMenu(final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(SvgImage.SETTINGS_BLUE)
+                .icon(SvgImage.SETTINGS)
                 .text("Settings")
                 .command(() -> showSettings(tabConfig))
                 .build();

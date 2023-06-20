@@ -31,7 +31,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 @ConfigurableElement(type = "DynamicSearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET}, icon = PipelineElementIcon.SEARCH)
+        PipelineElementType.ROLE_TARGET}, icon = PipelineElementIcon.SEARCH_OUTPUT)
 public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
 
     private final ExtractionStateHolder extractionStateHolder;

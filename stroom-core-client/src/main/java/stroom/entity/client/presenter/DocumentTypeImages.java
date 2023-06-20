@@ -14,59 +14,59 @@ public class DocumentTypeImages {
     public static SvgImage get(final String type) {
         switch (type) {
             case "AnalyticRule":
-                return SvgImage.ANALYTIC_RULE;
+                return SvgImage.DOCUMENT_ANALYTIC_RULE;
             case "AnalyticOutputStore":
-                return SvgImage.ANALYTIC_OUTPUT_STORE;
+                return SvgImage.DOCUMENT_ANALYTIC_OUTPUT_STORE;
             case "AnnotationsIndex":
-                return SvgImage.ANNOTATIONS_INDEX;
+                return SvgImage.DOCUMENT_ANNOTATIONS_INDEX;
             case "Dashboard":
-                return SvgImage.DASHBOARD;
+                return SvgImage.DOCUMENT_DASHBOARD;
             case "Dictionary":
-                return SvgImage.DICTIONARY;
+                return SvgImage.DOCUMENT_DICTIONARY;
             case "ElasticCluster":
-                return SvgImage.ELASTIC_CLUSTER;
+                return SvgImage.DOCUMENT_ELASTIC_CLUSTER;
             case "ElasticIndex":
-                return SvgImage.ELASTIC_INDEX;
+                return SvgImage.DOCUMENT_ELASTIC_INDEX;
             case "Favourites":
-                return SvgImage.FAVOURITES;
+                return SvgImage.DOCUMENT_FAVOURITES;
             case "Feed":
-                return SvgImage.FEED;
+                return SvgImage.DOCUMENT_FEED;
             case "Folder":
-                return SvgImage.FOLDER;
+                return SvgImage.DOCUMENT_FOLDER;
             case "Index":
-                return SvgImage.INDEX;
+                return SvgImage.DOCUMENT_INDEX;
             case "KafkaConfig":
-                return SvgImage.KAFKA_CONFIG;
+                return SvgImage.DOCUMENT_KAFKA_CONFIG;
             case "Pipeline":
-                return SvgImage.PIPELINE;
+                return SvgImage.DOCUMENT_PIPELINE;
             case "Query":
-                return SvgImage.QUERY;
+                return SvgImage.DOCUMENT_QUERY;
             case "ReceiveDataRuleSet":
-                return SvgImage.RECEIVE_DATA_RULE_SET;
+                return SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
             case "Script":
-                return SvgImage.SCRIPT;
+                return SvgImage.DOCUMENT_SCRIPT;
 //            case "searchable":
-//                return SvgImage.searchable;
+//                return SvgImage.DOCUMENT_searchable;
             case "SelectAllOrNone":
-                return SvgImage.SELECT_ALL_OR_NONE;
+                return SvgImage.DOCUMENT_SELECT_ALL_OR_NONE;
             case "SolrIndex":
-                return SvgImage.SOLR_INDEX;
+                return SvgImage.DOCUMENT_SOLR_INDEX;
             case "StatisticStore":
-                return SvgImage.STATISTIC_STORE;
+                return SvgImage.DOCUMENT_STATISTIC_STORE;
             case "StroomStatsStore":
-                return SvgImage.STROOM_STATS_STORE;
+                return SvgImage.DOCUMENT_STROOM_STATS_STORE;
             case "System":
-                return SvgImage.SYSTEM;
+                return SvgImage.DOCUMENT_SYSTEM;
             case "TextConverter":
-                return SvgImage.TEXT_CONVERTER;
+                return SvgImage.DOCUMENT_TEXT_CONVERTER;
             case "View":
-                return SvgImage.VIEW;
+                return SvgImage.DOCUMENT_VIEW;
             case "Visualisation":
-                return SvgImage.VISUALISATION;
+                return SvgImage.DOCUMENT_VISUALISATION;
             case "XMLSchema":
-                return SvgImage.XMLSCHEMA;
+                return SvgImage.DOCUMENT_XMLSCHEMA;
             case "XSLT":
-                return SvgImage.XSLT;
+                return SvgImage.DOCUMENT_XSLT;
         }
         return null;
     }
@@ -88,59 +88,59 @@ public class DocumentTypeImages {
     public static SvgImage get(final DocumentIcon icon) {
         switch (icon) {
             case ANALYTIC_RULE:
-                return SvgImage.ANALYTIC_RULE;
+                return SvgImage.DOCUMENT_ANALYTIC_RULE;
             case ANALYTIC_OUTPUT_STORE:
-                return SvgImage.ANALYTIC_OUTPUT_STORE;
+                return SvgImage.DOCUMENT_ANALYTIC_OUTPUT_STORE;
             case ANNOTATIONS_INDEX:
-                return SvgImage.ANNOTATIONS_INDEX;
+                return SvgImage.DOCUMENT_ANNOTATIONS_INDEX;
             case DASHBOARD:
-                return SvgImage.DASHBOARD;
+                return SvgImage.DOCUMENT_DASHBOARD;
             case DICTIONARY:
-                return SvgImage.DICTIONARY;
+                return SvgImage.DOCUMENT_DICTIONARY;
             case ELASTIC_CLUSTER:
-                return SvgImage.ELASTIC_CLUSTER;
+                return SvgImage.DOCUMENT_ELASTIC_CLUSTER;
             case ELASTIC_INDEX:
-                return SvgImage.ELASTIC_INDEX;
+                return SvgImage.DOCUMENT_ELASTIC_INDEX;
             case FAVOURITES:
-                return SvgImage.FAVOURITES;
+                return SvgImage.DOCUMENT_FAVOURITES;
             case FEED:
-                return SvgImage.FEED;
+                return SvgImage.DOCUMENT_FEED;
             case FOLDER:
-                return SvgImage.FOLDER;
+                return SvgImage.DOCUMENT_FOLDER;
             case INDEX:
-                return SvgImage.INDEX;
+                return SvgImage.DOCUMENT_INDEX;
             case KAFKA_CONFIG:
-                return SvgImage.KAFKA_CONFIG;
+                return SvgImage.DOCUMENT_KAFKA_CONFIG;
             case PIPELINE:
-                return SvgImage.PIPELINE;
+                return SvgImage.DOCUMENT_PIPELINE;
             case QUERY:
-                return SvgImage.QUERY;
+                return SvgImage.DOCUMENT_QUERY;
             case RECEIVE_DATA_RULE_SET:
-                return SvgImage.RECEIVE_DATA_RULE_SET;
+                return SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
             case SCRIPT:
-                return SvgImage.SCRIPT;
+                return SvgImage.DOCUMENT_SCRIPT;
             case SEARCHABLE:
-                return SvgImage.SEARCHABLE;
+                return SvgImage.DOCUMENT_SEARCHABLE;
             case SELECT_ALL_OR_NONE:
-                return SvgImage.SELECT_ALL_OR_NONE;
+                return SvgImage.DOCUMENT_SELECT_ALL_OR_NONE;
             case SOLR_INDEX:
-                return SvgImage.SOLR_INDEX;
+                return SvgImage.DOCUMENT_SOLR_INDEX;
             case STATISTIC_STORE:
-                return SvgImage.STATISTIC_STORE;
+                return SvgImage.DOCUMENT_STATISTIC_STORE;
             case STROOM_STATS_STORE:
-                return SvgImage.STROOM_STATS_STORE;
+                return SvgImage.DOCUMENT_STROOM_STATS_STORE;
             case SYSTEM:
-                return SvgImage.SYSTEM;
+                return SvgImage.DOCUMENT_SYSTEM;
             case TEXT_CONVERTER:
-                return SvgImage.TEXT_CONVERTER;
+                return SvgImage.DOCUMENT_TEXT_CONVERTER;
             case VIEW:
-                return SvgImage.VIEW;
+                return SvgImage.DOCUMENT_VIEW;
             case VISUALISATION:
-                return SvgImage.VISUALISATION;
+                return SvgImage.DOCUMENT_VISUALISATION;
             case XML_SCHEMA:
-                return SvgImage.XMLSCHEMA;
+                return SvgImage.DOCUMENT_XMLSCHEMA;
             case XSLT:
-                return SvgImage.XSLT;
+                return SvgImage.DOCUMENT_XSLT;
         }
         return null;
     }

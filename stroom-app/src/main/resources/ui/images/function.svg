@@ -51,7 +51,7 @@
   <g
      id="g4830"
      transform="matrix(0.96593676,0,0,0.96593676,45.112514,30.520682)"
-     style="fill:#2196f3;fill-opacity:1">
+     style="fill:currentColor;fill-opacity:1">
     <path
        d="m 123.97185,1625.5582 q -71.205453,0 -119.1321997,-17.7163 l 0,-171.4941 q 41.7647367,14.8818 78.7367977,14.8818 41.764732,0 73.259452,-28.3461 31.49472,-28.3462 44.50341,-92.125 l 139.67223,-683.85003 -111.60086,0 20.54004,-102.75468 125.29422,-59.52686 12.32402,-59.52684 q 28.07138,-134.64406 94.48416,-196.29687 67.09745,-62.36146 187.59898,-62.36146 89.69148,0 160.89694,34.72399 l -54.77343,158.73827 q -47.24208,-21.96824 -91.06082,-21.96824 -39.02606,0 -62.98943,28.34611 -23.96338,28.34612 -32.17939,74.40857 l -8.21602,43.93647 149.94225,0 -33.54872,162.28154 -150.62692,0 -147.20359,715.73943 q -52.71941,262.9103 -275.92112,262.9103 z"
        style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:1021.99700928px;line-height:125%;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans, Bold Italic';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -60,7 +60,7 @@
     <g
        transform="matrix(0.87966516,0,0,0.9104814,184.84476,203.73334)"
        id="g4813"
-       style="fill:#2196f3;fill-opacity:1">
+       style="fill:currentColor;fill-opacity:1">
       <path
          inkscape:connector-curvature="0"
          id="path4220"

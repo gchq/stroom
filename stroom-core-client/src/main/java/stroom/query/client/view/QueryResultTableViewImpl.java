@@ -51,7 +51,7 @@ public class QueryResultTableViewImpl extends ViewWithUiHandlers<TableUiHandlers
 
         pause = new InlineSvgButton();
         pause.addStyleName("dashboardTable-pause");
-        pause.setSvg(SvgImage.MONO_PAUSE);
+        pause.setSvg(SvgImage.PAUSE);
         pause.setTitle("Resume Update");
 
         layout.add(spinnerSmall);
