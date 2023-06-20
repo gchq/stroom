@@ -157,7 +157,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void insertTextAtCursor(final String text) {
         if (started) {
-            textDirty = true;
             editor.insertAtCursor(text);
             this.text = editor.getText();
         }
@@ -165,7 +164,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void replaceSelectedText(String text) {
         if (started) {
-            textDirty = true;
             editor.replaceSelectedText(text);
             this.text = editor.getText();
         }
@@ -173,7 +171,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void insertSnippet(String snippet) {
         if (started) {
-            textDirty = true;
             editor.insertSnippet(snippet);
             this.text = editor.getText();
         }

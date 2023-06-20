@@ -21,6 +21,7 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -108,6 +109,7 @@ public class SolrSearchProvider implements SearchProvider {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
             return DataSource
                     .builder()
+                    .docRef(DocRefUtil.create(index))
                     .fields(SolrIndexDataSourceFieldUtil.getDataSourceFields(index))
                     .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
                     .build();

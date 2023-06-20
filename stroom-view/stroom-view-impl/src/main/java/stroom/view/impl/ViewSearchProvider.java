@@ -1,5 +1,6 @@
 package stroom.view.impl;
 
+import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.datasource.api.v2.DateField;
@@ -49,24 +50,34 @@ public class ViewSearchProvider implements SearchProvider {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ViewDoc viewDoc = getView(docRef);
-            return getDelegateDataSourceProvider(viewDoc).getDataSource(viewDoc.getDataSource());
+            return DataSource
+                    .builder()
+                    .docRef(viewDoc.asDocRef())
+                    .fields(getInheritedFields(viewDoc)) // Temporary inheritance of index fields.
+                    .defaultExtractionPipeline(viewDoc.getPipeline())
+                    .build();
         });
     }
 
-    private DataSourceProvider getDelegateDataSourceProvider(final ViewDoc viewDoc) {
+    private List<AbstractField> getInheritedFields(final ViewDoc viewDoc) {
         // Find the referenced data source.
-        final DocRef dataSource = viewDoc.getDataSource();
-        if (dataSource == null) {
+        final DocRef docRef = viewDoc.getDataSource();
+        if (docRef == null) {
             throw new RuntimeException("Null datasource in view " + DocRefUtil.create(viewDoc));
         }
 
         final Optional<DataSourceProvider> delegate =
-                dataSourceProviderRegistry.get().getDataSourceProvider(dataSource);
+                dataSourceProviderRegistry.get().getDataSourceProvider(docRef);
         if (delegate.isEmpty()) {
-            throw new RuntimeException("No data source provider found for " + dataSource);
+            throw new RuntimeException("No data source provider found for view " + docRef);
         }
 
-        return delegate.get();
+        final DataSource dataSource = delegate.get().getDataSource(docRef);
+        if (dataSource == null) {
+            throw new RuntimeException("No data source found for view " + docRef);
+        }
+
+        return dataSource.getFields();
     }
 
     @Override

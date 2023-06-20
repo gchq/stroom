@@ -48,6 +48,7 @@ public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
         implements HasDirtyHandlers, HasToolbar {
 
+    private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
     EditorPresenter codePresenter;
     private final QueryResultTablePresenter tablePresenter;
@@ -59,6 +60,7 @@ public class QueryEditPresenter
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
                               final QueryEditView view,
+                              final QueryHelpPresenter queryHelpPresenter,
                               final QueryToolbarPresenter queryToolbarPresenter,
                               final Provider<EditorPresenter> editorPresenterProvider,
                               final QueryResultTablePresenter tablePresenter,
@@ -67,6 +69,7 @@ public class QueryEditPresenter
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
                               final ResultStoreModel resultStoreModel) {
         super(eventBus, view);
+        this.queryHelpPresenter = queryHelpPresenter;
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.tablePresenter = tablePresenter;
 
@@ -82,6 +85,7 @@ public class QueryEditPresenter
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
 
+        view.setQueryHelp(queryHelpPresenter.getView());
         view.setQueryEditor(codePresenter.getView());
         view.setTable(tablePresenter.getView());
     }
@@ -94,12 +98,16 @@ public class QueryEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(codePresenter.addValueChangeHandler(event -> {
+            queryHelpPresenter.updateQuery(codePresenter.getText());
+            setDirty(true);
+        }));
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
         registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
+        registerHandler(queryHelpPresenter.addInsertHandler(e -> codePresenter.insertTextAtCursor(e.getElement())));
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
@@ -163,6 +171,7 @@ public class QueryEditPresenter
         if (query != null) {
             reading = true;
             codePresenter.setText(query);
+            queryHelpPresenter.setQuery(query);
             reading = false;
         }
         queryToolbarPresenter.setEnabled(true);
@@ -188,6 +197,8 @@ public class QueryEditPresenter
     }
 
     public interface QueryEditView extends View {
+
+        void setQueryHelp(View view);
 
         void setQueryEditor(View view);
 

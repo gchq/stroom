@@ -21,6 +21,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -154,6 +155,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
             return DataSource.builder()
+                    .docRef(DocRefUtil.create(index))
                     .fields(getDataSourceFields(index))
                     .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
                     .build();

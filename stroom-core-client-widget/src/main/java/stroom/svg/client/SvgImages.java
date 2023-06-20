@@ -490,7 +490,7 @@ public enum SvgImages {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__primary, #2196f3)\"\n" +
             "          d=\"M1664 1632v-1088q0-13-9.5-22.5t-22.5-9.5h-1088q-13 0-22.5 9.5t-9.5 " +
             "22.5v1088q0 13 9.5 22.5t22.5 9.5h1088q13 0 22.5-9.5t9.5-22.5zm128-1088v1088q0 66" +
             "-47 113t-113 47h-1088q-66 0-113-47t-47-113v-1088q0-66 47-113t113-47h1088q66 0 11" +
@@ -1634,14 +1634,15 @@ public enum SvgImages {
             ""),
 
     FILE("" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">\n" +
-            "    <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Lice" +
-            "nse - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1" +
-            ", Code: MIT License) -->\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
-            "          d=\"M369.9 97.9L286 14C277 5 264.8-.1 252.1-.1H48C21.5 0 0 21.5 0 48v41" +
-            "6c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V131.9c0-12.7-5.1-25-14.1-34zM332" +
-            ".1 128H256V51.9l76.1 76.1zM48 464V48h160v104c0 13.3 10.7 24 24 24h104v288H48z\"/>\n" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
+            "/2000/svg\">\n" +
+            "    <path\n" +
+            "            style=\"fill:#2196f3\"\n" +
+            "            d=\"M1596 380q28 28 48 76t20 88v1152q0 40-28 68t-68 28h-1344q-40 0-68" +
+            "-28t-28-68v-1600q0-40 28-68t68-28h896q40 0 88 20t76 48zm-444-244v376h376q-10-29-" +
+            "22-41l-313-313q-12-12-41-22zm384 1528v-1024h-416q-40 0-68-28t-28-68v-416h-768v15" +
+            "36h1280z\"/>\n" +
             "</svg>\n" +
             ""),
 
@@ -3093,6 +3094,42 @@ public enum SvgImages {
             "0,9.33333 3,17 9,23 6,6 13.66667,9 23,9 l 192,0 c 9.3333,0 17,-3 23,-9 6,-6 9,-1" +
             "3.66667 9,-23 z\"\n" +
             "     id=\"path4237\" />\n" +
+            "</svg>\n" +
+            ""),
+
+    INSERT("" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<svg\n" +
+            "   width=\"1792\"\n" +
+            "   height=\"1792\"\n" +
+            "   viewBox=\"0 0 1792 1792\"\n" +
+            "   version=\"1.1\"\n" +
+            "   xmlns=\"http://www.w3.org/2000/svg\">\n" +
+            "  <path\n" +
+            "     d=\"M 160,384 C 116.00004,384 78.3333,399.6667 47,431 15.6667,462.3333 0,500" +
+            ".00004 0,544 v 1088 c 0,44 15.6667,81.6667 47,113 31.3333,31.3333 69.00004,47 11" +
+            "3,47 h 1088 c 44,0 81.6667,-15.6667 113,-47 31.3333,-31.3333 47,-69 47,-113 V 63" +
+            "5.05323 L 1153.9304,384 Z m 0,128 h 867.2795 L 1153.9304,384 1408,635.05323 1280" +
+            ",763.92607 V 1632 c 0,8.6667 -3.1667,16.1667 -9.5,22.5 -6.3333,6.3333 -13.8333,9" +
+            ".5 -22.5,9.5 H 160 c -8.66666,0 -16.16667,-3.1667 -22.5,-9.5 -6.33333,-6.3333 -9" +
+            ".5,-13.8333 -9.5,-22.5 V 544 c 0,-8.66666 3.16667,-16.16667 9.5,-22.5 6.33333,-6" +
+            ".33333 13.83334,-9.5 22.5,-9.5 z\"\n" +
+            "     style=\"fill:var(--icon-colour__primary, #2196f3)\" />\n" +
+            "  <path\n" +
+            "     style=\"fill:none;stroke:var(--icon-colour__primary, #2196f3);stroke-width:1" +
+            "20;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opaci" +
+            "ty:1\"\n" +
+            "     d=\"m 1574.9359,216.36611 v 0 0 L 704,1088 v 0 0\"/>\n" +
+            "  <path\n" +
+            "     style=\"fill:none;stroke:var(--icon-colour__primary, #2196f3);stroke-width:1" +
+            "19.98;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-op" +
+            "acity:1\"\n" +
+            "     d=\"m 703.99022,1087.9902 428.65668,1.2267 v 0\"/>\n" +
+            "  <path\n" +
+            "     style=\"fill:none;stroke:var(--icon-colour__primary, #2196f3);stroke-width:1" +
+            "20;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opaci" +
+            "ty:1\"\n" +
+            "     d=\"M 704,674.58926 V 1088\"/>\n" +
             "</svg>\n" +
             ""),
 

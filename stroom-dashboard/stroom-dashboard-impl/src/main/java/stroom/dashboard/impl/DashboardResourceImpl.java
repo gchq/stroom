@@ -134,16 +134,4 @@ class DashboardResourceImpl implements DashboardResource {
             throw e;
         }
     }
-
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public List<String> fetchTimeZones() {
-        return dashboardServiceProvider.get().fetchTimeZones();
-    }
-
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public List<FunctionSignature> fetchFunctions() {
-        return dashboardServiceProvider.get().fetchFunctions();
-    }
 }

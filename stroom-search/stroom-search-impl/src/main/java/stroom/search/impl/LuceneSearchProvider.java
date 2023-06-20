@@ -21,6 +21,7 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
@@ -102,6 +103,7 @@ public class LuceneSearchProvider implements SearchProvider {
                         final IndexDoc index = indexStore.readDocument(docRef);
                         return DataSource
                                 .builder()
+                                .docRef(DocRefUtil.create(index))
                                 .fields(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext))
                                 .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
                                 .build();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.impl.datasource;
+package stroom.query.impl.datasource;
 
 import stroom.util.guice.RestResourcesBinder;
 
