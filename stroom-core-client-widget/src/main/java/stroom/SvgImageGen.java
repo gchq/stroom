@@ -61,12 +61,12 @@ public class SvgImageGen {
                         Files.createDirectories(output.getParent());
 
                         String xml = Files.readString(f, StandardCharsets.UTF_8);
-//                        xml = xml.replaceAll("#2196f0", "currentColor");
+                        xml = xml.replaceAll("#000000", "var(--icon-colour__foreground)");
                         xml = xml.replaceAll("#2196f4", "var(--icon-colour__xsd-background)");
                         xml = xml.replaceAll("#aed581", "var(--icon-colour__xsl-background)");
                         xml = xml.replaceAll("#ce93d8", "var(--icon-colour__xml-background)");
                         xml = xml.replaceAll("#4A4B4C", "var(--icon-colour__grey)");
-                        xml = xml.replaceAll("#010101", "currentColor");//"var(--icon-colour__foreground)");
+                        xml = xml.replaceAll("#010101", "currentColor");
 
                         if (Files.exists(output)) {
                             System.err.println("File exists: " + output);

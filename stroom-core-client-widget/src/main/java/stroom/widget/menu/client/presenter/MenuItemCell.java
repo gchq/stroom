@@ -153,7 +153,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                 if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem) &&
                         value.isEnabled()) {
                     inner.append(TEMPLATE.expandArrow("menuItem-expandArrow",
-                            SafeHtmlUtils.fromSafeConstant(SvgImage.ARROW_SOLID_RIGHT.getSvg())));
+                            SafeHtmlUtils.fromSafeConstant(SvgImage.ARROW_RIGHT.getSvg())));
                 }
 
                 String className = "menuItem-outer";

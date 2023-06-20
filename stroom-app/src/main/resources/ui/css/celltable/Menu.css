@@ -52,6 +52,7 @@
 
 .menuItem-icon {
 	display: flex;
+	color: var(--icon-colour__blue);
 }
 
 .menuItem-icon svg {
@@ -89,6 +90,6 @@
 }
 
 .menuItem-expandArrow svg {
-	width: var(--icon-width);
-	height: var(--icon-height);
+	width: 10px;
+	height: 10px;
 }

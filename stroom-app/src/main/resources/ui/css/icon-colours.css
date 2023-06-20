@@ -12,6 +12,7 @@
 }
 
 
+.navigation,
 .stroom-theme-dark {
     --icon-colour__foreground: var(--white);
     --icon-colour__blue: var(--blue-500);
