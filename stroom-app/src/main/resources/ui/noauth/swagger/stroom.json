@@ -14576,7 +14576,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "FILE", "FILES", "HADOOP", "ELASTIC_INDEX", "ID", "INDEX", "JSON", "KAFKA", "RECORD_COUNT", "RECORD_OUTPUT", "REFERENCE_DATA", "SEARCH", "XML_SEARCH", "SOLR", "SPLIT", "STATISTICS", "STREAM", "STROOM_STATS", "TEXT", "XML", "XSD", "XSLT" ]
+            "enum" : [ "FILE", "FILES", "HADOOP", "ELASTIC_INDEX", "ID", "INDEX", "JSON", "KAFKA", "RECORD_COUNT", "RECORD_OUTPUT", "REFERENCE_DATA", "SEARCH_OUTPUT", "XML_SEARCH", "SOLR", "SPLIT", "STATISTICS", "STREAM", "STROOM_STATS", "TEXT", "XML", "XSD", "XSLT" ]
           },
           "roles" : {
             "type" : "array",
