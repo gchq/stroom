@@ -21,7 +21,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.api.v2.QueryKey;
@@ -35,7 +35,7 @@ import org.xml.sax.SAXException;
 import javax.inject.Inject;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
+        PipelineElementType.ROLE_TARGET}, icon = PipelineElementIcon.SEARCH)
 public class SearchResultOutputFilter extends AbstractXMLFilter {
 
     private static final String RECORD = "record";

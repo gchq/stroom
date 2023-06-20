@@ -33,8 +33,8 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -83,7 +83,7 @@ import javax.xml.transform.sax.TransformerHandler;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.XSLT)
+        icon = PipelineElementIcon.XSLT)
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
 
     private final XsltPool xsltPool;

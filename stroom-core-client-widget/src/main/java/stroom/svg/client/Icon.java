@@ -16,32 +16,40 @@
 
 package stroom.svg.client;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class Icon {
 
-    protected final String className;
+    protected final SvgImage svgImage;
 
-    protected Icon(final String className) {
-        this.className = className;
+    protected Icon(final SvgImage svgImage) {
+        this.svgImage = svgImage;
     }
 
-    public static Icon create(final String className) {
-        if (className == null) {
+    public static Icon create(final SvgImage svgImage) {
+        if (svgImage == null) {
             return null;
         }
-        return new Icon(className);
+        return new Icon(svgImage);
     }
 
     public String getClassName() {
-        return "svgIcon " + className;
+        return "svgIcon " + svgImage.getCssClass();
     }
 
     public Widget asWidget() {
         final SimplePanel panel = new SimplePanel();
         panel.getElement().addClassName("svgIcon");
-        panel.getElement().addClassName(className);
+        panel.getElement().addClassName(svgImage.getCssClass());
+        panel.getElement().setInnerHTML(svgImage.getSvg());
         return panel;
+    }
+
+    public static SafeHtml getSafeHtml(final SvgImage svgImage) {
+        return SafeHtmlUtils.fromSafeConstant(
+                "<div class=\"svgIcon\">" + svgImage.getSvg() + "</div>");
     }
 }

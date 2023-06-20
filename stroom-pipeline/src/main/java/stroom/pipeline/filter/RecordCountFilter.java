@@ -18,7 +18,7 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.Incrementor;
@@ -38,7 +38,7 @@ import javax.inject.Inject;
  * of event processing.
  */
 @ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_COUNT)
+        PipelineElementType.ROLE_HAS_TARGETS}, icon = PipelineElementIcon.RECORD_COUNT)
 public class RecordCountFilter extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);

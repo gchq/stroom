@@ -28,7 +28,7 @@ import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
@@ -72,7 +72,7 @@ import javax.inject.Inject;
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS},
-        icon = ElementIcons.REFERENCE_DATA)
+        icon = PipelineElementIcon.REFERENCE_DATA)
 public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataFilter.class);

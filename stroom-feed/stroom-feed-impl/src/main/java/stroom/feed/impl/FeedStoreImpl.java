@@ -24,6 +24,7 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.feed.api.FeedStore;
@@ -121,7 +122,11 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.DATA_PROCESSING, FeedDoc.DOCUMENT_TYPE, FeedDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.DATA_PROCESSING,
+                FeedDoc.DOCUMENT_TYPE,
+                FeedDoc.DOCUMENT_TYPE,
+                DocumentIcon.FEED);
     }
 
     ////////////////////////////////////////////////////////////////////////

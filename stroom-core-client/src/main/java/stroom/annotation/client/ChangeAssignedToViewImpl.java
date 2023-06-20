@@ -46,7 +46,7 @@ public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedT
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        assignedToIcon.setSvg(SvgImage.MONO_ARROW_DOWN);
+        assignedToIcon.setSvg(SvgImage.ARROW_DOWN);
     }
 
     @Override

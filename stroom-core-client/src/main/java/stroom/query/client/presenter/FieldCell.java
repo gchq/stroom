@@ -19,6 +19,8 @@ package stroom.query.client.presenter;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Sort;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgImage;
 
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.HasCell;
@@ -58,7 +60,7 @@ public class FieldCell extends CompositeCell<Field> {
                 if (field.getGroup() == null) {
                     return null;
                 } else {
-                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-group\"></div>");
+                    return Icon.getSafeHtml(SvgImage.FIELDS_GROUP);
                 }
             }
         };
@@ -85,9 +87,9 @@ public class FieldCell extends CompositeCell<Field> {
                 if (field.getSort() == null) {
                     return null;
                 } else if (Sort.SortDirection.ASCENDING == field.getSort().getDirection()) {
-                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-sortaz\"></div>");
+                    return Icon.getSafeHtml(SvgImage.FIELDS_SORTAZ);
                 } else {
-                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-sortza\"></div>");
+                    return Icon.getSafeHtml(SvgImage.FIELDS_SORTZA);
                 }
             }
         };
@@ -116,7 +118,7 @@ public class FieldCell extends CompositeCell<Field> {
                 if (filter != null) {
                     if ((filter.getIncludes() != null && filter.getIncludes().trim().length() > 0) ||
                             (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
-                        return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-filter\"></div>");
+                        return Icon.getSafeHtml(SvgImage.FIELDS_FILTER);
                     }
                 }
 

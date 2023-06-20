@@ -23,6 +23,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
@@ -64,9 +65,11 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     private List<DocumentType> visibleTypes;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All / None";
-    private static final String SELECT_ALL_OR_NONE_ICON = "svgIcon-document svgIcon-document-SelectAllOrNone";
     private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SYSTEM, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
+            DocumentTypeGroup.SYSTEM,
+            SELECT_ALL_OR_NONE_TEXT,
+            SELECT_ALL_OR_NONE_TEXT,
+            DocumentIcon.SELECT_ALL_OR_NONE);
 
     private final CellTable<DocumentType> cellTable;
 

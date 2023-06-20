@@ -19,12 +19,12 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -52,7 +52,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             new String[]{
                     PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE},
-            ElementIcons.STREAM);
+            PipelineElementIcon.STREAM);
 
     static {
         SOURCE_ELEMENT.setElementType(SOURCE_ELEMENT_TYPE);

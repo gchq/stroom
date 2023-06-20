@@ -8,7 +8,7 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
@@ -29,7 +29,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
-        icon = ElementIcons.STROOM_STATS)
+        icon = PipelineElementIcon.STROOM_STATS)
 class StroomStatsFilter extends AbstractKafkaProducerFilter {
 
     private final HBaseStatisticsConfig hBaseStatisticsConfig;

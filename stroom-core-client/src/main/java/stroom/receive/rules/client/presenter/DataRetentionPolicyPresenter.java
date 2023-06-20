@@ -26,6 +26,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.svg.client.Preset;
+import stroom.svg.client.SvgImage;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
@@ -68,7 +69,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             "Add new rule below the selected one");
     protected static final Preset COPY_RULE_SVG_PRESET = SvgPresets.COPY.title("Copy rule");
     protected static final Preset EDIT_RULE_SVG_PRESET = SvgPresets.EDIT.title("Edit rule");
-    protected static final Preset MOVE_RULE_UP_SVG_PRESET = SvgPresets.UP.title("Move Rule up");
+    protected static final Preset MOVE_RULE_UP_SVG_PRESET = SvgPresets.UP.title("Move rule up");
     protected static final Preset MOVE_RULE_DOWN_SVG_PRESET = SvgPresets.DOWN.title("Move rule down");
 
     private final DataRetentionPolicyListPresenter listPresenter;
@@ -205,37 +206,44 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 //                .withSeparator()
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
-                                .icon(ADD_ABOVE_SVG_PRESET)
+                                .icon(SvgImage.ADD_ABOVE)
                                 .text("Add new rule above")
                                 .command(() ->
                                         addNewRule(rule.getRuleNumber() - 1)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .icon(ADD_BELOW_SVG_PRESET)
+                                .icon(SvgImage.ADD_BELOW)
                                 .text("Add new rule below")
                                 .command(() ->
                                         addNewRule(rule.getRuleNumber())))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .icon(EDIT_RULE_SVG_PRESET)
+                                .icon(SvgImage.EDIT)
+                                .text("Edit Rule")
                                 .command(() ->
                                         editRule(rule)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
-                                .icon(COPY_RULE_SVG_PRESET)
+                                .icon(SvgImage.COPY)
+                                .text("Copy Rule")
                                 .command(() ->
                                         copyRule(rule)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .icon(DELETE_RULE_SVG_PRESET)
+                                .icon(SvgImage.DELETE)
+                                .text("Delete Rule")
                                 .command(() ->
                                         deleteRule(rule)))
                 .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 0, itemBuilder ->
-                        itemBuilder.icon(MOVE_RULE_UP_SVG_PRESET)
+                        itemBuilder
+                                .icon(SvgImage.UP)
+                                .text("Move Rule Up")
                                 .command(() ->
                                         moveRuleUp(rule)))
                 .withIconMenuItemIf(rule.getRuleNumber() < visibleRules.size() - 1, itemBuilder ->
-                        itemBuilder.icon(MOVE_RULE_DOWN_SVG_PRESET)
+                        itemBuilder
+                                .icon(SvgImage.DOWN)
+                                .text("Move Rule Down")
                                 .command(() ->
                                         moveRuleDown(rule)))
                 .build();

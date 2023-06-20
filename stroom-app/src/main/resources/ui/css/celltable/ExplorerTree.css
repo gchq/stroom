@@ -44,6 +44,11 @@
 	display: flex;
 }
 
+.explorerCell-icon svg {
+	width: var(--icon-width);
+	height: var(--icon-height)
+}
+
 .explorerCell-text {
 	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 	white-space: nowrap;

@@ -264,7 +264,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 }
             }
         };
-        dataGrid.addColumn(typeEditColumn, "", 20);
+        dataGrid.addColumn(typeEditColumn, "", ColumnSizeConstants.ICON_COL);
 
         // Max.
         final Column<JobNode, Number> maxColumn = new Column<JobNode, Number>(new ValueSpinnerCell(1, 1000)) {

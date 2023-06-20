@@ -20,7 +20,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
@@ -59,7 +59,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.HADOOP)
+        icon = PipelineElementIcon.HADOOP)
 public class HDFSFileAppender extends AbstractAppender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HDFSFileAppender.class);

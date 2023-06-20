@@ -27,6 +27,7 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -35,7 +36,6 @@ import stroom.util.NullSafe;
 import stroom.util.shared.Message;
 import stroom.util.string.StringUtil;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -99,8 +99,11 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.CONFIGURATION, DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.CONFIGURATION,
+                DictionaryDoc.DOCUMENT_TYPE,
+                DictionaryDoc.DOCUMENT_TYPE,
+                DocumentIcon.DICTIONARY);
     }
 
     ////////////////////////////////////////////////////////////////////////

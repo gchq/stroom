@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.entity.client.presenter.DocumentTypeImages;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -47,8 +48,9 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
 
             // Add icon
-            main.append(template.icon(getCellClassName() + "-icon " + value.getIconClassName(),
-                    value.getDocContentMatch().getDocRef().getType()));
+            main.append(template.icon(getCellClassName() + "-icon",
+                    value.getDocContentMatch().getDocRef().getType(),
+                    DocumentTypeImages.getSafeHtml(value.getIcon())));
 
             // Add sample
             main.append(template.div(getCellClassName() + "-sample",
@@ -80,8 +82,8 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
 
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
-        SafeHtml icon(String iconClass, String typeName);
+        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
+        SafeHtml icon(String iconClass, String typeName, SafeHtml icon);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);

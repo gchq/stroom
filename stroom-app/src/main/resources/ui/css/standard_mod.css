@@ -400,7 +400,7 @@ td.datePickerYear {
 }
 
 .gwt-ValueSpinner .textBox {
-	height: 16px;
+	height: var(--icon-height);
 }
 
 .gwt-ValueSpinner td {

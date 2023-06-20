@@ -18,14 +18,14 @@ package stroom.pipeline.writer;
 
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 
 import java.io.OutputStream;
 import javax.inject.Inject;
 
 @ConfigurableElement(type = "TestAppender", roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_DESTINATION}, icon = ElementIcons.STREAM)
+        PipelineElementType.ROLE_DESTINATION}, icon = PipelineElementIcon.STREAM)
 public class TestAppender extends AbstractAppender {
 
     private OutputStream outputStream;

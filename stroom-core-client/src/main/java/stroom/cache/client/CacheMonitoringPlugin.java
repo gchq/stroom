@@ -23,7 +23,7 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -48,9 +48,9 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(12)
-                            .icon(SvgPresets.MONITORING)
+                            .icon(SvgImage.MONITORING)
                             .text("Caches")
-                            .command(() -> open())
+                            .command(this::open)
                             .build());
         }
     }

@@ -23,7 +23,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.filter.AbstractFieldFilter;
 import stroom.pipeline.filter.FieldValue;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 
@@ -31,7 +31,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 @ConfigurableElement(type = "DynamicSearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
+        PipelineElementType.ROLE_TARGET}, icon = PipelineElementIcon.SEARCH)
 public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
 
     private final ExtractionStateHolder extractionStateHolder;

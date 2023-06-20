@@ -26,6 +26,7 @@ import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerDocContentMatch;
@@ -222,14 +223,18 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private void buildFavouritesNode(final TreeModel masterTreeModel) {
         final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
-                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
+                .icon(DocumentIcon.FAVOURITES);
         final ExplorerNode favNode = favNodeBuilder.build();
+
+        final Map<String, DocumentIcon> iconMap = getNonSystemTypes()
+                .stream()
+                .collect(Collectors.toMap(DocumentType::getType, DocumentType::getIcon));
 
         for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
             final ExplorerNode childNode = favNode.copy()
                     .docRef(favDocRef)
                     .depth(1)
-                    .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + favDocRef.getType())
+                    .icon(iconMap.get(favDocRef.getType()))
                     .isFavourite(true)
                     .rootNodeUuid(favNode)
                     .build();
@@ -269,8 +274,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .map(node -> {
                         final ExplorerNode.Builder root = node.copy();
                         Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
-                                .map(DocumentType::getIconClassName)
-                                .ifPresent(root::iconClassName);
+                                .map(DocumentType::getIcon)
+                                .ifPresent(root::icon);
                         return root;
                     })
                     .orElseGet(ExplorerNode::builder);
@@ -324,7 +329,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .tags(StandardTagNames.DATA_SOURCE)
                 .nodeState(NodeState.LEAF)
                 .depth(1)
-                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + "searchable")
+                .icon(DocumentIcon.SEARCHABLE)
                 .build();
     }
 
@@ -1078,7 +1083,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 final ExplorerDocContentMatch explorerDocContentMatch = ExplorerDocContentMatch.builder()
                         .docContentMatch(docContentMatch)
                         .path(parentPath.toString())
-                        .iconClassName(explorerActionHandler.getDocumentType().getIconClassName())
+                        .icon(explorerActionHandler.getDocumentType().getIcon())
                         .build();
                 list.add(explorerDocContentMatch);
             }

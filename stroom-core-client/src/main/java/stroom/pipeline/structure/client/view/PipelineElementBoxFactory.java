@@ -17,6 +17,7 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.structure.client.presenter.PipelineElementIcons;
 import stroom.svg.client.Icon;
 
 import com.google.inject.Inject;
@@ -30,7 +31,7 @@ public class PipelineElementBoxFactory {
     }
 
     public PipelineElementBox create(final PipelineElement pipelineElement) {
-        final Icon icon = Icon.create(pipelineElement.getElementType().getIcon());
+        final Icon icon = Icon.create(PipelineElementIcons.get(pipelineElement.getElementType().getIcon()));
         if (icon != null) {
             return new PipelineElementBox(pipelineElement, icon);
         } else {

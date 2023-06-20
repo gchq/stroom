@@ -20,7 +20,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.shared.Severity;
@@ -39,7 +39,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_READER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STREAM)
+        icon = PipelineElementIcon.STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
     private static final char REPLACEMENT_CHAR = 0xfffd; // The � symbol (3 bytes)

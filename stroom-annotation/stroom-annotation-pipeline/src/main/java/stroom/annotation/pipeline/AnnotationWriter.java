@@ -24,7 +24,7 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Severity;
 
@@ -70,7 +70,7 @@ import javax.inject.Inject;
         roles = {PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
-        icon = ElementIcons.TEXT)
+        icon = PipelineElementIcon.TEXT)
 class AnnotationWriter extends AbstractXMLFilter {
 
     private static final String ANNOTATION_TAG = "annotation";

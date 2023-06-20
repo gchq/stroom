@@ -88,7 +88,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
         settings = new InlineSvgButton();
         settings.addStyleName("tabLayout-settingsButton");
-        settings.setSvg(SvgImage.MONO_SETTINGS);
+        settings.setSvg(SvgImage.SETTINGS);
         settings.setTitle("Settings");
         buttons.add(settings);
 

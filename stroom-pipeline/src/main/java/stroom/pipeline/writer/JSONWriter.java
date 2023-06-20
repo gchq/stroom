@@ -21,7 +21,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONParser;
@@ -53,7 +53,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_WRITER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.JSON)
+        icon = PipelineElementIcon.JSON)
 public class JSONWriter extends AbstractWriter {
 
     private final boolean addTrailingRootValueSeparator = true;

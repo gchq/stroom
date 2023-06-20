@@ -32,7 +32,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
@@ -56,7 +56,7 @@ import javax.inject.Inject;
 
 @ConfigurableElement(type = "StreamAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+        PipelineElementType.VISABILITY_STEPPING}, icon = PipelineElementIcon.STREAM)
 public class StreamAppender extends AbstractAppender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);

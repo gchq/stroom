@@ -17,7 +17,7 @@
 package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
@@ -30,7 +30,7 @@ import org.xml.sax.helpers.AttributesImpl;
 @ConfigurableElement(type = "SafeXMLFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
-        PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.RECORD_OUTPUT)
+        PipelineElementType.ROLE_MUTATOR}, icon = PipelineElementIcon.RECORD_OUTPUT)
 public class SafeXMLFilter extends AbstractXMLFilter {
 
     private final SafeBuffer safeBuffer = new SafeBuffer(500);

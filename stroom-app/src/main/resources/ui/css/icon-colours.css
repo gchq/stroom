@@ -1,3 +1,24 @@
 :root {
-    --icon-colour__primary: var(--blue-500);
+    --icon-colour: var(--black);
+    --icon-colour__blue: var(--blue-500);
+    --icon-colour__grey: #4A4B4C;
+    --icon-colour__xml-background: #ce93d8;
+    --icon-colour__xsd-background: #2196f3;
+    --icon-colour__xsl-background: #aed581;
+
+
+    --icon-width: 16px;
+    --icon-height: 16px;
 }
+
+
+.stroom-theme-dark {
+    --icon-colour: var(--white);
+    --icon-colour__blue: var(--blue-500);
+    --icon-colour__grey: #ccc;
+    --icon-colour__xml-background: #ce93d8;
+    --icon-colour__xsd-background: #266fa9;
+    --icon-colour__xsl-background: #287f2c;
+
+}
+

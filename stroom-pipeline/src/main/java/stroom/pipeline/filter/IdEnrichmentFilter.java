@@ -20,7 +20,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.IdEnrichmentExpectedIds;
@@ -46,7 +46,7 @@ import javax.inject.Inject;
 @ConfigurableElement(type = "IdEnrichmentFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
-        PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.ID)
+        PipelineElementType.ROLE_MUTATOR}, icon = PipelineElementIcon.ID)
 public class IdEnrichmentFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IdEnrichmentFilter.class);

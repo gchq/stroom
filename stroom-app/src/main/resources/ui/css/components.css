@@ -135,6 +135,11 @@
     margin: 0 5px 0 5px;
 }
 
+.curveTab .curveTab-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
 .curveTab .curveTab-face {
 	border: none;
 	outline: none;
@@ -412,7 +417,6 @@
 }
 
 .gwt-Button.userTaskView-terminate {
-    background-image: url("../images/terminate.png") !important;
 	width: 12px;
 	height: 12px;
 	background-size: contain;
@@ -423,6 +427,12 @@
 	border-radius: 0;
 	border: none !important;
 	opacity: 0.8;
+}
+
+.gwt-Button.userTaskView-terminate svg {
+	width: 12px;
+	height: 12px;
+	color: red;
 }
 
 .gwt-Button.userTaskView-terminate:hover {
@@ -1393,8 +1403,8 @@
 }
 
 .navigation-arrow-image svg {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-width);
+    height: var(--icon-height);
     margin-top: .25rem;
 }
 
@@ -1409,12 +1419,6 @@ button.main-menu svg {
     margin-top: 6px;
     margin-right: 12px;
 }
-
-/*
-.stroom-theme-dark .navigation-logo {
-    background-image: url("../images/logo.svg");
-}
-*/
 
 .top-right-menu {
     position: absolute;
@@ -1434,23 +1438,6 @@ button.main-menu svg {
     height: 42px;
     justify-content: center;
 }
-/*
-.stroom-theme-dark .navigation-menu-button,
-.navigation-title-bar .navigation-menu-button {
-    color: white;
-    opacity: 0.8;
-}
-
-.navigation-menu-button svg {
-    width: 16px;
-    height: 16px;
-}
-*/
-/*
-.stroom-theme-dark .navigation-menu-button {
-    background-image: url("../images/menu-white.svg");
-}
-*/
 
 .navigation-header {
     display: flex;
@@ -1471,31 +1458,6 @@ button.main-menu svg {
 	flex-grow: 1;
 	margin: .4rem;
 }
-
-.navigation-header-arrow {
-    background-image: url("../images/arrow-right-white.svg");
-    width: .9rem;
-    height: .9rem;
-    flex-shrink: 0;
-    flex-grow: 0;
-    margin: .4rem;
-}
-
-.navigation-header-arrow-open {
-    background-image: url("../images/arrow-down-white.svg");
-}
-
-/*
-.stroom-theme-dark .navigation-header-arrow,
-.stroom-theme-dark2 .navigation-header-arrow {
-    background-image: url("../images/arrow-right-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-arrow-open,
-.stroom-theme-dark2 .navigation-header-arrow-open {
-    background-image: url("../images/arrow-down-white.svg");
-}
-*/
 
 .navigation-body {
 }

@@ -16,8 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.svg.client.SvgImage;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -29,8 +28,8 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
     private final Future<List<Item>> children;
 
     protected IconParentMenuItem(final int priority,
-                       final Icon enabledIcon,
-                       final Icon disabledIcon,
+                       final SvgImage enabledIcon,
+                       final SvgImage disabledIcon,
                        final String text,
                        final Action action,
                        final boolean enabled,
@@ -67,9 +66,9 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
         }
 
         public IconParentMenuItem build() {
-            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
-                text = ((Preset) enabledIcon).getTitle();
-            }
+//            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
+//                text = ((Preset) enabledIcon).getTitle();
+//            }
             return new IconParentMenuItem(
                     priority,
                     enabledIcon,

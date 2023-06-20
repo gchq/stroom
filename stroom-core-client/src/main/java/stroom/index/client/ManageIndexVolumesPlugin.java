@@ -23,7 +23,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -49,7 +49,7 @@ public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolume
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()
                             .priority(3)
-                            .icon(SvgPresets.VOLUMES)
+                            .icon(SvgImage.VOLUMES)
                             .text("Index Volumes")
                             .command(this::open)
                             .build());

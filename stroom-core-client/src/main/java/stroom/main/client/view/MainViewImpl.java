@@ -67,7 +67,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
-        menu.setSvg(SvgImage.MONO_THREE_DOTS_VERTICAL);
+        menu.setSvg(SvgImage.ELLIPSES_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 

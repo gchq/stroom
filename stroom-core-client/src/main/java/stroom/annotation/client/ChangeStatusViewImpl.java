@@ -43,7 +43,7 @@ public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandl
     @Inject
     public ChangeStatusViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        statusIcon.setSvg(SvgImage.MONO_ARROW_DOWN);
+        statusIcon.setSvg(SvgImage.ARROW_DOWN);
     }
 
     @Override

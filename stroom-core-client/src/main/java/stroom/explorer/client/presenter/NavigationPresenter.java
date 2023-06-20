@@ -107,7 +107,7 @@ public class NavigationPresenter
         this.currentActivity = currentActivity;
 
         add = new InlineSvgButton();
-        add.setSvg(SvgImage.MONO_ADD);
+        add.setSvg(SvgImage.ADD);
         add.getElement().addClassName("navigation-header-button add");
         add.setTitle("New");
         add.setEnabled(false);

@@ -67,7 +67,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
         final Element logoImage = DOM.createDiv();
         logoImage.setClassName("navigation-logo-image");
-        logoImage.setInnerHTML(SvgImage.MONO_LOGO.getSvg());
+        logoImage.setInnerHTML(SvgImage.LOGO.getSvg());
 
         logo.getElement().appendChild(logoImage);
 

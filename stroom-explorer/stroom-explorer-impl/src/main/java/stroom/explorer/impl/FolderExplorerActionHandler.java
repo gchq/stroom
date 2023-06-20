@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
@@ -122,8 +123,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.STRUCTURE, FolderExplorerActionHandler.FOLDER,
-                FolderExplorerActionHandler.FOLDER);
+        return new DocumentType(
+                DocumentTypeGroup.STRUCTURE,
+                FolderExplorerActionHandler.FOLDER,
+                FolderExplorerActionHandler.FOLDER,
+                DocumentIcon.FOLDER);
     }
 
     ////////////////////////////////////////////////////////////////////////

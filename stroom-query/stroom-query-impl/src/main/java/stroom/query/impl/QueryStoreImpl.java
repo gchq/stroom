@@ -24,6 +24,7 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -99,7 +100,11 @@ class QueryStoreImpl implements QueryStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.SEARCH, QueryDoc.DOCUMENT_TYPE, QueryDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.SEARCH,
+                QueryDoc.DOCUMENT_TYPE,
+                QueryDoc.DOCUMENT_TYPE,
+                DocumentIcon.QUERY);
     }
 
     ////////////////////////////////////////////////////////////////////////

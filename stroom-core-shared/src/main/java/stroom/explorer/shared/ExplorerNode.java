@@ -44,7 +44,7 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final int depth;
     @JsonProperty
-    private final String iconClassName;
+    private final DocumentIcon icon;
     @JsonProperty
     private final NodeState nodeState;
 
@@ -63,7 +63,7 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("name") final String name,
                         @JsonProperty("tags") final String tags,
                         @JsonProperty("depth") final int depth,
-                        @JsonProperty("iconClassName") final String iconClassName,
+                        @JsonProperty("icon") final DocumentIcon icon,
                         @JsonProperty("nodeState") final NodeState nodeState,
                         @JsonProperty("children") final List<ExplorerNode> children,
                         @JsonProperty("rootNodeUuid") final String rootNodeUuid,
@@ -74,7 +74,7 @@ public class ExplorerNode implements HasDisplayValue {
         this.name = name;
         this.tags = tags;
         this.depth = depth;
-        this.iconClassName = iconClassName;
+        this.icon = icon;
         this.nodeState = nodeState;
         this.children = children;
         this.rootNodeUuid = rootNodeUuid;
@@ -102,8 +102,8 @@ public class ExplorerNode implements HasDisplayValue {
         return depth;
     }
 
-    public String getIconClassName() {
-        return iconClassName;
+    public DocumentIcon getIcon() {
+        return icon;
     }
 
     public NodeState getNodeState() {
@@ -180,7 +180,7 @@ public class ExplorerNode implements HasDisplayValue {
         private String name;
         private String tags;
         private int depth;
-        private String iconClassName;
+        private DocumentIcon icon;
         private NodeState nodeState;
         private List<ExplorerNode> children;
         private String rootNodeUuid;
@@ -195,7 +195,7 @@ public class ExplorerNode implements HasDisplayValue {
             this.name = explorerNode.name;
             this.tags = explorerNode.tags;
             this.depth = explorerNode.depth;
-            this.iconClassName = explorerNode.iconClassName;
+            this.icon = explorerNode.icon;
             this.nodeState = explorerNode.nodeState;
             this.children = explorerNode.children;
             this.rootNodeUuid = explorerNode.rootNodeUuid;
@@ -237,8 +237,8 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder iconClassName(final String iconClassName) {
-            this.iconClassName = iconClassName;
+        public Builder icon(final DocumentIcon icon) {
+            this.icon = icon;
             return this;
         }
 
@@ -256,7 +256,8 @@ public class ExplorerNode implements HasDisplayValue {
             if (children == null) {
                 children = new ArrayList<>();
             }
-            children.add(child);;
+            children.add(child);
+            ;
             return this;
         }
 
@@ -266,7 +267,9 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder rootNodeUuid(final ExplorerNode rootNodeUuid) {
-            this.rootNodeUuid = rootNodeUuid != null ? rootNodeUuid.getUuid() : null;
+            this.rootNodeUuid = rootNodeUuid != null
+                    ? rootNodeUuid.getUuid()
+                    : null;
             return this;
         }
 
@@ -282,7 +285,7 @@ public class ExplorerNode implements HasDisplayValue {
                     name,
                     tags,
                     depth,
-                    iconClassName,
+                    icon,
                     nodeState,
                     children,
                     rootNodeUuid,

@@ -33,18 +33,18 @@ public class ExplorerDocContentMatch {
     @JsonProperty
     private final String path;
     @JsonProperty
-    private final String iconClassName;
+    private final DocumentIcon icon;
     @JsonProperty
     private final boolean isFavourite;
 
     @JsonCreator
     public ExplorerDocContentMatch(@JsonProperty("docContentMatch") final DocContentMatch docContentMatch,
                                    @JsonProperty("path") final String path,
-                                   @JsonProperty("iconClassName") final String iconClassName,
+                                   @JsonProperty("icon") final DocumentIcon icon,
                                    @JsonProperty("isFavourite") final boolean isFavourite) {
         this.docContentMatch = docContentMatch;
         this.path = path;
-        this.iconClassName = iconClassName;
+        this.icon = icon;
         this.isFavourite = isFavourite;
     }
 
@@ -56,8 +56,8 @@ public class ExplorerDocContentMatch {
         return path;
     }
 
-    public String getIconClassName() {
-        return iconClassName;
+    public DocumentIcon getIcon() {
+        return icon;
     }
 
     public boolean getIsFavourite() {
@@ -75,12 +75,12 @@ public class ExplorerDocContentMatch {
         final ExplorerDocContentMatch that = (ExplorerDocContentMatch) o;
         return isFavourite == that.isFavourite && Objects.equals(docContentMatch,
                 that.docContentMatch) && Objects.equals(path,
-                that.path) && Objects.equals(iconClassName, that.iconClassName);
+                that.path) && Objects.equals(icon, that.icon);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docContentMatch, path, iconClassName, isFavourite);
+        return Objects.hash(docContentMatch, path, icon, isFavourite);
     }
 
     public static Builder builder() {
@@ -95,7 +95,7 @@ public class ExplorerDocContentMatch {
 
         private DocContentMatch docContentMatch;
         private String path;
-        private String iconClassName;
+        private DocumentIcon icon;
         private boolean isFavourite;
 
         private Builder() {
@@ -104,7 +104,7 @@ public class ExplorerDocContentMatch {
         private Builder(final ExplorerDocContentMatch explorerDocContentMatch) {
             this.docContentMatch = explorerDocContentMatch.docContentMatch;
             this.path = explorerDocContentMatch.path;
-            this.iconClassName = explorerDocContentMatch.iconClassName;
+            this.icon = explorerDocContentMatch.icon;
             this.isFavourite = explorerDocContentMatch.isFavourite;
         }
 
@@ -118,8 +118,8 @@ public class ExplorerDocContentMatch {
             return this;
         }
 
-        public Builder iconClassName(final String iconClassName) {
-            this.iconClassName = iconClassName;
+        public Builder icon(final DocumentIcon icon) {
+            this.icon = icon;
             return this;
         }
 
@@ -132,7 +132,7 @@ public class ExplorerDocContentMatch {
             return new ExplorerDocContentMatch(
                     docContentMatch,
                     path,
-                    iconClassName,
+                    icon,
                     isFavourite);
         }
     }

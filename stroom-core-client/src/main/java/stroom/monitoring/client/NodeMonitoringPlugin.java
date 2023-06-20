@@ -23,7 +23,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.NodeMonitoringPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -49,7 +49,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresent
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(10)
-                            .icon(SvgPresets.NODES)
+                            .icon(SvgImage.NODES)
                             .text("Nodes")
                             .command(this::open)
                             .build());

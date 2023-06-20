@@ -54,6 +54,11 @@
 	display: flex;
 }
 
+.menuItem-icon svg {
+	width: var(--icon-width);
+	height: var(--icon-height);
+}
+
 .menuItem-disabled {
 	cursor: default;
 	opacity: 0.4;
@@ -81,4 +86,9 @@
 
 .menuItem-expandArrow {
 	display: flex;
+}
+
+.menuItem-expandArrow svg {
+	width: var(--icon-width);
+	height: var(--icon-height);
 }

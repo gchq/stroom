@@ -26,7 +26,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
@@ -46,7 +46,6 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkItemResponse.Failure;
@@ -100,7 +99,7 @@ import javax.ws.rs.NotFoundException;
         PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE
-}, icon = ElementIcons.ELASTIC_INDEX)
+}, icon = PipelineElementIcon.ELASTIC_INDEX)
 class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
     private static final JsonFactory JSON_FACTORY = new JsonFactory();

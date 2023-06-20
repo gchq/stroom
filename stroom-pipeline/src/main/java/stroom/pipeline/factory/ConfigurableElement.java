@@ -16,6 +16,7 @@
 
 package stroom.pipeline.factory;
 
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 
 import java.lang.annotation.ElementType;
@@ -42,7 +43,7 @@ public @interface ConfigurableElement {
 
     String[] roles();
 
-    String icon();
+    PipelineElementIcon icon();
 
     /**
      * A description of what this pipeline element does.

@@ -42,8 +42,8 @@ public class NavButtons extends Composite implements HasUiHandlers<NavUiHandlers
 
     public NavButtons() {
         initWidget(BINDER.createAndBindUi(this));
-        backward.setSvg(SvgImage.MONO_BACKWARD);
-        forward.setSvg(SvgImage.MONO_FORWARD);
+        backward.setSvg(SvgImage.BACKWARD);
+        forward.setSvg(SvgImage.FORWARD);
     }
 
     @Override

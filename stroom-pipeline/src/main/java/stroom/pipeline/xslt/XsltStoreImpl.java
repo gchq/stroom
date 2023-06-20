@@ -24,6 +24,7 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -85,7 +86,11 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.TRANSFORMATION, XsltDoc.DOCUMENT_TYPE, "XSL Translation");
+        return new DocumentType(
+                DocumentTypeGroup.TRANSFORMATION,
+                XsltDoc.DOCUMENT_TYPE,
+                "XSL Translation",
+                DocumentIcon.XSLT);
     }
 
     ////////////////////////////////////////////////////////////////////////

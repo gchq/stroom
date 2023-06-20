@@ -51,11 +51,11 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
     public FindViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        toggleMatchCase.setSvg(SvgImage.MONO_CASE_SENSITIVE);
+        toggleMatchCase.setSvg(SvgImage.CASE_SENSITIVE);
         toggleMatchCase.setTitle("Match case");
         toggleMatchCase.setEnabled(true);
 
-        toggleRegex.setSvg(SvgImage.MONO_REGEX);
+        toggleRegex.setSvg(SvgImage.REGEX);
         toggleRegex.setTitle("Regex");
         toggleRegex.setEnabled(true);
     }

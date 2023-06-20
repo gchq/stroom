@@ -28,8 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.SvgImage;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 
@@ -129,8 +128,8 @@ public class DatabaseTablesMonitoringPresenter
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.DATABASE;
+    public SvgImage getIcon() {
+        return SvgImage.DATABASE;
     }
 
     @Override

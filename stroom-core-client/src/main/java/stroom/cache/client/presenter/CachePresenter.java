@@ -17,8 +17,7 @@
 package stroom.cache.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.SvgImage;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -61,8 +60,8 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.MONITORING;
+    public SvgImage getIcon() {
+        return SvgImage.MONITORING;
     }
 
     @Override

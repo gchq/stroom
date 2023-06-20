@@ -24,7 +24,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.logging.LogUtil;
@@ -59,7 +59,7 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 
 
 @ConfigurableElement(type = "XPathExtractionOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET}, icon = ElementIcons.XML_SEARCH)
+        PipelineElementType.ROLE_TARGET}, icon = PipelineElementIcon.XML_SEARCH)
 public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";

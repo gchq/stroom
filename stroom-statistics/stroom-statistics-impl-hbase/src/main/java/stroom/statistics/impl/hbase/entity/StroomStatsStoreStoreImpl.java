@@ -24,6 +24,7 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -85,7 +86,11 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.INDEXING, StroomStatsStoreDoc.DOCUMENT_TYPE, "Stroom-Stats Store");
+        return new DocumentType(
+                DocumentTypeGroup.INDEXING,
+                StroomStatsStoreDoc.DOCUMENT_TYPE,
+                "Stroom-Stats Store",
+                DocumentIcon.STROOM_STATS_STORE);
     }
 
     ////////////////////////////////////////////////////////////////////////

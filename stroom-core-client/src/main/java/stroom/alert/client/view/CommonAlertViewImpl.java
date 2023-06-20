@@ -17,6 +17,7 @@
 package stroom.alert.client.view;
 
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
+import stroom.svg.client.SvgImage;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -51,6 +52,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         messageArea.add(showHideDetail);
         messageArea.add(detail);
 
+        image.setStyleName("alert-icon");
         message.setStyleName("alert-message");
         showHideDetail.addStyleName("alert-showHide");
         detail.setStyleName("alert-detail");
@@ -80,25 +82,25 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Override
     public void setQuestion(final SafeHtml text) {
-        image.getElement().setClassName("alert-icon-question");
+        image.getElement().setInnerHTML(SvgImage.QUESTION.getSvg());
         setHTML(text);
     }
 
     @Override
     public void setInfo(final SafeHtml text) {
-        image.getElement().setClassName("alert-icon-info");
+        image.getElement().setInnerHTML(SvgImage.INFO.getSvg());
         setHTML(text);
     }
 
     @Override
     public void setWarn(final SafeHtml text) {
-        image.getElement().setClassName("alert-icon-warning");
+        image.getElement().setInnerHTML(SvgImage.WARNING.getSvg());
         setHTML(text);
     }
 
     @Override
     public void setError(final SafeHtml text) {
-        image.getElement().setClassName("alert-icon-error");
+        image.getElement().setInnerHTML(SvgImage.ERROR.getSvg());
         setHTML(text);
     }
 

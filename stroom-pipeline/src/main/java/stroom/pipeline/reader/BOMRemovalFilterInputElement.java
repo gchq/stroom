@@ -17,7 +17,7 @@
 package stroom.pipeline.reader;
 
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 
@@ -32,7 +32,7 @@ import java.io.InputStream;
                 PipelineElementType.ROLE_READER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STREAM)
+        icon = PipelineElementIcon.STREAM)
 public class BOMRemovalFilterInputElement extends AbstractInputElement {
 
     private BOMRemovalInputStream bomRemovalInputStream;

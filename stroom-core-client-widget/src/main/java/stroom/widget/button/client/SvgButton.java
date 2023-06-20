@@ -18,10 +18,10 @@ package stroom.widget.button.client;
 
 import stroom.svg.client.Preset;
 
-public class SvgButton extends BaseSvgButton implements ButtonView {
+public class SvgButton extends InlineSvgButton {
 
-    private SvgButton(final Preset preset) {
-        super(preset);
+    private SvgButton() {
+        super();
     }
 
     @Override
@@ -30,7 +30,10 @@ public class SvgButton extends BaseSvgButton implements ButtonView {
     }
 
     public static SvgButton create(final Preset preset) {
-        final SvgButton button = new SvgButton(preset);
+        final SvgButton button = new SvgButton();
+        button.setSvg(preset.getSvgImage());
+        button.setTitle(preset.getTitle());
+        button.setEnabled(preset.isEnabled());
         return button;
     }
 

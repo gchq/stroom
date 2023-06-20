@@ -19,7 +19,7 @@ package stroom.pipeline.source;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.reader.AbstractInputElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 
 @ConfigurableElement(type = "Source",
@@ -28,6 +28,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE
         },
-        icon = ElementIcons.STREAM)
+        icon = PipelineElementIcon.STREAM)
 public class SourceElement extends AbstractInputElement implements Element {
 }

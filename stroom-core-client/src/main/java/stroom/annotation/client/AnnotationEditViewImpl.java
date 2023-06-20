@@ -80,9 +80,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
 
-        statusIcon.setSvg(SvgImage.MONO_ARROW_DOWN);
-        assignedToIcon.setSvg(SvgImage.MONO_ARROW_DOWN);
-        commentIcon.setSvg(SvgImage.MONO_ARROW_DOWN);
+        statusIcon.setSvg(SvgImage.ARROW_DOWN);
+        assignedToIcon.setSvg(SvgImage.ARROW_DOWN);
+        commentIcon.setSvg(SvgImage.ARROW_DOWN);
 
         setTitle(null);
         setSubject(null);

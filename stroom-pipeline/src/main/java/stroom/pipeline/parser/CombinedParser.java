@@ -36,8 +36,8 @@ import stroom.pipeline.filter.DocFinder;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.reader.InvalidXmlCharFilter;
 import stroom.pipeline.reader.Xml10Chars;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.FeedHolder;
@@ -81,7 +81,7 @@ import javax.xml.parsers.SAXParserFactory;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.TEXT)
+        icon = PipelineElementIcon.TEXT)
 public class CombinedParser extends AbstractParser implements SupportsCodeInjection {
 
     public static final String DEFAULT_NAME = "combinedParser";

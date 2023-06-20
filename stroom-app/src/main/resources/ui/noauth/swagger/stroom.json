@@ -9216,6 +9216,28 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/view/v1/list" : {
+      "get" : {
+        "operationId" : "listViews",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch view names",
+        "tags" : [ "Views" ]
+      }
+    },
     "/view/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchView",
@@ -11571,8 +11593,9 @@
             "type" : "string",
             "enum" : [ "STRUCTURE", "DATA_PROCESSING", "TRANSFORMATION", "SEARCH", "INDEXING", "CONFIGURATION", "SYSTEM" ]
           },
-          "iconClassName" : {
-            "type" : "string"
+          "icon" : {
+            "type" : "string",
+            "enum" : [ "ANALYTIC_RULE", "ANALYTIC_OUTPUT_STORE", "ANNOTATIONS_INDEX", "DASHBOARD", "DICTIONARY", "ELASTIC_CLUSTER", "ELASTIC_INDEX", "FAVOURITES", "FEED", "FOLDER", "INDEX", "KAFKA_CONFIG", "PIPELINE", "QUERY", "RECEIVE_DATA_RULE_SET", "SCRIPT", "SEARCHABLE", "SELECT_ALL_OR_NONE", "SOLR_INDEX", "STATISTIC_STORE", "STROOM_STATS_STORE", "SYSTEM", "TEXT_CONVERTER", "VIEW", "VISUALISATION", "XML_SCHEMA", "XSLT" ]
           },
           "type" : {
             "type" : "string"
@@ -11939,8 +11962,9 @@
           "docContentMatch" : {
             "$ref" : "#/components/schemas/DocContentMatch"
           },
-          "iconClassName" : {
-            "type" : "string"
+          "icon" : {
+            "type" : "string",
+            "enum" : [ "ANALYTIC_RULE", "ANALYTIC_OUTPUT_STORE", "ANNOTATIONS_INDEX", "DASHBOARD", "DICTIONARY", "ELASTIC_CLUSTER", "ELASTIC_INDEX", "FAVOURITES", "FEED", "FOLDER", "INDEX", "KAFKA_CONFIG", "PIPELINE", "QUERY", "RECEIVE_DATA_RULE_SET", "SCRIPT", "SEARCHABLE", "SELECT_ALL_OR_NONE", "SOLR_INDEX", "STATISTIC_STORE", "STROOM_STATS_STORE", "SYSTEM", "TEXT_CONVERTER", "VIEW", "VISUALISATION", "XML_SCHEMA", "XSLT" ]
           },
           "isFavourite" : {
             "type" : "boolean"
@@ -11963,8 +11987,9 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "iconClassName" : {
-            "type" : "string"
+          "icon" : {
+            "type" : "string",
+            "enum" : [ "ANALYTIC_RULE", "ANALYTIC_OUTPUT_STORE", "ANNOTATIONS_INDEX", "DASHBOARD", "DICTIONARY", "ELASTIC_CLUSTER", "ELASTIC_INDEX", "FAVOURITES", "FEED", "FOLDER", "INDEX", "KAFKA_CONFIG", "PIPELINE", "QUERY", "RECEIVE_DATA_RULE_SET", "SCRIPT", "SEARCHABLE", "SELECT_ALL_OR_NONE", "SOLR_INDEX", "STATISTIC_STORE", "STROOM_STATS_STORE", "SYSTEM", "TEXT_CONVERTER", "VIEW", "VISUALISATION", "XML_SCHEMA", "XSLT" ]
           },
           "isFavourite" : {
             "type" : "boolean"
@@ -14550,7 +14575,8 @@
             "enum" : [ "INTERNAL", "READER", "PARSER", "FILTER", "WRITER", "DESTINATION" ]
           },
           "icon" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "FILE", "FILES", "HADOOP", "ELASTIC_INDEX", "ID", "INDEX", "JSON", "KAFKA", "RECORD_COUNT", "RECORD_OUTPUT", "REFERENCE_DATA", "SEARCH", "XML_SEARCH", "SOLR", "SPLIT", "STATISTICS", "STREAM", "STROOM_STATS", "TEXT", "XML", "XSD", "XSLT" ]
           },
           "roles" : {
             "type" : "array",

@@ -92,25 +92,27 @@ public class ActionCell<R> extends AbstractCell<R> {
         if (row == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final String className = "svgCell-button " + svgPreset.getClassName();
+            final String className = "svgCell-button";
 
             if (svgPreset.getTitle() != null && !svgPreset.getTitle().isEmpty()) {
                 sb.append(template.icon(
                         className,
-                        svgPreset.getTitle()));
+                        svgPreset.getTitle(),
+                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
             } else {
                 sb.append(template.icon(
-                        className));
+                        className,
+                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
             }
         }
     }
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml icon(String className);
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml icon(String className, SafeHtml icon);
 
-        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
-        SafeHtml icon(String className, String title);
+        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
+        SafeHtml icon(String className, String title, SafeHtml icon);
     }
 }

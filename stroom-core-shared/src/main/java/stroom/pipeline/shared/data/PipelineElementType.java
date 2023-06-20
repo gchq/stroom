@@ -76,7 +76,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     @JsonProperty
     private final String[] roles;
     @JsonProperty
-    private final String icon;
+    private final PipelineElementIcon icon;
 
     @JsonIgnore
     private Set<String> roleSet;
@@ -85,7 +85,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     public PipelineElementType(@JsonProperty("type") final String type,
                                @JsonProperty("category") final Category category,
                                @JsonProperty("roles") final String[] roles,
-                               @JsonProperty("icon") final String icon) {
+                               @JsonProperty("icon") final PipelineElementIcon icon) {
         this.type = type;
         this.category = category;
         this.roles = roles;
@@ -105,7 +105,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return roles;
     }
 
-    public String getIcon() {
+    public PipelineElementIcon getIcon() {
         return icon;
     }
 

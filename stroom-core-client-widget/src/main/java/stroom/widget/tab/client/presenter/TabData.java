@@ -16,11 +16,11 @@
 
 package stroom.widget.tab.client.presenter;
 
-import stroom.svg.client.Icon;
+import stroom.svg.client.SvgImage;
 
 public interface TabData {
 
-    Icon getIcon();
+    SvgImage getIcon();
 
     String getLabel();
 

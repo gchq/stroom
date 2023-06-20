@@ -25,9 +25,7 @@ import stroom.docref.HasType;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;
-import stroom.explorer.shared.DocumentType;
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.svg.client.SvgImage;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -168,8 +166,8 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    public Icon getIcon() {
-        return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getType(), null, true);
+    public SvgImage getIcon() {
+        return DocumentTypeImages.get(getType());
     }
 
     @Override

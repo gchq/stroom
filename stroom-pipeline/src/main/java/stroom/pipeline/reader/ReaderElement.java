@@ -17,11 +17,11 @@
 package stroom.pipeline.reader;
 
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 
 @ConfigurableElement(type = "Reader", category = Category.READER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = PipelineElementIcon.STREAM)
 public class ReaderElement extends AbstractReaderElement {
 }

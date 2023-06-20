@@ -7,7 +7,7 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
@@ -28,7 +28,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STROOM_STATS)
+        icon = PipelineElementIcon.STROOM_STATS)
 class StroomStatsAppender extends AbstractKafkaAppender {
 
     private final StroomStatsStoreStore stroomStatsStoreStore;

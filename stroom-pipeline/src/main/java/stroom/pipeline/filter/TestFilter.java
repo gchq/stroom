@@ -19,7 +19,7 @@ package stroom.pipeline.filter;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 
 import org.xml.sax.SAXException;
@@ -37,7 +37,7 @@ import javax.inject.Inject;
  */
 @ConfigurableElement(type = "TestFilter", roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+        PipelineElementType.VISABILITY_STEPPING}, icon = PipelineElementIcon.STREAM)
 public class TestFilter extends AbstractSamplingFilter {
 
     private final List<String> outputs;

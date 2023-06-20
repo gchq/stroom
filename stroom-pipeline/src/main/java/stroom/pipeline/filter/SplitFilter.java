@@ -18,7 +18,7 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.LocationHolder;
@@ -51,7 +51,7 @@ import javax.inject.Inject;
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS},
-        icon = ElementIcons.SPLIT)
+        icon = PipelineElementIcon.SPLIT)
 public class SplitFilter extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SplitFilter.class);

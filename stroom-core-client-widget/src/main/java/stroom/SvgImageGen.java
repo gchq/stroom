@@ -1,5 +1,6 @@
 package stroom;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -7,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -26,11 +28,49 @@ public class SvgImageGen {
 
         Path appPath = widgetPath.getParent().resolve(APP_DIR);
 
+        Path rawImagesPath = appPath.resolve("src")
+                .resolve("main")
+                .resolve("resources")
+                .resolve("ui")
+                .resolve("raw-images");
+
         Path imagesPath = appPath.resolve("src")
                 .resolve("main")
                 .resolve("resources")
                 .resolve("ui")
                 .resolve("images");
+
+        // First transform the raw images.
+        deleteDirectory(imagesPath);
+        try (final Stream<Path> stream = Files.walk(rawImagesPath)) {
+            stream.forEach(f -> {
+                try {
+                    String fileName = f.getFileName().toString();
+                    if (fileName.toLowerCase(Locale.ROOT).endsWith(".svg")) {
+                        final Path relative = rawImagesPath.relativize(f);
+                        final Path output = imagesPath.resolve(relative);
+                        Files.createDirectories(output.getParent());
+
+                        String xml = Files.readString(f, StandardCharsets.UTF_8);
+                        xml = xml.replaceAll("#2196f3", "currentColor");
+
+                        Files.writeString(output, xml);
+                    } else if (fileName.toLowerCase(Locale.ROOT).endsWith(".png")) {
+                        final Path relative = rawImagesPath.relativize(f);
+                        final Path output = imagesPath.resolve(relative);
+                        Files.createDirectories(output.getParent());
+                        Files.copy(f, output);
+                    }
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+
 
         final Map<String, String> entries = new HashMap<>();
         try (final Stream<Path> stream = Files.walk(imagesPath)) {
@@ -146,6 +186,17 @@ public class SvgImageGen {
         try (final OutputStream outputStream = Files.newOutputStream(outPath)) {
             outputStream.write(sb.toString().getBytes(StandardCharsets.UTF_8));
         } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    static void deleteDirectory(Path directoryToBeDeleted) {
+        try {
+            Files.walk(directoryToBeDeleted)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }

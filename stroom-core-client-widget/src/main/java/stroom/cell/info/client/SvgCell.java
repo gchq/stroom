@@ -101,27 +101,29 @@ public class SvgCell extends AbstractCell<Preset> {
                 className += " " + "svgCell-disabled";
             }
 
-            className += " " + value.getClassName();
+//            className += " " + value.getClassName();
 
             if (value.getTitle() != null && !value.getTitle().isEmpty()) {
                 sb.append(template.icon(
                         className,
                         builder.toSafeStyles(),
-                        value.getTitle()));
+                        value.getTitle(),
+                        SafeHtmlUtils.fromSafeConstant(value.getSvgImage().getSvg())));
             } else {
                 sb.append(template.icon(
                         className,
-                        builder.toSafeStyles()));
+                        builder.toSafeStyles(),
+                        SafeHtmlUtils.fromSafeConstant(value.getSvgImage().getSvg())));
             }
         }
     }
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" style=\"{1}\"></div>")
-        SafeHtml icon(String className, SafeStyles style);
+        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml icon(String className, SafeStyles style, SafeHtml icon);
 
-        @Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\"></div>")
-        SafeHtml icon(String className, SafeStyles style, String title);
+        @Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\">{3}</div>")
+        SafeHtml icon(String className, SafeStyles style, String title, SafeHtml icon);
     }
 }

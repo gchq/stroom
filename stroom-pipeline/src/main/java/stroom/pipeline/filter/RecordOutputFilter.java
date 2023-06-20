@@ -19,7 +19,7 @@ package stroom.pipeline.filter;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.event.Event;
@@ -37,7 +37,7 @@ import javax.inject.Inject;
  * Filters out records that have raised an error or warning during processing.
  */
 @ConfigurableElement(type = "RecordOutputFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_OUTPUT)
+        PipelineElementType.ROLE_HAS_TARGETS}, icon = PipelineElementIcon.RECORD_OUTPUT)
 public class RecordOutputFilter extends BufferFilter {
 
     private final ErrorReceiverProxy errorReceiverProxy;
