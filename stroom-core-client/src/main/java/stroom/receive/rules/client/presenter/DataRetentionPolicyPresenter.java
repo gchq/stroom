@@ -65,8 +65,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     private static final Preset DELETE_RULE_SVG_PRESET = SvgPresets.DELETE.title("Delete rule");
     protected static final Preset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
             "Add new rule above the selected one");
-    protected static final Preset ADD_BELOW_SVG_PRESET = SvgPresets.ADD_BELOW.title(
-            "Add new rule below the selected one");
     protected static final Preset COPY_RULE_SVG_PRESET = SvgPresets.COPY.title("Copy rule");
     protected static final Preset EDIT_RULE_SVG_PRESET = SvgPresets.EDIT.title("Edit rule");
     protected static final Preset MOVE_RULE_UP_SVG_PRESET = SvgPresets.UP.title("Move rule up");

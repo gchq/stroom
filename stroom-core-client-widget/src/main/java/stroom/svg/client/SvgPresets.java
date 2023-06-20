@@ -21,7 +21,6 @@ public final class SvgPresets {
 
     public static final Preset ADD = enabled(SvgImage.ADD, "Add");
     public static final Preset ADD_ABOVE = enabled(SvgImage.ADD_ABOVE, "Add above");
-    public static final Preset ADD_BELOW = enabled(SvgImage.ADD_BELOW, "Add below");
     public static final Preset ALERT = enabled(SvgImage.ALERT, "Alert");
     public static final Preset ANNOTATE = disabled(SvgImage.EDIT, "Annotate");
     public static final Preset CLEAR = disabled(SvgImage.CLEAR, "Clear");
