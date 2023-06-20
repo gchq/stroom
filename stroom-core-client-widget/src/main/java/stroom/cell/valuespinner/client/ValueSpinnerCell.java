@@ -40,11 +40,11 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     private static volatile Template template;
     private static final SafeHtml arrowUpHtml =
             SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowUp\">" +
-                    SvgImages.MONO_ARROW_UP +
+                    SvgImages.MONO_ARROW_UP.getSvg() +
                     "</div>");
     private static final SafeHtml arrowDownHtml =
             SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">" +
-                    SvgImages.MONO_ARROW_DOWN +
+                    SvgImages.MONO_ARROW_DOWN.getSvg() +
                     "</div>");
     private static volatile Spinner spinner;
     private long min = 0;
