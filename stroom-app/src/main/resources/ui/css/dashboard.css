@@ -354,13 +354,7 @@
 }
 
 .fields-field * {
-    text-decoration: inherit;
     vertical-align: middle;
-}
-
-.fields-field:hover {
-    opacity: 1;
-    text-decoration: underline;
 }
 
 .fields-fieldLabel {
@@ -368,9 +362,19 @@
 	height: 16px;
 	padding: 0px;
 	padding-right: 5px;
-	cursor: pointer;
 	font-weight: 500;
-    text-decoration: inherit;
+}
+
+.allow-header-selection .fields-fieldLabel {
+	cursor: pointer;
+}
+
+.allow-header-selection .fields-field:hover {
+    opacity: 1;
+}
+
+.allow-header-selection .fields-field:hover .fields-fieldLabel {
+    text-decoration: underline;
 }
 
 .fields-fieldText {
