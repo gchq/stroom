@@ -85,6 +85,7 @@ public class LmdbDataStore implements DataStore {
     private final FieldExpressionMatcher fieldExpressionMatcher;
     private final ExpressionOperator valueFilter;
     private final ValueReferenceIndex valueReferenceIndex;
+    private final CompiledFields compiledFields;
     private final CompiledField[] compiledFieldArray;
     private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
@@ -155,7 +156,7 @@ public class LmdbDataStore implements DataStore {
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
         valueFilter = modifiedTableSettings.getValueFilter();
         fieldExpressionMatcher = new FieldExpressionMatcher(fields);
-        final CompiledFields compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
+        this.compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
         this.compiledFieldArray = compiledFields.getCompiledFields();
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledFieldArray, modifiedTableSettings.showDetail());
@@ -587,6 +588,11 @@ public class LmdbDataStore implements DataStore {
             errorConsumer.add(e);
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public List<Field> getFields() {
+        return compiledFields.getFields();
     }
 
     /**
@@ -1087,12 +1093,11 @@ public class LmdbDataStore implements DataStore {
         public Val getValue(final int index, final boolean evaluateChildren) {
             if (index >= cachedValues.length) {
                 try {
-                    throw new ArrayIndexOutOfBoundsException("Attempt to get value for unknown field index");
+                    throw new ArrayIndexOutOfBoundsException("Attempt to get value for unknown field index: " + index);
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    LOGGER.error(Arrays.toString(data.compiledFields));
-                    throw e;
+                    LOGGER.error(e.getMessage() + "\n" + Arrays.toString(data.compiledFields), e);
                 }
+                return ValNull.INSTANCE;
             }
 
             Val val = cachedValues[index];

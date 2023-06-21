@@ -22,6 +22,7 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.util.LambdaLogger;
@@ -57,7 +58,8 @@ public class MapDataStore implements DataStore, Data {
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
     private final ValueReferenceIndex valueReferenceIndex;
-    private final CompiledField[] compiledFields;
+    private final CompiledFields compiledFields;
+    private final CompiledField[] compiledFieldsArray;
     private final CompiledSorter<ItemImpl>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
@@ -78,11 +80,11 @@ public class MapDataStore implements DataStore, Data {
                         final Map<String, String> paramMap,
                         final DataStoreSettings dataStoreSettings) {
         this.serialisers = serialisers;
-        final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
+        this.compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
-        this.compiledFields = compiledFields.getCompiledFields();
-        final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFields, tableSettings.showDetail());
-        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFields);
+        this.compiledFieldsArray = compiledFields.getCompiledFields();
+        final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFieldsArray, tableSettings.showDetail());
+        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFieldsArray);
         this.compiledDepths = compiledDepths;
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
@@ -130,8 +132,8 @@ public class MapDataStore implements DataStore, Data {
             }
 
             int groupIndex = 0;
-            for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
-                final CompiledField compiledField = compiledFields[fieldIndex];
+            for (int fieldIndex = 0; fieldIndex < compiledFieldsArray.length; fieldIndex++) {
+                final CompiledField compiledField = compiledFieldsArray[fieldIndex];
 
                 final Generator generator = compiledField.getGenerator();
                 if (generator != null) {
@@ -245,6 +247,11 @@ public class MapDataStore implements DataStore, Data {
                 }
             });
         }
+    }
+
+    @Override
+    public List<Field> getFields() {
+        return compiledFields.getFields();
     }
 
     @Override
@@ -549,7 +556,7 @@ public class MapDataStore implements DataStore, Data {
             this.dataStore = dataStore;
             this.key = key;
             this.storedValues = storedValues;
-            this.cachedValues = new Val[dataStore.compiledFields.length];
+            this.cachedValues = new Val[dataStore.compiledFieldsArray.length];
         }
 
         @Override
@@ -569,7 +576,7 @@ public class MapDataStore implements DataStore, Data {
 
         private Val createValue(final int index) {
             Val val;
-            final Generator generator = dataStore.compiledFields[index].getGenerator();
+            final Generator generator = dataStore.compiledFieldsArray[index].getGenerator();
             if (key.isGrouped()) {
                 final Supplier<ChildData> childDataSupplier = () -> new ChildData() {
                     @Override

@@ -302,6 +302,11 @@ class TestSearchResponseCreator {
             }
 
             @Override
+            public List<Field> getFields() {
+                return Collections.emptyList();
+            }
+
+            @Override
             public void getData(final Consumer<Data> consumer) {
                 consumer.accept((key, timeFilter) -> {
                     if (key == Key.ROOT_KEY) {
