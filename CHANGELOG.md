@@ -13,6 +13,31 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.34] - 2023-06-21
+
+* Issue **#3542** : Stop logging expected task termination exceptions as errors.
+
+* Issue **#3541** : Change the expression editor to confirm closure when changes have been made to the expression. Add vim key mapping of 'jk' => 'esc'. Prevent stroom handling keydown events when the Ace editor has focus to avoid conflict with vim key bindings and code completion popups.
+
+* Issue **#3535** : Fix ArrayIndexOutOfBoundsException.
+
+* Issue **#3516** : Add day of week to user preference date/time format via E,EE pattern variables.
+
+* Issue **#3521** : Fix find content paging error.
+
+* Issue **#3526** : Fix onDirty behaviour for view.
+
+* Issue **#3533** : Require design mode to change dashboard table columns or make dashboard dirty.
+
+* Issue **#3405** : Resolve current dependency names on dependencies screen.
+
+* Issue **#3372** : Fix to stop additional data source nodes appearing on favourites.
+
+* Issue **#3544** : Fix filter icon on pipeline elements in stepper not disappearing after clearing filters.
+
+* Issue **#3487** : Change ref log message `Reference data loader for {} was closed with a state of {}` from warn to debug as it is expected behaviour for a stream that is found to have been already loaded by another thread.
+
+
 ## [v7.2-beta.33] - 2023-06-20
 
 * Issue **#3412** : Add a filter icon to pipeline elements in the stepper to show which elements have active filters. Change the _Change Filters_ screen to show which of the elements has active filter(s) and to select the element currently selected in the stepper. Add a context menu to the pipeline elements to allow editing/deleting of the step filters.
@@ -5492,7 +5517,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.33...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.34...HEAD
+[v7.2-beta.34]: https://github.com/gchq/stroom/compare/v7.2-beta.33...v7.2-beta.34
 [v7.2-beta.33]: https://github.com/gchq/stroom/compare/v7.2-beta.32...v7.2-beta.33
 [v7.2-beta.32]: https://github.com/gchq/stroom/compare/v7.2-beta.31...v7.2-beta.32
 [v7.2-beta.31]: https://github.com/gchq/stroom/compare/v7.2-beta.30...v7.2-beta.31
