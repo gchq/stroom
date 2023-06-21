@@ -72,7 +72,10 @@ import java.util.stream.Collectors;
 
 public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
-        implements ExpressionUiHandlers, ShowPopupEvent.Handler, HidePopupRequestEvent.Handler, HidePopupEvent.Handler {
+        implements ExpressionUiHandlers,
+        ShowPopupEvent.Handler,
+        HidePopupRequestEvent.Handler,
+        HidePopupEvent.Handler {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
@@ -258,10 +261,9 @@ public class ExpressionPresenter
                 // User not change anything so allow the close
                 e.hide();
             } else {
-                ConfirmEvent.fire(ExpressionPresenter.this,
-                        "Expression has unsaved changes.\n"
-                                + "Are you sure you want to close this window?",
-                        confirm -> {
+                final String msg = "Expression has unsaved changes.\n"
+                        + "Are you sure you want to close this window?";
+                ConfirmEvent.fire(ExpressionPresenter.this, msg, confirm -> {
                             if (confirm) {
                                 e.hide();
                             } else {
