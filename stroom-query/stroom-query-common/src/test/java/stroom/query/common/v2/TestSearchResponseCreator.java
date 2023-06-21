@@ -289,7 +289,7 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public Val getValue(final int index, final boolean evaluateChildren) {
+            public Val getValue(final int index) {
                 return null;
             }
         };
@@ -299,6 +299,11 @@ class TestSearchResponseCreator {
         return new DataStore() {
             @Override
             public void add(final Val[] values) {
+            }
+
+            @Override
+            public List<Field> getFields() {
+                return Collections.emptyList();
             }
 
             @Override

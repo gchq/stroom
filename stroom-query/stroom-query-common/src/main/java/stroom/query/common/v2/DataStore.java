@@ -1,13 +1,20 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.query.api.v2.Field;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public interface DataStore extends ValuesConsumer {
+
+    /**
+     * Get the fields that this data store knows about.
+     */
+    List<Field> getFields();
 
     /**
      * Get data from the store
