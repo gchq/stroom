@@ -1336,19 +1336,6 @@ paths:
         node.
       tags:
       - Global Config
-  /config/v1/noauth/fetchExtendedUiConfig:
-    get:
-      operationId: fetchExtendedUiConfig
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExtendedUiConfig'
-          description: default response
-      summary: Fetch the extended UI configuration
-      tags:
-      - Global Config
   /config/v1/noauth/fetchUiConfig:
     get:
       operationId: fetchUiConfig
@@ -6162,46 +6149,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageUserName'
+                $ref: '#/components/schemas/ResultPageString'
           description: default response
       summary: Find the user names matching the supplied criteria
-      tags:
-      - Authorisation
-  /userNames/v1/getByDisplayName/{displayName}:
-    get:
-      operationId: getByDisplayName
-      parameters:
-      - in: path
-        name: displayName
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserName'
-          description: default response
-      summary: Find the user name matching the supplied displayName
-      tags:
-      - Authorisation
-  /userNames/v1/{userId}:
-    get:
-      operationId: getByUserId
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserName'
-          description: default response
-      summary: Find the user name matching the supplied unique user ID
       tags:
       - Authorisation
   /users/v1:
@@ -6247,41 +6197,25 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserName'
+                  type: string
           description: default response
       summary: Gets a list of associated users
       tags:
       - Authorisation
-  /users/v1/createGroup:
-    post:
-      operationId: createGroup
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-        description: name
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: default response
-      summary: Creates a group with the supplied name
-      tags:
-      - Authorisation
-  /users/v1/createUser:
+  /users/v1/create/{name}/{isGroup}:
     post:
       operationId: createUser
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserName'
-        description: name
+      parameters:
+      - in: path
+        name: name
         required: true
+        schema:
+          type: string
+      - in: path
+        name: isGroup
+        required: true
+        schema:
+          type: boolean
       responses:
         default:
           content:
@@ -6289,30 +6223,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: default response
-      summary: Creates a user with the supplied name
-      tags:
-      - Authorisation
-  /users/v1/createUsers:
-    post:
-      operationId: createUsers
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-        description: users
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-          description: default response
-      summary: Creates a batch of users from a list of CSV entries. Each line is of
-        the form 'id,displayName,fullName', where displayName and fullName are optional
+      summary: Creates a user or group with the supplied name
       tags:
       - Authorisation
   /users/v1/find:
@@ -7052,14 +6963,14 @@ components:
       type: object
       properties:
         assignedTo:
-          $ref: '#/components/schemas/UserName'
+          type: string
         comment:
           type: string
         createTime:
           type: integer
           format: int64
         createUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
         history:
           type: string
         id:
@@ -7075,7 +6986,7 @@ components:
           type: integer
           format: int64
         updateUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
         version:
           type: integer
           format: int32
@@ -7095,11 +7006,11 @@ components:
           type: integer
           format: int64
         createUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
+        data:
+          type: string
         entryType:
           type: string
-        entryValue:
-          $ref: '#/components/schemas/EntryValue'
         id:
           type: integer
           format: int64
@@ -7107,7 +7018,7 @@ components:
           type: integer
           format: int64
         updateUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
         version:
           type: integer
           format: int32
@@ -7594,8 +7505,8 @@ components:
       properties:
         annotation:
           $ref: '#/components/schemas/Annotation'
-        entryValue:
-          $ref: '#/components/schemas/EntryValue'
+        data:
+          type: string
         linkedEvents:
           type: array
           items:
@@ -8339,15 +8250,6 @@ components:
         rangeValueCount:
           type: integer
           format: int64
-    EntryValue:
-      type: object
-      discriminator:
-        propertyName: type
-      properties:
-        type:
-          type: string
-      required:
-      - type
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -8650,13 +8552,6 @@ components:
       required:
       - condition
       - field
-    ExtendedUiConfig:
-      type: object
-      properties:
-        externalIdentityProvider:
-          type: boolean
-        uiConfig:
-          $ref: '#/components/schemas/UiConfig'
     FeedDoc:
       type: object
       properties:
@@ -9400,10 +9295,8 @@ components:
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
           - 401 - 301 - Client Token Required
-          - 401 - 302 - Client Token or Certificate Required
-          - 401 - 310 - Client Certificate failed authentication
-          - 401 - 311 - Client Token failed authentication
-          - 401 - 312 - Client Token or Certificate failed authentication
+          - 403 - 310 - Client Certificate not authorised
+          - 403 - 311 - Client Token not authorised
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -11412,6 +11305,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StoredQuery'
+    ResultPageString:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            type: string
     ResultPageUser:
       type: object
       description: A page of results.
@@ -11422,16 +11325,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    ResultPageUserName:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserName'
     ResultRequest:
       type: object
       description: A definition for how to return the raw results of the query in
@@ -11857,7 +11750,7 @@ components:
         nodeName:
           type: string
         userName:
-          $ref: '#/components/schemas/UserName'
+          type: string
     SessionListResponse:
       type: object
       properties:
@@ -11876,7 +11769,7 @@ components:
             type: integer
             format: int64
         assignedTo:
-          $ref: '#/components/schemas/UserName'
+          type: string
     SetStatusRequest:
       type: object
       properties:
@@ -11932,10 +11825,6 @@ components:
     SimpleUser:
       type: object
       properties:
-        displayName:
-          type: string
-        fullName:
-          type: string
         name:
           type: string
         uuid:
@@ -12383,14 +12272,6 @@ components:
           type: string
         stringUpper:
           type: string
-    StringEntryValue:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/EntryValue'
-      - type: object
-        properties:
-          value:
-            type: string
     StroomStatsStoreDoc:
       type: object
       properties:
@@ -12873,9 +12754,6 @@ components:
           format: int64
         id_token:
           type: string
-        refresh_expires_in:
-          type: integer
-          format: int64
         refresh_token:
           type: string
         refresh_token_expires_in:
@@ -12991,10 +12869,6 @@ components:
           format: int64
         createUser:
           type: string
-        displayName:
-          type: string
-        fullName:
-          type: string
         group:
           type: boolean
         id:
@@ -13006,8 +12880,6 @@ components:
           type: integer
           format: int64
         updateUser:
-          type: string
-        userIdentityForAudit:
           type: string
         uuid:
           type: string
@@ -13022,27 +12894,8 @@ components:
           items:
             type: string
           uniqueItems: true
-        userName:
-          $ref: '#/components/schemas/UserName'
-    UserName:
-      type: object
-      properties:
-        displayName:
+        userId:
           type: string
-        fullName:
-          type: string
-        name:
-          type: string
-        userIdentityForAudit:
-          type: string
-    UserNameEntryValue:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/EntryValue'
-      - type: object
-        properties:
-          userName:
-            $ref: '#/components/schemas/UserName'
     UserPreferences:
       type: object
       properties:
@@ -13107,8 +12960,6 @@ components:
           $ref: '#/components/schemas/DocRef'
         description:
           type: string
-        filter:
-          $ref: '#/components/schemas/ExpressionOperator'
         name:
           type: string
         pipeline:
