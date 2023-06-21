@@ -180,6 +180,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (started && textDirty) {
             editor.setText(this.text);
             textDirty = false;
+            markClean();
         }
     }
 
@@ -513,6 +514,18 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (editor.isAttached()) {
             editor.focus();
         }
+    }
+
+    public boolean isClean() {
+        if (editor.isAttached()) {
+            return editor.isClean();
+        } else {
+            return true;
+        }
+    }
+
+    public void markClean() {
+        editor.markClean();
     }
 
     @Override

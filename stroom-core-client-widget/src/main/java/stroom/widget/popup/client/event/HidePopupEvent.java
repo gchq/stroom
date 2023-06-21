@@ -66,10 +66,18 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
         return ok;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onHide(HidePopupEvent event);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
