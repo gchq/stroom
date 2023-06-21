@@ -289,7 +289,7 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public Val getValue(final int index, final boolean evaluateChildren) {
+            public Val getValue(final int index) {
                 return null;
             }
         };

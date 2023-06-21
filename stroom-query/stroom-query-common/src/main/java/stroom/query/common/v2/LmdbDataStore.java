@@ -1090,7 +1090,7 @@ public class LmdbDataStore implements DataStore {
         }
 
         @Override
-        public Val getValue(final int index, final boolean evaluateChildren) {
+        public Val getValue(final int index) {
             if (index >= cachedValues.length) {
                 try {
                     throw new ArrayIndexOutOfBoundsException("Attempt to get value for unknown field index: " + index);

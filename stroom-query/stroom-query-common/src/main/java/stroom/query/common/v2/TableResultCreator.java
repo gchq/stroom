@@ -275,7 +275,7 @@ public class TableResultCreator implements ResultCreator {
             int i = 0;
             for (final Field field : fields) {
                 try {
-                    final Val val = item.getValue(i, true);
+                    final Val val = item.getValue(i);
                     final String string = fieldFormatter.format(field, val);
                     stringValues.add(string);
                 } catch (final RuntimeException e) {
@@ -341,7 +341,7 @@ public class TableResultCreator implements ResultCreator {
             final List<String> stringValues = new ArrayList<>(fields.size());
             int i = 0;
             for (final Field field : fields) {
-                final Val val = item.getValue(i, true);
+                final Val val = item.getValue(i);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
                 fieldIdToValueMap.put(field.getName(), string);
@@ -430,7 +430,7 @@ public class TableResultCreator implements ResultCreator {
             final List<String> stringValues = new ArrayList<>(fields.size());
             int i = 0;
             for (final Field field : fields) {
-                final Val val = item.getValue(i, true);
+                final Val val = item.getValue(i);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
                 fieldIdToValueMap.put(field.getName(), string);

@@ -565,7 +565,7 @@ public class MapDataStore implements DataStore, Data {
         }
 
         @Override
-        public Val getValue(final int index, final boolean evaluateChildren) {
+        public Val getValue(final int index) {
             Val val = cachedValues[index];
             if (val == null) {
                 val = createValue(index);
