@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.33-open-id-1] - 2023-06-21
+
 * Issue **#3412** : Add a filter icon to pipeline elements in the stepper to show which elements have active filters. Change the _Change Filters_ screen to show which of the elements has active filter(s) and to select the element currently selected in the stepper. Add a context menu to the pipeline elements to allow editing/deleting of the step filters.
 
 * Issue **#3538** : Fix null pointer exception when opening the dashboard expression editor a second time.
@@ -5489,7 +5491,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.27-open-id-1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.33-open-id-1...HEAD
+[v7.2-beta.33-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.27-open-id-1...v7.2-beta.33-open-id-1
 [v7.2-beta.27-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.18-open-id-1...v7.2-beta.27-open-id-1
 [v7.2-beta.18-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-7...v7.2-beta.18-open-id-1
 [v7.2-beta.10-open-id-7]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-6...v7.2-beta.10-open-id-7
