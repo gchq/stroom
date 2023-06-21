@@ -264,12 +264,12 @@ public class ExpressionPresenter
                 final String msg = "Expression has unsaved changes.\n"
                         + "Are you sure you want to close this window?";
                 ConfirmEvent.fire(ExpressionPresenter.this, msg, confirm -> {
-                            if (confirm) {
-                                e.hide();
-                            } else {
-                                // Don't hide
-                            }
-                        });
+                    if (confirm) {
+                        e.hide();
+                    } else {
+                        // Don't hide
+                    }
+                });
             }
         }
     }
