@@ -44,6 +44,7 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -1052,7 +1053,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .findByContent(request.getPattern(), request.isRegex(), request.isMatchCase());
 
             for (final DocContentMatch docContentMatch : matches) {
-
                 final List<String> parents = new ArrayList<>();
                 parents.add(docContentMatch.getDocRef().getName());
                 final TreeModel masterTreeModel = explorerTreeModel.getModel();
@@ -1083,6 +1083,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 list.add(explorerDocContentMatch);
             }
         }
-        return ResultPage.createPageLimitedList(list, request.getPageRequest());
+
+        PageRequest pageRequest = request.getPageRequest();
+        if (list.size() < pageRequest.getOffset()) {
+            return ResultPage.createUnboundedList(Collections.emptyList());
+        }
+        return ResultPage.createPageLimitedList(list, pageRequest);
     }
 }
