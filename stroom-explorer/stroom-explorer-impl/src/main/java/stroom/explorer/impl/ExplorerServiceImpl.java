@@ -233,6 +233,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + favDocRef.getType())
                     .isFavourite(true)
                     .rootNodeUuid(favNode)
+                    .tags(ExplorerTags.getTags(favDocRef.getType()))
                     .build();
             masterTreeModel.add(favNode, childNode);
         }
@@ -244,7 +245,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                             final List<ExplorerNode> rootNodes,
                                             final Predicate<DocRef> fuzzyMatchPredicate) {
         if (rootNodes.size() > 0) {
-            final ExplorerNode rootNode = rootNodes.get(0);
+            final ExplorerNode rootNode = rootNodes.get(rootNodes.size() - 1);
             return rootNodes
                     .stream()
                     .map(node -> {
