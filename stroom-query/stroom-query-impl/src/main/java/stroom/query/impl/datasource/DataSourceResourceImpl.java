@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.impl.datasource;
+package stroom.query.impl.datasource;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.meta.shared.MetaFields;
-import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.impl.QueryService;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -29,25 +28,20 @@ import javax.inject.Provider;
 @AutoLogged
 class DataSourceResourceImpl implements DataSourceResource {
 
-    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
+    private final Provider<QueryService> queryServiceProvider;
 
     @Inject
-    DataSourceResourceImpl(final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
-        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
+    DataSourceResourceImpl(final Provider<QueryService> queryServiceProvider) {
+        this.queryServiceProvider = queryServiceProvider;
     }
 
     @Override
     public DataSource fetch(final DocRef dataSourceRef) {
-        if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
-            return DataSource
-                    .builder()
-                    .fields(MetaFields.getFields())
-                    .build();
-        }
+        return queryServiceProvider.get().getDataSource(dataSourceRef);
+    }
 
-        return dataSourceProviderRegistryProvider.get()
-                .getDataSourceProvider(dataSourceRef)
-                .map(provider -> provider.getDataSource(dataSourceRef))
-                .orElse(null);
+    @Override
+    public DataSource fetchFromQuery(final String query) {
+        return queryServiceProvider.get().getDataSource(query);
     }
 }

@@ -13,6 +13,31 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3412** : Add a filter icon to pipeline elements in the stepper to show which elements have active filters. Change the _Change Filters_ screen to show which of the elements has active filter(s) and to select the element currently selected in the stepper. Add a context menu to the pipeline elements to allow editing/deleting of the step filters.
+
+* Issue **#3538** : Fix null pointer exception when opening the dashboard expression editor a second time.
+
+* Issue **#3537** : Fix spinner arrows showing as `MONO_ARROW_UP` and `MONO_ARROW_DOWN` text instead of icons.
+
+* Issue **#3528** : Fix null pointer exception when booting proxy with a non-null TlsConfiguration.
+
+* Issue **#3509** : Add field, function, statement picker.
+
+* Issue **#3482** : Add a log pane to the stepper to show all the info/warn/error/fatal messages in one place. Add button to toggle the new log pane. Add coloured border to pipeline elements in the stepper to indicate the presence of INFO/WARN/ERROR/FATAL messages.
+
+* Issue **#3519** : Fix search API compatibility.
+
+* Issue **#3518** : Allow users to select the rendered markdown documentation content in the browser.
+
+* Issue **#3522** : Change the default stroom/proxy config files to set `detailedJsonProcessingExceptionMapper: true` so REST clients see the reason for a 400 Bad Request and it is also included in the app logs when using the Jersey logging feature logger.
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+
 ## [v7.2-beta.27-open-id-1] - 2023-06-14
 
 * Issue **#3304** : Make analytic results searchable.

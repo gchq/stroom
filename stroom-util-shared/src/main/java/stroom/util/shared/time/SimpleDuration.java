@@ -11,6 +11,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class SimpleDuration {
+
     public static SimpleDuration ZERO = new SimpleDuration(0, TimeUnit.NANOSECONDS);
 
     @JsonProperty
@@ -65,6 +66,10 @@ public class SimpleDuration {
                 ", timeUnit=" + timeUnit +
                 '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

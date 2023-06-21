@@ -11,6 +11,10 @@
   overflow-y: scroll;
   background-color: var(--markdown-background__color);
   white-space: normal !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
 }
 
 .markdown h1,
@@ -44,6 +48,13 @@
   font-weight: 400;
   font-size: 1.1em;
   margin-bottom: 3px;
+}
+
+.markdown p {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
 }
 
 .markdown code {
@@ -157,3 +168,4 @@ hide the standard control and replace it with something more fancy that we can c
   margin-left: 0.5em;
   padding-top: 0.2em;
 }
+

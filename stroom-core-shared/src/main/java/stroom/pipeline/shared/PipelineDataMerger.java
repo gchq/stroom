@@ -310,6 +310,10 @@ public class PipelineDataMerger {
         return elementMap;
     }
 
+    public PipelineElement getElement(final String elementId) {
+        return elementMap.get(elementId);
+    }
+
     public Map<String, Map<String, PipelineProperty>> getProperties() {
         return propertyMap;
     }

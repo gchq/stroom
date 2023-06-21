@@ -16,6 +16,7 @@
 
 package stroom.widget.button.client;
 
+import stroom.svg.client.SvgImages;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -23,7 +24,6 @@ import stroom.widget.util.client.MouseUtil;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
@@ -46,6 +46,8 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
      */
     private boolean allowClickPropagation;
 
+    private String svgClassName = null;
+
     public InlineSvgButton() {
         super(Document.get().createPushButtonElement());
 
@@ -63,8 +65,17 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
         setEnabled(true);
     }
 
-    public void setSvg(final String svg) {
-        face.setInnerHTML(svg);
+    public void setSvg(final SvgImages svgImage) {
+        // Puts a class on the button that is specific to the svg file, so we
+        // can do custom styling of the button bases on the svg it uses.
+        final String newSvgClassName = svgImage.getCssClass();
+        if (this.svgClassName != null) {
+            getElement().replaceClassName(this.svgClassName, newSvgClassName);
+        } else {
+            getElement().addClassName(newSvgClassName);
+        }
+        this.svgClassName = newSvgClassName;
+        face.setInnerHTML(svgImage.getSvg());
     }
 
     @Override

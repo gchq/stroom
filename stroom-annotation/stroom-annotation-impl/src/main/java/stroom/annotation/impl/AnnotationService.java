@@ -60,6 +60,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         checkPermission();
         return DataSource
                 .builder()
+                .docRef(ANNOTATIONS_PSEUDO_DOC_REF)
                 .fields(AnnotationFields.FIELDS)
                 .build();
     }

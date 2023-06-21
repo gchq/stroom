@@ -1,6 +1,7 @@
 package stroom.app.guice;
 
 import stroom.analytics.rule.impl.AnalyticRuleModule;
+import stroom.query.impl.datasource.DataSourceModule;
 
 import com.google.inject.AbstractModule;
 
@@ -32,7 +33,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.welcome.SessionInfoModule());
         install(new stroom.core.welcome.WelcomeModule());
         install(new stroom.dashboard.impl.DashboardModule());
-        install(new stroom.dashboard.impl.datasource.DataSourceModule());
+        install(new DataSourceModule());
         install(new stroom.dashboard.impl.logging.LoggingModule());
         install(new stroom.dashboard.impl.script.ScriptModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());

@@ -337,9 +337,9 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         public TableResultConsumer addRow(final Row row) {
             try {
                 Long time = null;
-                final int timeFieldPos = fieldIndex.getTimeFieldPos();
-                if (timeFieldPos != -1) {
-                    time = DateUtil.parseNormalDateTimeString(row.getValues().get(timeFieldPos));
+                final int timeFieldIndex = fieldIndex.getTimeFieldIndex();
+                if (timeFieldIndex != -1) {
+                    time = DateUtil.parseNormalDateTimeString(row.getValues().get(timeFieldIndex));
                 }
 
                 // Get value.

@@ -17,6 +17,8 @@
 package stroom.query.shared;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.FunctionSignature;
+import stroom.dashboard.shared.StructureElement;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
@@ -105,4 +107,18 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Fetch time zone data from the server",
             operationId = "fetchTimeZones")
     List<String> fetchTimeZones();
+
+    @GET
+    @Path("/functions")
+    @Operation(
+            summary = "Fetch all expression functions",
+            operationId = "fetchFunctions")
+    List<FunctionSignature> fetchFunctions();
+
+    @GET
+    @Path("/structure")
+    @Operation(
+            summary = "Fetch all structure element descriptions",
+            operationId = "fetchStructureElements")
+    List<StructureElement> fetchStructureElements();
 }

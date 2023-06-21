@@ -41,6 +41,7 @@ public final class SvgPresets {
     public static final Preset ELLIPSES_HORIZONTAL = enabled("svgIcon-ellipses-horizontal", "Actions...");
     public static final Preset ELLIPSES_VERTICAL = enabled("svgIcon-ellipses-vertical", "Actions...");
     public static final Preset ERROR = enabled("svgIcon-error", "Error");
+    public static final Preset EXCLAMATION = enabled("svgIcon-exclamation", "Problems");
     public static final Preset EXPLORER = enabled("svgIcon-explorer", "Explorer");
     public static final Preset FATAL = enabled("svgIcon-fatal", "Fatal");
     public static final Preset FAVOURITES = disabled("svgIcon-favourites", "Favourites");

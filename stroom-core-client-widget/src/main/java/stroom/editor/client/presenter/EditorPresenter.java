@@ -23,6 +23,7 @@ import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.util.shared.TextRange;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -279,22 +280,31 @@ public class EditorPresenter
      */
     public void registerCompletionProviders(final AceEditorMode aceEditorMode,
                                             final AceCompletionProvider... completionProviders) {
-        delegatingAceCompleter.registerCompletionProviders(
-                getEditorId(), aceEditorMode, completionProviders);
+        // scheduleDeferred to ensure editor is initialised before getId is called
+        Scheduler.get().scheduleDeferred(() -> {
+            delegatingAceCompleter.registerCompletionProviders(
+                    getEditorId(), aceEditorMode, completionProviders);
+        });
     }
 
     /**
      * Registers mode agnostic completion providers specific to this editor instance
      */
     public void registerCompletionProviders(final AceCompletionProvider... completionProviders) {
-        delegatingAceCompleter.registerCompletionProviders(
-                getEditorId(), completionProviders);
+        // scheduleDeferred to ensure editor is initialised before getId is called
+        Scheduler.get().scheduleDeferred(() -> {
+            delegatingAceCompleter.registerCompletionProviders(
+                    getEditorId(), completionProviders);
+        });
     }
 
     /**
      * Removes all completion providers specific to this editor instance
      */
     public void deRegisterCompletionProviders() {
-        delegatingAceCompleter.deRegisterCompletionProviders(getEditorId());
+        // scheduleDeferred to ensure editor is initialised before getId is called
+        Scheduler.get().scheduleDeferred(() -> {
+            delegatingAceCompleter.deRegisterCompletionProviders(getEditorId());
+        });
     }
 }

@@ -12,6 +12,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.TreeAction;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -38,6 +39,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class DataGridUtil {
 
@@ -388,6 +390,7 @@ public class DataGridUtil {
         private String fieldName;
         private boolean isIgnoreCaseOrdering = false;
         private List<String> styleNames = null;
+        private List<Function<T_ROW, String>> styleFunctions = null;
 
         private ColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
                               final Function<T_RAW_VAL, T_CELL_VAL> formatter,
@@ -465,12 +468,41 @@ public class DataGridUtil {
             return withVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
         }
 
+        /**
+         * Add a style that will be applied to all rows in this column
+         */
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withStyleName(final String styleName) {
             if (styleNames == null) {
                 styleNames = new ArrayList<>();
             }
             styleNames.add(Objects.requireNonNull(styleName));
             return this;
+        }
+
+        /**
+         * Add a style (or space separated styles) to rows in this column conditionally based on the row value
+         * @param styleFunction A function to return the style name, an empty string or null
+         */
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withConditionalStyleName(
+                final Function<T_ROW, String> styleFunction) {
+            if (styleFunctions == null) {
+                styleFunctions = new ArrayList<>();
+            }
+            styleFunctions.add(Objects.requireNonNull(styleFunction));
+            return this;
+        }
+
+        private String buildCellStyles(final String baseStyleNames,
+                                       final T_ROW object) {
+            return String.join(" ",
+                    GwtNullSafe.string(baseStyleNames),
+                    GwtNullSafe.stream(styleNames)
+                            .collect(Collectors.joining(" ")),
+                    GwtNullSafe.stream(styleFunctions)
+                            .filter(Objects::nonNull)
+                            .map(func -> func.apply(object))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.joining(" ")));
         }
 
         public Column<T_ROW, T_CELL_VAL> build() {
@@ -501,14 +533,9 @@ public class DataGridUtil {
 
                     @Override
                     public String getCellStyleNames(final Context context, final T_ROW object) {
-                        if (styleNames == null) {
-                            return super.getCellStyleNames(context, object);
-                        } else {
-                            return super.getCellStyleNames(context, object)
-                                    + " "
-                                    + String.join(" ", styleNames);
-                        }
+                        return buildCellStyles(super.getCellStyleNames(context, object), object);
                     }
+
                 };
             } else {
                 // Explicit generics typing for GWT
@@ -520,13 +547,7 @@ public class DataGridUtil {
 
                     @Override
                     public String getCellStyleNames(final Context context, final T_ROW object) {
-                        if (styleNames == null) {
-                            return super.getCellStyleNames(context, object);
-                        } else {
-                            return super.getCellStyleNames(context, object)
-                                    + " "
-                                    + String.join(" ", styleNames);
-                        }
+                        return buildCellStyles(super.getCellStyleNames(context, object), object);
                     }
                 };
             }

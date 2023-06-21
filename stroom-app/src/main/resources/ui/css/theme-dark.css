@@ -40,6 +40,10 @@
 
     --tooltip__background-color: #1a1d21;
     --tooltip__text-color: var(--text-color);
+    /*
+    --tooltip__background-color: #adadad;
+    --tooltip__text-color: #000;
+    */
 
     --button__background-image: none;
     --button__background-color: #333436;
@@ -56,7 +60,7 @@
 
     --icon-button__background-color--on: var(--blue-500);
     --icon-button__border-color--on: var(--black);
-    --icon-button__color--on: var(--white);
+    --icon-button__color--on: var(--app__background);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
     --icon-button__color: var(--blue-500);
@@ -73,10 +77,17 @@
     --pipeline-element-box__background-color: #454545;
     --pipeline-element-box__background-color--hover: #505050;
     --pipeline-element-box__background-color--selected: #1164a3;
-    --pipeline-element-box__background-color--selected--hover: #1164a3;
+    --pipeline-element-box__background-color--selected--hover: #276fb0;
     --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
-    --pipeline-element-box__text-color: #fff;
-    --pipeline-element-box__border-color: #a1a1a1;
+    --pipeline-element-box__text-color: #c1c1fc1;
+    --pipeline-element-box__text-color--selected: #fff;
+    --pipeline-element-box__border-color: #777;
+    --pipeline-element-box__border-color--selected: #a1a1a1;
+    --pipeline-element-box__border-color--info: #378cff;
+    --pipeline-element-box__border-color--warn: yellow;
+    --pipeline-element-box__border-color--error: orangered;
+    --pipeline-element-box__border-color--fatal-error: red;
+    --pipeline-element-box__border-color--fatal-error-dark: #c60000;
 
     --link__text-color: #3aaaff;
 
@@ -85,14 +96,14 @@
 
     --code-editor-right-bar__background-color: #19171d;
     --code-editor__border-color: #000;
-    --code-editor__border-color--info: #3676c6;
+    --code-editor__border-color--info: #378cff;
     --code-editor__background-color--info: #378cff;
-    --code-editor__border-color--warning: #dd9942;
-    --code-editor__background-color--warning: #ffde81;
-    --code-editor__border-color--error: #660000;
-    --code-editor__background-color--error: #ff3a37;
-    --code-editor__border-color--fatal: #c5cde2;
-    --code-editor__background-color--fatal: #000000;
+    --code-editor__border-color--warning: yellow;
+    --code-editor__background-color--warning: yellow;
+    --code-editor__border-color--error: orangered;
+    --code-editor__background-color--error: orangered;
+    --code-editor__border-color--fatal: red;
+    --code-editor__background-color--fatal: red;
     --code-editor__background-color--highlight: #1164a3;
 
     --xsdbrowser-box__background-color: #19171d;
