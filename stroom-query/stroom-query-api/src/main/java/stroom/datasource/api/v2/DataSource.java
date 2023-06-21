@@ -29,23 +29,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({
-        "fields",
-        "timeField",
-        "defaultExtractionPipeline"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public final class DataSource implements Serializable {
 
+    @JsonProperty
+    private final DocRef docRef;
     @JsonProperty
     private final List<AbstractField> fields;
     @JsonProperty
     private final DocRef defaultExtractionPipeline;
 
     @JsonCreator
-    public DataSource(@JsonProperty("fields") final List<AbstractField> fields,
+    public DataSource(@JsonProperty("docRef") final DocRef docRef,
+                      @JsonProperty("fields") final List<AbstractField> fields,
                       @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
+        this.docRef = docRef;
         this.fields = fields;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
     }
 
     public List<AbstractField> getFields() {
@@ -92,6 +97,7 @@ public final class DataSource implements Serializable {
 
     public static final class Builder {
 
+        private DocRef docRef;
         private List<AbstractField> fields = new ArrayList<>();
         private DocRef defaultExtractionPipeline;
 
@@ -99,8 +105,14 @@ public final class DataSource implements Serializable {
         }
 
         private Builder(final DataSource dataSource) {
+            docRef = dataSource.docRef;
             fields = dataSource.fields;
             defaultExtractionPipeline = dataSource.defaultExtractionPipeline;
+        }
+
+        public Builder docRef(final DocRef docRef) {
+            this.docRef = docRef;
+            return this;
         }
 
         public Builder fields(final List<AbstractField> fields) {
@@ -114,7 +126,7 @@ public final class DataSource implements Serializable {
         }
 
         public DataSource build() {
-            return new DataSource(fields, defaultExtractionPipeline);
+            return new DataSource(docRef, fields, defaultExtractionPipeline);
         }
     }
 }

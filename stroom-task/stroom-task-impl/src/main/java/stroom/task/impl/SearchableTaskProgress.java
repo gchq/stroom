@@ -79,6 +79,7 @@ class SearchableTaskProgress implements Searchable {
     public DataSource getDataSource() {
         return DataSource
                 .builder()
+                .docRef(TASK_MANAGER_PSEUDO_DOC_REF)
                 .fields(TaskManagerFields.getFields())
                 .build();
     }

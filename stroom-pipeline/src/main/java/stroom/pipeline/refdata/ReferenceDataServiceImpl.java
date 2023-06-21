@@ -81,7 +81,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
 
-    private static final DataSource DATA_SOURCE = DataSource.builder().fields(ReferenceDataFields.FIELDS).build();
+    private static final DataSource DATA_SOURCE = DataSource
+            .builder()
+            .docRef(ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF)
+            .fields(ReferenceDataFields.FIELDS)
+            .build();
     private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 

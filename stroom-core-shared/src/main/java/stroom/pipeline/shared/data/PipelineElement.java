@@ -16,7 +16,11 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -67,6 +71,11 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @JsonProperty
     private String type;
 
+    // Only used in the UI to filter stepping. Not persisted.
+    @XmlTransient
+    @JsonIgnore
+    private SteppingFilterSettings steppingFilterSettings = null;
+
     public PipelineElement() {
     }
 
@@ -108,6 +117,20 @@ public class PipelineElement implements Comparable<PipelineElement> {
         this.type = value;
     }
 
+    @JsonIgnore
+    public void setSteppingFilterSettings(final SteppingFilterSettings steppingFilterSettings) {
+        this.steppingFilterSettings = steppingFilterSettings;
+    }
+
+    @JsonIgnore
+    public SteppingFilterSettings getSteppingFilterSettings() {
+        return steppingFilterSettings;
+    }
+
+    public boolean hasActiveFilters() {
+        return GwtNullSafe.test(steppingFilterSettings, SteppingFilterSettings::hasActiveFilters);
+    }
+
     @Override
     public int compareTo(final PipelineElement o) {
         return id.compareTo(o.id);
@@ -134,5 +157,14 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @Override
     public String toString() {
         return "id=" + id + ", type=" + type;
+    }
+
+    /**
+     * E.g.
+     * <pre>{@code CombinedParser 'myCombinedParser'}</pre>
+     */
+    @JsonIgnore
+    public String getDisplayName() {
+        return type + " '" + id + "'";
     }
 }

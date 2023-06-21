@@ -69,14 +69,14 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
             final Rest<DataSource> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
-                        loadedDataSourceRef = dataSourceRef;
-
                         if (result != null) {
+                            loadedDataSourceRef = result.getDocRef();
                             dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
                             indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
                             defaultExtractionPipeline = result.getDefaultExtractionPipeline();
                             Collections.sort(indexFieldNames);
                         } else {
+                            loadedDataSourceRef = dataSourceRef;
                             dataSourceFieldsMap = new DataSourceFieldsMap();
                             indexFieldNames = new ArrayList<>();
                             defaultExtractionPipeline = null;
@@ -107,6 +107,49 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
         }
     }
 
+    public void loadDataSource(final String query) {
+        if (query != null) {
+            final Rest<DataSource> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        if (result != null) {
+                            loadedDataSourceRef = result.getDocRef();
+                            dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
+                            indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
+                            defaultExtractionPipeline = result.getDefaultExtractionPipeline();
+                            Collections.sort(indexFieldNames);
+                        } else {
+                            loadedDataSourceRef = null;
+                            dataSourceFieldsMap = new DataSourceFieldsMap();
+                            indexFieldNames = new ArrayList<>();
+                            defaultExtractionPipeline = null;
+                        }
+
+                        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
+                    })
+                    .onFailure(caught -> {
+                        loadedDataSourceRef = null;
+                        indexFieldNames = null;
+                        defaultExtractionPipeline = null;
+                        dataSourceFieldsMap = null;
+
+//                        AlertEvent.fireError(IndexLoader.this,
+//                                "Unable to locate datasource " + dataSourceRef.getUuid(),
+//                                null);
+                        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
+
+                    })
+                    .call(DATA_SOURCE_RESOURCE)
+                    .fetchFromQuery(query);
+        } else {
+            loadedDataSourceRef = null;
+            indexFieldNames = null;
+            defaultExtractionPipeline = null;
+            dataSourceFieldsMap = null;
+            ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
+        }
+    }
+
     public DocRef getLoadedDataSourceRef() {
         return loadedDataSourceRef;
     }
@@ -122,4 +165,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     public DataSourceFieldsMap getDataSourceFieldsMap() {
         return dataSourceFieldsMap;
     }
+
+
 }

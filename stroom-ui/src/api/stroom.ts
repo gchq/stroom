@@ -815,6 +815,9 @@ export interface DataRetentionRules {
 export interface DataSource {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   defaultExtractionPipeline?: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
   fields?: AbstractField[];
 }
 
@@ -3152,6 +3155,8 @@ export interface SearchApiKeyRequest {
  * A request for new search or a follow up request for more data for an existing iterative search
  */
 export interface SearchRequest {
+  dateTimeLocale?: string;
+
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
 
@@ -3621,6 +3626,11 @@ export interface StroomStatsStoreFieldChangeRequest {
   oldEntityData?: StroomStatsStoreEntityData;
 }
 
+export interface StructureElement {
+  description?: string;
+  title?: string;
+}
+
 export interface Suggestions {
   cacheable?: boolean;
   list?: string[];
@@ -3861,6 +3871,7 @@ export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
   defaultMaxResults?: string;
+  helpSubPathDocumentation?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;
   helpSubPathProperties?: string;
@@ -5660,40 +5671,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name FetchTimeZones
-     * @summary Fetch time zone data from the server
-     * @request GET:/dashboard/v1/fetchTimeZones
-     * @secure
-     */
-    fetchTimeZones: (params: RequestParams = {}) =>
-      this.request<any, string[]>({
-        path: `/dashboard/v1/fetchTimeZones`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
-     * @name FetchDashboardFunctions
-     * @summary Fetch all expression functions
-     * @request GET:/dashboard/v1/functions
-     * @secure
-     */
-    fetchDashboardFunctions: (params: RequestParams = {}) =>
-      this.request<any, FunctionSignature[]>({
-        path: `/dashboard/v1/functions`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
      * @request POST:/dashboard/v1/search/{nodeName}
@@ -5962,6 +5939,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DataSource>({
         path: `/dataSource/v1/fetchFields`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Sources
+     * @name FetchDataSourceFieldsFromQuery
+     * @summary Fetch data source fields
+     * @request POST:/dataSource/v1/fetchFieldsFromQuery
+     * @secure
+     */
+    fetchDataSourceFieldsFromQuery: (data: string, params: RequestParams = {}) =>
+      this.request<any, DataSource>({
+        path: `/dataSource/v1/fetchFieldsFromQuery`,
         method: "POST",
         body: data,
         secure: true,
@@ -8264,14 +8260,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name FetchTimeZones1
+     * @name FetchTimeZones
      * @summary Fetch time zone data from the server
      * @request GET:/query/v1/fetchTimeZones
      * @secure
      */
-    fetchTimeZones1: (params: RequestParams = {}) =>
+    fetchTimeZones: (params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/query/v1/fetchTimeZones`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchFunctions
+     * @summary Fetch all expression functions
+     * @request GET:/query/v1/functions
+     * @secure
+     */
+    fetchFunctions: (params: RequestParams = {}) =>
+      this.request<any, FunctionSignature[]>({
+        path: `/query/v1/functions`,
         method: "GET",
         secure: true,
         ...params,
@@ -8293,6 +8306,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchStructureElements
+     * @summary Fetch all structure element descriptions
+     * @request GET:/query/v1/structure
+     * @secure
+     */
+    fetchStructureElements: (params: RequestParams = {}) =>
+      this.request<any, StructureElement[]>({
+        path: `/query/v1/structure`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
 

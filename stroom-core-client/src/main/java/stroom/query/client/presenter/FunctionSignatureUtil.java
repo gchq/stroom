@@ -1,4 +1,4 @@
-package stroom.dashboard.client.table;
+package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;

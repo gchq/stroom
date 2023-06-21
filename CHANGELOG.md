@@ -13,6 +13,48 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.33] - 2023-06-20
+
+* Issue **#3412** : Add a filter icon to pipeline elements in the stepper to show which elements have active filters. Change the _Change Filters_ screen to show which of the elements has active filter(s) and to select the element currently selected in the stepper. Add a context menu to the pipeline elements to allow editing/deleting of the step filters.
+
+* Issue **#3538** : Fix null pointer exception when opening the dashboard expression editor a second time.
+
+* Issue **#3537** : Fix spinner arrows showing as `MONO_ARROW_UP` and `MONO_ARROW_DOWN` text instead of icons.
+
+
+## [v7.2-beta.32] - 2023-06-19
+
+* Issue **#3528** : Fix null pointer exception when booting proxy with a non-null TlsConfiguration.
+
+* Issue **#3509** : Add field, function, statement picker.
+
+
+## [v7.2-beta.31] - 2023-06-15
+
+* Issue **#3482** : Add a log pane to the stepper to show all the info/warn/error/fatal messages in one place. Add button to toggle the new log pane. Add coloured border to pipeline elements in the stepper to indicate the presence of INFO/WARN/ERROR/FATAL messages.
+
+* Issue **#3519** : Fix search API compatibility.
+
+* Issue **#3518** : Allow users to select the rendered markdown documentation content in the browser.
+
+* Issue **#3522** : Change the default stroom/proxy config files to set `detailedJsonProcessingExceptionMapper: true` so REST clients see the reason for a 400 Bad Request and it is also included in the app logs when using the Jersey logging feature logger.
+
+
+## [v7.2-beta.30] - 2023-06-14
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+
+## [v7.2-beta.29] - 2023-06-14
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+
+## [v7.2-beta.28] - 2023-06-14
+
+* Issue **#3305** : Fix index out of bounds exception.
+
+
 ## [v7.2-beta.27] - 2023-06-13
 
 * Issue **#3304** : Make analytic results searchable.
@@ -5450,7 +5492,13 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.27...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.33...HEAD
+[v7.2-beta.33]: https://github.com/gchq/stroom/compare/v7.2-beta.32...v7.2-beta.33
+[v7.2-beta.32]: https://github.com/gchq/stroom/compare/v7.2-beta.31...v7.2-beta.32
+[v7.2-beta.31]: https://github.com/gchq/stroom/compare/v7.2-beta.30...v7.2-beta.31
+[v7.2-beta.30]: https://github.com/gchq/stroom/compare/v7.2-beta.29...v7.2-beta.30
+[v7.2-beta.29]: https://github.com/gchq/stroom/compare/v7.2-beta.28...v7.2-beta.29
+[v7.2-beta.28]: https://github.com/gchq/stroom/compare/v7.2-beta.27...v7.2-beta.28
 [v7.2-beta.27]: https://github.com/gchq/stroom/compare/v7.2-beta.26...v7.2-beta.27
 [v7.2-beta.26]: https://github.com/gchq/stroom/compare/v7.2-beta.25...v7.2-beta.26
 [v7.2-beta.25]: https://github.com/gchq/stroom/compare/v7.2-beta.24...v7.2-beta.25

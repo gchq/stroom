@@ -57,6 +57,7 @@ import javax.xml.transform.stream.StreamSource;
 class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltPoolImpl.class);
+    private static final String ELEMENT_ID = XsltPool.class.getSimpleName();
 
     private final URIResolver uriResolver;
     private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
@@ -116,7 +117,9 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         StroomXsltFunctionLibrary functionLibrary = null;
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
         final LocationFactory locationFactory = new DefaultLocationFactory();
-        final ErrorListener errorListener = new ErrorListenerAdaptor(getClass().getSimpleName(), locationFactory,
+        final ErrorListener errorListener = new ErrorListenerAdaptor(
+                ELEMENT_ID,
+                locationFactory,
                 errorReceiver);
 
         try {
@@ -135,7 +138,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
 
         } catch (final SaxonApiException e) {
             LOGGER.debug(e.getMessage(), e);
-            errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
+            errorReceiver.log(Severity.FATAL_ERROR, null, ELEMENT_ID, e.getMessage(), e);
         }
 
         return new StoredXsltExecutable(xsltExecutable, functionLibrary, errorReceiver);

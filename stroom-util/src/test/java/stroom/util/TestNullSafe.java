@@ -3,6 +3,8 @@ package stroom.util;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
 
 import com.google.inject.TypeLiteral;
@@ -896,6 +898,20 @@ class TestNullSafe {
                 .addCase(null, StroomDuration.ZERO)
                 .addCase(StroomDuration.ZERO, StroomDuration.ZERO)
                 .addCase(StroomDuration.ofSeconds(5), StroomDuration.ofSeconds(5))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSimpleDuration() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(SimpleDuration.class)
+                .withTestFunction(testCase ->
+                        NullSafe.duration(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, SimpleDuration.ZERO)
+                .addCase(SimpleDuration.ZERO, SimpleDuration.ZERO)
+                .addCase(SimpleDuration.builder().timeUnit(TimeUnit.SECONDS).time(5).build(),
+                        SimpleDuration.builder().timeUnit(TimeUnit.SECONDS).time(5).build())
                 .build();
     }
 

@@ -40,7 +40,7 @@ public class FieldIndex {
     private final Map<Integer, String> posToField = new TreeMap<>();
     private int index;
 
-    private Integer timeFieldPos;
+    private Integer timeFieldIndex;
     private Integer streamIdFieldIndex;
     private Integer eventIdFieldIndex;
 
@@ -82,22 +82,22 @@ public class FieldIndex {
         posToField.forEach(consumer);
     }
 
-    public int getWindowTimeFieldPos() {
-        final int pos = getTimeFieldPos();
-        if (pos == -1) {
+    public int getWindowTimeFieldIndex() {
+        final int index = getTimeFieldIndex();
+        if (index == -1) {
             throw new RuntimeException("Cannot apply window when there is no time field");
         }
-        return pos;
+        return index;
     }
 
-    public int getTimeFieldPos() {
-        if (timeFieldPos == null) {
-            timeFieldPos =
+    public int getTimeFieldIndex() {
+        if (timeFieldIndex == null) {
+            timeFieldIndex =
                     Optional.ofNullable(getPos(DEFAULT_TIME_FIELD_NAME))
                             .or(() -> Optional.ofNullable(getPos(FALLBACK_TIME_FIELD_NAME)))
                             .orElse(-1);
         }
-        return timeFieldPos;
+        return timeFieldIndex;
     }
 
     public int getStreamIdFieldIndex() {

@@ -109,12 +109,12 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
             SafeHtml expanderIcon;
             if (value.isLeaf()) {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_DOT);
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_DOT.getSvg());
             } else if (value.isExpanded()) {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
                 className = " active";
             } else {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
                 className = " active";
             }
 
