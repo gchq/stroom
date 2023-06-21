@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
@@ -252,7 +253,22 @@ public class ExpressionPresenter
                 }
             }
         } else {
-            e.hide();
+            // Cancel/Close
+            if (editorPresenter.isClean()) {
+                // User not change anything so allow the close
+                e.hide();
+            } else {
+                ConfirmEvent.fire(ExpressionPresenter.this,
+                        "Expression has unsaved changes.\n"
+                                + "Are you sure you want to close this window?",
+                        confirm -> {
+                            if (confirm) {
+                                e.hide();
+                            } else {
+                                // Don't hide
+                            }
+                        });
+            }
         }
     }
 

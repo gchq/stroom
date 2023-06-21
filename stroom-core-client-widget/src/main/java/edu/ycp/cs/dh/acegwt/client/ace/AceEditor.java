@@ -1045,6 +1045,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		editor.getSession().setScrollTop(scrollTop);
 	}-*/;
 
+    public native boolean isClean() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		return editor.getSession().getUndoManager().isClean();
+	}-*/;
+
+    public native void markClean() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.getSession().getUndoManager().markClean();
+	}-*/;
+
     /**
      * Bind command line and editor. For default implementation of command line
      * you can use <code> AceCommandLine cmdLine = new AceDefaultCommandLine(textBox) </code>
