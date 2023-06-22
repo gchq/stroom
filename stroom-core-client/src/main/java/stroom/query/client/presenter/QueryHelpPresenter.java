@@ -18,17 +18,26 @@
 package stroom.query.client.presenter;
 
 import stroom.data.table.client.MyCellTable;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.QueryHelpItem.FunctionCategoryItem;
 import stroom.query.client.presenter.QueryHelpItem.FunctionItem;
+import stroom.query.client.presenter.QueryHelpItem.OverloadedFunctionHeadingItem;
 import stroom.query.client.presenter.QueryHelpItem.QueryHelpItemHeading;
+import stroom.query.client.presenter.QueryHelpItem.TopLevelHeadingItem;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.GwtNullSafe;
+import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.TableBuilder;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -44,11 +53,15 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class QueryHelpPresenter
         extends MyPresenterWidget<QueryHelpView>
@@ -84,10 +97,25 @@ public class QueryHelpPresenter
         elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
         view.setUiHandlers(this);
 
-        final QueryHelpItemHeading dataSourceHeading = new QueryHelpItemHeading("Data Sources", 0);
-        final QueryHelpItemHeading structureHeading = new QueryHelpItemHeading("Structure", 0);
-        fieldsHeading = new QueryHelpItemHeading("Fields", 0);
-        final QueryHelpItemHeading functionsHeading = new QueryHelpItemHeading("Functions", 0);
+        final QueryHelpItem dataSourceHeading = new TopLevelHeadingItem(
+                "Data Sources",
+                0,
+                SafeHtmlUtil.from("A list of data sources that can be queried by specifying them in " +
+                        "the 'from' clause."));
+        final QueryHelpItem structureHeading = new TopLevelHeadingItem(
+                "Structure",
+                0,
+                SafeHtmlUtil.from("A list of the keywords available in the Stroom Query Language."));
+        fieldsHeading = new TopLevelHeadingItem(
+                "Fields",
+                0,
+                SafeHtmlUtil.from("A list of the fields available to 'select' from the specified " +
+                        "data source. The fields will only become available one the data source has been " +
+                        "specified using the 'from' keyword."));
+        final QueryHelpItem functionsHeading = new TopLevelHeadingItem(
+                "Functions",
+                0,
+                SafeHtmlUtil.from("A list of functions available to use the Stroom Query Language."));
         queryHelpItems.add(dataSourceHeading);
         queryHelpItems.add(fieldsHeading);
         queryHelpItems.add(structureHeading);
@@ -100,32 +128,65 @@ public class QueryHelpPresenter
         });
 
         // Add views.
-        views.fetchViews(viewNames -> {
-            viewNames.forEach(viewName -> {
+        views.fetchViews(viewDocRefs -> {
+            viewDocRefs.stream()
+                    .sorted()
+                    .forEach(viewDocRef -> {
+
+                        final String name = viewDocRef.getName();
+                        final String uuid = viewDocRef.getUuid();
+                        final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                        appendKeyValueTable(htmlBuilder,
+                                Arrays.asList(
+                                        new SimpleEntry<>("Name:", name),
+                                        new SimpleEntry<>("UUID:", uuid)));
+
+                        dataSourceHeading.addOrGetChild(new DataSourceHelpItem(
+                                name, htmlBuilder.toSafeHtml(), null));
+                    });
+            viewDocRefs.forEach(viewName -> {
                 // Add function.
-                dataSourceHeading.addOrGetChild(new DataSourceHelpItem(viewName, viewName, null));
             });
             refresh();
         });
 
-        // Add functions.
-        functionSignatures.fetchHelpUrl(helpUrl -> functionSignatures.fetchFunctions(functions -> {
-            functions.forEach(functionSignature -> {
-                QueryHelpItem parent = functionsHeading;
+        // Add functions (ignoring the short form ones like + - * / as the help text can't cope with them
+        functionSignatures.fetchHelpUrl(helpUrl ->
+                functionSignatures.fetchFunctions(functions -> {
+                    functions.stream()
+                            .filter(FunctionSignatureUtil::isBracketedForm)
+                            .forEach(functionSignature -> {
+                                QueryHelpItem parent = functionsHeading;
 
-                // Add categories.
-                final List<String> categories = functionSignature.getCategoryPath();
-                for (final String category : categories) {
-                    final FunctionCategoryItem categoryHeading =
-                            new FunctionCategoryItem(category, parent.getDepth() + 1);
-                    parent = parent.addOrGetChild(categoryHeading);
-                }
+                                // Add categories.
+                                final List<String> categories = functionSignature.getCategoryPath();
+                                for (final String category : categories) {
+                                    final FunctionCategoryItem categoryHeading =
+                                            new FunctionCategoryItem(category, parent.getDepth() + 1);
+                                    parent = parent.addOrGetChild(categoryHeading);
+                                }
 
-                // Add function.
-                parent.addOrGetChild(new FunctionItem(functionSignature, helpUrl, parent.getDepth() + 1));
-            });
-            refresh();
-        }));
+                                final String title = functionSignature.isOverloaded()
+                                        ? FunctionSignatureUtil.buildSignatureStr(functionSignature)
+                                        .replace(functionSignature.getName(), "...")
+                                        : functionSignature.getName();
+
+                                if (functionSignature.isOverloaded()) {
+                                    final OverloadedFunctionHeadingItem overloadedFuncNameHeading =
+                                            new OverloadedFunctionHeadingItem(
+                                                    functionSignature.getName(), parent.getDepth() + 1);
+                                    parent = parent.addOrGetChild(overloadedFuncNameHeading);
+                                }
+
+                                // Add function.
+                                parent.addOrGetChild(new FunctionItem(
+                                        title,
+                                        functionSignature,
+                                        helpUrl,
+                                        parent.getDepth() + 1));
+                            });
+                    refresh();
+                }));
 
         Column<QueryHelpItem, QueryHelpItem> expanderColumn =
                 new Column<QueryHelpItem, QueryHelpItem>(new QueryHelpItemCell(openItems)) {
@@ -150,6 +211,14 @@ public class QueryHelpPresenter
 //        elementChooser.addColumn(textColumn);
         elementChooser.setSelectionModel(elementSelectionModel,
                 new AbstractSelectionEventManager<QueryHelpItem>(elementChooser) {
+
+                    @Override
+                    protected void onSelect(final CellPreviewEvent<QueryHelpItem> e) {
+                        super.onSelect(e);
+                        GWT.log("onSelect: "
+                                + GwtNullSafe.get(e, CellPreviewEvent::getValue, QueryHelpItem::getTitle));
+                    }
+
                     @Override
                     protected void onMoveRight(final CellPreviewEvent<QueryHelpItem> e) {
                         super.onMoveRight(e);
@@ -157,6 +226,7 @@ public class QueryHelpPresenter
                             openItems.add(e.getValue());
                             refresh();
                         }
+                        updateDetails(e.getValue());
                     }
 
                     @Override
@@ -166,6 +236,23 @@ public class QueryHelpPresenter
                             openItems.remove(e.getValue());
                             refresh();
                         }
+                        updateDetails(e.getValue());
+                    }
+
+                    @Override
+                    protected void onMoveDown(final CellPreviewEvent<QueryHelpItem> e) {
+                        super.onMoveDown(e);
+                        final QueryHelpItem keyboardSelectedItem = elementChooser.getVisibleItem(
+                                elementChooser.getKeyboardSelectedRow());
+                        updateDetails(keyboardSelectedItem);
+                    }
+
+                    @Override
+                    protected void onMoveUp(final CellPreviewEvent<QueryHelpItem> e) {
+                        super.onMoveUp(e);
+                        final QueryHelpItem keyboardSelectedItem = elementChooser.getVisibleItem(
+                                elementChooser.getKeyboardSelectedRow());
+                        updateDetails(keyboardSelectedItem);
                     }
 
                     @Override
@@ -176,11 +263,9 @@ public class QueryHelpPresenter
 
                         lastSelection = value;
 
-                        if (value == null) {
-                            getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
+                        updateDetails(value);
 
-                        } else {
-                            getView().setDetails(value.getDetail());
+                        if (value != null) {
                             if (value.hasChildren()) {
                                 toggleOpen(value);
                                 refresh();
@@ -189,12 +274,26 @@ public class QueryHelpPresenter
                             }
                         }
 
-                        getView().enableButtons(e.getValue() != null &&
-                                !e.getValue().getDetail().asString().equals(SafeHtmlUtils.EMPTY_SAFE_HTML.asString()));
+                        getView().enableButtons(GwtNullSafe.test(
+                                e.getValue(),
+                                QueryHelpItem::getInsertType,
+                                InsertType::isInsertable));
                     }
                 });
 
         getView().setElementChooser(elementChooser);
+    }
+
+    private void updateDetails(final QueryHelpItem queryHelpItem) {
+//        final QueryHelpItem selectedItem = elementSelectionModel.getSelectedObject();
+        final QueryHelpItem selectedItem = queryHelpItem;
+        if (selectedItem == null) {
+            getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
+        } else {
+            getView().setDetails(GwtNullSafe.requireNonNullElse(
+                    selectedItem.getDetail(),
+                    SafeHtmlUtils.EMPTY_SAFE_HTML));
+        }
     }
 
     private void toggleOpen(final QueryHelpItem queryHelpItem) {
@@ -222,14 +321,77 @@ public class QueryHelpPresenter
         registerHandler(indexLoader.addChangeDataHandler(e -> {
             functionSignatures.fetchHelpUrl(helpUrl -> {
                 fieldsHeading.clear();
-                final List<String> fieldNames = indexLoader.getIndexFieldNames();
-                if (fieldNames != null) {
-                    fieldNames.forEach(fieldName ->
-                            fieldsHeading.addOrGetChild(new FieldHelpItem(fieldName, fieldName, helpUrl)));
-                }
+                final DataSourceFieldsMap dataSourceFieldsMap = indexLoader.getDataSourceFieldsMap();
+
+                GwtNullSafe.map(dataSourceFieldsMap)
+                        .entrySet()
+                        .stream()
+                        .sorted(Entry.comparingByKey())
+                        .forEach(entry -> {
+                            final String fieldName = entry.getKey();
+                            final AbstractField field = entry.getValue();
+                            final String fieldType = field.getFieldType().getDisplayValue();
+                            final String supportedConditions = field.getConditions()
+                                    .stream()
+                                    .map(Condition::getDisplayValue)
+                                    .map(str -> "'" + str + "'")
+                                    .collect(Collectors.joining(", "));
+//                            TableBuilder tableBuilder = new TableBuilder();
+//                            tableBuilder.row(
+//                                    HtmlBuilder.builder().bold(htmlBuilder -> htmlBuilder.append("Name:")).toSafeHtml(),
+//                                    SafeHtmlUtil.from(fieldName));
+//                            tableBuilder.row(
+//                                    HtmlBuilder.builder().bold(htmlBuilder -> htmlBuilder.append("Type:")).toSafeHtml(),
+//                                    SafeHtmlUtil.from(fieldType));
+//                            tableBuilder.row(
+//                                    HtmlBuilder.builder().bold(htmlBuilder ->
+//                                            htmlBuilder.append("Supported Conditions:")).toSafeHtml(),
+//                                    SafeHtmlUtil.from(supportedConditions));
+//                            tableBuilder.row(
+//                                    HtmlBuilder.builder().bold(htmlBuilder ->
+//                                            htmlBuilder.append("Is queryable:")).toSafeHtml(),
+//                                    SafeHtmlUtil.from(asDisplayValue(field.queryable())));
+//                            tableBuilder.row(
+//                                    HtmlBuilder.builder().bold(htmlBuilder ->
+//                                            htmlBuilder.append("Is numeric:")).toSafeHtml(),
+//                                    SafeHtmlUtil.from(asDisplayValue(field.isNumeric())));
+
+                            final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                            appendKeyValueTable(htmlBuilder,
+                                    Arrays.asList(
+                                            new SimpleEntry<>("Name:", fieldName),
+                                            new SimpleEntry<>("Type:", fieldType),
+                                            new SimpleEntry<>("Supported Conditions:", supportedConditions),
+                                            new SimpleEntry<>("Is queryable:", asDisplayValue(field.queryable())),
+                                            new SimpleEntry<>("Is numeric:", asDisplayValue(field.isNumeric()))));
+
+//                            htmlBuilder.div(tableBuilder::write, Attribute.className("functionSignatureTable"));
+                            fieldsHeading.addOrGetChild(new FieldHelpItem(
+                                    fieldName, htmlBuilder.toSafeHtml(), helpUrl));
+                        });
                 refresh();
             });
         }));
+    }
+
+    private void appendKeyValueTable(final HtmlBuilder htmlBuilder,
+                                     final List<Entry<String, String>> entries) {
+
+        final TableBuilder tableBuilder = new TableBuilder();
+        for (final Entry<String, String> entry : entries) {
+            tableBuilder.row(
+                    HtmlBuilder.builder()
+                            .bold(htmlBuilder2 -> htmlBuilder2.append(entry.getKey()))
+                            .toSafeHtml(),
+                    SafeHtmlUtil.from(entry.getValue()));
+        }
+        htmlBuilder.div(tableBuilder::write, Attribute.className("functionSignatureTable"));
+    }
+
+    private String asDisplayValue(final boolean bool) {
+        return bool
+                ? "True"
+                : "False";
     }
 
     private void refresh() {
@@ -295,6 +457,10 @@ public class QueryHelpPresenter
         return addHandlerToSource(InsertQueryElementEvent.getType(), handler);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface QueryHelpView extends View, HasUiHandlers<QueryHelpUiHandlers> {
 
         void setElementChooser(Widget widget);
@@ -305,11 +471,14 @@ public class QueryHelpPresenter
     }
 
 
+    // --------------------------------------------------------------------------------
+
+
     public static class DataSourceHelpItem extends QueryHelpItem {
 
         private final SafeHtml detail;
 
-        public DataSourceHelpItem(final String title, final String detail, final String helpUrlBase) {
+        public DataSourceHelpItem(final String title, final SafeHtml detail, final String helpUrlBase) {
             super(title, false, 1);
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(hb1 -> {
@@ -356,15 +525,31 @@ public class QueryHelpPresenter
 
         @Override
         public String getInsertText() {
-            return "\"" + text + "\"";
+            return "from \"" + title + "\"";
+        }
+
+        @Override
+        String getClassName() {
+            return super.getClassName() + " queryHelpItem-leaf";
+        }
+
+        @Override
+        public InsertType getInsertType() {
+            return GwtNullSafe.isBlankString(title)
+                    ? InsertType.BLANK
+                    : InsertType.PLAIN_TEXT;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class FieldHelpItem extends QueryHelpItem {
 
         private final SafeHtml detail;
 
-        public FieldHelpItem(final String title, final String detail, final String helpUrlBase) {
+        public FieldHelpItem(final String title, final SafeHtml detail, final String helpUrlBase) {
             super(title, false, 1);
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(hb1 -> {
@@ -411,7 +596,41 @@ public class QueryHelpPresenter
 
         @Override
         public String getInsertText() {
-            return "\"" + text + "\"";
+            return "\"" + title + "\"";
+        }
+
+        @Override
+        String getClassName() {
+            return super.getClassName() + " queryHelpItem-leaf";
+        }
+
+        @Override
+        public InsertType getInsertType() {
+            return GwtNullSafe.isBlankString(title)
+                    ? InsertType.BLANK
+                    : InsertType.PLAIN_TEXT;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum InsertType {
+
+        PLAIN_TEXT(true),
+        SNIPPET(true),
+        BLANK(false),
+        NOT_INSERTABLE(false);
+
+        private final boolean isInsertable;
+
+        InsertType(final boolean isInsertable) {
+            this.isInsertable = isInsertable;
+        }
+
+        public boolean isInsertable() {
+            return isInsertable;
         }
     }
 }

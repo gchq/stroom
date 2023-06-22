@@ -30,6 +30,8 @@ public class FunctionSignature {
     private final String returnDescription;
     @JsonProperty
     private final String description;
+    @JsonProperty
+    private final boolean overloaded;
 
     @JsonCreator
     public FunctionSignature(@JsonProperty("name") final String name,
@@ -38,7 +40,8 @@ public class FunctionSignature {
                              @JsonProperty("args") final List<Arg> args,
                              @JsonProperty("returnType") final Type returnType,
                              @JsonProperty("returnDescription") final String returnDescription,
-                             @JsonProperty("description") final String description) {
+                             @JsonProperty("description") final String description,
+                             @JsonProperty("overloaded") final boolean overloaded) {
         this.name = name;
         this.aliases = aliases;
         this.categoryPath = categoryPath;
@@ -46,10 +49,11 @@ public class FunctionSignature {
         this.returnType = returnType;
         this.returnDescription = returnDescription;
         this.description = description;
+        this.overloaded = overloaded;
     }
 
     /**
-     * @return Once {@link FunctionSignature} for each name or alias with the name set to that name/alias
+     * @return Onc {@link FunctionSignature} for each name or alias with the name set to that name/alias
      * and no aliases.
      */
     public List<FunctionSignature> asAliases() {
@@ -83,7 +87,8 @@ public class FunctionSignature {
                     args,
                     returnType,
                     returnDescription,
-                    description);
+                    description,
+                    overloaded);
         } else {
             throw new RuntimeException(newPrimaryName + " is not a valid name or alias");
         }
@@ -130,6 +135,13 @@ public class FunctionSignature {
         return description;
     }
 
+    /**
+     * @return True if this function signature is overloaded within its category
+     */
+    public boolean isOverloaded() {
+        return overloaded;
+    }
+
     @Override
     public String toString() {
         return "FunctionSignature{" +
@@ -140,6 +152,7 @@ public class FunctionSignature {
                 ", returnType=" + returnType +
                 ", returnDescription='" + returnDescription + '\'' +
                 ", description='" + description + '\'' +
+                ", isOverloaded='" + overloaded + '\'' +
                 '}';
     }
 
@@ -158,15 +171,19 @@ public class FunctionSignature {
                 && Objects.equals(args, that.args)
                 && returnType == that.returnType
                 && Objects.equals(returnDescription, that.returnDescription)
-                && Objects.equals(description, that.description);
+                && Objects.equals(description, that.description)
+                && Objects.equals(overloaded, that.overloaded);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, aliases, categoryPath, args, returnType, returnDescription, description);
+        return Objects.hash(
+                name, aliases, categoryPath, args, returnType, returnDescription, description, overloaded);
     }
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // --------------------------------------------------------------------------------
+
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Arg {
@@ -286,7 +303,7 @@ public class FunctionSignature {
 
     }
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // --------------------------------------------------------------------------------
 
     public enum Type {
 

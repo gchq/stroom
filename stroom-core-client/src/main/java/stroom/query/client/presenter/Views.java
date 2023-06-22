@@ -3,6 +3,7 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.view.shared.ViewResource;
 
 import com.google.gwt.core.client.GWT;
@@ -23,7 +24,7 @@ public class Views implements HasHandlers {
     private final EventBus eventBus;
     private final RestFactory restFactory;
 
-    private List<String> viewNames;
+    private List<DocRef> views;
 
 
     @Inject
@@ -33,14 +34,14 @@ public class Views implements HasHandlers {
         this.restFactory = restFactory;
     }
 
-    public void fetchViews(final Consumer<List<String>> consumer) {
-        if (viewNames != null) {
-            consumer.accept(viewNames);
+    public void fetchViews(final Consumer<List<DocRef>> consumer) {
+        if (views != null) {
+            consumer.accept(views);
         } else {
-            final Rest<List<String>> rest = restFactory.create();
+            final Rest<List<DocRef>> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
-                        viewNames = result;
+                        views = result;
                         consumer.accept(result);
                     })
                     .onFailure(throwable -> AlertEvent.fireError(

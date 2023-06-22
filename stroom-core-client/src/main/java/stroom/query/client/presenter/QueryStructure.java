@@ -4,8 +4,10 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.StructureElement;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
 import stroom.query.shared.QueryResource;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 
@@ -74,7 +76,7 @@ public class QueryStructure implements HasHandlers {
     private void fetchHelpUrl(final Consumer<String> consumer) {
         uiConfigCache.get()
                 .onSuccess(result -> {
-                    final String helpUrl = result.getHelpUrlExpressions();
+                    final String helpUrl = result.getHelpUrlStroomQueryLanguage();
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
                         consumer.accept(helpUrl);
                     } else {
@@ -234,7 +236,7 @@ public class QueryStructure implements HasHandlers {
 
         private final SafeHtml detail;
 
-        public StructureQueryHelpItem(final String title, final String detail, final String helpUrlBase) {
+        public StructureQueryHelpItem(final String title, final String detail, final String helpUrl) {
             super(title, false, 1);
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(hb1 -> {
@@ -258,14 +260,10 @@ public class QueryStructure implements HasHandlers {
 //                                        .collect(Collectors.joining(", "))));
 //                    }
 
-                if (helpUrlBase != null) {
+                if (helpUrl != null) {
                     hb1.append("For more information see the ");
                     hb1.appendLink(
-                            helpUrlBase +
-                                    "/user-guide/stroom-query-language/structure/" +
-                                    title.toLowerCase().replace(" ", "-") +
-                                    "#" +
-                                    title,
+                            helpUrl + "#" + title.toLowerCase().replace(" ", "-"),
                             "Help Documentation");
                     hb1.append(".");
                 }
@@ -277,6 +275,19 @@ public class QueryStructure implements HasHandlers {
         @Override
         public SafeHtml getDetail() {
             return detail;
+        }
+
+        @Override
+        public InsertType getInsertType() {
+            // TODO: 22/06/2023 Might want to make these snippets
+            return GwtNullSafe.isBlankString(title)
+                    ? InsertType.BLANK
+                    : InsertType.PLAIN_TEXT;
+        }
+
+        @Override
+        String getClassName() {
+            return super.getClassName() + " queryHelpItem-leaf";
         }
     }
 }

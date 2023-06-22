@@ -84,6 +84,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private final String helpSubPathDocumentation;
 
     @JsonProperty
+    @JsonPropertyDescription("The sub-path for the help page for Stroom Query Language. Appended to helpUrl.")
+    private final String helpSubPathStroomQueryLanguage;
+
+    @JsonProperty
     private final ThemeConfig theme;
 
     @JsonProperty
@@ -136,6 +140,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         helpSubPathProperties = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/properties/";
         helpSubPathExpressions = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/expressions/";
         helpSubPathDocumentation = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/content/documentation/";
+        helpSubPathStroomQueryLanguage = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "TODO";
         theme = new ThemeConfig();
         query = new QueryConfig();
         namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
@@ -160,6 +165,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("helpSubPathProperties") final String helpSubPathProperties,
                     @JsonProperty("helpSubPathExpressions") final String helpSubPathExpressions,
                     @JsonProperty("helpSubPathDocumentation") final String helpSubPathDocumentation,
+                    @JsonProperty("helpSubPathStroomQueryLanguage") final String helpSubPathStroomQueryLanguage,
                     @JsonProperty("theme") final ThemeConfig theme,
                     @JsonProperty("query") final QueryConfig query,
                     @JsonProperty("namePattern") final String namePattern,
@@ -180,6 +186,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.helpSubPathProperties = helpSubPathProperties;
         this.helpSubPathExpressions = helpSubPathExpressions;
         this.helpSubPathDocumentation = helpSubPathDocumentation;
+        this.helpSubPathStroomQueryLanguage = helpSubPathStroomQueryLanguage;
         this.theme = theme;
         this.query = query;
         this.namePattern = namePattern;
@@ -235,6 +242,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return helpSubPathDocumentation;
     }
 
+    public String getHelpSubPathStroomQueryLanguage() {
+        return helpSubPathStroomQueryLanguage;
+    }
+
     private String appendHelpPath(final String subPath) {
         if (helpUrl == null) {
             // No point appending a path to a null url
@@ -284,6 +295,14 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
      */
     @JsonIgnore
     public String getHelpUrlDocumentation() {
+        return appendHelpPath(helpSubPathDocumentation);
+    }
+
+    /**
+     * @return The URL for the Stroom Query Language page in the help site.
+     */
+    @JsonIgnore
+    public String getHelpUrlStroomQueryLanguage() {
         return appendHelpPath(helpSubPathDocumentation);
     }
 

@@ -145,19 +145,27 @@ public class FunctionSignatureUtil {
         return childMenuItems;
     }
 
+    public static List<AceCompletion> buildCompletions(final FunctionSignature signature,
+                                                       final String helpUrlBase) {
+        // FlatMap to aliases so we have one func def per alias
+        // Filter on isBracketedForm to ignore aliases like +, -, * etc which have a different form,
+        // e.g. 1+2 vs add(1, 2)
+        return signature.asAliases()
+                .stream()
+                .filter(FunctionSignatureUtil::isBracketedForm)
+                .map(sig ->
+                        convertFunctionDefinitionToCompletion(sig, helpUrlBase))
+                .collect(Collectors.toList());
+    }
 
     public static List<AceCompletion> buildCompletions(final List<FunctionSignature> signatures,
                                                        final String helpUrlBase) {
+
         // FlatMap to aliases so we have one func def per alias
         // Filter on name length > 1 to ignore aliases like +, -, * etc which have a different form,
         // e.g. 1+2 vs add(1, 2)
         return signatures.stream()
-                .flatMap(signature -> signature.asAliases().stream())
-                .filter(FunctionSignatureUtil::isBracketedForm)
-                .map(signature ->
-                        convertFunctionDefinitionToCompletion(
-                                signature,
-                                helpUrlBase))
+                .flatMap(signature -> buildCompletions(signature, helpUrlBase).stream())
                 .collect(Collectors.toList());
     }
 
@@ -225,7 +233,7 @@ public class FunctionSignatureUtil {
                 html);
     }
 
-    private static String buildSnippetText(final FunctionSignature signature) {
+    public static String buildSnippetText(final FunctionSignature signature) {
         final String argsStr;
         if (signature.getArgs().isEmpty()) {
             argsStr = "";
@@ -363,7 +371,7 @@ public class FunctionSignatureUtil {
                 command);
     }
 
-    private static String buildSignatureStr(final FunctionSignature signature) {
+    public static String buildSignatureStr(final FunctionSignature signature) {
         String argsStr;
         if (signature.getArgs().isEmpty()) {
             argsStr = "";
@@ -564,7 +572,7 @@ public class FunctionSignatureUtil {
         }
     }
 
-    private static boolean isBracketedForm(final FunctionSignature signature) {
+    public static boolean isBracketedForm(final FunctionSignature signature) {
 
         return signature.getName().length() > 1
                 && Character.isLetter(signature.getName().charAt(0));
