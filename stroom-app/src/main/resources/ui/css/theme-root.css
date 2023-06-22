@@ -43,6 +43,7 @@
     --button__background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
     --button__background-color: #f6f5f5;
     --button__border-color: #918e8c;
+    --button__image-color: #918e8c;
     --button__text-color: #000;
     --button__background-image--active: linear-gradient(#c8c9cb 0px, #c8cacd 10px, #c2c6c8 0px, #b5b7ba);
     --button__background-color--active: #c2c6c8;
@@ -203,6 +204,7 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
+    --navigation__splitter__background-color: rgba(10,36,65,.8);
     --navigation__background-color: #004c98;
     --navigation__background-color--hovered: rgba(10,36,65,.4);
     --navigation__background-color--selected: rgba(10,36,65,.6);

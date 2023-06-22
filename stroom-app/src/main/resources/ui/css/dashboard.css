@@ -102,6 +102,7 @@
 
 .dashboard-designSurface {
     position: absolute;
+    overflow: hidden;
 }
 
 .dashboard__designMode .dashboard-designSurface {
@@ -157,6 +158,7 @@
 .flexLayout-splitter {
 	position: absolute;
     background-color: var(--splitter__background-color);
+    z-index: 6;
 }
 /*
 .dashboard__designMode .flexLayout-splitter {
@@ -242,7 +244,6 @@
 
 .tabLayout {
     display: flex;
-    padding: 5px;
     background-color: var(--dashboard-panel__background-color);
     color: var(--control__text-color);
 }
@@ -261,12 +262,13 @@
 
 .tabLayout .tabLayout-barOuter {
     display: flex;
-	flex-grow: 0;
-	flex-shrink: 0;
-	gap: 5px;
-	cursor: default;
-	z-index: 5;
-	min-height: 26px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    gap: 5px;
+    padding: 5px 5px 0 5px;
+    cursor: default;
+    z-index: 5;
+    min-height: 31px;
 }
 
 .tabLayout .tabLayout-tabContainer {
@@ -284,7 +286,6 @@
 .tabLayout .tabLayout-content {
     display: flex;
     flex-grow: 1;
-	position: relative;
 }
 
 .tabLayout .tabLayout-buttons {
@@ -292,16 +293,10 @@
     display: none;
 }
 
-/*
-.tabLayout-buttons button {
-	transition: opacity 0.25s ease-in-out;
-    opacity: 0.5;
-}
 
-.tabLayout-buttons button:hover {
-    opacity: 1;
+.tabLayout-buttons button {
+    color: var(--button__image-color);
 }
-*/
 
 .dashboard__designMode .tabLayout .tabLayout-buttons {
     display: flex;
@@ -545,9 +540,20 @@
 }
 
 .dashboardVis-outerLayout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: solid var(--split__size) transparent;
 }
 
 .dashboardVis-innerLayout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .dashboardVis-smallSpinner {

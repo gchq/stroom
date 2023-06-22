@@ -28,7 +28,7 @@
 	background: var(--page__background-color);
 	border: thin solid var(--dialog__border-color);
 	box-shadow: var(--popup__shadow);
-	border-radius: 8px;
+	border-radius: 0.4rem;
 	z-index: 100;
 }
 

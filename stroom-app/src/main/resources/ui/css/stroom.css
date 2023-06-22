@@ -755,6 +755,11 @@ select option:disabled {
     width: 100%;
     height: 100%;
     overflow: auto;
+
+    border: solid 1px var(--dashboard-panel__border-color);
+    background-color: var(--dashboard-panel__background-color);
+    color: var(--control__text-color);
+    border-radius: .25rem;
 }
 
 /**
@@ -878,9 +883,8 @@ textarea.clipboardCopy {
 .iframe-panel {
   width: 100%;
   height: 100%;
-  border-width: 1px;
-  border-style: solid;
-  border-color: solid;
+  /*border-width: 1px;
+  border-style: solid;*/
 }
 
 
