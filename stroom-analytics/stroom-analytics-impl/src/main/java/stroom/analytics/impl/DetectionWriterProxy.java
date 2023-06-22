@@ -1,59 +1,57 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.api.AlertManager;
-import stroom.analytics.impl.RecordConsumer.Data;
-import stroom.analytics.impl.RecordConsumer.Record;
+import stroom.analytics.impl.DetectionConsumer.Detection;
+import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
+import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.index.shared.IndexConstants;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.DateTimeSettings;
-import stroom.query.api.v2.Field;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 
-public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
+public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAware {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertWriter2.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DetectionWriterProxy.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final FieldFormatter fieldFormatter;
-    private final String additionalFieldsPrefix;
-    private final boolean outputIndexFields;
+//    private final String additionalFieldsPrefix;
+//    private final boolean outputIndexFields;
 
     private FieldIndex fieldIndex;
-    private RecordConsumer recordConsumer;
+    private DetectionConsumer detectionConsumer;
 
     private AnalyticRuleDoc analyticRuleDoc;
 
     private CompiledFields compiledFields;
 
     @Inject
-    public AlertWriter2(final ErrorReceiverProxy errorReceiverProxy,
-                        final AlertConfig alertConfig) {
+    public DetectionWriterProxy(final ErrorReceiverProxy errorReceiverProxy,
+                                final AlertConfig alertConfig) {
         this.errorReceiverProxy = errorReceiverProxy;
-        additionalFieldsPrefix = alertConfig.getAdditionalFieldsPrefix() != null
-                ?
-                alertConfig.getAdditionalFieldsPrefix()
-                : "";
-        outputIndexFields = alertConfig.isReportAllExtractedFieldsEnabled();
+//        additionalFieldsPrefix = alertConfig.getAdditionalFieldsPrefix() != null
+//                ?
+//                alertConfig.getAdditionalFieldsPrefix()
+//                : "";
+//        outputIndexFields = alertConfig.isReportAllExtractedFieldsEnabled();
 
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
@@ -64,15 +62,15 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
 
     @Override
     public void start() {
-        if (recordConsumer instanceof ProcessLifecycleAware) {
-            ((ProcessLifecycleAware) recordConsumer).start();
+        if (detectionConsumer instanceof ProcessLifecycleAware) {
+            ((ProcessLifecycleAware) detectionConsumer).start();
         }
     }
 
     @Override
     public void end() {
-        if (recordConsumer instanceof ProcessLifecycleAware) {
-            ((ProcessLifecycleAware) recordConsumer).end();
+        if (detectionConsumer instanceof ProcessLifecycleAware) {
+            ((ProcessLifecycleAware) detectionConsumer).end();
         }
     }
 
@@ -88,8 +86,8 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
         this.fieldIndex = fieldIndex;
     }
 
-    public void setRecordConsumer(final RecordConsumer recordConsumer) {
-        this.recordConsumer = recordConsumer;
+    public void setDetectionConsumer(final DetectionConsumer detectionConsumer) {
+        this.detectionConsumer = detectionConsumer;
     }
 
     @Override
@@ -154,61 +152,82 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
     }
 
     private void writeRecord(final CompiledFieldValue[] fieldVals) {
-        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
+//        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
         if (fieldVals == null || fieldVals.length == 0) {
             return;
         }
 
-        final List<Data> rows = new ArrayList<>();
-        rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR, DateUtil.createNormalDateTimeString()));
-        rows.add(new Data("alertRuleName", analyticRuleDoc.getName()));
-        rows.add(new Data("alertRuleUuid", analyticRuleDoc.getUuid()));
-
-        // Output all the dashboard fields
-        Set<String> skipFields = new HashSet<>();
-        int index = 0;
-        for (final CompiledField compiledField : compiledFieldArray) {
-            final Field field = compiledField.getField();
-            if (field.isVisible()) {
-                final String fieldName = field.getDisplayValue();
-                final CompiledFieldValue compiledFieldValue = fieldVals[index];
-                final Val fieldVal = compiledFieldValue.getVal();
-
-                // Remember this field so not to output again
-                skipFields.add(fieldName);
-
-                if (fieldVal != null) {
-                    final String fieldValStr =
-                            fieldFormatter.format(compiledFieldValue.getCompiledField().getField(), fieldVal);
-                    rows.add(new Data(fieldName, fieldValStr));
-                }
-            }
-            index++;
-        }
+        final List<Value> values = new ArrayList<>();
+//        final List<LinkedEvent> linkedEvents = new ArrayList<>();
+//
+//        // Output all the dashboard fields
+//        Set<String> skipFields = new HashSet<>();
+//        int index = 0;
+//        for (final CompiledField compiledField : compiledFieldArray) {
+//            final Field field = compiledField.getField();
+//            if (field.isVisible()) {
+//                final String fieldName = field.getDisplayValue();
+//                final CompiledFieldValue compiledFieldValue = fieldVals[index];
+//                final Val fieldVal = compiledFieldValue.getVal();
+//
+//                // Remember this field so not to output again
+//                skipFields.add(fieldName);
+//
+//                if (fieldVal != null) {
+//                    final String fieldValStr =
+//                            fieldFormatter.format(compiledFieldValue.getCompiledField().getField(), fieldVal);
+//                    values.add(new Value(fieldName, fieldValStr));
+//                }
+//            }
+//            index++;
+//        }
 
         // Output standard index fields
+        final AtomicReference<Long> streamId = new AtomicReference<>();
+        final AtomicReference<Long> eventId = new AtomicReference<>();
         fieldIndex.forEach((idx, fieldName) -> {
-            if (skipFields.contains(fieldName)) {
-                String val = "Unknown";
-                final CompiledFieldValue compiledFieldValue = fieldVals[idx];
-                if (compiledFieldValue != null && compiledFieldValue.getVal() != null) {
-                    val = compiledFieldValue.getVal().toString();
-                }
-
-                if (IndexConstants.STREAM_ID.equals(fieldName)) {
-                    rows.add(new Data(AlertManager.STREAM_ID_DATA_ELEMENT_NAME_ATTR, val));
-                } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
-                    rows.add(new Data(AlertManager.EVENT_ID_DATA_ELEMENT_NAME_ATTR, val));
-                } else if (outputIndexFields && compiledFieldValue != null && compiledFieldValue.getVal() != null) {
+//            if (skipFields.contains(fieldName)) {
+            final CompiledFieldValue compiledFieldValue = fieldVals[idx];
+            if (compiledFieldValue != null && compiledFieldValue.getVal() != null) {
+                if (fieldIndex.getStreamIdFieldIndex() == idx) {
+                    try {
+                        streamId.set(compiledFieldValue.getVal().toLong());
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                } else if (fieldIndex.getEventIdFieldIndex() == idx) {
+                    try {
+                        eventId.set(compiledFieldValue.getVal().toLong());
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                } else {
                     final String fieldValStr =
                             fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
                                     compiledFieldValue.getVal());
-                    rows.add(new Data(additionalFieldsPrefix + fieldName, fieldValStr));
+                    values.add(new Value(fieldName, fieldValStr));
                 }
             }
+//            }
         });
 
-        recordConsumer.accept(new Record(rows));
+        final Detection detection = new Detection(
+                Instant.now(),
+                analyticRuleDoc.getName(),
+                analyticRuleDoc.getUuid(),
+                analyticRuleDoc.getVersion(),
+                null,
+                null,
+                analyticRuleDoc.getDescription(),
+                null,
+                UUID.randomUUID().toString(),
+                0,
+                false,
+                values,
+                List.of(new LinkedEvent(null, streamId.get(), eventId.get()))
+        );
+
+        detectionConsumer.accept(detection);
     }
 
     private static class CompiledFieldValue {

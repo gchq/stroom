@@ -7,20 +7,20 @@ import stroom.pipeline.writer.XMLWriter;
 
 import javax.inject.Inject;
 
-public class DetectionsWriter implements DetectionConsumer, ProcessLifecycleAware {
+public class RecordsWriter implements RecordConsumer, ProcessLifecycleAware {
 
-    private final DetectionWriter detectionWriter;
+    private final RecordWriter recordWriter;
     private final StreamAppender streamAppender;
 
 
     @Inject
-    public DetectionsWriter(final DetectionWriter detectionWriter,
-                            final XMLWriter xmlWriter,
-                            final StreamAppender streamAppender) {
-        this.detectionWriter = detectionWriter;
+    public RecordsWriter(final RecordWriter recordWriter,
+                         final XMLWriter xmlWriter,
+                         final StreamAppender streamAppender) {
+        this.recordWriter = recordWriter;
         this.streamAppender = streamAppender;
 
-        detectionWriter.setHandler(xmlWriter);
+        recordWriter.setHandler(xmlWriter);
         xmlWriter.setTarget(streamAppender);
         xmlWriter.setIndentOutput(true);
         streamAppender.setStreamType(StreamTypeNames.DETECTIONS);
@@ -32,16 +32,16 @@ public class DetectionsWriter implements DetectionConsumer, ProcessLifecycleAwar
 
     @Override
     public void start() {
-        detectionWriter.start();
+        recordWriter.start();
     }
 
     @Override
     public void end() {
-        detectionWriter.end();
+        recordWriter.end();
     }
 
     @Override
-    public void accept(final Detection detection) {
-        detectionWriter.accept(detection);
+    public void accept(final Record detection) {
+        recordWriter.accept(detection);
     }
 }
