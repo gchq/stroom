@@ -28,7 +28,6 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
-import stroom.util.client.Console;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
@@ -1266,7 +1265,18 @@ public class FlexLayout extends Composite {
                     designSurfaceSize = outerSize;
                 }
 
-                GWT.log("visibleWidth=" + visibleWidth + " designWidth=" + designWidth + " visibleHeight=" + visibleHeight + " designHeight=" + designHeight + " width=" + width + " height=" + height);
+                GWT.log("visibleWidth=" +
+                        visibleWidth +
+                        " designWidth=" +
+                        designWidth +
+                        " visibleHeight=" +
+                        visibleHeight +
+                        " designHeight=" +
+                        designHeight +
+                        " width=" +
+                        width +
+                        " height=" +
+                        height);
 
                 designSurface.setSize(
                         designSurfaceSize.getWidth() + "px",
