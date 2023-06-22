@@ -36,18 +36,6 @@
     display: flex;
     margin: 2px;
     gap: 2px;
-
-    /*
-    white-space: nowrap;
-    align-items: center;
-    flex-wrap: nowrap;
-    align-content: center;
-    justify-content: flex-start;
-
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    padding: 2px;*/
 }
 
 .basicTabSelector {
@@ -96,22 +84,14 @@
     display: flex;
     align-items: center;
     height: 34px;
-    /*padding: 0 2px;*/
     border-bottom: solid 3px transparent;
     border-top: solid 3px transparent;
-    /*
-    border: var(--curve-tab__border);
-    border-radius: var(--curve-tab__border-radius);*/
     background-color: var(--curve-tab__background-color);
     color: var(--control__text-color);
 }
 
 .curveTab:hover {
-    background: rgba(var(--blue-300-rgb), .2);
-/*
     background: var(--curve-tab__background-color--hover);
-    border: var(--curve-tab__border--hover);
-*/
 }
 
 .curveTab-selected {
@@ -119,21 +99,11 @@
 }
 
 .curveTab-selected:hover {
-    background: rgba(var(--blue-300-rgb), .2);
-
-/*
-    background: var(--curve-tab__background-color--selected);
-    border: var(--curve-tab__border--hover);
-    box-shadow: var(--curve-tab__box-shadow--selected);
-    */
+    background: var(--curve-tab__background-color--hover);
 }
 
 .curveTab-keyboardSelected:focus {
-    background: rgba(var(--blue-300-rgb), .2);
-/*
-    border-color: var(--focus-border);
-    box-shadow: var(--focus-shadow);
-    */
+    background: var(--curve-tab__background-color--hover);
 }
 
 /* Tab content */
@@ -214,7 +184,7 @@
 }
 
 .curveTabSelector:hover {
-    background: var(--curve-tab__background-color--selected);
+    background: var(--curve-tab__background-color--hover);
     border: var(--curve-tab__border--hover);
 }
 

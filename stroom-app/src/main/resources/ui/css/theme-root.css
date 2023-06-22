@@ -137,7 +137,7 @@
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid rgb(200 200 200);
     --curve-tab__background-color--selected: #fff;
-    --curve-tab__background-color--hover: #fff;
+    --curve-tab__background-color--hover: rgba(var(--blue-300-rgb), .2);
     --curve-tab__box-shadow--selected: 0 0 4px 0px rgb(200 200 200 / 100%);
     --curve-tab__border-radius: .2rem;
 
