@@ -226,8 +226,8 @@
     /* Dialog */
     --dialog__background-color: #1a1d21;
     --dialog__border-color: #2c2f35;
-    --dialog__shadow: 0 0 50px 10px rgb(0 0 0 / 100%);
-    --popup__shadow: 0 0 20px 5px rgb(0 0 0 / 80%);
+    --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .7);
+    --popup__shadow: 0 0 10px 1px rgb(0, 0, 0, .8);
 
     /* Status */
     --ok: var(--blue-500);
