@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.35] - 2023-06-22
+
+* Issue **#3510** : Fix explorer scroll jumping issue.
+
+
 ## [v7.2-beta.34] - 2023-06-21
 
 * Issue **#3542** : Stop logging expected task termination exceptions as errors.
@@ -5517,7 +5522,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.34...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.35...HEAD
+[v7.2-beta.35]: https://github.com/gchq/stroom/compare/v7.2-beta.34...v7.2-beta.35
 [v7.2-beta.34]: https://github.com/gchq/stroom/compare/v7.2-beta.33...v7.2-beta.34
 [v7.2-beta.33]: https://github.com/gchq/stroom/compare/v7.2-beta.32...v7.2-beta.33
 [v7.2-beta.32]: https://github.com/gchq/stroom/compare/v7.2-beta.31...v7.2-beta.32
