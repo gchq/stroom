@@ -110,7 +110,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
     // --------------------------------------------------------------------------------
 
 
-    public static abstract class QueryHelpItemHeading extends QueryHelpItem {
+    public abstract static class QueryHelpItemHeading extends QueryHelpItem {
 
         public QueryHelpItemHeading(final String text, final int depth) {
             super(text, true, depth);
@@ -155,7 +155,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
     // --------------------------------------------------------------------------------
 
 
-    public static abstract class FunctionHeadingItem extends QueryHelpItemHeading {
+    public abstract static class FunctionHeadingItem extends QueryHelpItemHeading {
 
         public FunctionHeadingItem(final String text, final int depth) {
             super(text, depth);

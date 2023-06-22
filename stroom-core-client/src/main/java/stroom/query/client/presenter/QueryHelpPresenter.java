@@ -336,25 +336,6 @@ public class QueryHelpPresenter
                                     .map(Condition::getDisplayValue)
                                     .map(str -> "'" + str + "'")
                                     .collect(Collectors.joining(", "));
-//                            TableBuilder tableBuilder = new TableBuilder();
-//                            tableBuilder.row(
-//                                    HtmlBuilder.builder().bold(htmlBuilder -> htmlBuilder.append("Name:")).toSafeHtml(),
-//                                    SafeHtmlUtil.from(fieldName));
-//                            tableBuilder.row(
-//                                    HtmlBuilder.builder().bold(htmlBuilder -> htmlBuilder.append("Type:")).toSafeHtml(),
-//                                    SafeHtmlUtil.from(fieldType));
-//                            tableBuilder.row(
-//                                    HtmlBuilder.builder().bold(htmlBuilder ->
-//                                            htmlBuilder.append("Supported Conditions:")).toSafeHtml(),
-//                                    SafeHtmlUtil.from(supportedConditions));
-//                            tableBuilder.row(
-//                                    HtmlBuilder.builder().bold(htmlBuilder ->
-//                                            htmlBuilder.append("Is queryable:")).toSafeHtml(),
-//                                    SafeHtmlUtil.from(asDisplayValue(field.queryable())));
-//                            tableBuilder.row(
-//                                    HtmlBuilder.builder().bold(htmlBuilder ->
-//                                            htmlBuilder.append("Is numeric:")).toSafeHtml(),
-//                                    SafeHtmlUtil.from(asDisplayValue(field.isNumeric())));
 
                             final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
                             appendKeyValueTable(htmlBuilder,
