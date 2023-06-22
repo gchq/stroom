@@ -15,6 +15,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -218,6 +219,18 @@ class DynamicTestBuilder {
         public AssertionsBuilder<I, O> withTestFunction(final Function<TestCase<I, O>, O> testFunction) {
             Objects.requireNonNull(testFunction);
             return new AssertionsBuilder<>(testFunction);
+        }
+
+        /**
+         * Define the action for the dynamic test lambda, where the test input
+         * uses {@link TestCase#getInput()} to produce some output.
+         * Test assertions are added later with {@link AssertionsBuilder#withAssertions(Consumer)}.
+         */
+        @SuppressWarnings("unused")
+        public AssertionsBuilder<I, O> withSingleArgTestFunction(final Function<I, O> testFunction) {
+            Objects.requireNonNull(testFunction);
+            return new AssertionsBuilder<>(testCase ->
+                    testFunction.apply(testCase.getInput()));
         }
     }
 
@@ -485,6 +498,12 @@ class DynamicTestBuilder {
                 stringBuilder.append("(")
                         .append(tupleStr)
                         .append(")");
+            } else if (value instanceof final Object[] arr) {
+                stringBuilder.append("[")
+                        .append(Arrays.stream(arr)
+                                .map(this::valueToStr)
+                                .collect(Collectors.joining(", ")))
+                        .append("]");
             } else {
                 String valStr = value.toString();
                 // No point outputting the lambda reference as it doesn't help

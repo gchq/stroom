@@ -256,11 +256,11 @@ public class HDFSFileAppender extends AbstractAppender {
                         // another
                         // file.
                         if (hdfs.exists(lockFile)) {
-                            throw new ProcessException("Output file \"" + lockFile.toString() + "\" already exists");
+                            throw ProcessException.create("Output file \"" + lockFile.toString() + "\" already exists");
                         }
 
                         if (hdfs.exists(outFile)) {
-                            throw new ProcessException("Output file \"" + outFile.toString() + "\" already exists");
+                            throw ProcessException.create("Output file \"" + outFile.toString() + "\" already exists");
                         }
 
                         // Get a writer for the new lock file.

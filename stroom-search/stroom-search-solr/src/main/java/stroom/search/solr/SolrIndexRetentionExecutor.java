@@ -110,8 +110,8 @@ public class SolrIndexRetentionExecutor {
                                         searchConfigProvider.get().getMaxBooleanClauseCount(),
                                         null,
                                         System.currentTimeMillis());
-                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(
-                                solrIndexDoc.getRetentionExpression());
+                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder
+                                .buildQuery(solrIndexDoc.getRetentionExpression());
                         final Query query = searchExpressionQuery.getQuery();
                         final String queryString = query.toString();
                         solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {

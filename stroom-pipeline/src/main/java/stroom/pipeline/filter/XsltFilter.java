@@ -186,9 +186,9 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                         final CharBuffer sb = new CharBuffer(100);
                         sb.append("There is a problem with the XSLT \"");
                         sb.append(xslt.getName());
-                        sb.append("\", see previous logs for details");
+                        sb.append("\", see log entries for details.");
                         final String msg = sb.toString();
-                        throw new ProcessException(msg);
+                        throw ProcessException.create(msg);
                     }
                 }
             }
@@ -196,13 +196,13 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             if (xsltRequired && xsltExecutable == null && !pipelineContext.isStepping()) {
                 passThrough = false;
                 final String msg = "XSLT is required but either no XSLT was found or there is an error in the XSLT";
-                throw new ProcessException(msg);
+                throw ProcessException.create(msg);
             }
         } catch (final RuntimeException e) {
             errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), e.getMessage(), e);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
-                throw new LoggedException(e.getMessage(), e);
+                throw LoggedException.wrap(e);
             }
         } finally {
             super.startProcessing();
@@ -275,7 +275,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                     throwable);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
-                throw new LoggedException(throwable.getMessage(), throwable);
+                throw LoggedException.wrap(throwable);
             }
         }
     }
@@ -301,7 +301,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                             throwable);
                     // If we aren't stepping then throw an exception to terminate early.
                     if (!pipelineContext.isStepping()) {
-                        throw new LoggedException(throwable.getMessage(), throwable);
+                        throw LoggedException.wrap(throwable);
                     }
 
                 } finally {
@@ -410,7 +410,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                         " has been exceeded. Please ensure a split filter is present and is configured " +
                         "correctly for this pipeline.";
 
-                final ProcessException exception = new ProcessException(message);
+                final ProcessException exception = ProcessException.create(message);
                 if (pipelineContext.isStepping()) {
                     errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), exception.getMessage(),
                             exception);
@@ -422,7 +422,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 // If we aren't stepping then throw an exception to terminate
                 // early.
                 if (!pipelineContext.isStepping()) {
-                    throw new LoggedException(exception.getMessage(), exception);
+                    throw LoggedException.wrap(exception);
                 }
             }
 
@@ -587,7 +587,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 final String message = "XSLT \"" +
                         docRef.getName() +
                         "\" appears to have been deleted";
-                throw new ProcessException(message);
+                throw ProcessException.create(message);
             }
 
             return xsltDoc;

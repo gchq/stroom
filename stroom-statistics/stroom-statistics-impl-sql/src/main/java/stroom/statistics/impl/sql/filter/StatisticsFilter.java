@@ -120,7 +120,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     public void startProcessing() {
         if (statisticStoreRef == null) {
             log(Severity.FATAL_ERROR, "Statistics data source has not been set", null);
-            throw new LoggedException("Statistics data source has not been set");
+            throw LoggedException.create("Statistics data source has not been set");
         }
 
         // Reload the data source as we might have new fields.
@@ -128,13 +128,13 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
         if (statisticStoreEntity == null) {
             log(Severity.FATAL_ERROR, "Unable to load Statistics data source ", null);
-            throw new LoggedException("Unable to load Statistics data source ");
+            throw LoggedException.create("Unable to load Statistics data source ");
         }
 
         if (!statisticStoreEntity.isEnabled()) {
             final String msg = "Statistics data source with name [" + statisticStoreEntity.getName() + "] is disabled";
             log(Severity.FATAL_ERROR, msg, null);
-            throw new LoggedException(msg);
+            throw LoggedException.create(msg);
         }
 
         // clean out the map of field names to values

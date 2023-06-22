@@ -29,7 +29,7 @@ public class BasicTabSelector extends AbstractTabSelector {
     public BasicTabSelector() {
         final Element arrows = DOM.createDiv();
         arrows.setClassName("basicTabSelector-arrows");
-        arrows.setInnerHTML(SvgImages.MONO_DOUBLE_ARROW);
+        arrows.setInnerHTML(SvgImages.MONO_DOUBLE_ARROW.getSvg());
 
         text = DOM.createDiv();
         text.setClassName("basicTabSelector-text");

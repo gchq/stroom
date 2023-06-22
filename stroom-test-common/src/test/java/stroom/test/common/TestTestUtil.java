@@ -43,6 +43,17 @@ class TestTestUtil {
     }
 
     @TestFactory
+    Stream<DynamicTest> testBuildDynamicTestStream_singleArgTestFunc() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withSingleArgTestFunction(String::toUpperCase)
+                .withSimpleEqualityAssertion()
+                .addCase("a", "A")
+                .addNamedCase("Zed", "z", "Z")
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testBuildDynamicTestStream_simpleTypes() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Integer.class)

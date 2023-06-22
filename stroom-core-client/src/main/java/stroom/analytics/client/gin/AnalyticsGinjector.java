@@ -23,7 +23,7 @@ import com.google.gwt.inject.client.AsyncProvider;
 
 public interface AnalyticsGinjector {
 
-    AsyncProvider<AnalyticsPlugin> getAlertRulePlugin();
+    AsyncProvider<AnalyticsPlugin> getAnalyticsRulePlugin();
 
-    AsyncProvider<AnalyticRulePresenter> getAlertRulePresenter();
+    AsyncProvider<AnalyticRulePresenter> getAnalyticsRulePresenter();
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/** 
+/**
  * Styles for standard HTML elements
  */
 html,body {
@@ -24,11 +24,11 @@ html,body {
 	background: white;
 	color: var(--text-color);
 	direction: ltr;
-	
+
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
-	user-select: none;	
+	user-select: none;
 }
 
 html,body,div,span,table,tbody,tr,th,td,b,p,h1,h2,h3,h4 {
@@ -98,18 +98,18 @@ img {
 }
 
 h1 {
-	font-size: var(--font-size-19);
+	font-size: var(--font-size-22);
 	font-weight: 500;
 	margin-bottom: 11px;
 }
 
 h2 {
-	font-size: var(--font-size-15);
+	font-size: var(--font-size-16);
 	font-weight: 500;
 }
 
 h3 {
-	font-size: var(--font-size-11);
+	font-size: var(--font-size-13);
 	font-weight: 500;
 }
 
@@ -345,7 +345,7 @@ td {
 }
 
 .logout {
-	
+
 }
 
 .pageContentContainer {
@@ -371,39 +371,6 @@ td {
 	background-color: #E7F7FF;
 }
 
-/* TOOLBAR */
-.toolbar {
-	width: 100%;
-	padding: 2px 2px 2px 4px;
-}
-
-.toolbarButton {
-	display: inline-block;
-	_display: inline;
-	cursor: pointer;
-	padding: 3px;
-	background-color: none;
-	border: none;
-	width: 20px;
-	height: 20px;
-}
-
-.toolbarButton-hover { /*	
-	padding: 2px;
-	background-color: var(--control__border-color);
-	border: 1px solid #2291D0;
-*/
-	
-}
-
-.toolbarButton-pressed { /*	
-	padding: 2px;
-	background-color: #2291D0;
-	border: 1px solid black;
-*/
-	
-}
-
 .stroom-main-content-container {
 	height: 100%;
 	padding: 0px;
@@ -426,7 +393,7 @@ td {
 
 .headerWrapper {
 	border-bottom: 1px solid var(--border-color) !important;
-	/*	
+	/*
 	background: #93c2f1 url(../images/hborder.png) repeat-x 0px -1463px
 		!important;
 */
@@ -442,7 +409,9 @@ td {
 }
 
 .statusIcon {
-	padding-top: 1px !important;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 	cursor: default !important;
 }
 
@@ -480,7 +449,7 @@ td {
 }
 
 .stroom-TabBar .gwt-TabBarRest {
-	
+
 }
 
 .stroom-TabBar .gwt-TabBarRest-wrapper {
@@ -501,7 +470,7 @@ td {
 
 .stroom-TabBar .gwt-TabBarItem-selected {
 	cursor: default;
-	/*	
+	/*
 	background: #93c2f1 url(../images/hborder.png) repeat-x 0px -1463px;
 */
 	background: #dfeaf8 url(../images/header.png) repeat-x;
@@ -613,7 +582,8 @@ input:-webkit-autofill:active {
 	outline: none;
 	background-color: var(--control__background-color) !important;
 	color: var(--control__text-color) !important;
-	-webkit-box-shadow: 0 0 0px 1000px var(--control__background-color) inset;
+	-webkit-box-shadow: 0 0 0px 30px var(--control__background-color) inset;
+	-webkit-text-fill-color: var(--control__text-color) !important;
 	transition: background-color 5000s ease-in-out 0s;
 	transition: color 5000s ease-in-out 0s;
 }
@@ -898,3 +868,19 @@ textarea.clipboardCopy {
 	opacity: 1;
 	z-index: -1;
 }
+
+.iframe-frame {
+  width: 100%;
+  height: 100%;
+  border-style: none;
+}
+
+.iframe-panel {
+  width: 100%;
+  height: 100%;
+  border-width: 1px;
+  border-style: solid;
+  border-color: solid;
+}
+
+

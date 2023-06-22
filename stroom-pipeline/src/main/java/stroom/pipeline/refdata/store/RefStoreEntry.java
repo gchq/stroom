@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class RefStoreEntry {
 
     @JsonProperty
+    private final String feedName;
+    @JsonProperty
     private final MapDefinition mapDefinition;
     @JsonProperty
     private final String key; // simple key or a str representation of a range (e.g. 1-100)
@@ -20,17 +22,22 @@ public class RefStoreEntry {
     private final RefDataProcessingInfo refDataProcessingInfo;
 
     @JsonCreator
-    public RefStoreEntry(@JsonProperty("mapDefinition") final MapDefinition mapDefinition,
+    public RefStoreEntry(@JsonProperty("feedName") final String feedName,
+                         @JsonProperty("mapDefinition") final MapDefinition mapDefinition,
                          @JsonProperty("key") final String key,
                          @JsonProperty("value") final String value,
                          @JsonProperty("valueReferenceCount") final int valueReferenceCount,
                          @JsonProperty("refDataProcessingInfo") final RefDataProcessingInfo refDataProcessingInfo) {
-
+        this.feedName = feedName;
         this.mapDefinition = mapDefinition;
         this.key = key;
         this.value = value;
         this.valueReferenceCount = valueReferenceCount;
         this.refDataProcessingInfo = refDataProcessingInfo;
+    }
+
+    public String getFeedName() {
+        return feedName;
     }
 
     public MapDefinition getMapDefinition() {
@@ -56,7 +63,8 @@ public class RefStoreEntry {
     @Override
     public String toString() {
         return "RefStoreEntry{" +
-                "mapDefinition=" + mapDefinition +
+                "feedName=" + feedName +
+                ", mapDefinition=" + mapDefinition +
                 ", key='" + key + '\'' +
                 ", value='" + value + '\'' +
                 ", valueReferenceCount=" + valueReferenceCount +

@@ -289,14 +289,14 @@ public class ProcessorTaskListPresenter
 
     private String toDateString(final Long ms) {
         if (ms != null) {
-            return dateTimeFormatter.format(ms) + " (" + ms + ")";
+            return dateTimeFormatter.formatWithDuration(ms);
         } else {
             return "";
         }
     }
 
     @Override
-    public void read(final DocRef docRef, final Object entity) {
+    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
         if (docRef == null) {
             setExpression(null);
         } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {

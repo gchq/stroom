@@ -15,8 +15,11 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class FindExplorerNodeQuery extends BaseCriteria {
 
+    @JsonProperty
     private final String pattern;
+    @JsonProperty
     private final boolean matchCase;
+    @JsonProperty
     private final boolean regex;
 
     @JsonCreator

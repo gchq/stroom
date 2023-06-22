@@ -1,21 +1,26 @@
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.ByteBufferInputStream;
-import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+
+import org.assertj.core.data.Offset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,39 +30,39 @@ public class AbstractExpressionParserTest {
 
     protected final ExpressionParser parser = new ExpressionParser(new ParamFactory());
 
-    protected static Supplier<ChildData> createChildDataSupplier(final List<Val> values) {
+    protected static Supplier<ChildData> createChildDataSupplier(final List<StoredValues> values) {
         return () -> new ChildData() {
             @Override
-            public Val first() {
+            public StoredValues first() {
                 return values.get(0);
             }
 
             @Override
-            public Val last() {
+            public StoredValues last() {
                 return values.get(values.size() - 1);
             }
 
             @Override
-            public Val nth(final int pos) {
+            public StoredValues nth(final int pos) {
                 return values.get(pos);
             }
 
             @Override
-            public Val top(final String delimiter, final int limit) {
-                return join(delimiter, limit, false);
+            public Iterable<StoredValues> top(final int limit) {
+                return join(limit, false);
             }
 
             @Override
-            public Val bottom(final String delimiter, final int limit) {
-                return join(delimiter, limit, true);
+            public Iterable<StoredValues> bottom(final int limit) {
+                return join(limit, true);
             }
 
             @Override
-            public Val count() {
-                return ValLong.create(values.size());
+            public long count() {
+                return values.size();
             }
 
-            private Val join(final String delimiter, final int limit, final boolean trimTop) {
+            private Iterable<StoredValues> join(final int limit, final boolean trimTop) {
                 int start;
                 int end;
                 if (trimTop) {
@@ -68,38 +73,36 @@ public class AbstractExpressionParserTest {
                     start = 0;
                 }
 
-                final StringBuilder sb = new StringBuilder();
+                final List<StoredValues> list = new ArrayList<>();
                 for (int i = start; i <= end; i++) {
-                    final Val val = values.get(i);
-                    if (val.type().isValue()) {
-                        if (sb.length() > 0) {
-                            sb.append(delimiter);
-                        }
-                        sb.append(val);
-                    }
+                    final StoredValues val = values.get(i);
+                    list.add(val);
                 }
-                return ValString.create(sb.toString());
+                return list;
             }
         };
     }
 
-    protected static void testKryo(final Generator inputGenerator, final Generator outputGenerator) {
-        final Val val = inputGenerator.eval(null);
+    protected static void testKryo(final ValueReferenceIndex valueReferenceIndex,
+                                   final Generator generator,
+                                   final StoredValues storedValues) {
+        final Val val = generator.eval(storedValues, null);
 
-        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
-
-        try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
-            inputGenerator.write(output);
+        ByteBuffer buffer;
+        try (final MyByteBufferOutput output = new MyByteBufferOutput(1024, -1)) {
+            valueReferenceIndex.write(storedValues, output);
+            output.flush();
+            buffer = output.getByteBuffer();
+            buffer.flip();
+            print(buffer);
         }
 
-        buffer.flip();
-        print(buffer);
-
-        try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
-            outputGenerator.read(input);
+        StoredValues newStoredValues;
+        try (final MyByteBufferInput input = new MyByteBufferInput(buffer)) {
+            newStoredValues = valueReferenceIndex.read(input);
         }
 
-        final Val newVal = outputGenerator.eval(null);
+        final Val newVal = generator.eval(newStoredValues, null);
 
         assertThat(newVal).isEqualTo(val);
     }
@@ -117,28 +120,28 @@ public class AbstractExpressionParserTest {
         return val.getClass().getSimpleName() + "(" + val + ")";
     }
 
-    protected static Val[] getVals(final String... str) {
-        final Val[] result = new Val[str.length];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = ValString.create(str[i]);
-        }
-        return Val.of(result);
-    }
-
-    protected static Val[] getVals(final double... d) {
-        final Val[] result = new Val[d.length];
-        for (int i = 0; i < d.length; i++) {
-            result[i] = ValDouble.create(d[i]);
-        }
-        return Val.of(result);
-    }
+//    protected static Val[] getVals(final String... str) {
+//        final Val[] result = new Val[str.length];
+//        for (int i = 0; i < result.length; i++) {
+//            result[i] = ValString.create(str[i]);
+//        }
+//        return Val.of(result);
+//    }
+//
+//    protected static Val[] getVals(final double... d) {
+//        final Val[] result = new Val[d.length];
+//        for (int i = 0; i < d.length; i++) {
+//            result[i] = ValDouble.create(d[i]);
+//        }
+//        return Val.of(result);
+//    }
 
     protected void test(final String expression) {
         createExpression(expression, exp ->
                 System.out.println(exp.toString()));
     }
 
-    protected void createGenerator(final String expression, final Consumer<Generator> consumer) {
+    protected void createGenerator(final String expression, final BiConsumer<Generator, StoredValues> consumer) {
         createGenerator(expression, 1, consumer);
     }
 
@@ -148,13 +151,83 @@ public class AbstractExpressionParserTest {
 
     protected void createGenerator(final String expression,
                                    final int valueCount,
-                                   final Consumer<Generator> consumer) {
+                                   final BiConsumer<Generator, StoredValues> consumer) {
         createExpression(expression, valueCount, exp -> {
+            final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+            exp.addValueReferences(valueReferenceIndex);
+            final StoredValues storedValues = valueReferenceIndex.createStoredValues();
             final Generator gen = exp.createGenerator();
-            consumer.accept(gen);
+            consumer.accept(gen, storedValues);
+            testKryo(valueReferenceIndex, gen, storedValues);
+        });
+    }
 
-            final Generator generator2 = exp.createGenerator();
-            testKryo(gen, generator2);
+    protected void testSelectors(final String expression,
+                                 final IntStream intStream,
+                                 final Consumer<Val> valConsumer) {
+        createExpression(expression, 1, exp -> {
+            final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+            exp.addValueReferences(valueReferenceIndex);
+            final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+            final Generator gen = exp.createGenerator();
+
+            gen.set(Val.of(300), storedValues);
+            Val out = gen.eval(storedValues, null);
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+
+            final List<StoredValues> childValues = new ArrayList<>();
+            intStream
+                    .mapToObj(ValLong::create)
+                    .forEach(v -> {
+                        final StoredValues values = valueReferenceIndex.createStoredValues();
+                        gen.set(Val.of(v), values);
+                        childValues.add(values);
+                    });
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            valConsumer.accept(gen.eval(storedValues, childDataSupplier));
+
+            testKryo(valueReferenceIndex, gen, storedValues);
+        });
+    }
+
+    protected void compute(final String expression,
+                           final Val[] values,
+                           final Consumer<Val> consumer) {
+        compute(expression, 1, values, consumer);
+    }
+
+    protected void compute(final String expression,
+                           final Consumer<Val> consumer) {
+        compute(expression, 1, consumer);
+    }
+
+    protected void compute(final String expression,
+                           final int valueCount,
+                           final Consumer<Val> consumer) {
+        createExpression(expression, valueCount, exp -> {
+            final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+            exp.addValueReferences(valueReferenceIndex);
+            final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+            final Generator gen = exp.createGenerator();
+            final Val out = gen.eval(storedValues, null);
+            consumer.accept(out);
+            testKryo(valueReferenceIndex, gen, storedValues);
+        });
+    }
+
+    protected void compute(final String expression,
+                           final int valueCount,
+                           final Val[] values,
+                           final Consumer<Val> consumer) {
+        createExpression(expression, valueCount, exp -> {
+            final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+            exp.addValueReferences(valueReferenceIndex);
+            final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+            final Generator gen = exp.createGenerator();
+            gen.set(values, storedValues);
+            final Val out = gen.eval(storedValues, null);
+            consumer.accept(out);
+            testKryo(valueReferenceIndex, gen, storedValues);
         });
     }
 
@@ -186,12 +259,12 @@ public class AbstractExpressionParserTest {
     }
 
     protected void assertThatItEvaluatesToValErr(final String expression, final Val... values) {
-        createGenerator(expression, gen -> {
-            gen.set(Val.of(values));
-            Val out = gen.eval(null);
+        createGenerator(expression, (gen, storedValues) -> {
+            gen.set(Val.of(values), storedValues);
+            Val out = gen.eval(storedValues, null);
             System.out.println(expression + " - " +
                     out.getClass().getSimpleName() + ": " +
-                    out.toString() +
+                    out +
                     (out instanceof ValErr
                             ? (" - " + ((ValErr) out).getMessage())
                             : ""));
@@ -202,14 +275,14 @@ public class AbstractExpressionParserTest {
     protected void assertThatItEvaluatesTo(final String expression,
                                            final Val expectedOutput,
                                            final Val[] inputValues) {
-        createGenerator(expression, gen -> {
+        createGenerator(expression, (gen, storedValues) -> {
             if (inputValues != null && inputValues.length > 0) {
-                gen.set(inputValues);
+                gen.set(inputValues, storedValues);
             }
-            final Val out = gen.eval(null);
+            final Val out = gen.eval(storedValues, null);
             System.out.println(expression + " - " +
                     out.getClass().getSimpleName() + ": " +
-                    out.toString() +
+                    out +
                     (out instanceof ValErr
                             ? (" - " + ((ValErr) out).getMessage())
                             : ""));
@@ -223,15 +296,15 @@ public class AbstractExpressionParserTest {
                                            final Val val2,
                                            final Val expectedOutput) {
         final String expression = String.format("(${val1}%s${val2})", operator);
-        createGenerator(expression, 2, gen -> {
-            gen.set(Val.of(val1, val2));
-            Val out = gen.eval(null);
+        createGenerator(expression, 2, (gen, storedValues) -> {
+            gen.set(Val.of(val1, val2), storedValues);
+            Val out = gen.eval(storedValues, null);
 
             System.out.printf("[%s: %s] %s [%s: %s] => [%s: %s%s]%n",
-                    val1.getClass().getSimpleName(), val1.toString(),
+                    val1.getClass().getSimpleName(), val1,
                     operator,
-                    val2.getClass().getSimpleName(), val2.toString(),
-                    out.getClass().getSimpleName(), out.toString(),
+                    val2.getClass().getSimpleName(), val2,
+                    out.getClass().getSimpleName(), out,
                     (out instanceof ValErr
                             ? (" - " + ((ValErr) out).getMessage())
                             : ""));
@@ -244,8 +317,8 @@ public class AbstractExpressionParserTest {
     }
 
     protected void assertTypeOf(final String expression, final String expectedType) {
-        createGenerator(expression, gen -> {
-            Val out = gen.eval(null);
+        createGenerator(expression, (gen, storedValues) -> {
+            Val out = gen.eval(storedValues, null);
 
             System.out.printf("%s => [%s:%s%s]%n",
                     expression,
@@ -264,9 +337,9 @@ public class AbstractExpressionParserTest {
 
     protected void assertTypeOf(final Val val1, final String expectedType) {
         final String expression = "typeOf(${val1})";
-        createGenerator(expression, gen -> {
-            gen.set(Val.of(val1));
-            Val out = gen.eval(null);
+        createGenerator(expression, (gen, storedValues) -> {
+            gen.set(Val.of(val1), storedValues);
+            Val out = gen.eval(storedValues, null);
 
             System.out.printf("%s - [%s:%s] => [%s:%s%s]%n",
                     expression,
@@ -286,14 +359,14 @@ public class AbstractExpressionParserTest {
 
     protected void assertIsExpression(final Val val1, final String function, final Val expectedOutput) {
         final String expression = String.format("%s(${val1})", function);
-        createGenerator(expression, 2, gen -> {
-            gen.set(Val.of(val1));
-            Val out = gen.eval(null);
+        createGenerator(expression, 2, (gen, storedValues) -> {
+            gen.set(Val.of(val1), storedValues);
+            Val out = gen.eval(storedValues, null);
 
             System.out.printf("%s([%s: %s]) => [%s: %s%s]%n",
                     function,
-                    val1.getClass().getSimpleName(), val1.toString(),
-                    out.getClass().getSimpleName(), out.toString(),
+                    val1.getClass().getSimpleName(), val1,
+                    out.getClass().getSimpleName(), out,
                     (out instanceof ValErr
                             ? (" - " + ((ValErr) out).getMessage())
                             : ""));

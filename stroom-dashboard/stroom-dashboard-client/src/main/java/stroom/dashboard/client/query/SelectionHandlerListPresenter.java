@@ -51,9 +51,6 @@ public class SelectionHandlerListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        // Add a border to the list.
-        getWidget().getElement().addClassName("stroom-border");
-
         initTableColumns();
     }
 
@@ -61,6 +58,24 @@ public class SelectionHandlerListPresenter
      * Add the columns to the table.
      */
     private void initTableColumns() {
+        // Enabled.
+        final Column<ComponentSelectionHandler, TickBoxState> enabledColumn =
+                new Column<ComponentSelectionHandler, TickBoxState>(
+                        TickBoxCell.create(
+                                new TickBoxCell.NoBorderAppearance(),
+                                false,
+                                false,
+                                false)) {
+                    @Override
+                    public TickBoxState getValue(final ComponentSelectionHandler row) {
+                        if (row == null) {
+                            return null;
+                        }
+                        return TickBoxState.fromBoolean(row.isEnabled());
+                    }
+                };
+        dataGrid.addColumn(enabledColumn, "Enabled", 50);
+
         // Component.
         final Column<ComponentSelectionHandler, String> componentColumn =
                 new Column<ComponentSelectionHandler, String>(new TextCell()) {
@@ -80,24 +95,6 @@ public class SelectionHandlerListPresenter
                     }
                 };
         dataGrid.addResizableColumn(expressionColumn, "Expression", 200);
-
-        // Enabled.
-        final Column<ComponentSelectionHandler, TickBoxState> enabledColumn =
-                new Column<ComponentSelectionHandler, TickBoxState>(
-                        TickBoxCell.create(
-                                new TickBoxCell.NoBorderAppearance(),
-                                false,
-                                false,
-                                false)) {
-                    @Override
-                    public TickBoxState getValue(final ComponentSelectionHandler row) {
-                        if (row == null) {
-                            return null;
-                        }
-                        return TickBoxState.fromBoolean(row.isEnabled());
-                    }
-                };
-        dataGrid.addColumn(enabledColumn, "Enabled", 50);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

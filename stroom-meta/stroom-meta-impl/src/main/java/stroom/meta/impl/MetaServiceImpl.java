@@ -285,6 +285,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public DataSource getDataSource() {
         return DataSource
                 .builder()
+                .docRef(META_STORE_PSEUDO_DOC_REF)
                 .fields(MetaFields.getAllFields())
                 .build();
     }

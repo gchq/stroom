@@ -20,7 +20,6 @@ package stroom.bytebuffer;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
-import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.io.MappedByteBufferPool;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -367,11 +366,11 @@ class TestByteBufferPool {
         IntStream.rangeClosed(1, rounds).forEach(testRound -> {
             try {
                 doPerfTest(results, testRound, iterations, nonPooledByteBufferPool, executorService);
-                doPerfTest(results, testRound, iterations, byteBufferPool, executorService);
-                doPerfTest(results, testRound, iterations, byteBufferPool2, executorService);
-                doPerfTest(results, testRound, iterations, byteBufferPool3, executorService);
+//                doPerfTest(results, testRound, iterations, byteBufferPool, executorService);
+//                doPerfTest(results, testRound, iterations, byteBufferPool2, executorService);
+//                doPerfTest(results, testRound, iterations, byteBufferPool3, executorService);
                 doPerfTest(results, testRound, iterations, byteBufferPool4, executorService);
-                doPerfTest(results, testRound, iterations, byteBufferPool5, executorService);
+//                doPerfTest(results, testRound, iterations, byteBufferPool5, executorService);
                 doPerfTest(results, testRound, iterations, jettyByteBufferPool, executorService);
                 doPerfTest(results, testRound, iterations, hbaseByteBufferPool, executorService);
 
@@ -386,18 +385,21 @@ class TestByteBufferPool {
 
     private void simulateUsingBuffer(final ByteBuffer buffer, final int requestedCapacity) {
         // Check buffer is in a ready state for us
-        Assertions.assertThat(buffer.capacity())
-                .isGreaterThanOrEqualTo(requestedCapacity);
-        Assertions.assertThat(buffer.position())
-                .isEqualTo(0);
+        if (buffer.capacity() < requestedCapacity) {
+            throw new RuntimeException(LogUtil.message("Capacity {} is < that {}",
+                    buffer.capacity(), requestedCapacity));
+        }
+        if (buffer.position() != 0) {
+            throw new RuntimeException(LogUtil.message("Invalid position {}", buffer.position()));
+        }
 //        Assertions.assertThat(buffer.limit())
 //                .isEqualTo(buffer.capacity());
 
         // Fill the buffer up to the capacity we asked for as the buffer may be bigger than what
         // we need.
-        for (int i = 0; i < requestedCapacity; i++) {
-            buffer.put((byte) 1);
-        }
+//        for (int i = 0; i < requestedCapacity; i++) {
+//            buffer.put((byte) 1);
+//        }
     }
 
     private void doPerfTest(final List<String> results,
@@ -426,7 +428,7 @@ class TestByteBufferPool {
                             Thread.currentThread().interrupt();
                             throw new RuntimeException(e);
                         }
-                        int capacity = random.nextInt(2000) + 1;
+                        int capacity = 500 + random.nextInt(1000) + 1;
 
                         // Using the pool
                         try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(capacity)) {
@@ -473,6 +475,10 @@ class TestByteBufferPool {
             throw new RuntimeException(e);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class NonPooledByteBufferPool implements ByteBufferPool {
 
@@ -536,6 +542,9 @@ class TestByteBufferPool {
     }
 
 
+    // --------------------------------------------------------------------------------
+
+
     private static final class JettyByteBufferPool implements ByteBufferPool {
 
         private final org.eclipse.jetty.io.ByteBufferPool delegatePool = new MappedByteBufferPool();
@@ -575,11 +584,13 @@ class TestByteBufferPool {
         }
     }
 
+    // --------------------------------------------------------------------------------
+
     private static final class HbaseByteBufferPool implements ByteBufferPool {
 
         private final org.apache.hadoop.hbase.io.ByteBufferPool delegatePool =
                 new org.apache.hadoop.hbase.io.ByteBufferPool(
-                        2048,
+                        4096,
                         50,
                         true);
 

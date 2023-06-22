@@ -142,7 +142,7 @@ public class DataLoader {
                     // Write meta.
                     if (metaInputStream != null) {
                         handler.addEntry(
-                                "001" + StroomZipFileType.META.getExtension(),
+                                "001" + StroomZipFileType.META.getDotExtension(),
                                 metaInputStream,
                                 progressHandler);
                     }
@@ -150,7 +150,7 @@ public class DataLoader {
                     // Write data.
                     if (dataInputStream != null) {
                         handler.addEntry(
-                                "001" + StroomZipFileType.DATA.getExtension(),
+                                "001" + StroomZipFileType.DATA.getDotExtension(),
                                 dataInputStream,
                                 progressHandler);
                     }

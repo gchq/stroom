@@ -1,13 +1,17 @@
 package stroom.util.shared.time;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class SimpleDuration {
+
     public static SimpleDuration ZERO = new SimpleDuration(0, TimeUnit.NANOSECONDS);
 
     @JsonProperty
@@ -62,6 +66,10 @@ public class SimpleDuration {
                 ", timeUnit=" + timeUnit +
                 '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

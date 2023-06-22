@@ -18,6 +18,8 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -28,8 +30,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollupResource;
@@ -41,7 +42,6 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.cellview.client.Column;
@@ -58,8 +58,7 @@ import java.util.List;
 import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+        implements HasDocumentRead<StatisticStoreDoc>, HasDocumentWrite<StatisticStoreDoc>, HasDirtyHandlers {
 
     private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE = GWT.create(StatisticRollupResource.class);
 
@@ -166,15 +165,15 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerVi
 
     private void addStatFieldColumn(final int fieldPositionNumber, final String fieldname) {
         // Enabled.
-        final Column<MaskHolder, Boolean> rolledUpColumn = new Column<MaskHolder, Boolean>(new CheckboxCell()) {
+        final Column<MaskHolder, TickBoxState> rolledUpColumn = new Column<MaskHolder, TickBoxState>(
+                TickBoxCell.create(false, true)) {
             @Override
-            public Boolean getValue(final MaskHolder row) {
-                return row.getMask().isTagRolledUp(fieldPositionNumber);
+            public TickBoxState getValue(final MaskHolder row) {
+                return TickBoxState.fromBoolean(row.getMask().isTagRolledUp(fieldPositionNumber));
             }
         };
-
         rolledUpColumn.setFieldUpdater((index, row, value) -> {
-            row.getMask().setRollUpState(fieldPositionNumber, value);
+            row.getMask().setRollUpState(fieldPositionNumber, value.toBoolean());
 
             DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
         });
@@ -247,30 +246,27 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerVi
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
+    public void read(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
         // initialise the columns and hold the statDataSource on first time
         // or if we are passed a different object
-        if (this.statisticsDataSource == null || this.statisticsDataSource != statisticsDataSource) {
-            this.statisticsDataSource = statisticsDataSource;
+        if (this.statisticsDataSource == null || this.statisticsDataSource != document) {
+            this.statisticsDataSource = document;
 
             removeAllColumns();
             addColumns();
         }
 
-        refreshFromEntity(statisticsDataSource);
+        refreshFromEntity(document);
     }
 
     @Override
-    public StatisticStoreDoc write(final StatisticStoreDoc entity) {
-        entity.getConfig()
+    public StatisticStoreDoc write(final StatisticStoreDoc document) {
+        document.getConfig()
                 .setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
+        return document;
     }
 
     @Override

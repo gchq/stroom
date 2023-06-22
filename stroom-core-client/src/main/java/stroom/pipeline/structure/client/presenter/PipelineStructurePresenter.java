@@ -28,8 +28,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.FetchPipelineXmlResponse;
@@ -80,7 +79,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
-        implements HasDocumentRead<PipelineDoc>, HasWrite<PipelineDoc>, HasDirtyHandlers, ReadOnlyChangeHandler,
+        implements HasDocumentRead<PipelineDoc>, HasDocumentWrite<PipelineDoc>, HasDirtyHandlers,
         PipelineStructureUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
@@ -218,12 +217,18 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public void read(final DocRef docRef, final PipelineDoc pipelineDoc) {
-        if (pipelineDoc != null) {
+    public void read(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        pipelinePresenter.setEnabled(!readOnly);
+        propertyListPresenter.setReadOnly(readOnly);
+        pipelineReferenceListPresenter.setReadOnly(readOnly);
+        enableButtons();
+
+        if (document != null) {
             final PipelineElement previousSelection = this.selectedElement;
 
             this.docRef = docRef;
-            this.pipelineDoc = pipelineDoc;
+            this.pipelineDoc = document;
             this.selectedElement = null;
 
             if (pipelineModel == null) {
@@ -231,10 +236,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 pipelineTreePresenter.setModel(pipelineModel);
             }
 
-            if (pipelineDoc.getParentPipeline() != null) {
-                this.parentPipeline = pipelineDoc.getParentPipeline();
+            if (document.getParentPipeline() != null) {
+                this.parentPipeline = document.getParentPipeline();
             }
-            pipelinePresenter.setSelectedEntityReference(pipelineDoc.getParentPipeline());
+            pipelinePresenter.setSelectedEntityReference(document.getParentPipeline());
 
             final Rest<List<PipelineData>> rest = restFactory.create();
             rest
@@ -268,31 +273,22 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public PipelineDoc write(final PipelineDoc pipeline) {
+    public PipelineDoc write(final PipelineDoc document) {
         // Only write if we have been revealed and therefore created a pipeline
         // model.
         if (pipelineModel != null) {
             try {
                 // Set the parent pipeline.
-                pipeline.setParentPipeline(getParentPipeline());
+                document.setParentPipeline(getParentPipeline());
 
                 // Diff base and combined to create fresh pipeline data.
                 final PipelineData pipelineData = pipelineModel.diff();
-                pipeline.setPipelineData(pipelineData);
+                document.setPipelineData(pipelineData);
             } catch (final RuntimeException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
         }
-        return pipeline;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        pipelinePresenter.setEnabled(!readOnly);
-        propertyListPresenter.onReadOnly(readOnly);
-        pipelineReferenceListPresenter.onReadOnly(readOnly);
-        enableButtons();
+        return document;
     }
 
     @Override
@@ -535,12 +531,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                 })
                                 .fire();
                     })
-                    .onFailure(throwable -> {
-                        xmlEditor.setErrorText(
-                                "Unable to display pipeline source",
-                                throwable.getMessage()
-                        );
-                    })
+                    .onFailure(throwable -> xmlEditor.setErrorText(
+                            "Unable to display pipeline source",
+                            throwable.getMessage()
+                    ))
                     .call(PIPELINE_RESOURCE)
                     .fetchPipelineXml(docRef);
         }
@@ -643,6 +637,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         setDirty(true);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface PipelineStructureView extends View, HasUiHandlers<PipelineStructureUiHandlers> {
 
         void setInheritanceTree(View view);
@@ -659,6 +657,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         void setRemoveEnabled(boolean enabled);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class AddPipelineElementCommand implements Command {
 
@@ -695,6 +697,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class RestorePipelineElementCommand implements Command {
 

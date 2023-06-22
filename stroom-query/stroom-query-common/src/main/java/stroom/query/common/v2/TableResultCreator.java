@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
@@ -31,6 +32,8 @@ import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +54,7 @@ public class TableResultCreator implements ResultCreator {
 
     private final FieldFormatter fieldFormatter;
     private final Sizes defaultMaxResultsSizes;
-    private volatile List<Field> latestFields;
+//    private volatile List<Field> latestFields;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
@@ -95,14 +98,12 @@ public class TableResultCreator implements ResultCreator {
             // What is the interaction between the paging and the maxResults? The assumption is that
             // maxResults defines the max number of records to come back and the paging can happen up to
             // that maxResults threshold
-
+            final List<Field> fields = dataStore.getFields();
             TableSettings tableSettings = resultRequest.getMappings().get(0);
-            WindowSupport windowSupport = new WindowSupport(tableSettings);
-            tableSettings = windowSupport.getTableSettings();
-            latestFields = tableSettings != null
-                    ? tableSettings.getFields()
-                    : Collections.emptyList();
-            tableResultBuilder.fields(latestFields);
+//            WindowSupport windowSupport = new WindowSupport(tableSettings);
+//            tableSettings = windowSupport.getTableSettings();
+
+            tableResultBuilder.fields(fields);
 
             // Create a set of sizes that are the minimum values for the combination of user provided sizes for
             // the table and the default maximum sizes.
@@ -113,34 +114,53 @@ public class TableResultCreator implements ResultCreator {
                     defaultMaxResultsSizes);
 
             // Create the row creator.
-            Optional<RowCreator> optionalRowCreator =
-                    ConditionalFormattingRowCreator.create(fieldFormatter, keyFactory, tableSettings);
-            if (optionalRowCreator.isEmpty()) {
-                optionalRowCreator = FilteredRowCreator.create(fieldFormatter, keyFactory, tableSettings);
+            Optional<RowCreator> optionalRowCreator = Optional.empty();
+            if (tableSettings != null) {
+                optionalRowCreator = ConditionalFormattingRowCreator.create(
+                        fieldFormatter,
+                        keyFactory,
+                        tableSettings.getAggregateFilter(),
+                        tableSettings.getConditionalFormattingRules(),
+                        fields);
                 if (optionalRowCreator.isEmpty()) {
-                    optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory);
+                    optionalRowCreator = FilteredRowCreator.create(
+                            fieldFormatter,
+                            keyFactory,
+                            tableSettings.getAggregateFilter(),
+                            fields);
                 }
             }
+
+            if (optionalRowCreator.isEmpty()) {
+                optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory);
+            }
+
             final RowCreator rowCreator = optionalRowCreator.orElse(null);
 
             final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
-            dataStore.getData(data ->
-                    addTableResults(data,
-                            latestFields.toArray(new Field[0]),
-                            maxResults,
-                            offset,
-                            length,
-                            resultRequest.getTimeFilter(),
-                            openGroups,
-                            tableResultBuilder,
-                            currentLength,
-                            data.get(Key.ROOT_KEY, resultRequest.getTimeFilter()),
-                            0,
-                            totalResults,
-                            rowCreator,
-                            errorConsumer));
-        } catch (final RuntimeException e) {
+            dataStore.getData(data -> {
+                final Optional<Items> optional = data.get(Key.ROOT_KEY, resultRequest.getTimeFilter());
+                optional.ifPresent(items ->
+                        addTableResults(data,
+                                fields,
+                                maxResults,
+                                offset,
+                                length,
+                                resultRequest.getTimeFilter(),
+                                openGroups,
+                                tableResultBuilder,
+                                currentLength,
+                                items,
+                                0,
+                                totalResults,
+                                rowCreator,
+                                errorConsumer));
+            });
+        } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
+            errorConsumer.add(e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
             errorConsumer.add(e);
         }
 
@@ -150,7 +170,7 @@ public class TableResultCreator implements ResultCreator {
     }
 
     private void addTableResults(final Data data,
-                                 final Field[] fields,
+                                 final List<Field> fields,
                                  final Sizes maxResults,
                                  final int offset,
                                  final int length,
@@ -166,7 +186,7 @@ public class TableResultCreator implements ResultCreator {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
-        for (final Item item : items) {
+        for (final Item item : items.getIterable()) {
             boolean hide = false;
 
             // If the result is within the requested window (offset + length) then add it.
@@ -191,21 +211,23 @@ public class TableResultCreator implements ResultCreator {
 
                 // Add child results if a node is open.
                 if (openGroups != null && openGroups.contains(item.getKey())) {
-                    addTableResults(
-                            data,
-                            fields,
-                            maxResults,
-                            offset,
-                            length,
-                            timeFilter,
-                            openGroups,
-                            tableResultBuilder,
-                            currentLength,
-                            data.get(item.getKey(), timeFilter),
-                            depth + 1,
-                            pos,
-                            rowCreator,
-                            errorConsumer);
+                    final Optional<Items> optional = data.get(item.getKey(), timeFilter);
+                    optional.ifPresent(childItems ->
+                            addTableResults(
+                                    data,
+                                    fields,
+                                    maxResults,
+                                    offset,
+                                    length,
+                                    timeFilter,
+                                    openGroups,
+                                    tableResultBuilder,
+                                    currentLength,
+                                    childItems,
+                                    depth + 1,
+                                    pos,
+                                    rowCreator,
+                                    errorConsumer));
                 }
 
                 // Increment the total results at this depth.
@@ -220,7 +242,7 @@ public class TableResultCreator implements ResultCreator {
 
     private interface RowCreator {
 
-        Row create(Field[] fields,
+        Row create(List<Field> fields,
                    Item item,
                    int depth,
                    ErrorConsumer errorConsumer);
@@ -245,16 +267,22 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields,
+        public Row create(final List<Field> fields,
                           final Item item,
                           final int depth,
                           final ErrorConsumer errorConsumer) {
-            final List<String> stringValues = new ArrayList<>(fields.length);
-            for (int i = 0; i < fields.length; i++) {
-                final Field field = fields[i];
-                final Val val = item.getValue(i, true);
-                final String string = fieldFormatter.format(field, val);
-                stringValues.add(string);
+            final List<String> stringValues = new ArrayList<>(fields.size());
+            int i = 0;
+            for (final Field field : fields) {
+                try {
+                    final Val val = item.getValue(i);
+                    final String string = fieldFormatter.format(field, val);
+                    stringValues.add(string);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(LogUtil.message("Error getting field value for field {} at index {}", field, i), e);
+                    throw e;
+                }
+                i++;
             }
 
             return Row.builder()
@@ -289,34 +317,35 @@ public class TableResultCreator implements ResultCreator {
 
         public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
                                                   final KeyFactory keyFactory,
-                                                  final TableSettings tableSettings) {
-            if (tableSettings != null && tableSettings.getAggregateFilter() != null) {
-                final FieldExpressionMatcher expressionMatcher =
-                        new FieldExpressionMatcher(tableSettings.getFields());
+                                                  final ExpressionOperator rowFilter,
+                                                  final List<Field> fields) {
+            if (rowFilter != null) {
+                final FieldExpressionMatcher expressionMatcher = new FieldExpressionMatcher(fields);
                 return Optional.of(new FilteredRowCreator(
                         fieldFormatter,
                         keyFactory,
-                        tableSettings.getAggregateFilter(),
+                        rowFilter,
                         expressionMatcher));
             }
             return Optional.empty();
         }
 
         @Override
-        public Row create(final Field[] fields,
+        public Row create(final List<Field> fields,
                           final Item item,
                           final int depth,
                           final ErrorConsumer errorConsumer) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
-            final List<String> stringValues = new ArrayList<>(fields.length);
-            for (int i = 0; i < fields.length; i++) {
-                final Field field = fields[i];
-                final Val val = item.getValue(i, true);
+            final List<String> stringValues = new ArrayList<>(fields.size());
+            int i = 0;
+            for (final Field field : fields) {
+                final Val val = item.getValue(i);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
                 fieldIdToValueMap.put(field.getName(), string);
+                i++;
             }
 
             try {
@@ -366,25 +395,24 @@ public class TableResultCreator implements ResultCreator {
 
         public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
                                                   final KeyFactory keyFactory,
-                                                  final TableSettings tableSettings) {
+                                                  final ExpressionOperator rowFilter,
+                                                  final List<ConditionalFormattingRule> rules,
+                                                  final List<Field> fields) {
             // Create conditional formatting expression matcher.
-            if (tableSettings != null) {
-                List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-                if (rules != null) {
-                    rules = rules
-                            .stream()
-                            .filter(ConditionalFormattingRule::isEnabled)
-                            .collect(Collectors.toList());
-                    if (rules.size() > 0) {
-                        final FieldExpressionMatcher expressionMatcher =
-                                new FieldExpressionMatcher(tableSettings.getFields());
-                        return Optional.of(new ConditionalFormattingRowCreator(
-                                fieldFormatter,
-                                keyFactory,
-                                tableSettings.getAggregateFilter(),
-                                rules,
-                                expressionMatcher));
-                    }
+            if (rules != null) {
+                final List<ConditionalFormattingRule> activeRules = rules
+                        .stream()
+                        .filter(ConditionalFormattingRule::isEnabled)
+                        .collect(Collectors.toList());
+                if (activeRules.size() > 0) {
+                    final FieldExpressionMatcher expressionMatcher =
+                            new FieldExpressionMatcher(fields);
+                    return Optional.of(new ConditionalFormattingRowCreator(
+                            fieldFormatter,
+                            keyFactory,
+                            rowFilter,
+                            activeRules,
+                            expressionMatcher));
                 }
             }
 
@@ -392,20 +420,21 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields,
+        public Row create(final List<Field> fields,
                           final Item item,
                           final int depth,
                           final ErrorConsumer errorConsumer) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
-            final List<String> stringValues = new ArrayList<>(fields.length);
-            for (int i = 0; i < fields.length; i++) {
-                final Field field = fields[i];
-                final Val val = item.getValue(i, true);
+            final List<String> stringValues = new ArrayList<>(fields.size());
+            int i = 0;
+            for (final Field field : fields) {
+                final Val val = item.getValue(i);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
                 fieldIdToValueMap.put(field.getName(), string);
+                i++;
             }
 
             // Find a matching rule.

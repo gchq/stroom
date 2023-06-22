@@ -1,33 +1,37 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.dashboard.expression.v1.ref.OutputFactory;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-
-import java.nio.charset.StandardCharsets;
+import com.esotericsoftware.kryo.io.Output;
+import net.openhft.hashing.LongHashFunction;
 
 public class ValHasher {
 
-    public static long hash(final Val[] values) {
+    private final OutputFactory outputFactory;
+    private final ErrorConsumer errorConsumer;
+    private int bufferSize = 16;
+
+    public ValHasher(final OutputFactory outputFactory,
+                     final ErrorConsumer errorConsumer) {
+        this.outputFactory = outputFactory;
+        this.errorConsumer = errorConsumer;
+    }
+
+    public long hash(final Val[] values) {
         if (values == null) {
             return -1;
         } else if (values.length == 0) {
             return 0;
         }
-
-        Hasher hasher = Hashing.sipHash24().newHasher();
-        for (final Val val : values) {
-            hasher = hasher.putByte(val.type().getId());
-            switch (val.type()) {
-                case NULL -> hasher = hasher.putBoolean(false);
-                case BOOLEAN -> hasher = hasher.putBoolean(val.toBoolean());
-                case FLOAT, DOUBLE -> hasher.putDouble(val.toDouble());
-                case INTEGER, LONG, DATE -> hasher.putLong(val.toLong());
-                case STRING, ERR -> hasher.putString(val.toString(), StandardCharsets.UTF_8);
-                default -> throw new IllegalStateException("Unexpected value: " + val.type());
-            }
+        try (final Output output = outputFactory.createHashOutput(bufferSize, errorConsumer)) {
+            ValSerialiser.writeArray(output, values);
+            output.flush();
+            final byte[] bytes = output.toBytes();
+            bufferSize = Math.max(bufferSize, output.getBuffer().length);
+            return LongHashFunction.xx3().hashBytes(bytes);
         }
-        return hasher.hash().asLong();
     }
 }

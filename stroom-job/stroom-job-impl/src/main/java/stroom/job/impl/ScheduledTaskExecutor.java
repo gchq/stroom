@@ -20,6 +20,8 @@ import stroom.job.api.ScheduledJob;
 import stroom.job.shared.JobNode;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
@@ -274,6 +276,8 @@ class ScheduledTaskExecutor {
                 } finally {
                     jobNodeTracker.decrementTaskCount();
                 }
+            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                LOGGER.debug(e.getMessage(), e);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }

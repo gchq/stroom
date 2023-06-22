@@ -49,7 +49,7 @@ class TestComparator {
             }
 
             final long now = System.currentTimeMillis();
-            list.sort(new AutoComparator());
+            list.sort(new ValComparator());
             final long duration = System.currentTimeMillis() - now;
             totalDuration += duration;
             final long average = (long) (((double) totalDuration) / run);
@@ -104,7 +104,7 @@ class TestComparator {
                 }
 
                 try {
-                    list.sort(new AutoComparator());
+                    list.sort(new ValComparator());
                 } catch (final IllegalArgumentException e) {
 //                    System.out.println("Found bad list: size=" + list.size());
                     // Expected this.
@@ -120,9 +120,9 @@ class TestComparator {
 
                 // Sort each
                 try {
-                    new ArrayList<>(lower).sort(new AutoComparator());
+                    new ArrayList<>(lower).sort(new ValComparator());
                     try {
-                        new ArrayList<>(upper).sort(new AutoComparator());
+                        new ArrayList<>(upper).sort(new ValComparator());
                     } catch (IllegalArgumentException e) {
 //                        System.out.println("Error in upper: size=" + upper.size());
                         list = upper;
@@ -159,10 +159,10 @@ class TestComparator {
             }
         }
 
-        CheckComparator.checkConsitency(candidateList, new AutoComparator());
-        new ComparatorConsistencyChecker<Val>().check(candidateList, new AutoComparator());
+        CheckComparator.checkConsitency(candidateList, new ValComparator());
+        new ComparatorConsistencyChecker<Val>().check(candidateList, new ValComparator());
 
-        candidateList.sort(new AutoComparator());
+        candidateList.sort(new ValComparator());
     }
 
     private void printList(List<Val> list) {
@@ -221,7 +221,7 @@ class TestComparator {
                 }
 
                 try {
-                    list.sort(new AutoComparator());
+                    list.sort(new ValComparator());
                 } catch (final IllegalArgumentException e) {
                     System.out.println("Found bad list: size=" + list.size());
                     // Expected this.
@@ -239,7 +239,7 @@ class TestComparator {
 
                 // Sort each
                 try {
-                    lower.sort(new AutoComparator());
+                    lower.sort(new ValComparator());
                 } catch (IllegalArgumentException e) {
                     System.out.println("Error in lower: size=" + lower.size());
                     list = lower;

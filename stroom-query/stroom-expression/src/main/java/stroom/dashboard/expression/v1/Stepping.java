@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -109,29 +111,25 @@ class Stepping extends AbstractLink {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final StringBuilder sb = new StringBuilder();
 
-            append(sb, 1, ARG_ID);
-            append(sb, 2, ARG_PART_NO);
-            append(sb, 3, ARG_RECORD_NO);
+            append(storedValues, sb, 1, ARG_ID);
+            append(storedValues, sb, 2, ARG_PART_NO);
+            append(storedValues, sb, 3, ARG_RECORD_NO);
 
             return makeLink(
-                    getEscapedString(childGenerators[0].eval(childDataSupplier)),
+                    getEscapedString(childGenerators[0].eval(storedValues, childDataSupplier)),
                     EncodingUtil.encodeUrl(sb.toString()),
                     "stepping");
         }
 
-        private void append(final StringBuilder sb, final int index, final String key) {
+        private void append(final StoredValues storedValues,
+                            final StringBuilder sb,
+                            final int index,
+                            final String key) {
             if (index < childGenerators.length) {
-                final Val val = childGenerators[index].eval(null);
+                final Val val = childGenerators[index].eval(storedValues, null);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {
                         sb.append("&");

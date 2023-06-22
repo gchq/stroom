@@ -54,7 +54,6 @@ class Negate extends NumericFunction {
 
     static class Calc extends Calculator {
 
-
         private static final ValInteger MINUS_ONE = ValInteger.create(-1);
 
         @Override
@@ -64,7 +63,7 @@ class Negate extends NumericFunction {
         }
 
         @Override
-        protected double op(final double cur, final double val) {
+        double op(final double cur, final double val) {
             return val * cur;
         }
     }

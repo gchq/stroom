@@ -33,6 +33,20 @@
     display: flex;
 }
 
+.QueryToolbarViewImpl-outer {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-grow: 1;
+}
+
+.QueryToolbarViewImpl-inner {
+    display: flex;
+    gap: 2px;
+    margin-right: 5px;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
@@ -134,6 +148,10 @@
 }
 
 .flexLayout-markerVisible {
+}
+
+.flexLayout-marker-tab {
+   	opacity: 0.8;
 }
 
 .flexLayout-splitter {
@@ -248,6 +266,7 @@
 	gap: 5px;
 	cursor: default;
 	z-index: 5;
+	min-height: 26px;
 }
 
 .tabLayout .tabLayout-tabContainer {
@@ -375,13 +394,7 @@
 }
 
 .fields-field * {
-    text-decoration: inherit;
     vertical-align: middle;
-}
-
-.fields-field:hover {
-    opacity: 1;
-    text-decoration: underline;
 }
 
 .fields-fieldLabel {
@@ -389,9 +402,19 @@
 	height: 16px;
 	padding: 0px;
 	padding-right: 5px;
-	cursor: pointer;
 	font-weight: 500;
-    text-decoration: inherit;
+}
+
+.allow-header-selection .fields-fieldLabel {
+	cursor: pointer;
+}
+
+.allow-header-selection .fields-field:hover {
+    opacity: 1;
+}
+
+.allow-header-selection .fields-field:hover .fields-fieldLabel {
+    text-decoration: underline;
 }
 
 .fields-fieldText {

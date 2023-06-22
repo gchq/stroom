@@ -248,9 +248,13 @@ public class TermEditor extends Composite {
         conditionListBox.setSelectedItem(selected);
         changeCondition(field, selected);
 
-        fieldTypeLabel.setText(field.getFieldType().getShortTypeName());
-        fieldTypeLabel.setTitle(field.getFieldType().getDescription());
-        fieldTypeLabel.setVisible(true);
+        if (field != null && field.getFieldType() != null) {
+            fieldTypeLabel.setText(field.getFieldType().getShortTypeName());
+            fieldTypeLabel.setTitle(field.getFieldType().getDescription());
+            fieldTypeLabel.setVisible(true);
+        } else {
+            fieldTypeLabel.setVisible(false);
+        }
     }
 
     private List<Condition> getConditions(final AbstractField field) {

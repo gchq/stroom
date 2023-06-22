@@ -28,6 +28,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -40,7 +41,7 @@ import javax.inject.Singleton;
 @Singleton
 public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
 
-    private static final AnalyticRuleResource ALERT_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
+    private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
 
     private final Provider<AnalyticRulePresenter> editorProvider;
     private final RestFactory restFactory;
@@ -50,8 +51,9 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                            final Provider<AnalyticRulePresenter> editorProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
-                           final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                           final DocumentPluginEventManager entityPluginEventManager,
+                           final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
@@ -69,7 +71,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ALERT_RULE_RESOURCE)
+                .call(ANALYTIC_RULE_RESOURCE)
                 .fetch(docRef.getUuid());
     }
 
@@ -82,7 +84,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ALERT_RULE_RESOURCE)
+                .call(ANALYTIC_RULE_RESOURCE)
                 .update(document.getUuid(), document);
     }
 

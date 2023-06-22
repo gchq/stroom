@@ -24,82 +24,70 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
 
     @Test
     void testExtractAuthorityFromUri() {
-        createGenerator("extractAuthorityFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("www.example.com:1234");
-        });
+        test("extractAuthorityFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path",
+                "www.example.com:1234");
     }
 
     @Test
     void testExtractFragmentFromUri() {
-        createGenerator("extractFragmentFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path#frag"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("frag");
-        });
+        test("extractFragmentFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path#frag",
+                "frag");
     }
 
     @Test
     void testExtractHostFromUri() {
-        createGenerator("extractHostFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("www.example.com");
-        });
+        test("extractHostFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path",
+                "www.example.com");
     }
 
     @Test
     void testExtractPathFromUri() {
-        createGenerator("extractPathFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("/this/is/a/path");
-        });
+        test("extractPathFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path",
+                "/this/is/a/path");
     }
 
     @Test
     void testExtractPortFromUri() {
-        createGenerator("extractPortFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("1234");
-        });
+        test("extractPortFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path",
+                "1234");
     }
 
     @Test
     void testExtractQueryFromUri() {
-        createGenerator("extractQueryFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path?this=that&foo=bar"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("this=that&foo=bar");
-        });
+        test("extractQueryFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path?this=that&foo=bar",
+                "this=that&foo=bar");
     }
 
     @Test
     void testExtractSchemeFromUri() {
-        createGenerator("extractSchemeFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("http");
-        });
+        test("extractSchemeFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path",
+                "http");
     }
 
     @Test
     void testExtractSchemeSpecificPartFromUri() {
-        createGenerator("extractSchemeSpecificPartFromUri(${val1})", gen -> {
-            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("//www.example.com:1234/this/is/a/path");
-        });
+        test("extractSchemeSpecificPartFromUri(${val1})",
+                "http://www.example.com:1234/this/is/a/path",
+                "//www.example.com:1234/this/is/a/path");
     }
 
     @Test
     void testExtractUserInfoFromUri() {
-        createGenerator("extractUserInfoFromUri(${val1})", gen -> {
-            gen.set(getVals("http://john:doe@example.com:81/"));
-            Val out = gen.eval(null);
-            assertThat(out.toString()).isEqualTo("john:doe");
-        });
+        test("extractUserInfoFromUri(${val1})",
+                "http://john:doe@example.com:81/",
+                "john:doe");
+    }
+
+    private void test(final String expression, final String value, final String expected) {
+        compute(expression,
+                Val.of(value),
+                out -> assertThat(out.toString()).isEqualTo(expected));
     }
 }

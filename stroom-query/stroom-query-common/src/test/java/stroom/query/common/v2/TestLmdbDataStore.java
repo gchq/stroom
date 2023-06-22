@@ -21,6 +21,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
@@ -28,6 +29,8 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -35,6 +38,7 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.Metrics;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +71,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Override
-    DataStore create(final QueryKey queryKey,
+    DataStore create(final SearchRequestSource searchRequestSource,
+                     final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
                      final AbstractResultStoreConfig resultStoreConfig,
@@ -81,12 +86,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 pathCreator,
                 tempDirProvider,
                 () -> lmdbLibraryConfig);
+        final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig());
 
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
+                searchRequestSource,
                 serialisers,
-                lmdbEnvFactory,
+                lmdbEnvBuilder,
                 resultStoreConfig,
                 queryKey,
                 componentId,
@@ -119,36 +126,41 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         .build())
                 .build();
 
-        final DataStoreSettings dataStoreSettings = DataStoreSettings
-                .createBigStoreSettings();
-        final DataStore dataStore = create(tableSettings, dataStoreSettings);
+        final DataStore dataStore = create(tableSettings);
 
-        for (int i = 0; i < 3000; i++) {
-            final Val val = ValString.create("Text " + i + "test".repeat(1000));
-            dataStore.add(Val.of(val, val));
-        }
+        Metrics.setEnabled(true);
+        Metrics.measure("Added data", () -> {
+            for (int i = 0; i < 300_000; i++) {
+                final Val val = ValString.create("Text " + i + "test".repeat(1000));
+                dataStore.add(Val.of(val, val));
+            }
 
-        // Wait for all items to be added.
-        try {
-            dataStore.getCompletionState().signalComplete();
-            dataStore.getCompletionState().awaitCompletion();
-        } catch (final InterruptedException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+            // Wait for all items to be added.
+            try {
+                dataStore.getCompletionState().signalComplete();
+                dataStore.getCompletionState().awaitCompletion();
+            } catch (final InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
+        Metrics.report();
 
-        // Make sure we only get 50 results.
-        final ResultRequest tableResultRequest = ResultRequest.builder()
-                .componentId("componentX")
-                .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
-                .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
-        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
-                dataStore,
-                tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        Metrics.measure("Retrieved data", () -> {
+            // Make sure we only get 50 results.
+            final ResultRequest tableResultRequest = ResultRequest.builder()
+                    .componentId("componentX")
+                    .addMappings(tableSettings)
+                    .requestedRange(new OffsetRange(0, 3000))
+                    .build();
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                    fieldFormatter,
+                    defaultMaxResultsSizes);
+            final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                    dataStore,
+                    tableResultRequest);
+            assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        });
+        Metrics.report();
     }
 
     @Test
@@ -172,17 +184,21 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("EventTime")
                         .name("EventTime")
-                        .group(0)
                         .expression(ParamSubstituteUtil.makeParam("EventTime"))
                         .format(Format.DATE_TIME)
                         .build())
                 .build();
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final AbstractResultStoreConfig resultStoreConfig = new AnalyticStoreConfig();
-        final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings("test");
+        final AbstractResultStoreConfig resultStoreConfig = new AnalyticResultStoreConfig();
+        final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
+        final SearchRequestSource searchRequestSource = SearchRequestSource
+                .builder()
+                .sourceType(SourceType.ANALYTIC_RULE)
+                .build();
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(
+                        searchRequestSource,
                         queryKey,
                         "0",
                         tableSettings,
@@ -199,7 +215,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         }
 
         // Wait for all items to be added.
-        final CurrentDbState currentDbState = dataStore.sync();
+        CurrentDbState currentDbState = dataStore.sync();
         assertThat(currentDbState.getStreamId()).isEqualTo(100);
         assertThat(currentDbState.getEventId()).isEqualTo(100);
 
@@ -225,17 +241,39 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         // Try and open the datastore again.
         LmdbDataStore dataStore2 = (LmdbDataStore)
                 create(
+                        searchRequestSource,
                         queryKey,
                         "0",
                         tableSettings,
                         resultStoreConfig,
                         dataStoreSettings);
 
-        final CurrentDbState currentDbState2 = dataStore2.sync();
-        assertThat(currentDbState2.getStreamId()).isEqualTo(100);
-        assertThat(currentDbState2.getEventId()).isEqualTo(100);
+        currentDbState = dataStore2.sync();
+        assertThat(currentDbState.getStreamId()).isEqualTo(100);
+        assertThat(currentDbState.getEventId()).isEqualTo(100);
 
         // Make sure we only get 50 results.
+        searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore2,
+                tableResultRequest);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+
+        // Load some more data.
+        for (int i = 101; i <= 200; i++) {
+            for (int j = 101; j <= 200; j++) {
+                final Val streamId = ValLong.create(i);
+                final Val eventId = ValLong.create(j);
+                final Val eventTime = ValLong.create(System.currentTimeMillis());
+                dataStore2.add(Val.of(streamId, eventId, eventTime));
+            }
+        }
+
+        // Wait for all items to be added.
+        currentDbState = dataStore2.sync();
+        assertThat(currentDbState.getStreamId()).isEqualTo(200);
+        assertThat(currentDbState.getEventId()).isEqualTo(200);
+
+        // Make sure we still only get 50 results.
         searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore2,
                 tableResultRequest);
@@ -270,5 +308,10 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @Test
     void sortedCountedTextTest3() {
         super.sortedCountedTextTest3();
+    }
+
+    @Test
+    void firstLastSelectorTest() {
+        super.firstLastSelectorTest();
     }
 }

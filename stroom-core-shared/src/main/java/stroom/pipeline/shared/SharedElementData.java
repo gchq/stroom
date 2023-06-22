@@ -19,6 +19,7 @@ package stroom.pipeline.shared;
 import stroom.util.shared.Indicators;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -70,6 +71,11 @@ public class SharedElementData {
         return outputIndicators;
     }
 
+    @JsonIgnore
+    public Indicators getAllIndicators() {
+        return Indicators.combine(outputIndicators, codeIndicators);
+    }
+
     public boolean isFormatInput() {
         return formatInput;
     }
@@ -77,5 +83,6 @@ public class SharedElementData {
     public boolean isFormatOutput() {
         return formatOutput;
     }
+
 }
 

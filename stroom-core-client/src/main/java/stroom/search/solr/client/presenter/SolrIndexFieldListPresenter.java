@@ -29,8 +29,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
@@ -59,7 +58,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFieldListPresenter.SolrIndexFieldListView>
-        implements HasDocumentRead<SolrIndexDoc>, HasWrite<SolrIndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<SolrIndexDoc>, HasDocumentWrite<SolrIndexDoc>, HasDirtyHandlers {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
@@ -324,19 +323,21 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
 
     @Override
     public void read(final DocRef docRef,
-                     final SolrIndexDoc index) {
-        this.index = index;
-        if (index != null) {
-            fields = index.getFields().stream()
+                     final SolrIndexDoc document,
+                     final boolean readOnly) {
+        this.readOnly = readOnly;
+        this.index = document;
+        if (document != null) {
+            fields = document.getFields().stream()
                     .sorted(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
 
-            final SolrSynchState state = index.getSolrSynchState();
+            final SolrSynchState state = document.getSolrSynchState();
             final StringBuilder sb = new StringBuilder();
             if (state != null) {
                 if (state.getLastSynchronized() != null) {
                     sb.append("<b>Last synchronised:</b> ");
-                    sb.append(dateTimeFormatter.format(index.getSolrSynchState().getLastSynchronized()));
+                    sb.append(dateTimeFormatter.format(document.getSolrSynchState().getLastSynchronized()));
                     sb.append("</br>");
                 }
                 for (final String message : state.getMessages()) {
@@ -347,18 +348,13 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
             getView().setSynchState(sb.toString());
         }
         refresh();
-    }
-
-    @Override
-    public SolrIndexDoc write(final SolrIndexDoc entity) {
-        entity.setFields(fields);
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
         enableButtons();
+    }
+
+    @Override
+    public SolrIndexDoc write(final SolrIndexDoc document) {
+        document.setFields(fields);
+        return document;
     }
 
     @Override

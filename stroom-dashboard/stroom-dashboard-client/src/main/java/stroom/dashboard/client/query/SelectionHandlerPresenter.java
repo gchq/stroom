@@ -84,18 +84,26 @@ public class SelectionHandlerPresenter
     }
 
     ComponentSelectionHandler write() {
-        String id = null;
+        final String id;
         if (originalHandler != null && originalHandler.getId() != null) {
             id = originalHandler.getId();
         } else {
             id = RandomId.createId(5);
         }
 
+        final Component component = getView().getComponent();
+        final String componentId;
+        if (component != null) {
+            componentId = component.getId();
+        } else {
+            componentId = null;
+        }
+
         final ExpressionOperator expression = editExpressionPresenter.write();
         return ComponentSelectionHandler
                 .builder()
                 .id(id)
-                .componentId(getView().getComponent().getId())
+                .componentId(componentId)
                 .expression(expression)
                 .enabled(getView().isEnabled())
                 .build();

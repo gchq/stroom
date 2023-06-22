@@ -7,6 +7,8 @@ import stroom.proxy.repo.RepoSourceItemRef;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.OperationWriteQueue;
+import stroom.proxy.repo.queue.QueueMonitor;
+import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.queue.ReadQueue;
 import stroom.proxy.repo.queue.RecordQueue;
 import stroom.proxy.repo.queue.WriteQueue;
@@ -38,10 +40,14 @@ public class AggregateDao {
     private final RecordQueue recordQueue;
     private final OperationWriteQueue aggregateWriteQueue;
     private final ReadQueue<Aggregate> aggregateReadQueue;
+    private final QueueMonitor queueMonitor;
 
     @Inject
     AggregateDao(final SqliteJooqHelper jooq,
-                 final ProxyDbConfig dbConfig) {
+                 final ProxyDbConfig dbConfig,
+                 final QueueMonitors queueMonitors) {
+        queueMonitor = queueMonitors.create(4, "Aggregates");
+
         this.jooq = jooq;
         init();
 
@@ -55,6 +61,8 @@ public class AggregateDao {
     }
 
     private long read(final long currentReadPos, final long limit, List<Aggregate> readQueue) {
+        queueMonitor.setReadPos(currentReadPos);
+
         final AtomicLong pos = new AtomicLong(currentReadPos);
         jooq.readOnlyTransactionResult(context -> context
                         .select(AGGREGATE.ID,
@@ -67,7 +75,10 @@ public class AggregateDao {
                         .limit(limit)
                         .fetch())
                 .forEach(r -> {
-                    pos.set(r.get(AGGREGATE.NEW_POSITION));
+                    final long newPosition = r.get(AGGREGATE.NEW_POSITION);
+                    pos.set(newPosition);
+                    queueMonitor.setBufferPos(newPosition);
+
                     final Aggregate aggregate = new Aggregate(
                             r.get(AGGREGATE.ID),
                             r.get(AGGREGATE.FK_FEED_ID));
@@ -82,9 +93,11 @@ public class AggregateDao {
                     .getMaxId(context, AGGREGATE, AGGREGATE.ID)
                     .orElse(0L));
 
-            aggregateNewPosition.set(JooqUtil
+            final long newPosition = JooqUtil
                     .getMaxId(context, AGGREGATE, AGGREGATE.NEW_POSITION)
-                    .orElse(0L));
+                    .orElse(0L);
+            queueMonitor.setWritePos(newPosition);
+            aggregateNewPosition.set(newPosition);
         });
     }
 
@@ -159,10 +172,13 @@ public class AggregateDao {
 
         recordQueue.add(() -> {
             for (final Aggregate aggregate : list) {
+                final long newPosition = aggregateNewPosition.incrementAndGet();
+                queueMonitor.setWritePos(newPosition);
+
                 aggregateWriteQueue.add(context -> context
                         .update(AGGREGATE)
                         .set(AGGREGATE.COMPLETE, true)
-                        .set(AGGREGATE.NEW_POSITION, aggregateNewPosition.incrementAndGet())
+                        .set(AGGREGATE.NEW_POSITION, newPosition)
                         .where(AGGREGATE.ID.eq(aggregate.id()))
                         .execute());
             }

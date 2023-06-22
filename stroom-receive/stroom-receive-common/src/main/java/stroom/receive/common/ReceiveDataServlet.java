@@ -18,6 +18,7 @@ package stroom.receive.common;
 
 import stroom.meta.api.AttributeMapUtil;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import org.slf4j.Logger;
@@ -43,11 +44,16 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataServlet.class);
 
-    public static final String DATA_FEED_PATH_PART = "datafeed";
+    public static final String DATA_FEED_PATH_PART = "/datafeed";
 
+    // AWS ELB/ALB can't map paths so rather than add nginx or similar into the mix to map paths,
+    // have a pair of aliases without 'noauth' in them.
+    // This is somewhat inconsistent with our other servlets so far from ideal.
     private static final Set<String> PATH_SPECS = Set.of(
-            "/" + DATA_FEED_PATH_PART,
-            "/" + DATA_FEED_PATH_PART + "/*");
+            ResourcePaths.addUnauthenticatedPrefix(DATA_FEED_PATH_PART),
+            ResourcePaths.addUnauthenticatedPrefix(DATA_FEED_PATH_PART, "/*"),
+            DATA_FEED_PATH_PART,
+            DATA_FEED_PATH_PART + "/*");
 
     private final Provider<RequestHandler> requestHandlerProvider;
 

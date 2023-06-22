@@ -43,6 +43,10 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
 
     void setText(final String text, final boolean format);
 
+    boolean isClean();
+
+    void markClean();
+
     void insertTextAtCursor(final String text);
 
     void replaceSelectedText(final String text);

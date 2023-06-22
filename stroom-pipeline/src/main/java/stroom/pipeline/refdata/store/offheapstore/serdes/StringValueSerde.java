@@ -26,6 +26,7 @@ import stroom.util.logging.LogUtil;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class StringValueSerde implements RefDataValueSerde {
 
@@ -57,7 +58,7 @@ public class StringValueSerde implements RefDataValueSerde {
                                 final RefDataValue refDataValue) {
         try {
             final StringValue stringValue = (StringValue) refDataValue;
-            pooledByteBufferOutputStream.write(stringValue.getValue().getBytes(StandardCharsets.UTF_8));
+            pooledByteBufferOutputStream.write(toBytes(stringValue));
             return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
         } catch (ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
@@ -71,7 +72,12 @@ public class StringValueSerde implements RefDataValueSerde {
     /**
      * Extracts the string value from the buffer.
      */
-    public String extractValue(final ByteBuffer byteBuffer) {
-        return stringSerde.deserialize(byteBuffer);
+    public static String extractValue(final ByteBuffer byteBuffer) {
+        return StringSerde.extractValue(byteBuffer);
+    }
+
+    public static byte[] toBytes(final StringValue stringValue) {
+        Objects.requireNonNull(stringValue);
+        return stringValue.getValue().getBytes(StandardCharsets.UTF_8);
     }
 }

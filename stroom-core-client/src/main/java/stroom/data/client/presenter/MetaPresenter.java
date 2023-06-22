@@ -23,6 +23,7 @@ import stroom.data.client.presenter.MetaPresenter.MetaView;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -374,7 +375,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     private static void getTerms(final ExpressionOperator expressionOperator,
                                  final AbstractField field,
                                  final Set<String> terms) {
-        if (expressionOperator.enabled()) {
+        if (expressionOperator.enabled() && expressionOperator.getChildren() != null) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
@@ -416,10 +417,10 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     }
 
     @Override
-    public void read(final DocRef docRef, final Object entity) {
-        if (entity instanceof FeedDoc) {
+    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
+        if (document instanceof FeedDoc) {
             setFeedCriteria(docRef);
-        } else if (entity instanceof PipelineDoc) {
+        } else if (document instanceof PipelineDoc) {
             setPipelineCriteria(docRef);
         } else if (docRef != null) {
             setFolderCriteria(docRef);
@@ -433,10 +434,13 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         if (!hasSetCriteria) {
             hasSetCriteria = true;
             showUploadButton(false);
-            showStreamRelationListButtons(true);
 
-            metaListPresenter.setExpression(MetaExpressionUtil.createFolderExpression(folder));
-
+            if (ExplorerConstants.SYSTEM.equals(folder.getType())) {
+                // No point in adding a term for the root folder as everything is a descendent of it
+                metaListPresenter.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
+            } else {
+                metaListPresenter.setExpression(MetaExpressionUtil.createFolderExpression(folder));
+            }
             refresh();
         }
     }
@@ -447,10 +451,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
             hasSetCriteria = true;
             this.feedRef = feedRef;
             showUploadButton(true);
-            showStreamRelationListButtons(true);
-
             metaListPresenter.setExpression(MetaExpressionUtil.createFeedExpression(feedRef));
-
             refresh();
         }
     }
@@ -460,20 +461,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         if (!hasSetCriteria) {
             hasSetCriteria = true;
             showUploadButton(false);
-            showStreamRelationListButtons(false);
-
             metaListPresenter.setExpression(MetaExpressionUtil.createPipelineExpression(pipelineRef));
-
             refresh();
         }
     }
 
     private void setNullCriteria() {
         showUploadButton(false);
-        showStreamRelationListButtons(false);
-
         metaListPresenter.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
-
         refresh();
     }
 
@@ -499,9 +494,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         if (streamListUpload != null) {
             streamListUpload.setVisible(visible);
         }
-    }
-
-    private void showStreamRelationListButtons(final boolean visible) {
     }
 
     public boolean isSomeSelected(final AbstractMetaListPresenter streamListPresenter,

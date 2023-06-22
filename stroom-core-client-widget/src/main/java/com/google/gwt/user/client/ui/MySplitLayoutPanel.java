@@ -69,6 +69,7 @@ import com.google.gwt.user.client.Event;
 public class MySplitLayoutPanel extends DockLayoutPanel {
 
     private static final int SPLITTER_SIZE = 1;
+    public static final double HALF_N_HALF_SPLIT = 0.5;
     /**
      * The element that masks the screen so we can catch mouse events over
      * iframes.
@@ -93,8 +94,16 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         hSplits = parseSplits(str);
     }
 
+    public void setHSplits(final double... splits) {
+        hSplits = splits;
+    }
+
     public void setVSplits(final String str) {
         vSplits = parseSplits(str);
+    }
+
+    public void setVSplits(final double... splits) {
+        vSplits = splits;
     }
 
     private double[] parseSplits(final String str) {
@@ -251,6 +260,19 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         return false;
     }
 
+    @Override
+    public void setWidgetHidden(Widget widget, boolean hidden) {
+        super.setWidgetHidden(widget, hidden);
+        // If we are hiding a widget then we also need to hide its splitter else you get an
+        // orphaned splitter appearing
+        if (!(widget instanceof Splitter)) {
+            final Splitter associatedSplitter = getAssociatedSplitter(widget);
+            if (associatedSplitter != null) {
+                setWidgetHidden(associatedSplitter, hidden);
+            }
+        }
+    }
+
     /**
      * Sets the minimum allowable size for the given widget.
      * <p>
@@ -363,34 +385,9 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         onResize();
     }
 
-    class HSplitter extends Splitter {
 
-        public HSplitter(final Widget target, final boolean reverse, final int index) {
-            super(target, reverse, index, false);
-            getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
-            setStyleName("gwt-SplitLayoutPanel-Dragger gwt-SplitLayoutPanel-HDragger");
-        }
+    // --------------------------------------------------------------------------------
 
-        @Override
-        protected int getAbsolutePosition() {
-            return getAbsoluteLeft();
-        }
-
-        @Override
-        protected int getEventPosition(final Event event) {
-            return event.getClientX();
-        }
-
-        @Override
-        protected int getTargetPosition() {
-            return target.getAbsoluteLeft();
-        }
-
-        @Override
-        protected int getTargetSize() {
-            return target.getOffsetWidth();
-        }
-    }
 
     abstract class Splitter extends Widget {
 
@@ -437,44 +434,89 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
 
                 case Event.ONMOUSEMOVE:
                     if (mouseDown) {
-                        int size;
-                        if (reverse) {
-                            size = getTargetPosition() + getTargetSize() - getEventPosition(event) - offset;
-                        } else {
-                            size = getEventPosition(event) - getTargetPosition() - offset;
-                        }
-
-                        int clientSize = 0;
-                        final int min = 0;
-                        int max = -min;
-                        if (vertical) {
-                            clientSize = getElement().getParentElement().getParentElement().getOffsetHeight();
-                            max += clientSize - getOffsetHeight();
-                        } else {
-                            clientSize = getElement().getParentElement().getParentElement().getOffsetWidth();
-                            max += clientSize - getOffsetWidth();
-                        }
-                        if (size > max) {
-                            size = max;
-                        } else if (size < min) {
-                            size = min;
-                        }
-
-                        if (vertical) {
-                            if (vSplits != null && vSplits.length > index) {
-                                vSplits[index] = (double) size / (double) clientSize;
-                            }
-                        } else {
-                            if (hSplits != null && hSplits.length > index) {
-                                hSplits[index] = (double) size / (double) clientSize;
-                            }
-                        }
-
-                        setAssociatedWidgetSize(size);
-                        event.preventDefault();
+                        handleMouseDrag(event);
                     }
                     break;
             }
+        }
+
+        private void handleMouseDrag(final Event event) {
+            int size;
+            if (reverse) {
+                size = getTargetPosition() + getTargetSize() - getEventPosition(event) - offset;
+            } else {
+                size = getEventPosition(event) - getTargetPosition() - offset;
+            }
+
+            int clientSize = 0;
+            final int min = 0;
+            int max = -min;
+            if (vertical) {
+                clientSize = getElement().getParentElement().getParentElement().getOffsetHeight();
+                max += clientSize - getOffsetHeight();
+            } else {
+                clientSize = getElement().getParentElement().getParentElement().getOffsetWidth();
+                max += clientSize - getOffsetWidth();
+            }
+            if (size > max) {
+                size = max;
+            } else if (size < min) {
+                size = min;
+            }
+
+            // TODO: 06/06/2023 This only works with 1-2 vertical splitters or 1 horizontal one
+            //  Currently don't have any screens with more than that so can cross that road when
+            //  we come to it.
+            boolean allowResize = true;
+            if (vertical) {
+                // Splitter moving up/down
+                if (vSplits != null && vSplits.length > index) {
+                    final double currVSplit = vSplits[index];
+                    double newVSplit = (double) size / (double) clientSize;
+
+                    if (newVSplit > currVSplit && index == vSplits.length - 1) {
+                        // bottom splitter moving up
+
+                        // Not the first split (from top) so need to make sure our split does
+                        // not move above the split above us.
+                        double adjacentSplitTotal = 0;
+                        for (int i = 0; i < index; i++) {
+                            adjacentSplitTotal += vSplits[i];
+                        }
+                        final double maxVSplit = (1 - adjacentSplitTotal - 0.04);
+                        if (newVSplit > maxVSplit) {
+                            newVSplit = maxVSplit;
+                            // Reach the max for this split so don't resize anymore
+                            allowResize = false;
+                        }
+                    } else if (newVSplit > currVSplit && index == 0){
+                        // Top split moving down
+
+                        // Not the last split (from top) so need to make sure our split does not
+                        // move below the split below us
+                        double adjacentSplitTotal = 0;
+                        for (int i = index + 1; i < vSplits.length; i++) {
+                            adjacentSplitTotal += vSplits[i];
+                        }
+                        final double maxVSplit = 1 - adjacentSplitTotal - 0.04;
+                        if (newVSplit > maxVSplit) {
+                            newVSplit = maxVSplit;
+                            allowResize = false;
+                        }
+                    }
+                    vSplits[index] = newVSplit;
+                }
+            } else {
+                // Splitter moving left/right
+                if (hSplits != null && hSplits.length > index) {
+                    hSplits[index] = (double) size / (double) clientSize;
+                }
+            }
+
+            if (allowResize) {
+                setAssociatedWidgetSize(size);
+            }
+            event.preventDefault();
         }
 
         public void setMinSize(final int minSize) {
@@ -525,6 +567,60 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A vertical split line for splitting a panel horizontally into two columns. e.g:
+     * <pre>{@code
+     * ┌───┬───┐
+     * │   │   │
+     * └───┴───┘}</pre>
+     */
+    class HSplitter extends Splitter {
+
+        public HSplitter(final Widget target, final boolean reverse, final int index) {
+            super(target, reverse, index, false);
+            getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
+            setStyleName("gwt-SplitLayoutPanel-Dragger gwt-SplitLayoutPanel-HDragger");
+        }
+
+        @Override
+        protected int getAbsolutePosition() {
+            return getAbsoluteLeft();
+        }
+
+        @Override
+        protected int getEventPosition(final Event event) {
+            return event.getClientX();
+        }
+
+        @Override
+        protected int getTargetPosition() {
+            return target.getAbsoluteLeft();
+        }
+
+        @Override
+        protected int getTargetSize() {
+            return target.getOffsetWidth();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A horizontal split line for splitting a panel vertically into two rows. e.g:
+     * <pre>{@code
+     * ┌────┐
+     * │    │
+     * ├────┤
+     * │    │
+     * └────┘
+     * }</pre>
+     */
     class VSplitter extends Splitter {
 
         public VSplitter(final Widget target, final boolean reverse, final int index) {

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 import java.util.function.Supplier;
 
@@ -39,7 +41,7 @@ abstract class AbstractIsFunction extends AbstractFunction {
             hasAggregate = function.hasAggregate();
         } else if (param instanceof Val) {
             // Static computation.
-            gen = new StaticValueFunction(getTest().test((Val) param)).createGenerator();
+            gen = new StaticValueGen(getTest().test((Val) param));
         } else {
             throw new RuntimeException("Unexpected type [" + param.getClass().getSimpleName() + "]");
         }
@@ -62,6 +64,14 @@ abstract class AbstractIsFunction extends AbstractFunction {
         return hasAggregate;
     }
 
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
+
     interface Test {
 
         Val test(Val val);
@@ -77,13 +87,13 @@ abstract class AbstractIsFunction extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return test.test(childGenerator.eval(childDataSupplier));
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return test.test(childGenerator.eval(storedValues, childDataSupplier));
         }
     }
 }

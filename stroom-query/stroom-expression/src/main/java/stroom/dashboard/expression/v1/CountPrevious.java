@@ -16,8 +16,9 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.CountIterationReference;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
@@ -36,6 +37,7 @@ public class CountPrevious extends AbstractFunction implements AggregateFunction
 
     static final String NAME = "countPrevious";
     private int iteration;
+    private CountIterationReference valueReference;
 
     public CountPrevious(final String name) {
         super(name, 1, 1);
@@ -48,8 +50,14 @@ public class CountPrevious extends AbstractFunction implements AggregateFunction
     }
 
     @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        valueReference = valueReferenceIndex.addCountIteration(name + " - " + iteration, iteration);
+        super.addValueReferences(valueReferenceIndex);
+    }
+
+    @Override
     public Generator createGenerator() {
-        return new Gen(iteration);
+        return new Gen(iteration, valueReference);
     }
 
     @Override
@@ -65,37 +73,29 @@ public class CountPrevious extends AbstractFunction implements AggregateFunction
     public static final class Gen extends AbstractNoChildGenerator {
 
         private final int iteration;
-        private long count;
+        private final CountIterationReference valueReference;
 
-        public Gen(final int iteration) {
+        public Gen(final int iteration, final CountIterationReference valueReference) {
             this.iteration = iteration;
+            this.valueReference = valueReference;
         }
 
         @Override
-        public void set(final Val[] values) {
-            count++;
+        public void set(final Val[] values, final StoredValues storedValues) {
+            valueReference.increment(storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValLong.create(count);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return ValLong.create(valueReference.get(storedValues));
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final Gen countGen = (Gen) generator;
-            count += countGen.count;
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            count = input.readLong(true);
-        }
-
-        @Override
-        public void write(final Output output) {
-            output.writeLong(count, true);
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            final long existingValue = valueReference.get(existingValues);
+            final long newValue = valueReference.get(newValues);
+            valueReference.set(existingValues, existingValue + newValue);
+            super.merge(existingValues, newValues);
         }
 
         public int getIteration() {

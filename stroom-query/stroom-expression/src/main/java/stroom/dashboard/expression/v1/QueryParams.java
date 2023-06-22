@@ -33,9 +33,8 @@ class QueryParams extends AbstractFunction {
 
     static final String NAME = "params";
     private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
-    private static final Generator NULL_GEN = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
 
-    private Generator gen = NULL_GEN;
+    private Generator gen = Null.GEN;
 
     public QueryParams(final String name) {
         super(name, 0, 0);
@@ -53,7 +52,7 @@ class QueryParams extends AbstractFunction {
                     sb.append("\" ");
                 }
             });
-            gen = new StaticValueFunction(ValString.create(sb.toString().trim())).createGenerator();
+            gen = new StaticValueGen(ValString.create(sb.toString().trim()));
         }
     }
 

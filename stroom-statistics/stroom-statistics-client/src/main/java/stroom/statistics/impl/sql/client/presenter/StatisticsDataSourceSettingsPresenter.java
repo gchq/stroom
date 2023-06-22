@@ -17,13 +17,12 @@
 
 package stroom.statistics.impl.sql.client.presenter;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
@@ -31,9 +30,6 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -43,22 +39,12 @@ import com.gwtplatform.mvp.client.View;
 
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
-        StatisticsDataSourceSettingsUiHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<StatisticStoreDoc>, HasDocumentWrite<StatisticStoreDoc>, HasDirtyHandlers,
+        StatisticsDataSourceSettingsUiHandlers {
 
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view) {
         super(eventBus, view);
-
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                DirtyEvent.fire(StatisticsDataSourceSettingsPresenter.this, true);
-            }
-        };
-
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
-
         view.setUiHandlers(this);
     }
 
@@ -68,31 +54,25 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
-        if (statisticsDataSource != null) {
-            getView().getDescription().setText(statisticsDataSource.getDescription());
-            getView().setStatisticType(statisticsDataSource.getStatisticType());
-            getView().getEnabled().setValue(statisticsDataSource.isEnabled());
-            getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(statisticsDataSource.getPrecision()));
-            getView().setRollUpType(statisticsDataSource.getRollUpType());
-        }
-    }
-
-    @Override
-    public StatisticStoreDoc write(final StatisticStoreDoc statisticsDataSource) {
-        if (statisticsDataSource != null) {
-            statisticsDataSource.setDescription(getView().getDescription().getText());
-            statisticsDataSource.setStatisticType(getView().getStatisticType());
-            statisticsDataSource.setEnabled(getView().getEnabled().getValue());
-            statisticsDataSource.setPrecision(getView().getPrecision().columnInterval());
-            statisticsDataSource.setRollUpType(getView().getRollUpType());
-        }
-        return statisticsDataSource;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
+    public void read(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
         getView().onReadOnly(readOnly);
+        if (document != null) {
+            getView().setStatisticType(document.getStatisticType());
+            getView().getEnabled().setValue(document.isEnabled());
+            getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(document.getPrecision()));
+            getView().setRollUpType(document.getRollUpType());
+        }
+    }
+
+    @Override
+    public StatisticStoreDoc write(final StatisticStoreDoc document) {
+        if (document != null) {
+            document.setStatisticType(getView().getStatisticType());
+            document.setEnabled(getView().getEnabled().getValue());
+            document.setPrecision(getView().getPrecision().columnInterval());
+            document.setRollUpType(getView().getRollUpType());
+        }
+        return document;
     }
 
     @Override
@@ -102,8 +82,6 @@ public class StatisticsDataSourceSettingsPresenter
 
     public interface StatisticsDataSourceSettingsView
             extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers>, ReadOnlyChangeHandler {
-
-        TextArea getDescription();
 
         StatisticType getStatisticType();
 

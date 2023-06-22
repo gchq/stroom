@@ -16,25 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+abstract class AbstractGenerator implements Generator {
 
-abstract class AbstractGenerator implements Generator, Comparable<Generator> {
-
-    private static final AutoComparator COMPARATOR = new AutoComparator();
-
-    @Override
-    public final int compareTo(final Generator gen) {
-        final Val o1 = eval(null);
-        final Val o2 = gen.eval(null);
-        return COMPARATOR.compare(o1, o2);
-    }
-
-    @Override
-    public void read(final Input input) {
-    }
-
-    @Override
-    public void write(final Output output) {
-    }
 }

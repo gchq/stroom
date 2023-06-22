@@ -69,8 +69,8 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     }
 
     @Override
-    public void setMode(final boolean mode) {
-        queryButtons.setMode(mode);
+    public void onSearching(final boolean searching) {
+        queryButtons.onSearching(searching);
     }
 
     @Override

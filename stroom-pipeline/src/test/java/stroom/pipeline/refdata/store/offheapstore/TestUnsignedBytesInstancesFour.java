@@ -3,13 +3,18 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.test.common.TestUtil;
 
+import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.stream.Stream;
 
 class TestUnsignedBytesInstancesFour {
 
@@ -103,6 +108,39 @@ class TestUnsignedBytesInstancesFour {
                 .isEqualTo(2);
         Assertions.assertThat(byteBuffer.remaining())
                 .isEqualTo(2);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCompare() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Long.class, Long.class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    final ByteBuffer buffer1 = create(testCase.getInput()._1);
+                    final ByteBuffer buffer2 = create(testCase.getInput()._2);
+                    return FOUR_UNSIGNED_BYTES.compare(
+                            buffer1,
+                            buffer2);
+                })
+                .withAssertions(testOutcome -> {
+                    if (testOutcome.getExpectedOutput() < 0) {
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .isLessThan(0);
+                    } else if (testOutcome.getExpectedOutput() > 0) {
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .isGreaterThan(0);
+                    } else {
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .isEqualTo(0);
+                    }
+                })
+                .addCase(Tuple.of(42L, 42L), 0)
+                .addCase(Tuple.of(41L, 42L), -1)
+                .addCase(Tuple.of(43L, 42L), 1)
+                .addThrowsCase(Tuple.of(null, null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(1L, null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(null, 1L), NullPointerException.class)
+                .build();
     }
 
     @Test
@@ -262,6 +300,20 @@ class TestUnsignedBytesInstancesFour {
                     doDecrementTest(0, byteBuffer);
                 })
                 .withMessageContaining("Can't decrement without overflowing");
+    }
+
+    @Test
+    void testZero() {
+        final byte[] bytes = FOUR_UNSIGNED_BYTES.toBytes(0);
+        Assertions.assertThat(bytes)
+                .isEqualTo(new byte[]{0, 0, 0, 0});
+    }
+
+    private ByteBuffer create(final long val) {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(FOUR_UNSIGNED_BYTES.length());
+        FOUR_UNSIGNED_BYTES.put(byteBuffer, val);
+        byteBuffer.flip();
+        return byteBuffer;
     }
 
     private void doDecrementTest(final long val, final ByteBuffer byteBuffer) {

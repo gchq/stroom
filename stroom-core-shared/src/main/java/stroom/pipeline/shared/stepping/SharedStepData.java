@@ -18,6 +18,7 @@ package stroom.pipeline.shared.stepping;
 
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -54,5 +55,15 @@ public class SharedStepData {
             return null;
         }
         return elementMap.get(elementId);
+    }
+
+    public boolean hasIndicators() {
+        return GwtNullSafe.map(getElementMap())
+                .values()
+                .stream()
+                .anyMatch(elmData -> GwtNullSafe.test(
+                        elmData,
+                        SharedElementData::getAllIndicators,
+                        allIndicators -> !allIndicators.isEmpty()));
     }
 }

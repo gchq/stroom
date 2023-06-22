@@ -36,6 +36,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,7 +89,8 @@ class FsOrphanFileFinder {
                         " - Skipping as root is not a directory !!");
                 return result;
             }
-            LOGGER.debug("{} - Scanning directory {}", FsOrphanFileFinderExecutor.TASK_NAME, directory);
+            LOGGER.debug(() -> LogUtil.message("{} - Scanning directory {} with oldestDirTime {}",
+                    FsOrphanFileFinderExecutor.TASK_NAME, directory, Instant.ofEpochMilli(oldestDirTime)));
 
             final Map<Long, Set<Path>> fileMap = new HashMap<>();
             final Map<Path, Long> dirAges = new HashMap<>();
@@ -119,6 +121,8 @@ class FsOrphanFileFinder {
                                 if (age != null && age < oldestDirTime) {
                                     LOGGER.trace(() -> "Orphan dir: " + FileUtil.getCanonicalPath(dir));
                                     orphanConsumer.accept(dir);
+                                } else {
+                                    LOGGER.trace("Ignoring recently created dir {}", dir);
                                 }
 
                                 return super.postVisitDirectory(dir, exc);
@@ -139,10 +143,7 @@ class FsOrphanFileFinder {
                                 // Process only raw zip repo files, i.e. files that have not already been created
                                 // by the fragmenting process.
                                 final long id = fileSystemStreamPathHelper.getId(file);
-                                LOGGER.trace(() -> "Got id = " +
-                                        id +
-                                        " for file " +
-                                        FileUtil.getCanonicalPath(file));
+                                LOGGER.trace(() -> "Got id = " + id + " for file " + FileUtil.getCanonicalPath(file));
 
                                 if (id == -1) {
                                     LOGGER.trace(() -> "Orphan file as no id: " + FileUtil.getCanonicalPath(file));

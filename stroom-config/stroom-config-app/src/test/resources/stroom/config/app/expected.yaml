@@ -18,20 +18,20 @@ appConfig:
         prepStmtCacheSqlLimit: 256
   alerting:
     additionalFieldsPrefix: "_"
-    analyticStoreConfig:
+    reportAllExtractedFieldsEnabled: false
+    resultStore:
       lmdb:
         localDir: "analytic_store"
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
-      maxPayloadSize: "1M"
-      maxPutsBeforeCommit: 100000
+      maxPayloadSize: "1G"
+      maxPutsBeforeCommit: 10000
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
       storeSize: "1000000,100,10,1"
-      valueQueueSize: 100000
-    reportAllExtractedFieldsEnabled: false
+      valueQueueSize: 10000
     rulesFolderList: []
     timezone: "UTC"
   analytics:
@@ -480,7 +480,17 @@ appConfig:
       loadingLockStripes: 2048
       maxPurgeDeletesBeforeCommit: 200000
       maxPutsBeforeCommit: 200000
+      metaIdToRefStoreCache:
+        expireAfterAccess: "PT1H"
+        expireAfterWrite: null
+        maximumSize: 1000
       purgeAge: "P30D"
+      stagingLmdb:
+        localDir: "reference_staging_data"
+        maxReaders: 5
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+        readerBlockedByWriter: false
     xmlSchema:
       cache:
         expireAfterAccess: "PT10M"
@@ -596,12 +606,12 @@ appConfig:
         maxStoreSize: "10G"
         readAheadEnabled: true
       maxPayloadSize: "1G"
-      maxPutsBeforeCommit: 100000
+      maxPutsBeforeCommit: 10000
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
       storeSize: "1000000,100,10,1"
-      valueQueueSize: 100000
+      valueQueueSize: 10000
     shard:
       indexShardSearcherCache:
         expireAfterAccess: "PT1M"
@@ -932,11 +942,12 @@ appConfig:
       enabled: false
       managerTitle: "Choose Activity"
     defaultMaxResults: "1000000,100,10,1"
+    helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
     helpSubPathQuickFilter: "/user-guide/finding-things/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.0/docs"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.2/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     oncontextmenu: "return false;"

@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class WindowSupport {
 
@@ -56,28 +59,56 @@ public class WindowSupport {
                 } catch (final RuntimeException | ParseException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-                // Add all the additional fields we want for time windows.
-                final List<Field> newFields = new ArrayList<>();
-                newFields.add(Field.builder()
-                        .id(hoppingWindow.getTimeField())
-                        .name(hoppingWindow.getTimeField())
-                        .expression("${" + hoppingWindow.getTimeField() + "}")
-                        .group(0)
-                        .sort(Sort.builder().order(0).direction(SortDirection.ASCENDING).build())
-                        .visible(true)
-                        .build());
-                newFields.addAll(tableSettings.getFields());
 
-                for (int i = 0; i < offsets.size(); i++) {
-                    newFields.add(Field.builder()
-                            .id("period-" + i)
-                            .name("period-" + i)
-                            .expression("countPrevious(" + i + ")")
+                // Add all the additional fields we want for time windows.
+                final List<Field> fields = new ArrayList<>();
+                if (tableSettings.getFields() != null) {
+                    fields.addAll(tableSettings.getFields());
+                }
+
+                final Map<String, Field> fieldMap = fields
+                        .stream()
+                        .collect(Collectors.toMap(Field::getId, Function.identity()));
+
+                Field timeField = fieldMap.get(hoppingWindow.getTimeField());
+                if (timeField != null) {
+                    final int index = fields.indexOf(timeField);
+                    fields.set(index, timeField
+                            .copy()
+                            .expression("${" + hoppingWindow.getTimeField() + "}")
+                            .group(0)
+                            .build());
+                } else {
+                    fields.add(Field.builder()
+                            .id(hoppingWindow.getTimeField())
+                            .name(hoppingWindow.getTimeField())
+                            .expression("${" + hoppingWindow.getTimeField() + "}")
+                            .group(0)
+                            .sort(Sort.builder().order(0).direction(SortDirection.ASCENDING).build())
                             .visible(true)
                             .build());
                 }
 
-                this.tableSettings = tableSettings.copy().fields(newFields).build();
+                for (int i = 0; i < offsets.size(); i++) {
+                    final String fieldId = "period-" + i;
+                    final Field field = fieldMap.get(fieldId);
+                    if (field != null) {
+                        final int index = fields.indexOf(field);
+                        fields.set(index, field
+                                .copy()
+                                .expression("countPrevious(" + i + ")")
+                                .build());
+                    } else {
+                        fields.add(Field.builder()
+                                .id(fieldId)
+                                .name(fieldId)
+                                .expression("countPrevious(" + i + ")")
+                                .visible(true)
+                                .build());
+                    }
+                }
+
+                this.tableSettings = tableSettings.copy().fields(fields).build();
             }
         }
     }
@@ -85,7 +116,7 @@ public class WindowSupport {
     public Val[] addWindow(final FieldIndex fieldIndex,
                            final Val[] values,
                            final SimpleDuration offset) {
-        final int windowTimeFieldPos = fieldIndex.getWindowTimeFieldPos();
+        final int windowTimeFieldPos = fieldIndex.getWindowTimeFieldIndex();
         final Val val = values[windowTimeFieldPos];
         final Val adjusted = adjustWithOffset(val, offset);
         final Val[] arr = new Val[values.length];

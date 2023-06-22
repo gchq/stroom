@@ -1175,7 +1175,7 @@ public class DataFetcher {
                     }
                 }
                 if (writer == null) {
-                    throw new ProcessException("Pipeline has no writer");
+                    throw ProcessException.create("Pipeline has no writer");
                 }
 
                 // Create an output stream and give it to the writer.
@@ -1190,7 +1190,7 @@ public class DataFetcher {
                 try {
                     pipeline.startProcessing();
                 } catch (final RuntimeException e) {
-                    processException = new ProcessException(e.getMessage());
+                    processException = ProcessException.create(e.getMessage());
                     throw processException;
                 } finally {
                     try {
@@ -1199,7 +1199,7 @@ public class DataFetcher {
                         if (processException != null) {
                             processException.addSuppressed(e);
                         } else {
-                            processException = new ProcessException(e.getMessage());
+                            processException = ProcessException.create(e.getMessage());
                             throw processException;
                         }
                     } finally {
@@ -1209,7 +1209,7 @@ public class DataFetcher {
                             if (processException != null) {
                                 processException.addSuppressed(e);
                             } else {
-                                processException = new ProcessException(e.getMessage());
+                                processException = ProcessException.create(e.getMessage());
                                 throw processException;
                             }
                         } finally {

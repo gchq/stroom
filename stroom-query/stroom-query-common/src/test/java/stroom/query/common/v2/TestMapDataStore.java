@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 
 import org.junit.jupiter.api.Test;
@@ -27,13 +28,14 @@ import java.util.Collections;
 class TestMapDataStore extends AbstractDataStoreTest {
 
     @Override
-    DataStore create(final QueryKey queryKey,
+    DataStore create(final SearchRequestSource searchRequestSource,
+                     final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
                      final AbstractResultStoreConfig resultStoreConfig,
                      final DataStoreSettings dataStoreSettings) {
         final FieldIndex fieldIndex = new FieldIndex();
-        final Serialisers serialisers = new Serialisers(new ResultStoreConfig());
+        final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         return new MapDataStore(
                 serialisers,
                 tableSettings,
@@ -70,5 +72,10 @@ class TestMapDataStore extends AbstractDataStoreTest {
     @Test
     void sortedCountedTextTest3() {
         super.sortedCountedTextTest3();
+    }
+
+    @Test
+    void firstLastSelectorTest() {
+        super.firstLastSelectorTest();
     }
 }

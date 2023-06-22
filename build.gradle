@@ -118,6 +118,7 @@ ext.versions = [
         gwt               : '2.10.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
+        jersey            : '2.35', // This is a fudge. We should get it from the dropwiz bom but dropwizard-jersey pulls in 2.33 and metrics-jersey pulls in 2.35. IJ seems to get confused and put both on the classpath. See dependencySubstitution below.
         jmh               : '1.35',
         jooq              : '3.16.4',
         junit_jupiter     : '5.8.2',
@@ -139,7 +140,6 @@ ext.libs = [
         hadoopCommonShaded                  : "uk.gov.gchq.stroom.hadoop.common:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded                    : "uk.gov.gchq.stroom.hadoop.hdfs:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
         stroomStatsSchema                   : "uk.gov.gchq.stroom.stats:stroom-stats-schema:$versions.stroomStats",
-        stroomTestData                      : "uk.gov.gchq.stroom.testdata:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
         assertj_core                        : "org.assertj:assertj-core", // version controlled by dropwizard-dependencies
@@ -160,6 +160,7 @@ ext.libs = [
         curator_client                      : "org.apache.curator:curator-client:$versions.curator",
         curator_framework                   : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery                 : "org.apache.curator:curator-x-discovery:$versions.curator",
+        data_faker                          : "net.datafaker:datafaker:1.8.1",
         dropwizard_assets                   : "io.dropwizard:dropwizard-assets", // version controlled by dropwizard-dependencies
         dropwizard_auth                     : "io.dropwizard:dropwizard-auth", // version controlled by dropwizard-dependencies
         dropwizard_auth_jwt                 : "com.github.toastshaman:dropwizard-auth-jwt:1.0.2-0",
@@ -271,6 +272,7 @@ ext.libs = [
         saxon_he                            : "net.sf.saxon:Saxon-HE:9.9.1-8",
         simple_java_mail                    : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
+        snake_yaml                          : "org.yaml:snakeyaml:1.28",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
         sqlite                              : "org.xerial:sqlite-jdbc:3.36.0.3",
         stax_api                            : "stax:stax-api:1.0.1",
@@ -392,6 +394,11 @@ subprojects {
                     substitute module('javax.activation:activation') using module('javax.activation:javax.activation-api:1.2.0')
                     //substitute module('log4j:log4j') using module("org.slf4j:log4j-over-slf4j:1.7.25")
                     substitute module('log4j:log4j') using module("org.slf4j:log4j-over-slf4j:$dropwizardBomSlf4jVersion")
+
+                    // These three are a fudge. We should get it from the dropwiz bom but dropwizard-jersey pulls in 2.33 and metrics-jersey pulls in 2.35. IJ seems to get confused and put both on the classpath. See dependencySubstitution below.
+                    substitute module('org.glassfish.jersey.core:jersey-common') using module("org.glassfish.jersey.core:jersey-common:$versions.jersey")
+                    substitute module('org.glassfish.jersey.core:jersey-server') using module("org.glassfish.jersey.core:jersey-server:$versions.jersey")
+                    substitute module('org.glassfish.jersey.core:jersey-client') using module("org.glassfish.jersey.core:jersey-client:$versions.jersey")
 
 //                    substitute module('org.apache.lucene:lucene-analyzers-common') with module("org.apache.lucene:lucene-analyzers-common:$versions.lucene")
 //                    substitute module('org.apache.lucene:lucene-backward-codecs') with module("org.apache.lucene:lucene-backward-codecs:$versions.lucene")

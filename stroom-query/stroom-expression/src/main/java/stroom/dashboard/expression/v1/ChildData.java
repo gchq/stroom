@@ -1,16 +1,18 @@
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 public interface ChildData {
 
-    Val first();
+    StoredValues first();
 
-    Val last();
+    StoredValues last();
 
-    Val nth(int pos);
+    StoredValues nth(int pos);
 
-    Val top(String delimiter, int limit);
+    Iterable<StoredValues> top(int limit);
 
-    Val bottom(String delimiter, int limit);
+    Iterable<StoredValues> bottom(int limit);
 
-    Val count();
+    long count();
 }

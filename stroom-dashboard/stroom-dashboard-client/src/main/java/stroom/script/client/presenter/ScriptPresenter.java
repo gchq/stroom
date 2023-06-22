@@ -24,8 +24,8 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -33,18 +33,15 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-import javax.inject.Provider;
-
 public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ScriptDoc> {
 
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
-    private static final TabData SCRIPT_TAB = new TabDataImpl("Script");
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData SCRIPT = new TabDataImpl("Script");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     private final ScriptSettingsPresenter settingsPresenter;
-    private final Provider<EditorPresenter> editorPresenterProvider;
-
-    private EditorPresenter codePresenter;
-    private boolean readOnly = true;
+    private final EditorPresenter codePresenter;
+    private final MarkdownEditPresenter markdownEditPresenter;
 
     private int loadCount;
 
@@ -52,43 +49,63 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     public ScriptPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
                            final ScriptSettingsPresenter settingsPresenter,
-                           final ClientSecurityContext securityContext,
-                           final Provider<EditorPresenter> editorPresenterProvider) {
-        super(eventBus, view, securityContext);
+                           final EditorPresenter codePresenter,
+                           final MarkdownEditPresenter markdownEditPresenter) {
+        super(eventBus, view);
         this.settingsPresenter = settingsPresenter;
-        this.editorPresenterProvider = editorPresenterProvider;
+        this.codePresenter = codePresenter;
+        this.markdownEditPresenter = markdownEditPresenter;
 
-        settingsPresenter.addDirtyHandler(event -> {
+        codePresenter.setMode(AceEditorMode.JAVASCRIPT);
+
+        addTab(SCRIPT);
+        addTab(SETTINGS);
+        addTab(DOCUMENTATION);
+        selectTab(SCRIPT);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        registerHandler(settingsPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
                 setDirty(true);
             }
-        });
-
-        addTab(SCRIPT_TAB);
-        addTab(SETTINGS_TAB);
-        selectTab(SCRIPT_TAB);
+        }));
+        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
     }
 
     @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS_TAB.equals(tab)) {
+        if (SETTINGS.equals(tab)) {
             callback.onReady(settingsPresenter);
-        } else if (SCRIPT_TAB.equals(tab)) {
-            callback.onReady(getOrCreateCodePresenter());
+        } else if (SCRIPT.equals(tab)) {
+            callback.onReady(codePresenter);
+        } else if (DOCUMENTATION.equals(tab)) {
+            callback.onReady(markdownEditPresenter);
         } else {
             callback.onReady(null);
         }
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ScriptDoc script) {
-        super.onRead(docRef, script);
+    public void onRead(final DocRef docRef, final ScriptDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
         loadCount++;
-        settingsPresenter.read(docRef, script);
+        settingsPresenter.read(docRef, doc, readOnly);
 
-        if (codePresenter != null && script.getData() != null) {
-            codePresenter.setText(script.getData());
-        }
+        codePresenter.setText(doc.getData());
+        codePresenter.setReadOnly(isReadOnly());
+        codePresenter.getFormatAction().setAvailable(!isReadOnly());
+
+        markdownEditPresenter.setText(doc.getDescription());
+        markdownEditPresenter.setReadOnly(readOnly);
 
         if (loadCount > 1) {
             // Remove the script function from the cache so dashboards reload
@@ -102,42 +119,15 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    protected ScriptDoc onWrite(ScriptDoc script) {
-        script = settingsPresenter.write(script);
-        if (codePresenter != null) {
-            script.setData(codePresenter.getText());
-        }
-        return script;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (codePresenter != null) {
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-        }
+    protected ScriptDoc onWrite(ScriptDoc doc) {
+        doc = settingsPresenter.write(doc);
+        doc.setData(codePresenter.getText());
+        doc.setDescription(markdownEditPresenter.getText());
+        return doc;
     }
 
     @Override
     public String getType() {
         return ScriptDoc.DOCUMENT_TYPE;
-    }
-
-    private EditorPresenter getOrCreateCodePresenter() {
-        if (codePresenter == null) {
-            codePresenter = editorPresenterProvider.get();
-            codePresenter.setMode(AceEditorMode.JAVASCRIPT);
-            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-            if (getEntity() != null && getEntity().getData() != null) {
-                codePresenter.setText(getEntity().getData());
-            }
-        }
-        return codePresenter;
     }
 }

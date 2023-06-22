@@ -85,7 +85,7 @@ public class AnalyticFieldListConsumer implements Consumer<List<FieldValue>> {
 
     private boolean matchQuery(final MemoryIndex memoryIndex) {
         try {
-            final SearchExpressionQuery query = searchExpressionQueryCache.getQuery();
+            final SearchExpressionQuery query = searchExpressionQueryCache.getQuery(true);
             final IndexSearcher indexSearcher = memoryIndex.createSearcher();
             final TopDocs docs = indexSearcher.search(query.getQuery(), 100);
 
@@ -101,5 +101,9 @@ public class AnalyticFieldListConsumer implements Consumer<List<FieldValue>> {
         }
 
         return false;
+    }
+
+    public long getEventId() {
+        return eventId;
     }
 }

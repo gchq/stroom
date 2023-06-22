@@ -139,7 +139,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                 stroomStreamProcessor.processInputStream(inputStream, "");
                             });
                         } catch (final RuntimeException | IOException e) {
-                            LOGGER.error(e.getMessage(), e);
+                            LOGGER.debug(e.getMessage(), e);
                             throw StroomStreamException.create(e, attributeMap);
                         }
                     }).run();

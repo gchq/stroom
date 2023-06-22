@@ -45,12 +45,6 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-//        selectionModel = new MySingleSelectionModel<>();
-//        dataGrid.setSelectionModel(selectionModel);
-
-        // Add a border to the list.
-        getWidget().getElement().addClassName("stroom-border");
-
         initTableColumns();
     }
 

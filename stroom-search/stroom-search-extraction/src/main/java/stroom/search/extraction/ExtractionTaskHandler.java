@@ -17,6 +17,7 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
@@ -39,7 +40,6 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.security.api.SecurityContext;
@@ -176,7 +176,7 @@ public class ExtractionTaskHandler {
             }
 
             final StoredError storedError = new StoredError(severity, location, elementId, message);
-            errorConsumer.add(new RuntimeException(storedError.toString(), e));
+            errorConsumer.add(storedError::toString);
             throw ProcessException.wrap(message, e);
         };
 

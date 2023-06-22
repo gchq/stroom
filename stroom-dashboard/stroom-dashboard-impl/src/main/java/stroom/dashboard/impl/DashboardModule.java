@@ -35,6 +35,7 @@ public class DashboardModule extends AbstractModule {
         bind(DashboardService.class).to(DashboardServiceImpl.class);
         bind(FunctionFactory.class).asEagerSingleton();
         bind(FunctionService.class).to(FunctionServiceImpl.class).asEagerSingleton();
+        bind(StructureElementService.class).to(StructureElementServiceImpl.class).asEagerSingleton();
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(DashboardStoreImpl.class);

@@ -19,14 +19,15 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.AnalyticStoreConfig;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
@@ -35,12 +36,12 @@ import stroom.query.common.v2.Items;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.query.common.v2.Serialisers;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -63,6 +64,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -94,11 +96,9 @@ class TestSearchResultCreation {
                 () -> lmdbLibraryConfig);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
-                ResultStoreConfig::new,
-                AnalyticStoreConfig::new,
+                SearchResultStoreConfig::new,
                 pathCreator,
-                () -> executorService,
-                () -> new Serialisers(new ResultStoreConfig()));
+                () -> executorService);
     }
 
     @AfterEach
@@ -122,7 +122,8 @@ class TestSearchResultCreation {
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -229,7 +230,8 @@ class TestSearchResultCreation {
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -241,7 +243,8 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -260,7 +263,7 @@ class TestSearchResultCreation {
         // Perform final payload transfer.
         while (!coprocessors.getCompletionState().isComplete()) {
             transferPayloads(coprocessors, coprocessors2);
-            Thread.sleep(500);
+            ThreadUtil.sleep(500);
         }
 
         // Ensure the target coprocessors get a chance to add the data from the payloads.
@@ -302,7 +305,8 @@ class TestSearchResultCreation {
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -314,7 +318,8 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -335,7 +340,7 @@ class TestSearchResultCreation {
         // Perform final payload transfer.
         while (!coprocessors.getCompletionState().isComplete()) {
             transferPayloads(coprocessors, coprocessors2);
-            Thread.sleep(500);
+            ThreadUtil.sleep(500);
         }
 
         // Ensure the target coprocessors get a chance to add the data from the payloads.
@@ -361,7 +366,7 @@ class TestSearchResultCreation {
         validateSearchResponse(searchResponse);
     }
 
-    private void complete(final Coprocessors coprocessors) throws InterruptedException {
+    private void complete(final CoprocessorsImpl coprocessors) throws InterruptedException {
         coprocessors.getCompletionState().signalComplete();
         // Wait for the coprocessors to finish processing data.
         coprocessors.getCompletionState().awaitCompletion();
@@ -389,7 +394,8 @@ class TestSearchResultCreation {
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -401,7 +407,8 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+                SearchRequestSource.createBasic(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -464,11 +471,14 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
-            final Items dataItems = data.get(Key.ROOT_KEY, null);
-            final Item dataItem = dataItems.iterator().next();
-            final Val val = dataItem.getValue(2, true);
-            assertThat(val.toLong())
-                    .isEqualTo(count);
+            final Optional<Items> optional = data.get(Key.ROOT_KEY, null);
+            assertThat(optional).isPresent();
+            optional.ifPresent(items -> {
+                final Item dataItem = items.getIterable().iterator().next();
+                final Val val = dataItem.getValue(2);
+                assertThat(val.toLong())
+                        .isEqualTo(count);
+            });
         });
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);

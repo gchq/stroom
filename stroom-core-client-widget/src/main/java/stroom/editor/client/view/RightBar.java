@@ -17,7 +17,6 @@
 package stroom.editor.client.view;
 
 import stroom.util.shared.Severity;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
@@ -36,11 +35,9 @@ public class RightBar extends Composite {
     private Editor editor;
 
     public RightBar() {
-        sinkEvents(Event.ONMOUSEDOWN);
+        sinkEvents(Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONMOUSEDOWN);
 
         final SimplePanel simplePanel = new SimplePanel();
-        simplePanel.setStyleName("codeEditor-rightBar");
-
         initWidget(simplePanel);
     }
 
@@ -52,8 +49,8 @@ public class RightBar extends Composite {
         event.stopPropagation();
         event.preventDefault();
 
-        if (eventType == Event.ONMOUSEDOWN && MouseUtil.isPrimary(event)
-                && indicators != null) {
+//        if (eventType == Event.ONMOUSEDOWN && MouseUtil.isPrimary(event)
+        if (indicators != null) {
             final String className = target.getClassName();
             if (className != null) {
                 if (className.toUpperCase().contains("codeEditor-marker".toUpperCase())) {
@@ -61,16 +58,31 @@ public class RightBar extends Composite {
                     final String lineNo = target.getAttribute("lineno");
                     if (lineNo != null) {
                         final int line = Integer.parseInt(lineNo);
-                        editor.gotoLine(line);
+                        if (eventType == Event.ONMOUSEDOWN) {
+                            editor.gotoLine(line);
+                        } else if (eventType == Event.ONMOUSEOVER) {
+//                                final Element parent = target.cast();
+                            final int x = target.getAbsoluteLeft();
+                            final int y = target.getAbsoluteTop();
+                            final Indicator indicator = indicators.getIndicator(line);
+                            final String msg = indicator.getMaxSeverity().getDisplayValue()
+                                    + " at line " + lineNo + ", click to navigate.";
+                            showIndicatorPopup(x, y, true, msg);
+                        } else if (eventType == Event.ONMOUSEOUT) {
+                            indicatorPopup.hide();
+                        }
                     }
-
                 } else if (className.toUpperCase().contains("codeEditor-summary".toUpperCase())) {
-                    // This is a summary box.
-                    final Element parent = target.getParentElement().cast();
-                    final int x = parent.getAbsoluteLeft();
-                    final int y = parent.getAbsoluteTop();
+                    if (eventType == Event.ONMOUSEOVER) {
+                        // This is a summary box.
+                        final Element parent = target.getParentElement().cast();
+                        final int x = parent.getAbsoluteLeft();
+                        final int y = parent.getAbsoluteTop();
 
-                    showIndicatorPopup(x, y, true, indicators.getSummaryHTML());
+                        showIndicatorPopup(x, y, true, indicators.getSummaryHTML());
+                    } else if (eventType == Event.ONMOUSEOUT) {
+                        indicatorPopup.hide();
+                    }
                 }
             }
         }

@@ -19,7 +19,7 @@
  */
 
 body, table td, select {
-  font-family: var(--main-font-family);
+  font-family: var(--regular-font-family);
   font-size: var(--font-size-11);
 }
 pre {

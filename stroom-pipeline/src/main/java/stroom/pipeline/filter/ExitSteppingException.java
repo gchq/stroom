@@ -19,7 +19,6 @@ package stroom.pipeline.filter;
 import stroom.pipeline.errorhandler.ExpectedProcessException;
 
 public class ExitSteppingException extends ExpectedProcessException {
-    private static final long serialVersionUID = -4291139272314171562L;
 
     public ExitSteppingException() {
         super("Safe exit");

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+~ Copyright 2016 - 2023 Crown Copyright
+~
+~ Licensed under the Apache License, Version 2.0 (the "License");
+~ you may not use this file except in compliance with the License.
+~ You may obtain a copy of the License at
+~
+~ http://www.apache.org/licenses/LICENSE-2.0
+~
+~ Unless required by applicable law or agreed to in writing, software
+~ distributed under the License is distributed on an "AS IS" BASIS,
+~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~ See the License for the specific language governing permissions and
+~ limitations under the License.
+-->
+<xs:schema xmlns:doc="index-documents:1" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="index-documents:1" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0" id="index-documents-v1.0">
+    <xs:annotation>
+        <xs:documentation>This schema describes the allowed element structure for document indexing.</xs:documentation>
+    </xs:annotation>
+    <xs:element name="index-documents">
+        <xs:annotation>
+            <xs:documentation>The root element that contains multiple document elements.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence minOccurs="1" maxOccurs="1">
+                <xs:element name="document" minOccurs="0" maxOccurs="unbounded">
+                    <xs:annotation>
+                        <xs:documentation>A single document that we want to index.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence minOccurs="1" maxOccurs="1">
+                            <xs:element name="field" minOccurs="0" maxOccurs="unbounded">
+                                <xs:annotation>
+                                    <xs:documentation>This is a field in the document.</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:sequence minOccurs="1" maxOccurs="1">
+                                        <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>The name of the field.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element name="type" type="doc:FieldTypeSimpleType" minOccurs="0" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>The data type of the field. If omitted this defaults to 'Text'.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element name="analyser" type="doc:AnalyserSimpleType" minOccurs="0" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>How should we analyse this field. This affects how the field can be searched by altering the way the field value is indexed. If omitted this defaults to 'Keyword'.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element name="indexed" type="xs:boolean" minOccurs="0" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>Is this an indexed field, i.e. can it be searched or is it just for display. If omitted this value is true by default.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element name="stored" type="xs:boolean" minOccurs="0" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>Should the value of the field be stored in the index? If omitted this value is false by default.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element name="termPositions" type="xs:boolean" minOccurs="0" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>Should we store term positions (needed for sentence searching). If omitted this value is false by default.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element name="caseSensitive" type="xs:boolean" minOccurs="0" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>Is the field case sensitive. If omitted this value is false by default.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element name="value" type="xs:string" minOccurs="1" maxOccurs="1">
+                                            <xs:annotation>
+                                                <xs:documentation>The value of the field.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+            <xs:attribute name="version" type="doc:VersionSimpleType" use="required" />
+        </xs:complexType>
+    </xs:element>
+    <xs:simpleType name="FieldTypeSimpleType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Id" />
+            <xs:enumeration value="Boolean" />
+            <xs:enumeration value="Integer" />
+            <xs:enumeration value="Long" />
+            <xs:enumeration value="Float" />
+            <xs:enumeration value="Double" />
+            <xs:enumeration value="Date" />
+            <xs:enumeration value="Text" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="AnalyserSimpleType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Keyword" />
+            <xs:enumeration value="Alpha" />
+            <xs:enumeration value="Numeric" />
+            <xs:enumeration value="Alpha numeric" />
+            <xs:enumeration value="Whitespace" />
+            <xs:enumeration value="Stop words" />
+            <xs:enumeration value="Standard" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="VersionSimpleType">
+        <xs:annotation>
+            <xs:documentation>Type for specifying the version numbers of XML documents that are supported by this version of the XMLSchema.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="1.0" />
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

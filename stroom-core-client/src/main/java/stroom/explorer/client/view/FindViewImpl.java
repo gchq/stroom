@@ -82,17 +82,17 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
 
     @UiHandler("pattern")
     void onPatternChange(final KeyUpEvent e) {
-        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.isOn(), toggleRegex.isOn());
+        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
     }
 
     @UiHandler("toggleMatchCase")
     void onToggleMatchCase(final ClickEvent e) {
-        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.isOn(), toggleRegex.isOn());
+        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
     }
 
     @UiHandler("toggleRegex")
     void onToggleRegex(final ClickEvent e) {
-        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.isOn(), toggleRegex.isOn());
+        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
     }
 
     public interface Binder extends UiBinder<Widget, FindViewImpl> {

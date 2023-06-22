@@ -17,6 +17,7 @@
 package stroom.importexport.client.presenter;
 
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -147,11 +148,11 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 COL_WIDTH_TYPE);
 
         // From (Name)
-        final Column<Dependency, String> fromNameColumn = DataGridUtil.hyperlinkColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getFrom, DocRef::getName))
+        final Column<Dependency, CommandLink> fromNameColumn = DataGridUtil.commandLinkColumnBuilder((Dependency row) ->
+                        getName(row, Dependency::getFrom, true))
                 .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                 .build();
-        fromNameColumn.setFieldUpdater((index, object, value) -> onOpenDoc(object.getFrom()));
+        DataGridUtil.addCommandLinkFieldUpdater(fromNameColumn);
         dataGrid.addResizableColumn(fromNameColumn,
                 DependencyCriteria.FIELD_FROM_NAME,
                 COL_WIDTH_NAME);
@@ -175,11 +176,11 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 COL_WIDTH_TYPE);
 
         // To (Name)
-        final Column<Dependency, String> toNameColumn = DataGridUtil.hyperlinkColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getTo, DocRef::getName))
+        final Column<Dependency, CommandLink> toNameColumn = DataGridUtil.commandLinkColumnBuilder((Dependency row) ->
+                        getName(row, Dependency::getTo, false))
                 .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
                 .build();
-        toNameColumn.setFieldUpdater((index, object, value) -> onOpenDoc(object.getTo()));
+        DataGridUtil.addCommandLinkFieldUpdater(toNameColumn);
         dataGrid.addResizableColumn(toNameColumn,
                 DependencyCriteria.FIELD_TO_NAME,
                 COL_WIDTH_NAME);
@@ -299,12 +300,25 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 .fetchDocumentTypes();
     }
 
+    private CommandLink getName(final Dependency row,
+                                final Function<Dependency, DocRef> docRefExtractor,
+                                final boolean from) {
+        final DocRef docRef = docRefExtractor.apply(row);
+        if (docRef != null) {
+            if (from | row.isOk()) {
+                return new CommandLink(docRef.getName(), () -> onOpenDoc(docRef));
+            } else {
+                return new CommandLink(docRef.getName(), null);
+            }
+        } else {
+            return null;
+        }
+    }
+
     private String getValue(final Dependency row,
                             final Function<Dependency, DocRef> docRefExtractor,
                             final Function<DocRef, String> valueExtractor) {
-
         final DocRef docRef = docRefExtractor.apply(row);
-
         if (docRef != null) {
             return valueExtractor.apply(docRef);
         } else {

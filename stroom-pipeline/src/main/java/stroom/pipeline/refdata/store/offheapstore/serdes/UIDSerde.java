@@ -34,7 +34,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
     @Override
     public UID deserialize(final ByteBuffer byteBuffer) {
         UID uid = getUid(byteBuffer);
-        byteBuffer.flip();
+        byteBuffer.rewind();
         return uid;
     }
 
@@ -65,20 +65,37 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
     }
 
     /**
-     * Reads a {@link UID} from the passed {@link ByteBuffer}. The passed {@link ByteBuffer}
-     * is not muted in the process.
+     * Reads a {@link UID} from the passed {@link ByteBuffer} at its current position.
+     * The passed {@link ByteBuffer} is not muted in the process.
      * The returned buffer is just a view onto part of the original buffer.
      */
     public static UID extractUid(final ByteBuffer byteBuffer) {
         // create a buffer that only covers the UID part, to allow for de-serialising a UID
         // from a buffer that contains other data
 
-        final ByteBuffer dupBuffer = byteBuffer.duplicate();
+        final ByteBuffer dupBuffer = byteBuffer.slice();
         dupBuffer.limit(dupBuffer.position() + UID.UID_ARRAY_LENGTH);
 
         final UID uid = UID.wrap(dupBuffer);
         // no need to flip as we are just wrapping the original buffer
 
+        return uid;
+    }
+
+    /**
+     * Reads a {@link UID} from the passed {@link ByteBuffer} and position.
+     * The passed {@link ByteBuffer} is not muted in the process.
+     * The returned buffer is just a view onto part of the original buffer.
+     */
+    public static UID extractUid(final ByteBuffer byteBuffer, final int position) {
+        // create a buffer that only covers the UID part, to allow for de-serialising a UID
+        // from a buffer that contains other data
+
+        final ByteBuffer dupBuffer = byteBuffer.slice(position, UID.UID_ARRAY_LENGTH);
+        dupBuffer.limit(position + UID.UID_ARRAY_LENGTH);
+
+        final UID uid = UID.wrap(dupBuffer);
+        // no need to flip as we are just wrapping the original buffer
         return uid;
     }
 

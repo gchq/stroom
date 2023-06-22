@@ -33,9 +33,7 @@ class CurrentUser extends AbstractFunction {
     static final String KEY = "currentUser()";
     static final String NAME = "currentUser";
 
-    private static final Generator NULL_GEN = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
-
-    private Generator gen = NULL_GEN;
+    private Generator gen = Null.GEN;
 
     public CurrentUser(final String name) {
         super(name, 0, 0);
@@ -50,7 +48,7 @@ class CurrentUser extends AbstractFunction {
     public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
         final String v = staticMappedValues.get(KEY);
         if (v != null) {
-            gen = new StaticValueFunction(ValString.create(v)).createGenerator();
+            gen = new StaticValueGen(ValString.create(v));
         }
     }
 

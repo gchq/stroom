@@ -1,10 +1,10 @@
 package stroom.test;
 
 import stroom.test.common.StroomCoreServerTestFileUtil;
-import stroom.testdata.DataGenerator;
-import stroom.testdata.DataWriter;
-import stroom.testdata.FlatDataWriterBuilder;
-import stroom.testdata.XmlAttributesDataWriterBuilder;
+import stroom.test.common.data.DataGenerator;
+import stroom.test.common.data.DataWriter;
+import stroom.test.common.data.FlatDataWriterBuilder;
+import stroom.test.common.data.XmlAttributesDataWriterBuilder;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
@@ -204,7 +204,7 @@ public class SampleDataGenerator {
                             faker -> faker.name().username()))
                     .addFieldDefinition(DataGenerator.fakerField(
                             "bloodGroup",
-                            faker -> faker.name().bloodGroup()))
+                            faker -> faker.bloodtype().bloodGroup()))
                     .addFieldDefinition(DataGenerator.randomEmoticonEmojiField(
                             "emotionalState"))
                     .addFieldDefinition(DataGenerator.fakerField(

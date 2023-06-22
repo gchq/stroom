@@ -24,8 +24,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.script.shared.ScriptDoc;
@@ -43,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<ScriptDoc>, HasWrite<ScriptDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<ScriptDoc>, HasDocumentWrite<ScriptDoc>, HasDirtyHandlers {
 
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
@@ -120,20 +119,23 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     }
 
     @Override
-    public void read(final DocRef docRef, final ScriptDoc script) {
+    public void read(final DocRef docRef, final ScriptDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
         scripts = new ArrayList<>();
-        if (script != null) {
-            if (script.getDependencies() != null) {
-                scripts = script.getDependencies();
+        if (document != null) {
+            if (document.getDependencies() != null) {
+                scripts = document.getDependencies();
             }
         }
         refresh();
     }
 
     @Override
-    public ScriptDoc write(final ScriptDoc script) {
-        script.setDependencies(scripts);
-        return script;
+    public ScriptDoc write(final ScriptDoc document) {
+        document.setDependencies(scripts);
+        return document;
     }
 
     private void refresh() {
@@ -144,12 +146,6 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         } else {
             scriptListPresenter.setData(new ArrayList<>());
         }
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
     }
 
     private void enableButtons() {

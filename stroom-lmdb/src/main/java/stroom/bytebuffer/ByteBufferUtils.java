@@ -74,6 +74,73 @@ public class ByteBufferUtils {
         return sb.toString();
     }
 
+    /**
+     * Increments a Long value at absolute position idx. Does not modify the position
+     * of the buffer.
+     */
+    public static void incrementLong(final ByteBuffer byteBuffer,
+                                     final int idx) {
+        final long val = byteBuffer.getLong(idx);
+        if (val == Long.MAX_VALUE) {
+            throw new ArithmeticException("Can't increment beyond max value of " + Long.MAX_VALUE);
+        }
+        byteBuffer.putLong(idx, val + 1L);
+    }
+
+    /**
+     * Increments a Integer value at absolute position idx. Does not modify the position
+     * of the buffer.
+     */
+    public static void incrementInt(final ByteBuffer byteBuffer,
+                                    final int idx) {
+        final int val = byteBuffer.getInt(idx);
+        if (val == Integer.MAX_VALUE) {
+            throw new ArithmeticException("Can't increment beyond max value of " + Integer.MAX_VALUE);
+        }
+        byteBuffer.putInt(idx, val + 1);
+    }
+
+    /**
+     * Increments a Short value at absolute position idx. Does not modify the position
+     * of the buffer.
+     */
+    public static void incrementShort(final ByteBuffer byteBuffer,
+                                      final int idx) {
+        final short val = byteBuffer.getShort(idx);
+        if (val == Short.MAX_VALUE) {
+            throw new ArithmeticException("Can't increment beyond max value of " + Short.MAX_VALUE);
+        }
+        byteBuffer.putShort(idx, (short) (val + 1));
+    }
+
+    /**
+     * Increments the numeric value with length len at index. Does not modify the position
+     * of the buffer.
+     * <p>
+     * NOTE this appears to be no quicker than doing putInt(getint(...) + 1) type thing.
+     * </p>
+     */
+    public static void increment(final ByteBuffer byteBuffer,
+                                 final int idx,
+                                 final int len) {
+        // Work from right to left
+        for (int i = idx + len - 1; i >= idx; i--) {
+            byte b = byteBuffer.get(i);
+            if (b == (byte) 0xFF) {
+                // Byte rolls around to zero and we need to carry over to the next one
+                byteBuffer.put(i, (byte) 0x00);
+            } else if (i == idx && b == 0x7F) {
+                // 7F is the highest value for the first byte due to the sign bit
+                throw new IllegalArgumentException("Can't increment without overflowing");
+            } else {
+                // Not going to overflow this byte so just increment it then break out
+                // as the rest are unchanged
+                byteBuffer.put(i, (byte) (b + 1));
+                break;
+            }
+        }
+    }
+
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
         if (byteBuffer == null) {
             return "null";
@@ -90,6 +157,9 @@ public class ByteBufferUtils {
     }
 
     public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
+        if (byteBuffer == null) {
+            return "null";
+        }
         return ByteArrayUtils.byteArrayToAllForms(Bytes.getBytes(byteBuffer));
     }
 
@@ -240,6 +310,19 @@ public class ByteBufferUtils {
     }
 
     /**
+     * Creates a new direct {@link ByteBuffer} from the input {@link ByteBuffer}.
+     * The bytes from position() to limit() will be copied into a newly allocated
+     * buffer. The new buffer will be flipped to set its position read for get operations
+     */
+    public static ByteBuffer copyToHeapBuffer(final ByteBuffer input) {
+        ByteBuffer output = ByteBuffer.allocate(input.remaining());
+        output.put(input);
+        output.flip();
+        input.rewind();
+        return output;
+    }
+
+    /**
      * Credit for this code goes to Dima
      * (see https://stackoverflow.com/questions/34166809/faster-comparison-of-longs-in-byte-format)
      */
@@ -298,4 +381,15 @@ public class ByteBufferUtils {
         return arr;
     }
 
+//    public static void debug(final ByteBuffer byteBuffer) {
+//        System.out.println(Arrays.toString(toBytes(byteBuffer.slice())));
+//    }
+//
+//    public static void debugCurrent(final ByteBuffer byteBuffer) {
+//        System.out.println(Arrays.toString(toBytes(byteBuffer.slice(0, byteBuffer.position()))));
+//    }
+//
+//    public static void debugCurrent(final UnsafeByteBufferOutput output) {
+//        debugCurrent(output.getByteBuffer());
+//    }
 }

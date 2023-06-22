@@ -16,18 +16,26 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValReference;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.util.function.Supplier;
 
 abstract class AbstractAggregateFunction extends AbstractManyChildFunction implements AggregateFunction {
 
     private final Calculator calculator;
+    private ValReference valReference;
 
     AbstractAggregateFunction(final String name, final Calculator calculator) {
         super(name, 1, Integer.MAX_VALUE);
         this.calculator = calculator;
+    }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        valReference = valueReferenceIndex.addValue(name);
+        super.addValueReferences(valueReferenceIndex);
     }
 
     @Override
@@ -36,7 +44,7 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         // mode.
         if (isAggregate()) {
             final Generator childGenerator = functions[0].createGenerator();
-            return new AggregateGen(childGenerator, calculator);
+            return new AggregateGen(childGenerator, calculator, valReference);
         }
 
         return super.createGenerator();
@@ -55,42 +63,35 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
     private static final class AggregateGen extends AbstractSingleChildGenerator {
 
         private final Calculator calculator;
+        private final ValReference valReference;
 
-        private Val current = ValNull.INSTANCE;
-
-        AggregateGen(final Generator childGenerator, final Calculator calculator) {
+        AggregateGen(final Generator childGenerator,
+                     final Calculator calculator,
+                     final ValReference valReference) {
             super(childGenerator);
             this.calculator = calculator;
+            this.valReference = valReference;
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
-            current = calculator.calc(current, childGenerator.eval(null));
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
+            final Val current = valReference.get(storedValues);
+            final Val val = calculator.calc(current, childGenerator.eval(storedValues, null));
+            valReference.set(storedValues, val);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return current;
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return valReference.get(storedValues);
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final AggregateGen aggregateGen = (AggregateGen) generator;
-            current = calculator.calc(current, aggregateGen.current);
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            super.read(input);
-            current = ValSerialiser.read(input);
-        }
-
-        @Override
-        public void write(final Output output) {
-            super.write(output);
-            ValSerialiser.write(output, current);
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            Val current = valReference.get(existingValues);
+            current = calculator.calc(current, valReference.get(newValues));
+            valReference.set(existingValues, current);
+            super.merge(existingValues, newValues);
         }
     }
 
@@ -104,17 +105,10 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator gen : childGenerators) {
-                gen.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             Val value = ValNull.INSTANCE;
             for (final Generator gen : childGenerators) {
-                final Val val = gen.eval(childDataSupplier);
+                final Val val = gen.eval(storedValues, childDataSupplier);
                 if (!val.type().isValue()) {
                     return val;
                 }

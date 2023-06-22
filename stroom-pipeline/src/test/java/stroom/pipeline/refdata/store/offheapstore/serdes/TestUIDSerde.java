@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.offheapstore.UID;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -35,7 +36,7 @@ class TestUIDSerde extends AbstractSerdeTest<UID, UIDSerde> {
     }
 
     @Override
-    Class<UIDSerde> getSerdeType() {
-        return UIDSerde.class;
+    TypeLiteral<UIDSerde> getSerdeType() {
+        return new TypeLiteral<UIDSerde>(){};
     }
 }

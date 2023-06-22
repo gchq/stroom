@@ -20,6 +20,7 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
@@ -125,7 +126,7 @@ class TestXMLWriter extends StroomUnitTest {
                 bw.close();
 
             } catch (final IOException | SAXException | ParserConfigurationException | RuntimeException e) {
-                fail(e.getMessage());
+                fail(LogUtil.message("Error processing file {}. {}", inputFile, e.getMessage()), e);
             }
         } catch (final IOException | RuntimeException e) {
             // Ignore...

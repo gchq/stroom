@@ -26,10 +26,11 @@ package stroom.dashboard.expression.v1;
                 description = "Returns the boolean true.",
                 args = {}))
 class True extends AbstractStaticFunction {
-
     static final String NAME = "true";
 
+    public static final StaticValueGen GEN = new StaticValueGen(ValBoolean.TRUE);
+
     public True(final String name) {
-        super(name, ValBoolean.TRUE);
+        super(name, GEN);
     }
 }

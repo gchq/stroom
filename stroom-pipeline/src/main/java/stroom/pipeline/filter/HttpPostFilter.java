@@ -22,21 +22,24 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.writer.HTTPAppender;
+import stroom.util.NullSafe;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Deprecated // This is pretty limited in what it can do. HttpAppender is much better and more configurable
 @ConfigurableElement(type = "HttpPostFilter", category = PipelineElementType.Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)
@@ -45,42 +48,58 @@ public class HttpPostFilter extends AbstractSamplingFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpPostFilter.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final JerseyClientFactory jerseyClientFactory;
 
-    private final Client client = ClientBuilder.newClient(new ClientConfig()
-            .register(ClientResponse.class));
     private String receivingApiUrl;
 
     @Inject
     public HttpPostFilter(final ErrorReceiverProxy errorReceiverProxy,
-                          final LocationFactoryProxy locationFactory) {
+                          final LocationFactoryProxy locationFactory,
+                          final JerseyClientFactory jerseyClientFactory) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
+        this.jerseyClientFactory = jerseyClientFactory;
     }
 
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
         String xml = getOutput();
-        try {
-            Response response = client
-                    .target(receivingApiUrl)
-                    .request()
-                    .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
-                    .post(Entity.xml(xml));
-            if (response.getStatus() != Response.Status.ACCEPTED.ordinal()) {
-                String errorMessage = String.format("POST was not accepted by the API: %s", response);
-                errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, null);
+
+        final String deprecatedMsg = LogUtil.message("{} is deprecated. Use {} instead.",
+                HttpPostFilter.class.getSimpleName(),
+                HTTPAppender.class.getSimpleName());
+        LOGGER.warn(deprecatedMsg);
+        errorReceiverProxy.log(Severity.WARNING, null, null, deprecatedMsg, null);
+
+        if (NullSafe.isBlankString(receivingApiUrl)) {
+            final String msg = "Property 'receivingApiUrl' is not set. Unable to POST.";
+            errorReceiverProxy.log(Severity.ERROR, null, null, msg, null);
+        } else {
+            try {
+                final Client client = jerseyClientFactory.getNamedClient(JerseyClientName.HTTP_POST_FILTER);
+                try (Response response = client
+                        .target(receivingApiUrl)
+                        .request()
+                        .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
+                        .post(Entity.xml(xml))) {
+                    if (response.getStatus() != Response.Status.ACCEPTED.ordinal()) {
+                        final String errorMessage = String.format("POST was not accepted by the API: %s", response);
+                        errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, null);
+                        LOGGER.error(errorMessage);
+                    } else {
+                        LOGGER.info("POSTed document to API {}", receivingApiUrl);
+                    }
+                }
+            } catch (final RuntimeException e) {
+                final String errorMessage = String.format("Unable to POST document to API: %s", e);
+                errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, e);
                 LOGGER.error(errorMessage);
-            } else {
-                LOGGER.info("POSTed document to API.");
             }
-        } catch (final RuntimeException e) {
-            String errorMessage = String.format("Unable to POST document to API: %s", e);
-            errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, e);
-            LOGGER.error(errorMessage);
         }
     }
 
+    @SuppressWarnings("unused") // Called if the prop is set in the UI
     @PipelineProperty(description = "The URL of the receiving API.", displayPriority = 1)
     public void setReceivingApiUrl(final String receivingApiUrl) {
         this.receivingApiUrl = receivingApiUrl;

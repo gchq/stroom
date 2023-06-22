@@ -1,10 +1,11 @@
 package stroom.suggestions.api;
 
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.Suggestions;
 
 import java.util.List;
 
 public interface SuggestionsService {
 
-    List<String> fetch(final FetchSuggestionsRequest request);
+    Suggestions fetch(final FetchSuggestionsRequest request);
 }

@@ -1,6 +1,8 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -25,6 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -34,6 +37,7 @@ public class DependencyServiceImpl implements DependencyService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
 
     private final ImportExportActionHandlers importExportActionHandlers;
+    private final DocRefInfoService docRefInfoService;
     private final TaskContextFactory taskContextFactory;
 
     private static final Comparator<Dependency> FROM_TYPE_COMPARATOR =
@@ -92,23 +96,25 @@ public class DependencyServiceImpl implements DependencyService {
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
+                                 final DocRefInfoService docRefInfoService,
                                  final TaskContextFactory taskContextFactory) {
         this.importExportActionHandlers = importExportActionHandlers;
+        this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
     }
 
     @Override
     public QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
         return taskContextFactory.contextResult(
-                "Get Dependencies",
-                taskContext -> {
-                    try {
-                        return getDependencies(criteria, taskContext);
-                    } catch (Exception e) {
-                        LOGGER.error("Error getting dependencies for criteria " + criteria, e);
-                        throw e;
-                    }
-                })
+                        "Get Dependencies",
+                        taskContext -> {
+                            try {
+                                return getDependencies(criteria, taskContext);
+                            } catch (Exception e) {
+                                LOGGER.error("Error getting dependencies for criteria " + criteria, e);
+                                throw e;
+                            }
+                        })
                 .get();
     }
 
@@ -144,6 +150,7 @@ public class DependencyServiceImpl implements DependencyService {
                                                    final Map<DocRef, Set<DocRef>> allDependencies,
                                                    final Set<DocRef> pseudoDocRefs,
                                                    final Optional<Comparator<Dependency>> optSortListComparator) {
+        final Map<DocRef, Optional<DocRefInfo>> docRefInfoCache = new ConcurrentHashMap<>();
         Stream<Dependency> filteredStream = QuickFilterPredicateFactory.filterStream(
                 criteria.getPartialName(),
                 FIELD_MAPPERS,
@@ -153,11 +160,19 @@ public class DependencyServiceImpl implements DependencyService {
                             final DocRef parentDocRef = entry.getKey();
                             final Set<DocRef> childDocRefs = entry.getValue();
                             return childDocRefs.stream()
-                                    .map(childDocRef -> new Dependency(
-                                            parentDocRef,
-                                            childDocRef,
-                                            pseudoDocRefs.contains(childDocRef) ||
-                                                    allDependencies.containsKey(childDocRef)));
+                                    .map(childDocRef -> {
+                                        // Resolve doc info.
+                                        final Optional<DocRefInfo> parentInfo = docRefInfoCache
+                                                .computeIfAbsent(parentDocRef, docRefInfoService::info);
+                                        final Optional<DocRefInfo> childInfo = docRefInfoCache
+                                                .computeIfAbsent(childDocRef, docRefInfoService::info);
+
+                                        return new Dependency(
+                                                parentInfo.map(DocRefInfo::getDocRef).orElse(parentDocRef),
+                                                childInfo.map(DocRefInfo::getDocRef).orElse(childDocRef),
+                                                pseudoDocRefs.contains(childDocRef) ||
+                                                        allDependencies.containsKey(childDocRef));
+                                    });
                         }),
                 optSortListComparator.orElse(null));
 

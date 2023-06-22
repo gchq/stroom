@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -25,7 +26,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class EventCoprocessor implements Coprocessor {
+public class EventCoprocessor implements Coprocessor, HasCompletionState {
 
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";

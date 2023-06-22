@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Map;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
 
@@ -96,5 +97,15 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
 
     protected ByteSize getMaxSizeBytes() {
         return DB_MAX_SIZE;
+    }
+
+    protected <K, V> void putValues(final AbstractLmdbDb<K, V> lmdbDb,
+                                    final boolean overwriteExisting,
+                                    final Map<K, V> data) {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            data.forEach((key, value) -> {
+                lmdbDb.put(writeTxn, key, value, overwriteExisting);
+            });
+        });
     }
 }

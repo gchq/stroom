@@ -216,6 +216,7 @@ public class TableComponentSettings implements ComponentSettings {
         return new Builder();
     }
 
+    @Override
     public Builder copy() {
         return new Builder(this);
     }
@@ -223,7 +224,7 @@ public class TableComponentSettings implements ComponentSettings {
     /**
      * Builder for constructing a {@link TableSettings tableSettings}
      */
-    public static final class Builder {
+    public static final class Builder implements ComponentSettings.Builder {
 
         private String queryId;
         private DocRef dataSourceRef;
@@ -239,21 +240,21 @@ public class TableComponentSettings implements ComponentSettings {
         }
 
         private Builder(final TableComponentSettings tableSettings) {
-            this.queryId = tableSettings.getQueryId();
-            this.dataSourceRef = tableSettings.getDataSourceRef();
-            this.fields = tableSettings.getFields() == null
+            this.queryId = tableSettings.queryId;
+            this.dataSourceRef = tableSettings.dataSourceRef;
+            this.fields = tableSettings.fields == null
                     ? null
-                    : new ArrayList<>(tableSettings.getFields());
-            this.extractValues = tableSettings.getExtractValues();
-            this.extractionPipeline = tableSettings.getExtractionPipeline();
-            this.maxResults = tableSettings.getMaxResults() == null
+                    : new ArrayList<>(tableSettings.fields);
+            this.extractValues = tableSettings.extractValues;
+            this.extractionPipeline = tableSettings.extractionPipeline;
+            this.maxResults = tableSettings.maxResults == null
                     ? null
-                    : new ArrayList<>(tableSettings.getMaxResults());
-            this.showDetail = tableSettings.getShowDetail();
-            this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
+                    : new ArrayList<>(tableSettings.maxResults);
+            this.showDetail = tableSettings.showDetail;
+            this.conditionalFormattingRules = tableSettings.conditionalFormattingRules == null
                     ? null
-                    : new ArrayList<>(tableSettings.getConditionalFormattingRules());
-            this.modelVersion = tableSettings.getModelVersion();
+                    : new ArrayList<>(tableSettings.conditionalFormattingRules);
+            this.modelVersion = tableSettings.modelVersion;
         }
 
         /**
@@ -360,6 +361,7 @@ public class TableComponentSettings implements ComponentSettings {
             return this;
         }
 
+        @Override
         public TableComponentSettings build() {
             return new TableComponentSettings(
                     queryId,

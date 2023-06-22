@@ -3,17 +3,18 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:MySplitLayoutPanel styleName="steppingFilterViewImpl  max">
-        <g:west size="220">
-            <g:MaxScrollPanel styleName="max navigation">
+        <g:west size="245">
+            <g:MaxScrollPanel styleName="max stroom-control">
                 <g:SimplePanel ui:field="elementChooser"/>
             </g:MaxScrollPanel>
         </g:west>
         <g:center>
             <g:FlowPanel styleName="max form">
-                <form:FormGroup identity="steppingSeverity" label="Jump to where message severity >=">
+                <g:Label ui:field="nameLabel" addStyleNames="form-heading"/>
+                <form:FormGroup identity="steppingSeverity" label="Jump to where message severity is at least:">
                     <g:ListBox ui:field="skipToErrors"/>
                 </form:FormGroup>
-                <form:FormGroup identity="steppingErrors" label="Jump to where output is">
+                <form:FormGroup identity="steppingErrors" label="Jump to where output is:">
                     <g:ListBox ui:field="skipToOutput"/>
                 </form:FormGroup>
                 <form:FormGroup identity="steppingConditions"
@@ -24,4 +25,4 @@
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

@@ -1,9 +1,11 @@
 package stroom.util;
 
-import stroom.util.logging.LogUtil;
+import stroom.util.logging.DurationTimer;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,47 +29,100 @@ public class NullSafe {
     }
 
     /**
-     * Return first non-null value or an empty {@link Optional} if all are null
+     * Allows you to safely compare a child property of val1 to other.
+     * @return False if val1 is null else whether the child property of val1 is equal to other
      */
-    public static <T> Optional<T> coalesce(final T val1, final T val2) {
-        return val1 != null
-                ? Optional.of(val1)
-                : (val2 != null
-                        ? Optional.of(val2)
-                        : Optional.empty());
+    public static <T1, T2> boolean equals(final T1 val1,
+                                          final Function<T1, T2> getter,
+                                          final Object other) {
+        if (val1 == null) {
+            return false;
+        } else {
+            final T2 val2 = getter.apply(val1);
+            return Objects.equals(val2, other);
+        }
+    }
+
+    /**
+     * @return True if all values in the array are null or the array itself is null
+     */
+    public static <T> boolean allNull(final T... vals) {
+        if (vals == null) {
+            return true;
+        } else {
+            boolean allNull = true;
+            for (final T val : vals) {
+                if (val != null) {
+                    allNull = false;
+                    break;
+                }
+            }
+            return allNull;
+        }
+    }
+
+    /**
+     * @return True if the array itself is non-null and all values in the array are non-null
+     */
+    public static <T> boolean allNonNull(final T... vals) {
+        if (vals == null) {
+            return false;
+        } else {
+            boolean allNonNull = true;
+            for (final T val : vals) {
+                if (val == null) {
+                    allNonNull = false;
+                    break;
+                }
+            }
+            return allNonNull;
+        }
+    }
+
+    /**
+     * Allows you to safely compare a grandchild property of val1 to other.
+     * @return False if val1 is null or if val1's child property is null,
+     * else whether the grandchild property of val1 is equal to other
+     */
+    public static <T1, T2, T3> boolean equals(final T1 val1,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, T3> getter2,
+                                              final Object other) {
+        if (val1 == null) {
+            return false;
+        } else {
+            final T2 val2 = getter1.apply(val1);
+            if (val2 == null) {
+                return false;
+            } else {
+                final T3 val3 = getter2.apply(val2);
+                return Objects.equals(val3, other);
+            }
+        }
+    }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     * <p>
+     * Alias for {@link NullSafe#coalesce(T[])}
+     */
+    public static <T> Optional<T> firstNonNull(final T... vals) {
+        return coalesce(vals);
     }
 
     /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */
-    public static <T> Optional<T> coalesce(final T val1, final T val2, final T val3) {
-        return val1 != null
-                ? Optional.of(val1)
-                : (val2 != null
-                        ? Optional.of(val2)
-                        : (val3 != null
-                                ? Optional.of(val3)
-                                : Optional.empty()));
+    public static <T> Optional<T> coalesce(final T... vals) {
+        if (vals != null) {
+            for (final T val : vals) {
+                if (val != null) {
+                    return Optional.of(val);
+                }
+            }
+        }
+        return Optional.empty();
     }
-
-    /**
-     * Return first non-null value or an empty {@link Optional} if all are null
-     */
-    public static <T> Optional<T> coalesce(final T val1,
-                                           final T val2,
-                                           final T val3,
-                                           final T val4) {
-        return val1 != null
-                ? Optional.of(val1)
-                : (val2 != null
-                        ? Optional.of(val2)
-                        : (val3 != null
-                                ? Optional.of(val3)
-                                : (val4 != null
-                                        ? Optional.of(val4)
-                                        : Optional.empty())));
-    }
-
 
     /**
      * @return True if str is null or blank
@@ -81,6 +136,13 @@ public class NullSafe {
      */
     public static boolean isEmptyString(final String str) {
         return str == null || str.isEmpty();
+    }
+
+    /**
+     * @return True if val is not null and true
+     */
+    public static boolean isTrue(final Boolean val) {
+        return val != null && val;
     }
 
     /**
@@ -225,13 +287,24 @@ public class NullSafe {
     }
 
     /**
-     * Returns a {@link Stream<E>} if collection is non-null else returns an empty {@link Stream< E >}
+     * Returns a {@link Stream<E>} if collection is non-null else returns an empty {@link Stream<E>}
      */
     public static <E> Stream<E> stream(final Collection<E> collection) {
         if (collection == null || collection.isEmpty()) {
             return Stream.empty();
         } else {
             return collection.stream();
+        }
+    }
+
+    /**
+     * Returns a {@link Stream<T>} if items is non-null else returns an empty {@link Stream<T>}
+     */
+    public static <T> Stream<T> stream(final T... items) {
+        if (items == null || items.length == 0) {
+            return Stream.empty();
+        } else {
+            return Arrays.stream(items);
         }
     }
 
@@ -281,12 +354,30 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed duration if it is non-null else returns a ZERO {@link SimpleDuration}
+     */
+    public static SimpleDuration duration(final SimpleDuration duration) {
+        return duration != null
+                ? duration
+                : SimpleDuration.ZERO;
+    }
+
+    /**
      * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
      */
     public static Duration duration(final Duration duration) {
         return duration != null
                 ? duration
                 : Duration.ZERO;
+    }
+
+    /**
+     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
+     */
+    public static DurationTimer durationTimer(final DurationTimer durationTimer) {
+        return durationTimer != null
+                ? durationTimer
+                : DurationTimer.ZERO;
     }
 
     /**

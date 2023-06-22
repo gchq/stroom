@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -29,14 +30,6 @@ public interface Coprocessor extends ValuesConsumer {
      * Clear the data store.
      */
     void clear();
-
-    /**
-     * Get the completion state associated with receiving all search results and having added them to the store
-     * successfully.
-     *
-     * @return The search completion state for the data store.
-     */
-    CompletionState getCompletionState();
 
     /**
      * Read items from the supplied input and transfer them to the data store.

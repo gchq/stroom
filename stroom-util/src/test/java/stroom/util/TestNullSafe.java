@@ -3,6 +3,8 @@ package stroom.util;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
 
 import com.google.inject.TypeLiteral;
@@ -42,6 +44,112 @@ class TestNullSafe {
 
     private long getOther() {
         return other;
+    }
+
+    @Test
+    void testEquals1() {
+        // Null parent
+        Assertions.assertThat(NullSafe.equals(nullLevel1, Level1::getNonNullLevel2, nonNullLevel1.getNonNullLevel2()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNullLevel2, nonNullLevel1.getNonNullLevel2()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, "foobar"))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, null))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        nonNullLevel1.getNonNullLevel2()))
+                .isTrue();
+    }
+
+    @Test
+    void testEquals2() {
+        // Null parent
+        Assertions.assertThat(NullSafe.equals(
+                        nullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNullLevel2,
+                        Level2::getNonNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        "foobar"))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        null))
+                .isFalse();
+        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
+                        Level1::getNonNullLevel2,
+                        Level2::getNonNullLevel3,
+                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+                .isTrue();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAllNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(NullSafe::allNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(new String[]{null}, true)
+                .addCase(new String[]{null, null}, true)
+                .addCase(new String[]{null, null, null}, true)
+                .addCase(new String[]{"foo", null, null}, false)
+                .addCase(new String[]{null, "foo", null}, false)
+                .addCase(new String[]{null, null, "foo"}, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAllNonNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(NullSafe::allNonNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(new String[]{null}, false)
+                .addCase(new String[]{null, null}, false)
+                .addCase(new String[]{null, null, null}, false)
+                .addCase(new String[]{"foo", null, null}, false)
+                .addCase(new String[]{null, "foo", null}, false)
+                .addCase(new String[]{null, "foo", "foo"}, false)
+                .addCase(new String[]{"1", "2", "3"}, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testFirstNonNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withSingleArgTestFunction(NullSafe::firstNonNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Optional.empty())
+                .addCase(new String[]{null}, Optional.empty())
+                .addCase(new String[]{null, null}, Optional.empty())
+                .addCase(new String[]{null, null, null}, Optional.empty())
+                .addCase(new String[]{"foo", null, null}, Optional.of("foo"))
+                .addCase(new String[]{null, "foo", null}, Optional.of("foo"))
+                .addCase(new String[]{null, "foo", "bar"}, Optional.of("foo"))
+                .addCase(new String[]{"1", "2", "3"}, Optional.of("1"))
+                .build();
     }
 
     @TestFactory
@@ -677,7 +785,7 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testStream() {
+    Stream<DynamicTest> testStream_collection() {
         final AtomicInteger counter = new AtomicInteger(0);
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<String>>() {
@@ -694,6 +802,26 @@ class TestNullSafe {
                 .addCase(null, Tuple.of(0, Collections.emptyList()))
                 .addCase(Collections.emptyList(), Tuple.of(0, Collections.emptyList()))
                 .addCase(List.of("foo", "bar"), Tuple.of(2, List.of("foo", "bar")))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testStream_array() {
+        final AtomicInteger counter = new AtomicInteger(0);
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withWrappedOutputType(new TypeLiteral<Tuple2<Integer, List<String>>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final List<String> newList = NullSafe.stream(testCase.getInput())
+                            .peek(item -> counter.incrementAndGet())
+                            .toList();
+                    return Tuple.of(counter.get(), newList);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, Tuple.of(0, Collections.emptyList()))
+                .addCase(new String[0], Tuple.of(0, Collections.emptyList()))
+                .addCase(new String[]{"foo", "bar"}, Tuple.of(2, List.of("foo", "bar")))
                 .build();
     }
 
@@ -762,6 +890,33 @@ class TestNullSafe {
                 .addCase(null, StroomDuration.ZERO)
                 .addCase(StroomDuration.ZERO, StroomDuration.ZERO)
                 .addCase(StroomDuration.ofSeconds(5), StroomDuration.ofSeconds(5))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSimpleDuration() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(SimpleDuration.class)
+                .withTestFunction(testCase ->
+                        NullSafe.duration(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, SimpleDuration.ZERO)
+                .addCase(SimpleDuration.ZERO, SimpleDuration.ZERO)
+                .addCase(SimpleDuration.builder().timeUnit(TimeUnit.SECONDS).time(5).build(),
+                        SimpleDuration.builder().timeUnit(TimeUnit.SECONDS).time(5).build())
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsTrue() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Boolean.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> NullSafe.isTrue(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(false, false)
+                .addCase(true, true)
                 .build();
     }
 
@@ -999,6 +1154,25 @@ class TestNullSafe {
         public String toString() {
             return id + ":" + level;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level1 level1 = (Level1) o;
+            return id == level1.id && Objects.equals(nullLevel2, level1.nullLevel2) && Objects.equals(
+                    nonNullLevel2,
+                    level1.nonNullLevel2) && Objects.equals(level, level1.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel2, nonNullLevel2, level);
+        }
     }
 
     private static class Level2 {
@@ -1028,6 +1202,25 @@ class TestNullSafe {
         @Override
         public String toString() {
             return id + ":" + level;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level2 level2 = (Level2) o;
+            return id == level2.id && Objects.equals(nullLevel3, level2.nullLevel3) && Objects.equals(
+                    nonNullLevel3,
+                    level2.nonNullLevel3) && Objects.equals(level, level2.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel3, nonNullLevel3, level);
         }
     }
 
@@ -1059,6 +1252,25 @@ class TestNullSafe {
         public String toString() {
             return id + ":" + level;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level3 level3 = (Level3) o;
+            return id == level3.id && Objects.equals(nullLevel4, level3.nullLevel4) && Objects.equals(
+                    nonNullLevel4,
+                    level3.nonNullLevel4) && Objects.equals(level, level3.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel4, nonNullLevel4, level);
+        }
     }
 
     private static class Level4 {
@@ -1089,6 +1301,25 @@ class TestNullSafe {
         public String toString() {
             return id + ":" + level;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level4 level4 = (Level4) o;
+            return id == level4.id && Objects.equals(nullLevel5, level4.nullLevel5) && Objects.equals(
+                    nonNullLevel5,
+                    level4.nonNullLevel5) && Objects.equals(level, level4.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, nullLevel5, nonNullLevel5, level);
+        }
     }
 
     private static class Level5 {
@@ -1107,6 +1338,23 @@ class TestNullSafe {
         @Override
         public String toString() {
             return id + ":" + level;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Level5 level5 = (Level5) o;
+            return id == level5.id && Objects.equals(level, level5.level);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, level);
         }
     }
 

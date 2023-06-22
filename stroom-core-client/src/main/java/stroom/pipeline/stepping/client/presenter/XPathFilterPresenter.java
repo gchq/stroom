@@ -31,7 +31,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter.XPathFilterView> {
 
-    final PopupSize popupSize = PopupSize.resizableX();
+    final PopupSize popupSize = PopupSize.resizableX(700);
     private XPathFilter xPathFilter;
 
     @Inject
@@ -90,6 +90,10 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
                 .onHideRequest(handler)
                 .fire();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface XPathFilterView extends View, Focus {
 

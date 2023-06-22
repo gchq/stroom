@@ -9,6 +9,8 @@ import stroom.proxy.repo.db.jooq.tables.records.ForwardAggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
 import stroom.proxy.repo.queue.OperationWriteQueue;
+import stroom.proxy.repo.queue.QueueMonitor;
+import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.queue.ReadQueue;
 import stroom.proxy.repo.queue.RecordQueue;
 import stroom.util.logging.Metrics;
@@ -78,9 +80,16 @@ public class ForwardAggregateDao implements Flushable {
     private final OperationWriteQueue retryUpdateQueue;
     private final ReadQueue<ForwardAggregate> retryReadQueue;
 
+    private final QueueMonitor forwardQueueMonitor;
+    private final QueueMonitor retryQueueMonitor;
+
     @Inject
     ForwardAggregateDao(final SqliteJooqHelper jooq,
-                        final ProxyDbConfig dbConfig) {
+                        final ProxyDbConfig dbConfig,
+                        final QueueMonitors queueMonitors) {
+        forwardQueueMonitor = queueMonitors.create(10, "Forward aggregates");
+        retryQueueMonitor = queueMonitors.create(11, "Retry forward aggregates");
+
         this.jooq = jooq;
         this.dbConfig = dbConfig;
         init();
@@ -104,17 +113,20 @@ public class ForwardAggregateDao implements Flushable {
     }
 
     private long readNew(final long currentReadPos, final long limit, List<ForwardAggregate> readQueue) {
-        return read(currentReadPos, limit, readQueue, FORWARD_AGGREGATE.NEW_POSITION);
+        return read(currentReadPos, limit, readQueue, FORWARD_AGGREGATE.NEW_POSITION, forwardQueueMonitor);
     }
 
     private long readRetry(final long currentReadPos, final long limit, List<ForwardAggregate> readQueue) {
-        return read(currentReadPos, limit, readQueue, FORWARD_AGGREGATE.RETRY_POSITION);
+        return read(currentReadPos, limit, readQueue, FORWARD_AGGREGATE.RETRY_POSITION, retryQueueMonitor);
     }
 
     private long read(final long currentReadPos,
                       final long limit,
                       final List<ForwardAggregate> readQueue,
-                      final TableField<ForwardAggregateRecord, Long> positionField) {
+                      final TableField<ForwardAggregateRecord, Long> positionField,
+                      final QueueMonitor queueMonitor) {
+        queueMonitor.setReadPos(currentReadPos);
+
         final AtomicLong pos = new AtomicLong(currentReadPos);
         jooq.readOnlyTransactionResult(context -> context
                         .select(FORWARD_AGGREGATE.ID,
@@ -137,7 +149,10 @@ public class ForwardAggregateDao implements Flushable {
                         .limit(limit)
                         .fetch())
                 .forEach(r -> {
-                    pos.set(r.get(positionField));
+                    final long newPosition = r.get(positionField);
+                    pos.set(newPosition);
+                    queueMonitor.setBufferPos(newPosition);
+
                     final ForwardDest forwardDest = new ForwardDest(r.get(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID),
                             r.get(FORWARD_DEST.NAME));
                     final Aggregate aggregate = new Aggregate(
@@ -163,14 +178,19 @@ public class ForwardAggregateDao implements Flushable {
                     .getMaxId(context, FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID)
                     .orElse(0L));
 
-            forwardAggregateNewPosition.set(JooqUtil
-                    .getMaxId(context, FORWARD_AGGREGATE, FORWARD_AGGREGATE.NEW_POSITION)
-                    .orElse(0L));
-
-            forwardAggregateRetryPosition.set(JooqUtil
-                    .getMaxId(context, FORWARD_AGGREGATE, FORWARD_AGGREGATE.RETRY_POSITION)
-                    .orElse(0L));
+            forwardAggregateNewPosition.set(initQueue(context, FORWARD_AGGREGATE.NEW_POSITION, forwardQueueMonitor));
+            forwardAggregateRetryPosition.set(initQueue(context, FORWARD_AGGREGATE.RETRY_POSITION, retryQueueMonitor));
         });
+    }
+
+    private long initQueue(final DSLContext context,
+                           final TableField<ForwardAggregateRecord, Long> positionField,
+                           final QueueMonitor queueMonitor) {
+        final long newPosition = JooqUtil
+                .getMaxId(context, FORWARD_AGGREGATE, positionField)
+                .orElse(0L);
+        queueMonitor.setWritePos(newPosition);
+        return newPosition;
     }
 
     public void clear() {
@@ -267,13 +287,16 @@ public class ForwardAggregateDao implements Flushable {
         recordQueue.add(() -> {
             for (final Aggregate aggregate : aggregates.list()) {
                 for (final ForwardDest forwardDest : forwardDests) {
+                    final long newPosition = forwardAggregateNewPosition.incrementAndGet();
+                    forwardQueueMonitor.setWritePos(newPosition);
+
                     final Object[] row = new Object[FORWARD_AGGREGATE_COLUMNS.length];
                     row[0] = forwardAggregateId.incrementAndGet();
                     row[1] = System.currentTimeMillis();
                     row[2] = forwardDest.getId();
                     row[3] = aggregate.id();
                     row[4] = false;
-                    row[5] = forwardAggregateNewPosition.incrementAndGet();
+                    row[5] = newPosition;
                     forwardAggregateWriteQueue.add(row);
                 }
 
@@ -387,6 +410,10 @@ public class ForwardAggregateDao implements Flushable {
     private void updateForwardAggregate(final DSLContext context,
                                         final ForwardAggregate forwardAggregate,
                                         final Long retryPosition) {
+        if (retryPosition != null) {
+            retryQueueMonitor.setWritePos(retryPosition);
+        }
+
         context
                 .update(FORWARD_AGGREGATE)
                 .set(FORWARD_AGGREGATE.UPDATE_TIME_MS, forwardAggregate.getUpdateTimeMs())

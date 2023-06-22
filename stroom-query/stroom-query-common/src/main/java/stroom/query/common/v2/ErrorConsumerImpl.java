@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ErrorConsumerImpl implements ErrorConsumer {
@@ -26,8 +28,19 @@ public class ErrorConsumerImpl implements ErrorConsumer {
     }
 
     @Override
+    public void add(final Supplier<String> message) {
+        int count = errorCount.incrementAndGet();
+        if (count <= MAX_ERROR_COUNT) {
+            final String string = message.get();
+            final RuntimeException exception = new RuntimeException(string);
+            LOGGER.trace(exception::getMessage, exception);
+            errors.add(exception);
+        }
+    }
+
+    @Override
     public void add(final Throwable exception) {
-        LOGGER.debug(exception::getMessage, exception);
+        LOGGER.trace(exception::getMessage, exception);
         if (!ErrorConsumerUtil.isInterruption(exception)) {
             int count = errorCount.incrementAndGet();
             if (count <= MAX_ERROR_COUNT) {

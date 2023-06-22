@@ -4,9 +4,6 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="textConverterSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="textConverterSettingsConverterType" label="Converter Type">
             <l:ItemListBox ui:field="converterType"/>
         </form:FormGroup>

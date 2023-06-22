@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public final class FileUtil {
 
@@ -97,6 +98,21 @@ public final class FileUtil {
             recursiveDelete(path, success);
         }
         return success.get();
+    }
+
+    /**
+     * @return True if path contains no files or directories.
+     * @throws IOException if it is unable to list the contents of path
+     */
+    public static boolean isEmptyDirectory(final Path path) throws IOException {
+        Objects.requireNonNull(path);
+        if (Files.isDirectory(path)) {
+            try (final Stream<Path> pathStream = Files.list(path)) {
+                return pathStream.findAny().isEmpty();
+            }
+        } else {
+            return false;
+        }
     }
 
     private static void recursiveDelete(final Path path, final AtomicBoolean success) {
@@ -370,5 +386,25 @@ public final class FileUtil {
         } catch (IOException e) {
             throw new RuntimeException("Error opening lock file " + lockFilePath.toAbsolutePath(), e);
         }
+    }
+
+    public static long getByteSize(final Path dir) {
+        final AtomicLong total = new AtomicLong();
+        try {
+            try (final Stream<Path> stream = Files.walk(dir)) {
+                stream.forEach(path -> {
+                    try {
+                        if (Files.isRegularFile(path)) {
+                            total.addAndGet(Files.size(path));
+                        }
+                    } catch (final IOException e) {
+                        LOGGER.debug(e::getMessage, e);
+                    }
+                });
+            }
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return total.get();
     }
 }

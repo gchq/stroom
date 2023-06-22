@@ -18,6 +18,7 @@ package stroom.lifecycle.impl;
 
 import stroom.lifecycle.api.ShutdownTask;
 import stroom.lifecycle.api.StartupTask;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogExecutionTime;
 
 import io.dropwizard.lifecycle.Managed;
@@ -114,7 +115,7 @@ class LifecycleService implements Managed {
                 startRemaining.await();
 
                 LOGGER.info("Started Stroom Lifecycle service");
-            } catch (final InterruptedException e) {
+            } catch (final InterruptedException | UncheckedInterruptedException e) {
                 LOGGER.info("Interrupted");
                 stop();
             }
@@ -171,7 +172,7 @@ class LifecycleService implements Managed {
             }
 
             LOGGER.info("Stopped Stroom Lifecycle service");
-        } catch (final InterruptedException e) {
+        } catch (final InterruptedException | UncheckedInterruptedException e) {
             LOGGER.info("Interrupted");
         }
     }

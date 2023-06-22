@@ -16,8 +16,9 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.RandomValReference;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.util.function.Supplier;
 
@@ -37,13 +38,21 @@ class Random extends AbstractFunction {
 
     static final String NAME = "random";
 
+    private RandomValReference randomValReference;
+
     public Random(final String name) {
         super(name, 0, 0);
     }
 
     @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        randomValReference = valueReferenceIndex.addRandomValue(name);
+        super.addValueReferences(valueReferenceIndex);
+    }
+
+    @Override
     public Generator createGenerator() {
-        return new Gen();
+        return new Gen(randomValReference);
     }
 
     @Override
@@ -53,26 +62,20 @@ class Random extends AbstractFunction {
 
     private static final class Gen extends AbstractNoChildGenerator {
 
-        private Val value;
+        private final RandomValReference randomValReference;
 
-        @Override
-        public void set(final Val[] values) {
-            value = ValDouble.create(Math.random());
+        public Gen(final RandomValReference randomValReference) {
+            this.randomValReference = randomValReference;
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return value;
+        public void set(final Val[] values, final StoredValues storedValues) {
+            randomValReference.set(storedValues, ValDouble.create(Math.random()));
         }
 
         @Override
-        public void read(final Input input) {
-            value = ValDouble.create(input.readDouble());
-        }
-
-        @Override
-        public void write(final Output output) {
-            output.writeDouble(value.toDouble());
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return randomValReference.get(storedValues);
         }
     }
 }

@@ -16,17 +16,18 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+
 import java.util.Map;
-import java.util.function.Supplier;
 
 abstract class AbstractStaticFunction implements Function, Appendable {
 
     private final String name;
     private final Generator gen;
 
-    AbstractStaticFunction(final String name, final Val value) {
+    AbstractStaticFunction(final String name, final Generator gen) {
         this.name = name;
-        this.gen = new Gen(value);
+        this.gen = gen;
     }
 
     @Override
@@ -36,6 +37,11 @@ abstract class AbstractStaticFunction implements Function, Appendable {
 
     @Override
     public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
+        // Ignore
+    }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
         // Ignore
     }
 
@@ -70,19 +76,5 @@ abstract class AbstractStaticFunction implements Function, Appendable {
     @Override
     public boolean requiresChildData() {
         return false;
-    }
-
-    private static final class Gen extends AbstractNoChildGenerator {
-
-        private final Val value;
-
-        Gen(final Val value) {
-            this.value = value;
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return value;
-        }
     }
 }

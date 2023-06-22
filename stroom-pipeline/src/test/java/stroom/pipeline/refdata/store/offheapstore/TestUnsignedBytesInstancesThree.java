@@ -282,6 +282,13 @@ class TestUnsignedBytesInstancesThree {
                 .withMessageContaining("Can't decrement without overflowing");
     }
 
+    @Test
+    void testZero() {
+        final byte[] bytes = THREE_UNSIGNED_BYTES.toBytes(0);
+        Assertions.assertThat(bytes)
+                .isEqualTo(new byte[]{0, 0, 0});
+    }
+
     private void doDecrementTest(final long val, final ByteBuffer byteBuffer) {
 
         byteBuffer.clear();

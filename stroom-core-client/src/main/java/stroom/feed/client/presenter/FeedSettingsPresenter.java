@@ -21,7 +21,7 @@ import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
@@ -35,7 +35,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.InputHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -43,7 +42,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, FeedDoc> {
+public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
 
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
 
@@ -91,7 +90,6 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         // Add listeners for dirty events.
         final InputHandler inputHandler = event -> setDirty(true);
         final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
-        registerHandler(view.getDescription().addDomHandler(inputHandler, InputEvent.getType()));
         registerHandler(view.getClassification().addDomHandler(inputHandler, InputEvent.getType()));
         registerHandler(view.getReference().addValueChangeHandler(checkHandler));
         registerHandler(view.getDataEncoding().addChangeHandler(event -> {
@@ -125,8 +123,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final FeedDoc feed) {
-        getView().getDescription().setText(feed.getDescription());
+    protected void onRead(final DocRef docRef, final FeedDoc feed, final boolean readOnly) {
         getView().getReference().setValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());
         getView().getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
@@ -137,7 +134,6 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
 
     @Override
     protected FeedDoc onWrite(final FeedDoc feed) {
-        feed.setDescription(getView().getDescription().getText().trim());
         feed.setReference(getView().getReference().getValue());
         feed.setClassification(getView().getClassification().getText());
         feed.setEncoding(ensureEncoding(getView().getDataEncoding().getSelected()));
@@ -161,8 +157,6 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     }
 
     public interface FeedSettingsView extends View {
-
-        TextArea getDescription();
 
         TextBox getClassification();
 

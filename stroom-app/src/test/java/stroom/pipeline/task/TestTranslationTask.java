@@ -63,11 +63,18 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         commonTranslationTestHelper.setup();
 
         final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
-        assertThat(results.size()).isEqualTo(N4);
+
+        assertThat(results).hasSize(N4);
         for (final ProcessorResult result : results) {
-            assertThat(result.getWritten() > 0).as(result.toString()).isTrue();
-            assertThat(result.getRead() <= result.getWritten()).as(result.toString()).isTrue();
-            assertThat(result.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
+            assertThat(result.getWritten())
+                    .as(result.toString())
+                    .isGreaterThan(0);
+            assertThat(result.getRead())
+                    .as(result.toString())
+                    .isLessThanOrEqualTo(result.getWritten());
+            assertThat(result.getMarkerCount(Severity.SEVERITIES))
+                    .as(result.toString())
+                    .isZero();
         }
 
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
@@ -92,7 +99,8 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         }
 
         // Make sure 26 records were written.
-        assertThat(results.get(N3).getWritten()).isEqualTo(26);
+        assertThat(results.get(N3).getWritten())
+                .isEqualTo(26);
     }
 
     /**
@@ -106,9 +114,9 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
                 CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
 
         final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
-        assertThat(results.size()).isEqualTo(N4);
+        assertThat(results).hasSize(N4);
 
         // Make sure no records were written.
-        assertThat((results.get(N3)).getWritten()).isEqualTo(0);
+        assertThat((results.get(N3)).getWritten()).isZero();
     }
 }

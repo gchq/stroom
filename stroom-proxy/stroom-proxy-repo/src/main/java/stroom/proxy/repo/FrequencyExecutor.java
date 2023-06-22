@@ -1,5 +1,8 @@
 package stroom.proxy.repo;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -12,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class FrequencyExecutor implements Managed {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FrequencyExecutor.class);
 
     private final ScheduledExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
@@ -31,7 +36,17 @@ public class FrequencyExecutor implements Managed {
 
     @Override
     public void start() {
-        executorService.scheduleWithFixedDelay(runnableSupplier.get(), 0, frequency, TimeUnit.MILLISECONDS);
+        final Runnable runnable = () -> {
+            try {
+                runnableSupplier.get().run();
+            } catch (final UncheckedInterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        };
+        executorService.scheduleWithFixedDelay(runnable, 0, frequency, TimeUnit.MILLISECONDS);
     }
 
     @Override

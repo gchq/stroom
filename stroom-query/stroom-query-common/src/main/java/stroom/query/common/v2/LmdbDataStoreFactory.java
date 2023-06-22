@@ -1,10 +1,13 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -34,29 +37,21 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStoreFactory.class);
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final Provider<ResultStoreConfig> resultStoreConfigProvider;
-    private final Provider<AnalyticStoreConfig> analyticStoreConfigProvider;
+    private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
-    private final Provider<Serialisers> serialisersProvider;
     private final Path searchResultStoreDir;
-    private final Path analyticResultStoreDir;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
-                                final Provider<ResultStoreConfig> resultStoreConfigProvider,
-                                final Provider<AnalyticStoreConfig> analyticStoreConfigProvider,
+                                final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
                                 final PathCreator pathCreator,
-                                final Provider<Executor> executorProvider,
-                                final Provider<Serialisers> serialisersProvider) {
+                                final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
-        this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.executorProvider = executorProvider;
-        this.serialisersProvider = serialisersProvider;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
-        this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
         // As search result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
@@ -64,7 +59,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final QueryKey queryKey,
+    public DataStore create(final SearchRequestSource searchRequestSource,
+                            final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
@@ -72,59 +68,38 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
 
-        final ResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
+        final SearchResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         if (!resultStoreConfig.isOffHeapResults()) {
             if (dataStoreSettings.isProducePayloads()) {
                 throw new RuntimeException("MapDataStore cannot produce payloads");
             }
 
             return new MapDataStore(
-                    serialisersProvider.get(),
+                    new Serialisers(resultStoreConfig),
                     tableSettings,
                     fieldIndex,
                     paramMap,
                     dataStoreSettings);
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
-            final DataStoreSettings modifiedDataStoreSettings =
-                    dataStoreSettings.copy().subDirectory(subDirectory).build();
+            final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory
+                    .builder(resultStoreConfig.getLmdbConfig())
+                    .withSubDirectory(subDirectory);
 
             return new LmdbDataStore(
-                    serialisersProvider.get(),
-                    lmdbEnvFactory,
+                    searchRequestSource,
+                    new Serialisers(resultStoreConfig),
+                    lmdbEnvBuilder,
                     resultStoreConfig,
                     queryKey,
                     componentId,
                     tableSettings,
                     fieldIndex,
                     paramMap,
-                    modifiedDataStoreSettings,
+                    dataStoreSettings,
                     executorProvider,
                     errorConsumer);
         }
-    }
-
-    public LmdbDataStore createAnalyticLmdbDataStore(final QueryKey queryKey,
-                                                     final String componentId,
-                                                     final TableSettings tableSettings,
-                                                     final FieldIndex fieldIndex,
-                                                     final Map<String, String> paramMap,
-                                                     final DataStoreSettings dataStoreSettings,
-                                                     final ErrorConsumer errorConsumer) {
-
-        final AnalyticStoreConfig storeConfig = analyticStoreConfigProvider.get();
-        return new LmdbDataStore(
-                serialisersProvider.get(),
-                lmdbEnvFactory,
-                storeConfig,
-                queryKey,
-                componentId,
-                tableSettings,
-                fieldIndex,
-                paramMap,
-                dataStoreSettings,
-                executorProvider,
-                errorConsumer);
     }
 
     private Path getLocalDir(final AbstractResultStoreConfig resultStoreConfig,

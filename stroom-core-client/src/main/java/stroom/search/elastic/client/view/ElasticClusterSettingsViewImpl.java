@@ -44,8 +44,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     private final Widget widget;
 
     @UiField
-    TextArea description;
-    @UiField
     TextArea connectionUrls;
     @UiField
     TextArea caCertificate;
@@ -64,7 +62,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     public ElasticClusterSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        description.addKeyDownHandler(e -> fireChange());
         connectionUrls.addKeyDownHandler(e -> fireChange());
         caCertificate.addKeyDownHandler(e -> fireChange());
         useAuthentication.addValueChangeHandler(e -> fireChange());
@@ -82,16 +79,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public String getDescription() {
-        return description.getText().trim();
-    }
-
-    @Override
-    public void setDescription(final String description) {
-        this.description.setText(description);
     }
 
     @Override
@@ -158,7 +145,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         connectionUrls.setEnabled(!readOnly);
         caCertificate.setEnabled(!readOnly);
         useAuthentication.setEnabled(!readOnly);

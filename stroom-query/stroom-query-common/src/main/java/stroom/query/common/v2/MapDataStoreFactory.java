@@ -1,7 +1,9 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 
 import java.util.Map;
@@ -18,7 +20,8 @@ public class MapDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final QueryKey queryKey,
+    public DataStore create(final SearchRequestSource searchRequestSource,
+                            final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,

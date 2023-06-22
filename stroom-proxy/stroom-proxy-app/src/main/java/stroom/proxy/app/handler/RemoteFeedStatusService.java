@@ -9,6 +9,8 @@ import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cache.CacheConfig;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
@@ -32,7 +34,6 @@ import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
@@ -51,18 +52,18 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
-    private final Provider<Client> jerseyClientProvider;
+    private final JerseyClientFactory jerseyClientFactory;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
     RemoteFeedStatusService(final Provider<ProxyConfig> proxyConfigProvider,
                             final Provider<FeedStatusConfig> feedStatusConfigProvider,
-                            final Provider<Client> jerseyClientProvider,
-                            final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                            final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                            final JerseyClientFactory jerseyClientFactory) {
         this.proxyConfigProvider = proxyConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.jerseyClientProvider = jerseyClientProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
 
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
@@ -202,10 +203,9 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     }
 
     private WebTarget getFeedStatusWebTarget(final String url) {
-        final WebTarget feedStatusWebTarget = jerseyClientProvider.get()
-                .target(url)
+        return jerseyClientFactory.createWebTarget(
+                JerseyClientName.FEED_STATUS, url)
                 .path(GET_FEED_STATUS_PATH);
-        return feedStatusWebTarget;
     }
 
     @Override

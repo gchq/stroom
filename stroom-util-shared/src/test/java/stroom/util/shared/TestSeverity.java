@@ -62,7 +62,7 @@ class TestSeverity {
         list.add(Severity.WARNING);
         list.add(Severity.FATAL_ERROR);
 
-        list.sort(Severity.COMPARATOR);
+        list.sort(Severity.LOW_TO_HIGH_COMPARATOR);
 
         Assertions.assertThat(list)
                 .containsExactly(

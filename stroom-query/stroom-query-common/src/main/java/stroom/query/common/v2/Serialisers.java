@@ -1,23 +1,13 @@
 package stroom.query.common.v2;
 
-import javax.inject.Inject;
-
 public class Serialisers {
+    private final OutputFactoryImpl outputFactory;
 
-    private final InputFactory inputFactory;
-    private final OutputFactory outputFactory;
-
-    @Inject
     public Serialisers(final AbstractResultStoreConfig resultStoreConfig) {
-        this.inputFactory = new InputFactory();
-        this.outputFactory = new OutputFactory(resultStoreConfig);
+        this.outputFactory = new OutputFactoryImpl(resultStoreConfig);
     }
 
-    public InputFactory getInputFactory() {
-        return inputFactory;
-    }
-
-    public OutputFactory getOutputFactory() {
+    public OutputFactoryImpl getOutputFactory() {
         return outputFactory;
     }
 }
