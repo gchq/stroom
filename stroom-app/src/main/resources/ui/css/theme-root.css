@@ -129,7 +129,7 @@
 
     /* Splitter */
     --splitter__background-color: #ebebeb;
-    --splitter__background-color--highlight: rgba(24, 94, 144, 0.9);
+    --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */
     --curve-tab__svg-color: #555;
