@@ -5,9 +5,11 @@ import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -41,7 +43,8 @@ public class MarkdownConverter {
     }-*/;
 
     /**
-     * Converts the supplied markdown into html with appropriate syntax highlighting
+     * Converts the supplied markdown into html with appropriate syntax highlighting.
+     * The markdown is surrounded by a container div.
      * <p><b>NOTE:</b> if the markdown has come from user content then it cannot be trusted, so
      * you should contain the resulting html in a sandboxed iframe or add other layers of protection
      * from scripting in the markdown.</p>
@@ -53,6 +56,38 @@ public class MarkdownConverter {
             final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
             appendMarkdownInDiv(htmlBuilder, rawMarkdown);
             return htmlBuilder.toSafeHtml();
+        }
+    }
+
+    /**
+     * Converts the supplied markdown into html with appropriate syntax highlighting
+     * The markdown is surrounded by a container div and placed in a sandboxed iFrame for
+     * safety from scripts.
+     */
+    public SafeHtml convertMarkdownToHtmlInFrame(final String rawMarkdown) {
+        if (GwtNullSafe.isBlankString(rawMarkdown)) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else {
+
+            final SafeHtml markdownSafeHtml = convertMarkdownToHtml(rawMarkdown);
+            final String currentPreferenceClasses = userPreferencesManager.getCurrentPreferenceClasses();
+            final SafeHtml iFrameHtmlContent = new SafeHtmlBuilder()
+                    .appendHtmlConstant("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+                    .appendHtmlConstant("<!DOCTYPE html>")
+                    .appendHtmlConstant("<html class=\"")
+                    .append(SafeHtmlUtil.from(currentPreferenceClasses))
+                    .appendHtmlConstant("\">")
+                    .appendHtmlConstant("<head>")
+                    .appendHtmlConstant("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">")
+                    .appendHtmlConstant("<link rel=\"stylesheet\" href=\"css/app.css\" type=\"text/css\" />")
+                    .appendHtmlConstant("</head>")
+                    .appendHtmlConstant("<body>")
+                    .append(markdownSafeHtml)
+                    .appendHtmlConstant("</body>")
+                    .appendHtmlConstant("</html>")
+                    .toSafeHtml();
+
+            return iFrameHtmlContent;
         }
     }
 

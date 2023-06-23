@@ -176,8 +176,14 @@ hide the standard control and replace it with something more fancy that we can c
 /* force the font family/size for inline and fenced blocks,
    else we get a bit of a mix of prism/bootstrap/stroom css */
 .markdown code,
-.markdown code[class*=language-],
-.markdown code[class*=language-] span {
+.markdown pre code[class*=language-],
+.markdown pre code[class*=language-] span {
   font-size: var(--font-size-12);
   font-family: var(--monospace-font-family);
+  line-height: 1em;
+}
+
+.markdown p code {
+  font-size: var(--font-size-13);
+  line-height: 1em;
 }

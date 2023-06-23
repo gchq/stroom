@@ -34,10 +34,8 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -184,27 +182,28 @@ public class MarkdownEditPresenter
     }
 
     private void updateMarkdownOnIFramePresenter() {
-        final SafeHtml markdownAsHtml = markdownConverter.convertMarkdownToHtml(codePresenter.getText());
-        final String currentPreferenceClasses = userPreferencesManager.getCurrentPreferenceClasses();
+//        final SafeHtml markdownAsHtml = markdownConverter.convertMarkdownToHtml(codePresenter.getText());
+//        final String currentPreferenceClasses = userPreferencesManager.getCurrentPreferenceClasses();
+//
+//        final String iFrameHtmlContent = new SafeHtmlBuilder()
+//                .appendHtmlConstant("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+//                .appendHtmlConstant("<!DOCTYPE html>")
+//                .appendHtmlConstant("<html class=\"")
+//                .append(SafeHtmlUtil.from(currentPreferenceClasses))
+//                .appendHtmlConstant("\">")
+//                .appendHtmlConstant("<head>")
+//                .appendHtmlConstant("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">")
+//                .appendHtmlConstant("<link rel=\"stylesheet\" href=\"css/app.css\" type=\"text/css\" />")
+//                .appendHtmlConstant("</head>")
+//                .appendHtmlConstant("<body>")
+//                .append(markdownAsHtml)
+//                .appendHtmlConstant("</body>")
+//                .appendHtmlConstant("</html>")
+//                .toSafeHtml()
+//                .asString();
+        final SafeHtml iFrameHtmlContent = markdownConverter.convertMarkdownToHtmlInFrame(codePresenter.getText());
 
-        final String iFrameHtmlContent = new SafeHtmlBuilder()
-                .appendHtmlConstant("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-                .appendHtmlConstant("<!DOCTYPE html>")
-                .appendHtmlConstant("<html class=\"")
-                .append(SafeHtmlUtil.from(currentPreferenceClasses))
-                .appendHtmlConstant("\">")
-                .appendHtmlConstant("<head>")
-                .appendHtmlConstant("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">")
-                .appendHtmlConstant("<link rel=\"stylesheet\" href=\"css/app.css\" type=\"text/css\" />")
-                .appendHtmlConstant("</head>")
-                .appendHtmlConstant("<body>")
-                .append(markdownAsHtml)
-                .appendHtmlConstant("</body>")
-                .appendHtmlConstant("</html>")
-                .toSafeHtml()
-                .asString();
-
-        iFramePresenter.setSrcDoc(iFrameHtmlContent);
+        iFramePresenter.setSrcDoc(iFrameHtmlContent.asString());
     }
 
     public void setReadOnly(final boolean readOnly) {
