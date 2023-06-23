@@ -4,6 +4,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.StructureElement;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
 import stroom.query.shared.QueryResource;
 import stroom.ui.config.client.UiConfigCache;
@@ -18,6 +19,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -32,21 +34,27 @@ public class QueryStructure implements HasHandlers {
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
+    private final MarkdownConverter markdownConverter;
 
     private List<StructureQueryHelpItem> items;
+    private String cssClasses = null;
 
 
     @Inject
     QueryStructure(final EventBus eventBus,
                    final RestFactory restFactory,
-                   final UiConfigCache uiConfigCache) {
+                   final UiConfigCache uiConfigCache,
+                   final MarkdownConverter markdownConverter) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
+        this.markdownConverter = markdownConverter;
     }
 
     public void fetchStructureElements(final Consumer<List<StructureQueryHelpItem>> consumer) {
-        if (items != null) {
+        // Theme is baked into the html due to the way prism works so we need to rebuild
+        // if the theme has changed
+        if (items != null && !hasThemeChanged()) {
             consumer.accept(items);
         } else {
             fetchHelpUrl(helpUrl -> {
@@ -55,11 +63,14 @@ public class QueryStructure implements HasHandlers {
                         .onSuccess(result -> {
                             items = result
                                     .stream()
-                                    .map(structureElement ->
-                                            new StructureQueryHelpItem(
-                                                    structureElement.getTitle(),
-                                                    structureElement.getDescription(),
-                                                    helpUrl))
+                                    .map(structureElement -> {
+                                        final SafeHtml detailHtml = buildDescriptionHtml(
+                                                structureElement.getDescription());
+                                        return new StructureQueryHelpItem(
+                                                structureElement.getTitle(),
+                                                detailHtml,
+                                                helpUrl);
+                                    })
                                     .collect(Collectors.toList());
                             consumer.accept(items);
                         })
@@ -71,6 +82,21 @@ public class QueryStructure implements HasHandlers {
                         .fetchStructureElements();
             });
         }
+    }
+
+    private SafeHtml buildDescriptionHtml(final String description) {
+        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(description);
+        cssClasses = markdownConverter.getMarkdownContainerClasses();
+
+        return HtmlBuilder.builder()
+                .div(builder -> builder.append(markdownHtml),
+                        Attribute.className(cssClasses))
+                .toSafeHtml();
+    }
+
+    private boolean hasThemeChanged() {
+        final String cssClasses = markdownConverter.getMarkdownContainerClasses();
+        return !Objects.equals(cssClasses, this.cssClasses);
     }
 
     private void fetchHelpUrl(final Consumer<String> consumer) {
@@ -232,11 +258,16 @@ public class QueryStructure implements HasHandlers {
 //    }
 //
 //
+
+
+    // --------------------------------------------------------------------------------
+
+
     public static class StructureQueryHelpItem extends QueryHelpItem {
 
         private final SafeHtml detail;
 
-        public StructureQueryHelpItem(final String title, final String detail, final String helpUrl) {
+        public StructureQueryHelpItem(final String title, final SafeHtml detail, final String helpUrl) {
             super(title, false, 1);
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(hb1 -> {

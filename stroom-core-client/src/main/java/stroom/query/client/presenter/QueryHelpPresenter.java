@@ -19,6 +19,8 @@ package stroom.query.client.presenter;
 
 import stroom.data.table.client.MyCellTable;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.QueryHelpItem.FunctionCategoryItem;
 import stroom.query.client.presenter.QueryHelpItem.FunctionItem;
@@ -37,7 +39,6 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.TableBuilder;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -74,12 +75,15 @@ public class QueryHelpPresenter
     private final CellTable<QueryHelpItem> elementChooser;
     private final FunctionSignatures functionSignatures;
     private final IndexLoader indexLoader;
+    private final MarkdownConverter markdownConverter;
+    private final QueryStructure queryStructure;
 
     private final List<QueryHelpItem> queryHelpItems = new ArrayList<>();
     private final Set<QueryHelpItem> openItems = new HashSet<>();
     private QueryHelpItem lastSelection;
 
     private final QueryHelpItemHeading fieldsHeading;
+    private final QueryHelpItemHeading structureHeading;
 
     private Timer requestTimer;
     private String currentQuery;
@@ -90,10 +94,13 @@ public class QueryHelpPresenter
                               final Views views,
                               final FunctionSignatures functionSignatures,
                               final QueryStructure queryStructure,
-                              final IndexLoader indexLoader) {
+                              final IndexLoader indexLoader,
+                              final MarkdownConverter markdownConverter) {
         super(eventBus, view);
         this.functionSignatures = functionSignatures;
         this.indexLoader = indexLoader;
+        this.markdownConverter = markdownConverter;
+        this.queryStructure = queryStructure;
         elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
         view.setUiHandlers(this);
 
@@ -102,7 +109,7 @@ public class QueryHelpPresenter
                 0,
                 SafeHtmlUtil.from("A list of data sources that can be queried by specifying them in " +
                         "the 'from' clause."));
-        final QueryHelpItem structureHeading = new TopLevelHeadingItem(
+        structureHeading = new TopLevelHeadingItem(
                 "Structure",
                 0,
                 SafeHtmlUtil.from("A list of the keywords available in the Stroom Query Language."));
@@ -121,25 +128,20 @@ public class QueryHelpPresenter
         queryHelpItems.add(structureHeading);
         queryHelpItems.add(functionsHeading);
 
-        // Add structure.
-        queryStructure.fetchStructureElements(list -> {
-            list.forEach(structureHeading::addOrGetChild);
-            refresh();
-        });
+        buildStructureMenuItems();
 
         // Add views.
         views.fetchViews(viewDocRefs -> {
             viewDocRefs.stream()
                     .sorted()
                     .forEach(viewDocRef -> {
-
                         final String name = viewDocRef.getName();
-                        final String uuid = viewDocRef.getUuid();
                         final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
                         appendKeyValueTable(htmlBuilder,
                                 Arrays.asList(
                                         new SimpleEntry<>("Name:", name),
-                                        new SimpleEntry<>("UUID:", uuid)));
+                                        new SimpleEntry<>("Type:", viewDocRef.getType()),
+                                        new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
 
                         dataSourceHeading.addOrGetChild(new DataSourceHelpItem(
                                 name, htmlBuilder.toSafeHtml(), null));
@@ -188,7 +190,7 @@ public class QueryHelpPresenter
                     refresh();
                 }));
 
-        Column<QueryHelpItem, QueryHelpItem> expanderColumn =
+        final Column<QueryHelpItem, QueryHelpItem> expanderColumn =
                 new Column<QueryHelpItem, QueryHelpItem>(new QueryHelpItemCell(openItems)) {
                     @Override
                     public QueryHelpItem getValue(final QueryHelpItem object) {
@@ -200,88 +202,117 @@ public class QueryHelpPresenter
             refresh();
         });
         elementChooser.addColumn(expanderColumn);
-//
-//        // Text.
-//        final Column<QueryHelpItem, SafeHtml> textColumn = new Column<QueryHelpItem, SafeHtml>(new SafeHtmlCell()) {
-//            @Override
-//            public SafeHtml getValue(final QueryHelpItem item) {
-//                return item.getLabel();
-//            }
-//        };
-//        elementChooser.addColumn(textColumn);
-        elementChooser.setSelectionModel(elementSelectionModel,
-                new AbstractSelectionEventManager<QueryHelpItem>(elementChooser) {
 
-                    @Override
-                    protected void onSelect(final CellPreviewEvent<QueryHelpItem> e) {
-                        super.onSelect(e);
-                        GWT.log("onSelect: "
-                                + GwtNullSafe.get(e, CellPreviewEvent::getValue, QueryHelpItem::getTitle));
-                    }
-
-                    @Override
-                    protected void onMoveRight(final CellPreviewEvent<QueryHelpItem> e) {
-                        super.onMoveRight(e);
-                        if (e.getValue().hasChildren()) {
-                            openItems.add(e.getValue());
-                            refresh();
-                        }
-                        updateDetails(e.getValue());
-                    }
-
-                    @Override
-                    protected void onMoveLeft(final CellPreviewEvent<QueryHelpItem> e) {
-                        super.onMoveLeft(e);
-                        if (e.getValue().hasChildren()) {
-                            openItems.remove(e.getValue());
-                            refresh();
-                        }
-                        updateDetails(e.getValue());
-                    }
-
-                    @Override
-                    protected void onMoveDown(final CellPreviewEvent<QueryHelpItem> e) {
-                        super.onMoveDown(e);
-                        final QueryHelpItem keyboardSelectedItem = elementChooser.getVisibleItem(
-                                elementChooser.getKeyboardSelectedRow());
-                        updateDetails(keyboardSelectedItem);
-                    }
-
-                    @Override
-                    protected void onMoveUp(final CellPreviewEvent<QueryHelpItem> e) {
-                        super.onMoveUp(e);
-                        final QueryHelpItem keyboardSelectedItem = elementChooser.getVisibleItem(
-                                elementChooser.getKeyboardSelectedRow());
-                        updateDetails(keyboardSelectedItem);
-                    }
-
-                    @Override
-                    protected void onExecute(final CellPreviewEvent<QueryHelpItem> e) {
-                        super.onExecute(e);
-                        final QueryHelpItem value = e.getValue();
-                        final boolean doubleSelect = doubleSelectTest.test(value);
-
-                        lastSelection = value;
-
-                        updateDetails(value);
-
-                        if (value != null) {
-                            if (value.hasChildren()) {
-                                toggleOpen(value);
-                                refresh();
-                            } else if (doubleSelect) {
-                                onInsert();
-                            }
-                        }
-
-                        getView().enableButtons(GwtNullSafe.test(
-                                e.getValue(),
-                                QueryHelpItem::getInsertType,
-                                InsertType::isInsertable));
-                    }
-                });
-
+        elementChooser.setSelectionModel(elementSelectionModel, buildSelectionEventManager());
         getView().setElementChooser(elementChooser);
+
+        // Markdown styling has the light/dark theme baked in so have to rebuild it on theme change
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
+            // Rebuild the structure menu items as they contain markdown
+            buildStructureMenuItems(() -> {
+                elementSelectionModel.clear();
+                getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
+            });
+        }));
+    }
+
+    private void buildStructureMenuItems() {
+        buildStructureMenuItems(null);
+    }
+
+    private void buildStructureMenuItems(final Runnable afterBuildAction) {
+        structureHeading.clear();
+        // Add structure.
+        queryStructure.fetchStructureElements(list -> {
+            list.forEach(structureHeading::addOrGetChild);
+            refresh();
+            GwtNullSafe.run(afterBuildAction);
+        });
+    }
+
+    private CellPreviewEvent.Handler<QueryHelpItem> buildSelectionEventManager() {
+
+        return new AbstractSelectionEventManager<QueryHelpItem>(elementChooser) {
+
+            @Override
+            protected void onSelect(final CellPreviewEvent<QueryHelpItem> e) {
+                super.onSelect(e);
+                lastSelection = e.getValue();
+//                GWT.log("onSelect: "
+//                        + GwtNullSafe.get(e, CellPreviewEvent::getValue, QueryHelpItem::getTitle));
+            }
+
+            @Override
+            protected void onMouseDown(final CellPreviewEvent<QueryHelpItem> e) {
+                super.onMouseDown(e);
+                lastSelection = e.getValue();
+//                GWT.log("onMouseDown: "
+//                        + GwtNullSafe.get(e, CellPreviewEvent::getValue, QueryHelpItem::getTitle));
+            }
+
+            @Override
+            protected void onMoveRight(final CellPreviewEvent<QueryHelpItem> e) {
+                super.onMoveRight(e);
+                if (e.getValue().hasChildren()) {
+                    openItems.add(e.getValue());
+                    refresh();
+                }
+                updateDetails(e.getValue());
+            }
+
+            @Override
+            protected void onMoveLeft(final CellPreviewEvent<QueryHelpItem> e) {
+                super.onMoveLeft(e);
+                if (e.getValue().hasChildren()) {
+                    openItems.remove(e.getValue());
+                    refresh();
+                }
+                updateDetails(e.getValue());
+            }
+
+            @Override
+            protected void onMoveDown(final CellPreviewEvent<QueryHelpItem> e) {
+                super.onMoveDown(e);
+                final QueryHelpItem keyboardSelectedItem = elementChooser.getVisibleItem(
+                        elementChooser.getKeyboardSelectedRow());
+                lastSelection = keyboardSelectedItem;
+                updateDetails(keyboardSelectedItem);
+            }
+
+            @Override
+            protected void onMoveUp(final CellPreviewEvent<QueryHelpItem> e) {
+                super.onMoveUp(e);
+                final QueryHelpItem keyboardSelectedItem = elementChooser.getVisibleItem(
+                        elementChooser.getKeyboardSelectedRow());
+                lastSelection = keyboardSelectedItem;
+                updateDetails(keyboardSelectedItem);
+            }
+
+            @Override
+            protected void onExecute(final CellPreviewEvent<QueryHelpItem> e) {
+                super.onExecute(e);
+                final QueryHelpItem value = e.getValue();
+                final boolean doubleSelect = doubleSelectTest.test(value);
+
+                lastSelection = value;
+
+                updateDetails(value);
+
+                if (value != null) {
+                    if (value.hasChildren()) {
+                        toggleOpen(value);
+                        refresh();
+                    } else if (doubleSelect) {
+                        onInsert();
+                    }
+                }
+
+                getView().enableButtons(GwtNullSafe.test(
+                        e.getValue(),
+                        QueryHelpItem::getInsertType,
+                        InsertType::isInsertable));
+            }
+        };
     }
 
     private void updateDetails(final QueryHelpItem queryHelpItem) {
@@ -346,7 +377,6 @@ public class QueryHelpPresenter
                                             new SimpleEntry<>("Is queryable:", asDisplayValue(field.queryable())),
                                             new SimpleEntry<>("Is numeric:", asDisplayValue(field.isNumeric()))));
 
-//                            htmlBuilder.div(tableBuilder::write, Attribute.className("functionSignatureTable"));
                             fieldsHeading.addOrGetChild(new FieldHelpItem(
                                     fieldName, htmlBuilder.toSafeHtml(), helpUrl));
                         });

@@ -169,3 +169,17 @@ hide the standard control and replace it with something more fancy that we can c
   padding-top: 0.2em;
 }
 
+/* Fenced blocks */
+.markdown pre[class*=language-] {
+  /* The standard prism padding for fenced blocks is 1em so a bit big */
+  padding: 0.3em 0.5em;
+}
+
+/* force the font family/size for inline and fenced blocks,
+   else we get a bit of a mix of prism/bootstrap/stroom css */
+.markdown code,
+.markdown code[class*=language-],
+.markdown code[class*=language-] span {
+  font-size: var(--font-size-12);
+  font-family: var(--monospace-font-family);
+}

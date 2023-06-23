@@ -122,7 +122,7 @@ public class MarkdownEditPresenter
                 if (editMode) {
                     getView().setView(codePresenter.getView());
                 } else {
-                    // Raw markdown likely been changed to update the iframe cotent
+                    // Raw markdown likely been changed to update the iframe content
                     updateMarkdownOnIFramePresenter();
                     getView().setView(iFramePresenter.getView());
                 }
