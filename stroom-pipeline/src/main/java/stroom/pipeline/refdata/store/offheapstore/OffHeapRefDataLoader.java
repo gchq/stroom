@@ -750,7 +750,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         LOGGER.trace("Close called for {}", refStreamDefinition);
 
         if (!currentLoaderState.equals(LoaderState.COMPLETED)) {
-            LOGGER.warn("Reference data loader for {} was closed with a state of {}",
+            // This is likely if two threads try to load the same stream. One will win and load it
+            // while the other will be blocked until it discovers it is already loaded then closes the loader
+            LOGGER.debug("Reference data loader for {} was closed with a state of {}",
                     refStreamDefinition, currentLoaderState);
         }
 
