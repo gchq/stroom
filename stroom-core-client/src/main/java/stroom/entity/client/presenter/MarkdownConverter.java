@@ -69,7 +69,7 @@ public class MarkdownConverter {
             final SafeHtml markdownSafeHtml = SafeHtmlUtils.fromTrustedString(markdownHtml);
             final String cssClasses = getMarkdownContainerClasses();
 
-                htmlBuilder.div(builder -> builder.append(markdownSafeHtml),
+            htmlBuilder.div(builder -> builder.append(markdownSafeHtml),
                     Attribute.className(cssClasses));
         }
     }
