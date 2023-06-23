@@ -20,6 +20,7 @@ package stroom.query.client.presenter;
 import stroom.data.table.client.MyCellTable;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.KeyedAceCompletionProvider;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.QueryHelpItem.FunctionCategoryItem;
@@ -53,6 +54,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -69,6 +73,28 @@ public class QueryHelpPresenter
         implements QueryHelpUiHandlers {
 
     private static final int DEBOUNCE_PERIOD_MILLIS = 2000;
+    private static final String DATA_SOURCES_HELP_TEXT = "A list of data sources that can be queried by " +
+            "specifying them in the 'from' clause.";
+    private static final String STRUCTURE_HELP_TEXT = "A list of the keywords available in the Stroom Query Language.";
+    private static final String FIELDS_HELP_TEXT = "A list of the fields available to 'select' from the specified " +
+            "data source. The fields will only become available one the data source has been " +
+            "specified using the 'from' keyword.";
+    private static final String FUNCTIONS_HELP_TEXT = "A list of functions available to use the Stroom Query Language.";
+
+    private static final String DATA_SOURCES_COMPLETION_KEY = "DATA_SOURCES";
+    private static final String STRUCTURE_COMPLETION_KEY = "STRUCTURE";
+    private static final String FIELDS_COMPLETION_KEY = "FIELDS";
+    private static final String FUNCTIONS_COMPLETION_KEY = "FUNCTIONS";
+
+    private static final String DATA_SOURCES_META = "Data Source";
+    private static final String STRUCTURE_META = "Structure";
+    private static final String FIELDS_META = "Field";
+    private static final String FUNCTIONS_META = "Function";
+
+    private static final int DATA_SOURCES_COMPLETION_SCORE = 500;
+    private static final int STRUCTURE_COMPLETION_SCORE = 400;
+    private static final int FIELDS_COMPLETION_SCORE = 300;
+    private static final int FUNCTIONS_COMPLETION_SCORE = 200;
 
     private final SingleSelectionModel<QueryHelpItem> elementSelectionModel = new SingleSelectionModel<>();
     private final DoubleSelectTester doubleSelectTest = new DoubleSelectTester();
@@ -77,6 +103,7 @@ public class QueryHelpPresenter
     private final IndexLoader indexLoader;
     private final MarkdownConverter markdownConverter;
     private final QueryStructure queryStructure;
+    private final KeyedAceCompletionProvider keyedAceCompletionProvider;
 
     private final List<QueryHelpItem> queryHelpItems = new ArrayList<>();
     private final Set<QueryHelpItem> openItems = new HashSet<>();
@@ -95,66 +122,73 @@ public class QueryHelpPresenter
                               final FunctionSignatures functionSignatures,
                               final QueryStructure queryStructure,
                               final IndexLoader indexLoader,
-                              final MarkdownConverter markdownConverter) {
+                              final MarkdownConverter markdownConverter,
+                              final KeyedAceCompletionProvider keyedAceCompletionProvider) {
         super(eventBus, view);
         this.functionSignatures = functionSignatures;
         this.indexLoader = indexLoader;
         this.markdownConverter = markdownConverter;
         this.queryStructure = queryStructure;
+        this.keyedAceCompletionProvider = keyedAceCompletionProvider;
         elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
         view.setUiHandlers(this);
 
-        final QueryHelpItem dataSourceHeading = new TopLevelHeadingItem(
+        final QueryHelpItem dataSourceHeading = createTopLevelHelpItem(
+                queryHelpItems,
                 "Data Sources",
-                0,
-                SafeHtmlUtil.from("A list of data sources that can be queried by specifying them in " +
-                        "the 'from' clause."));
-        structureHeading = new TopLevelHeadingItem(
+                DATA_SOURCES_HELP_TEXT,
+                false);
+        structureHeading = createTopLevelHelpItem(
+                queryHelpItems,
                 "Structure",
-                0,
-                SafeHtmlUtil.from("A list of the keywords available in the Stroom Query Language."));
-        fieldsHeading = new TopLevelHeadingItem(
+                STRUCTURE_HELP_TEXT,
+                false);
+        fieldsHeading = createTopLevelHelpItem(
+                queryHelpItems,
                 "Fields",
-                0,
-                SafeHtmlUtil.from("A list of the fields available to 'select' from the specified " +
-                        "data source. The fields will only become available one the data source has been " +
-                        "specified using the 'from' keyword."));
-        final QueryHelpItem functionsHeading = new TopLevelHeadingItem(
+                FIELDS_HELP_TEXT,
+                false);
+        final QueryHelpItem functionsHeading = createTopLevelHelpItem(
+                queryHelpItems,
                 "Functions",
-                0,
-                SafeHtmlUtil.from("A list of functions available to use the Stroom Query Language."));
-        queryHelpItems.add(dataSourceHeading);
-        queryHelpItems.add(fieldsHeading);
-        queryHelpItems.add(structureHeading);
-        queryHelpItems.add(functionsHeading);
+                FUNCTIONS_HELP_TEXT,
+                false);
 
         buildStructureMenuItems();
+        buildDataSourcesMenuItems(views, dataSourceHeading);
+        buildFunctionsMenuItems(functionSignatures, functionsHeading);
 
-        // Add views.
-        views.fetchViews(viewDocRefs -> {
-            viewDocRefs.stream()
-                    .sorted()
-                    .forEach(viewDocRef -> {
-                        final String name = viewDocRef.getName();
-                        final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
-                        appendKeyValueTable(htmlBuilder,
-                                Arrays.asList(
-                                        new SimpleEntry<>("Name:", name),
-                                        new SimpleEntry<>("Type:", viewDocRef.getType()),
-                                        new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
-
-                        dataSourceHeading.addOrGetChild(new DataSourceHelpItem(
-                                name, htmlBuilder.toSafeHtml(), null));
-                    });
-            viewDocRefs.forEach(viewName -> {
-                // Add function.
-            });
+        final Column<QueryHelpItem, QueryHelpItem> expanderColumn =
+                new Column<QueryHelpItem, QueryHelpItem>(new QueryHelpItemCell(openItems)) {
+                    @Override
+                    public QueryHelpItem getValue(final QueryHelpItem object) {
+                        return object;
+                    }
+                };
+        expanderColumn.setFieldUpdater((index, row, value) -> {
+            toggleOpen(row);
             refresh();
         });
+        elementChooser.addColumn(expanderColumn);
+        elementChooser.setSelectionModel(elementSelectionModel, buildSelectionEventManager());
+        getView().setElementChooser(elementChooser);
 
+        // Markdown styling has the light/dark theme baked in so have to rebuild it on theme change
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
+            // Rebuild the structure menu items as they contain markdown
+            buildStructureMenuItems(() -> {
+                elementSelectionModel.clear();
+                getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
+            });
+        }));
+    }
+
+    private void buildFunctionsMenuItems(final FunctionSignatures functionSignatures,
+                                         final QueryHelpItem functionsHeading) {
         // Add functions (ignoring the short form ones like + - * / as the help text can't cope with them
         functionSignatures.fetchHelpUrl(helpUrl ->
                 functionSignatures.fetchFunctions(functions -> {
+                    keyedAceCompletionProvider.clear(FUNCTIONS_COMPLETION_KEY);
                     functions.stream()
                             .filter(FunctionSignatureUtil::isBracketedForm)
                             .forEach(functionSignature -> {
@@ -180,6 +214,14 @@ public class QueryHelpPresenter
                                     parent = parent.addOrGetChild(overloadedFuncNameHeading);
                                 }
 
+                                // Create and register the completion snippet for this function
+                                final AceCompletion aceCompletion =
+                                        FunctionSignatureUtil.convertFunctionDefinitionToCompletion(
+                                                functionSignature, helpUrl, FUNCTIONS_COMPLETION_SCORE);
+                                keyedAceCompletionProvider.addCompletion(
+                                        FUNCTIONS_COMPLETION_KEY,
+                                        aceCompletion);
+
                                 // Add function.
                                 parent.addOrGetChild(new FunctionItem(
                                         title,
@@ -189,31 +231,67 @@ public class QueryHelpPresenter
                             });
                     refresh();
                 }));
+    }
 
-        final Column<QueryHelpItem, QueryHelpItem> expanderColumn =
-                new Column<QueryHelpItem, QueryHelpItem>(new QueryHelpItemCell(openItems)) {
-                    @Override
-                    public QueryHelpItem getValue(final QueryHelpItem object) {
-                        return object;
-                    }
-                };
-        expanderColumn.setFieldUpdater((index, row, value) -> {
-            toggleOpen(row);
+    private void buildDataSourcesMenuItems(final Views views, final QueryHelpItem dataSourceHeading) {
+        // Add views.
+        views.fetchViews(viewDocRefs -> {
+            viewDocRefs.stream()
+                    .sorted()
+                    .forEach(viewDocRef -> {
+                        keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
+                        final String name = viewDocRef.getName();
+                        final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                        appendKeyValueTable(htmlBuilder,
+                                Arrays.asList(
+                                        new SimpleEntry<>("Name:", name),
+                                        new SimpleEntry<>("Type:", viewDocRef.getType()),
+                                        new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
+
+                        final DataSourceHelpItem dataSourceHelpItem = new DataSourceHelpItem(name,
+                                htmlBuilder.toSafeHtml(),
+                                null);
+
+                        keyedAceCompletionProvider.addCompletion(
+                                DATA_SOURCES_COMPLETION_KEY,
+                                new AceCompletionValue(
+                                        dataSourceHelpItem.title,
+                                        dataSourceHelpItem.getInsertText(),
+                                        DATA_SOURCES_META,
+                                        dataSourceHelpItem.getDetail().asString(),
+                                        DATA_SOURCES_COMPLETION_SCORE));
+
+                        dataSourceHeading.addOrGetChild(dataSourceHeading);
+                    });
+            viewDocRefs.forEach(viewName -> {
+                // Add function.
+            });
             refresh();
         });
-        elementChooser.addColumn(expanderColumn);
+    }
 
-        elementChooser.setSelectionModel(elementSelectionModel, buildSelectionEventManager());
-        getView().setElementChooser(elementChooser);
+    public AceCompletionProvider getKeyedAceCompletionProvider() {
+        return keyedAceCompletionProvider;
+    }
 
-        // Markdown styling has the light/dark theme baked in so have to rebuild it on theme change
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
-            // Rebuild the structure menu items as they contain markdown
-            buildStructureMenuItems(() -> {
-                elementSelectionModel.clear();
-                getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
-            });
-        }));
+    private TopLevelHeadingItem createTopLevelHelpItem(final List<QueryHelpItem> queryHelpItems,
+                                                       final String title,
+                                                       final String helpText,
+                                                       final boolean isMarkdown) {
+        final SafeHtml helpHtml;
+        if (GwtNullSafe.isBlankString(helpText)) {
+            helpHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else if (isMarkdown) {
+            helpHtml = markdownConverter.convertMarkdownToHtml(helpText);
+        } else {
+            helpHtml = SafeHtmlUtil.from(helpText);
+        }
+        final TopLevelHeadingItem topLevelHeadingItem = new TopLevelHeadingItem(
+                title,
+                0,
+                helpHtml);
+        queryHelpItems.add(topLevelHeadingItem);
+        return topLevelHeadingItem;
     }
 
     private void buildStructureMenuItems() {
@@ -352,6 +430,7 @@ public class QueryHelpPresenter
         registerHandler(indexLoader.addChangeDataHandler(e -> {
             functionSignatures.fetchHelpUrl(helpUrl -> {
                 fieldsHeading.clear();
+                keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
                 final DataSourceFieldsMap dataSourceFieldsMap = indexLoader.getDataSourceFieldsMap();
 
                 GwtNullSafe.map(dataSourceFieldsMap)
@@ -377,8 +456,21 @@ public class QueryHelpPresenter
                                             new SimpleEntry<>("Is queryable:", asDisplayValue(field.queryable())),
                                             new SimpleEntry<>("Is numeric:", asDisplayValue(field.isNumeric()))));
 
-                            fieldsHeading.addOrGetChild(new FieldHelpItem(
-                                    fieldName, htmlBuilder.toSafeHtml(), helpUrl));
+                            final FieldHelpItem fieldHelpItem = new FieldHelpItem(
+                                    fieldName,
+                                    htmlBuilder.toSafeHtml(),
+                                    helpUrl);
+
+                            keyedAceCompletionProvider.addCompletion(
+                                    FIELDS_COMPLETION_KEY,
+                                    new AceCompletionValue(
+                                            fieldName,
+                                            fieldHelpItem.getInsertText(),
+                                            FIELDS_META,
+                                            fieldHelpItem.getDetail().asString(),
+                                            FIELDS_COMPLETION_SCORE));
+
+                            fieldsHeading.addOrGetChild(fieldHelpItem);
                         });
                 refresh();
             });
@@ -539,7 +631,10 @@ public class QueryHelpPresenter
 
         @Override
         public String getInsertText() {
-            return "from \"" + title + "\"";
+            return GwtNullSafe.get(title, title2 ->
+                    title2.contains(" ")
+                            ? "from \"" + title2 + "\""
+                            : "from " + title2);
         }
 
         @Override
@@ -610,7 +705,10 @@ public class QueryHelpPresenter
 
         @Override
         public String getInsertText() {
-            return "\"" + title + "\"";
+            return GwtNullSafe.get(title, title2 ->
+                    title2.contains(" ")
+                            ? "\"" + title2 + "\""
+                            : title2);
         }
 
         @Override

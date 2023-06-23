@@ -32,6 +32,7 @@ import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
 import stroom.view.client.presenter.IndexLoader;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -43,7 +44,6 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
@@ -51,7 +51,7 @@ public class QueryEditPresenter
 
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
-    EditorPresenter codePresenter;
+    private final EditorPresenter editorPresenter;
     private final QueryResultTablePresenter tablePresenter;
     private boolean dirty;
     private boolean reading;
@@ -63,7 +63,7 @@ public class QueryEditPresenter
                               final QueryEditView view,
                               final QueryHelpPresenter queryHelpPresenter,
                               final QueryToolbarPresenter queryToolbarPresenter,
-                              final Provider<EditorPresenter> editorPresenterProvider,
+                              final EditorPresenter editorPresenter,
                               final QueryResultTablePresenter tablePresenter,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,
@@ -83,11 +83,18 @@ public class QueryEditPresenter
         queryModel.addSearchErrorListener(queryToolbarPresenter);
         queryModel.addSearchStateListener(queryToolbarPresenter);
 
-        codePresenter = editorPresenterProvider.get();
-        codePresenter.setMode(AceEditorMode.STROOM_QUERY);
+        this.editorPresenter = editorPresenter;
+        this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
+
+        // Need to do this via addAttachHandler so the editor is fully loaded
+        // else it moans about the id not being a thing on the AceEditor
+        this.editorPresenter.getWidget().addAttachHandler(event -> {
+            GWT.log("Registering keyedAceCompletionProvider");
+            this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider());
+        });
 
         view.setQueryHelp(queryHelpPresenter.getView());
-        view.setQueryEditor(codePresenter.getView());
+        view.setQueryEditor(this.editorPresenter.getView());
         view.setTable(tablePresenter.getView());
     }
 
@@ -99,22 +106,22 @@ public class QueryEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(codePresenter.addValueChangeHandler(event -> {
-            queryHelpPresenter.updateQuery(codePresenter.getText());
+        registerHandler(editorPresenter.addValueChangeHandler(event -> {
+            queryHelpPresenter.updateQuery(editorPresenter.getText());
             setDirty(true);
         }));
-        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
         registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
         registerHandler(queryHelpPresenter.addInsertHandler(insertEditorTextEvent -> {
             if (InsertType.SNIPPET.equals(insertEditorTextEvent.getInsertType())) {
-                codePresenter.insertSnippet(insertEditorTextEvent.getText());
-                codePresenter.focus();
+                editorPresenter.insertSnippet(insertEditorTextEvent.getText());
+                editorPresenter.focus();
             } else {
-                codePresenter.insertTextAtCursor(insertEditorTextEvent.getText());
-                codePresenter.focus();
+                editorPresenter.insertTextAtCursor(insertEditorTextEvent.getText());
+                editorPresenter.focus();
             }
         }));
 
@@ -164,7 +171,7 @@ public class QueryEditPresenter
         // Start search.
         queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
         queryModel.startNewSearch(
-                codePresenter.getText(),
+                editorPresenter.getText(),
                 null, //getDashboardContext().getCombinedParams(),
                 queryToolbarPresenter.getTimeRange(),
                 incremental,
@@ -179,21 +186,21 @@ public class QueryEditPresenter
         queryModel.init(docRef.getUuid(), "query");
         if (query != null) {
             reading = true;
-            codePresenter.setText(query);
+            editorPresenter.setText(query);
             queryHelpPresenter.setQuery(query);
             reading = false;
         }
         queryToolbarPresenter.setEnabled(true);
         queryToolbarPresenter.onSearching(false);
 
-        codePresenter.setReadOnly(readOnly);
-        codePresenter.getFormatAction().setAvailable(!readOnly);
+        editorPresenter.setReadOnly(readOnly);
+        editorPresenter.getFormatAction().setAvailable(!readOnly);
 
         dirty = false;
     }
 
     public String getQuery() {
-        return codePresenter.getText();
+        return editorPresenter.getText();
     }
 
     @Override

@@ -3,6 +3,7 @@ package stroom.query.client.presenter;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
 import stroom.dashboard.shared.FunctionSignature.Type;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.InfoMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
@@ -207,9 +208,16 @@ public class FunctionSignatureUtil {
         }
     }
 
-    private static AceCompletion convertFunctionDefinitionToCompletion(
+    public static AceCompletion convertFunctionDefinitionToCompletion(
             final FunctionSignature signature,
             final String helpUrlBase) {
+        return convertFunctionDefinitionToCompletion(signature, helpUrlBase, DEFAULT_COMPLETION_SCORE);
+    }
+
+    public static AceCompletion convertFunctionDefinitionToCompletion(
+            final FunctionSignature signature,
+            final String helpUrlBase,
+            final int score) {
 
         final String name = buildSignatureStr(signature);
 
@@ -220,7 +228,7 @@ public class FunctionSignatureUtil {
         final String functionTypeStr = signature.getArgs().isEmpty()
                 ? "Value"
                 : "Function";
-        final String meta = signature.getPrimaryCategory() + " " + functionTypeStr;
+        final String meta = "Fn " + signature.getPrimaryCategory() + " " + functionTypeStr;
         final String snippetText = buildSnippetText(signature);
 
 //                    GWT.log("Adding snippet " + name + " | " + meta + " | " + snippetText);
@@ -228,7 +236,7 @@ public class FunctionSignatureUtil {
         return new AceCompletionSnippet(
                 name,
                 snippetText,
-                DEFAULT_COMPLETION_SCORE,
+                GwtNullSafe.requireNonNullElse(score, DEFAULT_COMPLETION_SCORE),
                 meta,
                 html);
     }
