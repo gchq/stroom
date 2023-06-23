@@ -438,7 +438,10 @@ public class QueryHelpPresenter
     @Override
     public void onInsert() {
         if (lastSelection != null) {
-            InsertQueryElementEvent.fire(this, lastSelection.getInsertText());
+            InsertEditorTextEvent.fire(
+                    this,
+                    lastSelection.getInsertText(),
+                    lastSelection.getInsertType());
         }
     }
 
@@ -464,8 +467,8 @@ public class QueryHelpPresenter
         }
     }
 
-    public HandlerRegistration addInsertHandler(InsertQueryElementEvent.Handler handler) {
-        return addHandlerToSource(InsertQueryElementEvent.getType(), handler);
+    public HandlerRegistration addInsertHandler(InsertEditorTextEvent.Handler handler) {
+        return addHandlerToSource(InsertEditorTextEvent.getType(), handler);
     }
 
 

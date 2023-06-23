@@ -512,7 +512,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void focus() {
         if (editor.isAttached()) {
-            editor.focus();
+            Scheduler.get().scheduleDeferred(editor::focus);
         }
     }
 

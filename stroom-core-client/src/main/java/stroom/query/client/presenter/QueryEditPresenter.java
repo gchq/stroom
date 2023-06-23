@@ -29,6 +29,7 @@ import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
+import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
 import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -107,7 +108,15 @@ public class QueryEditPresenter
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
-        registerHandler(queryHelpPresenter.addInsertHandler(e -> codePresenter.insertTextAtCursor(e.getElement())));
+        registerHandler(queryHelpPresenter.addInsertHandler(insertEditorTextEvent -> {
+            if (InsertType.SNIPPET.equals(insertEditorTextEvent.getInsertType())) {
+                codePresenter.insertSnippet(insertEditorTextEvent.getText());
+                codePresenter.focus();
+            } else {
+                codePresenter.insertTextAtCursor(insertEditorTextEvent.getText());
+                codePresenter.focus();
+            }
+        }));
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
