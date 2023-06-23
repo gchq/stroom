@@ -3,6 +3,8 @@ package stroom.entity.client.presenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -39,15 +41,41 @@ public class MarkdownConverter {
     }-*/;
 
     /**
-     * Converts the supplied markdown into html with appropriate syntax highlighting.
-     * <b>NOTE:</b> if the markdown has come from user content then it cannot be trusted, so
+     * Converts the supplied markdown into html with appropriate syntax highlighting
+     * <p><b>NOTE:</b> if the markdown has come from user content then it cannot be trusted, so
      * you should contain the resulting html in a sandboxed iframe or add other layers of protection
-     * from scripting in the markdown.
+     * from scripting in the markdown.</p>
      */
     public SafeHtml convertMarkdownToHtml(final String rawMarkdown) {
-        return GwtNullSafe.isBlankString(rawMarkdown)
-                ? SafeHtmlUtils.EMPTY_SAFE_HTML
-                : SafeHtmlUtils.fromTrustedString(nativeConvertMarkdownToHtml(rawMarkdown));
+        if (GwtNullSafe.isBlankString(rawMarkdown)) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else {
+            final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+            appendMarkdownInDiv(htmlBuilder, rawMarkdown);
+            return htmlBuilder.toSafeHtml();
+        }
+    }
+
+    /**
+     * Converts the supplied markdown into html with appropriate syntax highlighting and
+     * appends it to the htmlBuilder as a div with the appropriate classes for markdown rendering.
+     * <p><b>NOTE:</b> if the markdown has come from user content then it cannot be trusted, so
+     * you should contain the resulting html in a sandboxed iframe or add other layers of protection
+     * from scripting in the markdown.</p>
+     */
+    public void appendMarkdownInDiv(final HtmlBuilder htmlBuilder, final String rawMarkdown) {
+        if (htmlBuilder != null && !GwtNullSafe.isBlankString(rawMarkdown)) {
+            final String markdownHtml = nativeConvertMarkdownToHtml(rawMarkdown);
+            final SafeHtml markdownSafeHtml = SafeHtmlUtils.fromTrustedString(markdownHtml);
+            final String cssClasses = getMarkdownContainerClasses();
+
+                htmlBuilder.div(builder -> builder.append(markdownSafeHtml),
+                    Attribute.className(cssClasses));
+        }
+    }
+
+    public ThemeType geCurrentThemeType() {
+        return userPreferencesManager.geCurrentThemeType();
     }
 
     private native String nativeConvertMarkdownToHtml(final String rawMarkdown) /*-{
@@ -74,7 +102,7 @@ public class MarkdownConverter {
      * @return The space separated list of css classes to set on the container div that holds
      * the markdown html.
      */
-    public String getMarkdownContainerClasses() {
+    private String getMarkdownContainerClasses() {
         final String prismThemeClassName = getPrismThemeClassName();
         return "max info-page markdown-container markdown " + prismThemeClassName;
     }

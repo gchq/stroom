@@ -63,8 +63,6 @@
 
 .markdown hr {
   border-top: 1px solid var(--text-color);
-  /* Bit of a gap at either end to make it look more like a section seprator */
-  max-width: 98%;
 }
 
 .markdown table th {
@@ -154,10 +152,10 @@ hide the standard control and replace it with something more fancy that we can c
 .markdown h1,
 .markdown h2,
 .markdown h3 {
-  /* Sensible max line length for text */
+  /* Sensible max line length for normal text (Note fenced blocks are not wrapped) */
   max-width: 60em;
   white-space: normal;
-  line-height: 1.4em;
+  line-height: 1.5em;
 }
 
 .markdown blockquote {
