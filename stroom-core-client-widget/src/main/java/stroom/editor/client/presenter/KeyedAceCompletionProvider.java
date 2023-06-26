@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class KeyedAceCompletionProvider implements AceCompletionProvider {
 
@@ -29,7 +30,10 @@ public class KeyedAceCompletionProvider implements AceCompletionProvider {
                 .flatMap(List::stream)
                 .toArray(AceCompletion[]::new);
 
-//        GWT.log("getProposals, count: " + completionsArr.length);
+        GWT.log("getProposals, counts: " + completionsMap.entrySet()
+                .stream()
+                        .map(entry -> entry.getKey() + ":" + entry.getValue().size())
+                        .collect(Collectors.joining(", ")));
 
         callback.invokeWithCompletions(completionsArr);
     }

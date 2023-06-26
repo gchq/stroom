@@ -20,12 +20,13 @@ import javax.inject.Singleton;
 public class Views implements HasHandlers {
 
     private static final ViewResource VIEW_RESOURCE = GWT.create(ViewResource.class);
+    private static final long VIEWS_TIME_TO_LIVE_MS = 2_000;
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
 
     private List<DocRef> views;
-
+    private long nextUpdateTimeEpochMs = 0;
 
     @Inject
     Views(final EventBus eventBus,
@@ -35,7 +36,8 @@ public class Views implements HasHandlers {
     }
 
     public void fetchViews(final Consumer<List<DocRef>> consumer) {
-        if (views != null) {
+        // Need to allow for available data sources changing, so use a TTL
+        if (views != null && System.currentTimeMillis() < nextUpdateTimeEpochMs) {
             consumer.accept(views);
         } else {
             final Rest<List<DocRef>> rest = restFactory.create();
@@ -43,6 +45,7 @@ public class Views implements HasHandlers {
                     .onSuccess(result -> {
                         views = result;
                         consumer.accept(result);
+                        nextUpdateTimeEpochMs = System.currentTimeMillis() + VIEWS_TIME_TO_LIVE_MS;
                     })
                     .onFailure(throwable -> AlertEvent.fireError(
                             this,

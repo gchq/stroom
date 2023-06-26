@@ -92,8 +92,9 @@ public enum TokenType {
 //    public static Set<TokenType> LOGIC = Set.of(AND, OR, NOT);
 
     public static boolean isString(AbstractToken token) {
-        return TokenType.STRING.equals(token.getTokenType()) ||
+        return token != null
+                && (TokenType.STRING.equals(token.getTokenType()) ||
                 TokenType.SINGLE_QUOTED_STRING.equals(token.getTokenType()) ||
-                TokenType.DOUBLE_QUOTED_STRING.equals(token.getTokenType());
+                TokenType.DOUBLE_QUOTED_STRING.equals(token.getTokenType()));
     }
 }

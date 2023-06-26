@@ -1,8 +1,10 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.StructureElement;
+import stroom.util.NullSafe;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,7 +28,8 @@ class StructureElementServiceImpl implements StructureElementService {
                         ```text
                         from "my source"
                         ```
-                        """);
+                        """,
+                "from \"${1:view}\"$0");
         add("where",
                 """
                         Use where to construct query criteria, e.g.
@@ -45,7 +48,8 @@ class StructureElementServiceImpl implements StructureElementService {
                         where user = "bob"
                         and (feed = "my feed" or feed = "other feed")
                         ```
-                        """);
+                        """,
+                "where ${1:field} ${2:=} ${3:value}$0");
         add("filter",
                 """
                         Use filter to filter values that have not been indexed during search retrieval.
@@ -56,7 +60,8 @@ class StructureElementServiceImpl implements StructureElementService {
                                             
                         Add boolean logic with `and`, `or` and `not` to build complex criteria as supported by the `where` clause.
                         Use brackets to group logical sub expressions as supported by the `where` clause.
-                        """);
+                        """,
+                "filter ${1:field} ${:2=} ${3:value}$0");
         add("eval",
                 """
                         Use eval to apply a function and get a result, e.g.
@@ -94,7 +99,8 @@ class StructureElementServiceImpl implements StructureElementService {
                                             
                         Add boolean logic with `and`, `or` and `not` to build complex criteria, e.g. `where feed = "my feed" or feed = "other feed"`.
                         Use brackets to group logical sub expressions, e.g. `where user = "bob" and (feed = "my feed" or feed = "other feed")`.
-                        """);
+                        """,
+                "eval ${1:variable_name} = ${2:value}$0");
         add("group by",
                 """
                         Use to group by columns, e.g.
@@ -112,7 +118,8 @@ class StructureElementServiceImpl implements StructureElementService {
                         group by feed
                         group by name
                         ```
-                        """);
+                        """,
+                "group by ${1:field(s)}$0");
         add("sort by",
                 """
                         Use to sort by columns, e.g.
@@ -133,7 +140,8 @@ class StructureElementServiceImpl implements StructureElementService {
                         ```text
                         sort by feed desc
                         ```
-                        """);
+                        """,
+                "sort by ${1:field(s)}$0");
         add("select",
                 """
                         Select the columns to display in the table output, e.g.
@@ -146,14 +154,16 @@ class StructureElementServiceImpl implements StructureElementService {
                         select feed as 'my feed column',
                           name as 'my name column'
                         ```
-                        """);
+                        """,
+                "select ${1:field(s)}$0");
         add("limit",
                 """
                         Limit the number of results, e.g.
                         ```text
                         limit 10
                         ```
-                        """);
+                        """,
+                "limit ${1:count}$0");
         add("window",
                 """
                         Create windowed data, e.g.
@@ -166,18 +176,24 @@ class StructureElementServiceImpl implements StructureElementService {
                         window EventTime by 1y advance 1m
                         ```
                         This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
-                        """);
+                        """,
+                "window ${1:field} by ${2:period}$0");
         add("having",
                 """
                         Apply a post aggregate filter to data, e.g.
                         ```text
                         having count > 3
                         ```
-                        """);
+                        """,
+                "having ${1:field} ${2:=} ${3:value}$0");
     }
 
     private void add(final String title, final String detail) {
-        list.add(new StructureElement(title, detail));
+        list.add(new StructureElement(title, detail, Collections.emptyList()));
+    }
+
+    private void add(final String title, final String detail, final String... snippets) {
+        list.add(new StructureElement(title, detail, NullSafe.asList(snippets)));
     }
 
     @Override

@@ -182,27 +182,7 @@ public class MarkdownEditPresenter
     }
 
     private void updateMarkdownOnIFramePresenter() {
-//        final SafeHtml markdownAsHtml = markdownConverter.convertMarkdownToHtml(codePresenter.getText());
-//        final String currentPreferenceClasses = userPreferencesManager.getCurrentPreferenceClasses();
-//
-//        final String iFrameHtmlContent = new SafeHtmlBuilder()
-//                .appendHtmlConstant("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-//                .appendHtmlConstant("<!DOCTYPE html>")
-//                .appendHtmlConstant("<html class=\"")
-//                .append(SafeHtmlUtil.from(currentPreferenceClasses))
-//                .appendHtmlConstant("\">")
-//                .appendHtmlConstant("<head>")
-//                .appendHtmlConstant("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">")
-//                .appendHtmlConstant("<link rel=\"stylesheet\" href=\"css/app.css\" type=\"text/css\" />")
-//                .appendHtmlConstant("</head>")
-//                .appendHtmlConstant("<body>")
-//                .append(markdownAsHtml)
-//                .appendHtmlConstant("</body>")
-//                .appendHtmlConstant("</html>")
-//                .toSafeHtml()
-//                .asString();
         final SafeHtml iFrameHtmlContent = markdownConverter.convertMarkdownToHtmlInFrame(codePresenter.getText());
-
         iFramePresenter.setSrcDoc(iFrameHtmlContent.asString());
     }
 

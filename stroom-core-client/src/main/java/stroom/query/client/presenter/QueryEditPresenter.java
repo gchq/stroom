@@ -119,7 +119,7 @@ public class QueryEditPresenter
             if (InsertType.SNIPPET.equals(insertEditorTextEvent.getInsertType())) {
                 editorPresenter.insertSnippet(insertEditorTextEvent.getText());
                 editorPresenter.focus();
-            } else {
+            } else if (insertEditorTextEvent.getInsertType().isInsertable()) {
                 editorPresenter.insertTextAtCursor(insertEditorTextEvent.getText());
                 editorPresenter.focus();
             }
@@ -211,6 +211,10 @@ public class QueryEditPresenter
     public void setSourceType(final SourceType sourceType) {
         this.queryModel.setSourceType(sourceType);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface QueryEditView extends View {
 

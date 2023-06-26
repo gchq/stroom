@@ -19,6 +19,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -67,9 +68,11 @@ public class QueryStructure implements HasHandlers {
                                     .map(structureElement -> {
                                         final SafeHtml detailHtml = buildDescriptionHtml(
                                                 structureElement.getDescription());
+
                                         return new StructureQueryHelpItem(
                                                 structureElement.getTitle(),
                                                 detailHtml,
+                                                structureElement.getSnippets(),
                                                 helpUrl);
                                     })
                                     .collect(Collectors.toList());
@@ -128,9 +131,20 @@ public class QueryStructure implements HasHandlers {
     public static class StructureQueryHelpItem extends QueryHelpItem {
 
         private final SafeHtml detail;
+        private final List<String> snippets;
 
-        public StructureQueryHelpItem(final String title, final SafeHtml detail, final String helpUrl) {
+        public StructureQueryHelpItem(final String title,
+                                      final SafeHtml detail,
+                                      final List<String> snippets,
+                                      final String helpUrl) {
             super(title, false, 1);
+            this.detail = buildDetailHtml(title, detail, helpUrl);
+            this.snippets = new ArrayList<>(snippets);
+        }
+
+        private static SafeHtml buildDetailHtml(final String title,
+                                                final SafeHtml detail,
+                                                final String helpUrl) {
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(hb1 -> {
                 hb1.bold(hb2 -> hb2.append(title));
@@ -138,7 +152,7 @@ public class QueryStructure implements HasHandlers {
                 hb1.hr();
 
                 hb1.para(hb2 -> hb2.append(detail),
-                        Attribute.className("functionSignatureInfo-description"));
+                        Attribute.className("queryHelpDetail-description"));
 
 //                    final boolean addedArgs = addArgsBlockToInfo(signature, hb1);
 //
@@ -160,9 +174,8 @@ public class QueryStructure implements HasHandlers {
                             "Help Documentation");
                     hb1.append(".");
                 }
-            }, Attribute.className("functionSignatureInfo"));
-
-            this.detail = htmlBuilder.toSafeHtml();
+            }, Attribute.className("queryHelpDetail"));
+            return htmlBuilder.toSafeHtml();
         }
 
         @Override
@@ -172,15 +185,24 @@ public class QueryStructure implements HasHandlers {
 
         @Override
         public InsertType getInsertType() {
-            // TODO: 22/06/2023 Might want to make these snippets
-            return GwtNullSafe.isBlankString(title)
-                    ? InsertType.BLANK
-                    : InsertType.PLAIN_TEXT;
+            return GwtNullSafe.hasItems(snippets)
+                    ? InsertType.SNIPPET
+                    : InsertType.BLANK;
         }
 
         @Override
         String getClassName() {
             return super.getClassName() + " queryHelpItem-leaf";
+        }
+
+        @Override
+        public String getInsertText() {
+            return GwtNullSafe.list(snippets)
+                    .get(0);
+        }
+
+        public List<String> getSnippets() {
+            return snippets;
         }
     }
 }

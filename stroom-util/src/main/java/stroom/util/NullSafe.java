@@ -318,6 +318,18 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed array of items or varargs items as a non-null list.
+     * Doesn't support null items in the list.
+     */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    public static <T> List<T> asList(final T... items) {
+        return items != null
+                ? List.of(items)
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed set if it is non-null else returns an empty set.
      */
     public static <S extends Set<T>, T> Set<T> set(final S set) {

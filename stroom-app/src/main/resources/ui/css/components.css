@@ -1689,34 +1689,34 @@ button.main-menu svg {
     font-weight: 500;
 }
 
-.functionSignatureInfo {
+.queryHelpDetail {
     max-width: 600px;
 }
 
-.functionSignatureInfo-description {
+.queryHelpDetail-description {
     white-space: pre-wrap !important;
 }
 
-.functionSignatureInfo-description td {
+.queryHelpDetail-description td {
     padding: 5px;
 }
 
-.functionSignatureTable {
+.queryHelpDetail-table {
     user-select: text;
 }
 
-.functionSignatureTable tr {
+.queryHelpDetail-table tr {
     height: 10px;
 }
 
-.functionSignatureTable th {
+.queryHelpDetail-table th {
     padding-right: var(--row__gap--horizontal);
     padding-top: var(--row__gap--vertical);
     padding-bottom: var(--row__gap--vertical);
     font-weight: bold;
 }
 
-.functionSignatureTable td {
+.queryHelpDetail-table td {
     padding-right: var(--row__gap--horizontal);
     padding-top: var(--row__gap--vertical);
     padding-bottom: var(--row__gap--vertical);

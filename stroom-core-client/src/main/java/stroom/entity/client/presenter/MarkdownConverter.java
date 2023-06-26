@@ -30,18 +30,6 @@ public class MarkdownConverter {
         this.showdownConverter = initConverter();
     }
 
-    private native JavaScriptObject initConverter() /*-{
-        // See https://showdownjs.com/docs/available-options/
-        var converter = new $wnd.showdown.Converter({
-            openLinksInNewWindow: true,
-            strikethrough: true,
-            tables: true,
-            tasklists: true,
-        });
-
-        return converter;
-    }-*/;
-
     /**
      * Converts the supplied markdown into html with appropriate syntax highlighting.
      * The markdown is surrounded by a container div.
@@ -112,6 +100,18 @@ public class MarkdownConverter {
     public ThemeType geCurrentThemeType() {
         return userPreferencesManager.geCurrentThemeType();
     }
+
+    private native JavaScriptObject initConverter() /*-{
+        // See https://showdownjs.com/docs/available-options/
+        var converter = new $wnd.showdown.Converter({
+            openLinksInNewWindow: true,
+            strikethrough: true,
+            tables: true,
+            tasklists: true,
+        });
+
+        return converter;
+    }-*/;
 
     private native String nativeConvertMarkdownToHtml(final String rawMarkdown) /*-{
         var converter = this.@stroom.entity.client.presenter.MarkdownConverter::showdownConverter;

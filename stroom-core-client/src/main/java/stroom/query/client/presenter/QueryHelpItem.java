@@ -204,7 +204,6 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
         private final FunctionSignature signature;
         private final String helpUrl;
         private final String snippetText;
-//        private final String title;
 
         public FunctionItem(final String title,
                             final FunctionSignature signature,
@@ -214,7 +213,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
             this.signature = signature;
             this.helpUrl = helpUrl;
             this.snippetText = FunctionSignatureUtil.buildSnippetText(signature);
-//            this.title = title;
+//            GWT.log("snippet: " + snippetText);
         }
 
         @Override

@@ -841,6 +841,21 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testAsList() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::asList)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase(new String[0], Collections.emptyList())
+                .addCase(new String[]{ "foo"}, List.of("foo"))
+                .addCase(new String[]{ "foo", "bar" }, List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {

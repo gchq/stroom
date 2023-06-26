@@ -181,7 +181,7 @@ public class FunctionSignatureUtil {
 
                 if (signature.getDescription() != null && !signature.getDescription().isEmpty()) {
                     hb1.para(hb2 -> hb2.append(signature.getDescription()),
-                            Attribute.className("functionSignatureInfo-description"));
+                            Attribute.className("queryHelpDetail-description"));
                 }
 
                 final boolean addedArgs = addArgsBlockToInfo(signature, hb1);
@@ -200,7 +200,7 @@ public class FunctionSignatureUtil {
                 if (helpUrlBase != null) {
                     addHelpLinkToInfo(signature, helpUrlBase, hb1);
                 }
-            }, Attribute.className("functionSignatureInfo"));
+            }, Attribute.className("queryHelpDetail"));
 
             return htmlBuilder.toSafeHtml();
         } else {
@@ -526,7 +526,7 @@ public class FunctionSignatureUtil {
             addedContent.set(true);
         }
 
-        htmlBuilder.div(tb::write, Attribute.className("functionSignatureTable"));
+        htmlBuilder.div(tb::write, Attribute.className("queryHelpDetail-table"));
         return addedContent.get();
     }
 
