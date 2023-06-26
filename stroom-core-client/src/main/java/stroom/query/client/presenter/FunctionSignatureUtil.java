@@ -225,10 +225,15 @@ public class FunctionSignatureUtil {
         // event so leave it out for now.
         final String html = buildInfoHtml(signature, null)
                 .asString();
-        final String functionTypeStr = signature.getArgs().isEmpty()
-                ? "Value"
-                : "Function";
-        final String meta = "Fn " + signature.getPrimaryCategory() + " " + functionTypeStr;
+
+        final String meta;
+        if ("Value".equals(signature.getPrimaryCategory())) {
+            meta = signature.getPrimaryCategory();
+        } else if (signature.getArgs().isEmpty()) {
+            meta = signature.getPrimaryCategory() + " Value";
+        } else {
+            meta = "Func (" + signature.getPrimaryCategory() + ")";
+        }
         final String snippetText = buildSnippetText(signature);
 
 //                    GWT.log("Adding snippet " + name + " | " + meta + " | " + snippetText);
@@ -288,15 +293,18 @@ public class FunctionSignatureUtil {
                 ? arg.getDefaultValue()
                 : argName;
 
-        final StringBuilder stringBuilder = new StringBuilder();
-        final boolean addQuotes = Type.STRING.equals(arg.getArgType())
-                && !snippetDefault.startsWith("${")
-                && !snippetDefault.endsWith("}");
+//        final StringBuilder stringBuilder = new StringBuilder();
+//        final boolean addQuotes = Type.STRING.equals(arg.getArgType())
+//                && !snippetDefault.startsWith("${")
+//                && !snippetDefault.endsWith("}");
 
-        if (addQuotes) {
-            stringBuilder.append("'");
-        }
-        stringBuilder
+//        if (addQuotes) {
+//            stringBuilder.append("'");
+//        }
+        // No need to quote args as when you tab through you can surround with quotes
+        // just by hitting the ' or " key. Also, more often than not, the arg value
+        // is another func call or a field.
+        final StringBuilder stringBuilder = new StringBuilder()
                 .append("${")
                 .append(position)
                 .append(":")
@@ -304,10 +312,9 @@ public class FunctionSignatureUtil {
                         .replace("$", "\\$")
                         .replace("}", "\\}"))
                 .append("}");
-
-        if (addQuotes) {
-            stringBuilder.append("'");
-        }
+//        if (addQuotes) {
+//            stringBuilder.append("'");
+//        }
 
         return stringBuilder.toString();
     }
@@ -543,7 +550,6 @@ public class FunctionSignatureUtil {
         htmlBuilder.append("For more information see the ");
         htmlBuilder.appendLink(
                 helpUrlBase +
-                        "/user-guide/dashboards/expressions/" +
                         signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
                         "#" +
                         functionNameToAnchor(signature.getName()),

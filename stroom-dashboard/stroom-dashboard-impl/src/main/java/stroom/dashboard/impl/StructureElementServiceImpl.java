@@ -49,7 +49,7 @@ class StructureElementServiceImpl implements StructureElementService {
                         and (feed = "my feed" or feed = "other feed")
                         ```
                         """,
-                "where ${1:field} ${2:=} ${3:value}$0");
+                "where ${1:field} ${2:=} ${3:value}\n$0");
         add("filter",
                 """
                         Use filter to filter values that have not been indexed during search retrieval.
@@ -61,7 +61,7 @@ class StructureElementServiceImpl implements StructureElementService {
                         Add boolean logic with `and`, `or` and `not` to build complex criteria as supported by the `where` clause.
                         Use brackets to group logical sub expressions as supported by the `where` clause.
                         """,
-                "filter ${1:field} ${:2=} ${3:value}$0");
+                "filter ${1:field} ${:2=} ${3:value}\n$0");
         add("eval",
                 """
                         Use eval to apply a function and get a result, e.g.
@@ -100,7 +100,7 @@ class StructureElementServiceImpl implements StructureElementService {
                         Add boolean logic with `and`, `or` and `not` to build complex criteria, e.g. `where feed = "my feed" or feed = "other feed"`.
                         Use brackets to group logical sub expressions, e.g. `where user = "bob" and (feed = "my feed" or feed = "other feed")`.
                         """,
-                "eval ${1:variable_name} = ${2:value}$0");
+                "eval ${1:variable_name} = ${2:value}\n$0");
         add("group by",
                 """
                         Use to group by columns, e.g.
@@ -163,7 +163,7 @@ class StructureElementServiceImpl implements StructureElementService {
                         limit 10
                         ```
                         """,
-                "limit ${1:count}$0");
+                "limit ${1:count}\n$0");
         add("window",
                 """
                         Create windowed data, e.g.
@@ -177,7 +177,7 @@ class StructureElementServiceImpl implements StructureElementService {
                         ```
                         This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
                         """,
-                "window ${1:field} by ${2:period}$0");
+                "window ${1:field} by ${2:period} advance ${3:adv_value}\n$0");
         add("having",
                 """
                         Apply a post aggregate filter to data, e.g.
@@ -185,7 +185,7 @@ class StructureElementServiceImpl implements StructureElementService {
                         having count > 3
                         ```
                         """,
-                "having ${1:field} ${2:=} ${3:value}$0");
+                "having ${1:field} ${2:=} ${3:value}\n$0");
     }
 
     private void add(final String title, final String detail) {
