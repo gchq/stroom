@@ -23,6 +23,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -49,6 +50,7 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
                     new IconMenuItem.Builder()
                             .priority(7)
                             .icon(SvgImage.DATABASE)
+                            .iconColour(IconColour.GREY)
                             .text("Database Tables")
                             .command(this::open)
                             .build());

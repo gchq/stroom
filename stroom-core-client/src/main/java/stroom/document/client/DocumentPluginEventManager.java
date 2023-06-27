@@ -78,6 +78,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -929,6 +930,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close")
                 .action(Action.ITEM_CLOSE)
                 .enabled(isTabItemSelected(selectedTab))
@@ -940,6 +942,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close Others")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
@@ -950,6 +953,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close Saved")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
@@ -960,6 +964,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close All")
                 .action(Action.ITEM_CLOSE_ALL)
                 .enabled(isTabItemSelected(selectedTab))

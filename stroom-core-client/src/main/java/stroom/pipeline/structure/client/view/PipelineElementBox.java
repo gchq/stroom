@@ -19,8 +19,6 @@ package stroom.pipeline.structure.client.view;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.svg.client.SvgImage;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
@@ -28,6 +26,7 @@ import stroom.util.shared.Severity;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
 import java.util.List;
@@ -76,8 +75,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
         background.add(label);
 
-        filterIcon = SvgPresets.FILTER_GREEN.asWidget();
-        filterIcon.addStyleName(BASE_CLASS + "-filterImage");
+        filterIcon = new SimplePanel();
+        filterIcon.getElement().setInnerHTML(SvgImage.FILTER.getSvg());
+        filterIcon.addStyleName("svgIcon " + BASE_CLASS + "-image icon-colour__green");
         background.add(filterIcon);
         updateFilterState();
 

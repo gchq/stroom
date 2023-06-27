@@ -16,6 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -25,11 +26,13 @@ public class IconMenuItem extends MenuItem {
 
     private final SvgImage enabledIcon;
     private final SvgImage disabledIcon;
+    private final IconColour iconColour;
     private final boolean highlight;
 
     protected IconMenuItem(final int priority,
                            final SvgImage enabledIcon,
                            final SvgImage disabledIcon,
+                           final IconColour iconColour,
                            final String text,
                            final Action action,
                            final boolean enabled,
@@ -38,6 +41,7 @@ public class IconMenuItem extends MenuItem {
         super(priority, text, action, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
+        this.iconColour = iconColour;
         this.highlight = highlight;
     }
 
@@ -49,6 +53,10 @@ public class IconMenuItem extends MenuItem {
         return disabledIcon;
     }
 
+    public IconColour getIconColour() {
+        return iconColour;
+    }
+
     public boolean isHighlight() {
         return highlight;
     }
@@ -58,6 +66,7 @@ public class IconMenuItem extends MenuItem {
 
         protected SvgImage enabledIcon = null;
         protected SvgImage disabledIcon = null;
+        protected IconColour iconColour;
         protected boolean highlight;
 
         public B icon(final SvgImage icon) {
@@ -67,6 +76,11 @@ public class IconMenuItem extends MenuItem {
 
         public B disabledIcon(final SvgImage icon) {
             this.disabledIcon = icon;
+            return self();
+        }
+
+        public B iconColour(final IconColour iconColour) {
+            this.iconColour = iconColour;
             return self();
         }
 
@@ -96,6 +110,7 @@ public class IconMenuItem extends MenuItem {
                     priority,
                     enabledIcon,
                     disabledIcon,
+                    iconColour,
                     text,
                     action,
                     enabled,

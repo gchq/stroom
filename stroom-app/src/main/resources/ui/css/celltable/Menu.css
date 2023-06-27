@@ -52,7 +52,7 @@
 
 .menuItem-icon {
 	display: flex;
-	color: var(--icon-colour__blue);
+	color: var(--icon-colour__grey);
 }
 
 .menuItem-icon svg {

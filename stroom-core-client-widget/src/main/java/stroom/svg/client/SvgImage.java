@@ -301,7 +301,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1664,896 c 0,139.3333 -34.3333,267.8333 -103,385.5 -68.6667,117.6" +
             "667 -161.8333,210.8333 -279.5,279.5 -117.6667,68.6667 -246.1667,103 -385.5,103 -" +
             "139.33333,0 -267.83333,-34.3333 -385.5,-103 C 392.83333,1492.3333 299.66667,1399" +
@@ -368,7 +368,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#d32f2f\"\n" +
+            "    <path style=\"fill:currentColor\"\n" +
             "          d=\"M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294" +
             "q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28" +
             "-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28" +
@@ -438,7 +438,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:currentColor\"\n" +
             "          d=\"M896 768q237 0 443-43t325-127v170q0 69-103 128t-280 93.5-385 34.5-3" +
             "85-34.5-280-93.5-103-128v-170q119 84 325 127t443 43zm0 768q237 0 443-43t325-127v" +
             "170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119 84 325 12" +
@@ -614,9 +614,9 @@ public enum SvgImage {
             "       y=\"243.71935\"\n" +
             "       transform=\"matrix(1,0,-0.00232161,0.99999731,0,0)\" />\n" +
             "    <rect\n" +
-            "       style=\"fill:#4caf50;fill-opacity:1;stroke:#4caf50;stroke-width:18.0000749" +
-            "7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacit" +
-            "y:1;paint-order:fill markers stroke\"\n" +
+            "       style=\"fill:var(--icon-colour__green);fill-opacity:1;stroke:var(--icon-co" +
+            "lour__green);stroke-width:18.00007497;stroke-linecap:round;stroke-linejoin:round" +
+            ";stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke\"\n" +
             "       id=\"rect4655-5-9\"\n" +
             "       width=\"155.95563\"\n" +
             "       height=\"108.24628\"\n" +
@@ -624,9 +624,9 @@ public enum SvgImage {
             "       y=\"71.178368\"\n" +
             "       transform=\"matrix(1,0,-0.00408154,0.99999167,0,0)\" />\n" +
             "    <rect\n" +
-            "       style=\"fill:#2196f3;fill-opacity:1;stroke:#2196f3;stroke-width:18.0000749" +
-            "7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacit" +
-            "y:1;paint-order:fill markers stroke\"\n" +
+            "       style=\"fill:var(--icon-colour__blue);fill-opacity:1;stroke:var(--icon-col" +
+            "our__blue);stroke-width:18.00007497;stroke-linecap:round;stroke-linejoin:round;s" +
+            "troke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke\"\n" +
             "       id=\"rect4655-5-9-2\"\n" +
             "       width=\"155.95563\"\n" +
             "       height=\"108.24628\"\n" +
@@ -641,7 +641,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M1703 478q40 57 18 129l-275 906q-19 64-76.5 107.5t-122.5 43.5h-923q" +
             "-77 0-148.5-53.5t-99.5-131.5q-24-67-2-127 0-4 3-27t4-37q1-8-3-21.5t-3-19.5q2-11 " +
             "8-21t16.5-23.5 16.5-23.5q23-38 45-91.5t30-91.5q3-10 .5-30t-.5-28q3-11 17-28t17-2" +
@@ -767,7 +767,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"m 938.50195,211.41007 c -5.56299,0.0388 -11.74705,1.29983 -18.55468" +
             ",3.7832 -18.1537,6.6223 -30.41561,18.62426 -36.78321,36.00781 L 781.2832,529.337" +
             "8 l -636.59961,0 c -11.58903,0 -22.47327,3.72569 -32.65234,11.17578 -10.17907,7." +
@@ -793,7 +793,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M1728 608v704q0 92-66 158t-158 66h-1216q-92 0-158-66t-66-158v-960q0" +
             "-92 66-158t158-66h320q92 0 158 66t66 158v32h672q92 0 158 66t66 158z\"/>\n" +
             "</svg>\n" +
@@ -866,7 +866,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1440,95.339844 c -9.3333,0 -17,2.999997 -23,8.999996 -6,6 -9,13.6" +
             "6667 -9,23 l 0,192 -256,0 c -45.3333,0 -88,5.5 -128,16.5 -40.00001,11 -75.50001," +
             "25 -106.50001,42 -31,17 -61,39.83333 -90,68.5 -29,28.66667 -53.66667,56.33333 -7" +
@@ -884,7 +884,7 @@ public enum SvgImage {
             " 3.1667,16.16667 9.5,22.5 6.3333,6.33333 13.8333,9.5 22.5,9.5 9.3333,0 17,-3 23," +
             "-9 l 320,-320 c 6,-6 9,-13.66667 9,-23 0,-9.33333 -3,-17 -9,-23 l -319,-319 c -8" +
             ",-6.666666 -16,-9.999996 -24,-9.999996 z\"/>\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M 32 608.88672 C 22.666667 608.88672 15 611.88672 9 617.88672 C 3.0" +
             "000001 623.88672 0 631.55342 0 640.88672 L 0 832.88672 C -2.3684758e-15 842.2200" +
             "5 3.0000001 849.88672 9 855.88672 C 14.999999 861.88672 22.666667 864.88672 32 8" +
@@ -919,7 +919,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "  <path style=\"fill:#2196f3\"\n" +
+            "  <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "        d=\"M1216 832q0-185-131.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 131." +
             "5 316.5 316.5 131.5 316.5-131.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-90-" +
             "38l-343-342q-179 124-399 124-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5-2" +
@@ -943,7 +943,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1512.2605,1230.6818 q 0,206.9151 -162.3487,320.4532 -161.2877,113" +
             ".538 -455.21327,113.538 -546.4681,0 -633.47856,-379.8749 l 196.30408,-39.2608 q " +
             "33.9553,134.7601 144.31002,198.4262 110.35472,62.6051 300.29218,62.6051 196.3040" +
@@ -982,7 +982,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M1671 566q0 40-28 68l-724 724-136 136q-28 28-68 28t-68-28l-136-136-" +
             "362-362q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 295 656-657q28-28 68-28" +
             "t68 28l136 136q28 28 28 68z\"/>\n" +
@@ -1090,7 +1090,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M896 768q237 0 443-43t325-127v170q0 69-103 128t-280 93.5-385 34.5-3" +
             "85-34.5-280-93.5-103-128v-170q119 84 325 127t443 43zm0 768q237 0 443-43t325-127v" +
             "170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119 84 325 12" +
@@ -1172,13 +1172,13 @@ public enum SvgImage {
             "1,512 128,453 128,384 V 256 Q 128,187 231,128 334,69 511,34.5 688,0 896,0 Z\"\n" +
             "            id=\"path246\" />\n" +
             "    <path\n" +
-            "            style=\"fill:#4caf50\"\n" +
+            "            style=\"fill:var(--icon-colour__green)\"\n" +
             "            d=\"m 896,1152 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
             " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1339 231,1280 128" +
             ",1221 128,1152 V 982 q 119,84 325,127 206,43 443,43 z\"\n" +
             "            id=\"path244\" />\n" +
             "    <path\n" +
-            "            style=\"fill:#2196f3\"\n" +
+            "            style=\"fill:var(--icon-colour__blue)\"\n" +
             "            d=\"m 896,1536 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
             " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1723 231,1664 128" +
             ",1605 128,1536 v -170 q 119,84 325,127 206,43 443,43 z\"\n" +
@@ -1197,25 +1197,25 @@ public enum SvgImage {
             "<!--\n" +
             "\n" +
             "    <path\n" +
-            "            style=\"fill:#2196f3\"\n" +
+            "            style=\"fill:var(--icon-colour__blue)\"\n" +
             "            d=\"m 896,0 q 208,0 385,34.5 177,34.5 280,93.5 103,59 103,128 v 128 q" +
             " 0,69 -103,128 -103,59 -280,93.5 Q 1104,640 896,640 688,640 511,605.5 334,571 23" +
             "1,512 128,453 128,384 V 256 Q 128,187 231,128 334,69 511,34.5 688,0 896,0 Z\"\n" +
             "            id=\"path246\" />\n" +
             "    <path\n" +
-            "            style=\"fill:#2196f3\"\n" +
+            "            style=\"fill:var(--icon-colour__blue)\"\n" +
             "            d=\"m 896,1152 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
             " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1339 231,1280 128" +
             ",1221 128,1152 V 982 q 119,84 325,127 206,43 443,43 z\"\n" +
             "            id=\"path244\" />\n" +
             "    <path\n" +
-            "            style=\"fill:#2196f3\"\n" +
+            "            style=\"fill:var(--icon-colour__blue)\"\n" +
             "            d=\"m 896,1536 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
             " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1723 231,1664 128" +
             ",1605 128,1536 v -170 q 119,84 325,127 206,43 443,43 z\"\n" +
             "            id=\"path242\" />\n" +
             "    <path\n" +
-            "            style=\"fill:#2196f3\"\n" +
+            "            style=\"fill:var(--icon-colour__blue)\"\n" +
             "            d=\"m 896,768 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128 " +
             "-103,59 -280,93.5 Q 1104,1024 896,1024 688,1024 511,989.5 334,955 231,896 128,83" +
             "7 128,768 V 598 q 119,84 325,127 206,43 443,43 z\"\n" +
@@ -1225,7 +1225,7 @@ public enum SvgImage {
             "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
             "-->\n" +
             "\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l" +
             "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
             "</svg>\n" +
@@ -1235,13 +1235,13 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 768,890 546,546 Q 1208,1544 1066.5,1604 925,1664 768,1664 559,166" +
             "4 382.5,1561 206,1458 103,1281.5 0,1105 0,896 0,687 103,510.5 206,334 382.5,231 " +
             "559,128 768,128 l 0,762 z\"/>\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
             "          d=\"m 955,896 773,0 q 0,157 -60,298.5 -60,141.5 -168,247.5 z\"/>\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M 1664,768 896,768 896,0 Q 1105,0 1281.5,103 1458,206 1561,382.5 16" +
             "64,559 1664,768 Z\"/>\n" +
             "</svg>\n" +
@@ -1412,7 +1412,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M1675 832q0 53-37 90l-651 652q-39 37-91 37-53 0-90-37l-651-652q-38-" +
             "36-38-90 0-53 38-91l74-75q39-37 91-37 53 0 90 37l294 294v-704q0-52 38-90t90-38h1" +
             "28q52 0 90 38t38 90v704l294-294q37-37 90-37 52 0 91 37l75 75q37 39 37 91z\"/>\n" +
@@ -1796,7 +1796,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"m 938.50195,211.41007 c -5.56299,0.0388 -11.74705,1.29983 -18.55468" +
             ",3.7832 -18.1537,6.6223 -30.41561,18.62426 -36.78321,36.00781 L 781.2832,529.337" +
             "8 l -636.59961,0 c -11.58903,0 -22.47327,3.72569 -32.65234,11.17578 -10.17907,7." +
@@ -1890,9 +1890,9 @@ public enum SvgImage {
             "       style=\"font-style:normal;font-variant:normal;font-weight:bold;font-stretc" +
             "h:normal;font-size:1021.99993896px;line-height:125%;font-family:'Noto Sans';-ink" +
             "scape-font-specification:'Noto Sans, Bold';text-align:start;letter-spacing:0px;w" +
-            "ord-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-opacity:1" +
-            ";stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-o" +
-            "pacity:1\"\n" +
+            "ord-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:var(--icon-colour__blu" +
+            "e);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejo" +
+            "in:miter;stroke-opacity:1\"\n" +
             "       id=\"path4227\"\n" +
             "       inkscape:connector-curvature=\"0\" />\n" +
             "    <path\n" +
@@ -1908,9 +1908,9 @@ public enum SvgImage {
             "       style=\"font-style:normal;font-variant:normal;font-weight:bold;font-stretc" +
             "h:normal;font-size:1021.99993896px;line-height:125%;font-family:'Noto Sans';-ink" +
             "scape-font-specification:'Noto Sans, Bold';text-align:start;letter-spacing:0px;w" +
-            "ord-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-opacity:1" +
-            ";stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-o" +
-            "pacity:1\"\n" +
+            "ord-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:var(--icon-colour__blu" +
+            "e);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejo" +
+            "in:miter;stroke-opacity:1\"\n" +
             "       id=\"path4229\"\n" +
             "       inkscape:connector-curvature=\"0\" />\n" +
             "    <path\n" +
@@ -1926,9 +1926,9 @@ public enum SvgImage {
             "       style=\"font-style:normal;font-variant:normal;font-weight:bold;font-stretc" +
             "h:normal;font-size:1021.99993896px;line-height:125%;font-family:'Noto Sans';-ink" +
             "scape-font-specification:'Noto Sans, Bold';text-align:start;letter-spacing:0px;w" +
-            "ord-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-opacity:1" +
-            ";stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-o" +
-            "pacity:1\"\n" +
+            "ord-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:var(--icon-colour__blu" +
+            "e);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejo" +
+            "in:miter;stroke-opacity:1\"\n" +
             "       id=\"path4231\"\n" +
             "       inkscape:connector-curvature=\"0\" />\n" +
             "  </g>\n" +
@@ -2493,11 +2493,11 @@ public enum SvgImage {
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
             "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
             " 1792\">\n" +
-            " <path fill=\"#2196f3\" d=\"m1617.9 701.64v610.84q0 79.825-57.266 137.09-57.266 57." +
-            "266-137.09 57.266h-1055.1q-79.825 0-137.09-57.266-57.266-57.266-57.266-137.09v-8" +
-            "32.96q0-79.825 57.266-137.09 57.266-57.266 137.09-57.266h277.65q79.825 0 137.09 " +
-            "57.266 57.266 57.266 57.266 137.09v27.765h583.07q79.825 0 137.09 57.266 57.266 5" +
-            "7.266 57.266 137.09z\"/>\n" +
+            " <path fill=\"var(--icon-colour__blue)\" d=\"m1617.9 701.64v610.84q0 79.825-57.266 " +
+            "137.09-57.266 57.266-137.09 57.266h-1055.1q-79.825 0-137.09-57.266-57.266-57.266" +
+            "-57.266-137.09v-832.96q0-79.825 57.266-137.09 57.266-57.266 137.09-57.266h277.65" +
+            "q79.825 0 137.09 57.266 57.266 57.266 57.266 137.09v27.765h583.07q79.825 0 137.0" +
+            "9 57.266 57.266 57.266 57.266 137.09z\"/>\n" +
             "</svg>\n" +
             ""),
 
@@ -2507,7 +2507,7 @@ public enum SvgImage {
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
             "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
             " 1792\">\n" +
-            " <g fill=\"#2196f3\">\n" +
+            " <g fill=\"var(--icon-colour__blue)\">\n" +
             "  <path d=\"m804.29 276.08v287.08q0 37.516-26.913 64.429t-64.429 26.913h-495.86q-" +
             "37.516 0-64.429-26.913-26.91-26.92-26.91-64.43v-391.47q0-37.516 26.913-64.429t64" +
             ".429-26.913h130.49q37.516 0 64.429 26.913t26.913 64.429v13.049h274.03q37.516 0 6" +
@@ -2521,10 +2521,10 @@ public enum SvgImage {
             "13h130.49q37.516 0 64.429 26.913t26.913 64.429v13.049h274.03q37.516 0 64.429 26." +
             "913t26.913 64.429z\"/>\n" +
             " </g>\n" +
-            " <path stroke-linejoin=\"round\" d=\"m600.75 492.64v949.1h381.89\" stroke=\"#2196f3\" " +
-            "stroke-width=\"71.125\" fill=\"none\"/>\n" +
-            " <path d=\"m597.94 807.14h539.13\" fill-rule=\"evenodd\" stroke=\"#2196f3\" stroke-wid" +
-            "th=\"71.125\"/>\n" +
+            " <path stroke-linejoin=\"round\" d=\"m600.75 492.64v949.1h381.89\" stroke=\"var(--ico" +
+            "n-colour__blue)\" stroke-width=\"71.125\" fill=\"none\"/>\n" +
+            " <path d=\"m597.94 807.14h539.13\" fill-rule=\"evenodd\" stroke=\"var(--icon-colour__" +
+            "blue)\" stroke-width=\"71.125\"/>\n" +
             "</svg>\n" +
             ""),
 
@@ -2534,7 +2534,8 @@ public enum SvgImage {
             "\"http://www.w3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"" +
             "http://creativecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" view" +
             "Box=\"0 0 1792 1792\">\n" +
-            " <g id=\"g4311\" fill=\"#2196f3\" transform=\"translate(89.176 -311.75)\">\n" +
+            " <g id=\"g4311\" fill=\"var(--icon-colour__blue)\" transform=\"translate(89.176 -311." +
+            "75)\">\n" +
             "  <path id=\"path4255\" d=\"m71.887 1784.2c-17.333 0-32.333 6.3333-45 19s-19 27.667" +
             "-19 45v128c0 17.333 6.3333 32.333 19 45s27.667 19 45 19h247.17 19.717 328.96c17." +
             "333 0 32.333-6.3333 45-19s19-27.667 19-45v-128c0-17.333-6.3333-32.333-19-45s-27." +
@@ -2679,9 +2680,9 @@ public enum SvgImage {
             "       style=\"font-style:italic;font-variant:normal;font-weight:bold;font-stretc" +
             "h:normal;font-size:1021.99700928px;line-height:125%;font-family:'Noto Sans';-ink" +
             "scape-font-specification:'Noto Sans, Bold Italic';text-align:start;letter-spacin" +
-            "g:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-op" +
-            "acity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;s" +
-            "troke-opacity:1\"\n" +
+            "g:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:var(--icon-colo" +
+            "ur__blue);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke" +
+            "-linejoin:miter;stroke-opacity:1\"\n" +
             "       id=\"path4218\"\n" +
             "       inkscape:connector-curvature=\"0\" />\n" +
             "    <g\n" +
@@ -2694,9 +2695,9 @@ public enum SvgImage {
             "         style=\"font-style:italic;font-variant:normal;font-weight:bold;font-stre" +
             "tch:normal;font-size:1021.99700928px;line-height:125%;font-family:'Noto Sans';-i" +
             "nkscape-font-specification:'Noto Sans, Bold Italic';text-align:start;letter-spac" +
-            "ing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-" +
-            "opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter" +
-            ";stroke-opacity:1\"\n" +
+            "ing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:var(--icon-co" +
+            "lour__blue);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stro" +
+            "ke-linejoin:miter;stroke-opacity:1\"\n" +
             "         d=\"m 561.38701,1031.0562 q 0,-178.49534 64.23726,-329.61086 64.76379,-1" +
             "51.64206 201.13633,-292.22688 l 137.95214,0 Q 830.44634,555.59517 765.68256,711." +
             "4495 701.4453,866.7773 701.4453,1036.848 q 0,162.1728 61.60458,312.7618 l -123.2" +
@@ -2707,9 +2708,9 @@ public enum SvgImage {
             "         style=\"font-style:italic;font-variant:normal;font-weight:bold;font-stre" +
             "tch:normal;font-size:1021.99700928px;line-height:125%;font-family:'Noto Sans';-i" +
             "nkscape-font-specification:'Noto Sans, Bold Italic';text-align:start;letter-spac" +
-            "ing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-" +
-            "opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter" +
-            ";stroke-opacity:1\"\n" +
+            "ing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:var(--icon-co" +
+            "lour__blue);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stro" +
+            "ke-linejoin:miter;stroke-opacity:1\"\n" +
             "         d=\"m 1088.4484,877.308 -118.4703,-286.96153 169.0178,0 60.5514,175.8626" +
             "7 128.4745,-175.86267 186.3934,0 -245.8918,295.38608 128.4745,293.27995 -171.650" +
             "3,0 -65.8169,-180.07494 -139.0052,180.07494 -184.28726,0 252.21016,-301.7045 z\" " +
@@ -2720,9 +2721,9 @@ public enum SvgImage {
             "         style=\"font-style:italic;font-variant:normal;font-weight:bold;font-stre" +
             "tch:normal;font-size:1021.99700928px;line-height:125%;font-family:'Noto Sans';-i" +
             "nkscape-font-specification:'Noto Sans, Bold Italic';text-align:start;letter-spac" +
-            "ing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#2196f3;fill-" +
-            "opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter" +
-            ";stroke-opacity:1\"\n" +
+            "ing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:var(--icon-co" +
+            "lour__blue);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stro" +
+            "ke-linejoin:miter;stroke-opacity:1\"\n" +
             "         d=\"m 1787.1604,727.24555 q 0,180.07494 -65.2903,332.24355 -65.2904,151." +
             "642 -199.5568,290.1207 l -137.9521,0 q 262.7408,-286.9615 262.7408,-627.6296 0,-" +
             "161.64622 -61.078,-312.76174 l 122.6826,0 q 78.4538,139.00523 78.4538,318.02709 " +
@@ -2750,7 +2751,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1664,896 c 0,139.3333 -34.3333,267.8333 -103,385.5 -68.6667,117.6" +
             "667 -161.8333,210.8333 -279.5,279.5 -117.6667,68.6667 -246.1667,103 -385.5,103 -" +
             "139.33333,0 -267.83333,-34.3333 -385.5,-103 C 392.83333,1492.3333 299.66667,1399" +
@@ -2781,16 +2782,16 @@ public enum SvgImage {
     HIDE("" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
-            "/2000/svg\"><path style=\"fill:#2196f3\" d=\"M555 1335l78-141q-87-63-136-159t-49-203" +
-            "q0-121 61-225-229 117-381 353 167 258 427 375zm389-759q0-20-14-34t-34-14q-125 0-" +
-            "214.5 89.5t-89.5 214.5q0 20 14 34t34 14 34-14 14-34q0-86 61-147t147-61q20 0 34-1" +
-            "4t14-34zm363-191q0 7-1 9-106 189-316 567t-315 566l-49 89q-10 16-28 16-12 0-134-7" +
-            "0-16-10-16-28 0-12 44-87-143-65-263.5-173t-208.5-245q-20-31-20-69t20-69q153-235 " +
-            "380-371t496-136q89 0 180 17l54-97q10-16 28-16 5 0 18 6t31 15.5 33 18.5 31.5 18.5" +
-            " 19.5 11.5q16 10 16 27zm37 447q0 139-79 253.5t-209 164.5l280-502q8 45 8 84zm448 " +
-            "128q0 35-20 69-39 64-109 145-150 172-347.5 267t-419.5 95l74-132q212-18 392.5-137" +
-            "t301.5-307q-115-179-282-294l63-112q95 64 182.5 153t144.5 184q20 34 20 69z\"/></sv" +
-            "g>\n" +
+            "/2000/svg\"><path style=\"fill:var(--icon-colour__blue)\" d=\"M555 1335l78-141q-87-6" +
+            "3-136-159t-49-203q0-121 61-225-229 117-381 353 167 258 427 375zm389-759q0-20-14-" +
+            "34t-34-14q-125 0-214.5 89.5t-89.5 214.5q0 20 14 34t34 14 34-14 14-34q0-86 61-147" +
+            "t147-61q20 0 34-14t14-34zm363-191q0 7-1 9-106 189-316 567t-315 566l-49 89q-10 16" +
+            "-28 16-12 0-134-70-16-10-16-28 0-12 44-87-143-65-263.5-173t-208.5-245q-20-31-20-" +
+            "69t20-69q153-235 380-371t496-136q89 0 180 17l54-97q10-16 28-16 5 0 18 6t31 15.5 " +
+            "33 18.5 31.5 18.5 19.5 11.5q16 10 16 27zm37 447q0 139-79 253.5t-209 164.5l280-50" +
+            "2q8 45 8 84zm448 128q0 35-20 69-39 64-109 145-150 172-347.5 267t-419.5 95l74-132" +
+            "q212-18 392.5-137t301.5-307q-115-179-282-294l63-112q95 64 182.5 153t144.5 184q20" +
+            " 34 20 69z\"/></svg>\n" +
             ""),
 
     HIDE_MENU("" +
@@ -2811,7 +2812,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:currentColor\"\n" +
             "          d=\"M1024 544v448q0 14-9 23t-23 9h-320q-14 0-23-9t-9-23v-64q0-14 9-23t2" +
             "3-9h224v-352q0-14 9-23t23-9h64q14 0 23 9t9 23zm416 352q0-148-73-273t-198-198-273" +
             "-73-273 73-198 198-73 273 73 273 198 198 273 73 273-73 198-198 73-273zm224 0q0 2" +
@@ -2824,7 +2825,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1664,896 c 0,139.3333 -34.3333,267.8333 -103,385.5 -68.6667,117.6" +
             "667 -161.8333,210.8333 -279.5,279.5 -117.6667,68.6667 -246.1667,103 -385.5,103 -" +
             "139.33333,0 -267.83333,-34.3333 -385.5,-103 C 392.83333,1492.3333 299.66667,1399" +
@@ -3002,7 +3003,7 @@ public enum SvgImage {
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
             "          d=\"m 1797.4237,1536 0,128 L 0,1664 0,128 l 128,0 0,1408 z\"/>\n" +
-            "    <path style=\"fill:currentColor\"\n" +
+            "    <path style=\"fill:#ff8f00\"\n" +
             "          d=\"m 1800.3555,369.26798 0,404.31287 q 0,19.51855 -18.1244,27.41892 -1" +
             "8.1244,7.90037 -32.9956,-6.97091 L 1636.7714,681.56482 1048.4265,1269.9098 q -9." +
             "2946,9.2945 -21.3775,9.2945 -12.0829,0 -21.3774,-9.2945 L 789.10857,1053.3468 40" +
@@ -3221,7 +3222,7 @@ public enum SvgImage {
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
             "/2000/svg\">\n" +
             "    <path\n" +
-            "            style=\"fill:#2196f3\"\n" +
+            "            style=\"fill:var(--icon-colour__blue)\"\n" +
             "            d=\"M1596 380q28 28 48 76t20 88v1152q0 40-28 68t-68 28h-1344q-40 0-68" +
             "-28t-28-68v-1600q0-40 28-68t68-28h896q40 0 88 20t76 48zm-444-244v376h376q-10-29-" +
             "22-41l-313-313q-12-12-41-22zm384 1528v-1024h-416q-40 0-68-28t-28-68v-416h-768v15" +
@@ -3234,7 +3235,7 @@ public enum SvgImage {
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
             "/2000/svg\">\n" +
             "    <path\n" +
-            "            style=\"fill:#2196f3\"\n" +
+            "            style=\"fill:var(--icon-colour__blue)\"\n" +
             "            d=\"M1696 384q40 0 68 28t28 68v1216q0 40-28 68t-68 28h-960q-40 0-68-2" +
             "8t-28-68v-288h-544q-40 0-68-28t-28-68v-672q0-40 20-88t48-76l408-408q28-28 76-48t" +
             "88-20h416q40 0 68 28t28 68v328q68-40 128-40h416zm-544 213l-299 299h299v-299zm-64" +
@@ -4127,7 +4128,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 838.79102,128.16797 539.12698,0 0,1062.61323 c 0,146.8389 -43.269" +
             "7,262.5192 -129.8106,347.0411 -86.5408,83.8055 -205.0476,125.707 -355.51951,125." +
             "707 -279.1137,0 -444.78903,-132.5129 -497.02539,-397.5391 l 218.69141,-33.3066 c" +
@@ -4189,7 +4190,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 288,333.95508 c -26.66667,0 -49.33333,9.33333 -68,28 -18.66667,18" +
             ".66666 -28,41.33333 -28,68 0.0805,246.24683 0,490.77231 0,736.97462 0,26.6667 9." +
             "33333,49.3333 28,68 18.66667,18.6667 41.33333,28 68,28 l 1216,0 c 26.6667,0 49.3" +
@@ -4261,7 +4262,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M1671 566q0 40-28 68l-724 724-136 136q-28 28-68 28t-68-28l-136-136-" +
             "362-362q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 295 656-657q28-28 68-28" +
             "t68 28l136 136q28 28 28 68z\"/>\n" +
@@ -4272,7 +4273,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1205.3507,897.46166 q 0,20.9696 -14.368,35.3376 L 938.18285,1185." +
             "5992 q -15.14469,14.368 -35.33761,14.368 -19.80459,0 -34.94929,-14.368 l -29.124" +
             "4,-29.1244 q -14.75637,-14.7564 -14.75637,-35.3377 0,-20.5812 14.75637,-35.3376 " +
@@ -4282,7 +4283,7 @@ public enum SvgImage {
             "98 -14.75637,-34.9493 0,-20.9696 14.75637,-34.9493 l 29.1244,-29.1244 q 14.75637" +
             ",-14.7564 34.94929,-14.7564 20.58125,0 35.33761,14.7564 l 252.79985,252.7998 q 1" +
             "4.368,13.5914 14.368,34.9493 z\"/>\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M 155.66211 541.10742 L 377.63672 873.35547 L 123.20117 1253.8164 L" +
             " 227.26758 1253.8164 L 429.19336 950.6875 L 629.6875 1253.8164 L 733.27734 1253." +
             "8164 L 488.86523 883.37891 L 718 541.10742 L 614.41211 541.10742 L 436.35352 806" +
@@ -4297,7 +4298,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M1216 832q0-185-131.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 13" +
             "1.5 316.5 316.5 131.5 316.5-131.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-9" +
             "0-38l-343-342q-179 124-399 124-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5" +
@@ -4336,7 +4337,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M 1440 96.289062 C 1430.6667 96.289062 1423 99.289066 1417 105.2890" +
             "6 C 1411 111.28906 1408 118.95573 1408 128.28906 L 1408 320.28906 L 1152 320.289" +
             "06 C 1106.6667 320.28906 1064 325.78906 1024 336.78906 C 984 347.78906 948.5 361" +
@@ -4391,7 +4392,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M896 768q237 0 443-43t325-127v170q0 69-103 128t-280 93.5-385 34.5-3" +
             "85-34.5-280-93.5-103-128v-170q119 84 325 127t443 43zm0 768q237 0 443-43t325-127v" +
             "170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119 84 325 12" +
@@ -4406,7 +4407,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M 499.42773 349.50586 C 471.2255 349.65535 443.05802 352.21777 415." +
             "25195 357.10156 C 314.29291 374.83377 218.08985 423.16111 142.17383 497.58398 C " +
             "120.16923 517.22845 82.017578 562.56836 82.017578 562.56836 L 17.439453 647.6289" +
@@ -4583,7 +4584,7 @@ public enum SvgImage {
             "     inkscape:window-maximized=\"1\"\n" +
             "     inkscape:current-layer=\"svg3982\" />\n" +
             "  <path\n" +
-            "     style=\"fill:#2196f3\"\n" +
+            "     style=\"fill:var(--icon-colour__blue)\"\n" +
             "     d=\"M1216 832q0-185-131.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 131.5 3" +
             "16.5 316.5 131.5 316.5-131.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-90-38l" +
             "-343-342q-179 124-399 124-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5-273." +
@@ -4739,7 +4740,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#1976d2\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1440,95.339844 c -9.3333,0 -17,2.999997 -23,8.999996 -6,6 -9,13.6" +
             "6667 -9,23 l 0,192 -256,0 c -45.3333,0 -88,5.5 -128,16.5 -40.00001,11 -75.50001," +
             "25 -106.50001,42 -31,17 -61,39.83333 -90,68.5 -29,28.66667 -53.66667,56.33333 -7" +
@@ -4757,7 +4758,7 @@ public enum SvgImage {
             " 3.1667,16.16667 9.5,22.5 6.3333,6.33333 13.8333,9.5 22.5,9.5 9.3333,0 17,-3 23," +
             "-9 l 320,-320 c 6,-6 9,-13.66667 9,-23 0,-9.33333 -3,-17 -9,-23 l -319,-319 c -8" +
             ",-6.666666 -16,-9.999996 -24,-9.999996 z\"/>\n" +
-            "    <path style=\"fill:#388e3c\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M 32 608.88672 C 22.666667 608.88672 15 611.88672 9 617.88672 C 3.0" +
             "000001 623.88672 0 631.55342 0 640.88672 L 0 832.88672 C -2.3684758e-15 842.2200" +
             "5 3.0000001 849.88672 9 855.88672 C 14.999999 861.88672 22.666667 864.88672 32 8" +
@@ -4810,7 +4811,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "  <path style=\"fill:#2196f3\"\n" +
+            "  <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "        d=\"m 1664,896 c 0,139.3333 -34.3333,267.8333 -103,385.5 -68.6667,117.666" +
             "7 -161.8333,210.8333 -279.5,279.5 -117.6667,68.6667 -246.1667,103 -385.5,103 -13" +
             "9.33333,0 -267.83333,-34.3333 -385.5,-103 C 392.83333,1492.3333 299.66667,1399.1" +
@@ -5167,7 +5168,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M1216 832q0-185-131.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 13" +
             "1.5 316.5 316.5 131.5 316.5-131.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-9" +
             "0-38l-343-342q-179 124-399 124-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5" +
@@ -5211,7 +5212,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"M 504.35742 1187.6074 C 389.50028 1210.4757 298.36975 1241.2006 231" +
             " 1279.791 C 162.33333 1319.1243 128 1361.791 128 1407.791 L 128 1535.791 C 128 1" +
             "581.791 162.33333 1624.4577 231 1663.791 C 299.66667 1703.1243 393 1734.291 511 " +
@@ -5223,7 +5224,7 @@ public enum SvgImage {
             "9 C 1012.9015 1461.461 953.6261 1485.9707 896 1485.9707 C 838.23415 1485.9707 77" +
             "7.60767 1461.2151 736.5957 1420.2031 A 107.19621 107.19621 0 0 1 736.53711 1420." +
             "1445 L 504.35742 1187.6074 z \"/>\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 836.54102,1.0253906 c -32.20659,0 -60.07772,11.7671574 -83.61329," +
             "35.3027344 C 729.39215,59.863702 717.625,87.734831 717.625,119.94141 l 0,654.041" +
             "01 L 444.48828,500.8457 c -22.91621,-22.91622 -50.78734,-34.37304 -83.61328,-34." +
@@ -5255,7 +5256,7 @@ public enum SvgImage {
             "9 C 1012.9015 1461.461 953.6261 1485.9707 896 1485.9707 C 838.23415 1485.9707 77" +
             "7.60767 1461.2151 736.5957 1420.2031 A 107.19621 107.19621 0 0 1 736.53711 1420." +
             "1445 L 504.35742 1187.6074 z \"/>\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 836.54102,1.0253906 c -32.20659,0 -60.07772,11.7671574 -83.61329," +
             "35.3027344 C 729.39215,59.863702 717.625,87.734831 717.625,119.94141 l 0,654.041" +
             "01 L 444.48828,500.8457 c -22.91621,-22.91622 -50.78734,-34.37304 -83.61328,-34." +
@@ -5379,7 +5380,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1792 1792\" height=\"1792\" wi" +
             "dth=\"1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
+            "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
             "          d=\"m 1664,896 c 0,139.3333 -34.3333,267.8333 -103,385.5 -68.6667,117.6" +
             "667 -161.8333,210.8333 -279.5,279.5 -117.6667,68.6667 -246.1667,103 -385.5,103 -" +
             "139.33333,0 -267.83333,-34.3333 -385.5,-103 C 392.83333,1492.3333 299.66667,1399" +
@@ -5676,7 +5677,7 @@ public enum SvgImage {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#4caf50\"\n" +
+            "    <path style=\"fill:var(--icon-colour__green)\"\n" +
             "          d=\"M1675 971q0 51-37 90l-75 75q-38 38-91 38-54 0-90-38l-294-293v704q0 " +
             "52-37.5 84.5t-90.5 32.5h-128q-53 0-90.5-32.5t-37.5-84.5v-704l-294 293q-36 38-90 " +
             "38t-90-38l-75-75q-38-38-38-90 0-53 38-91l651-651q35-37 90-37 54 0 91 37l651 651q" +

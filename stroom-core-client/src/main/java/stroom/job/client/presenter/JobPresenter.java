@@ -18,6 +18,7 @@ package stroom.job.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.job.shared.Job;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 
 import com.google.inject.Inject;
@@ -57,6 +58,11 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     @Override
     public SvgImage getIcon() {
         return SvgImage.JOBS;
+    }
+
+    @Override
+    public IconColour getIconColour() {
+        return IconColour.GREY;
     }
 
     @Override

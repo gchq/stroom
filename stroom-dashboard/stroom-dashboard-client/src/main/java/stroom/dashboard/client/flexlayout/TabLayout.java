@@ -83,7 +83,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         initWidget(panel);
 
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons");
+        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons icon-colour__grey");
         barOuter.add(buttons);
 
         settings = new InlineSvgButton();

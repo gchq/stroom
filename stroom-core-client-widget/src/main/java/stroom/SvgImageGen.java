@@ -65,6 +65,8 @@ public class SvgImageGen {
                         xml = xml.replaceAll("#2196f4", "var(--icon-colour__xsd-background)");
                         xml = xml.replaceAll("#aed581", "var(--icon-colour__xsl-background)");
                         xml = xml.replaceAll("#ce93d8", "var(--icon-colour__xml-background)");
+                        xml = xml.replaceAll("#2196f3", "var(--icon-colour__blue)");
+                        xml = xml.replaceAll("#4caf50", "var(--icon-colour__green)");
                         xml = xml.replaceAll("#4A4B4C", "var(--icon-colour__grey)");
                         xml = xml.replaceAll("#010101", "currentColor");
 

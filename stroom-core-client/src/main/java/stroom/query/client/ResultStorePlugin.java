@@ -24,6 +24,7 @@ import stroom.query.client.presenter.ResultStorePresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -62,6 +63,7 @@ public class ResultStorePlugin extends Plugin implements CurrentUserChangedHandl
                 new IconMenuItem.Builder()
                         .priority(201)
                         .icon(SvgImage.DATABASE)
+                        .iconColour(IconColour.GREY)
                         .text("Search Results")
                         .command(resultStorePresenter::show)
                         .build());

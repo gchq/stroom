@@ -33,9 +33,9 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FocusPanel;
-import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -58,7 +58,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     ResizeLayoutPanel contentPanel;
     private Widget maximisedWidget;
     private int splitPos = 300;
-    private MySplitLayoutPanel splitPanel;
+    private ThinSplitLayoutPanel splitPanel;
     private Widget westWidget;
     private Widget centerWidget;
     private String currentBanner;
@@ -158,7 +158,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
             splitPos = 10;
         }
 
-        splitPanel = new MySplitLayoutPanel();
+        splitPanel = new ThinSplitLayoutPanel();
         splitPanel.addStyleName("mainViewImpl-splitPanel");
         if (westWidget != null) {
             splitPanel.addWest(westWidget, splitPos);

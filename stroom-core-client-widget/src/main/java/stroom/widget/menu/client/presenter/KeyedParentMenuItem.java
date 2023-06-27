@@ -16,6 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
@@ -32,12 +33,13 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
     KeyedParentMenuItem(final int priority,
                         final SvgImage enabledIcon,
                         final SvgImage disabledIcon,
+                        final IconColour iconColour,
                         final String text,
                         final Action action,
                         final boolean enabled,
                         final MenuItems menuItems,
                         final MenuKey menuKey) {
-        super(priority, enabledIcon, disabledIcon, text, action, enabled, null, false);
+        super(priority, enabledIcon, disabledIcon, iconColour, text, action, enabled, null, false);
         this.menuItems = menuItems;
         this.menuKey = menuKey;
     }
@@ -94,6 +96,7 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                     priority,
                     enabledIcon,
                     disabledIcon,
+                    iconColour,
                     text,
                     action,
                     enabled,

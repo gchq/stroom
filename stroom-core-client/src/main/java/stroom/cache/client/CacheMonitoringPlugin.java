@@ -23,6 +23,7 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -49,6 +50,7 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
                     new IconMenuItem.Builder()
                             .priority(12)
                             .icon(SvgImage.MONITORING)
+                            .iconColour(IconColour.GREY)
                             .text("Caches")
                             .command(this::open)
                             .build());

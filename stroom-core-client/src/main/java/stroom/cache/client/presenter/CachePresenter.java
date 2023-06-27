@@ -17,6 +17,7 @@
 package stroom.cache.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 
 import com.google.inject.Inject;
@@ -62,6 +63,11 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
     @Override
     public SvgImage getIcon() {
         return SvgImage.MONITORING;
+    }
+
+    @Override
+    public IconColour getIconColour() {
+        return IconColour.GREY;
     }
 
     @Override

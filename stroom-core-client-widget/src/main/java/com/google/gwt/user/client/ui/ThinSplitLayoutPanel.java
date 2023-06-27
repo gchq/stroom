@@ -58,18 +58,17 @@ import com.google.gwt.user.client.Event;
  * </p>
  * <p>
  * <h3>CSS Style Rules</h3>
- * <ul class='css'> <li>.gwt-SplitLayoutPanel { the panel itself }</li>
- * <li>.gwt-SplitLayoutPanel .gwt-SplitLayoutPanel-HDragger { horizontal dragger
- * }</li> <li>.gwt-SplitLayoutPanel .gwt-SplitLayoutPanel-VDragger { vertical
+ * <ul class='css'> <li>.thinSplitLayoutPanel { the panel itself }</li>
+ * <li>.thinSplitLayoutPanel .thinSplitLayoutPanel-HDragger { horizontal dragger
+ * }</li> <li>.thinSplitLayoutPanel .thinSplitLayoutPanel-VDragger { vertical
  * dragger } </li> </ul>
  * <p>
  * <p> <h3>Example</h3>
  * {@example com.google.gwt.examples.SplitLayoutPanelExample} </p>
  */
-public class MySplitLayoutPanel extends DockLayoutPanel {
+public class ThinSplitLayoutPanel extends DockLayoutPanel {
 
-    private static final int SPLITTER_SIZE = 7;
-    public static final double HALF_N_HALF_SPLIT = 0.5;
+    private static final int SPLITTER_SIZE = 1;
     /**
      * The element that masks the screen so we can catch mouse events over
      * iframes.
@@ -85,9 +84,9 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     private boolean isResizing;
 
     @UiConstructor
-    public MySplitLayoutPanel() {
+    public ThinSplitLayoutPanel() {
         super(Unit.PX);
-        setStyleName("gwt-SplitLayoutPanel");
+        setStyleName("thinSplitLayoutPanel");
     }
 
     public void setHSplits(final String str) {
@@ -279,7 +278,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
      * <p>
      * Its associated splitter cannot be dragged to a position that would make
      * it smaller than this size. This method has no effect for the
-     * {@link DockLayoutPanel.Direction#CENTER} widget.
+     * {@link Direction#CENTER} widget.
      * </p>
      *
      * @param child   the child whose minimum size will be set
@@ -329,6 +328,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         }
 
         super.insert(splitter, layout.direction, SPLITTER_SIZE, before);
+        splitter.getElement().getParentElement().setClassName("thinSplitLayoutPanel-Dragger-Outer");
     }
 
     private Element getGlass() {
@@ -559,9 +559,9 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
 
         public void setDragging(final boolean dreagging) {
             if (dreagging) {
-                getElement().addClassName("gwt-SplitLayoutPanel-Dragger--dragging");
+                getElement().addClassName("thinSplitLayoutPanel-Dragger--dragging");
             } else {
-                getElement().removeClassName("gwt-SplitLayoutPanel-Dragger--dragging");
+                getElement().removeClassName("thinSplitLayoutPanel-Dragger--dragging");
             }
         }
     }
@@ -582,7 +582,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         public HSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, false);
             getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
-            setStyleName("gwt-SplitLayoutPanel-Dragger gwt-SplitLayoutPanel-HDragger");
+            setStyleName("thinSplitLayoutPanel-Dragger thinSplitLayoutPanel-HDragger");
         }
 
         @Override
@@ -625,7 +625,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         public VSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, true);
             getElement().getStyle().setPropertyPx("height", SPLITTER_SIZE);
-            setStyleName("gwt-SplitLayoutPanel-Dragger gwt-SplitLayoutPanel-VDragger");
+            setStyleName("thinSplitLayoutPanel-Dragger thinSplitLayoutPanel-VDragger");
         }
 
         @Override

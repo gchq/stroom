@@ -22,6 +22,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
+import stroom.pipeline.structure.client.presenter.PipelineElementIcons;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -100,14 +101,14 @@ public class SteppingFilterPresenter extends
                                     PipelineElement::getElementType);
                             if (pipelineElementType != null && pipelineElementType.getIcon() != null) {
                                 return new Preset(
-                                        pipelineElementType.getIcon(),
+                                        PipelineElementIcons.get(pipelineElementType.getIcon()),
                                         pipelineElementType.getType(),
                                         true);
                             } else {
                                 return null;
                             }
                         })
-                .withStyleName(BASE_CLASS + "-iconCell")
+                .withStyleName(BASE_CLASS + "-iconCell svgIcon")
                 .build();
         elementChooser.addColumn(iconColumn);
 
@@ -128,8 +129,8 @@ public class SteppingFilterPresenter extends
         final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(
                         false,
                         (PipelineElement pipelineElement) ->
-                                SvgPresets.FILTER_GREEN.title("Has active filter(s)"))
-                .withStyleName(BASE_CLASS + "-filterIconCell")
+                                SvgPresets.FILTER.title("Has active filter(s)"))
+                .withStyleName(BASE_CLASS + "-filterIconCell svgIcon icon-colour__green")
                 .withConditionalStyleName(filterActiveStyleFunc)
                 .build();
         elementChooser.addColumn(filterIconColumn);

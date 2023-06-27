@@ -16,6 +16,7 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 
 import com.google.gwt.dom.client.Element;
@@ -32,7 +33,7 @@ public class CurveTab extends AbstractTab {
     private final Element close;
     private final boolean allowClose;
 
-    public CurveTab(final SvgImage icon, final String text, final boolean allowClose) {
+    public CurveTab(final SvgImage icon, final IconColour iconColour, final String text, final boolean allowClose) {
         this.allowClose = allowClose;
 
         element = DOM.createDiv();
@@ -44,7 +45,7 @@ public class CurveTab extends AbstractTab {
 
         if (icon != null) {
             final Element iconElement = DOM.createDiv();
-            iconElement.addClassName("curveTab-icon");
+            iconElement.addClassName("curveTab-icon " + iconColour.getClassName());
             iconElement.setInnerHTML(icon.getSvg());
             element.appendChild(iconElement);
         }

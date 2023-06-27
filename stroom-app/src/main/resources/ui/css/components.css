@@ -811,7 +811,7 @@
     height: 288px;
     display: flex;
     flex-direction: column;
-    margin: -8px -8px 0 -8px;
+    margin: -8px -5px 0 -8px;
 }
 
 .aboutViewImpl-stroom-body {
@@ -824,6 +824,20 @@
     position: absolute;
     width: 500px;
     height: 30px;
+}
+
+.aboutViewImpl-logo {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--blue-500);
+}
+
+.aboutViewImpl-logo > svg {
+    width: 150px;
+    height: 40px;
+    color: white;
 }
 
 .aboutViewImpl-body {
@@ -1081,9 +1095,55 @@
 }
 */
 
-.mainViewImpl-splitPanel > .gwt-SplitLayoutPanel-Dragger-Outer {
+.mainViewImpl-splitPanel > .thinSplitLayoutPanel-Dragger-Outer {
     background-color: var(--navigation__splitter__background-color);
 }
+
+.thinSplitLayoutPanel-Dragger-Outer {
+    overflow: visible !important;
+    background-color: var(--splitter__background-color);
+    z-index: 10;
+}
+
+.thinSplitLayoutPanel-Dragger {
+    position: absolute;
+    background: none;
+    width: 100%;
+    height: 100%;
+    border: none;
+    inset: initial !important;
+}
+
+.thinSplitLayoutPanel-HDragger {
+	width: var(--split__size) !important;
+	height: 100% !important;
+	left: var(--split__offset) !important;
+	cursor: col-resize;
+}
+
+.thinSplitLayoutPanel-VDragger {
+	width: 100% !important;
+	height: var(--split__size) !important;
+	top: var(--split__offset) !important;
+    cursor: row-resize;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .mainViewImpl-contentPanel {
     width: 100%;
@@ -1755,38 +1815,26 @@ button.main-menu svg {
     opacity: .5;
 }
 
-.pipelineElementChooser-iconCell .svgIcon {
-    width: 22px;
-    /* Height is a bit of a hack to match padding on text cell, but won't be right for different
-       font sizes or densities */
-    height: 26px;
-    background-size: 20px 20px;
-    background-repeat: no-repeat;
-    background-position: center;
+.pipelineElementChooser-iconCell {
+    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell {
-    padding: 5px;
+    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-width: 200px;
 }
 
-.pipelineElementChooser-textCell.pipelineElementChooser-filterOn div {
+.pipelineElementChooser-filterIconCell {
+    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
-.pipelineElementChooser-filterIconCell .svgIcon {
-    width: 20px;
-    /* Height is a bit of a hack to match padding on text cell, but won't be right for different
-       font sizes or densities */
-    height: 26px;
-    background-size: 14px 14px;
-    background-repeat: no-repeat;
-    background-position: center;
+.pipelineElementChooser-textCell.pipelineElementChooser-filterOn {
 }
 
-.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOn .svgIcon {
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOn {
 }
 
-.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff .svgIcon {
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff {
     visibility: hidden;
 }
 
@@ -1853,8 +1901,4 @@ button.main-menu svg {
 
 .queryHelp-details {
     padding: 5px;
-}
-
-.stepping-buttons .icon-button .face {
-    color: #4caf50;
 }

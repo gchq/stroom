@@ -4,6 +4,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -34,6 +35,7 @@ public class ChangePasswordPlugin extends Plugin {
                     changePasswordMenuItem = new IconMenuItem.Builder()
                             .priority(5)
                             .icon(icon)
+                            .iconColour(IconColour.GREY)
                             .text("Change password")
                             .command(() -> {
 //                            final Hyperlink hyperlink = new Builder()

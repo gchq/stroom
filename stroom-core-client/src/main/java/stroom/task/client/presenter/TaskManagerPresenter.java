@@ -18,6 +18,7 @@ package stroom.task.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 
@@ -50,6 +51,11 @@ public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
     @Override
     public SvgImage getIcon() {
         return SvgImage.JOBS;
+    }
+
+    @Override
+    public IconColour getIconColour() {
+        return IconColour.GREY;
     }
 
     @Override

@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -35,7 +36,7 @@ public class SteppingViewImpl extends ViewImpl implements SteppingView, Requires
 
     private final Widget widget;
     @UiField
-    MySplitLayoutPanel bottomLayout;
+    ThinSplitLayoutPanel bottomLayout;
     @UiField
     FlowPanel left;
     @UiField

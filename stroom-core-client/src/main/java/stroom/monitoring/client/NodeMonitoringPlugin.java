@@ -23,6 +23,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.NodeMonitoringPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -50,6 +51,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresent
                     new IconMenuItem.Builder()
                             .priority(10)
                             .icon(SvgImage.NODES)
+                            .iconColour(IconColour.GREY)
                             .text("Nodes")
                             .command(this::open)
                             .build());

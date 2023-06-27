@@ -23,6 +23,7 @@ import stroom.job.client.presenter.JobPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -48,6 +49,7 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
                     new IconMenuItem.Builder()
                             .priority(9)
                             .icon(SvgImage.JOBS)
+                            .iconColour(IconColour.GREY)
                             .text("Jobs")
                             .command(this::open)
                             .build());

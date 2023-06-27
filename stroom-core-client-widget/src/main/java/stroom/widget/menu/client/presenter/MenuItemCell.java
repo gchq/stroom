@@ -16,6 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 
@@ -118,22 +119,28 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final SvgImage enabledIcon = value.getEnabledIcon();
                 final SvgImage disabledIcon = value.getDisabledIcon();
 
+                IconColour iconColour = IconColour.BLUE;
+                if (value.getIconColour() != null) {
+                    iconColour = value.getIconColour();
+                }
+                final String iconClassName = "menuItem-icon" + " " + iconColour.getClassName();
+
                 if (value.isEnabled()) {
                     if (enabledIcon != null) {
-                        inner.append(TEMPLATE.inner("menuItem-icon",
+                        inner.append(TEMPLATE.inner(iconClassName,
                                 SafeHtmlUtils.fromSafeConstant(enabledIcon.getSvg())));
                     } else {
-                        inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
+                        inner.append(TEMPLATE.inner(iconClassName, SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 } else {
                     if (disabledIcon != null) {
-                        inner.append(TEMPLATE.inner("menuItem-icon",
+                        inner.append(TEMPLATE.inner(iconClassName,
                                 SafeHtmlUtils.fromSafeConstant(disabledIcon.getSvg())));
                     } else if (enabledIcon != null) {
-                        inner.append(TEMPLATE.inner("menuItem-icon",
+                        inner.append(TEMPLATE.inner(iconClassName,
                                 SafeHtmlUtils.fromSafeConstant(enabledIcon.getSvg())));
                     } else {
-                        inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
+                        inner.append(TEMPLATE.inner(iconClassName, SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 }
 
