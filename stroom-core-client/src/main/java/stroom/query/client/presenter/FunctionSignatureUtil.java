@@ -389,7 +389,10 @@ public class FunctionSignatureUtil {
     public static String buildSignatureStr(final FunctionSignature signature) {
         String argsStr;
         if (signature.getArgs().isEmpty()) {
-            argsStr = "";
+            argsStr = "()";
+        } else if (signature.getArgs().size() > 3) {
+            // Funcs with long arg lists get truncated. Help text explains all the args.
+            argsStr = "(...";
         } else {
             final AtomicBoolean foundOptArg = new AtomicBoolean(false);
             argsStr = signature.getArgs()
@@ -421,9 +424,11 @@ public class FunctionSignatureUtil {
             if (foundOptArg.get()) {
                 argsStr += "]";
             }
+            argsStr = "(" + argsStr + ")";
         }
 
-        return signature.getName() + "(" + argsStr + ")";
+        // Add a space to make it a bit clearer
+        return signature.getName() + " " + argsStr;
     }
 
     private static String buildInsertText(final FunctionSignature signature) {
@@ -552,11 +557,19 @@ public class FunctionSignatureUtil {
                 helpUrlBase +
                         signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
                         "#" +
-                        functionNameToAnchor(signature.getName()),
+                        functionSignatureToAnchor(signature),
                 "Help Documentation");
         htmlBuilder.append(".");
     }
 
+    private static String functionSignatureToAnchor(final FunctionSignature signature) {
+        final String helpAnchor = signature.getHelpAnchor();
+        if (GwtNullSafe.isBlankString(helpAnchor)) {
+            return functionNameToAnchor(signature.getName());
+        } else {
+            return helpAnchor;
+        }
+    }
 
     private static String functionNameToAnchor(final String name) {
         final StringBuilder stringBuilder = new StringBuilder();

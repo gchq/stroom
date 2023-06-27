@@ -140,7 +140,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         helpSubPathProperties = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/properties/";
         helpSubPathExpressions = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/expressions/";
         helpSubPathDocumentation = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/content/documentation/";
-        helpSubPathStroomQueryLanguage = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "TODO";
+        helpSubPathStroomQueryLanguage = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/stroom-query-language/";
         theme = new ThemeConfig();
         query = new QueryConfig();
         namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
@@ -303,7 +303,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
      */
     @JsonIgnore
     public String getHelpUrlStroomQueryLanguage() {
-        return appendHelpPath(helpSubPathDocumentation);
+        return appendHelpPath(helpSubPathStroomQueryLanguage);
     }
 
     public ThemeConfig getTheme() {

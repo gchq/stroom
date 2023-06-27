@@ -15,6 +15,7 @@ import stroom.dashboard.expression.v1.ValNumber;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
+import stroom.dashboard.shared.FunctionSignature.OverloadType;
 import stroom.dashboard.shared.FunctionSignature.Type;
 import stroom.util.NullSafe;
 
@@ -99,17 +100,35 @@ public class FunctionServiceImpl implements FunctionService {
 
             final List<String> categoryPath = buildCategoryPath(functionDef, functionSignature);
 
-            final boolean isOverloaded = NullSafe.test(countsByCategoryPath.get(categoryPath), count -> count > 1);
+            final OverloadType overloadType;
+            if (NullSafe.test(countsByCategoryPath.get(categoryPath), count -> count > 1)) {
+                overloadType = OverloadType.OVERLOADED_IN_CATEGORY;
+            } else {
+                final long totalSigCount = countsByCategoryPath.values()
+                        .stream()
+                        .mapToLong(Long::longValue)
+                        .sum();
+                if (totalSigCount == 1) {
+                    overloadType = OverloadType.NOT_OVERLOADED;
+                } else {
+                    overloadType = OverloadType.OVERLOADED_GLOBALLY;
+                }
+            }
+            final String helpAnchor = functionDef.helpAnchor() == null
+                    || FunctionDef.UNDEFINED.equals(functionDef.helpAnchor())
+                    ? null
+                    : functionDef.helpAnchor();
 
             return new FunctionSignature(
                     functionDef.name(),
+                    helpAnchor,
                     aliases,
                     categoryPath,
                     args,
                     returnType,
                     returnDescription,
                     description,
-                    isOverloaded);
+                    overloadType);
         } else {
             return null;
         }

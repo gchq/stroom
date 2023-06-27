@@ -19,6 +19,8 @@ public class FunctionSignature {
     @JsonProperty
     private final String name;
     @JsonProperty
+    private final String helpAnchor;
+    @JsonProperty
     private final List<String> aliases;
     @JsonProperty
     private final List<String> categoryPath;
@@ -31,25 +33,27 @@ public class FunctionSignature {
     @JsonProperty
     private final String description;
     @JsonProperty
-    private final boolean overloaded;
+    private final OverloadType overloadType;
 
     @JsonCreator
     public FunctionSignature(@JsonProperty("name") final String name,
+                             @JsonProperty("helpAnchor") final String helpAnchor,
                              @JsonProperty("aliases") final List<String> aliases,
                              @JsonProperty("categoryPath") final List<String> categoryPath,
                              @JsonProperty("args") final List<Arg> args,
                              @JsonProperty("returnType") final Type returnType,
                              @JsonProperty("returnDescription") final String returnDescription,
                              @JsonProperty("description") final String description,
-                             @JsonProperty("overloaded") final boolean overloaded) {
+                             @JsonProperty("overloadType") final OverloadType overloadType) {
         this.name = name;
+        this.helpAnchor = helpAnchor;
         this.aliases = aliases;
         this.categoryPath = categoryPath;
         this.args = args;
         this.returnType = returnType;
         this.returnDescription = returnDescription;
         this.description = description;
-        this.overloaded = overloaded;
+        this.overloadType = overloadType;
     }
 
     /**
@@ -82,13 +86,14 @@ public class FunctionSignature {
 
             return new FunctionSignature(
                     newPrimaryName,
+                    helpAnchor,
                     newAliases,
                     categoryPath,
                     args,
                     returnType,
                     returnDescription,
                     description,
-                    overloaded);
+                    overloadType);
         } else {
             throw new RuntimeException(newPrimaryName + " is not a valid name or alias");
         }
@@ -96,6 +101,10 @@ public class FunctionSignature {
 
     public String getName() {
         return name;
+    }
+
+    public String getHelpAnchor() {
+        return helpAnchor;
     }
 
     public List<String> getAliases() {
@@ -138,8 +147,8 @@ public class FunctionSignature {
     /**
      * @return True if this function signature is overloaded within its category
      */
-    public boolean isOverloaded() {
-        return overloaded;
+    public OverloadType getOverloadType() {
+        return overloadType;
     }
 
     @Override
@@ -152,7 +161,7 @@ public class FunctionSignature {
                 ", returnType=" + returnType +
                 ", returnDescription='" + returnDescription + '\'' +
                 ", description='" + description + '\'' +
-                ", isOverloaded='" + overloaded + '\'' +
+                ", overloadType='" + overloadType + '\'' +
                 '}';
     }
 
@@ -172,13 +181,13 @@ public class FunctionSignature {
                 && returnType == that.returnType
                 && Objects.equals(returnDescription, that.returnDescription)
                 && Objects.equals(description, that.description)
-                && Objects.equals(overloaded, that.overloaded);
+                && Objects.equals(overloadType, that.overloadType);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-                name, aliases, categoryPath, args, returnType, returnDescription, description, overloaded);
+                name, aliases, categoryPath, args, returnType, returnDescription, description, overloadType);
     }
 
 
@@ -303,7 +312,9 @@ public class FunctionSignature {
 
     }
 
+
     // --------------------------------------------------------------------------------
+
 
     public enum Type {
 
@@ -326,6 +337,15 @@ public class FunctionSignature {
         public String getName() {
             return name;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+    public enum OverloadType {
+        NOT_OVERLOADED,
+        OVERLOADED_IN_CATEGORY,
+        OVERLOADED_GLOBALLY;
     }
 
 }

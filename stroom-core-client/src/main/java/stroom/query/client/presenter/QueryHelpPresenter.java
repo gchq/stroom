@@ -17,6 +17,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dashboard.shared.FunctionSignature.OverloadType;
 import stroom.data.table.client.MyCellTable;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
@@ -214,12 +215,14 @@ public class QueryHelpPresenter
                                     parent = parent.addOrGetChild(categoryHeading);
                                 }
 
-                                final String title = functionSignature.isOverloaded()
+                                final boolean isOverloadedInCategory = OverloadType.OVERLOADED_IN_CATEGORY.equals(
+                                        functionSignature.getOverloadType());
+                                final String title = isOverloadedInCategory
                                         ? FunctionSignatureUtil.buildSignatureStr(functionSignature)
                                         .replace(functionSignature.getName(), "...")
                                         : functionSignature.getName();
 
-                                if (functionSignature.isOverloaded()) {
+                                if (isOverloadedInCategory) {
                                     final OverloadedFunctionHeadingItem overloadedFuncNameHeading =
                                             new OverloadedFunctionHeadingItem(
                                                     functionSignature.getName(), parent.getDepth() + 1);

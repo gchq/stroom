@@ -66,6 +66,10 @@ public class QueryEditViewImpl
         tableContainer.setWidget(view.asWidget());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, QueryEditViewImpl> {
 
     }
