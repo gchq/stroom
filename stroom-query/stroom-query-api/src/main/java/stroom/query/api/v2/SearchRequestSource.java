@@ -29,6 +29,10 @@ public class SearchRequestSource {
         this.componentId = componentId;
     }
 
+    public static SearchRequestSource createBasic() {
+        return builder().sourceType(SourceType.DASHBOARD_UI).build();
+    }
+
     public SourceType getSourceType() {
         return sourceType;
     }
@@ -44,7 +48,8 @@ public class SearchRequestSource {
     @Override
     public String toString() {
         return "SearchRequestSource{" +
-                "dashboardUuid='" + ownerDocUuid + '\'' +
+                "sourceType=" + sourceType +
+                ", ownerDocUuid='" + ownerDocUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 '}';
     }
@@ -96,21 +101,43 @@ public class SearchRequestSource {
     }
 
     public enum SourceType implements HasDisplayValue {
-        ANALYTIC_RULE("Analytic Rule"),
-        DASHBOARD_UI("Dashboard UI"),
-        QUERY_UI("Query UI"),
-        API("API Request"),
-        BATCH_SEARCH("Batch Search");
+        ANALYTIC_RULE("Analytic Rule", true, true, true),
+        ANALYTIC_RULE_UI("Analytic Rule UI", true, true, true),
+        DASHBOARD_UI("Dashboard UI", false, false, false),
+        QUERY_UI("Query UI", false, false, false),
+        API("API Request", false, false, false),
+        BATCH_SEARCH("Batch Search", false, false, false);
 
+        private final boolean requireTimeValue;
+        private final boolean requireStreamIdValue;
+        private final boolean requireEventIdValue;
         private final String displayValue;
 
-        SourceType(final String displayValue) {
+        SourceType(final String displayValue,
+                   final boolean requireTimeValue,
+                   final boolean requireStreamIdValue,
+                   final boolean requireEventIdValue) {
             this.displayValue = displayValue;
+            this.requireTimeValue = requireTimeValue;
+            this.requireStreamIdValue = requireStreamIdValue;
+            this.requireEventIdValue = requireEventIdValue;
         }
 
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+
+        public boolean isRequireTimeValue() {
+            return requireTimeValue;
+        }
+
+        public boolean isRequireStreamIdValue() {
+            return requireStreamIdValue;
+        }
+
+        public boolean isRequireEventIdValue() {
+            return requireEventIdValue;
         }
     }
 }

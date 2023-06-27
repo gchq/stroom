@@ -25,8 +25,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
@@ -46,8 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+        implements HasDocumentRead<StatisticStoreDoc>, HasDocumentWrite<StatisticStoreDoc>, HasDirtyHandlers {
 
     private final MyDataGrid<StatisticField> dataGrid;
     private final MultiSelectionModelImpl<StatisticField> selectionModel;
@@ -235,27 +233,24 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
-        if (statisticsDataSource != null) {
-            statisticsDataSourceData = statisticsDataSource.getConfig();
+    public void read(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
+        if (document != null) {
+            statisticsDataSourceData = document.getConfig();
 
             if (customMaskListPresenter != null) {
-                customMaskListPresenter.read(docRef, statisticsDataSource);
+                customMaskListPresenter.read(docRef, document, readOnly);
             }
             refresh();
         }
     }
 
     @Override
-    public StatisticStoreDoc write(final StatisticStoreDoc entity) {
-        entity.setConfig(statisticsDataSourceData);
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
+    public StatisticStoreDoc write(final StatisticStoreDoc document) {
+        document.setConfig(statisticsDataSourceData);
+        return document;
     }
 
     @Override

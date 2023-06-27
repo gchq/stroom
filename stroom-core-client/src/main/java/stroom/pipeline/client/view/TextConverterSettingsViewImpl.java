@@ -23,7 +23,6 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -33,8 +32,6 @@ public class TextConverterSettingsViewImpl extends ViewImpl
 
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField
     ItemListBox<TextConverterType> converterType;
 
@@ -49,18 +46,12 @@ public class TextConverterSettingsViewImpl extends ViewImpl
     }
 
     @Override
-    public TextArea getDescription() {
-        return description;
-    }
-
-    @Override
     public ItemListBox<TextConverterType> getConverterType() {
         return converterType;
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         converterType.setEnabled(!readOnly);
     }
 

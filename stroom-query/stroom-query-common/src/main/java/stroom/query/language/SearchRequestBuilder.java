@@ -35,6 +35,27 @@ public class SearchRequestBuilder {
         return new SearchRequestBuilder().doCreate(string, in);
     }
 
+    public static void extractDataSourceNameOnly(final String string, final Consumer<String> consumer) {
+        new SearchRequestBuilder().doExtractDataSourceNameOnly(string, consumer);
+    }
+
+    public void doExtractDataSourceNameOnly(final String string, final Consumer<String> consumer) {
+        // Get a list of tokens.
+        final List<Token> tokens = Tokeniser.parse(string);
+        if (tokens.size() == 0) {
+            throw new TokenException(null, "No tokens");
+        }
+
+        // Create structure.
+        final TokenGroup tokenGroup = StructureBuilder.create(tokens);
+
+        // Assume we have a root bracket group.
+        final List<AbstractToken> childTokens = tokenGroup.getChildren();
+
+        // Add data source.
+        addDataSourceName(childTokens, consumer);
+    }
+
     private SearchRequest doCreate(final String string, final SearchRequest in) {
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
@@ -55,7 +76,7 @@ public class SearchRequestBuilder {
         }
 
         // Add data source.
-        List<AbstractToken> remaining = addDataSource(childTokens, queryBuilder::dataSource);
+        List<AbstractToken> remaining = addDataSourceName(childTokens, queryBuilder::dataSourceName);
 
         // Add where expression.
         remaining = addExpression(remaining, TokenType.WHERE, queryBuilder::expression);
@@ -83,7 +104,7 @@ public class SearchRequestBuilder {
                 in.getTimeout());
     }
 
-    private List<AbstractToken> addDataSource(final List<AbstractToken> tokens, final Consumer<DocRef> consumer) {
+    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens, final Consumer<String> consumer) {
         AbstractToken token = tokens.get(0);
 
         // The first token must be `FROM`.
@@ -105,8 +126,7 @@ public class SearchRequestBuilder {
             throw new TokenException(dataSourceToken, "Expected string");
         }
         final String dataSourceName = dataSourceToken.getUnescapedText();
-        final DocRef dataSource = new DocRef(null, null, dataSourceName);
-        consumer.accept(dataSource);
+        consumer.accept(dataSourceName);
 
         return tokens.subList(1, tokens.size());
     }

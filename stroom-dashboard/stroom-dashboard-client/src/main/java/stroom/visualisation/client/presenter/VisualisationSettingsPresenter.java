@@ -20,7 +20,7 @@ package stroom.visualisation.client.presenter;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
@@ -30,15 +30,14 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-public class VisualisationSettingsPresenter
-        extends DocumentSettingsPresenter<VisualisationSettingsView, VisualisationDoc> {
+public class VisualisationSettingsPresenter extends DocumentEditPresenter<VisualisationSettingsView, VisualisationDoc> {
+
     private final EntityDropDownPresenter scriptPresenter;
     private final EditorPresenter editorPresenter;
 
@@ -62,7 +61,6 @@ public class VisualisationSettingsPresenter
         scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
         scriptPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(view.getFunctionName().addKeyDownHandler(keyDownHander));
         registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
         view.setScriptView(scriptPresenter.getView());
@@ -88,8 +86,11 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final VisualisationDoc visualisation) {
-        getView().getDescription().setText(visualisation.getDescription());
+    protected void onRead(final DocRef docRef, final VisualisationDoc visualisation, final boolean readOnly) {
+        scriptPresenter.setEnabled(!readOnly);
+        editorPresenter.setReadOnly(readOnly);
+        editorPresenter.getFormatAction().setAvailable(!readOnly);
+
         getView().getFunctionName().setText(visualisation.getFunctionName());
         scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef());
         editorPresenter.setText(visualisation.getSettings());
@@ -97,23 +98,13 @@ public class VisualisationSettingsPresenter
 
     @Override
     protected VisualisationDoc onWrite(final VisualisationDoc visualisation) {
-        visualisation.setDescription(getView().getDescription().getText().trim());
         visualisation.setFunctionName(getView().getFunctionName().getText().trim());
         visualisation.setScriptRef(scriptPresenter.getSelectedEntityReference());
         visualisation.setSettings(editorPresenter.getText().trim());
         return visualisation;
     }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        scriptPresenter.setEnabled(!readOnly);
-        editorPresenter.setReadOnly(readOnly);
-        editorPresenter.getFormatAction().setAvailable(!readOnly);
-    }
-
     public interface VisualisationSettingsView extends View {
-        TextArea getDescription();
 
         TextBox getFunctionName();
 

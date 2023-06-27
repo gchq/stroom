@@ -3,9 +3,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="scriptSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="scriptSettingsDependencies"
                         label="Dependencies"
                         addStyleNames="default-min-sizes flex-grow-1">

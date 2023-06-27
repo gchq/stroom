@@ -17,11 +17,13 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
@@ -31,25 +33,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
 
+    private static final int UID_OFFSET = 0;
+    private static final int KEY_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;
+
     @Override
     public KeyValueStoreKey deserialize(final ByteBuffer byteBuffer) {
 
-        // Create a bytebuffer that is a view onto the existing buffer
-        // NOTE: if the passed bytebuffer is owned by LMDB then this deserialize method
-        // needs to be used with care
-        ByteBuffer dupBuffer = byteBuffer.duplicate();
-
-        dupBuffer.limit(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
-
-        UID uid = UID.wrap(dupBuffer);
-        // advance the position now we have a dup of the UID portion
-        byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+        // This advances the position to aftet the UID
+        final UID uid = UIDSerde.getUid(byteBuffer);
 
         try (Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
             String key = input.readString();
@@ -81,5 +79,38 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
         // set the limit to just after the UID part
         byteBuffer.limit(startPos + UID.UID_ARRAY_LENGTH);
+    }
+
+    /**
+     * The returned UID is just a wrapper onto the passed {@link ByteBuffer}. If you need to use it outside
+     * a txn/cursor then you will need to copy it.
+     */
+    public UID extractUid(final ByteBuffer byteBuffer) {
+        return UIDSerde.extractUid(byteBuffer, UID_OFFSET);
+    }
+
+    /**
+     * Copy the contents of sourceByteBuffer into destByteBuffer but with the supplied UID.
+     */
+    public static void copyWithNewUid(final ByteBuffer sourceByteBuffer,
+                                      final ByteBuffer destByteBuffer,
+                                      final UID newUid) {
+        Objects.requireNonNull(sourceByteBuffer);
+        Objects.requireNonNull(destByteBuffer);
+        Objects.requireNonNull(newUid);
+
+        if (destByteBuffer.remaining() < sourceByteBuffer.remaining()) {
+            throw new RuntimeException(LogUtil.message("Insufficient remaining,\nsource: {},\ndest: {}",
+                    ByteBufferUtils.byteBufferInfo(sourceByteBuffer),
+                    ByteBufferUtils.byteBufferInfo(destByteBuffer)));
+        }
+
+        destByteBuffer.put(newUid.getBackingBuffer());
+        final ByteBuffer keyPartBuffer = sourceByteBuffer.slice(
+                KEY_OFFSET,
+                sourceByteBuffer.remaining() - UID.UID_ARRAY_LENGTH);
+        destByteBuffer.put(keyPartBuffer);
+        destByteBuffer.flip();
+        sourceByteBuffer.rewind();
     }
 }

@@ -68,7 +68,7 @@ class TestLogUtil {
     @Test
     void withPercentage_double() {
         assertThat(LogUtil.withPercentage(10.5, 100.0))
-                .isEqualTo("10.5 (10%)");
+                .isEqualTo("10.5 (10.5%)");
     }
 
     @Test

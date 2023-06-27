@@ -5,9 +5,6 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="indexSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="indexSettingsMaxDocsPerShard" label="Max Docs Per Shard">
             <v:ValueSpinner ui:field="maxDocsPerShard" width="200px"/>
         </form:FormGroup>

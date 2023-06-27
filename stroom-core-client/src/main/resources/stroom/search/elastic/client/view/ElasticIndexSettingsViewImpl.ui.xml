@@ -4,9 +4,6 @@
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="elasticIndexSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsClusterconfiguration" label="Cluster Configuration">
             <g:SimplePanel ui:field="cluster"/>
         </form:FormGroup>

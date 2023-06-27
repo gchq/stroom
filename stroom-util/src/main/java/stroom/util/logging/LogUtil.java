@@ -2,10 +2,14 @@ package stroom.util.logging;
 
 import stroom.util.NullSafe;
 import stroom.util.concurrent.DurationAdder;
+import stroom.util.shared.ModelStringUtil;
 
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -73,7 +77,8 @@ public final class LogUtil {
         final String text = message(format, args);
         final String str = Strings.repeat(String.valueOf(BOX_HORIZONTAL_LINE), 3)
                 + " "
-                + text;
+                + text
+                + " ";
         return Strings.padEnd(str, 100, BOX_HORIZONTAL_LINE);
     }
 
@@ -168,6 +173,21 @@ public final class LogUtil {
                 duration);
     }
 
+    public static String getDurationMessage(final String work,
+                                            final Duration duration,
+                                            final long iterations) {
+        final double secs = NullSafe.duration(duration).isZero()
+                ? 0
+                : duration.toMillis() / (double) 1_000;
+        final String rate = secs == 0
+                ? "NaN"
+                : ModelStringUtil.formatCsv(iterations / secs);
+        return LogUtil.message("Completed [{}] in {} ({}/sec)",
+                work,
+                duration,
+                rate);
+    }
+
     /**
      * @return epochMs as an instant or null if epochMs is null.
      */
@@ -228,18 +248,26 @@ public final class LogUtil {
                 return withPercentage(value,
                         ((Duration) value).toMillis(),
                         ((Duration) total).toMillis());
-            } else if (value instanceof DurationAdder) {
+            } else if (value instanceof final DurationAdder durationAdder) {
                 return withPercentage(value,
-                        ((DurationAdder) value).toMillis(),
+                        durationAdder.toMillis(),
                         ((DurationAdder) total).toMillis());
+            } else if (value instanceof final DurationTimer durationTimer) {
+                return withPercentage(value,
+                        durationTimer.get().toMillis(),
+                        ((DurationTimer) total).get().toMillis());
             } else if (value instanceof Number) {
                 final double valNum = ((Number) value).doubleValue();
                 final double totalNum = ((Number) total).doubleValue();
                 if (totalNum == 0) {
                     return originalValue + " (undefined%)";
                 } else {
-                    final int pct = (int) (valNum / totalNum * 100);
-                    return originalValue + " (" + pct + "%)";
+//                    final int pct = (int) (valNum / totalNum * 100);
+
+                    BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
+                            .stripTrailingZeros()
+                            .round(new MathContext(3, RoundingMode.HALF_UP));
+                    return originalValue + " (" + pct.toPlainString() + "%)";
                 }
             } else {
                 throw new IllegalArgumentException("Type "

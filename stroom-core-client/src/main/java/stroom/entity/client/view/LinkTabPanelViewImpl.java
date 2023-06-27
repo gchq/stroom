@@ -22,6 +22,7 @@ import stroom.widget.tab.client.presenter.TabBar;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -31,9 +32,7 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
 
     private final Widget widget;
     @UiField
-    FlowPanel left;
-    @UiField
-    FlowPanel right;
+    FlowPanel toolbarContainer;
     @UiField
     TabBar tabBar;
     @UiField
@@ -50,13 +49,13 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
     }
 
     @Override
-    public void addWidgetLeft(final Widget widget) {
-        left.add(widget);
+    public void clearToolbar() {
+        toolbarContainer.clear();
     }
 
     @Override
-    public void addWidgetRight(final Widget widget) {
-        right.add(widget);
+    public void addToolbar(final Widget widget) {
+        toolbarContainer.add(widget);
     }
 
     @Override

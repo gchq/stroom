@@ -17,8 +17,7 @@
 package stroom.node.impl;
 
 import stroom.node.api.NodeInfo;
-import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.pipeline.refdata.store.offheapstore.DelegatingRefDataOffHeapStore;
 import stroom.pipeline.state.RecordCountService;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreFactory.StoreSizeSummary;
@@ -50,7 +49,7 @@ class NodeStatusServiceUtil {
 
     private final NodeInfo nodeInfo;
     private final RecordCountService recordCountService;
-    private final RefDataStore refDataStore;
+    private final DelegatingRefDataOffHeapStore delegatingRefDataOffHeapStore;
     private final DataStoreFactory dataStoreFactory;
 
     private long time = System.currentTimeMillis();
@@ -60,11 +59,11 @@ class NodeStatusServiceUtil {
     @Inject
     NodeStatusServiceUtil(final NodeInfo nodeInfo,
                           final RecordCountService recordCountService,
-                          final RefDataStoreFactory refDataStoreFactory,
+                          final DelegatingRefDataOffHeapStore delegatingRefDataOffHeapStore,
                           final DataStoreFactory dataStoreFactory) {
         this.nodeInfo = nodeInfo;
         this.recordCountService = recordCountService;
-        this.refDataStore = refDataStoreFactory.getOffHeapStore();
+        this.delegatingRefDataOffHeapStore = delegatingRefDataOffHeapStore;
         this.dataStoreFactory = dataStoreFactory;
     }
 
@@ -201,10 +200,10 @@ class NodeStatusServiceUtil {
                                    final long nowEpochMs) {
 
         // No point in holding a load of zeros, e.g. nodes not running processing
-        final long sizeOnDisk = refDataStore.getSizeOnDisk();
-        final long combinedEntryCount = refDataStore.getKeyValueEntryCount()
-                + refDataStore.getRangeValueEntryCount();
-        final long processingInfoEntryCount = refDataStore.getProcessingInfoEntryCount();
+        final long sizeOnDisk = delegatingRefDataOffHeapStore.getSizeOnDisk();
+        final long combinedEntryCount = delegatingRefDataOffHeapStore.getKeyValueEntryCount()
+                + delegatingRefDataOffHeapStore.getRangeValueEntryCount();
+        final long processingInfoEntryCount = delegatingRefDataOffHeapStore.getProcessingInfoEntryCount();
 
         if (sizeOnDisk > 0) {
             statisticEventList.add(InternalStatisticEvent.createValueStat(

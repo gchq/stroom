@@ -46,6 +46,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     private TabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
     private DashboardContext dashboardContext;
+    protected boolean designMode;
 
     public AbstractComponentPresenter(final EventBus eventBus,
                                       final V view,
@@ -223,5 +224,10 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
 
     protected DashboardContext getDashboardContext() {
         return dashboardContext;
+    }
+
+    @Override
+    public void setDesignMode(final boolean designMode) {
+        this.designMode = designMode;
     }
 }

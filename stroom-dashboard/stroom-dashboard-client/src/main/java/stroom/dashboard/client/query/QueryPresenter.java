@@ -63,6 +63,8 @@ import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.ResultStoreModel;
+import stroom.query.client.presenter.SearchErrorListener;
+import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -97,12 +99,16 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements HasDirtyHandlers, Queryable {
+public class QueryPresenter
+        extends AbstractComponentPresenter<QueryPresenter.QueryView>
+        implements
+        HasDirtyHandlers,
+        Queryable,
+        SearchStateListener,
+        SearchErrorListener {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
@@ -128,7 +134,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
     private final ButtonView warningsButton;
-    private List<String> currentWarnings;
+    private List<String> currentErrors;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit;
     private long defaultProcessorRecordLimit;
@@ -168,7 +174,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
             @Override
             public void start() {
-                if (searchModel.getMode()) {
+                if (searchModel.isSearching()) {
                     QueryPresenter.this.stop();
                 } else {
                     queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
@@ -207,15 +213,15 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }
 
         warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
-        warningsButton.setVisible(false);
+        setWarningsVisible(false);
 
         searchModel = new SearchModel(
                 restFactory,
                 indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel);
-        searchModel.addErrorListener(this::setErrors);
-        searchModel.addModeListener(this::setMode);
+        searchModel.addSearchErrorListener(this);
+        searchModel.addSearchStateListener(this);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
@@ -223,11 +229,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
-    }
-
-    @Override
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-        searchModel.setResultStoreInfo(resultStoreInfo);
     }
 
     @Override
@@ -388,18 +389,38 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void addModeListener(final Consumer<Boolean> consumer) {
-        searchModel.addModeListener(consumer);
+    public void addSearchStateListener(final SearchStateListener listener) {
+        searchModel.addSearchStateListener(listener);
     }
 
     @Override
-    public void removeModeListener(final Consumer<Boolean> consumer) {
-        searchModel.removeModeListener(consumer);
+    public void removeSearchStateListener(final SearchStateListener listener) {
+        searchModel.removeSearchStateListener(listener);
     }
 
-    public void setErrors(final List<String> errors) {
-        currentWarnings = errors;
-        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
+    @Override
+    public void addSearchErrorListener(final SearchErrorListener listener) {
+        searchModel.addSearchErrorListener(listener);
+    }
+
+    public void removeSearchErrorListener(final SearchErrorListener listener) {
+        searchModel.removeSearchErrorListener(listener);
+    }
+
+    @Override
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        searchModel.setResultStoreInfo(resultStoreInfo);
+    }
+
+    @Override
+    public void onError(final List<String> errors) {
+        currentErrors = errors;
+        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
+    }
+
+    @Override
+    public List<String> getCurrentErrors() {
+        return currentErrors;
     }
 
     private void setButtonsEnabled() {
@@ -570,12 +591,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void showWarnings() {
-        if (currentWarnings != null && !currentWarnings.isEmpty()) {
-            final String msg = currentWarnings.size() == 1
+        if (currentErrors != null && !currentErrors.isEmpty()) {
+            final String msg = currentErrors.size() == 1
                     ? ("The following warning was created while running this search:")
-                    : ("The following " + currentWarnings.size()
+                    : ("The following " + currentErrors.size()
                             + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentWarnings);
+            final String errors = String.join("\n", currentErrors);
             AlertEvent.fireWarn(this, msg, errors, null);
         }
     }
@@ -605,8 +626,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public boolean getMode() {
-        return searchModel.getMode();
+    public boolean getSearchState() {
+        return searchModel.isSearching();
     }
 
     private void run(final boolean incremental,
@@ -622,10 +643,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         if (dataSourceRef == null) {
             warnNoDataSource();
         } else {
-            currentWarnings = null;
+            currentErrors = null;
             expressionPresenter.clearSelection();
 
-            warningsButton.setVisible(false);
+            setWarningsVisible(false);
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
@@ -652,10 +673,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         if (dataSourceRef == null) {
             warnNoDataSource();
         } else {
-            currentWarnings = null;
+            currentErrors = null;
             expressionPresenter.clearSelection();
 
-            warningsButton.setVisible(false);
+            setWarningsVisible(false);
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
@@ -790,11 +811,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         expressionPresenter.read(root);
     }
 
-    public void setMode(final boolean mode) {
-        getView().setMode(mode);
+    @Override
+    public void onSearching(final boolean searching) {
+        getView().onSearching(searching);
 
         // If this is the end of a query then schedule a refresh.
-        if (!mode) {
+        if (!searching) {
             scheduleRefresh();
         }
     }
@@ -822,7 +844,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                             stop();
                         } else {
                             // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (!searchModel.getMode()) {
+                            if (!searchModel.isSearching()) {
                                 QueryPresenter.this.run(false, false);
                             }
                         }
@@ -912,13 +934,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }
     }
 
-    public interface QueryView extends View {
+    private void setWarningsVisible(final boolean show) {
+        warningsButton.asWidget().getElement().getStyle().setOpacity(show
+                ? 1
+                : 0);
+    }
+
+    public interface QueryView extends View, SearchStateListener {
 
         ButtonView addButton(Preset preset);
 
         void setExpressionView(View view);
-
-        void setMode(boolean mode);
 
         void setEnabled(boolean enabled);
 

@@ -153,19 +153,123 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
+export interface AnalyticDataShard {
+  /** @format int64 */
+  createTimeMs?: number;
+  node?: string;
+  path?: string;
+
+  /** @format int64 */
+  size?: number;
+}
+
+export interface AnalyticNotification {
+  analyticUuid?: string;
+  config?: AnalyticNotificationConfig;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+
+  /** @format int32 */
+  version?: number;
+}
+
+export interface AnalyticNotificationConfig {
+  type: string;
+}
+
+export type AnalyticNotificationEmailConfig = AnalyticNotificationConfig & {
+  emailAddress?: string;
+  timeToWaitForData?: SimpleDuration;
+};
+
+export interface AnalyticNotificationRow {
+  analyticNotification?: AnalyticNotification;
+  analyticNotificationState?: AnalyticNotificationState;
+}
+
+export interface AnalyticNotificationState {
+  /** @format int64 */
+  lastExecutionTime?: number;
+  message?: string;
+  notificationUuid?: string;
+}
+
+export type AnalyticNotificationStreamConfig = AnalyticNotificationConfig & {
+  destinationFeed?: DocRef;
+  timeToWaitForData?: SimpleDuration;
+  useSourceFeedIfPossible?: boolean;
+};
+
+export interface AnalyticProcessorFilter {
+  analyticUuid?: string;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
+  expression?: ExpressionOperator;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+  node?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+
+  /** @format int32 */
+  version?: number;
+}
+
+export interface AnalyticProcessorFilterTracker {
+  /** @format int64 */
+  eventCount?: number;
+  filterUuid?: string;
+
+  /** @format int64 */
+  lastEventId?: number;
+
+  /** @format int64 */
+  lastEventTime?: number;
+
+  /** @format int64 */
+  lastMetaId?: number;
+
+  /** @format int64 */
+  lastPollMs?: number;
+
+  /** @format int32 */
+  lastPollTaskCount?: number;
+  message?: string;
+
+  /** @format int64 */
+  metaCount?: number;
+}
+
 export interface AnalyticRuleDoc {
   analyticRuleType?: "EVENT" | "AGGREGATE";
 
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  dataRetention?: SimpleDuration;
   description?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFeed?: DocRef;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
-  processSettings?: AnalyticRuleProcessSettings;
   query?: string;
   type?: string;
 
@@ -174,17 +278,6 @@ export interface AnalyticRuleDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
-}
-
-export interface AnalyticRuleProcessSettings {
-  enabled?: boolean;
-
-  /** @format int64 */
-  maxMetaCreateTimeMs?: number;
-
-  /** @format int64 */
-  minMetaCreateTimeMs?: number;
-  timeToWaitForData?: SimpleDuration;
 }
 
 export interface Annotation {
@@ -417,24 +510,6 @@ export interface ClusterNodeInfoItem {
   active?: boolean;
   master?: boolean;
   nodeName?: string;
-}
-
-export interface ClusterSearchTask {
-  /** The client date/time settings */
-  dateTimeSettings?: DateTimeSettings;
-
-  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
-  key?: QueryKey;
-
-  /** @format int64 */
-  now?: number;
-
-  /** The query terms for the search */
-  query?: Query;
-  settings?: CoprocessorSettings[];
-  shards?: number[];
-  sourceTaskId?: TaskId;
-  taskName?: string;
 }
 
 export interface ComponentConfig {
@@ -740,6 +815,9 @@ export interface DataRetentionRules {
 export interface DataSource {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   defaultExtractionPipeline?: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
   fields?: AbstractField[];
 }
 
@@ -1327,6 +1405,30 @@ export interface FilterUsersRequest {
   users?: SimpleUser[];
 }
 
+export interface FindAnalyticDataShardCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindAnalyticNotificationCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindAnalyticProcessorFilterCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindDBTableCriteria {
   pageRequest?: PageRequest;
   sort?: string;
@@ -1541,6 +1643,18 @@ export interface FunctionSignature {
   name?: string;
   returnDescription?: string;
   returnType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
+}
+
+export interface GetAnalyticShardDataRequest {
+  analyticDocUuid?: string;
+
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+  path?: string;
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
+  requestedRange?: OffsetRange;
+  timeRange?: TimeRange;
 }
 
 export interface GetFeedStatusRequest {
@@ -2005,6 +2119,26 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeSearchTask {
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  key?: QueryKey;
+
+  /** @format int64 */
+  now?: number;
+
+  /** The query terms for the search */
+  query?: Query;
+  searchRequestSource?: SearchRequestSource;
+  settings?: CoprocessorSettings[];
+  shards?: number[];
+  sourceTaskId?: TaskId;
+  taskName?: string;
+  type?: "LUCENE" | "ANALYTICS";
+}
+
 export interface NodeSetJobsEnabledRequest {
   enabled?: boolean;
   excludeJobs?: string[];
@@ -2270,7 +2404,15 @@ export interface ProcessingInfoResponse {
   effectiveTime?: string;
   lastAccessedTime?: string;
   maps?: Record<string, EntryCounts>;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  processingState?:
+    | "LOAD_IN_PROGRESS"
+    | "PURGE_IN_PROGRESS"
+    | "COMPLETE"
+    | "FAILED"
+    | "TERMINATED"
+    | "PURGE_FAILED"
+    | "STAGED"
+    | "READY_FOR_PURGE";
   refStreamDefinition?: RefStreamDefinition;
 }
 
@@ -2580,6 +2722,7 @@ export interface ReceiveDataRules {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  description?: string;
   fields?: AbstractField[];
   name?: string;
   rules?: ReceiveDataRule[];
@@ -2608,10 +2751,19 @@ export interface RefDataProcessingInfo {
 
   /** @format int64 */
   lastAccessedTimeEpochMs?: number;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  processingState?:
+    | "LOAD_IN_PROGRESS"
+    | "PURGE_IN_PROGRESS"
+    | "COMPLETE"
+    | "FAILED"
+    | "TERMINATED"
+    | "PURGE_FAILED"
+    | "STAGED"
+    | "READY_FOR_PURGE";
 }
 
 export interface RefStoreEntry {
+  feedName?: string;
   key?: string;
   mapDefinition?: MapDefinition;
   refDataProcessingInfo?: RefDataProcessingInfo;
@@ -2688,6 +2840,33 @@ export interface ResultPageActivity {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Activity[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageAnalyticDataShard {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: AnalyticDataShard[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageAnalyticNotificationRow {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: AnalyticNotificationRow[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageAnalyticProcessorFilter {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: AnalyticProcessorFilter[];
 }
 
 /**
@@ -2973,6 +3152,8 @@ export interface SearchApiKeyRequest {
  * A request for new search or a follow up request for more data for an existing iterative search
  */
 export interface SearchRequest {
+  dateTimeLocale?: string;
+
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
 
@@ -2997,7 +3178,7 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ANALYTIC_RULE" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?: "ANALYTIC_RULE" | "ANALYTIC_RULE_UI" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
 }
 
 /**
@@ -3442,6 +3623,16 @@ export interface StroomStatsStoreFieldChangeRequest {
   oldEntityData?: StroomStatsStoreEntityData;
 }
 
+export interface StructureElement {
+  description?: string;
+  title?: string;
+}
+
+export interface Suggestions {
+  cacheable?: boolean;
+  list?: string[];
+}
+
 export type Summary = Marker & { count?: number; expander?: Expander; total?: number };
 
 export interface SystemInfoResult {
@@ -3677,6 +3868,7 @@ export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
   defaultMaxResults?: string;
+  helpSubPathDocumentation?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;
   helpSubPathProperties?: string;
@@ -3792,9 +3984,6 @@ export interface ViewDoc {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
   description?: string;
-
-  /** A logical addOperator term in a query expression tree */
-  filter?: ExpressionOperator;
   name?: string;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -4317,7 +4506,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Activities
      * @name ValidateActivity
-     * @summary Create an Activity
+     * @summary Validate an Activity
      * @request POST:/activity/v1/validate
      * @secure
      */
@@ -4377,6 +4566,224 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateActivity: (id: number, data: Activity, params: RequestParams = {}) =>
       this.request<any, Activity>({
         path: `/activity/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  analyticDataShard = {
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name FindAnalyticDataShards
+     * @summary Find the analytic data shards for the specified analytic
+     * @request POST:/analyticDataShard/v1/find
+     * @secure
+     */
+    findAnalyticDataShards: (
+      data: FindAnalyticDataShardCriteria,
+      query?: { nodeName?: string },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, ResultPageAnalyticDataShard>({
+        path: `/analyticDataShard/v1/find`,
+        method: "POST",
+        query: query,
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name GetShardData
+     * @summary Get the data for the shard
+     * @request POST:/analyticDataShard/v1/getData
+     * @secure
+     */
+    getShardData: (data: GetAnalyticShardDataRequest, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, Result>({
+        path: `/analyticDataShard/v1/getData`,
+        method: "POST",
+        query: query,
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  analyticNotification = {
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name CreateAnalyticNotification
+     * @summary Create an analytic notification
+     * @request POST:/analyticNotification/v1
+     * @secure
+     */
+    createAnalyticNotification: (data: AnalyticNotification, params: RequestParams = {}) =>
+      this.request<any, AnalyticNotification>({
+        path: `/analyticNotification/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name FindAnalyticNotifications
+     * @summary Find the analytic notifications for the specified analytic
+     * @request POST:/analyticNotification/v1/find
+     * @secure
+     */
+    findAnalyticNotifications: (data: FindAnalyticNotificationCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageAnalyticNotificationRow>({
+        path: `/analyticNotification/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name UpdateAnalyticNotification
+     * @summary Delete an analytic notification
+     * @request DELETE:/analyticNotification/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticNotification: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/analyticNotification/v1/${uuid}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticNotifications
+     * @name UpdateAnalyticNotification1
+     * @summary Update an analytic notification
+     * @request PUT:/analyticNotification/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticNotification1: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
+      this.request<any, AnalyticNotification>({
+        path: `/analyticNotification/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  analyticProcessorFilter = {
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name CreateAnalyticProcessorFilter
+     * @summary Create an analytic processor filter
+     * @request POST:/analyticProcessorFilter/v1
+     * @secure
+     */
+    createAnalyticProcessorFilter: (data: AnalyticProcessorFilter, params: RequestParams = {}) =>
+      this.request<any, AnalyticProcessorFilter>({
+        path: `/analyticProcessorFilter/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name FindAnalyticProcessorFilters
+     * @summary Find the analytic processor filters for the specified analytic
+     * @request POST:/analyticProcessorFilter/v1/find
+     * @secure
+     */
+    findAnalyticProcessorFilters: (data: FindAnalyticProcessorFilterCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageAnalyticProcessorFilter>({
+        path: `/analyticProcessorFilter/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name FindAnalyticProcessorFilterTracker
+     * @summary Find the analytic processor filter tracker for the specified filter
+     * @request POST:/analyticProcessorFilter/v1/tracker
+     * @secure
+     */
+    findAnalyticProcessorFilterTracker: (data: string, params: RequestParams = {}) =>
+      this.request<any, AnalyticProcessorFilterTracker>({
+        path: `/analyticProcessorFilter/v1/tracker`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name UpdateAnalyticProcessorFilter
+     * @summary Delete an analytic processor filter
+     * @request DELETE:/analyticProcessorFilter/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticProcessorFilter: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/analyticProcessorFilter/v1/${uuid}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags AnalyticProcessorFilters
+     * @name UpdateAnalyticProcessorFilter1
+     * @summary Update an analytic processor filter
+     * @request PUT:/analyticProcessorFilter/v1/{uuid}
+     * @secure
+     */
+    updateAnalyticProcessorFilter1: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
+      this.request<any, AnalyticProcessorFilter>({
+        path: `/analyticProcessorFilter/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -5258,40 +5665,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name FetchTimeZones
-     * @summary Fetch time zone data from the server
-     * @request GET:/dashboard/v1/fetchTimeZones
-     * @secure
-     */
-    fetchTimeZones: (params: RequestParams = {}) =>
-      this.request<any, string[]>({
-        path: `/dashboard/v1/fetchTimeZones`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
-     * @name FetchDashboardFunctions
-     * @summary Fetch all expression functions
-     * @request GET:/dashboard/v1/functions
-     * @secure
-     */
-    fetchDashboardFunctions: (params: RequestParams = {}) =>
-      this.request<any, FunctionSignature[]>({
-        path: `/dashboard/v1/functions`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
      * @request POST:/dashboard/v1/search/{nodeName}
@@ -5560,6 +5933,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DataSource>({
         path: `/dataSource/v1/fetchFields`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Sources
+     * @name FetchDataSourceFieldsFromQuery
+     * @summary Fetch data source fields
+     * @request POST:/dataSource/v1/fetchFieldsFromQuery
+     * @secure
+     */
+    fetchDataSourceFieldsFromQuery: (data: string, params: RequestParams = {}) =>
+      this.request<any, DataSource>({
+        path: `/dataSource/v1/fetchFieldsFromQuery`,
         method: "POST",
         body: data,
         secure: true,
@@ -7862,14 +8254,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name FetchTimeZones1
+     * @name FetchTimeZones
      * @summary Fetch time zone data from the server
      * @request GET:/query/v1/fetchTimeZones
      * @secure
      */
-    fetchTimeZones1: (params: RequestParams = {}) =>
+    fetchTimeZones: (params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/query/v1/fetchTimeZones`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchFunctions
+     * @summary Fetch all expression functions
+     * @request GET:/query/v1/functions
+     * @secure
+     */
+    fetchFunctions: (params: RequestParams = {}) =>
+      this.request<any, FunctionSignature[]>({
+        path: `/query/v1/functions`,
         method: "GET",
         secure: true,
         ...params,
@@ -7891,6 +8300,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchStructureElements
+     * @summary Fetch all structure element descriptions
+     * @request GET:/query/v1/structure
+     * @secure
+     */
+    fetchStructureElements: (params: RequestParams = {}) =>
+      this.request<any, StructureElement[]>({
+        path: `/query/v1/structure`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
 
@@ -8030,6 +8456,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Reference Data
+     * @name PurgeReferenceDataByAge1
+     * @summary Explicitly delete all entries belonging to a feed that are older than purgeAge.Performed on the named node, or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}
+     * @secure
+     */
+    purgeReferenceDataByAge1: (
+      feedName: string,
+      purgeAge: string,
+      query?: { nodeName?: string },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, boolean>({
+        path: `/refData/v1/purgeByFeedByAge/${feedName}/${purgeAge}`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reference Data
      * @name PurgeReferenceDataByStream
      * @summary Delete all entries for a reference stream. Performed on the named node or all nodes if null.
      * @request DELETE:/refData/v1/purgeByStream/{refStreamId}
@@ -8111,7 +8560,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/remoteSearch/v1/start
      * @secure
      */
-    startRemoteSearch: (data: ClusterSearchTask, params: RequestParams = {}) =>
+    startRemoteSearch: (data: NodeSearchTask, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/remoteSearch/v1/start`,
         method: "POST",
@@ -9193,7 +9642,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchSuggestions: (data: FetchSuggestionsRequest, params: RequestParams = {}) =>
-      this.request<any, string[]>({
+      this.request<any, Suggestions>({
         path: `/suggest/v1`,
         method: "POST",
         body: data,
@@ -9543,6 +9992,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   view = {
+    /**
+     * No description
+     *
+     * @tags Views
+     * @name ListViews
+     * @summary Fetch view names
+     * @request GET:/view/v1/list
+     * @secure
+     */
+    listViews: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/view/v1/list`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
     /**
      * No description
      *

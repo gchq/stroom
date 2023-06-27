@@ -21,6 +21,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
 import stroom.pipeline.structure.client.presenter.PipelineTreeUiHandlers;
 import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
+import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
@@ -32,6 +33,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
+import java.util.Map;
 
 public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandlers> implements PipelineTreeView {
 
@@ -122,5 +124,10 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     @Override
     public int getTreeHeight() {
         return treePanel.getTreeHeight();
+    }
+
+    @Override
+    public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
+        treePanel.setSeverities(elementIdToSeveritiesMap);
     }
 }

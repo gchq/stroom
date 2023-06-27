@@ -22,6 +22,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -83,7 +84,7 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
     }
 
     @Override
-    Class<MapDefinitionSerde> getSerdeType() {
-        return MapDefinitionSerde.class;
+    TypeLiteral<MapDefinitionSerde> getSerdeType() {
+        return new TypeLiteral<MapDefinitionSerde>(){};
     }
 }

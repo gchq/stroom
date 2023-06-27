@@ -17,17 +17,18 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Field;
+import stroom.query.client.presenter.FunctionSignatureUtil;
+import stroom.query.client.presenter.FunctionSignatures;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
@@ -71,7 +72,10 @@ import java.util.stream.Collectors;
 
 public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
-        implements ExpressionUiHandlers, ShowPopupEvent.Handler, HidePopupRequestEvent.Handler, HidePopupEvent.Handler {
+        implements ExpressionUiHandlers,
+        ShowPopupEvent.Handler,
+        HidePopupRequestEvent.Handler,
+        HidePopupEvent.Handler {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
@@ -79,7 +83,7 @@ public class ExpressionPresenter
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
-    private final UiConfigCache clientPropertyCache;
+    private final FunctionSignatures functionSignatures;
     private AceCompletionProvider functionsCompletionProvider;
     private List<Item> functionsMenuItems;
     private List<Item> fieldsMenuItems;
@@ -92,11 +96,11 @@ public class ExpressionPresenter
                                final ExpressionView view,
                                final RestFactory restFactory,
                                final EditorPresenter editorPresenter,
-                               final UiConfigCache clientPropertyCache) {
+                               final FunctionSignatures functionSignatures) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
-        this.clientPropertyCache = clientPropertyCache;
+        this.functionSignatures = functionSignatures;
         view.setEditor(editorPresenter.getView());
 
         final ButtonView addFunctionButton = view.addButton(SvgPresets.FUNCTION
@@ -113,62 +117,30 @@ public class ExpressionPresenter
     }
 
     private void buildMenusAndCompletions() {
-        withHelpUrl(helpUrl -> {
-            final Rest<List<FunctionSignature>> rest = restFactory.create();
-            rest
-                    .onSuccess(functions -> {
-                        functionCompletions.clear();
-                        functionsMenuItems = FunctionSignatureUtil.buildMenuItems(
-                                functions,
-                                this::addFunction,
-                                helpUrl);
-                        // addAll rather than assignment due to .js closure scope
-                        functionCompletions.addAll(FunctionSignatureUtil.buildCompletions(
-                                functions,
-                                helpUrl));
-                        functionsCompletionProvider = buildCompletionProvider(functionCompletions);
+        functionSignatures.fetchHelpUrl(helpUrl -> functionSignatures.fetchFunctions(functions -> {
+            functionCompletions.clear();
+            functionsMenuItems = FunctionSignatureUtil.buildMenuItems(
+                    functions,
+                    this::addFunction,
+                    helpUrl);
+            // addAll rather than assignment due to .js closure scope
+            functionCompletions.addAll(FunctionSignatureUtil.buildCompletions(
+                    functions,
+                    helpUrl));
+            functionsCompletionProvider = buildCompletionProvider(functionCompletions);
 
-                        editorPresenter.registerCompletionProviders(
-                                buildCompletionProvider(functionCompletions),
-                                buildFieldsCompletionProvider());
-                    })
-                    .onFailure(throwable -> {
-                        AlertEvent.fireError(
-                                ExpressionPresenter.this,
-                                throwable.getMessage(),
-                                null);
-                    })
-                    .call(DASHBOARD_RESOURCE)
-                    .fetchFunctions();
-        });
+            editorPresenter.registerCompletionProviders(
+                    buildCompletionProvider(functionCompletions),
+                    buildFieldsCompletionProvider());
+        }));
     }
 
     private void onShowHelp(final ClickEvent clickEvent) {
         if (MouseUtil.isPrimary(clickEvent)) {
-            withHelpUrl(helpUrl -> {
-                Window.open(helpUrl, "_blank", "");
-            });
+            functionSignatures.fetchHelpUrl(helpUrl -> Window.open(helpUrl, "_blank", ""));
         }
     }
 
-    private void withHelpUrl(final Consumer<String> work) {
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final String helpUrl = result.getHelpUrlExpressions();
-                    if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        work.accept(helpUrl);
-                    } else {
-                        AlertEvent.fireError(
-                                ExpressionPresenter.this,
-                                "Help is not configured!",
-                                null);
-                    }
-                })
-                .onFailure(caught -> AlertEvent.fireError(
-                        ExpressionPresenter.this,
-                        caught.getMessage(),
-                        null));
-    }
 
     private AceCompletionProvider buildFieldsCompletionProvider() {
 
@@ -284,7 +256,21 @@ public class ExpressionPresenter
                 }
             }
         } else {
-            e.hide();
+            // Cancel/Close
+            if (editorPresenter.isClean()) {
+                // User not change anything so allow the close
+                e.hide();
+            } else {
+                final String msg = "Expression has unsaved changes.\n"
+                        + "Are you sure you want to close this window?";
+                ConfirmEvent.fire(ExpressionPresenter.this, msg, confirm -> {
+                    if (confirm) {
+                        e.hide();
+                    } else {
+                        // Don't hide
+                    }
+                });
+            }
         }
     }
 

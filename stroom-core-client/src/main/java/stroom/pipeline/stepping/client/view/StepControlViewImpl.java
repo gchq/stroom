@@ -50,11 +50,11 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     @Inject
     public StepControlViewImpl(final Binder binder) {
 
-        filterButton = createButton(SvgPresets.FILTER_GREEN, "Filter");
-        firstButton = createButton(SvgPresets.FAST_BACKWARD_GREEN, "Step First");
+        filterButton = createButton(SvgPresets.FILTER_GREEN, "Manage Step Filters");
+        firstButton = createButton(SvgPresets.FAST_BACKWARD_GREEN, "Step To First");
         backwardButton = createButton(SvgPresets.STEP_BACKWARD_GREEN, "Step Backward");
         forwardButton = createButton(SvgPresets.STEP_FORWARD_GREEN, "Step Forward");
-        lastButton = createButton(SvgPresets.FAST_FORWARD_GREEN, "Step Last");
+        lastButton = createButton(SvgPresets.FAST_FORWARD_GREEN, "Step To Last");
         refreshButton = createButton(SvgPresets.REFRESH_GREEN, "Refresh Current Step");
 
         widget = binder.createAndBindUi(this);

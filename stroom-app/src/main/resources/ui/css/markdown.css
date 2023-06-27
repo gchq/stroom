@@ -1,0 +1,171 @@
+/* CSS for Showdown/Prism rendered markdown i.e MarkdownEditPresenter */
+
+.markdown {
+  --markdown-background__color: var(--dashboard-panel__background-color);
+  --markdown-tbl__border-color: var(--border-color);
+  --markdown-heading__color: var(--heading-color);
+  --markdown-accent__color: var(--heading-color);
+}
+
+.markdown-container {
+  overflow-y: scroll;
+  background-color: var(--markdown-background__color);
+  white-space: normal !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  color: var(--markdown-heading__color);
+}
+
+.markdown h1 {
+  font-weight: 700;
+  font-size: 2em;
+  margin-bottom: 12px;
+}
+
+.markdown h2 {
+  font-weight: 600;
+  font-size: 1.5em;
+  margin-bottom: 6px;
+}
+
+.markdown h3 {
+  font-weight: 500;
+  font-size: 1.3em;
+  margin-bottom: 4px;
+}
+
+.markdown h4 {
+  font-weight: 400;
+  font-size: 1.1em;
+  margin-bottom: 3px;
+}
+
+.markdown p {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+.markdown code {
+  color: var(--code-color);
+}
+
+.markdown hr {
+  border-top: 1px solid var(--text-color);
+  /* Bit of a gap at either end to make it look more like a section seprator */
+  max-width: 98%;
+}
+
+.markdown table th {
+  font-weight: bolder;
+  text-align: left;
+  border-bottom: solid 1px var(--markdown-tbl__border-color);
+}
+
+.markdown table td {
+/*   border-bottom: solid 1px var(--markdown-tbl__border-color); */
+}
+
+.markdown table tbody tr:nth-child(odd) {
+  background-color: var(--row__background-color--even);
+}
+
+.markdown table tbody tr:nth-child(even) {
+  background-color: var(--row__background-color--odd);
+}
+
+.markdown table {
+  margin: 12px 0px;
+}
+
+.markdown table th,
+.markdown table td {
+  padding: 5px 12px;
+}
+
+.markdown ul li::marker {
+  font-size: 1.3em;
+
+}
+
+.markdown ul li::marker,
+.markdown ol li::marker {
+    color: var(--markdown-accent__color);
+}
+
+.markdown ul li,
+.markdown ol li {
+    line-height: 1.5em;
+}
+
+
+/* Showdown renders task lists as disabled checkboxes. This makes them look a bit meh, so
+hide the standard control and replace it with something more fancy that we can colour */
+
+.markdown input[type="checkbox"] {
+  /* Add if not using autoprefixer */
+  -webkit-appearance: none;
+  /* Remove most all native input styles */
+  appearance: none;
+  /* For iOS < 15 */
+  background-color: var(--form-background);
+  /* Not removed via appearance */
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1.1em;
+  height: 1.1em;
+  border: 0.15em solid var(--markdown-accent__color);
+  border-radius: 0.15em;
+  display: inline-grid;
+  place-content: center;
+}
+
+.markdown input[type="checkbox"]::before {
+  content: "";
+  width: 0.6em;
+  height: 0.6em;
+  /* The tick */
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  /* Hide the tick */
+  transform: scale(0);
+/*   transform-origin: bottom left; */
+  background-color: var(--markdown-accent__color);
+}
+
+.markdown input[type="checkbox"]:checked::before {
+  /* Un-hide the tick */
+  transform: scale(1);
+}
+
+.markdown p,
+.markdown li,
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  /* Sensible max line length for text */
+  max-width: 60em;
+  white-space: normal;
+  line-height: 1.4em;
+}
+
+.markdown blockquote {
+  border-left-color: var(--markdown-accent__color);
+  border-left-style: solid;
+  border-left-width: 3px;
+  padding-left: 0.7em;
+  margin-left: 0.5em;
+  padding-top: 0.2em;
+}
+

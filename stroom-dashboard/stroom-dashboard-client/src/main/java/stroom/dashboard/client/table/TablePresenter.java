@@ -95,6 +95,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -275,7 +276,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
-                if (currentSearchModel.isSearching()) {
+                if (currentSearchModel.isPolling()) {
                     ConfirmEvent.fire(TablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
                                     "Note that these may be incomplete.",
@@ -709,7 +710,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             @Override
             public SafeHtml getValue(final TableRow row) {
                 if (row == null) {
-                    return null;
+                    return SafeHtmlUtil.NBSP;
                 }
 
                 return row.getValue(field.getId());
@@ -828,6 +829,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
+        // Remove all special fields as we will re-add them with the right names if there are any.
+        getTableSettings().getFields().removeIf(Field::isSpecial);
+
         // Get special fields from the current data source.
         final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
         final List<Field> requiredSpecialFields = new ArrayList<>();
@@ -846,9 +850,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             // If the fields we want to make special do exist in the current data source then
             // add them.
             if (requiredSpecialFields.size() > 0) {
-                // Remove all special fields as we will re-add them with the right names if there are any.
-                getTableSettings().getFields().removeIf(Field::isSpecial);
-
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
@@ -1070,7 +1071,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
             currentRequestCount--;
             getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.getMode());
+            getView().setRefreshing(currentSearchModel.isSearching());
         });
     }
 
@@ -1100,6 +1101,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         return null;
+    }
+
+    @Override
+    public void setDesignMode(final boolean designMode) {
+        super.setDesignMode(designMode);
+        dataGrid.setAllowMove(designMode);
+        dataGrid.setAllowHeaderSelection(designMode);
+        addFieldButton.setVisible(designMode);
     }
 
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {

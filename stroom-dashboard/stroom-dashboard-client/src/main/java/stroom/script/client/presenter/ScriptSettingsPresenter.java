@@ -17,23 +17,17 @@
 
 package stroom.script.client.presenter;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class ScriptSettingsPresenter
-        extends DocumentSettingsPresenter<ScriptSettingsView, ScriptDoc> {
+public class ScriptSettingsPresenter extends DocumentEditPresenter<ScriptSettingsView, ScriptDoc> {
 
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
 
@@ -43,16 +37,6 @@ public class ScriptSettingsPresenter
                                    final ScriptDependencyListPresenter scriptDependencyListPresenter) {
         super(eventBus, view);
         this.scriptDependencyListPresenter = scriptDependencyListPresenter;
-
-        // Add listeners for dirty events.
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        };
-
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         view.setDependencyList(scriptDependencyListPresenter.getView());
     }
 
@@ -68,28 +52,17 @@ public class ScriptSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ScriptDoc script) {
-        getView().getDescription().setText(script.getDescription());
-
-        scriptDependencyListPresenter.read(docRef, script);
+    protected void onRead(final DocRef docRef, final ScriptDoc script, final boolean readOnly) {
+        scriptDependencyListPresenter.read(docRef, script, readOnly);
     }
 
     @Override
     protected ScriptDoc onWrite(ScriptDoc script) {
-        script.setDescription(getView().getDescription().getText().trim());
         script = scriptDependencyListPresenter.write(script);
         return script;
     }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        scriptDependencyListPresenter.onReadOnly(readOnly);
-    }
-
-    public interface ScriptSettingsView extends View, ReadOnlyChangeHandler {
-
-        TextArea getDescription();
+    public interface ScriptSettingsView extends View {
 
         void setDependencyList(View view);
     }

@@ -24,12 +24,12 @@ import stroom.widget.util.client.MouseUtil;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 abstract class BaseSvgButton extends ButtonBase implements ButtonView {
+
     private final Element background;
     private final Element face;
     /**
@@ -64,6 +64,11 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         setSvgPreset(preset);
 
         setEnabled(preset.isEnabled());
+    }
+
+    void toggleSvgPreset(final Preset oldPreset, final Preset newPreset) {
+        face.removeClassName(oldPreset.getClassName());
+        setSvgPreset(newPreset);
     }
 
     void setSvgPreset(final Preset svgPreset) {

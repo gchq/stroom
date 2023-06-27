@@ -33,8 +33,8 @@
 
     --menu-separator__color: rgb(255 255 255 / 20%);
 
-    --tooltip__background-color: #3c3f41;
-    --tooltip__text-color: #fff;
+    --tooltip__background-color: #adadad;
+    --tooltip__text-color: #000;
 
     --button__background-image: none;
     --button__background-color: #454545;
@@ -49,10 +49,12 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
 
-    --icon-button__background-color--on: #262a32;
-    --icon-button__border-color--on: #444;
+    --icon-button__background-color--on: var(--blue-500);
+    --icon-button__border-color--on: var(--black);
+    --icon-button__color--on: var(--white);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
+    --icon-button__color: var(--blue-500);
     --navigation-icon-button__background-color--on: #262a32;
     --navigation-icon-button__border-color--on: #444;
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
@@ -78,14 +80,14 @@
 
     --code-editor-right-bar__background-color: #19171d;
     --code-editor__border-color: #000;
-    --code-editor__border-color--info: #3676c6;
+    --code-editor__border-color--info: #378cff;
     --code-editor__background-color--info: #378cff;
-    --code-editor__border-color--warning: #dd9942;
+    --code-editor__border-color--warning: #ffde81;
     --code-editor__background-color--warning: #ffde81;
-    --code-editor__border-color--error: #660000;
-    --code-editor__background-color--error: #ff3a37;
-    --code-editor__border-color--fatal: #c5cde2;
-    --code-editor__background-color--fatal: #000000;
+    --code-editor__border-color--error: #ff6c00;
+    --code-editor__background-color--error: #ff6c00;
+    --code-editor__border-color--fatal: #ff0000;
+    --code-editor__background-color--fatal: #ff0000;
     --code-editor__background-color--highlight: #1164a3;
 
     --xsdbrowser-box__background-color: #19171d;

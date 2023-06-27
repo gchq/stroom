@@ -19,6 +19,7 @@ package stroom.explorer.impl;
 import stroom.collection.api.CollectionService;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodePermissionsService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -36,6 +37,7 @@ public class ExplorerModule extends AbstractModule {
         bind(ExplorerNodePermissionsService.class).to(ExplorerNodePermissionsServiceImpl.class);
         bind(ExplorerSession.class).to(ExplorerSessionImpl.class);
         bind(ExplorerService.class).to(ExplorerServiceImpl.class);
+        bind(ExplorerDecorator.class).to(ExplorerDecoratorImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
         bind(CollectionService.class).to(ExplorerServiceImpl.class);
         bind(DocRefInfoService.class).to(DocRefInfoServiceImpl.class);

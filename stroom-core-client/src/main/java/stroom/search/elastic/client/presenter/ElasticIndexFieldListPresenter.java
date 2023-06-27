@@ -126,10 +126,10 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     @Override
-    public void read(final DocRef docRef, final ElasticIndexDoc index) {
+    public void read(final DocRef docRef, final ElasticIndexDoc document, final boolean readOnly) {
 
-        if (index != null) {
-            fields = index.getFields().stream()
+        if (document != null) {
+            fields = document.getFields().stream()
                     .sorted(Comparator.comparing(ElasticIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
 

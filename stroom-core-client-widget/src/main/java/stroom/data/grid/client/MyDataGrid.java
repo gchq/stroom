@@ -55,6 +55,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     public static final DefaultResources RESOURCES = GWT.create(DefaultResources.class);
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
+    private static final String MULTI_LINE = "multiline";
+    private static final String ALLOW_HEADER_SELECTION = "allow-header-selection";
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
@@ -64,6 +66,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private ResizeHandle<R> resizeHandle;
     private MoveHandle<R> moveHandle;
     private Heading moveHeading;
+    private boolean allowMove = true;
+    private boolean allowResize = true;
+    private boolean allowHeaderSelection = true;
 
     private final DoubleClickTester doubleClickTester = new DoubleClickTester();
 
@@ -82,6 +87,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         final Node header = getElement().getChild(0);
         final Element e = (Element) header;
         e.addClassName(RESOURCES.dataGridStyle().dataGridHeaderBackground());
+        e.addClassName(ALLOW_HEADER_SELECTION);
         e.getStyle().setPropertyPx("minHeight", 5);
 
         getRowContainer().getStyle().setCursor(Cursor.DEFAULT);
@@ -108,6 +114,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             setKeyboardSelectionHandler(event -> {
             });
             getRowContainer().getStyle().setCursor(Cursor.POINTER);
+        }
+    }
+
+    public void setMultiLine(final boolean multiLine) {
+        if (multiLine) {
+            addStyleName(MULTI_LINE);
+        } else {
+            removeStyleName(MULTI_LINE);
         }
     }
 
@@ -159,7 +173,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 if (moveHandle.isMoving()) {
                     moveHandle.move(event);
 
-                } else {
+                } else if (allowMove) {
                     // Try and start moving the current column.
                     moveHandle.startMove(event);
 
@@ -191,8 +205,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     headingListener.onMouseDown(event, heading);
                 }
 
-                if (!resizeHandle.isResizing()
-                        && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+                if (allowResize &&
+                        !resizeHandle.isResizing() &&
+                        MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
                     resizeHandle.startResize(event);
 
                 } else {
@@ -200,7 +215,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 }
 
                 // Set the heading that the move handle will use.
-                moveHandle.setHeading(event, moveHeading);
+                if (allowMove) {
+                    moveHandle.setHeading(event, moveHeading);
+                }
             }
 
         } else if (Event.ONMOUSEUP == nativePreviewEvent.getTypeInt()) {
@@ -209,12 +226,11 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 final MoveHandle<R> moveHandle = getMoveHandle();
 
                 if (resizeHandle.isResizing()) {
-
                     if (doubleClickTester.isDoubleClick(resizeHandle)) {
                         final int colNo = resizeHandle.getColNo();
 
                         final Element tempDiv = DOM.createDiv();
-                        tempDiv.setClassName("stroom-dashboard-text-measurement");
+                        tempDiv.setClassName("dataGridCell-text-measurement");
 
                         RootPanel.get().getElement().appendChild(tempDiv);
 
@@ -251,7 +267,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     // Stop moving column.
                     moveHandle.endMove(event);
                 } else {
-                    if (headingListener != null) {
+                    if (allowHeaderSelection && headingListener != null) {
                         final Heading heading = getHeading(event);
                         headingListener.onMouseUp(event, heading);
 
@@ -270,8 +286,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
             // Hide the resize handle once the mouse moves outside the data
             // grid.
-            if (!resizeHandle.isResizing() && moveHeading == null
-                    && !MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+            if (!resizeHandle.isResizing() &&
+                    moveHeading == null &&
+                    !MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
                 final Element rel = event.getRelatedEventTarget().cast();
                 final Heading heading = getHeading(rel, event.getClientX());
                 if (heading != null) {
@@ -541,6 +558,26 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     public void clearColumnSortList() {
         if (super.getColumnSortList() != null) {
             super.getColumnSortList().clear();
+        }
+    }
+
+    public void setAllowMove(final boolean allowMove) {
+        this.allowMove = allowMove;
+    }
+
+    public void setAllowResize(final boolean allowResize) {
+        this.allowResize = allowResize;
+    }
+
+    public void setAllowHeaderSelection(final boolean allowHeaderSelection) {
+        this.allowHeaderSelection = allowHeaderSelection;
+
+        final Node header = getElement().getChild(0);
+        final Element e = (Element) header;
+        if (allowHeaderSelection) {
+            e.addClassName(ALLOW_HEADER_SELECTION);
+        } else {
+            e.removeClassName(ALLOW_HEADER_SELECTION);
         }
     }
 }

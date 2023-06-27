@@ -534,7 +534,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final Object entity) {
+    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
         if (docRef == null) {
             setNullCriteria();
         } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {

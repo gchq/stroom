@@ -17,8 +17,8 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
-import stroom.util.shared.Range;
 
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -59,6 +59,29 @@ public class DateExpressionParser {
                 expression,
                 null,
                 nowEpochMilli);
+    }
+
+    public static TimeFilter getTimeFilter(final TimeRange timeRange,
+                                           final DateTimeSettings dateTimeSettings,
+                                           final long nowEpochMilli) {
+        final long from = getMs(timeRange.getFrom(), dateTimeSettings, nowEpochMilli, 0);
+        final long to = getMs(timeRange.getTo(), dateTimeSettings, nowEpochMilli, Long.MAX_VALUE);
+        return new TimeFilter(from, to);
+    }
+
+    private static long getMs(final String expression,
+                             final DateTimeSettings dateTimeSettings,
+                             final long nowEpochMilli,
+                             final long defaultValue) {
+        if (expression == null || expression.isBlank()) {
+            return defaultValue;
+        }
+        return DateExpressionParser.parse(
+                        expression,
+                        dateTimeSettings,
+                        nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli())
+                .orElse(defaultValue);
     }
 
     public static Optional<ZonedDateTime> parse(final String expression,

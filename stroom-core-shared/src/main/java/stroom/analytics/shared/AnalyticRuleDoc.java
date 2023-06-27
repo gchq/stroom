@@ -19,6 +19,7 @@ package stroom.analytics.shared;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.QueryKey;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -44,17 +45,14 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private final AnalyticRuleType analyticRuleType;
     @JsonProperty
-    private final DocRef destinationFeed;
-    @JsonProperty
-    private final AnalyticRuleProcessSettings processSettings;
+    private final SimpleDuration dataRetention;
 
     public AnalyticRuleDoc() {
         description = null;
         languageVersion = null;
         query = null;
         analyticRuleType = null;
-        destinationFeed = null;
-        processSettings = null;
+        dataRetention = null;
     }
 
     @JsonCreator
@@ -70,15 +68,13 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                            @JsonProperty("query") final String query,
                            @JsonProperty("analyticRuleType") AnalyticRuleType analyticRuleType,
-                           @JsonProperty("destinationFeed") final DocRef destinationFeed,
-                           @JsonProperty("processSettings") AnalyticRuleProcessSettings processSettings) {
+                           @JsonProperty("dataRetention") SimpleDuration dataRetention) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.query = query;
         this.analyticRuleType = analyticRuleType;
-        this.destinationFeed = destinationFeed;
-        this.processSettings = processSettings;
+        this.dataRetention = dataRetention;
     }
 
     /**
@@ -113,17 +109,13 @@ public class AnalyticRuleDoc extends Doc {
         return analyticRuleType;
     }
 
-    public DocRef getDestinationFeed() {
-        return destinationFeed;
-    }
-
-    public AnalyticRuleProcessSettings getProcessSettings() {
-        return processSettings;
-    }
-
     @JsonIgnore
     public QueryKey getQueryKey() {
         return new QueryKey(getUuid() + " - " + getName());
+    }
+
+    public SimpleDuration getDataRetention() {
+        return dataRetention;
     }
 
     @Override
@@ -142,8 +134,7 @@ public class AnalyticRuleDoc extends Doc {
                 languageVersion == that.languageVersion &&
                 Objects.equals(query, that.query) &&
                 analyticRuleType == that.analyticRuleType &&
-                Objects.equals(destinationFeed, that.destinationFeed) &&
-                Objects.equals(processSettings, that.processSettings);
+                Objects.equals(dataRetention, that.dataRetention);
     }
 
     @Override
@@ -153,8 +144,7 @@ public class AnalyticRuleDoc extends Doc {
                 languageVersion,
                 query,
                 analyticRuleType,
-                destinationFeed,
-                processSettings);
+                dataRetention);
     }
 
     @Override
@@ -163,9 +153,8 @@ public class AnalyticRuleDoc extends Doc {
                 "description='" + description + '\'' +
                 ", languageVersion=" + languageVersion +
                 ", query='" + query + '\'' +
-                ", alertRuleType=" + analyticRuleType +
-                ", destinationFeed=" + destinationFeed +
-                ", processSettings=" + processSettings +
+                ", analyticRuleType=" + analyticRuleType +
+                ", dataRetention=" + dataRetention +
                 '}';
     }
 
@@ -183,8 +172,7 @@ public class AnalyticRuleDoc extends Doc {
         private QueryLanguageVersion languageVersion;
         private String query;
         private AnalyticRuleType analyticRuleType;
-        private DocRef destinationFeed;
-        private AnalyticRuleProcessSettings processSettings;
+        private SimpleDuration dataRetention;
 
         public Builder() {
         }
@@ -195,8 +183,7 @@ public class AnalyticRuleDoc extends Doc {
             this.languageVersion = doc.languageVersion;
             this.query = doc.query;
             this.analyticRuleType = doc.analyticRuleType;
-            this.destinationFeed = doc.destinationFeed;
-            this.processSettings = doc.processSettings;
+            this.dataRetention = doc.dataRetention;
         }
 
         public Builder description(final String description) {
@@ -219,13 +206,8 @@ public class AnalyticRuleDoc extends Doc {
             return self();
         }
 
-        public Builder destinationFeed(final DocRef destinationFeed) {
-            this.destinationFeed = destinationFeed;
-            return self();
-        }
-
-        public Builder processSettings(final AnalyticRuleProcessSettings processSettings) {
-            this.processSettings = processSettings;
+        public Builder dataRetention(final SimpleDuration dataRetention) {
+            this.dataRetention = dataRetention;
             return self();
         }
 
@@ -249,8 +231,7 @@ public class AnalyticRuleDoc extends Doc {
                     languageVersion,
                     query,
                     analyticRuleType,
-                    destinationFeed,
-                    processSettings);
+                    dataRetention);
         }
     }
 }

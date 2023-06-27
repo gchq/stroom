@@ -16,6 +16,7 @@
 
 package stroom.pipeline.factory;
 
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.Terminator;
 
@@ -50,8 +51,12 @@ public abstract class AbstractElement implements Element {
         this.elementId = elementId;
     }
 
-    protected void checkTermination() throws TaskTerminatedException {
-        terminator.checkTermination();
+    protected void checkTermination() {
+        try {
+            terminator.checkTermination();
+        } catch (final TaskTerminatedException e) {
+            throw ProcessException.create(e.getMessage(), e);
+        }
     }
 
     @Override

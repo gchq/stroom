@@ -72,4 +72,12 @@ public interface UnsignedBytes {
      * @return The maximum unsigned value that can be written out as bytes.
      */
     long maxValue();
+
+    int compare(final ByteBuffer buffer1,
+                final int index1,
+                final ByteBuffer buffer2,
+                final int index2);
+
+    int compare(final ByteBuffer buffer1,
+                final ByteBuffer buffer2);
 }

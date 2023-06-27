@@ -37,10 +37,12 @@ jooq {
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
                         includes = "" +
-                                "analytic_rule|" +
-                                "analytic_rule_state"
+                                "analytic_processor_filter|" +
+                                "analytic_processor_filter_tracker|" +
+                                "analytic_notification|" +
+                                "analytic_notification_state"
                         // We don't want to include flyway versioning
-                        excludes = 'analytics_schema_history'
+                        excludes = 'analytic_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
 
@@ -51,8 +53,8 @@ jooq {
                             forcedType {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
-                                    '.*\\.analytic_rule\\.enabled|' +
-                                    '.*\\.analytic_rule\\.deleted|'
+                                    '.*\\.analytic_processor_filter\\.enabled|' +
+                                    '.*\\.analytic_notification\\.enabled|'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

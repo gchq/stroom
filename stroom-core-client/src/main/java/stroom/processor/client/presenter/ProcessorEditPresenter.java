@@ -104,6 +104,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                 .caption(filter != null
                         ? "Edit Filter"
                         : "Add Filter")
+                .modal(true)
                 .onShow(e -> editExpressionPresenter.focus())
                 .onHideRequest(event -> {
                     if (event.isOk()) {

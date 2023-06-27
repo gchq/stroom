@@ -17,23 +17,19 @@
 
 package stroom.pipeline.client.presenter;
 
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 public class TextConverterSettingsPresenter
-        extends DocumentSettingsPresenter<TextConverterSettingsView, TextConverterDoc> {
+        extends DocumentEditPresenter<TextConverterSettingsView, TextConverterDoc> {
 
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view) {
@@ -42,19 +38,13 @@ public class TextConverterSettingsPresenter
         view.getConverterType().addItem(TextConverterType.NONE);
         view.getConverterType().addItem(TextConverterType.DATA_SPLITTER);
         view.getConverterType().addItem(TextConverterType.XML_FRAGMENT);
+    }
 
-        // Add listeners for dirty events.
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        };
-
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
-
+    @Override
+    protected void onBind() {
+        super.onBind();
         registerHandler(
-                view.getConverterType().addSelectionHandler(event -> setDirty(true)));
+                getView().getConverterType().addSelectionHandler(event -> setDirty(true)));
     }
 
     @Override
@@ -63,22 +53,18 @@ public class TextConverterSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final TextConverterDoc textConverter) {
-        getView().getDescription().setText(textConverter.getDescription());
+    protected void onRead(final DocRef docRef, final TextConverterDoc textConverter, final boolean readOnly) {
         getView().getConverterType().setSelectedItem(textConverter.getConverterType());
     }
 
     @Override
     protected TextConverterDoc onWrite(final TextConverterDoc textConverter) {
         final TextConverterType converterType = getView().getConverterType().getSelectedItem();
-        textConverter.setDescription(getView().getDescription().getText().trim());
         textConverter.setConverterType(converterType);
         return textConverter;
     }
 
     public interface TextConverterSettingsView extends View {
-
-        TextArea getDescription();
 
         ItemListBox<TextConverterDoc.TextConverterType> getConverterType();
     }

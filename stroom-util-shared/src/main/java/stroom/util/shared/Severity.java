@@ -30,12 +30,22 @@ public enum Severity implements HasDisplayValue {
     ERROR(3, "ERROR", "Errors"),
     FATAL_ERROR(4, "FATAL", "Fatal Errors");
 
+    /**
+     * Array of severities in descending order of importance, i.e. FATAL_ERROR first
+     */
     public static final Severity[] SEVERITIES = {FATAL_ERROR, ERROR, WARNING, INFO};
 
     /**
-     * Comparator for comparing severities with nulls first
+     * Comparator for comparing severities with nulls first then lowest to highest severity
      */
-    public static final Comparator<Severity> COMPARATOR = Comparator.nullsFirst(Comparator.comparing(Severity::getId));
+    public static final Comparator<Severity> LOW_TO_HIGH_COMPARATOR = Comparator.nullsFirst(
+            Comparator.comparing(Severity::getId));
+
+    /**
+     * Comparator for comparing severities with nulls last and highest to lowest severity
+     */
+    public static final Comparator<Severity> HIGH_TO_LOW_COMPARATOR = Comparator.nullsLast(
+            Comparator.comparing(Severity::getId).reversed());
 
     private final int id;
     private final String displayValue;
@@ -112,7 +122,7 @@ public enum Severity implements HasDisplayValue {
                     .map(severity -> severity != null
                             ? severity
                             : defaultValue)
-                    .max(COMPARATOR)
+                    .max(LOW_TO_HIGH_COMPARATOR)
                     .orElse(defaultValue);
         }
     }

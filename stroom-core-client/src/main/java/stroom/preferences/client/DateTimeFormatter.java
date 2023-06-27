@@ -3,6 +3,7 @@ package stroom.preferences.client;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.widget.customdatebox.client.ClientDurationUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -15,6 +16,17 @@ public class DateTimeFormatter {
     @Inject
     public DateTimeFormatter(final UserPreferencesManager userPreferencesManager) {
         this.userPreferencesManager = userPreferencesManager;
+    }
+
+    public String formatWithDuration(final Long ms) {
+        if (ms == null) {
+            return null;
+        }
+
+        return format(ms) +
+                " (" +
+                ClientDurationUtil.humanise(-(System.currentTimeMillis() - ms), true) +
+                ")";
     }
 
     public String format(final Long ms) {
@@ -55,7 +67,7 @@ public class DateTimeFormatter {
         return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
     }
 
-    private String convertJavaDateTimePattern(final String pattern) {
+    String convertJavaDateTimePattern(final String pattern) {
         String converted = pattern;
         converted = converted.replace('y', 'Y');
         converted = converted.replace('d', 'D');
@@ -64,6 +76,18 @@ public class DateTimeFormatter {
         converted = converted.replaceAll("xxx", "Z");
         converted = converted.replaceAll("xx", "z");
         converted = converted.replaceAll("VV", "ZZ");
+
+        // Deal with day name formatting.
+        converted = converted.replaceAll("E{2,}", "dddd");
+        converted = converted.replaceAll("E", "ddd");
+        converted = converted.replaceAll("e{4,}", "dddd");
+        converted = converted.replaceAll("e{3,}", "ddd");
+        converted = converted.replaceAll("e+", "d");
+        converted = converted.replaceAll("c{4,}", "dddd");
+        converted = converted.replaceAll("c{3,}", "ddd");
+        converted = converted.replaceAll("c+", "d");
+
+
         return converted;
     }
 

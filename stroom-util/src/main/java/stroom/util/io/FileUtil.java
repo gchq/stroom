@@ -387,4 +387,24 @@ public final class FileUtil {
             throw new RuntimeException("Error opening lock file " + lockFilePath.toAbsolutePath(), e);
         }
     }
+
+    public static long getByteSize(final Path dir) {
+        final AtomicLong total = new AtomicLong();
+        try {
+            try (final Stream<Path> stream = Files.walk(dir)) {
+                stream.forEach(path -> {
+                    try {
+                        if (Files.isRegularFile(path)) {
+                            total.addAndGet(Files.size(path));
+                        }
+                    } catch (final IOException e) {
+                        LOGGER.debug(e::getMessage, e);
+                    }
+                });
+            }
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return total.get();
+    }
 }

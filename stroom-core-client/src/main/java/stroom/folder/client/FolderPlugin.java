@@ -46,10 +46,10 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     @Inject
     public FolderPlugin(final EventBus eventBus,
                         final Provider<FolderPresenter> editorProvider,
-                        final ClientSecurityContext securityContext,
                         final ContentManager contentManager,
-                        final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                        final DocumentPluginEventManager entityPluginEventManager,
+                        final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;
         this.contentManager = contentManager;

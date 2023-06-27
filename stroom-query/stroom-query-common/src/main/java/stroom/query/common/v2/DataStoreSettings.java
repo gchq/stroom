@@ -2,7 +2,6 @@ package stroom.query.common.v2;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Settings to configure the behaviour of a data store.
@@ -10,63 +9,43 @@ import java.util.UUID;
 public class DataStoreSettings {
 
     private final boolean producePayloads;
-    private final boolean requireTimeValue;
-    private final boolean requireStreamIdValue;
-    private final boolean requireEventIdValue;
+    private final boolean storeLatestEventReference;
     private final Sizes maxResults;
     private final Sizes storeSize;
-    private final String subDirectory;
 
     public DataStoreSettings(final boolean producePayloads,
-                             final boolean requireTimeValue,
-                             final boolean requireStreamIdValue,
-                             final boolean requireEventIdValue,
+                             final boolean storeLatestEventReference,
                              final Sizes maxResults,
-                             final Sizes storeSize,
-                             final String subDirectory) {
+                             final Sizes storeSize) {
         this.producePayloads = producePayloads;
-        this.requireTimeValue = requireTimeValue;
-        this.requireStreamIdValue = requireStreamIdValue;
-        this.requireEventIdValue = requireEventIdValue;
+        this.storeLatestEventReference = storeLatestEventReference;
         this.maxResults = maxResults;
         this.storeSize = storeSize;
-        this.subDirectory = subDirectory;
     }
 
-    public static DataStoreSettings createAnalyticStoreSettings(final String subDirectory) {
+    public static DataStoreSettings createAnalyticStoreSettings() {
         return DataStoreSettings
                 .builder()
-                .requireStreamIdValue(true)
-                .requireEventIdValue(true)
-                .requireTimeValue(true)
+                .storeLatestEventReference(true)
                 .maxResults(Sizes.create(Integer.MAX_VALUE))
                 .storeSize(Sizes.create(Integer.MAX_VALUE))
-                .subDirectory(subDirectory)
                 .build();
     }
 
     public static DataStoreSettings createBasicSearchResultStoreSettings() {
-        return DataStoreSettings.builder().subDirectory(UUID.randomUUID().toString()).build();
+        return DataStoreSettings.builder().build();
     }
 
     public static DataStoreSettings createPayloadProducerSearchResultStoreSettings() {
-        return DataStoreSettings.builder().producePayloads(true).subDirectory(UUID.randomUUID().toString()).build();
+        return DataStoreSettings.builder().producePayloads(true).build();
     }
 
     public boolean isProducePayloads() {
         return producePayloads;
     }
 
-    public boolean isRequireTimeValue() {
-        return requireTimeValue;
-    }
-
-    public boolean isRequireStreamIdValue() {
-        return requireStreamIdValue;
-    }
-
-    public boolean isRequireEventIdValue() {
-        return requireEventIdValue;
+    public boolean isStoreLatestEventReference() {
+        return storeLatestEventReference;
     }
 
     public Sizes getMaxResults() {
@@ -75,10 +54,6 @@ public class DataStoreSettings {
 
     public Sizes getStoreSize() {
         return storeSize;
-    }
-
-    public String getSubDirectory() {
-        return subDirectory;
     }
 
     @Override
@@ -91,35 +66,23 @@ public class DataStoreSettings {
         }
         final DataStoreSettings that = (DataStoreSettings) o;
         return producePayloads == that.producePayloads &&
-                requireTimeValue == that.requireTimeValue &&
-                requireStreamIdValue == that.requireStreamIdValue &&
-                requireEventIdValue == that.requireEventIdValue &&
+                storeLatestEventReference == that.storeLatestEventReference &&
                 Objects.equals(maxResults, that.maxResults) &&
-                Objects.equals(storeSize, that.storeSize) &&
-                Objects.equals(subDirectory, that.subDirectory);
+                Objects.equals(storeSize, that.storeSize);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(producePayloads,
-                requireTimeValue,
-                requireStreamIdValue,
-                requireEventIdValue,
-                maxResults,
-                storeSize,
-                subDirectory);
+        return Objects.hash(producePayloads, storeLatestEventReference, maxResults, storeSize);
     }
 
     @Override
     public String toString() {
         return "DataStoreSettings{" +
                 "producePayloads=" + producePayloads +
-                ", requireTimeValue=" + requireTimeValue +
-                ", requireStreamIdValue=" + requireStreamIdValue +
-                ", requireEventIdValue=" + requireEventIdValue +
+                ", storeLatestEventReference=" + storeLatestEventReference +
                 ", maxResults=" + maxResults +
                 ", storeSize=" + storeSize +
-                ", subDirectory=" + subDirectory +
                 '}';
     }
 
@@ -134,24 +97,18 @@ public class DataStoreSettings {
     public static class Builder {
 
         private boolean producePayloads;
-        private boolean requireTimeValue;
-        private boolean requireStreamIdValue;
-        private boolean requireEventIdValue;
+        private boolean storeLatestEventReference;
         private Sizes maxResults = Sizes.create(List.of(1000000, 100, 10, 1));
         private Sizes storeSize = Sizes.create(100);
-        private String subDirectory;
 
         private Builder() {
         }
 
         private Builder(final DataStoreSettings dataStoreSettings) {
             this.producePayloads = dataStoreSettings.producePayloads;
-            this.requireTimeValue = dataStoreSettings.requireTimeValue;
-            this.requireStreamIdValue = dataStoreSettings.requireStreamIdValue;
-            this.requireEventIdValue = dataStoreSettings.requireEventIdValue;
+            this.storeLatestEventReference = dataStoreSettings.storeLatestEventReference;
             this.maxResults = dataStoreSettings.maxResults;
             this.storeSize = dataStoreSettings.storeSize;
-            this.subDirectory = dataStoreSettings.subDirectory;
         }
 
         public Builder producePayloads(final boolean producePayloads) {
@@ -159,18 +116,8 @@ public class DataStoreSettings {
             return this;
         }
 
-        public Builder requireTimeValue(final boolean requireTimeValue) {
-            this.requireTimeValue = requireTimeValue;
-            return this;
-        }
-
-        public Builder requireStreamIdValue(final boolean requireStreamIdValue) {
-            this.requireStreamIdValue = requireStreamIdValue;
-            return this;
-        }
-
-        public Builder requireEventIdValue(final boolean requireEventIdValue) {
-            this.requireEventIdValue = requireEventIdValue;
+        public Builder storeLatestEventReference(final boolean storeLatestEventReference) {
+            this.storeLatestEventReference = storeLatestEventReference;
             return this;
         }
 
@@ -184,22 +131,12 @@ public class DataStoreSettings {
             return this;
         }
 
-        public Builder subDirectory(final String subDirectory) {
-            // Make safe for the file system.
-            final String dir = subDirectory.replaceAll("[^A-Za-z0-9]", "_");
-            this.subDirectory = dir;
-            return this;
-        }
-
         public DataStoreSettings build() {
             return new DataStoreSettings(
                     producePayloads,
-                    requireTimeValue,
-                    requireStreamIdValue,
-                    requireEventIdValue,
+                    storeLatestEventReference,
                     maxResults,
-                    storeSize,
-                    subDirectory);
+                    storeSize);
         }
     }
 }

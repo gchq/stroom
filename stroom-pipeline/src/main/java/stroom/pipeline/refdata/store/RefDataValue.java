@@ -38,4 +38,6 @@ public interface RefDataValue {
      * byte so values must be in the range -128 to 127.
      */
     int getTypeId();
+
+    boolean isNullValue();
 }

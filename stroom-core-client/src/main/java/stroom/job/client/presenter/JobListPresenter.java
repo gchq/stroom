@@ -34,9 +34,12 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.TableUtil;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.Range;
@@ -62,6 +65,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
 
         final MyDataGrid<Job> dataGrid = new MyDataGrid<>();
+        dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -88,10 +92,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addResizableColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
-                if (row != null) {
-                    return row.getName();
-                }
-                return null;
+                return TableUtil.getString(row, Job::getName);
             }
         }, "Job", 200);
 
@@ -132,13 +133,10 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         }, "<br/>", 20);
 
-        dataGrid.addResizableColumn(new Column<Job, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<Job, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public String getValue(final Job row) {
-                if (row != null) {
-                    return row.getDescription();
-                }
-                return null;
+            public SafeHtml getValue(final Job row) {
+                return TableUtil.getSafeHtml(row, Job::getDescription);
             }
         }, "Description", 800);
 

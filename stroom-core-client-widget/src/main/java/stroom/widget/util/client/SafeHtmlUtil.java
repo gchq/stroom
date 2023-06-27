@@ -6,6 +6,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class SafeHtmlUtil {
 
+    public static final SafeHtml NBSP = SafeHtmlUtils.fromSafeConstant("&nbsp;");
+
     private SafeHtmlUtil() {
     }
 
@@ -29,10 +31,10 @@ public class SafeHtmlUtil {
             return SafeHtmlUtils.fromString("");
         } else {
             String str = string;
-            if (str.startsWith("\n")) {
+            while (str.startsWith("\n")) {
                 str = str.substring(1);
             }
-            if (str.endsWith("\n")) {
+            while (str.endsWith("\n")) {
                 str = str.substring(0, str.length() - 1);
             }
             // One ...<br> tag at the end of each line
@@ -55,10 +57,10 @@ public class SafeHtmlUtil {
                     }
                 }
 
+                if (lineNo++ != 1) {
+                    builder.appendHtmlConstant("<br>");
+                }
                 if (!line.isEmpty()) {
-                    if (lineNo++ != 1) {
-                        builder.appendHtmlConstant("<br>");
-                    }
                     builder.appendEscaped(line);
                 }
             }

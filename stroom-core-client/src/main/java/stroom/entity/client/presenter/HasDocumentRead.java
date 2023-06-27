@@ -20,5 +20,5 @@ import stroom.docref.DocRef;
 
 public interface HasDocumentRead<E> {
 
-    void read(DocRef docRef, E entity);
+    void read(DocRef docRef, E document, boolean readOnly);
 }
