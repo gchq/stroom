@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.28] - 2023-06-27
+
+* Issue **#3504** : Fix XML schema cache deadlock.
+
+
 ## [v7.0.27] - 2023-06-15
 
 * Fix failing build.
@@ -4849,7 +4854,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.27...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.28...HEAD
+[v7.0.28]: https://github.com/gchq/stroom/compare/v7.0.27...v7.0.28
 [v7.0.27]: https://github.com/gchq/stroom/compare/v7.0.26...v7.0.27
 [v7.0.26]: https://github.com/gchq/stroom/compare/v7.0.25...v7.0.26
 [v7.0.25]: https://github.com/gchq/stroom/compare/v7.0.24...v7.0.25
