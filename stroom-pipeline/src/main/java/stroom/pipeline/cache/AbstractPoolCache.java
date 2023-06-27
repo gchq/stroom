@@ -173,6 +173,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
     }
 
     public void clear() {
+        keyMap.clear();
         cache.clear();
     }
 
