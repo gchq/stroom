@@ -9,6 +9,8 @@
     --control__gap--horizontal: 1rem;
     --dialog__padding--horizontal: 1rem;
     --dialog__padding--vertical: 1rem;
+    --split__size: 7px;
+    --split__offset: -3px;
 }
 
 .stroom-density-compact {
@@ -22,4 +24,6 @@
     --control__gap--horizontal: .4rem;
     --dialog__padding--horizontal: .4rem;
     --dialog__padding--vertical: .4rem;
+    --split__size: 7px;
+    --split__offset: -3px;
 }

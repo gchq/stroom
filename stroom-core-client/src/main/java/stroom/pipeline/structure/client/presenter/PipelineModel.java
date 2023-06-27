@@ -29,6 +29,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -48,9 +50,12 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     private static final String SOURCE = "Source";
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
-    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(SOURCE, null,
+    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(
+            SOURCE,
+            null,
             new String[]{
-                    PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
+                    PipelineElementType.ROLE_SOURCE,
+                    PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE},
             PipelineElementIcon.STREAM);
 
@@ -281,6 +286,10 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                 final PipelineElement linkTo = combinedData.getElements().get(link.getTo());
 
                 parentMap.put(linkTo, linkFrom);
+//                GWT.log("put "
+//                        + GwtNullSafe.get(linkFrom, PipelineElement::getId)
+//                        + " -> "
+//                        + GwtNullSafe.get(linkTo, PipelineElement::getId));
                 childMap.computeIfAbsent(linkFrom, k -> new ArrayList<>()).add(linkTo);
             }
         }
@@ -302,7 +311,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return parentMap;
     }
 
-    public PipelineElement addElement(final PipelineElement parent, final PipelineElementType elementType,
+    public PipelineElement addElement(final PipelineElement parent,
+                                      final PipelineElementType elementType,
                                       final String id) throws PipelineModelException {
         PipelineElement element;
 
@@ -471,6 +481,20 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     public void setPipelineData(final PipelineData pipelineData) {
         this.pipelineData = pipelineData;
+    }
+
+    /**
+     * Set the provided filters on the pipeline elements in our model
+     */
+    public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
+        GwtNullSafe.map(elementIdToStepFilterMap)
+                .forEach((elementId, steppingFilterSettings) -> {
+                    final PipelineElement pipelineElement = combinedData.getElement(elementId);
+                    if (pipelineElement != null) {
+                        pipelineElement.setSteppingFilterSettings(steppingFilterSettings);
+                    }
+                });
+        refresh();
     }
 
     private void removeLinks(final List<PipelineLink> list, final String element) {

@@ -106,7 +106,7 @@ public class SteppingResult {
         return GwtNullSafe.map(stepFilterMap)
                 .values()
                 .stream()
-                .anyMatch(SteppingFilterSettings::isActive);
+                .anyMatch(SteppingFilterSettings::hasActiveFilters);
     }
 
     public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {

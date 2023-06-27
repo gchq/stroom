@@ -21,7 +21,6 @@ import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -82,8 +81,13 @@ public class SteppingFilterSettings {
         }
     }
 
-    @JsonIgnore
-    public boolean isActive() {
+    public void clearAllFilters() {
+        skipToSeverity = null;
+        skipToOutput = null;
+        filters.clear();
+    }
+
+    public boolean hasActiveFilters() {
         return skipToSeverity != null
                 || skipToOutput != null
                 || (filters != null && !filters.isEmpty());

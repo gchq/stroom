@@ -54,10 +54,10 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
         widget = binder.createAndBindUi(this);
 
         filterButton.setSvg(SvgImage.FILTER);
-        filterButton.setTitle("Filter");
+        filterButton.setTitle("Manage Step Filters");
 
         firstButton.setSvg(SvgImage.FAST_BACKWARD);
-        firstButton.setTitle("Step First");
+        firstButton.setTitle("Step To First");
         firstButton.setEnabled(false);
 
         backwardButton.setSvg(SvgImage.STEP_BACKWARD);
@@ -69,7 +69,7 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
         forwardButton.setEnabled(false);
 
         lastButton.setSvg(SvgImage.FAST_FORWARD);
-        lastButton.setTitle("Step Last");
+        lastButton.setTitle("Step To Last");
         lastButton.setEnabled(false);
 
         refreshButton.setSvg(SvgImage.REFRESH);

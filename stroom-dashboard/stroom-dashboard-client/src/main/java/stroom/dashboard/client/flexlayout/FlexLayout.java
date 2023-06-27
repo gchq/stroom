@@ -28,7 +28,6 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
-import stroom.util.client.Console;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
@@ -38,6 +37,7 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.Size;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -61,7 +61,8 @@ public class FlexLayout extends Composite {
 
     private static final double DRAG_ZONE = 20;
     private static final double MIN_COMPONENT_WIDTH = 50;
-    private static final double SPLIT_SIZE = 6;
+    private static final double SPLIT_SIZE = 1;
+    private static final double SPLIT_OFFSET = 0;
     private static Glass marker;
     private static Glass glass;
     private final EventBus eventBus;
@@ -647,8 +648,8 @@ public class FlexLayout extends Composite {
             min = parentMin + getMinRequired(layoutConfig, dim, splitInfo.getIndex(), -1);
             max = parentMax - getMinRequired(layoutConfig, dim, splitInfo.getIndex() + 1, 1);
         }
-        min -= SPLIT_SIZE;
-        max -= SPLIT_SIZE;
+        min -= SPLIT_OFFSET;
+        max -= SPLIT_OFFSET;
     }
 
     private void setDefaultCursor() {
@@ -1172,17 +1173,22 @@ public class FlexLayout extends Composite {
     }
 
     public void refresh() {
+        Scheduler.get().scheduleDeferred(this::doRefresh);
+    }
+
+    public void doRefresh() {
         if (layoutConfig != null) {
             double minWidth = getMinRequired(layoutConfig, Dimension.X);
             double minHeight = getMinRequired(layoutConfig, Dimension.Y);
-            final double panelWidth = ElementUtil.getSubPixelOffsetWidth(getElement());
-            final double panelHeight = ElementUtil.getSubPixelOffsetHeight(getElement());
+            final double panelWidth = Math.floor(ElementUtil.getSubPixelOffsetWidth(getElement()));
+            final double panelHeight = Math.floor(ElementUtil.getSubPixelOffsetHeight(getElement()));
+//            GWT.log(getElement() + " panelWidth=" + panelWidth + " panelHeight=" + panelHeight);
 
-            double visibleWidth = panelWidth - 1;
-            double visibleHeight = panelHeight - 1;
-            double barWidth = 12;
-            boolean scrollX = false;
-            boolean scrollY = false;
+            double visibleWidth = panelWidth;
+            double visibleHeight = panelHeight;
+//            double barWidth = 12;
+//            boolean scrollX = false;
+//            boolean scrollY = false;
 
             if (!layoutConstraints.isFitWidth()) {
                 if (preferredSize.getWidth() > 0) {
@@ -1212,21 +1218,21 @@ public class FlexLayout extends Composite {
                 }
             }
 
-            for (int i = 0; i < 2; i++) {
-                if (!scrollX) {
-                    if (designWidth > visibleWidth) {
-                        scrollX = true;
-                        visibleHeight -= barWidth;
-                    }
-                }
-
-                if (!scrollY) {
-                    if (designHeight > visibleHeight) {
-                        scrollY = true;
-                        visibleWidth -= barWidth;
-                    }
-                }
-            }
+//            for (int i = 0; i < 2; i++) {
+//                if (!scrollX) {
+//                    if (designWidth > visibleWidth) {
+//                        scrollX = true;
+//                        visibleHeight -= barWidth;
+//                    }
+//                }
+//
+//                if (!scrollY) {
+//                    if (designHeight > visibleHeight) {
+//                        scrollY = true;
+//                        visibleWidth -= barWidth;
+//                    }
+//                }
+//            }
 
             final double width;
             if (layoutConstraints.isFitWidth()) {
@@ -1258,6 +1264,20 @@ public class FlexLayout extends Composite {
                 } else {
                     designSurfaceSize = outerSize;
                 }
+
+                GWT.log("visibleWidth=" +
+                        visibleWidth +
+                        " designWidth=" +
+                        designWidth +
+                        " visibleHeight=" +
+                        visibleHeight +
+                        " designHeight=" +
+                        designHeight +
+                        " width=" +
+                        width +
+                        " height=" +
+                        height);
+
                 designSurface.setSize(
                         designSurfaceSize.getWidth() + "px",
                         designSurfaceSize.getHeight() + "px");
@@ -1292,7 +1312,8 @@ public class FlexLayout extends Composite {
             }
 
             // Perform a resize on all child layouts.
-            resizeChildWidgets();
+            Scheduler.get().scheduleDeferred(this::resizeChildWidgets);
+//            resizeChildWidgets();
         }
     }
 
@@ -1311,11 +1332,11 @@ public class FlexLayout extends Composite {
         final PositionAndSize positionAndSize =
                 positionAndSizeMap.computeIfAbsent(splitInfo, k -> new PositionAndSize());
 
-        positionAndSize.setPos(dim, size.get(dim) - SPLIT_SIZE);
+        positionAndSize.setPos(dim, size.get(dim) - SPLIT_OFFSET);
         positionAndSize.setSize(dim, SPLIT_SIZE);
         final int opposite = Dimension.opposite(dim);
         positionAndSize.setPos(opposite, 0);
-        positionAndSize.setSize(opposite, size.get(opposite) - SPLIT_SIZE);
+        positionAndSize.setSize(opposite, size.get(opposite) + SPLIT_SIZE);
     }
 
     public void clear() {
@@ -1396,11 +1417,11 @@ public class FlexLayout extends Composite {
                         positionAndSize = positionAndSizeMap.computeIfAbsent(splitInfo, k -> new PositionAndSize());
 
                         if (dim == splitLayoutConfig.getDimension()) {
-                            positionAndSize.setPos(dim, pos - SPLIT_SIZE);
+                            positionAndSize.setPos(dim, pos - SPLIT_OFFSET);
                             positionAndSize.setSize(dim, SPLIT_SIZE);
                         } else {
                             positionAndSize.setPos(dim, pos);
-                            positionAndSize.setSize(dim, containerSize - SPLIT_SIZE);
+                            positionAndSize.setSize(dim, containerSize + SPLIT_SIZE);
                         }
 
                     } else {

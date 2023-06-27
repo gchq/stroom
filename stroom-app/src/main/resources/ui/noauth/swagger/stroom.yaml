@@ -13067,8 +13067,6 @@ components:
           $ref: '#/components/schemas/DocRef'
         description:
           type: string
-        filter:
-          $ref: '#/components/schemas/ExpressionOperator'
         name:
           type: string
         pipeline:

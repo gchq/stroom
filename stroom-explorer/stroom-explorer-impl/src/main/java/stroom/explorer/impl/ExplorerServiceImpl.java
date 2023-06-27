@@ -45,6 +45,7 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -237,6 +238,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .icon(iconMap.get(favDocRef.getType()))
                     .isFavourite(true)
                     .rootNodeUuid(favNode)
+                    .tags(ExplorerTags.getTags(favDocRef.getType()))
                     .build();
             masterTreeModel.add(favNode, childNode);
         }
@@ -248,7 +250,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                             final List<ExplorerNode> rootNodes,
                                             final Predicate<DocRef> fuzzyMatchPredicate) {
         if (rootNodes.size() > 0) {
-            final ExplorerNode rootNode = rootNodes.get(0);
+            final ExplorerNode rootNode = rootNodes.get(rootNodes.size() - 1);
             return rootNodes
                     .stream()
                     .map(node -> {
@@ -1057,7 +1059,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .findByContent(request.getPattern(), request.isRegex(), request.isMatchCase());
 
             for (final DocContentMatch docContentMatch : matches) {
-
                 final List<String> parents = new ArrayList<>();
                 parents.add(docContentMatch.getDocRef().getName());
                 final TreeModel masterTreeModel = explorerTreeModel.getModel();
@@ -1088,6 +1089,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 list.add(explorerDocContentMatch);
             }
         }
-        return ResultPage.createPageLimitedList(list, request.getPageRequest());
+
+        PageRequest pageRequest = request.getPageRequest();
+        if (list.size() < pageRequest.getOffset()) {
+            return ResultPage.createUnboundedList(Collections.emptyList());
+        }
+        return ResultPage.createPageLimitedList(list, pageRequest);
     }
 }

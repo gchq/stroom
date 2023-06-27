@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
@@ -71,7 +72,10 @@ import java.util.stream.Collectors;
 
 public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
-        implements ExpressionUiHandlers, ShowPopupEvent.Handler, HidePopupRequestEvent.Handler, HidePopupEvent.Handler {
+        implements ExpressionUiHandlers,
+        ShowPopupEvent.Handler,
+        HidePopupRequestEvent.Handler,
+        HidePopupEvent.Handler {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
@@ -252,7 +256,21 @@ public class ExpressionPresenter
                 }
             }
         } else {
-            e.hide();
+            // Cancel/Close
+            if (editorPresenter.isClean()) {
+                // User not change anything so allow the close
+                e.hide();
+            } else {
+                final String msg = "Expression has unsaved changes.\n"
+                        + "Are you sure you want to close this window?";
+                ConfirmEvent.fire(ExpressionPresenter.this, msg, confirm -> {
+                    if (confirm) {
+                        e.hide();
+                    } else {
+                        // Don't hide
+                    }
+                });
+            }
         }
     }
 

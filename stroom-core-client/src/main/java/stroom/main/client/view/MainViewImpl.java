@@ -159,6 +159,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
         }
 
         splitPanel = new MySplitLayoutPanel();
+        splitPanel.addStyleName("mainViewImpl-splitPanel");
         if (westWidget != null) {
             splitPanel.addWest(westWidget, splitPos);
         }

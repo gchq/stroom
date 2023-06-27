@@ -137,7 +137,8 @@ public class VisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
     @Override
     public void onResize() {
         if (visFrame != null) {
-            final Element ref = getParentByClass(visContainer.getElement(), "tabLayout-contentOuter");
+            final Element ref = visContainer.getElement();
+            //getParentByClass(visContainer.getElement(), "tabLayout-contentOuter");
             final Element dashboard = getParentByClass(ref, "dashboard-scrollPanel");
 
             if (ref != null) {

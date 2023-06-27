@@ -43,11 +43,19 @@ public class MyCellTable<T> extends CellTable<T> {
         super.setSelectionModel(selectionModel, selectionEventManager);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     @ImportedWithPrefix("gwt-CellTable")
     public interface DefaultStyle extends Style {
 
         String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DefaultResources extends Resources {
 
