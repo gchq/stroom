@@ -1017,18 +1017,19 @@
     padding-left: 5px;
 }
 
-.expressionViewImpl-resizePanel {
+.columnFunctionEditorViewImpl-resizePanel {
     display: block;
 }
 
-.expressionViewImpl-editorContainer {
+.columnFunctionEditorViewImpl-editorContainer {
     border: 1px solid var(--control__border-color);
     background-color: var(--control__background-color);
 }
 
-.expressionViewImpl-labelPanel {
+.columnFunctionEditorViewImpl-labelPanel {
     display: flex;
-    align-items: center;
+    /* align-items: center; */
+    justify-content: flex-end;
 }
 
 .characterNavigator {

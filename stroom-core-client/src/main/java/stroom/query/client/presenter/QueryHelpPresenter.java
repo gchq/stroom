@@ -22,6 +22,7 @@ import stroom.data.table.client.MyCellTable;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.KeyedAceCompletionProvider;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -35,7 +36,6 @@ import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.view.client.presenter.DataSourceFieldsMap;
-import stroom.view.client.presenter.IndexLoader;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.HtmlBuilder;
@@ -71,6 +71,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class QueryHelpPresenter
@@ -84,7 +86,8 @@ public class QueryHelpPresenter
     private static final String FIELDS_HELP_TEXT = "A list of the fields available to 'select' from the specified " +
             "data source. The fields will only become available one the data source has been " +
             "specified using the 'from' keyword.";
-    private static final String FUNCTIONS_HELP_TEXT = "A list of functions available to use the Stroom Query Language.";
+    private static final String FUNCTIONS_HELP_TEXT = "A list of functions available to use in the Stroom " +
+            "Query Language.";
 
     private static final String DATA_SOURCES_COMPLETION_KEY = "DATA_SOURCES";
     private static final String STRUCTURE_COMPLETION_KEY = "STRUCTURE";
@@ -107,11 +110,12 @@ public class QueryHelpPresenter
     private final DoubleSelectTester doubleSelectTest = new DoubleSelectTester();
     private final CellTable<QueryHelpItem> elementChooser;
     private final FunctionSignatures functionSignatures;
-    private final IndexLoader indexLoader;
+    //    private final IndexLoader indexLoader;
     private final MarkdownConverter markdownConverter;
     private final QueryStructure queryStructure;
     private final KeyedAceCompletionProvider keyedAceCompletionProvider;
     private final Views views;
+    private QueryHelpDataSupplier queryHelpDataSupplier;
 
     private final List<QueryHelpItem> queryHelpItems = new ArrayList<>();
     private final Set<QueryHelpItem> openItems = new HashSet<>();
@@ -119,14 +123,15 @@ public class QueryHelpPresenter
     private List<DocRef> lastFetchedViews = null;
     private DataSourceFieldsMap lastFetchedDataSourceFieldsMap = null;
 
-    private final QueryHelpItem dataSourceHeading;
-    private final QueryHelpItemHeading fieldsHeading;
-    private final QueryHelpItemHeading structureHeading;
-    private final QueryHelpItem functionsHeading;
+    private QueryHelpItem dataSourceHeading;
+    private QueryHelpItemHeading fieldsHeading;
+    private QueryHelpItemHeading structureHeading;
+    private QueryHelpItem functionsHeading;
 
     private Timer requestTimer;
     private String currentQuery;
     private ThemeType themeType = null;
+    private Function<String, String> fieldDecorator;
 
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
@@ -134,12 +139,12 @@ public class QueryHelpPresenter
                               final Views views,
                               final FunctionSignatures functionSignatures,
                               final QueryStructure queryStructure,
-                              final IndexLoader indexLoader,
+//                              final IndexLoader indexLoader,
                               final MarkdownConverter markdownConverter,
                               final KeyedAceCompletionProvider keyedAceCompletionProvider) {
         super(eventBus, view);
         this.functionSignatures = functionSignatures;
-        this.indexLoader = indexLoader;
+//        this.indexLoader = indexLoader;
         this.markdownConverter = markdownConverter;
         this.queryStructure = queryStructure;
         this.keyedAceCompletionProvider = keyedAceCompletionProvider;
@@ -147,30 +152,6 @@ public class QueryHelpPresenter
         elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
         view.setUiHandlers(this);
 
-        dataSourceHeading = createTopLevelHelpItem(
-                queryHelpItems,
-                "Data Sources",
-                DATA_SOURCES_HELP_TEXT,
-                false);
-        structureHeading = createTopLevelHelpItem(
-                queryHelpItems,
-                "Structure",
-                STRUCTURE_HELP_TEXT,
-                false);
-        fieldsHeading = createTopLevelHelpItem(
-                queryHelpItems,
-                "Fields",
-                FIELDS_HELP_TEXT,
-                false);
-        functionsHeading = createTopLevelHelpItem(
-                queryHelpItems,
-                "Functions",
-                FUNCTIONS_HELP_TEXT,
-                false);
-
-        buildStructureMenuItems();
-        buildDataSourcesMenuItems();
-        buildFunctionsMenuItems(functionSignatures);
 
         final Column<QueryHelpItem, QueryHelpItem> expanderColumn =
                 new Column<QueryHelpItem, QueryHelpItem>(new QueryHelpItemCell(openItems)) {
@@ -195,6 +176,42 @@ public class QueryHelpPresenter
                 getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
             });
         }));
+    }
+
+    private void initMenu(final FunctionSignatures functionSignatures,
+                          final QueryHelpDataSupplier queryHelpDataSupplier) {
+        if (queryHelpDataSupplier.isSupported(HelpItemType.DATA_SOURCE)) {
+            dataSourceHeading = createTopLevelHelpItem(
+                    queryHelpItems,
+                    "Data Sources",
+                    DATA_SOURCES_HELP_TEXT,
+                    false);
+            buildDataSourcesMenuItems();
+        }
+        if (queryHelpDataSupplier.isSupported(HelpItemType.STRUCTURE)) {
+            structureHeading = createTopLevelHelpItem(
+                    queryHelpItems,
+                    "Structure",
+                    STRUCTURE_HELP_TEXT,
+                    false);
+            buildStructureMenuItems();
+        }
+        if (queryHelpDataSupplier.isSupported(HelpItemType.FIELD)) {
+            fieldsHeading = createTopLevelHelpItem(
+                    queryHelpItems,
+                    "Fields",
+                    FIELDS_HELP_TEXT,
+                    false);
+            buildFieldsMenuItems();
+        }
+        if (queryHelpDataSupplier.isSupported(HelpItemType.FUNCTION)) {
+            functionsHeading = createTopLevelHelpItem(
+                    queryHelpItems,
+                    "Functions",
+                    FUNCTIONS_HELP_TEXT,
+                    false);
+            buildFunctionsMenuItems(functionSignatures);
+        }
     }
 
     private void buildFunctionsMenuItems(final FunctionSignatures functionSignatures) {
@@ -250,49 +267,61 @@ public class QueryHelpPresenter
 
     private void buildDataSourcesMenuItems() {
         // Add views.
-        views.fetchViews(viewDocRefs -> {
-            // Only need to re-build this part of the menu if the list of data sources has actually changed
-            if (!Objects.equals(lastFetchedViews, viewDocRefs) || hasThemeChanged()) {
-                lastFetchedViews = viewDocRefs;
-                dataSourceHeading.clear();
-                if (!viewDocRefs.isEmpty()) {
-                    viewDocRefs.stream()
-                            .sorted()
-                            .forEach(viewDocRef -> {
-                                keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
-                                final String name = viewDocRef.getName();
-                                final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
-                                appendKeyValueTable(htmlBuilder,
-                                        Arrays.asList(
-                                                new SimpleEntry<>("Name:", name),
-                                                new SimpleEntry<>("Type:", viewDocRef.getType()),
-                                                new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
+        if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.DATA_SOURCE))) {
+            queryHelpDataSupplier.fetchDataSources(viewDocRefs -> {
+                // Only need to re-build this part of the menu if the list of data sources has actually changed
+                if (!Objects.equals(lastFetchedViews, viewDocRefs) || hasThemeChanged()) {
+                    lastFetchedViews = viewDocRefs;
+                    dataSourceHeading.clear();
+                    if (!viewDocRefs.isEmpty()) {
+                        viewDocRefs.stream()
+                                .sorted()
+                                .forEach(viewDocRef -> {
+                                    keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
+                                    final String name = viewDocRef.getName();
+                                    final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                                    appendKeyValueTable(htmlBuilder,
+                                            Arrays.asList(
+                                                    new SimpleEntry<>("Name:", name),
+                                                    new SimpleEntry<>("Type:", viewDocRef.getType()),
+                                                    new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
 
-                                final DataSourceHelpItem dataSourceHelpItem = new DataSourceHelpItem(name,
-                                        htmlBuilder.toSafeHtml(),
-                                        null);
+                                    final DataSourceHelpItem dataSourceHelpItem = new DataSourceHelpItem(name,
+                                            htmlBuilder.toSafeHtml(),
+                                            null);
 
-                                keyedAceCompletionProvider.addCompletion(
-                                        DATA_SOURCES_COMPLETION_KEY,
-                                        new AceCompletionValue(
-                                                dataSourceHelpItem.title,
-                                                dataSourceHelpItem.getInsertText(),
-                                                DATA_SOURCES_META,
-                                                dataSourceHelpItem.getDetail().asString(),
-                                                DATA_SOURCES_COMPLETION_SCORE));
+                                    keyedAceCompletionProvider.addCompletion(
+                                            DATA_SOURCES_COMPLETION_KEY,
+                                            new AceCompletionValue(
+                                                    dataSourceHelpItem.title,
+                                                    dataSourceHelpItem.getInsertText(),
+                                                    DATA_SOURCES_META,
+                                                    dataSourceHelpItem.getDetail().asString(),
+                                                    DATA_SOURCES_COMPLETION_SCORE));
 
-                                dataSourceHeading.addOrGetChild(dataSourceHelpItem);
-                            });
-                } else {
-                    dataSourceHeading.addOrGetChild(createEmptyDataSourcesMenuItem());
+                                    dataSourceHeading.addOrGetChild(dataSourceHelpItem);
+                                });
+                    } else {
+                        dataSourceHeading.addOrGetChild(createEmptyDataSourcesMenuItem());
+                    }
+                    refresh();
                 }
-                refresh();
-            }
-        });
+            });
+        }
     }
 
     public AceCompletionProvider getKeyedAceCompletionProvider() {
         return keyedAceCompletionProvider;
+    }
+
+    public void setQueryHelpDataSupplier(final QueryHelpDataSupplier queryHelpDataSupplier) {
+        this.queryHelpDataSupplier = queryHelpDataSupplier;
+        if (queryHelpDataSupplier != null) {
+            initMenu(functionSignatures, queryHelpDataSupplier);
+            queryHelpDataSupplier.registerChangeHandler(dataSourceFieldsMap -> {
+                buildFieldsMenuItems();
+            });
+        }
     }
 
     /**
@@ -331,30 +360,32 @@ public class QueryHelpPresenter
     }
 
     private void buildStructureMenuItems(final Runnable afterBuildAction) {
-        structureHeading.clear();
-        // Add structure.
-        queryStructure.fetchStructureElements(list -> {
-            keyedAceCompletionProvider.clear(STRUCTURE_COMPLETION_KEY);
-            list.forEach(structureQueryHelpItem -> {
+        if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.STRUCTURE))) {
+            structureHeading.clear();
+            // Add structure.
+            queryStructure.fetchStructureElements(list -> {
+                keyedAceCompletionProvider.clear(STRUCTURE_COMPLETION_KEY);
+                list.forEach(structureQueryHelpItem -> {
 
-                structureHeading.addOrGetChild(structureQueryHelpItem);
-                structureQueryHelpItem.getSnippets()
-                        .stream()
-                        .filter(Objects::nonNull)
-                        .filter(str -> !GwtNullSafe.isBlankString(str))
-                        .forEach(snippet -> {
-                            final AceCompletion aceCompletion = new AceCompletionSnippet(
-                                    structureQueryHelpItem.title,
-                                    snippet,
-                                    STRUCTURE_COMPLETION_SCORE,
-                                    STRUCTURE_META,
-                                    structureQueryHelpItem.getDetail().asString());
-                            keyedAceCompletionProvider.addCompletion(STRUCTURE_COMPLETION_KEY, aceCompletion);
-                        });
+                    structureHeading.addOrGetChild(structureQueryHelpItem);
+                    structureQueryHelpItem.getSnippets()
+                            .stream()
+                            .filter(Objects::nonNull)
+                            .filter(str -> !GwtNullSafe.isBlankString(str))
+                            .forEach(snippet -> {
+                                final AceCompletion aceCompletion = new AceCompletionSnippet(
+                                        structureQueryHelpItem.title,
+                                        snippet,
+                                        STRUCTURE_COMPLETION_SCORE,
+                                        STRUCTURE_META,
+                                        structureQueryHelpItem.getDetail().asString());
+                                keyedAceCompletionProvider.addCompletion(STRUCTURE_COMPLETION_KEY, aceCompletion);
+                            });
+                });
+                refresh();
+                GwtNullSafe.run(afterBuildAction);
             });
-            refresh();
-            GwtNullSafe.run(afterBuildAction);
-        });
+        }
     }
 
     private CellPreviewEvent.Handler<QueryHelpItem> buildSelectionEventManager() {
@@ -489,38 +520,40 @@ public class QueryHelpPresenter
 //            refresh();
         }));
 
-        registerHandler(indexLoader.addChangeDataHandler(e -> {
-            buildFieldsMenuItems();
-        }));
+//        registerHandler(indexLoader.addChangeDataHandler(e -> {
+//            buildFieldsMenuItems();
+//        }));
     }
 
     private void buildFieldsMenuItems() {
-        functionSignatures.fetchHelpUrl(helpUrl -> {
-            final DataSourceFieldsMap dataSourceFieldsMap = indexLoader.getDataSourceFieldsMap();
+        if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.FIELD))) {
+            functionSignatures.fetchHelpUrl(helpUrl -> {
+                final DataSourceFieldsMap dataSourceFieldsMap = queryHelpDataSupplier.getDataSourceFieldsMap();
 
-            if (!Objects.equals(lastFetchedDataSourceFieldsMap, dataSourceFieldsMap) || hasThemeChanged()) {
-                lastFetchedDataSourceFieldsMap = dataSourceFieldsMap;
-                fieldsHeading.clear();
-                keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
+                if (!Objects.equals(lastFetchedDataSourceFieldsMap, dataSourceFieldsMap) || hasThemeChanged()) {
+                    lastFetchedDataSourceFieldsMap = dataSourceFieldsMap;
+                    fieldsHeading.clear();
+                    keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
 
-                if (GwtNullSafe.hasEntries(dataSourceFieldsMap)) {
-                    GWT.log("Adding " + dataSourceFieldsMap.size() + " fields");
-                    dataSourceFieldsMap
-                            .entrySet()
-                            .stream()
-                            .sorted(Entry.comparingByKey())
-                            .forEach(entry -> {
-                                final String fieldName = entry.getKey();
-                                final AbstractField field = entry.getValue();
-                                addFieldToMenu(helpUrl, fieldName, field);
-                            });
-                } else {
-                    GWT.log("Clearing fields list");
-                    fieldsHeading.addOrGetChild(createEmptyFieldsMenuItem());
+                    if (GwtNullSafe.hasEntries(dataSourceFieldsMap)) {
+                        GWT.log("Adding " + dataSourceFieldsMap.size() + " fields");
+                        dataSourceFieldsMap
+                                .entrySet()
+                                .stream()
+                                .sorted(Entry.comparingByKey())
+                                .forEach(entry -> {
+                                    final String fieldName = entry.getKey();
+                                    final AbstractField field = entry.getValue();
+                                    addFieldToMenu(helpUrl, fieldName, field);
+                                });
+                    } else {
+                        GWT.log("Clearing fields list");
+                        fieldsHeading.addOrGetChild(createEmptyFieldsMenuItem());
+                    }
+                    refresh();
                 }
-                refresh();
-            }
-        });
+            });
+        }
     }
 
     private QueryHelpItem createEmptyDataSourcesMenuItem() {
@@ -579,6 +612,7 @@ public class QueryHelpPresenter
 
         final FieldHelpItem fieldHelpItem = new FieldHelpItem(
                 fieldName,
+                queryHelpDataSupplier::decorateFieldName,
                 htmlBuilder.toSafeHtml(),
                 helpUrl);
 
@@ -662,7 +696,7 @@ public class QueryHelpPresenter
         }
     }
 
-    public void updateQuery(final String query) {
+    public void updateQuery(final String query, final Consumer<String> onQueryChange) {
         // Debounce requests so we don't spam the backend
         if (requestTimer != null) {
             requestTimer.cancel();
@@ -671,21 +705,69 @@ public class QueryHelpPresenter
         requestTimer = new Timer() {
             @Override
             public void run() {
-                setQuery(query);
+                setQuery(query, onQueryChange);
             }
         };
         requestTimer.schedule(DEBOUNCE_PERIOD_MILLIS);
     }
 
-    public void setQuery(final String query) {
+//    /**
+//     * Set an optional decorate to convert a field name into a form for insertion into the editor
+//     */
+//    public void setFieldDecorator(final Function<String, String> fieldDecorator) {
+//        this.fieldDecorator = fieldDecorator;
+//    }
+
+    public void setQuery(final String query, final Consumer<String> onQueryChange) {
         if (!Objects.equals(this.currentQuery, query)) {
             this.currentQuery = query;
-            indexLoader.loadDataSource(currentQuery);
+            if (onQueryChange != null) {
+                onQueryChange.accept(currentQuery);
+            }
         }
     }
 
-    public HandlerRegistration addInsertHandler(InsertEditorTextEvent.Handler handler) {
+    private HandlerRegistration addInsertHandler(InsertEditorTextEvent.Handler handler) {
         return addHandlerToSource(InsertEditorTextEvent.getType(), handler);
+    }
+
+//    public void addInsertHandler(final EditorPresenter editorPresenter) {
+//        registerHandler(addInsertHandler(insertEditorTextEvent -> {
+//            if (InsertType.SNIPPET.equals(insertEditorTextEvent.getInsertType())) {
+//                editorPresenter.insertSnippet(insertEditorTextEvent.getText());
+//                editorPresenter.focus();
+//            } else if (insertEditorTextEvent.getInsertType().isInsertable()) {
+//                editorPresenter.insertTextAtCursor(insertEditorTextEvent.getText());
+//                editorPresenter.focus();
+//            }
+//        }));
+//    }
+
+    /**
+     * Associate this {@link QueryHelpPresenter} with an editor. The editor's will be set to use
+     * this {@link QueryHelpPresenter} as its completion provider and items inserted using the
+     * query help menu will be inserted into the editor.
+     */
+    public void linkToEditor(final EditorPresenter editorPresenter) {
+        Objects.requireNonNull(editorPresenter);
+
+        // Set up the insert handler
+        registerHandler(addInsertHandler(insertEditorTextEvent -> {
+            if (InsertType.SNIPPET.equals(insertEditorTextEvent.getInsertType())) {
+                editorPresenter.insertSnippet(insertEditorTextEvent.getText());
+                editorPresenter.focus();
+            } else if (insertEditorTextEvent.getInsertType().isInsertable()) {
+                editorPresenter.insertTextAtCursor(insertEditorTextEvent.getText());
+                editorPresenter.focus();
+            }
+        }));
+
+        // This glues the editor code completion to the QueryHelpPresenter's completion provider
+        // Need to do this via addAttachHandler so the editor is fully loaded
+        // else it moans about the id not being a thing on the AceEditor
+        editorPresenter.getWidget().addAttachHandler(event -> {
+            editorPresenter.registerCompletionProviders(getKeyedAceCompletionProvider());
+        });
     }
 
 
@@ -782,9 +864,18 @@ public class QueryHelpPresenter
     public static class FieldHelpItem extends QueryHelpItem {
 
         private final SafeHtml detail;
+        private final Function<String, String> insertTextDecorator;
 
         public FieldHelpItem(final String title, final SafeHtml detail, final String helpUrlBase) {
+            this(title, null, detail, helpUrlBase);
+        }
+
+        public FieldHelpItem(final String title,
+                             final Function<String, String> insertTextDecorator,
+                             final SafeHtml detail,
+                             final String helpUrlBase) {
             super(title, false, 1);
+            this.insertTextDecorator = insertTextDecorator;
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(hb1 -> {
                 hb1.bold(hb2 -> hb2.append(title));
@@ -830,10 +921,9 @@ public class QueryHelpPresenter
 
         @Override
         public String getInsertText() {
-            return GwtNullSafe.get(title, title2 ->
-                    title2.contains(" ")
-                            ? "\"" + title2 + "\""
-                            : title2);
+            return GwtNullSafe.get(title, title2 -> insertTextDecorator != null
+                    ? insertTextDecorator.apply(title2)
+                    : title2);
         }
 
         @Override
@@ -869,5 +959,39 @@ public class QueryHelpPresenter
         public boolean isInsertable() {
             return isInsertable;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface QueryHelpDataSupplier {
+
+        DataSourceFieldsMap getDataSourceFieldsMap();
+
+        /**
+         * Decorates a field name for insertion into the editor
+         */
+        String decorateFieldName(final String fieldName);
+
+        /**
+         * Register a handler to be called when the data used by the {@link QueryHelpPresenter} changes.
+         */
+        void registerChangeHandler(final Consumer<DataSourceFieldsMap> onChange);
+
+        boolean isSupported(final HelpItemType helpItemType);
+
+        void fetchDataSources(final Consumer<List<DocRef>> dataSourceConsumer);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum HelpItemType {
+        DATA_SOURCE,
+        STRUCTURE,
+        FIELD,
+        FUNCTION
     }
 }

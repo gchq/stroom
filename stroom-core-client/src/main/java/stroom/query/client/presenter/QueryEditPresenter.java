@@ -29,10 +29,12 @@ import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
+import stroom.query.client.presenter.QueryHelpPresenter.HelpItemType;
+import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpDataSupplier;
+import stroom.util.shared.GwtNullSafe;
+import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,17 +44,28 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
         implements HasDirtyHandlers, HasToolbar {
 
+    private static final Set<HelpItemType> SUPPORTED_HELP_TYPES = EnumSet.of(
+            HelpItemType.DATA_SOURCE,
+            HelpItemType.STRUCTURE,
+            HelpItemType.FIELD,
+            HelpItemType.FUNCTION);
+
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultTablePresenter tablePresenter;
+    private final IndexLoader indexLoader;
+    private final Views views;
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
@@ -67,12 +80,15 @@ public class QueryEditPresenter
                               final QueryResultTablePresenter tablePresenter,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,
+                              final Views views,
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
                               final ResultStoreModel resultStoreModel) {
         super(eventBus, view);
         this.queryHelpPresenter = queryHelpPresenter;
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.tablePresenter = tablePresenter;
+        this.indexLoader = indexLoader;
+        this.views = views;
 
         queryModel = new QueryModel(
                 restFactory,
@@ -86,10 +102,10 @@ public class QueryEditPresenter
         this.editorPresenter = editorPresenter;
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
 
+        // This glues the editor code completion to the QueryHelpPresenter's completion provider
         // Need to do this via addAttachHandler so the editor is fully loaded
         // else it moans about the id not being a thing on the AceEditor
         this.editorPresenter.getWidget().addAttachHandler(event -> {
-            GWT.log("Registering keyedAceCompletionProvider");
             this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider());
         });
 
@@ -107,7 +123,7 @@ public class QueryEditPresenter
     protected void onBind() {
         super.onBind();
         registerHandler(editorPresenter.addValueChangeHandler(event -> {
-            queryHelpPresenter.updateQuery(editorPresenter.getText());
+            queryHelpPresenter.updateQuery(editorPresenter.getText(), indexLoader::loadDataSource);
             setDirty(true);
         }));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
@@ -115,20 +131,49 @@ public class QueryEditPresenter
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
-        registerHandler(queryHelpPresenter.addInsertHandler(insertEditorTextEvent -> {
-            if (InsertType.SNIPPET.equals(insertEditorTextEvent.getInsertType())) {
-                editorPresenter.insertSnippet(insertEditorTextEvent.getText());
-                editorPresenter.focus();
-            } else if (insertEditorTextEvent.getInsertType().isInsertable()) {
-                editorPresenter.insertTextAtCursor(insertEditorTextEvent.getText());
-                editorPresenter.focus();
-            }
-        }));
+        queryHelpPresenter.linkToEditor(editorPresenter);
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
             queryModel.reset(DestroyReason.WINDOW_CLOSE);
         }));
+
+        setupQueryHelpDataSupplier();
+    }
+
+    private void setupQueryHelpDataSupplier() {
+        queryHelpPresenter.setQueryHelpDataSupplier(new QueryHelpDataSupplier() {
+
+            @Override
+            public DataSourceFieldsMap getDataSourceFieldsMap() {
+                return indexLoader.getDataSourceFieldsMap();
+            }
+
+            @Override
+            public String decorateFieldName(final String fieldName) {
+                return GwtNullSafe.get(fieldName, str ->
+                        str.contains(" ")
+                                ? "\"" + str + "\""
+                                : str);
+            }
+
+            @Override
+            public void registerChangeHandler(final Consumer<DataSourceFieldsMap> onChange) {
+                registerHandler(indexLoader.addChangeDataHandler(e -> {
+                    onChange.accept(indexLoader.getDataSourceFieldsMap());
+                }));
+            }
+
+            @Override
+            public boolean isSupported(final HelpItemType helpItemType) {
+                return helpItemType != null && SUPPORTED_HELP_TYPES.contains(helpItemType);
+            }
+
+            @Override
+            public void fetchDataSources(final Consumer<List<DocRef>> dataSourceConsumer) {
+                views.fetchViews(dataSourceConsumer);
+            }
+        });
     }
 
     private void setDirty(final boolean dirty) {
@@ -187,7 +232,7 @@ public class QueryEditPresenter
         if (query != null) {
             reading = true;
             editorPresenter.setText(query);
-            queryHelpPresenter.setQuery(query);
+            queryHelpPresenter.setQuery(query, indexLoader::loadDataSource);
             reading = false;
         }
         queryToolbarPresenter.setEnabled(true);
