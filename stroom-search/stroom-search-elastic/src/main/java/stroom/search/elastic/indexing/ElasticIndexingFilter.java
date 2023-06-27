@@ -700,9 +700,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private String formatIndexName() {
         final Matcher indexNameVariableMatcher = INDEX_NAME_VALUE_PATTERN.matcher(indexName);
         return indexNameVariableMatcher.replaceAll(matchResult -> {
-            final String fieldName = matchResult.group()
-                    .replace("{", "")
-                    .replace("}", "");
+            final String fieldNameMatch = matchResult.group();
+            final String fieldName = fieldNameMatch.substring(1, fieldNameMatch.length() - 1);
             final String fieldValue = currentDocIndexNameVariables.get(fieldName);
             if (fieldValue == null) {
                 throw new IllegalArgumentException("Field '" + fieldName + "' not found in document when " +
