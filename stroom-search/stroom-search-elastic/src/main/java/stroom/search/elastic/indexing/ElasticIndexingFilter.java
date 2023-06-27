@@ -104,7 +104,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final int ES_MAX_EXCEPTION_CHARS = 1024;
     private static final String ES_TOO_MANY_REQUESTS_STATUS = "TOO_MANY_REQUESTS";
     private static final Pattern INDEX_NAME_VALUE_PATTERN = Pattern.compile("(\\{[^}]+?})");
-    private static final Pattern INDEX_BASE_NAME_PATTERN = Pattern.compile("^(.*)\\{");
+    private static final Pattern INDEX_BASE_NAME_PATTERN = Pattern.compile("^([^{]+)");
 
     // Dependencies
     private final LocationFactoryProxy locationFactory;
@@ -587,7 +587,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * Get the index name stem, which is the text up to the first index name variable, as denoted by curly braces
      */
     private String getIndexBaseName() {
-        return INDEX_BASE_NAME_PATTERN.matcher(indexName).group(1);
+        final Matcher indexNameMatcher = INDEX_BASE_NAME_PATTERN.matcher(indexName);
+        if (indexNameMatcher.find()) {
+            return indexNameMatcher.group(1);
+        } else {
+            throw new RuntimeException("Expected one or more characters in the index name before the first curly " +
+                    "brace.");
+        }
     }
 
     /**
