@@ -25,7 +25,7 @@
 }
 
 .simplePopup-background {
-	background: var(--page__background-color);
+	background: var(--dialog__background-color);
 	border: thin solid var(--dialog__border-color);
 	box-shadow: var(--popup__shadow);
 	border-radius: 0.4rem;

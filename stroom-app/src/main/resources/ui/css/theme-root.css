@@ -221,7 +221,7 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
-    --dialog__background-color: #fff; /*rgb(223, 234, 248);*/
+    --dialog__background-color: var(--app__background-color);
     --dialog__border-color: rgba(var(--black-rgb), .5);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .4);
     --popup__shadow: 0 0 10px 1px rgba(0, 0, 0, .4);

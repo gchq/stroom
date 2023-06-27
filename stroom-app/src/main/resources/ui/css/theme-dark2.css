@@ -114,7 +114,7 @@
     --page__text-color: #cacbcb;
 
     /* Splitter */
-    --splitter__background-color: #2f333c; /*#27252c;*/
+    --splitter__background-color: #353944; /*#27252c;*/
     --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */
@@ -186,7 +186,7 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
-    --navigation__splitter__background-color: #2f333c;
+    --navigation__splitter__background-color: #353944;
     --navigation__background-color: #2b2d30;
     --navigation__background-color--hovered: rgb(45, 47, 53);
     --navigation__background-color--selected: rgb(0, 101, 167);
@@ -203,7 +203,7 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), 0.2);
 
     /* Dialog */
-    --dialog__background-color: #1a1d21;
+    --dialog__background-color: var(--app__background-color);
     --dialog__border-color: rgb(132 132 132 / 60%);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .7);
     --popup__shadow: 0 0 10px 1px rgb(0, 0, 0, .8);

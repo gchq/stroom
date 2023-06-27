@@ -129,7 +129,7 @@
     --page__text-color: #cacbcb;
 
     /* Splitter */
-    --splitter__background-color: #2f333c; /*#27252c;*/
+    --splitter__background-color: #353944; /*#27252c;*/
     --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */
@@ -143,7 +143,7 @@
     --curve-tab__border-radius: .2rem;
 
     /* Controls */
-    --control__background-color: #151618;
+    --control__background-color: #15161b;
     --control__background-color--disabled: rgba(255, 255, 255, 0.1);
     --control__border-color: #505050;
     --control__border-color--disabled: transparent;
@@ -155,7 +155,7 @@
 
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
-    --dashboard-panel__border-color: #2f333c;
+    --dashboard-panel__border-color: #353944;
     --dashboard-panel__grid-color: rgba(255, 255, 255, 0.04);
 
     /* ExpanderCell */
@@ -206,7 +206,7 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
-    --navigation__splitter__background-color: #2f333c;
+    --navigation__splitter__background-color: #353944;
     --navigation__background-color: #19171d;
     --navigation__background-color--hovered: rgb(45, 47, 53);
     --navigation__background-color--selected: rgb(0, 101, 167);
@@ -224,7 +224,7 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), 0.2);
 
     /* Dialog */
-    --dialog__background-color: #1a1d21;
+    --dialog__background-color: var(--app__background-color);
     --dialog__border-color: #2c2f35;
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .7);
     --popup__shadow: 0 0 10px 1px rgb(0, 0, 0, .8);
