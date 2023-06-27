@@ -4,6 +4,7 @@ import stroom.util.shared.ServletAuthenticationChecker;
 
 import com.google.inject.AbstractModule;
 
+
 public class DropwizardModule extends AbstractModule {
 
     @Override

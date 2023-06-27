@@ -14,12 +14,14 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.io.DirProvidersModule;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.setup.Environment;
 
 public class CoreTestModule extends AbstractModule {
 
     @Override
     protected void configure() {
         // Stuff that comes from BootStrapModule
+        bind(Environment.class).toInstance(new Environment("Test Environment"));
         install(new GlobalConfigBootstrapModule());
         install(new GlobalConfigDaoModule());
         install(new DirProvidersModule());

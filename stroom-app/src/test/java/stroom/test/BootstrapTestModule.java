@@ -11,6 +11,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StroomPathConfig;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.setup.Environment;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -45,11 +46,12 @@ public class BootstrapTestModule extends AbstractModule {
     public BootstrapTestModule() {
         final ConfigHolder configHolder = new ConfigHolderImpl();
         final Config config = new Config(configHolder.getBootStrapConfig());
+        final Environment environment = new Environment("Test Environment");
 
         // Delegate to the normal BootStrapModule but use different Db and AppConfig modules
         bootStrapModule = new BootStrapModule(
                 config,
-                null,
+                environment,
                 configHolder,
                 DbTestModule::new,
                 AppConfigTestModule::new);
