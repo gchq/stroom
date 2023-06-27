@@ -217,9 +217,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private void populateIndexNameVariableNames() {
         indexNameVariables = INDEX_NAME_VALUE_PATTERN.matcher(indexName).results()
-                .map(matchResult -> matchResult.group()
-                        .replace("{", "")
-                        .replace("}", ""))
+                .map(matchResult -> {
+                    final String fieldNameMatch = matchResult.group();
+                    return fieldNameMatch.substring(1, fieldNameMatch.length() - 1);
+                })
                 .collect(Collectors.toSet());
     }
 
