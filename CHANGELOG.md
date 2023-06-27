@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.35-restyle] - 2023-06-27
+
+* Issue **#3553** : Improve UI styling.
+
+
 ## [v7.2-beta.35] - 2023-06-22
 
 * Issue **#3510** : Fix explorer scroll jumping issue.
@@ -5522,7 +5527,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.35...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.35-restyle...HEAD
+[v7.2-beta.35-restyle]: https://github.com/gchq/stroom/compare/v7.2-beta.35...v7.2-beta.35-restyle
 [v7.2-beta.35]: https://github.com/gchq/stroom/compare/v7.2-beta.34...v7.2-beta.35
 [v7.2-beta.34]: https://github.com/gchq/stroom/compare/v7.2-beta.33...v7.2-beta.34
 [v7.2-beta.33]: https://github.com/gchq/stroom/compare/v7.2-beta.32...v7.2-beta.33
