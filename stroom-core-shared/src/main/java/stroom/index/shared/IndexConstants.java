@@ -20,8 +20,4 @@ public interface IndexConstants {
 
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
-    String FEED_ID = "FeedId";
-    String INDEX_FLUSH_COMMAND = "IndexFlush";
-    String INDEX_CLOSE_COMMAND = "IndexClose";
-    String INDEX_DELETE_COMMAND = "IndexDelete";
 }
