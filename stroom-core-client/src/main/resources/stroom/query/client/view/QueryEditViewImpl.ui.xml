@@ -4,7 +4,7 @@
     <g:MySplitLayoutPanel styleName="DashboardViewImpl max">
         <g:north size="400">
             <g:MySplitLayoutPanel styleName="max">
-                <g:east size="500">
+                <g:east size="700">
                     <g:SimplePanel ui:field="queryHelpContainer" styleName="max"/>
                 </g:east>
                 <g:center>

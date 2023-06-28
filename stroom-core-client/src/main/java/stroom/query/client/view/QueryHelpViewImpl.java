@@ -64,7 +64,10 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
 
     @Override
     public void setDetails(final SafeHtml details) {
-        this.details.getElement().setInnerHTML(details.asString());
+        final String htmlStr = details != null
+                ? details.asString()
+                : "";
+        this.details.getElement().setInnerHTML(htmlStr);
     }
 
     @Override

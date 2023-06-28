@@ -137,7 +137,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 //                                "Unable to locate datasource " + dataSourceRef.getUuid(),
 //                                null);
                         ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-
                     })
                     .call(DATA_SOURCE_RESOURCE)
                     .fetchFromQuery(query);

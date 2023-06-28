@@ -3,6 +3,7 @@ package stroom.query.client.presenter;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
 import stroom.dashboard.shared.FunctionSignature.Type;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.InfoMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
@@ -145,19 +146,27 @@ public class FunctionSignatureUtil {
         return childMenuItems;
     }
 
+    public static List<AceCompletion> buildCompletions(final FunctionSignature signature,
+                                                       final String helpUrlBase) {
+        // FlatMap to aliases so we have one func def per alias
+        // Filter on isBracketedForm to ignore aliases like +, -, * etc which have a different form,
+        // e.g. 1+2 vs add(1, 2)
+        return signature.asAliases()
+                .stream()
+                .filter(FunctionSignatureUtil::isBracketedForm)
+                .map(sig ->
+                        convertFunctionDefinitionToCompletion(sig, helpUrlBase))
+                .collect(Collectors.toList());
+    }
 
     public static List<AceCompletion> buildCompletions(final List<FunctionSignature> signatures,
                                                        final String helpUrlBase) {
+
         // FlatMap to aliases so we have one func def per alias
         // Filter on name length > 1 to ignore aliases like +, -, * etc which have a different form,
         // e.g. 1+2 vs add(1, 2)
         return signatures.stream()
-                .flatMap(signature -> signature.asAliases().stream())
-                .filter(FunctionSignatureUtil::isBracketedForm)
-                .map(signature ->
-                        convertFunctionDefinitionToCompletion(
-                                signature,
-                                helpUrlBase))
+                .flatMap(signature -> buildCompletions(signature, helpUrlBase).stream())
                 .collect(Collectors.toList());
     }
 
@@ -172,7 +181,7 @@ public class FunctionSignatureUtil {
 
                 if (signature.getDescription() != null && !signature.getDescription().isEmpty()) {
                     hb1.para(hb2 -> hb2.append(signature.getDescription()),
-                            Attribute.className("functionSignatureInfo-description"));
+                            Attribute.className("queryHelpDetail-description"));
                 }
 
                 final boolean addedArgs = addArgsBlockToInfo(signature, hb1);
@@ -191,7 +200,7 @@ public class FunctionSignatureUtil {
                 if (helpUrlBase != null) {
                     addHelpLinkToInfo(signature, helpUrlBase, hb1);
                 }
-            }, Attribute.className("functionSignatureInfo"));
+            }, Attribute.className("queryHelpDetail"));
 
             return htmlBuilder.toSafeHtml();
         } else {
@@ -199,9 +208,16 @@ public class FunctionSignatureUtil {
         }
     }
 
-    private static AceCompletion convertFunctionDefinitionToCompletion(
+    public static AceCompletion convertFunctionDefinitionToCompletion(
             final FunctionSignature signature,
             final String helpUrlBase) {
+        return convertFunctionDefinitionToCompletion(signature, helpUrlBase, DEFAULT_COMPLETION_SCORE);
+    }
+
+    public static AceCompletion convertFunctionDefinitionToCompletion(
+            final FunctionSignature signature,
+            final String helpUrlBase,
+            final int score) {
 
         final String name = buildSignatureStr(signature);
 
@@ -209,10 +225,15 @@ public class FunctionSignatureUtil {
         // event so leave it out for now.
         final String html = buildInfoHtml(signature, null)
                 .asString();
-        final String functionTypeStr = signature.getArgs().isEmpty()
-                ? "Value"
-                : "Function";
-        final String meta = signature.getPrimaryCategory() + " " + functionTypeStr;
+
+        final String meta;
+        if ("Value".equals(signature.getPrimaryCategory())) {
+            meta = signature.getPrimaryCategory();
+        } else if (signature.getArgs().isEmpty()) {
+            meta = signature.getPrimaryCategory() + " Value";
+        } else {
+            meta = "Func (" + signature.getPrimaryCategory() + ")";
+        }
         final String snippetText = buildSnippetText(signature);
 
 //                    GWT.log("Adding snippet " + name + " | " + meta + " | " + snippetText);
@@ -220,12 +241,12 @@ public class FunctionSignatureUtil {
         return new AceCompletionSnippet(
                 name,
                 snippetText,
-                DEFAULT_COMPLETION_SCORE,
+                GwtNullSafe.requireNonNullElse(score, DEFAULT_COMPLETION_SCORE),
                 meta,
                 html);
     }
 
-    private static String buildSnippetText(final FunctionSignature signature) {
+    public static String buildSnippetText(final FunctionSignature signature) {
         final String argsStr;
         if (signature.getArgs().isEmpty()) {
             argsStr = "";
@@ -272,15 +293,18 @@ public class FunctionSignatureUtil {
                 ? arg.getDefaultValue()
                 : argName;
 
-        final StringBuilder stringBuilder = new StringBuilder();
-        final boolean addQuotes = Type.STRING.equals(arg.getArgType())
-                && !snippetDefault.startsWith("${")
-                && !snippetDefault.endsWith("}");
+//        final StringBuilder stringBuilder = new StringBuilder();
+//        final boolean addQuotes = Type.STRING.equals(arg.getArgType())
+//                && !snippetDefault.startsWith("${")
+//                && !snippetDefault.endsWith("}");
 
-        if (addQuotes) {
-            stringBuilder.append("'");
-        }
-        stringBuilder
+//        if (addQuotes) {
+//            stringBuilder.append("'");
+//        }
+        // No need to quote args as when you tab through you can surround with quotes
+        // just by hitting the ' or " key. Also, more often than not, the arg value
+        // is another func call or a field.
+        final StringBuilder stringBuilder = new StringBuilder()
                 .append("${")
                 .append(position)
                 .append(":")
@@ -288,10 +312,9 @@ public class FunctionSignatureUtil {
                         .replace("$", "\\$")
                         .replace("}", "\\}"))
                 .append("}");
-
-        if (addQuotes) {
-            stringBuilder.append("'");
-        }
+//        if (addQuotes) {
+//            stringBuilder.append("'");
+//        }
 
         return stringBuilder.toString();
     }
@@ -363,10 +386,13 @@ public class FunctionSignatureUtil {
                 command);
     }
 
-    private static String buildSignatureStr(final FunctionSignature signature) {
+    public static String buildSignatureStr(final FunctionSignature signature) {
         String argsStr;
         if (signature.getArgs().isEmpty()) {
-            argsStr = "";
+            argsStr = "()";
+        } else if (signature.getArgs().size() > 3) {
+            // Funcs with long arg lists get truncated. Help text explains all the args.
+            argsStr = "(...";
         } else {
             final AtomicBoolean foundOptArg = new AtomicBoolean(false);
             argsStr = signature.getArgs()
@@ -398,9 +424,11 @@ public class FunctionSignatureUtil {
             if (foundOptArg.get()) {
                 argsStr += "]";
             }
+            argsStr = "(" + argsStr + ")";
         }
 
-        return signature.getName() + "(" + argsStr + ")";
+        // Add a space to make it a bit clearer
+        return signature.getName() + " " + argsStr;
     }
 
     private static String buildInsertText(final FunctionSignature signature) {
@@ -510,7 +538,7 @@ public class FunctionSignatureUtil {
             addedContent.set(true);
         }
 
-        htmlBuilder.div(tb::write, Attribute.className("functionSignatureTable"));
+        htmlBuilder.div(tb::write, Attribute.className("queryHelpDetail-table"));
         return addedContent.get();
     }
 
@@ -527,14 +555,21 @@ public class FunctionSignatureUtil {
         htmlBuilder.append("For more information see the ");
         htmlBuilder.appendLink(
                 helpUrlBase +
-                        "/user-guide/dashboards/expressions/" +
                         signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
                         "#" +
-                        functionNameToAnchor(signature.getName()),
+                        functionSignatureToAnchor(signature),
                 "Help Documentation");
         htmlBuilder.append(".");
     }
 
+    private static String functionSignatureToAnchor(final FunctionSignature signature) {
+        final String helpAnchor = signature.getHelpAnchor();
+        if (GwtNullSafe.isBlankString(helpAnchor)) {
+            return functionNameToAnchor(signature.getName());
+        } else {
+            return helpAnchor;
+        }
+    }
 
     private static String functionNameToAnchor(final String name) {
         final StringBuilder stringBuilder = new StringBuilder();
@@ -564,7 +599,7 @@ public class FunctionSignatureUtil {
         }
     }
 
-    private static boolean isBracketedForm(final FunctionSignature signature) {
+    public static boolean isBracketedForm(final FunctionSignature signature) {
 
         return signature.getName().length() > 1
                 && Character.isLetter(signature.getName().charAt(0));

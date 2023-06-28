@@ -1,6 +1,5 @@
 package stroom.query.language;
 
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class SearchRequestBuilder {
 
@@ -53,7 +53,7 @@ public class SearchRequestBuilder {
         final List<AbstractToken> childTokens = tokenGroup.getChildren();
 
         // Add data source.
-        addDataSourceName(childTokens, consumer);
+        addDataSourceName(childTokens, consumer, true);
     }
 
     private SearchRequest doCreate(final String string, final SearchRequest in) {
@@ -104,7 +104,22 @@ public class SearchRequestBuilder {
                 in.getTimeout());
     }
 
-    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens, final Consumer<String> consumer) {
+    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
+                                                  final Consumer<String> consumer) {
+        return addDataSourceName(tokens, consumer, false);
+    }
+
+    /**
+     * @param isLenient Ignores any additional child tokens found. This is to support getting just
+     *                the data source from a partially written query, which is likely to not be
+     *                a valid query. For example, you may type
+     *                <pre>{@code from View sel}</pre> and at this point do code completion on 'sel'
+     *                so if this method is called it will treat 'sel as an extra child.
+     *
+     */
+    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
+                                                  final Consumer<String> consumer,
+                                                  final boolean isLenient) {
         AbstractToken token = tokens.get(0);
 
         // The first token must be `FROM`.
@@ -114,16 +129,18 @@ public class SearchRequestBuilder {
 
         final KeywordGroup keywordGroup = (KeywordGroup) token;
         if (keywordGroup.getChildren().size() == 0) {
-            throw new TokenException(token, "Expected data source");
-        } else if (keywordGroup.getChildren().size() > 1) {
-            throw new TokenException(keywordGroup.getChildren().get(1), "Unexpected token");
+            throw new TokenException(token, "Expected data source value");
+        } else if (keywordGroup.getChildren().size() > 1 && !isLenient) {
+            throw new TokenException(keywordGroup.getChildren().get(1),
+                    "Unexpected data source child tokens: " + keywordGroup.getChildren()
+                            .stream()
+                            .map(token2 -> token2.getTokenType() + ":[" + token2.getText() + "]")
+                            .collect(Collectors.joining(", ")));
         }
 
-        AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
-        if (!TokenType.STRING.equals(dataSourceToken.getTokenType()) &&
-                !TokenType.SINGLE_QUOTED_STRING.equals(dataSourceToken.getTokenType()) &&
-                !TokenType.DOUBLE_QUOTED_STRING.equals(dataSourceToken.getTokenType())) {
-            throw new TokenException(dataSourceToken, "Expected string");
+        final AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
+        if (!TokenType.isString(dataSourceToken)) {
+            throw new TokenException(dataSourceToken, "Expected a token of type string");
         }
         final String dataSourceName = dataSourceToken.getUnescapedText();
         consumer.accept(dataSourceName);
