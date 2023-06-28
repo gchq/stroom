@@ -36,18 +36,6 @@
     display: flex;
     margin: 2px;
     gap: 2px;
-
-    /*
-    white-space: nowrap;
-    align-items: center;
-    flex-wrap: nowrap;
-    align-content: center;
-    justify-content: flex-start;
-
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    padding: 2px;*/
 }
 
 .basicTabSelector {
@@ -86,7 +74,6 @@
     position: relative;
     width: 100%;
     height: 100%;
-    margin: 4px;
 }
 
 .curveTab {
@@ -97,33 +84,26 @@
     display: flex;
     align-items: center;
     height: 34px;
-    padding: 0 2px;
-    border: var(--curve-tab__border);
-    border-radius: var(--curve-tab__border-radius);
+    border-bottom: solid 3px transparent;
+    border-top: solid 3px transparent;
     background-color: var(--curve-tab__background-color);
     color: var(--control__text-color);
 }
 
 .curveTab:hover {
     background: var(--curve-tab__background-color--hover);
-    border: var(--curve-tab__border--hover);
 }
 
 .curveTab-selected {
-    background: var(--curve-tab__background-color--selected);
-    border: var(--curve-tab__border--hover);
-    box-shadow: var(--curve-tab__box-shadow--selected);
+    border-bottom: solid 3px var(--blue-300);
 }
 
 .curveTab-selected:hover {
-    background: var(--curve-tab__background-color--selected);
-    border: var(--curve-tab__border--hover);
-    box-shadow: var(--curve-tab__box-shadow--selected);
+    background: var(--curve-tab__background-color--hover);
 }
 
 .curveTab-keyboardSelected:focus {
-    border-color: var(--focus-border);
-    box-shadow: var(--focus-shadow);
+    background: var(--curve-tab__background-color--hover);
 }
 
 /* Tab content */
@@ -204,7 +184,7 @@
 }
 
 .curveTabSelector:hover {
-    background: var(--curve-tab__background-color--selected);
+    background: var(--curve-tab__background-color--hover);
     border: var(--curve-tab__border--hover);
 }
 
@@ -232,15 +212,11 @@
 }
 
 .layerContainer-container {
-	position: relative;
 	width: 100%;
 	height: 100%;
 }
 
 .layerContainer-layer {
-	position: absolute !important;
-	left: 0 !important;
-	top: 0 !important;
     width: 100%;
     height: 100%;
 }
@@ -481,6 +457,7 @@
 
 .tabBarContainer {
     display: flex;
+    border-bottom: 1px solid var(--splitter__background-color);
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -493,7 +470,7 @@
 }
 
 .curveTabLayoutViewImpl-tabBarOuter {
-    height: 42px;
+    height: 33px;
     margin-right: 42px;
     flex-grow: 1;
 }
@@ -651,7 +628,7 @@
     align-items: center;
     padding: 0 .75rem;
     gap: .75rem;
-    min-height: 1.8rem;
+    min-height: 27px;
 }
 
 .dataViewImpl-tabBarOuter {
@@ -985,6 +962,7 @@
     align-items: center;
     gap: 10px;
     min-height: 25px;
+    padding: 0 5px;
 }
 
 .linkTabPanelViewImpl-middle {
@@ -1094,6 +1072,10 @@
 }
 */
 
+.mainViewImpl-splitPanel > .gwt-SplitLayoutPanel-Dragger-Outer {
+    background-color: var(--navigation__splitter__background-color);
+}
+
 .mainViewImpl-contentPanel {
     width: 100%;
     height: 100%;
@@ -1102,7 +1084,7 @@
 
 .mainViewImpl-menu {
     position: absolute;
-    top: 2px;
+    top: 0;
     right: 2px;
     width: 32px;
     height: 32px;
@@ -1346,7 +1328,6 @@
 .navigation {
     background-color: var(--navigation__background-color);
     color: var(--navigation__text-color);
-    border-right: 1px solid var(--navigation__border-color);
     overflow: hidden;
 }
 
@@ -1432,7 +1413,7 @@ button.main-menu svg {
 
     display: flex;
     align-items: center;
-    height: 42px;
+    height: 33px;
     justify-content: center;
 }
 /*
