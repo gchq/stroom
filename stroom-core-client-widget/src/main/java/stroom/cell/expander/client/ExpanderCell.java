@@ -16,7 +16,7 @@
 
 package stroom.cell.expander.client;
 
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 
 import com.google.gwt.cell.client.AbstractCell;

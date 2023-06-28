@@ -37,7 +37,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;

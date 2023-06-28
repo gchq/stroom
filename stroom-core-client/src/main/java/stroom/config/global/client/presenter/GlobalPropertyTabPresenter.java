@@ -19,7 +19,7 @@ package stroom.config.global.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;

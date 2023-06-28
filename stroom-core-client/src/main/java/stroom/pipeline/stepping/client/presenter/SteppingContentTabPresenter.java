@@ -31,7 +31,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

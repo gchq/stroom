@@ -4,7 +4,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.SourceKey;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

@@ -16,7 +16,7 @@
 
 package stroom.widget.valuespinner.client;
 
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;

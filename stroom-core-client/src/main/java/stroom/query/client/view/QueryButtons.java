@@ -18,7 +18,7 @@ package stroom.query.client.view;
 
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.GWT;

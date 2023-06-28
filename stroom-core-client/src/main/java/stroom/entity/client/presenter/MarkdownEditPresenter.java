@@ -27,7 +27,7 @@ import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.SandboxOption;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.Themes.ThemeType;

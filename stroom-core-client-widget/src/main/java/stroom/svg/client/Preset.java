@@ -16,6 +16,8 @@
 
 package stroom.svg.client;
 
+import stroom.svg.shared.SvgImage;
+
 public class Preset {
 
     private final SvgImage svgImage;

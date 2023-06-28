@@ -17,7 +17,7 @@
 package stroom.widget.tab.client.presenter;
 
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 public interface TabData {
 

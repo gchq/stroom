@@ -1,6 +1,6 @@
 package stroom.query.client.presenter;
 
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;

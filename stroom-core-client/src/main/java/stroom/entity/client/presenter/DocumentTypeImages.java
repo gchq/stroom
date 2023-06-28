@@ -2,7 +2,7 @@ package stroom.entity.client.presenter;
 
 import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;

@@ -18,7 +18,7 @@ package stroom.cache.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

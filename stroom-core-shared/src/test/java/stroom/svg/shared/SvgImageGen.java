@@ -1,4 +1,4 @@
-package stroom;
+package stroom.svg.shared;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,12 +17,24 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
 
+/**
+ * A main method for walking a directory containing SVG files (some in sub dirs) and
+ * doing the following:
+ * <ul>
+ *     <li>Replacing hex colour codes with a corresponding css colour variable.
+ *     This is so we can change the icon colours at runtime.</li>
+ *     <li>Output the modified svg files into stroom-app/src/main/resources/ui/images with
+ *     the same names and relative paths as the source.</li>
+ *     <li>Generate {@link SvgImage} enum containing all the SVGs as string values for use
+ *     with inline SVGs in HTML.</li>
+ * </ul>
+ */
 public class SvgImageGen {
 
     private static final String WIDGET_DIR = "stroom-core-client-widget";
     private static final String APP_DIR = "stroom-app";
 
-    // Hex colour => css style name
+    // Hex colour => css colour variable
     private static final Map<String, String> COLOUR_MAPPINGS = Map.of(
             "#000000", "var(--icon-colour__foreground)",
             "#2196f4", "var(--icon-colour__xsd-background)",
@@ -78,6 +90,8 @@ public class SvgImageGen {
     private static final Path UI_RESOURCE_REL_PATH = Path.of(
             "src", "main", "resources", "ui");
 
+    private SvgImageGen() {
+    }
 
     public static void main(final String[] args) {
 
@@ -110,8 +124,8 @@ public class SvgImageGen {
                         String xml = Files.readString(sourceFile, StandardCharsets.UTF_8);
                         for (final Entry<String, String> entry : COLOUR_MAPPINGS.entrySet()) {
                             final String hex = entry.getKey();
-                            final String cssStyle = entry.getValue();
-                            xml = xml.replaceAll(hex, cssStyle);
+                            final String cssColourVariable = entry.getValue();
+                            xml = xml.replaceAll(hex, cssColourVariable);
                         }
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
                         final boolean isNewName = enumFieldNameSet.add(enumFieldName);

@@ -16,7 +16,7 @@
 
 package stroom.widget.tab.client.presenter;
 
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 public class TabDataImpl implements TabData {
 

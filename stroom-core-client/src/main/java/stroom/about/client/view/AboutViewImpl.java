@@ -17,7 +17,7 @@
 package stroom.about.client.view;
 
 import stroom.about.client.presenter.AboutPresenter;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

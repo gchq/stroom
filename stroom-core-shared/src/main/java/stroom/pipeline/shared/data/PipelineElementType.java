@@ -18,6 +18,7 @@ package stroom.pipeline.shared.data;
 
 import stroom.docref.HasDisplayValue;
 import stroom.docref.HasType;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -76,7 +77,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     @JsonProperty
     private final String[] roles;
     @JsonProperty
-    private final PipelineElementIcon icon;
+    private final SvgImage icon;
 
     @JsonIgnore
     private Set<String> roleSet;
@@ -85,7 +86,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     public PipelineElementType(@JsonProperty("type") final String type,
                                @JsonProperty("category") final Category category,
                                @JsonProperty("roles") final String[] roles,
-                               @JsonProperty("icon") final PipelineElementIcon icon) {
+                               @JsonProperty("icon") final SvgImage icon) {
         this.type = type;
         this.category = category;
         this.roles = roles;
@@ -105,7 +106,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return roles;
     }
 
-    public PipelineElementIcon getIcon() {
+    public SvgImage getIcon() {
         return icon;
     }
 

@@ -16,7 +16,7 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.NativeEvent;

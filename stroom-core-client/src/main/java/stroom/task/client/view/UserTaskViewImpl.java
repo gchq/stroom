@@ -16,7 +16,7 @@
 
 package stroom.task.client.view;
 
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.presenter.UserTaskUiHandlers;
 import stroom.task.shared.TaskProgress;

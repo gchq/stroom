@@ -17,7 +17,7 @@
 package stroom.iframe.client.presenter;
 
 import stroom.content.client.event.RefreshContentTabEvent;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;

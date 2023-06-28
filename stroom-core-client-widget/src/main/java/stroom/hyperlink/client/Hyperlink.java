@@ -1,6 +1,6 @@
 package stroom.hyperlink.client;
 
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.http.client.URL;
 

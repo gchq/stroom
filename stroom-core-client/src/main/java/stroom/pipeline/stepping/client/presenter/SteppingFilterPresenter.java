@@ -22,7 +22,6 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
-import stroom.pipeline.structure.client.presenter.PipelineElementIcons;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -101,7 +100,7 @@ public class SteppingFilterPresenter extends
                                     PipelineElement::getElementType);
                             if (pipelineElementType != null && pipelineElementType.getIcon() != null) {
                                 return new Preset(
-                                        PipelineElementIcons.get(pipelineElementType.getIcon()),
+                                        pipelineElementType.getIcon(),
                                         pipelineElementType.getType(),
                                         true);
                             } else {

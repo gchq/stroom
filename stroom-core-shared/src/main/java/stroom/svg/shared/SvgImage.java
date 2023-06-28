@@ -1,4 +1,4 @@
-package stroom.svg.client;
+package stroom.svg.shared;
 
 import javax.annotation.processing.Generated;
 

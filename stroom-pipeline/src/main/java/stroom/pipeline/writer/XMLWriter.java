@@ -35,12 +35,12 @@ import stroom.pipeline.filter.DocFinder;
 import stroom.pipeline.filter.NullXMLFilter;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
@@ -79,7 +79,7 @@ import javax.xml.transform.stream.StreamResult;
                 PipelineElementType.ROLE_WRITER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = PipelineElementIcon.XML)
+        icon = SvgImage.PIPELINE_XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(XMLWriter.class);

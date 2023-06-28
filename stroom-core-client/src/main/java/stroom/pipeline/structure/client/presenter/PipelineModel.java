@@ -24,12 +24,12 @@ import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineElementIcon;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -57,7 +57,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                     PipelineElementType.ROLE_SOURCE,
                     PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE},
-            PipelineElementIcon.STREAM);
+            SvgImage.PIPELINE_STREAM);
 
     static {
         SOURCE_ELEMENT.setElementType(SOURCE_ELEMENT_TYPE);

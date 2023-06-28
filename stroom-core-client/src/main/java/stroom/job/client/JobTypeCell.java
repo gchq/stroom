@@ -17,7 +17,7 @@
 package stroom.job.client;
 
 import stroom.job.shared.JobNode.JobType;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.SelectionCell;

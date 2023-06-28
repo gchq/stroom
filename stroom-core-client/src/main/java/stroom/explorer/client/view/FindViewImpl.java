@@ -18,7 +18,7 @@ package stroom.explorer.client.view;
 
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgToggleButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;

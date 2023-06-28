@@ -18,7 +18,7 @@ package stroom.cell.valuespinner.client;
 
 import stroom.cell.valuespinner.shared.Editable;
 import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.ElementUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;

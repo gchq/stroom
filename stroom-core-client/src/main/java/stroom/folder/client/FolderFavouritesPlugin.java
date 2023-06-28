@@ -19,7 +19,7 @@ package stroom.folder.client;
 
 import stroom.core.client.presenter.Plugin;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.svg.client.SvgImage;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;

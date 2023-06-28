@@ -17,6 +17,8 @@
 
 package stroom.svg.client;
 
+import stroom.svg.shared.SvgImage;
+
 public final class SvgPresets {
 
     public static final Preset ADD = enabled(SvgImage.ADD, "Add");
