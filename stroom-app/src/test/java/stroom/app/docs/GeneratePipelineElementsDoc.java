@@ -184,7 +184,7 @@ public class GeneratePipelineElementsDoc {
                     // Add the &nbsp; at the end so the markdown processor treats the line as a <p>
                     final String iconText = elementInfo.iconFilename != null
                             ? LogUtil.message("""
-                                    {{< pipe-elm "{}" >}}&nbsp;""", elementInfo.type)
+                            {{< pipe-elm "{}" >}}&nbsp;""", elementInfo.type)
                             : "";
 
                     final String rolesText = buildRolesText(elementInfo.roles);
@@ -307,6 +307,10 @@ public class GeneratePipelineElementsDoc {
         name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
         return name;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ElementInfo {
 

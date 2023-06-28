@@ -147,13 +147,16 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return type.compareTo(o.type);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Category implements HasDisplayValue {
         INTERNAL("Internal", -1),
         READER("Reader", 0),
         PARSER("Parser", 1),
         FILTER("Filter", 2),
-        WRITER("Writer",
-                3),
+        WRITER("Writer", 3),
         DESTINATION("Destination", 4);
 
         private final String displayValue;
