@@ -12,6 +12,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.2-beta.36] - 2023-06-28
+
+* Issue **#3536** : Analytic notifications are now written using the detection schema.
+
+* Issue **#3534** : Improve query help picker: add more detail text, improve styling, fix keyboard navigation, fix missing overloaded functions. Change the help picker to show markdown detail text. Remove single quotes from function snippet arguments as the Ace editor has a nice way to handle quotes. Fix broken help links for functions. Change the dashboard column expression editor to use the new query help menu.
+
+* Fix font size/family for rendered markdown in documentation.
+
+* Issue **#3561** : Limit search errors delivered to the UI.
+
+* Issue **#3560** : Table fields now include StreamId on data source load prior to automated search.
+
+* Issue **#3557** : Fix scroll for dashboard query expressions.
+
+* Issue **#3439** : Improve analytics execution logging.
+
 * Issue **#3504** : Fix XML schema cache deadlock.
 
 * Fix failing build.
@@ -19,6 +36,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
 
 * Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
+
 
 ## [v7.2-beta.35-restyle] - 2023-06-27
 
@@ -5534,7 +5552,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.35-restyle...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.36...HEAD
+[v7.2-beta.36]: https://github.com/gchq/stroom/compare/v7.2-beta.35-restyle...v7.2-beta.36
 [v7.2-beta.35-restyle]: https://github.com/gchq/stroom/compare/v7.2-beta.35...v7.2-beta.35-restyle
 [v7.2-beta.35]: https://github.com/gchq/stroom/compare/v7.2-beta.34...v7.2-beta.35
 [v7.2-beta.34]: https://github.com/gchq/stroom/compare/v7.2-beta.33...v7.2-beta.34
