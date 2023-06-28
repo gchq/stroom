@@ -3,6 +3,7 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.view.shared.ViewResource;
 
 import com.google.gwt.core.client.GWT;
@@ -19,12 +20,13 @@ import javax.inject.Singleton;
 public class Views implements HasHandlers {
 
     private static final ViewResource VIEW_RESOURCE = GWT.create(ViewResource.class);
+    private static final long VIEWS_TIME_TO_LIVE_MS = 2_000;
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
 
-    private List<String> viewNames;
-
+    private List<DocRef> views;
+    private long nextUpdateTimeEpochMs = 0;
 
     @Inject
     Views(final EventBus eventBus,
@@ -33,15 +35,17 @@ public class Views implements HasHandlers {
         this.restFactory = restFactory;
     }
 
-    public void fetchViews(final Consumer<List<String>> consumer) {
-        if (viewNames != null) {
-            consumer.accept(viewNames);
+    public void fetchViews(final Consumer<List<DocRef>> consumer) {
+        // Need to allow for available data sources changing, so use a TTL
+        if (views != null && System.currentTimeMillis() < nextUpdateTimeEpochMs) {
+            consumer.accept(views);
         } else {
-            final Rest<List<String>> rest = restFactory.create();
+            final Rest<List<DocRef>> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
-                        viewNames = result;
+                        views = result;
                         consumer.accept(result);
+                        nextUpdateTimeEpochMs = System.currentTimeMillis() + VIEWS_TIME_TO_LIVE_MS;
                     })
                     .onFailure(throwable -> AlertEvent.fireError(
                             this,

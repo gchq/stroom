@@ -16,26 +16,36 @@
 
 package stroom.query.client.presenter;
 
-import stroom.query.client.presenter.InsertQueryElementEvent.Handler;
+import stroom.query.client.presenter.InsertEditorTextEvent.Handler;
+import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class InsertQueryElementEvent extends GwtEvent<Handler> {
+import java.util.Objects;
+
+public class InsertEditorTextEvent extends GwtEvent<Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final String element;
+    private final String text;
+    private final InsertType insertType;
 
-    private InsertQueryElementEvent(final String element) {
-        this.element = element;
+    private InsertEditorTextEvent(final String text, final InsertType insertType) {
+        this.text = text;
+        this.insertType = Objects.requireNonNull(insertType);
     }
 
-    public static void fire(final HasHandlers source, final String element) {
-        if (TYPE != null) {
-            final InsertQueryElementEvent event = new InsertQueryElementEvent(element);
+    public static void fire(final HasHandlers source,
+                            final String text,
+                            final InsertType insertType) {
+        if (TYPE != null && Objects.requireNonNull(insertType).isInsertable()) {
+            final InsertEditorTextEvent event = new InsertEditorTextEvent(text, insertType);
             source.fireEvent(event);
+        } else {
+            GWT.log("Not firing, insertType: " + insertType + ", text: " + text);
         }
     }
 
@@ -56,16 +66,19 @@ public class InsertQueryElementEvent extends GwtEvent<Handler> {
         handler.onInsert(this);
     }
 
-    public String getElement() {
-        return element;
+    public String getText() {
+        return text;
     }
 
+    public InsertType getInsertType() {
+        return insertType;
+    }
 
     // --------------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {
 
-        void onInsert(InsertQueryElementEvent event);
+        void onInsert(InsertEditorTextEvent event);
     }
 }

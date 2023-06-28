@@ -42,5 +42,8 @@ public interface AceCompletionProvider {
      * @param callback the {@link AceCompletionCallback} to which the
      *                 proposals should be delivered
      */
-    void getProposals(AceEditor editor, AceEditorCursorPosition pos, String prefix, AceCompletionCallback callback);
+    void getProposals(AceEditor editor,
+                      AceEditorCursorPosition pos,
+                      String prefix,
+                      AceCompletionCallback callback);
 }

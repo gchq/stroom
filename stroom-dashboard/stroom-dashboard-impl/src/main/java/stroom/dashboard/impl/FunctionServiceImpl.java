@@ -15,12 +15,15 @@ import stroom.dashboard.expression.v1.ValNumber;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
+import stroom.dashboard.shared.FunctionSignature.OverloadType;
 import stroom.dashboard.shared.FunctionSignature.Type;
+import stroom.util.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,9 +52,14 @@ public class FunctionServiceImpl implements FunctionService {
     private Stream<FunctionSignature> convertFunctionDef(final FunctionDef functionDef) {
         if (functionDef != null) {
             try {
+                final Map<List<String>, Long> countsByCategoryPath = Arrays.stream(functionDef.signatures())
+                        .collect(Collectors.groupingBy(
+                                sig -> buildCategoryPath(functionDef, sig),
+                                Collectors.counting()));
+
                 return Arrays.stream(functionDef.signatures())
                         .map(functionSignature ->
-                                convertSignature(functionDef, functionSignature));
+                                convertSignature(functionDef, functionSignature, countsByCategoryPath));
             } catch (Exception e) {
                 throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
             }
@@ -62,15 +70,12 @@ public class FunctionServiceImpl implements FunctionService {
 
     private static FunctionSignature convertSignature(
             final FunctionDef functionDef,
-            final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
+            final stroom.dashboard.expression.v1.FunctionSignature functionSignature,
+            final Map<List<String>, Long> countsByCategoryPath) {
 
         if (functionSignature != null) {
 
             // The sig can override the types/descriptions set at the func def level
-            final String category = functionSignature.category().length > 0
-                    ? convertCategory(functionSignature.category())
-                    : convertCategory(functionDef.commonCategory());
-
             final Type returnType = functionSignature.returnType().length > 0
                     ? convertType(functionSignature.returnType())
                     : convertType(functionDef.commonReturnType());
@@ -95,14 +100,35 @@ public class FunctionServiceImpl implements FunctionService {
 
             final List<String> categoryPath = buildCategoryPath(functionDef, functionSignature);
 
+            final OverloadType overloadType;
+            if (NullSafe.test(countsByCategoryPath.get(categoryPath), count -> count > 1)) {
+                overloadType = OverloadType.OVERLOADED_IN_CATEGORY;
+            } else {
+                final long totalSigCount = countsByCategoryPath.values()
+                        .stream()
+                        .mapToLong(Long::longValue)
+                        .sum();
+                if (totalSigCount == 1) {
+                    overloadType = OverloadType.NOT_OVERLOADED;
+                } else {
+                    overloadType = OverloadType.OVERLOADED_GLOBALLY;
+                }
+            }
+            final String helpAnchor = functionDef.helpAnchor() == null
+                    || FunctionDef.UNDEFINED.equals(functionDef.helpAnchor())
+                    ? null
+                    : functionDef.helpAnchor();
+
             return new FunctionSignature(
                     functionDef.name(),
+                    helpAnchor,
                     aliases,
                     categoryPath,
                     args,
                     returnType,
                     returnDescription,
-                    description);
+                    description,
+                    overloadType);
         } else {
             return null;
         }

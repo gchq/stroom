@@ -412,6 +412,15 @@ public class GwtNullSafe {
     }
 
     /**
+     * If runnable is non-null run it.
+     */
+    public static void run(final Runnable runnable) {
+        if (runnable != null) {
+            runnable.run();
+        }
+    }
+
+    /**
      * If value is non-null pass it to the consumer, else it is a no-op.
      */
     public static <T> void consume(final T value,

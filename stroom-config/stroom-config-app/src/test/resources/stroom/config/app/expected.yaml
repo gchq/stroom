@@ -947,6 +947,7 @@ appConfig:
     helpSubPathJobs: "/user-guide/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
     helpSubPathQuickFilter: "/user-guide/finding-things/"
+    helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
     helpUrl: "https://gchq.github.io/stroom-docs/7.2/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
