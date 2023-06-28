@@ -1,9 +1,9 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.api.AlertManager;
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
-import stroom.analytics.impl.RecordConsumer.Data;
-import stroom.analytics.impl.RecordConsumer.Record;
+import stroom.analytics.impl.DetectionConsumer.Detection;
+import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
+import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticNotification;
 import stroom.analytics.shared.AnalyticNotificationConfig;
@@ -15,6 +15,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleType;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -74,6 +75,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -98,7 +100,7 @@ public class AnalyticsExecutor {
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
     private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
     private final AnalyticDataStores analyticDataStores;
-    private final Provider<AlertWriter2> alertWriterProvider;
+    private final Provider<DetectionWriterProxy> alertWriterProvider;
     private final TaskContextFactory taskContextFactory;
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
     private final AnalyticProcessorFilterDao analyticProcessorFilterDao;
@@ -128,7 +130,7 @@ public class AnalyticsExecutor {
                              final TaskContextFactory taskContextFactory,
                              final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
                              final AnalyticDataStores analyticDataStores,
-                             final Provider<AlertWriter2> alertWriterProvider,
+                             final Provider<DetectionWriterProxy> alertWriterProvider,
                              final AnalyticProcessorFilterDao analyticProcessorFilterDao,
                              final AnalyticProcessorFilterTrackerDao analyticProcessorFilterTrackerDao,
                              final AnalyticNotificationDao analyticNotificationDao,
@@ -364,11 +366,11 @@ public class AnalyticsExecutor {
                                             detectionsWriter.setFeed(streamConfig.getDestinationFeed());
                                         }
 
-                                        final AlertWriter2 alertWriter = alertWriterProvider.get();
+                                        final DetectionWriterProxy alertWriter = alertWriterProvider.get();
                                         alertWriter.setAnalyticRuleDoc(analyticRuleDoc);
                                         alertWriter.setCompiledFields(compiledFields);
                                         alertWriter.setFieldIndex(fieldIndex);
-                                        alertWriter.setRecordConsumer(detectionsWriter);
+                                        alertWriter.setDetectionConsumer(detectionsWriter);
 
                                         final AnalyticFieldListConsumer analyticFieldListConsumer =
                                                 new AnalyticFieldListConsumer(
@@ -641,7 +643,7 @@ public class AnalyticsExecutor {
                                  final AnalyticNotification notification,
                                  final AnalyticNotificationStreamConfig streamConfig,
                                  final AnalyticNotificationState notificationState,
-                                 final RecordConsumer recordConsumer,
+                                 final DetectionConsumer detectionConsumer,
                                  final AnalyticDataStore dataStore,
                                  final CurrentDbState currentDbState,
                                  final boolean upToDate,
@@ -689,7 +691,7 @@ public class AnalyticsExecutor {
             ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
             resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
             final TableResultConsumer tableResultConsumer =
-                    new TableResultConsumer(analyticRuleDoc, recordConsumer);
+                    new TableResultConsumer(analyticRuleDoc, detectionConsumer);
 
             final FieldFormatter fieldFormatter =
                     new FieldFormatter(new FormatterFactory(null));
@@ -917,14 +919,14 @@ public class AnalyticsExecutor {
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultConsumer.class);
 
         private final AnalyticRuleDoc analyticRuleDoc;
-        private final RecordConsumer recordConsumer;
+        private final DetectionConsumer detectionConsumer;
 
         private List<Field> fields;
 
         public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
-                                   final RecordConsumer recordConsumer) {
+                                   final DetectionConsumer detectionConsumer) {
             this.analyticRuleDoc = analyticRuleDoc;
-            this.recordConsumer = recordConsumer;
+            this.detectionConsumer = detectionConsumer;
         }
 
         @Override
@@ -949,21 +951,54 @@ public class AnalyticsExecutor {
         @Override
         public TableResultConsumer addRow(final Row row) {
             try {
-                final List<String> values = row.getValues();
+                final List<Value> values = new ArrayList<>();
 
-                // Match - dump record.
-                final List<Data> rows = new ArrayList<>();
-                rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR,
-                        DateUtil.createNormalDateTimeString()));
-                rows.add(new Data("analyticRuleUuid", analyticRuleDoc.getUuid()));
-                rows.add(new Data("analyticRuleName", analyticRuleDoc.getName()));
-                for (int i = 0; i < fields.size(); i++) {
-                    final String value = values.get(i);
-                    if (value != null) {
-                        rows.add(new Data(fields.get(i).getName(), value));
+                int index = 0;
+                Long streamId = null;
+                Long eventId = null;
+                for (final Field field : fields) {
+                    final String fieldValue = row.getValues().get(index);
+                    if (fieldValue != null) {
+                        final String fieldName = field.getDisplayValue();
+
+                        if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                            try {
+                                streamId = Long.parseLong(fieldValue);
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
+                            }
+                        } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                            try {
+                                eventId = Long.parseLong(fieldValue);
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
+                            }
+                        } else {
+                            values.add(new Value(fieldName, fieldValue));
+                        }
                     }
+
+                    index++;
                 }
-                recordConsumer.accept(new Record(rows));
+
+                final Detection detection = new Detection(
+                        Instant.now(),
+                        analyticRuleDoc.getName(),
+                        analyticRuleDoc.getUuid(),
+                        analyticRuleDoc.getVersion(),
+                        null,
+                        null,
+                        analyticRuleDoc.getDescription(),
+                        null,
+                        UUID.randomUUID().toString(),
+                        0,
+                        false,
+                        values,
+                        List.of(new LinkedEvent(null, streamId, eventId))
+                );
+
+                detectionConsumer.accept(detection);
+
             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
                 throw e;
