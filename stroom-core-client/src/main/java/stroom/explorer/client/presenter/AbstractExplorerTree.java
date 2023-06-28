@@ -362,11 +362,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         @Override
         protected void onMouseDown(final CellPreviewEvent<ExplorerNode> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
-            // We set focus here so that we can use the keyboard to navigate once we have focus.
-            cellTable.setFocus(true);
             final int row = cellTable.getVisibleItems().indexOf(e.getValue());
             if (row >= 0) {
-                cellTable.setKeyboardSelectedRow(row);
+                cellTable.setKeyboardSelectedRow(row, true);
+            } else {
+                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
             }
 
             if (MouseUtil.isSecondary(nativeEvent)) {

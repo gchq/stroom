@@ -115,6 +115,10 @@ public class QueryToolbarPresenter
         return addHandlerToSource(TimeRangeChangeEvent.getType(), handler);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface QueryToolbarView extends View, HasUiHandlers<QueryToolbarUiHandlers> {
 
         void setWarningsVisible(boolean show);

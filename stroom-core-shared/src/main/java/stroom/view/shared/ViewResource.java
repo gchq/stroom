@@ -16,6 +16,7 @@
 
 package stroom.view.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -60,5 +61,5 @@ public interface ViewResource extends RestResource, DirectRestService, FetchWith
     @Operation(
             summary = "Fetch view names",
             operationId = "listViews")
-    List<String> list();
+    List<DocRef> list();
 }

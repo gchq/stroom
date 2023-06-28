@@ -637,6 +637,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         setDirty(true);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface PipelineStructureView extends View, HasUiHandlers<PipelineStructureUiHandlers> {
 
         void setInheritanceTree(View view);
@@ -653,6 +657,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         void setRemoveEnabled(boolean enabled);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class AddPipelineElementCommand implements Command {
 
@@ -689,6 +697,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class RestorePipelineElementCommand implements Command {
 

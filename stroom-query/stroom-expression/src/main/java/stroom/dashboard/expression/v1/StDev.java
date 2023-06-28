@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = StDev.NAME,
+        helpAnchor = "stdev-standard-deviation",
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The standard deviation of all values.",
         signatures = {

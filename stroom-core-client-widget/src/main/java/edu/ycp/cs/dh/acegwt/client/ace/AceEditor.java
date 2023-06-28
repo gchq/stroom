@@ -125,7 +125,23 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     public native void setUseVimBindings(boolean useVimBindings) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (useVimBindings) {
-            editor.setKeyboardHandler('ace/keyboard/vim');
+            $wnd.ace.require("ace/keyboard/vim");
+            editor.setKeyboardHandler('ace/keyboard/vim', function() {
+                var vimKeyboard = $wnd.ace.require("ace/keyboard/vim");
+                if (vimKeyboard) {
+                    if (vimKeyboard.Vim) {
+                        // TODO: 21/06/2023 Ideally we would have a user pref for additional
+                        // vim mappings so users can set their own. E.g. some yaml containing
+                        // a list of
+                        vimKeyboard.Vim.map("jk", "<Esc>", "insert");
+//                        console.log("Mapping 'jk' to '<Esc>' in 'insert' mode");
+                    } else {
+//                        console.log("null Vim");
+                    }
+                } else {
+//                    console.log("null vimKeyboard");
+                }
+            });
         } else {
             editor.setKeyboardHandler(null);
         }
@@ -1043,6 +1059,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     public native void setScrollTop(final int scrollTop) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		editor.getSession().setScrollTop(scrollTop);
+	}-*/;
+
+    public native boolean isClean() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		return editor.getSession().getUndoManager().isClean();
+	}-*/;
+
+    public native void markClean() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.getSession().getUndoManager().markClean();
 	}-*/;
 
     /**

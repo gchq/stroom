@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -7,7 +8,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 public class NodeResultSerialiser {
 
@@ -15,7 +15,7 @@ public class NodeResultSerialiser {
 
     public static boolean read(final Input input,
                                final Coprocessors coprocessors,
-                               final Consumer<Throwable> errorConsumer) {
+                               final ErrorConsumer errorConsumer) {
 
         // Read completion status.
         final boolean complete = input.readBoolean();
@@ -27,8 +27,7 @@ public class NodeResultSerialiser {
         final int length = input.readInt();
         for (int i = 0; i < length; i++) {
             final String error = input.readString();
-            LOGGER.debug(() -> error);
-            errorConsumer.accept(new RuntimeException(error));
+            errorConsumer.add(() -> error);
         }
 
         return complete;

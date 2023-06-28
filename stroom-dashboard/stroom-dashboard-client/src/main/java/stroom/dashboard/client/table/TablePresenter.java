@@ -168,7 +168,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
-                          final Provider<ExpressionPresenter> expressionPresenterProvider,
+                          final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
