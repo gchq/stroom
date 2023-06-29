@@ -201,7 +201,7 @@ public class TabManager {
         return new IconMenuItem.Builder()
                 .priority(7)
                 .icon(SvgPresets.COPY)
-                .text("Duplicate Panel")
+                .text("Duplicate All")
                 .command(() -> duplicateTabPanel(tabLayoutConfig))
                 .build();
     }

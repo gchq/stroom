@@ -9226,7 +9226,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "type" : "string"
+                    "$ref" : "#/components/schemas/DocRef"
                   }
                 }
               }
@@ -13233,8 +13233,15 @@
           "description" : {
             "type" : "string"
           },
+          "helpAnchor" : {
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
+          },
+          "overloadType" : {
+            "type" : "string",
+            "enum" : [ "NOT_OVERLOADED", "OVERLOADED_IN_CATEGORY", "OVERLOADED_GLOBALLY" ]
           },
           "returnDescription" : {
             "type" : "string"
@@ -17354,6 +17361,12 @@
           "description" : {
             "type" : "string"
           },
+          "snippets" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "title" : {
             "type" : "string"
           }
@@ -17917,6 +17930,9 @@
             "type" : "string"
           },
           "helpSubPathQuickFilter" : {
+            "type" : "string"
+          },
+          "helpSubPathStroomQueryLanguage" : {
             "type" : "string"
           },
           "helpUrl" : {

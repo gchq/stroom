@@ -49,10 +49,10 @@ public class SplitLayoutConfig extends LayoutConfig {
      */
     @XmlElement(name = "preferredSize")
     @JsonProperty("preferredSize")
-    private Size preferredSize = new Size();
+    private final Size preferredSize;
     @XmlElement(name = "dimension")
     @JsonProperty("dimension")
-    private int dimension;
+    private final int dimension;
     @XmlElementWrapper(name = "children")
     @XmlElements({
             @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
@@ -60,26 +60,24 @@ public class SplitLayoutConfig extends LayoutConfig {
     @JsonProperty("children")
     private List<LayoutConfig> children;
 
-    public SplitLayoutConfig() {
-        id = "SplitLayoutConfig_" + RandomId.createId(10);
+    public SplitLayoutConfig(final int dimension) {
+        this(new Size(), dimension, null);
     }
 
-    public SplitLayoutConfig(final int dimension, final LayoutConfig... children) {
-        id = "SplitLayoutConfig_" + RandomId.createId(10);
-        this.dimension = dimension;
-        if (children != null) {
-            for (final LayoutConfig child : children) {
-                add(child);
-            }
-        }
+    public SplitLayoutConfig(final Size preferredSize, final int dimension) {
+        this(preferredSize, dimension, null);
     }
 
     @JsonCreator
-    public SplitLayoutConfig(@JsonProperty("preferredSize") Size preferredSize,
-                             @JsonProperty("dimension") int dimension,
-                             @JsonProperty("children") List<LayoutConfig> children) {
+    public SplitLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
+                             @JsonProperty("dimension") final int dimension,
+                             @JsonProperty("children") final List<LayoutConfig> children) {
         id = "SplitLayoutConfig_" + RandomId.createId(10);
-        this.preferredSize = preferredSize;
+        if (preferredSize == null) {
+            this.preferredSize = new Size();
+        } else {
+            this.preferredSize = preferredSize;
+        }
         this.dimension = dimension;
         this.children = children;
     }
@@ -147,6 +145,11 @@ public class SplitLayoutConfig extends LayoutConfig {
             return 0;
         }
         return children.size();
+    }
+
+    @Override
+    public String toString() {
+        return id;
     }
 
     public static Builder builder() {

@@ -33,6 +33,23 @@
     display: flex;
 }
 
+.DashboardViewImpl .linkTab {
+    cursor: default;
+    text-decoration: none;
+}
+
+.DashboardViewImpl.dashboard__designMode .linkTab {
+  cursor: pointer;
+}
+
+.DashboardViewImpl .linkTab:hover {
+    text-decoration: none;
+}
+
+.DashboardViewImpl.dashboard__designMode .linkTab:hover {
+    text-decoration: underline;
+}
+
 .QueryToolbarViewImpl-outer {
     display: flex;
     flex-direction: row-reverse;

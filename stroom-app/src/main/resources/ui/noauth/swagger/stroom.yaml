@@ -6341,7 +6341,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/DocRef'
           description: default response
       summary: Fetch view names
       tags:
@@ -9236,8 +9236,16 @@ components:
             type: string
         description:
           type: string
+        helpAnchor:
+          type: string
         name:
           type: string
+        overloadType:
+          type: string
+          enum:
+          - NOT_OVERLOADED
+          - OVERLOADED_IN_CATEGORY
+          - OVERLOADED_GLOBALLY
         returnDescription:
           type: string
         returnType:
@@ -12342,6 +12350,10 @@ components:
       properties:
         description:
           type: string
+        snippets:
+          type: array
+          items:
+            type: string
         title:
           type: string
     Suggestions:
@@ -12779,6 +12791,8 @@ components:
         helpSubPathProperties:
           type: string
         helpSubPathQuickFilter:
+          type: string
+        helpSubPathStroomQueryLanguage:
           type: string
         helpUrl:
           type: string

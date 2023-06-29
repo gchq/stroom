@@ -305,6 +305,7 @@ public class QueryPresenter
     @Override
     public void setComponents(final Components components) {
         super.setComponents(components);
+
         registerHandler(components.addComponentChangeHandler(event -> {
             if (initialised) {
                 final Component component = event.getComponent();

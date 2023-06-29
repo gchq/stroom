@@ -785,7 +785,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         updateFields();
-        getComponents().fireComponentChangeEvent(this);
+
+        // Not sure what this was needed for....
+//        getComponents().fireComponentChangeEvent(this);
     }
 
     private void cleanupSearchModelAssociation() {
