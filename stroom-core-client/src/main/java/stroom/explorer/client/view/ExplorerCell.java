@@ -2,7 +2,6 @@ package stroom.explorer.client.view;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.entity.client.presenter.DocumentTypeImages;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -92,7 +91,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 // Add icon
                 content.append(template.icon(getCellClassName() + "-icon",
                         item.getType(),
-                        DocumentTypeImages.getSafeHtml(item.getIcon())));
+                        SafeHtmlUtils.fromSafeConstant(item.getIcon().getSvg())));
             }
 
             if (item.getDisplayValue() != null) {

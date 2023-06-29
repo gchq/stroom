@@ -11,6 +11,7 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
 import java.util.Collections;
@@ -24,6 +25,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     private static final String SYSTEM = ExplorerConstants.SYSTEM;
     private static final String FOLDER = ExplorerConstants.FOLDER;
+    private static final SvgImage ICON = SvgImage.DOCUMENT_SYSTEM;
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
 
@@ -81,7 +83,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
                 DocumentTypeGroup.SYSTEM,
                 SystemExplorerActionHandler.SYSTEM,
                 SystemExplorerActionHandler.SYSTEM,
-                DocumentIcon.SYSTEM);
+                SystemExplorerActionHandler.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

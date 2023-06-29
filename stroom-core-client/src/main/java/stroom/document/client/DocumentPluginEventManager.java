@@ -46,7 +46,6 @@ import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
-import stroom.entity.client.presenter.DocumentTypeImages;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -849,7 +848,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(DocumentTypeImages.get(documentType.getIcon()))
+                .icon(documentType.getIcon())
                 .text(documentType.getDisplayType())
                 .command(() ->
                         ShowCreateDocumentDialogEvent.fire(

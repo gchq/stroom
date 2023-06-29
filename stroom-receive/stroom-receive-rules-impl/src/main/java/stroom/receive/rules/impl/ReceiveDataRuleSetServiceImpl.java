@@ -27,7 +27,6 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -97,7 +96,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                 DocumentTypeGroup.CONFIGURATION,
                 ReceiveDataRules.DOCUMENT_TYPE,
                 "Rule Set",
-                DocumentIcon.RECEIVE_DATA_RULE_SET);
+                ReceiveDataRules.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

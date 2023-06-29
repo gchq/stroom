@@ -17,6 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocContentMatch;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,14 +34,14 @@ public class ExplorerDocContentMatch {
     @JsonProperty
     private final String path;
     @JsonProperty
-    private final DocumentIcon icon;
+    private final SvgImage icon;
     @JsonProperty
     private final boolean isFavourite;
 
     @JsonCreator
     public ExplorerDocContentMatch(@JsonProperty("docContentMatch") final DocContentMatch docContentMatch,
                                    @JsonProperty("path") final String path,
-                                   @JsonProperty("icon") final DocumentIcon icon,
+                                   @JsonProperty("icon") final SvgImage icon,
                                    @JsonProperty("isFavourite") final boolean isFavourite) {
         this.docContentMatch = docContentMatch;
         this.path = path;
@@ -56,7 +57,7 @@ public class ExplorerDocContentMatch {
         return path;
     }
 
-    public DocumentIcon getIcon() {
+    public SvgImage getIcon() {
         return icon;
     }
 
@@ -91,11 +92,15 @@ public class ExplorerDocContentMatch {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private DocContentMatch docContentMatch;
         private String path;
-        private DocumentIcon icon;
+        private SvgImage icon;
         private boolean isFavourite;
 
         private Builder() {
@@ -118,7 +123,7 @@ public class ExplorerDocContentMatch {
             return this;
         }
 
-        public Builder icon(final DocumentIcon icon) {
+        public Builder icon(final SvgImage icon) {
             this.icon = icon;
             return this;
         }

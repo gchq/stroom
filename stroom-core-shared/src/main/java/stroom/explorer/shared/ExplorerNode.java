@@ -18,6 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -44,7 +45,7 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final int depth;
     @JsonProperty
-    private final DocumentIcon icon;
+    private final SvgImage icon;
     @JsonProperty
     private final NodeState nodeState;
 
@@ -63,7 +64,7 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("name") final String name,
                         @JsonProperty("tags") final String tags,
                         @JsonProperty("depth") final int depth,
-                        @JsonProperty("icon") final DocumentIcon icon,
+                        @JsonProperty("icon") final SvgImage icon,
                         @JsonProperty("nodeState") final NodeState nodeState,
                         @JsonProperty("children") final List<ExplorerNode> children,
                         @JsonProperty("rootNodeUuid") final String rootNodeUuid,
@@ -102,7 +103,7 @@ public class ExplorerNode implements HasDisplayValue {
         return depth;
     }
 
-    public DocumentIcon getIcon() {
+    public SvgImage getIcon() {
         return icon;
     }
 
@@ -180,7 +181,7 @@ public class ExplorerNode implements HasDisplayValue {
         private String name;
         private String tags;
         private int depth;
-        private DocumentIcon icon;
+        private SvgImage icon;
         private NodeState nodeState;
         private List<ExplorerNode> children;
         private String rootNodeUuid;
@@ -237,7 +238,7 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder icon(final DocumentIcon icon) {
+        public Builder icon(final SvgImage icon) {
             this.icon = icon;
             return this;
         }

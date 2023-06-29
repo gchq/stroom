@@ -23,10 +23,10 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -69,7 +69,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
             DocumentTypeGroup.SYSTEM,
             SELECT_ALL_OR_NONE_TEXT,
             SELECT_ALL_OR_NONE_TEXT,
-            DocumentIcon.SELECT_ALL_OR_NONE);
+            SvgImage.DOCUMENT_SELECT_ALL_OR_NONE);
 
     private final CellTable<DocumentType> cellTable;
 

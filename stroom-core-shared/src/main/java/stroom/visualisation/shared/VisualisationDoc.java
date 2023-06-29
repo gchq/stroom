@@ -18,6 +18,7 @@ package stroom.visualisation.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -44,6 +45,7 @@ import java.util.Objects;
 public class VisualisationDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Visualisation";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_VISUALISATION;
 
     @JsonProperty
     private String description;

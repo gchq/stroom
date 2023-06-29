@@ -29,7 +29,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.entity.client.presenter.DocumentTypeImages;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
@@ -39,8 +38,8 @@ import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.client.Preset;
-import stroom.svg.shared.SvgImage;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
@@ -276,7 +275,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                     typeToSvgMap = documentTypes.getVisibleTypes().stream()
                             .collect(Collectors.toMap(
                                     DocumentType::getType,
-                                    documentType -> DocumentTypeImages.get(documentType.getIcon())));
+                                    DocumentType::getIcon));
 
                     // Special case for Searchable as it is not a normal doc type
                     // Not ideal defining it here but adding it fetchDocumentTypes causes problems

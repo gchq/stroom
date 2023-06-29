@@ -41,6 +41,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.shared.SvgImage;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -224,10 +225,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private void buildFavouritesNode(final TreeModel masterTreeModel) {
         final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
-                .icon(DocumentIcon.FAVOURITES);
+                .icon(SvgImage.FAVOURITES);
         final ExplorerNode favNode = favNodeBuilder.build();
 
-        final Map<String, DocumentIcon> iconMap = getNonSystemTypes()
+        final Map<String, SvgImage> iconMap = getNonSystemTypes()
                 .stream()
                 .collect(Collectors.toMap(DocumentType::getType, DocumentType::getIcon));
 
@@ -331,7 +332,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .tags(StandardTagNames.DATA_SOURCE)
                 .nodeState(NodeState.LEAF)
                 .depth(1)
-                .icon(DocumentIcon.SEARCHABLE)
+                .icon(SvgImage.DOCUMENT_SEARCHABLE)
                 .build();
     }
 

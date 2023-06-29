@@ -24,7 +24,6 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -124,7 +123,8 @@ public class GeneratePipelineElementsDoc {
     }
 
     /**
-     * The output goes into layouts/shortcodes/pipe-elm.html in stroom-docs
+     * The output needs to be manually copied into
+     * layouts/shortcodes/pipe-elm.html in stroom-docs
      */
     @Disabled // Manual only
     @Test
@@ -265,7 +265,7 @@ public class GeneratePipelineElementsDoc {
             final ConfigurableElement elementAnno = clazz.getAnnotation(ConfigurableElement.class);
 
             final String description = getStringValue(elementAnno.description());
-            final String iconFileName = getStringValue(elementAnno.icon().name().toLowerCase(Locale.ROOT));
+            final String iconFileName = getStringValue(elementAnno.icon().getRelativePathStr());
             final String type = getStringValue(elementAnno.type());
             final Category category = elementAnno.category();
             final Set<String> roles = new HashSet<>(Arrays.asList(elementAnno.roles()));

@@ -29,7 +29,6 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -110,7 +109,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
                 DocumentTypeGroup.CONFIGURATION,
                 DataRetentionRules.DOCUMENT_TYPE,
                 "Data Retention Rules",
-                DocumentIcon.RECEIVE_DATA_RULE_SET);
+                DataRetentionRules.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

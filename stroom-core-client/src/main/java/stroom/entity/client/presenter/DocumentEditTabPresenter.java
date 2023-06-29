@@ -22,6 +22,7 @@ import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
 import stroom.docref.DocRef;
 import stroom.docref.HasType;
+import stroom.docstore.shared.DocumentTypeImages;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;

@@ -24,7 +24,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -90,7 +89,7 @@ public class IndexStoreImpl implements IndexStore {
                 DocumentTypeGroup.INDEXING,
                 IndexDoc.DOCUMENT_TYPE,
                 "Lucene Index",
-                DocumentIcon.INDEX);
+                IndexDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

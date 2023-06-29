@@ -16,14 +16,14 @@
 
 package stroom.explorer.impl;
 
-import stroom.explorer.shared.DocumentIcon;
+import stroom.svg.shared.SvgImage;
 
 import java.util.List;
 import java.util.function.Function;
 
 public interface ExplorerTreeDao {
 
-    TreeModel createModel(Function<String, DocumentIcon> iconUrlProvider,
+    TreeModel createModel(Function<String, SvgImage> iconUrlProvider,
                           long id,
                           long creationTime);
 

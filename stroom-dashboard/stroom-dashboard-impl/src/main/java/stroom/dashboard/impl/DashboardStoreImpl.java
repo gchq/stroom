@@ -33,7 +33,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -145,7 +144,7 @@ class DashboardStoreImpl implements DashboardStore {
                 DocumentTypeGroup.SEARCH,
                 DashboardDoc.DOCUMENT_TYPE,
                 DashboardDoc.DOCUMENT_TYPE,
-                DocumentIcon.DASHBOARD);
+                DashboardDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.entity.client.presenter.DocumentTypeImages;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -25,6 +24,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContentMatch> {
 
@@ -50,7 +50,7 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
             // Add icon
             main.append(template.icon(getCellClassName() + "-icon",
                     value.getDocContentMatch().getDocRef().getType(),
-                    DocumentTypeImages.getSafeHtml(value.getIcon())));
+                    SafeHtmlUtils.fromSafeConstant(value.getIcon().getSvg())));
 
             // Add sample
             main.append(template.div(getCellClassName() + "-sample",

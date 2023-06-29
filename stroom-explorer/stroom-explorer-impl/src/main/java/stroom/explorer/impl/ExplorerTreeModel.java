@@ -16,8 +16,8 @@
 
 package stroom.explorer.impl;
 
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
+import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -132,7 +132,7 @@ class ExplorerTreeModel {
         return newModel;
     }
 
-    private DocumentIcon getIcon(final String type) {
+    private SvgImage getIcon(final String type) {
         final DocumentType documentType = explorerActionHandlers.getType(type);
         if (documentType == null) {
             return null;

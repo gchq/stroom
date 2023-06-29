@@ -104,7 +104,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                 DocumentTypeGroup.SEARCH,
                 AnalyticRuleDoc.DOCUMENT_TYPE,
                 "Analytic Rule",
-                DocumentIcon.ANALYTIC_RULE);
+                AnalyticRuleDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

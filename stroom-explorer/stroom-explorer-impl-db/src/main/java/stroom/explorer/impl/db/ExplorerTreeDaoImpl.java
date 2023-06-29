@@ -7,8 +7,8 @@ import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.svg.shared.SvgImage;
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -157,7 +157,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
-    public TreeModel createModel(final Function<String, DocumentIcon> iconProvider,
+    public TreeModel createModel(final Function<String, SvgImage> iconProvider,
                                  final long id,
                                  final long creationTime) {
         final TreeModel treeModel = new TreeModel(id, creationTime);

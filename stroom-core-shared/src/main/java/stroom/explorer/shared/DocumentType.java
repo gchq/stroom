@@ -17,6 +17,8 @@
 
 package stroom.explorer.shared;
 
+import stroom.svg.shared.SvgImage;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -32,13 +34,13 @@ public class DocumentType {
     @JsonProperty
     private final String displayType;
     @JsonProperty
-    private final DocumentIcon icon;
+    private final SvgImage icon;
 
     @JsonCreator
     public DocumentType(@JsonProperty("group") final DocumentTypeGroup group,
                         @JsonProperty("type") final String type,
                         @JsonProperty("displayType") final String displayType,
-                        @JsonProperty("icon") final DocumentIcon icon) {
+                        @JsonProperty("icon") final SvgImage icon) {
         this.group = group;
         this.type = type;
         this.displayType = displayType;
@@ -57,7 +59,7 @@ public class DocumentType {
         return type;
     }
 
-    public DocumentIcon getIcon() {
+    public SvgImage getIcon() {
         return icon;
     }
 
