@@ -125,6 +125,11 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
+    public String getHelpUrlStroomQueryLanguage() {
+        return uiConfig.getHelpUrlStroomQueryLanguage();
+    }
+
+    @JsonIgnore
     public ThemeConfig getTheme() {
         return uiConfig.getTheme();
     }
