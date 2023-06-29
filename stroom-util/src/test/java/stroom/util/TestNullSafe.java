@@ -13,6 +13,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import io.vavr.Tuple5;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -848,6 +849,21 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testAsList() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::asList)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase(new String[0], Collections.emptyList())
+                .addCase(new String[]{ "foo"}, List.of("foo"))
+                .addCase(new String[]{ "foo", "bar" }, List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
@@ -938,6 +954,25 @@ class TestNullSafe {
                 .addCase(null, Duration.ZERO)
                 .addCase(Duration.ZERO, Duration.ZERO)
                 .addCase(Duration.ofSeconds(5), Duration.ofSeconds(5))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRun() {
+        final MutableBoolean didRun = new MutableBoolean(false);
+        final Runnable nonNullRunnable = didRun::setTrue;
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Runnable.class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(runnable -> {
+                    didRun.setFalse();
+                    NullSafe.run(runnable);
+                    return didRun.getValue();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(nonNullRunnable, true)
+                .addCase(null, false)
                 .build();
     }
 

@@ -475,7 +475,7 @@ class TestSearchResultCreation {
             assertThat(optional).isPresent();
             optional.ifPresent(items -> {
                 final Item dataItem = items.getIterable().iterator().next();
-                final Val val = dataItem.getValue(2, true);
+                final Val val = dataItem.getValue(2);
                 assertThat(val.toLong())
                         .isEqualTo(count);
             });

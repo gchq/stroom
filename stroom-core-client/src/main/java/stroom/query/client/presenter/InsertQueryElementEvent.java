@@ -60,6 +60,10 @@ public class InsertQueryElementEvent extends GwtEvent<Handler> {
         return element;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onInsert(InsertQueryElementEvent event);

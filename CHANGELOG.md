@@ -12,6 +12,54 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#3536** : Analytic notifications are now written using the detection schema.
+
+* Issue **#3534** : Improve query help picker: add more detail text, improve styling, fix keyboard navigation, fix missing overloaded functions. Change the help picker to show markdown detail text. Remove single quotes from function snippet arguments as the Ace editor has a nice way to handle quotes. Fix broken help links for functions. Change the dashboard column expression editor to use the new query help menu.
+
+* Fix font size/family for rendered markdown in documentation.
+
+* Issue **#3561** : Limit search errors delivered to the UI.
+
+* Issue **#3560** : Table fields now include StreamId on data source load prior to automated search.
+
+* Issue **#3557** : Fix scroll for dashboard query expressions.
+
+* Issue **#3439** : Improve analytics execution logging.
+
+* Issue **#3504** : Fix XML schema cache deadlock.
+
+* Fix failing build.
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+
+* Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
+
+* Issue **#3553** : Improve UI styling.
+
+* Issue **#3510** : Fix explorer scroll jumping issue.
+
+* Issue **#3542** : Stop logging expected task termination exceptions as errors.
+
+* Issue **#3541** : Change the expression editor to confirm closure when changes have been made to the expression. Add vim key mapping of 'jk' => 'esc'. Prevent stroom handling keydown events when the Ace editor has focus to avoid conflict with vim key bindings and code completion popups.
+
+* Issue **#3535** : Fix ArrayIndexOutOfBoundsException.
+
+* Issue **#3516** : Add day of week to user preference date/time format via E,EE pattern variables.
+
+* Issue **#3521** : Fix find content paging error.
+
+* Issue **#3526** : Fix onDirty behaviour for view.
+
+* Issue **#3533** : Require design mode to change dashboard table columns or make dashboard dirty.
+
+* Issue **#3405** : Resolve current dependency names on dependencies screen.
+
+* Issue **#3372** : Fix to stop additional data source nodes appearing on favourites.
+
+* Issue **#3544** : Fix filter icon on pipeline elements in stepper not disappearing after clearing filters.
+
+* Issue **#3487** : Change ref log message `Reference data loader for {} was closed with a state of {}` from warn to debug as it is expected behaviour for a stream that is found to have been already loaded by another thread.
+
 
 ## [v7.2-beta.33-open-id-1] - 2023-06-21
 

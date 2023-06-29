@@ -67,6 +67,10 @@ public class ExpressionPresenter
         return editExpressionPresenter.write();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ExpressionView extends View {
 
         void setExpressionView(View view);

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
+import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.editor.client.presenter.EditorView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
@@ -27,19 +27,25 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class ExpressionViewImpl extends ViewImpl implements ExpressionView {
+/**
+ * This is the view for editing the function expression in a dashboard column
+ */
+public class ColumnFunctionEditorViewImpl extends ViewImpl implements ColumnFunctionEditorView {
 
     private final Widget widget;
 
     @UiField
     SimplePanel editorContainer;
     @UiField
-    ButtonPanel buttonPanel;
+    SimplePanel queryHelpContainer;
+//    @UiField
+//    ButtonPanel buttonPanel;
 
     @Inject
-    public ExpressionViewImpl(final Binder binder) {
+    public ColumnFunctionEditorViewImpl(final Binder binder) {
 
         widget = binder.createAndBindUi(this);
     }
@@ -55,11 +61,20 @@ public class ExpressionViewImpl extends ViewImpl implements ExpressionView {
     }
 
     @Override
-    public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+    public void setQueryHelp(final View view) {
+        queryHelpContainer.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, ExpressionViewImpl> {
+//    @Override
+//    public ButtonView addButton(final Preset preset) {
+//        return buttonPanel.addButton(preset);
+//    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface Binder extends UiBinder<Widget, ColumnFunctionEditorViewImpl> {
 
     }
 }

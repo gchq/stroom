@@ -21,6 +21,8 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -53,15 +55,30 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
         if (event.getTypeInt() == Event.ONKEYDOWN) {
             final NativeEvent nativeEvent = event.getNativeEvent();
-            final Action action = KeyBinding.getAction(nativeEvent);
-            if (action != null) {
-                switch (action) {
-                    case CLOSE:
-                        onCloseAction();
-                        break;
-                    case OK:
-                        onOkAction();
-                        break;
+            final EventTarget eventTarget = nativeEvent.getEventTarget();
+            final boolean isEditor;
+            if (eventTarget != null) {
+                final Element element = Element.as(eventTarget);
+//                GWT.log("element: " + element.getTagName() + "." + element.getClassName());
+                // We should not be handling key down events if the target is the ACE editor
+                // as this messes with things like code completion, vim bindings, etc.
+                // If the user is focused on something other than the editor then it's all fine.
+                isEditor = element != null && element.hasClassName("ace_text-input");
+            } else {
+                isEditor = false;
+            }
+
+            if (!isEditor) {
+                final Action action = KeyBinding.getAction(nativeEvent);
+                if (action != null) {
+                    switch (action) {
+                        case CLOSE:
+                            onCloseAction();
+                            break;
+                        case OK:
+                            onOkAction();
+                            break;
+                    }
                 }
             }
         }

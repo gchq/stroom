@@ -285,6 +285,24 @@ class SecurityFilter implements Filter {
         }
     }
 
+//    private void authenticateAsAdmin(final HttpServletRequest request,
+//                                     final HttpServletResponse response,
+//                                     final FilterChain chain) throws IOException, ServletException {
+//
+//        bypassAuthentication(request, response, chain, UserIdentitySessionUtil.requestHasSessionCookie(request),
+//                securityContext.createIdentity(User.ADMIN_USER_NAME));
+//    }
+
+//    private void bypassAuthentication(final HttpServletRequest request,
+//                         final HttpServletResponse response,
+//                         final FilterChain chain) {
+//        try {
+//            chain.doFilter(request, response);
+//        } catch (final IOException | ServletException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
     private void process(final HttpServletRequest request,
                          final HttpServletResponse response,
                          final FilterChain chain) {

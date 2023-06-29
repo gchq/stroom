@@ -215,6 +215,16 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public boolean isClean() {
+        return editor.isClean();
+    }
+
+    @Override
+    public void markClean() {
+        editor.markClean();
+    }
+
+    @Override
     public void insertTextAtCursor(final String text) {
         editor.insertTextAtCursor(text);
     }

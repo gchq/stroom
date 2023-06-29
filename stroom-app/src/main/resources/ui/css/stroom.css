@@ -48,6 +48,13 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 	outline: none;
 }
 
+hr {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  border: 0;
+  border-top: 1px solid var(--text-color);
+}
+
 /*
 button {
     outline: 0;
@@ -746,15 +753,18 @@ select option:disabled {
 }
 
 .activityOuter {
-    padding: var(--control__padding--vertical) var(--control__padding--horizontal);
-    color: var(--text-color);
 }
 
 .activityButton {
-    padding: 5px;
+    padding: 10px;
     width: 100%;
     height: 100%;
     overflow: auto;
+    border: none;
+    border-top: solid 1px var(--navigation__splitter__background-color);
+    background-color: var(--navigation__background-color) !important;
+    color: var(--navigation__text-color);
+    border-radius: 0;
 }
 
 /**
@@ -882,9 +892,8 @@ textarea.clipboardCopy {
 .iframe-panel {
   width: 100%;
   height: 100%;
-  border-width: 1px;
-  border-style: solid;
-  border-color: solid;
+  /*border-width: 1px;
+  border-style: solid;*/
 }
 
 .user-batch-example {

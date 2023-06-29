@@ -262,6 +262,7 @@ public class DashboardPresenter
         setConstraintsButton.setVisible(designMode);
         layoutPresenter.setDesignMode(designMode);
         getView().setDesignMode(designMode);
+        components.forEach(component -> component.setDesignMode(designMode));
 
         if (designMode) {
             editModeButton.setTitle("Exit Design Mode");
@@ -512,6 +513,7 @@ public class DashboardPresenter
         final Component component = components.add(type, componentConfig.getId());
         if (component != null) {
             component.setDashboardContext(this);
+            component.setDesignMode(designMode);
 
             if (component instanceof HasDirtyHandlers) {
                 ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
@@ -530,6 +532,17 @@ public class DashboardPresenter
         enableQueryButtons();
 
         return component;
+    }
+
+    @Override
+    public void setDirty(final boolean dirty) {
+        if (dirty) {
+            if (designMode) {
+                super.setDirty(dirty);
+            }
+        } else {
+            super.setDirty(dirty);
+        }
     }
 
     private void enableQueryButtons() {
@@ -561,22 +574,24 @@ public class DashboardPresenter
 
     @Override
     protected DashboardDoc onWrite(final DashboardDoc dashboard) {
-        final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
-        for (final Component component : components) {
-            final ComponentConfig componentConfig = component.write();
-            componentDataList.add(componentConfig);
-        }
+        if (isDirty()) {
+            final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
+            for (final Component component : components) {
+                final ComponentConfig componentConfig = component.write();
+                componentDataList.add(componentConfig);
+            }
 
-        final DashboardConfig dashboardConfig = new DashboardConfig();
-        dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
-        dashboardConfig.setComponents(componentDataList);
-        dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
-        dashboardConfig.setLayoutConstraints(layoutConstraints);
-        dashboardConfig.setPreferredSize(preferredSize);
-        dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
-        dashboardConfig.setDesignMode(false);
-        dashboardConfig.setModelVersion(VERSION_7_2_0);
-        dashboard.setDashboardConfig(dashboardConfig);
+            final DashboardConfig dashboardConfig = new DashboardConfig();
+            dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
+            dashboardConfig.setComponents(componentDataList);
+            dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
+            dashboardConfig.setLayoutConstraints(layoutConstraints);
+            dashboardConfig.setPreferredSize(preferredSize);
+            dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
+            dashboardConfig.setDesignMode(false);
+            dashboardConfig.setModelVersion(VERSION_7_2_0);
+            dashboard.setDashboardConfig(dashboardConfig);
+        }
         return dashboard;
     }
 

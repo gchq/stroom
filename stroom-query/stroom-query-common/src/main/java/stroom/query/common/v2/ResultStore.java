@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
@@ -24,7 +25,6 @@ import stroom.query.api.v2.SearchTaskProgress;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.string.ExceptionStringUtil;
 
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
@@ -35,20 +35,18 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 public class ResultStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStore.class);
 
-    private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ErrorConsumer> errors = new ConcurrentHashMap<>();
     private final SearchRequestSource searchRequestSource;
     private final Set<String> highlights = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final CoprocessorsImpl coprocessors;
@@ -94,7 +92,10 @@ public class ResultStore {
     }
 
     public synchronized void terminate() {
-        LOGGER.trace(() -> "terminate()", new RuntimeException("terminate"));
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(() -> "terminate()", new RuntimeException("terminate"));
+        }
+
         this.terminate = true;
         if (searchProcess != null) {
             searchProcess.onTerminate();
@@ -107,8 +108,11 @@ public class ResultStore {
     public synchronized void destroy() {
         terminate();
 
-        LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
-        LOGGER.trace(() -> "coprocessors.clear()");
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
+            LOGGER.trace(() -> "coprocessors.clear()");
+        }
+
         coprocessors.clear();
     }
 
@@ -142,16 +146,8 @@ public class ResultStore {
         StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
         try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
-            final Set<Throwable> errors = new HashSet<>();
-            final Consumer<Throwable> errorConsumer = (error) -> {
-                LOGGER.debug(error::getMessage, error);
-                if (!ErrorConsumerUtil.isInterruption(error)) {
-                    errors.add(error);
-                }
-            };
-
+            final ErrorConsumer errorConsumer = getErrorConsumer(nodeName);
             complete = NodeResultSerialiser.read(input, coprocessors, errorConsumer);
-            addErrors(nodeName, errors);
         } catch (final KryoException e) {
             // Expected as sometimes the output stream is closed by the receiving node.
             LOGGER.debug(e::getMessage, e);
@@ -164,31 +160,19 @@ public class ResultStore {
         return isComplete() || complete;
     }
 
+    private ErrorConsumer getErrorConsumer(final String nodeName) {
+        return errors.computeIfAbsent(nodeName, k -> new ErrorConsumerImpl());
+    }
+
     public synchronized void onFailure(final String nodeName,
                                        final Throwable throwable) {
-        LOGGER.debug(throwable::getMessage, throwable);
-        if (!ErrorConsumerUtil.isInterruption(throwable)) {
-            addErrors(nodeName, Collections.singleton(throwable));
-        }
+        final ErrorConsumer errorConsumer = getErrorConsumer(nodeName);
+        errorConsumer.add(throwable);
     }
 
     public void addError(final Throwable error) {
-        final Set<Throwable> errorSet = errors.computeIfAbsent("local", k ->
-                Collections.newSetFromMap(new ConcurrentHashMap<>()));
-        LOGGER.debug(error::getMessage, error);
-        errorSet.add(error);
-    }
-
-    private void addErrors(final String nodeName,
-                           final Set<Throwable> newErrors) {
-        if (newErrors != null && newErrors.size() > 0) {
-            final Set<Throwable> errorSet = errors.computeIfAbsent(nodeName, k ->
-                    Collections.newSetFromMap(new ConcurrentHashMap<>()));
-            for (final Throwable error : newErrors) {
-                LOGGER.debug(error::getMessage, error);
-                errorSet.add(error);
-            }
-        }
+        final ErrorConsumer errorConsumer = getErrorConsumer(nodeName);
+        errorConsumer.add(error);
     }
 
     public List<String> getErrors() {
@@ -197,15 +181,15 @@ public class ResultStore {
         }
 
         final List<String> err = new ArrayList<>();
-        for (final Entry<String, Set<Throwable>> entry : errors.entrySet()) {
+        for (final Entry<String, ErrorConsumer> entry : errors.entrySet()) {
             final String nodeName = entry.getKey();
-            final Set<Throwable> errors = entry.getValue();
+            final ErrorConsumer errorConsumer = entry.getValue();
+            final List<String> errors = errorConsumer.getErrors();
 
             if (errors.size() > 0) {
                 err.add("Node: " + nodeName);
-
-                for (final Throwable error : errors) {
-                    err.add("\t" + ExceptionStringUtil.getMessage(error));
+                for (final String error : errors) {
+                    err.add("\t" + error);
                 }
             }
         }
@@ -258,7 +242,7 @@ public class ResultStore {
     }
 
     public boolean search(final SearchRequest request,
-                                 final Map<String, ResultBuilder<?>> resultBuilderMap) {
+                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
         final boolean complete = searchResponseCreator.create(request, resultBuilderMap);
         lastAccessTime = Instant.now();
         return complete;

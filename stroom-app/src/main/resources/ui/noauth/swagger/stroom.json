@@ -9349,6 +9349,28 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/view/v1/list" : {
+      "get" : {
+        "operationId" : "listViews",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch view names",
+        "tags" : [ "Views" ]
+      }
+    },
     "/view/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchView",
@@ -18360,9 +18382,6 @@
           },
           "description" : {
             "type" : "string"
-          },
-          "filter" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
           },
           "name" : {
             "type" : "string"
