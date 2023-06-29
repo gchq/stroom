@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.39] - 2023-06-29
+
+* Issue **#3559** : Allow user to choose the location of new dashboard components.
+
+
 ## [v7.2-beta.38] - 2023-06-29
 
 * Issue **#3567** : Improve analytics execution logging.
@@ -5557,7 +5562,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.38...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.39...HEAD
+[v7.2-beta.39]: https://github.com/gchq/stroom/compare/v7.2-beta.38...v7.2-beta.39
 [v7.2-beta.38]: https://github.com/gchq/stroom/compare/v7.2-beta.36...v7.2-beta.38
 [v7.2-beta.36]: https://github.com/gchq/stroom/compare/v7.2-beta.35-restyle...v7.2-beta.36
 [v7.2-beta.35-restyle]: https://github.com/gchq/stroom/compare/v7.2-beta.35...v7.2-beta.35-restyle
