@@ -1336,19 +1336,6 @@ paths:
         node.
       tags:
       - Global Config
-  /config/v1/noauth/fetchExtendedUiConfig:
-    get:
-      operationId: fetchExtendedUiConfig
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExtendedUiConfig'
-          description: default response
-      summary: Fetch the extended UI configuration
-      tags:
-      - Global Config
   /config/v1/noauth/fetchUiConfig:
     get:
       operationId: fetchUiConfig
@@ -6162,46 +6149,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageUserName'
+                $ref: '#/components/schemas/ResultPageString'
           description: default response
       summary: Find the user names matching the supplied criteria
-      tags:
-      - Authorisation
-  /userNames/v1/getByDisplayName/{displayName}:
-    get:
-      operationId: getByDisplayName
-      parameters:
-      - in: path
-        name: displayName
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserName'
-          description: default response
-      summary: Find the user name matching the supplied displayName
-      tags:
-      - Authorisation
-  /userNames/v1/{userId}:
-    get:
-      operationId: getByUserId
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserName'
-          description: default response
-      summary: Find the user name matching the supplied unique user ID
       tags:
       - Authorisation
   /users/v1:
@@ -6247,41 +6197,25 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserName'
+                  type: string
           description: default response
       summary: Gets a list of associated users
       tags:
       - Authorisation
-  /users/v1/createGroup:
-    post:
-      operationId: createGroup
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-        description: name
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: default response
-      summary: Creates a group with the supplied name
-      tags:
-      - Authorisation
-  /users/v1/createUser:
+  /users/v1/create/{name}/{isGroup}:
     post:
       operationId: createUser
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserName'
-        description: name
+      parameters:
+      - in: path
+        name: name
         required: true
+        schema:
+          type: string
+      - in: path
+        name: isGroup
+        required: true
+        schema:
+          type: boolean
       responses:
         default:
           content:
@@ -6289,30 +6223,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: default response
-      summary: Creates a user with the supplied name
-      tags:
-      - Authorisation
-  /users/v1/createUsers:
-    post:
-      operationId: createUsers
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-        description: users
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-          description: default response
-      summary: Creates a batch of users from a list of CSV entries. Each line is of
-        the form 'id,displayName,fullName', where displayName and fullName are optional
+      summary: Creates a user or group with the supplied name
       tags:
       - Authorisation
   /users/v1/find:
@@ -7052,14 +6963,14 @@ components:
       type: object
       properties:
         assignedTo:
-          $ref: '#/components/schemas/UserName'
+          type: string
         comment:
           type: string
         createTime:
           type: integer
           format: int64
         createUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
         history:
           type: string
         id:
@@ -7075,7 +6986,7 @@ components:
           type: integer
           format: int64
         updateUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
         version:
           type: integer
           format: int32
@@ -7095,11 +7006,11 @@ components:
           type: integer
           format: int64
         createUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
+        data:
+          type: string
         entryType:
           type: string
-        entryValue:
-          $ref: '#/components/schemas/EntryValue'
         id:
           type: integer
           format: int64
@@ -7107,7 +7018,7 @@ components:
           type: integer
           format: int64
         updateUser:
-          $ref: '#/components/schemas/UserName'
+          type: string
         version:
           type: integer
           format: int32
@@ -7594,8 +7505,8 @@ components:
       properties:
         annotation:
           $ref: '#/components/schemas/Annotation'
-        entryValue:
-          $ref: '#/components/schemas/EntryValue'
+        data:
+          type: string
         linkedEvents:
           type: array
           items:
@@ -8132,8 +8043,175 @@ components:
           - INDEXING
           - CONFIGURATION
           - SYSTEM
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - DROP_DOWN_DARK
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SEARCH_DARK
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         type:
           type: string
     DocumentTypes:
@@ -8339,15 +8417,6 @@ components:
         rangeValueCount:
           type: integer
           format: int64
-    EntryValue:
-      type: object
-      discriminator:
-        propertyName: type
-      properties:
-        type:
-          type: string
-      required:
-      - type
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -8408,8 +8477,175 @@ components:
       properties:
         docContentMatch:
           $ref: '#/components/schemas/DocContentMatch'
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - DROP_DOWN_DARK
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SEARCH_DARK
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         isFavourite:
           type: boolean
         path:
@@ -8424,8 +8660,175 @@ components:
         depth:
           type: integer
           format: int32
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - DROP_DOWN_DARK
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SEARCH_DARK
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         isFavourite:
           type: boolean
         name:
@@ -8650,13 +9053,6 @@ components:
       required:
       - condition
       - field
-    ExtendedUiConfig:
-      type: object
-      properties:
-        externalIdentityProvider:
-          type: boolean
-        uiConfig:
-          $ref: '#/components/schemas/UiConfig'
     FeedDoc:
       type: object
       properties:
@@ -9408,10 +9804,8 @@ components:
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
           - 401 - 301 - Client Token Required
-          - 401 - 302 - Client Token or Certificate Required
-          - 401 - 310 - Client Certificate failed authentication
-          - 401 - 311 - Client Token failed authentication
-          - 401 - 312 - Client Token or Certificate failed authentication
+          - 403 - 310 - Client Certificate not authorised
+          - 403 - 311 - Client Token not authorised
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -10378,6 +10772,173 @@ components:
           - DESTINATION
         icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - DROP_DOWN_DARK
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SEARCH_DARK
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         roles:
           type: array
           items:
@@ -11420,6 +11981,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StoredQuery'
+    ResultPageString:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            type: string
     ResultPageUser:
       type: object
       description: A page of results.
@@ -11430,16 +12001,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    ResultPageUserName:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserName'
     ResultRequest:
       type: object
       description: A definition for how to return the raw results of the query in
@@ -11865,7 +12426,7 @@ components:
         nodeName:
           type: string
         userName:
-          $ref: '#/components/schemas/UserName'
+          type: string
     SessionListResponse:
       type: object
       properties:
@@ -11884,7 +12445,7 @@ components:
             type: integer
             format: int64
         assignedTo:
-          $ref: '#/components/schemas/UserName'
+          type: string
     SetStatusRequest:
       type: object
       properties:
@@ -11940,10 +12501,6 @@ components:
     SimpleUser:
       type: object
       properties:
-        displayName:
-          type: string
-        fullName:
-          type: string
         name:
           type: string
         uuid:
@@ -12391,14 +12948,6 @@ components:
           type: string
         stringUpper:
           type: string
-    StringEntryValue:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/EntryValue'
-      - type: object
-        properties:
-          value:
-            type: string
     StroomStatsStoreDoc:
       type: object
       properties:
@@ -12885,9 +13434,6 @@ components:
           format: int64
         id_token:
           type: string
-        refresh_expires_in:
-          type: integer
-          format: int64
         refresh_token:
           type: string
         refresh_token_expires_in:
@@ -13005,10 +13551,6 @@ components:
           format: int64
         createUser:
           type: string
-        displayName:
-          type: string
-        fullName:
-          type: string
         group:
           type: boolean
         id:
@@ -13020,8 +13562,6 @@ components:
           type: integer
           format: int64
         updateUser:
-          type: string
-        userIdentityForAudit:
           type: string
         uuid:
           type: string
@@ -13036,27 +13576,8 @@ components:
           items:
             type: string
           uniqueItems: true
-        userName:
-          $ref: '#/components/schemas/UserName'
-    UserName:
-      type: object
-      properties:
-        displayName:
+        userId:
           type: string
-        fullName:
-          type: string
-        name:
-          type: string
-        userIdentityForAudit:
-          type: string
-    UserNameEntryValue:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/EntryValue'
-      - type: object
-        properties:
-          userName:
-            $ref: '#/components/schemas/UserName'
     UserPreferences:
       type: object
       properties:
