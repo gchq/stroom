@@ -16,11 +16,16 @@
 
 package stroom.widget.tab.client.presenter;
 
-import stroom.svg.client.Icon;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 
 public interface TabData {
 
-    Icon getIcon();
+    SvgImage getIcon();
+
+    default IconColour getIconColour() {
+        return IconColour.BLUE;
+    }
 
     String getLabel();
 

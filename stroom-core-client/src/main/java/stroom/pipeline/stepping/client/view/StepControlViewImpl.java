@@ -18,11 +18,9 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.InlineSvgButton;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,39 +32,45 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandlers> implements StepControlView {
 
     private final Widget widget;
-    @UiField(provided = true)
-    SvgButton filterButton;
-    @UiField(provided = true)
-    SvgButton firstButton;
-    @UiField(provided = true)
-    SvgButton backwardButton;
-    @UiField(provided = true)
-    SvgButton forwardButton;
-    @UiField(provided = true)
-    SvgButton lastButton;
-    @UiField(provided = true)
-    SvgButton refreshButton;
+    @UiField
+    InlineSvgButton filterButton;
+    @UiField
+    InlineSvgButton firstButton;
+    @UiField
+    InlineSvgButton backwardButton;
+    @UiField
+    InlineSvgButton forwardButton;
+    @UiField
+    InlineSvgButton lastButton;
+    @UiField
+    InlineSvgButton refreshButton;
 
     @Inject
     public StepControlViewImpl(final Binder binder) {
-
-        filterButton = createButton(SvgPresets.FILTER_GREEN, "Manage Step Filters");
-        firstButton = createButton(SvgPresets.FAST_BACKWARD_GREEN, "Step To First");
-        backwardButton = createButton(SvgPresets.STEP_BACKWARD_GREEN, "Step Backward");
-        forwardButton = createButton(SvgPresets.STEP_FORWARD_GREEN, "Step Forward");
-        lastButton = createButton(SvgPresets.FAST_FORWARD_GREEN, "Step To Last");
-        refreshButton = createButton(SvgPresets.REFRESH_GREEN, "Refresh Current Step");
-
         widget = binder.createAndBindUi(this);
-    }
 
-    private SvgButton createButton(final Preset svgIcon, final String title) {
-        final SvgButton button = SvgButton.create(svgIcon);
-        button.setTitle(title);
-        final Style style = button.getElement().getStyle();
-        style.setPadding(1, Style.Unit.PX);
-        style.setFloat(Style.Float.RIGHT);
-        return button;
+        filterButton.setSvg(SvgImage.FILTER);
+        filterButton.setTitle("Manage Step Filters");
+
+        firstButton.setSvg(SvgImage.FAST_BACKWARD);
+        firstButton.setTitle("Step To First");
+        firstButton.setEnabled(false);
+
+        backwardButton.setSvg(SvgImage.STEP_BACKWARD);
+        backwardButton.setTitle("Step Backward");
+        backwardButton.setEnabled(false);
+
+        forwardButton.setSvg(SvgImage.STEP_FORWARD);
+        forwardButton.setTitle("Step Forward");
+        forwardButton.setEnabled(false);
+
+        lastButton.setSvg(SvgImage.FAST_FORWARD);
+        lastButton.setTitle("Step To Last");
+        lastButton.setEnabled(false);
+
+        refreshButton.setSvg(SvgImage.REFRESH);
+        refreshButton.setTitle("Refresh Current Step");
+        refreshButton.setEnabled(false);
     }
 
     @Override

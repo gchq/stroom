@@ -24,6 +24,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContentMatch> {
 
@@ -47,8 +48,9 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
 
             // Add icon
-            main.append(template.icon(getCellClassName() + "-icon " + value.getIconClassName(),
-                    value.getDocContentMatch().getDocRef().getType()));
+            main.append(template.icon(getCellClassName() + "-icon",
+                    value.getDocContentMatch().getDocRef().getType(),
+                    SafeHtmlUtils.fromSafeConstant(value.getIcon().getSvg())));
 
             // Add sample
             main.append(template.div(getCellClassName() + "-sample",
@@ -80,8 +82,8 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
 
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
-        SafeHtml icon(String iconClass, String typeName);
+        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
+        SafeHtml icon(String iconClass, String typeName, SafeHtml icon);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);

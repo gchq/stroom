@@ -16,7 +16,7 @@
 
 package stroom.widget.tab.client.presenter;
 
-import stroom.svg.client.Icon;
+import stroom.svg.shared.SvgImage;
 
 public class TabDataImpl implements TabData {
 
@@ -33,7 +33,7 @@ public class TabDataImpl implements TabData {
     }
 
     @Override
-    public Icon getIcon() {
+    public SvgImage getIcon() {
         return null;
     }
 

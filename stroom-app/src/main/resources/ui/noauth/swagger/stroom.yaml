@@ -8043,8 +8043,36 @@ components:
           - INDEXING
           - CONFIGURATION
           - SYSTEM
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ANALYTIC_RULE
+          - ANALYTIC_OUTPUT_STORE
+          - ANNOTATIONS_INDEX
+          - DASHBOARD
+          - DICTIONARY
+          - ELASTIC_CLUSTER
+          - ELASTIC_INDEX
+          - FAVOURITES
+          - FEED
+          - FOLDER
+          - INDEX
+          - KAFKA_CONFIG
+          - PIPELINE
+          - QUERY
+          - RECEIVE_DATA_RULE_SET
+          - SCRIPT
+          - SEARCHABLE
+          - SELECT_ALL_OR_NONE
+          - SOLR_INDEX
+          - STATISTIC_STORE
+          - STROOM_STATS_STORE
+          - SYSTEM
+          - TEXT_CONVERTER
+          - VIEW
+          - VISUALISATION
+          - XML_SCHEMA
+          - XSLT
         type:
           type: string
     DocumentTypes:
@@ -8310,8 +8338,36 @@ components:
       properties:
         docContentMatch:
           $ref: '#/components/schemas/DocContentMatch'
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ANALYTIC_RULE
+          - ANALYTIC_OUTPUT_STORE
+          - ANNOTATIONS_INDEX
+          - DASHBOARD
+          - DICTIONARY
+          - ELASTIC_CLUSTER
+          - ELASTIC_INDEX
+          - FAVOURITES
+          - FEED
+          - FOLDER
+          - INDEX
+          - KAFKA_CONFIG
+          - PIPELINE
+          - QUERY
+          - RECEIVE_DATA_RULE_SET
+          - SCRIPT
+          - SEARCHABLE
+          - SELECT_ALL_OR_NONE
+          - SOLR_INDEX
+          - STATISTIC_STORE
+          - STROOM_STATS_STORE
+          - SYSTEM
+          - TEXT_CONVERTER
+          - VIEW
+          - VISUALISATION
+          - XML_SCHEMA
+          - XSLT
         isFavourite:
           type: boolean
         path:
@@ -8326,8 +8382,36 @@ components:
         depth:
           type: integer
           format: int32
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ANALYTIC_RULE
+          - ANALYTIC_OUTPUT_STORE
+          - ANNOTATIONS_INDEX
+          - DASHBOARD
+          - DICTIONARY
+          - ELASTIC_CLUSTER
+          - ELASTIC_INDEX
+          - FAVOURITES
+          - FEED
+          - FOLDER
+          - INDEX
+          - KAFKA_CONFIG
+          - PIPELINE
+          - QUERY
+          - RECEIVE_DATA_RULE_SET
+          - SCRIPT
+          - SEARCHABLE
+          - SELECT_ALL_OR_NONE
+          - SOLR_INDEX
+          - STATISTIC_STORE
+          - STROOM_STATS_STORE
+          - SYSTEM
+          - TEXT_CONVERTER
+          - VIEW
+          - VISUALISATION
+          - XML_SCHEMA
+          - XSLT
         isFavourite:
           type: boolean
         name:
@@ -10263,6 +10347,29 @@ components:
           - DESTINATION
         icon:
           type: string
+          enum:
+          - FILE
+          - FILES
+          - HADOOP
+          - ELASTIC_INDEX
+          - ID
+          - INDEX
+          - JSON
+          - KAFKA
+          - RECORD_COUNT
+          - RECORD_OUTPUT
+          - REFERENCE_DATA
+          - SEARCH_OUTPUT
+          - XML_SEARCH
+          - SOLR
+          - SPLIT
+          - STATISTICS
+          - STREAM
+          - STROOM_STATS
+          - TEXT
+          - XML
+          - XSD
+          - XSLT
         roles:
           type: array
           items:

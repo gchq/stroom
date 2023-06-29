@@ -52,9 +52,9 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
         if (this.isOn != isOn) {
             this.isOn = isOn;
             if (isOn) {
-                super.toggleSvgPreset(offPreset, onPreset);
+                super.toggleSvgPreset(onPreset);
             } else {
-                super.toggleSvgPreset(onPreset, offPreset);
+                super.toggleSvgPreset(offPreset);
             }
         }
     }

@@ -16,8 +16,8 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -31,14 +31,15 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
     private final MenuKey menuKey;
 
     KeyedParentMenuItem(final int priority,
-                        final Icon enabledIcon,
-                        final Icon disabledIcon,
+                        final SvgImage enabledIcon,
+                        final SvgImage disabledIcon,
+                        final IconColour iconColour,
                         final String text,
                         final Action action,
                         final boolean enabled,
                         final MenuItems menuItems,
                         final MenuKey menuKey) {
-        super(priority, enabledIcon, disabledIcon, text, action, enabled, null, false);
+        super(priority, enabledIcon, disabledIcon, iconColour, text, action, enabled, null, false);
         this.menuItems = menuItems;
         this.menuKey = menuKey;
     }
@@ -88,13 +89,14 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
         }
 
         public KeyedParentMenuItem build() {
-            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
-                text = ((Preset) enabledIcon).getTitle();
-            }
+//            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
+//                text = ((Preset) enabledIcon).getTitle();
+//            }
             return new KeyedParentMenuItem(
                     priority,
                     enabledIcon,
                     disabledIcon,
+                    iconColour,
                     text,
                     action,
                     enabled,

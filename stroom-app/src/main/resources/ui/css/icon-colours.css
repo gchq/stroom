@@ -1,3 +1,42 @@
 :root {
-    --icon-colour__primary: var(--blue-500);
+    --icon-colour__foreground: var(--black);
+    --icon-colour__blue: var(--blue-500);
+    --icon-colour__green: #4caf50;
+    --icon-colour__grey: #767e86;
+    --icon-colour__red: #d32f2f;
+    --icon-colour__xml-background: #ce93d8;
+    --icon-colour__xsd-background: #2196f3;
+    --icon-colour__xsl-background: #aed581;
+
+    --icon-width: 16px;
+    --icon-height: 16px;
+}
+
+
+.navigation,
+.stroom-theme-dark {
+    --icon-colour__foreground: var(--white);
+    --icon-colour__blue: var(--blue-300);
+    --icon-colour__green: #4caf50;
+    --icon-colour__grey: #e6e1dc;
+    --icon-colour__red: #d32f2f;
+    --icon-colour__xml-background: #ce93d8;
+    --icon-colour__xsd-background: #266fa9;
+    --icon-colour__xsl-background: #287f2c;
+}
+
+.icon-colour__blue svg {
+    color: var(--icon-colour__blue);
+}
+
+.icon-colour__green svg {
+    color: var(--icon-colour__green);
+}
+
+.icon-colour__grey svg {
+    color: var(--icon-colour__grey);
+}
+
+.icon-colour__red svg {
+    color: var(--icon-colour__red);
 }

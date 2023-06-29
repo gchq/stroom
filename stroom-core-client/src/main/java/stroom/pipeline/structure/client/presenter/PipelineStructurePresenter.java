@@ -43,8 +43,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -329,21 +328,21 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         menuItems.add(new IconParentMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.ADD)
+                .icon(SvgImage.ADD)
                 .text("Add")
                 .enabled(addMenuItems != null && addMenuItems.size() > 0)
                 .children(addMenuItems)
                 .build());
         menuItems.add(new IconParentMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.UNDO)
+                .icon(SvgImage.UNDO)
                 .text("Restore")
                 .enabled(restoreMenuItems != null && restoreMenuItems.size() > 0)
                 .children(restoreMenuItems)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(2)
-                .icon(SvgPresets.REMOVE)
+                .icon(SvgImage.REMOVE)
                 .text("Remove")
                 .enabled(selected != null)
                 .command(() -> onRemove(null))
@@ -372,7 +371,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     for (final PipelineElementType pipelineElementType : entry.getValue()) {
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
-                            final Icon icon = Icon.create(pipelineElementType.getIcon());
+                            final SvgImage icon = pipelineElementType.getIcon();
                             final Item item = new IconMenuItem.Builder()
                                     .priority(j++)
                                     .icon(icon)
@@ -426,7 +425,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final Category category = pipelineElementType.getCategory();
 
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
-                    final Icon icon = Icon.create(pipelineElementType.getIcon());
+                    final SvgImage icon = pipelineElementType.getIcon();
 
                     final Item item = new IconMenuItem.Builder()
                             .priority(pos++)

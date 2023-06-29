@@ -18,9 +18,6 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

@@ -19,6 +19,7 @@ package stroom.search.elastic.shared;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -56,6 +57,7 @@ public class ElasticIndexDoc extends Doc {
     public static final int DEFAULT_SEARCH_SLICES = 1;
     public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
     public static final String DOCUMENT_TYPE = "ElasticIndex";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_ELASTIC_INDEX;
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     /**

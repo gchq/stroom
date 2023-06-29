@@ -525,7 +525,7 @@ public final class MappingUtil {
                 value.getType(),
                 map(value.getCategory()),
                 value.getRoles().toArray(new String[0]),
-                value.getIcon());
+                null);
     }
 
     public static stroom.pipeline.shared.data.PipelineElementType.Category map(stroom.legacy.model_6_1.PipelineElementType.Category value) {

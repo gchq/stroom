@@ -20,7 +20,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -52,7 +52,7 @@ public class NavigationPlugin extends Plugin {
         event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
                 new IconMenuItem.Builder()
                         .priority(201)
-                        .icon(SvgPresets.FIND)
+                        .icon(SvgImage.FIND)
                         .text("Find Content")
                         .action(Action.FIND)
                         .command(() -> ShowFindEvent.fire(NavigationPlugin.this))

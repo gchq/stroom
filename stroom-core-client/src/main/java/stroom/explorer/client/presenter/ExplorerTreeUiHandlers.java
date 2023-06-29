@@ -16,10 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.user.client.Event;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ExplorerTreeUiHandlers extends UiHandlers {

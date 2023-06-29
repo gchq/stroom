@@ -115,6 +115,11 @@
     margin: 0 5px 0 5px;
 }
 
+.curveTab .curveTab-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
 .curveTab .curveTab-face {
 	border: none;
 	outline: none;
@@ -388,7 +393,6 @@
 }
 
 .gwt-Button.userTaskView-terminate {
-    background-image: url("../images/terminate.png") !important;
 	width: 12px;
 	height: 12px;
 	background-size: contain;
@@ -399,6 +403,12 @@
 	border-radius: 0;
 	border: none !important;
 	opacity: 0.8;
+}
+
+.gwt-Button.userTaskView-terminate svg {
+	width: 12px;
+	height: 12px;
+	color: red;
 }
 
 .gwt-Button.userTaskView-terminate:hover {
@@ -801,7 +811,7 @@
     height: 288px;
     display: flex;
     flex-direction: column;
-    margin: -8px -8px 0 -8px;
+    margin: -8px -5px 0 -8px;
 }
 
 .aboutViewImpl-stroom-body {
@@ -814,6 +824,20 @@
     position: absolute;
     width: 500px;
     height: 30px;
+}
+
+.aboutViewImpl-logo {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--blue-500);
+}
+
+.aboutViewImpl-logo > svg {
+    width: 150px;
+    height: 40px;
+    color: white;
 }
 
 .aboutViewImpl-body {
@@ -1072,9 +1096,55 @@
 }
 */
 
-.mainViewImpl-splitPanel > .gwt-SplitLayoutPanel-Dragger-Outer {
+.mainViewImpl-splitPanel > .thinSplitLayoutPanel-Dragger-Outer {
     background-color: var(--navigation__splitter__background-color);
 }
+
+.thinSplitLayoutPanel-Dragger-Outer {
+    overflow: visible !important;
+    background-color: var(--splitter__background-color);
+    z-index: 10;
+}
+
+.thinSplitLayoutPanel-Dragger {
+    position: absolute;
+    background: none;
+    width: 100%;
+    height: 100%;
+    border: none;
+    inset: initial !important;
+}
+
+.thinSplitLayoutPanel-HDragger {
+	width: var(--split__size) !important;
+	height: 100% !important;
+	left: var(--split__offset) !important;
+	cursor: col-resize;
+}
+
+.thinSplitLayoutPanel-VDragger {
+	width: 100% !important;
+	height: var(--split__size) !important;
+	top: var(--split__offset) !important;
+    cursor: row-resize;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .mainViewImpl-contentPanel {
     width: 100%;
@@ -1375,8 +1445,8 @@
 }
 
 .navigation-arrow-image svg {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-width);
+    height: var(--icon-height);
     margin-top: .25rem;
 }
 
@@ -1391,12 +1461,6 @@ button.main-menu svg {
     margin-top: 6px;
     margin-right: 12px;
 }
-
-/*
-.stroom-theme-dark .navigation-logo {
-    background-image: url("../images/logo.svg");
-}
-*/
 
 .top-right-menu {
     position: absolute;
@@ -1416,23 +1480,6 @@ button.main-menu svg {
     height: 33px;
     justify-content: center;
 }
-/*
-.stroom-theme-dark .navigation-menu-button,
-.navigation-title-bar .navigation-menu-button {
-    color: white;
-    opacity: 0.8;
-}
-
-.navigation-menu-button svg {
-    width: 16px;
-    height: 16px;
-}
-*/
-/*
-.stroom-theme-dark .navigation-menu-button {
-    background-image: url("../images/menu-white.svg");
-}
-*/
 
 .navigation-header {
     display: flex;
@@ -1453,31 +1500,6 @@ button.main-menu svg {
 	flex-grow: 1;
 	margin: .4rem;
 }
-
-.navigation-header-arrow {
-    background-image: url("../images/arrow-right-white.svg");
-    width: .9rem;
-    height: .9rem;
-    flex-shrink: 0;
-    flex-grow: 0;
-    margin: .4rem;
-}
-
-.navigation-header-arrow-open {
-    background-image: url("../images/arrow-down-white.svg");
-}
-
-/*
-.stroom-theme-dark .navigation-header-arrow,
-.stroom-theme-dark2 .navigation-header-arrow {
-    background-image: url("../images/arrow-right-white.svg");
-}
-
-.stroom-theme-dark .navigation-header-arrow-open,
-.stroom-theme-dark2 .navigation-header-arrow-open {
-    background-image: url("../images/arrow-down-white.svg");
-}
-*/
 
 .navigation-body {
 }
@@ -1742,6 +1764,10 @@ button.main-menu svg {
     top: 5px;
 }
 
+.find-buttons .icon-button .face {
+    color: var(--control__text-color);
+}
+
 .findCell {
 }
 
@@ -1798,38 +1824,26 @@ button.main-menu svg {
     opacity: .5;
 }
 
-.pipelineElementChooser-iconCell .svgIcon {
-    width: 22px;
-    /* Height is a bit of a hack to match padding on text cell, but won't be right for different
-       font sizes or densities */
-    height: 26px;
-    background-size: 20px 20px;
-    background-repeat: no-repeat;
-    background-position: center;
+.pipelineElementChooser-iconCell {
+    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell {
-    padding: 5px;
+    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-width: 200px;
 }
 
-.pipelineElementChooser-textCell.pipelineElementChooser-filterOn div {
+.pipelineElementChooser-filterIconCell {
+    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
-.pipelineElementChooser-filterIconCell .svgIcon {
-    width: 20px;
-    /* Height is a bit of a hack to match padding on text cell, but won't be right for different
-       font sizes or densities */
-    height: 26px;
-    background-size: 14px 14px;
-    background-repeat: no-repeat;
-    background-position: center;
+.pipelineElementChooser-textCell.pipelineElementChooser-filterOn {
 }
 
-.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOn .svgIcon {
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOn {
 }
 
-.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff .svgIcon {
+.pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff {
     visibility: hidden;
 }
 

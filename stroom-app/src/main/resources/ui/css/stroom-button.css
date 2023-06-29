@@ -56,19 +56,6 @@
     color: var(--icon-button__color--on);
 }
 
-/* Customisations for the two colour exclamation icon */
-/* This is the blue circle */
-.svg-image-exclamation.inline-svg-button.icon-button.on path:nth-child(1) {
-  fill: var(--icon-button__color--on) !important;
-}
-
-/* Customisations for the two colour exclamation icon */
-/* This is the white '!' */
-.svg-image-exclamation.inline-svg-button.icon-button.on path:nth-child(2),
-.svg-image-exclamation.inline-svg-button.icon-button.on path:nth-child(3) {
-  fill: var(--icon-button__background-color--on) !important;
-}
-
 .icon-button.disabled {
     opacity: .4;
 }

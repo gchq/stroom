@@ -31,10 +31,10 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractFieldFilter;
 import stroom.pipeline.filter.FieldValue;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 
@@ -66,7 +66,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
-        icon = ElementIcons.INDEX)
+        icon = SvgImage.PIPELINE_INDEX)
 class DynamicIndexingFilter extends AbstractFieldFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicIndexingFilter.class);

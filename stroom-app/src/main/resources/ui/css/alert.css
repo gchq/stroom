@@ -63,30 +63,11 @@
     user-select: text;          /* Likely future */
 }
 
-.alert-icon-question {
-    background-image: url("../images/question.svg");
-    width: 32px;
-    height: 32px;
+.alert-icon {
     flex-shrink: 0;
 }
 
-.alert-icon-info {
-    background-image: url("../images/info.svg");
+.alert-icon svg {
     width: 32px;
     height: 32px;
-    flex-shrink: 0;
-}
-
-.alert-icon-warning {
-    background-image: url("../images/warning.svg");
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-}
-
-.alert-icon-error {
-    background-image: url("../images/error.svg");
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
 }

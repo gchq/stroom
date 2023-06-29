@@ -18,11 +18,11 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.security.api.SecurityContext;
+import stroom.svg.shared.SvgImage;
 
 import javax.inject.Inject;
 import javax.xml.XMLConstants;
@@ -43,7 +43,7 @@ import javax.xml.XMLConstants;
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_VALIDATOR},
-        icon = ElementIcons.XSD)
+        icon = SvgImage.PIPELINE_XSD)
 public class SchemaFilterSplit extends AbstractXMLFilter {
 
     private final SchemaFilter schemaFilter;

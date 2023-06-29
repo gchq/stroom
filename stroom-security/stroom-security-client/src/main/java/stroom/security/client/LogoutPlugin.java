@@ -21,7 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -54,7 +54,7 @@ public class LogoutPlugin extends Plugin {
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()
                         .priority(3)
-                        .icon(SvgPresets.LOGOUT)
+                        .icon(SvgImage.LOGOUT)
                         .text("Logout")
                         .command(() ->
                                 ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", result -> {

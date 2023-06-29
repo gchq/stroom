@@ -85,7 +85,11 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.INDEXING, IndexDoc.DOCUMENT_TYPE, "Lucene Index");
+        return new DocumentType(
+                DocumentTypeGroup.INDEXING,
+                IndexDoc.DOCUMENT_TYPE,
+                "Lucene Index",
+                IndexDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

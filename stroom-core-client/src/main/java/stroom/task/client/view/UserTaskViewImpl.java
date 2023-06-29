@@ -16,6 +16,7 @@
 
 package stroom.task.client.view;
 
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.presenter.UserTaskUiHandlers;
 import stroom.task.shared.TaskProgress;
@@ -54,6 +55,7 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
         widget = binder.createAndBindUi(this);
         layout.setCellWidth(terminate, "18px");
         layout.setCellVerticalAlignment(terminate, HorizontalPanel.ALIGN_MIDDLE);
+        terminate.getElement().setInnerHTML(SvgImage.STOP.getSvg());
     }
 
     @Override

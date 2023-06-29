@@ -17,6 +17,7 @@
 package stroom.pipeline.factory;
 
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.svg.shared.SvgImage;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -42,7 +43,7 @@ public @interface ConfigurableElement {
 
     String[] roles();
 
-    String icon();
+    SvgImage icon();
 
     /**
      * A description of what this pipeline element does.

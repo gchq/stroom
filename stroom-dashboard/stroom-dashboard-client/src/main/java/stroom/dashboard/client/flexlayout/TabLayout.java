@@ -20,7 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
@@ -28,7 +28,6 @@ import stroom.widget.tab.client.view.LinkTabBar;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -84,18 +83,18 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         initWidget(panel);
 
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons");
+        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons icon-colour__grey");
         barOuter.add(buttons);
 
         settings = new InlineSvgButton();
         settings.addStyleName("tabLayout-settingsButton");
-        settings.setSvg(SvgImages.MONO_SETTINGS);
+        settings.setSvg(SvgImage.SETTINGS);
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new InlineSvgButton();
         close.addStyleName("tabLayout-closeButton");
-        close.setSvg(SvgImages.MONO_CLOSE);
+        close.setSvg(SvgImage.CLOSE);
         close.setTitle("Close");
         buttons.add(close);
 

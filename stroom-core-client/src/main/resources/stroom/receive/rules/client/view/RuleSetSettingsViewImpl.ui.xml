@@ -2,13 +2,13 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:SimplePanel styleName="max">
-        <g:MySplitLayoutPanel unit="PX" vSplits="0.5" styleName="max">
+        <g:ThinSplitLayoutPanel unit="PX" vSplits="0.5" styleName="max">
             <g:north size="200">
                 <g:SimplePanel ui:field="table" styleName="max dashboard-panel dock-container-vertical"/>
             </g:north>
             <g:center>
                 <g:SimplePanel ui:field="expression" styleName="max dashboard-panel dock-container-vertical"/>
             </g:center>
-        </g:MySplitLayoutPanel>
+        </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
 </ui:UiBinder> 

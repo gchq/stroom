@@ -20,7 +20,6 @@
 
 /* Resize handle */
 .resizableDialog-resizeHandle {
-	background-image: url("../images/dialog/resizeBottomRight.png");
 	position: absolute;
 	right: -9px;
 	bottom: -9px;
@@ -29,10 +28,9 @@
 	cursor: nw-resize;
 }
 
-.stroom-theme-dark .resizableDialog-resizeHandle {
-	background-image: url("../images/dialog/resizeBottomRight-dark.png");
+.resizableDialog-resizeHandle svg {
+	width: 20px;
+	height: 20px;
+	cursor: nw-resize;
 }
 
-.stroom-theme-dark2 .resizableDialog-resizeHandle {
-	background-image: url("../images/dialog/resizeBottomRight-dark2.png");
-}

@@ -25,7 +25,6 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.search.solr.CachedSolrIndex;
@@ -34,6 +33,7 @@ import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
+import stroom.svg.shared.SvgImage;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -65,7 +65,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
-        icon = ElementIcons.SOLR)
+        icon = SvgImage.PIPELINE_SOLR)
 class SolrIndexingFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexingFilter.class);

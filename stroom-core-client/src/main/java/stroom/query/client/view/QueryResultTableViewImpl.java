@@ -18,14 +18,13 @@ package stroom.query.client.view;
 
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableUiHandlers;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -52,7 +51,7 @@ public class QueryResultTableViewImpl extends ViewWithUiHandlers<TableUiHandlers
 
         pause = new InlineSvgButton();
         pause.addStyleName("dashboardTable-pause");
-        pause.setSvg(SvgImages.MONO_PAUSE);
+        pause.setSvg(SvgImage.PAUSE);
         pause.setTitle("Resume Update");
 
         layout.add(spinnerSmall);

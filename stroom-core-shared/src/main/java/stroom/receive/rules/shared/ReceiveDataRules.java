@@ -20,6 +20,7 @@ package stroom.receive.rules.shared;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -46,6 +47,7 @@ import java.util.Objects;
 public class ReceiveDataRules extends Doc {
 
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
 
     @JsonProperty
     private String description;
