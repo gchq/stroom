@@ -77,7 +77,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
         filterIcon = new SimplePanel();
         filterIcon.getElement().setInnerHTML(SvgImage.FILTER.getSvg());
-        filterIcon.addStyleName("svgIcon " + BASE_CLASS + "-image icon-colour__green");
+        filterIcon.addStyleName("svgIcon "
+                + BASE_CLASS + "-filterImage icon-colour__green");
         background.add(filterIcon);
         updateFilterState();
 
