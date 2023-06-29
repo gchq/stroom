@@ -24,7 +24,6 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -41,7 +40,6 @@ import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
@@ -283,7 +281,6 @@ class QueryServiceImpl implements QueryService {
                 try {
                     final Supplier<DashboardSearchResponse> supplier = taskContextFactory.contextResult(
                             "Dashboard Search",
-                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
                                 DashboardSearchResponse searchResponse;
                                 try {

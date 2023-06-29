@@ -23,7 +23,6 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.CompleteException;
@@ -153,7 +152,6 @@ public class ExtractionDecorator {
         return taskContextFactory.childContext(
                 parentContext,
                 "Extraction Task Mapper",
-                TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
                     info(taskContext, () -> "Starting extraction task producer");
                     try {

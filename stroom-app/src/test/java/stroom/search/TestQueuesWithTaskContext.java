@@ -7,7 +7,6 @@ import stroom.search.extraction.StreamEventMap;
 import stroom.search.extraction.StreamEventMap.EventSet;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -56,14 +55,12 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
 
         taskContextFactory.context(
                 "parent",
-                TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
 
                     // Start consumers.
                     executorService.execute(taskContextFactory.childContext(
                             taskContext,
                             "consumers",
-                            TerminateHandlerFactory.NOOP_FACTORY,
                             tc -> {
                                 taskManager.terminate(taskContext.getTaskId());
                                 consumptionStartLatch.countDown();
@@ -100,7 +97,6 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                     executorService.execute(taskContextFactory.childContext(
                             taskContext,
                             "producers",
-                            TerminateHandlerFactory.NOOP_FACTORY,
                             tc -> {
                                 final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
 

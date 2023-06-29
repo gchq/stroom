@@ -40,7 +40,6 @@ import stroom.query.common.v2.EventRefs;
 import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -479,7 +478,6 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
         final Runnable runnable = taskContextFactory.context(
                 "Translate",
-                TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
                     final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
                     eventSearchTaskHandler.exec(eventSearchTask, (eventRefs, throwable) -> {

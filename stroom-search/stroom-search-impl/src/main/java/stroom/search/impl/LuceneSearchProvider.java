@@ -42,7 +42,6 @@ import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -98,7 +97,6 @@ public class LuceneSearchProvider implements SearchProvider {
         return securityContext.useAsReadResult(() -> {
             final Supplier<DataSource> supplier = taskContextFactory.contextResult(
                     "Getting Data Source",
-                    TerminateHandlerFactory.NOOP_FACTORY,
                     taskContext -> {
                         final IndexDoc index = indexStore.readDocument(docRef);
                         return DataSource

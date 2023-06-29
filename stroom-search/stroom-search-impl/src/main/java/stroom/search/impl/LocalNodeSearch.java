@@ -5,7 +5,6 @@ import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -52,7 +51,6 @@ public class LocalNodeSearch implements NodeSearch {
                     taskContextFactory.childContext(
                             parentContext,
                             nodeSearchTask.getTaskName(),
-                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext ->
                                     nodeSearchTaskHandler.search(taskContext,
                                             nodeSearchTask,

@@ -148,7 +148,7 @@ public class IndexShardSearchFactory {
                                             complete = true;
                                         }
                                     }
-                                }).run(), executor);
+                                }), executor);
             }
         }
 
@@ -161,7 +161,7 @@ public class IndexShardSearchFactory {
                             taskContext.info(() -> "Complete stored data queue");
                             LOGGER.debug("Complete stored data queue");
                             storedDataQueue.complete();
-                        }).run(), executor);
+                        }), executor);
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(

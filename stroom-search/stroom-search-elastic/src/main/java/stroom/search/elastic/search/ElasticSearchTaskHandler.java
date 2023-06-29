@@ -35,7 +35,6 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -158,7 +157,6 @@ public class ElasticSearchTaskHandler {
                     final Runnable runnable = taskContextFactory.childContext(
                             parentContext,
                             "Elasticsearch Search Scroll Slice",
-                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> searchSlice(
                                     elasticIndex,
                                     queryBuilder,

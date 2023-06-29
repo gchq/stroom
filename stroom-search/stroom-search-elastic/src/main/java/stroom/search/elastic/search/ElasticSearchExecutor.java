@@ -6,7 +6,6 @@ import stroom.query.common.v2.SearchProcess;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.shared.TaskProgress;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,7 +43,6 @@ public class ElasticSearchExecutor {
         // Start asynchronous search execution.
         final Runnable runnable = taskContextFactory.context(
                 TASK_NAME,
-                TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
                     final AtomicBoolean destroyed = new AtomicBoolean();
                     final ElasticAsyncSearchTaskHandler asyncSearchTaskHandler =

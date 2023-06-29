@@ -17,7 +17,6 @@ import stroom.search.extraction.StoredDataQueue;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
@@ -85,7 +84,6 @@ public class ElasticSearchFactory {
         final Runnable runnable = taskContextFactory.childContext(
                 parentContext,
                 "Search Elasticsearch Index",
-                TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> elasticSearchTaskHandler.search(
                         taskContext,
                         index,
@@ -101,7 +99,6 @@ public class ElasticSearchFactory {
                 .runAsync(runnable, executor)
                 .whenCompleteAsync((r, t) -> taskContextFactory.childContext(parentContext,
                         "Search Elasticsearch Index",
-                        TerminateHandlerFactory.NOOP_FACTORY,
                         taskContext -> {
                             taskContext.info(() -> "Complete stored data queue");
                             LOGGER.debug("Complete stored data queue");
