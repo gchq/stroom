@@ -51,10 +51,12 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import javax.inject.Inject;
 
 public class FlexLayout extends Composite {
@@ -101,7 +103,7 @@ public class FlexLayout extends Composite {
 
     private boolean designMode;
 
-    private Component newComponent;
+    private List<Component> newComponents;
 
     @Inject
     public FlexLayout(final EventBus eventBus) {
@@ -166,15 +168,15 @@ public class FlexLayout extends Composite {
     }
 
     private void onMouseMove(final Event event) {
-        // If we are adding a new component then let the user start to select where to put it.
-        if (!busy && newComponent != null) {
-            enterNewComponentDestinationMode(event);
-        }
-
         // We need to know what the mouse is over.
         final double x = event.getClientX();
         final double y = event.getClientY();
         final Element target = event.getEventTarget().cast();
+
+//        // If we are adding a new component then let the user start to select where to put it.
+//        if (!busy && newComponents != null) {
+//            enterNewComponentDestinationMode(newComponents, x, y);
+//        }
 
         if (mouseDown) {
             // The mouse is down, so we might be moving a splitter or dragging
@@ -182,7 +184,7 @@ public class FlexLayout extends Composite {
             if (busy) {
                 // Busy means the mouse is down on a splitter or tab.
                 if (selectedSplitter != null) {
-                    moveSplit(event);
+                    moveSplit(x, y);
 
                 } else if (selection != null) {
                     if (!draggingTab) {
@@ -213,56 +215,70 @@ public class FlexLayout extends Composite {
     }
 
     private void onMouseDown(final Event event) {
-        if (newComponent == null && !busy) {
-            // Reset vars.
-            startPos = null;
-            draggingTab = false;
-            setDefaultCursor();
-
-            // Set the mouse down flag.
-            mouseDown = true;
-
-            // Find the target.
-            final double x = event.getClientX();
-            final double y = event.getClientY();
-            final MouseTarget mouseTarget = getMouseTarget(x, y, true, true);
-
-            // We need to know what the mouse is over.
-            final Element element = event.getEventTarget().cast();
-
-            // See if a splitter is the target.
-            selectedSplitter = getTargetSplitter(element);
-
-            if (selectedSplitter != null) {
-                // If we found a splitter as the event target then start split
-                // resize handling.
-                startPos = new double[]{x, y};
-                startSplitResize(x, y);
-                busy = true;
-
-            } else if (mouseTarget != null) {
-                // If the event target was not a splitter then see if it was a tab.
-                final TabData tab = mouseTarget.tab;
-                if (tab != null && Pos.TAB == mouseTarget.pos) {
-                    selection = mouseTarget;
-                    // The event target was a tab so store the start position of
-                    // the mouse.
-                    startPos = new double[]{x, y};
-                    busy = true;
-                }
+        if (newComponents == null) {
+            if (!busy) {
+                startSelection(event);
             }
-
-            // If we have clicked a hotspot then capture the mouse.
-            if (busy) {
-                capture();
-                event.preventDefault();
-                targetElement = element.getParentElement();
-                targetElement.addClassName("flexLayout-selected");
-            }
+        } else {
+            finishSelection(event);
         }
     }
 
     private void onMouseUp(final Event event) {
+        if (newComponents == null) {
+            finishSelection(event);
+        }
+    }
+
+    private void startSelection(final Event event) {
+        // Reset vars.
+        startPos = null;
+        draggingTab = false;
+        setDefaultCursor();
+
+        // Set the mouse down flag.
+        mouseDown = true;
+
+        // Find the target.
+        final double x = event.getClientX();
+        final double y = event.getClientY();
+        final MouseTarget mouseTarget = getMouseTarget(x, y, true, true);
+
+        // We need to know what the mouse is over.
+        final Element element = event.getEventTarget().cast();
+
+        // See if a splitter is the target.
+        selectedSplitter = getTargetSplitter(element);
+
+        if (selectedSplitter != null) {
+            // If we found a splitter as the event target then start split
+            // resize handling.
+            startPos = new double[]{x, y};
+            startSplitResize(x, y);
+            busy = true;
+
+        } else if (mouseTarget != null) {
+            // If the event target was not a splitter then see if it was a tab.
+            final List<TabData> tabs = mouseTarget.tabs;
+            if (tabs != null && Pos.TAB == mouseTarget.pos) {
+                selection = mouseTarget;
+                // The event target was a tab so store the start position of
+                // the mouse.
+                startPos = new double[]{x, y};
+                busy = true;
+            }
+        }
+
+        // If we have clicked a hotspot then capture the mouse.
+        if (busy) {
+            capture();
+            event.preventDefault();
+            targetElement = element.getParentElement();
+            targetElement.addClassName("flexLayout-selected");
+        }
+    }
+
+    private void finishSelection(final Event event) {
         final double x = event.getClientX();
         final double y = event.getClientY();
 
@@ -278,12 +294,14 @@ public class FlexLayout extends Composite {
                 if (mouseTarget != null) {
                     final Pos targetPos = mouseTarget.pos;
                     final LayoutConfig targetLayout = mouseTarget.layoutConfig;
-                    final TabConfig selectedTabConfig = ((Component) selection.tab).getTabConfig();
-                    final TabLayoutConfig currentParent = selectedTabConfig.getParent();
+
                     final List<TabConfig> tabGroup = new ArrayList<>();
-                    tabGroup.add(selectedTabConfig);
+                    for (final TabData tabData : selection.tabs) {
+                        tabGroup.add(((Component) tabData).getTabConfig());
+                    }
 
                     // Add all invisible tabs, so we can move them all together if this is the only tab.
+                    final TabLayoutConfig currentParent = mouseTarget.currentParent;
                     if (currentParent != null && currentParent.getVisibleTabCount() == 1) {
                         for (final TabConfig tabConfig : currentParent.getTabs()) {
                             if (!tabConfig.visible()) {
@@ -296,7 +314,7 @@ public class FlexLayout extends Composite {
 
                     if (changed) {
                         // Don't keep trying to add the same new component.
-                        newComponent = null;
+                        newComponents = null;
 
                         // Clear and refresh the layout.
                         clear();
@@ -315,11 +333,10 @@ public class FlexLayout extends Composite {
             } else {
                 // Find the selection target.
                 final MouseTarget mouseTarget = getMouseTarget(x, y, true, true);
-
                 if (mouseTarget != null) {
                     // If the event target was not a splitter then see if it was a tab.
-                    final TabData tab = mouseTarget.tab;
-                    if (selection.tab.equals(tab)) {
+                    final TabData tab = mouseTarget.getFirstTab();
+                    if (Objects.equals(selection.getFirstTab(), tab)) {
                         final TabLayout tabLayout = mouseTarget.tabLayout;
                         final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
                         if (tabLayout.getTabLayoutConfig().getSelected() == null
@@ -359,38 +376,37 @@ public class FlexLayout extends Composite {
         }
     }
 
-    private void enterNewComponentDestinationMode(final Event event) {
+    public void enterNewComponentDestinationMode(final List<Component> newComponents, final double x, final double y) {
+        this.newComponents = newComponents;
+
         // Reset vars.
-        startPos = null;
-        draggingTab = false;
         selectedSplitter = null;
         setDefaultCursor();
 
         // Set the mouse down flag.
         mouseDown = true;
 
-        // Find the target.
-        final double x = event.getClientX();
-        final double y = event.getClientY();
-
         // We need to know what the mouse is over.
+        final List<TabData> tabs = new ArrayList<>(newComponents);
         selection = new MouseTarget(
                 null,
                 null,
                 Pos.TAB,
                 null,
-                newComponent,
+                null,
+                tabs,
                 -1,
                 null);
 
         // The event target was a tab so store the start position of
         // the mouse.
-        startPos = new double[]{x, y};
         busy = true;
         draggingTab = true;
 
         capture();
-        event.preventDefault();
+
+        final MouseTarget mouseTarget = getMouseTarget(x, y, true, false);
+        highlightMouseTarget(mouseTarget);
     }
 
     private boolean moveTab(final MouseTarget mouseTarget,
@@ -505,7 +521,24 @@ public class FlexLayout extends Composite {
                                    final Pos targetPos) {
         boolean moved = false;
 
-        final SplitLayoutConfig parent = targetTabLayoutConfig.getParent();
+        // Ensure we have a parent.
+        SplitLayoutConfig parent = targetTabLayoutConfig.getParent();
+        if (parent == null) {
+            int dim = Dimension.X;
+            if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
+                dim = Dimension.Y;
+            }
+            final SplitLayoutConfig splitLayoutConfig =
+                    new SplitLayoutConfig(targetTabLayoutConfig.getPreferredSize().copy().build(), dim);
+            splitLayoutConfig.add(targetTabLayoutConfig);
+
+            final PositionAndSize positionAndSize = positionAndSizeMap.get(targetTabLayoutConfig);
+            positionAndSizeMap.put(splitLayoutConfig, positionAndSize.copy());
+
+            layoutConfig = splitLayoutConfig;
+            parent = splitLayoutConfig;
+        }
+
         // Get the index of the target layout and
         // therefore the insert position.
         int insertPos = parent.indexOf(targetTabLayoutConfig);
@@ -834,13 +867,13 @@ public class FlexLayout extends Composite {
         return totalChange;
     }
 
-    private void moveSplit(final Event event) {
+    private void moveSplit(final double x, final double y) {
         final SplitLayoutConfig layoutConfig = selectedSplitter.getSplitInfo().getLayoutConfig();
         final Element elem = selectedSplitter.getElement();
 
         setMarkerCursor(layoutConfig.getDimension());
         if (Dimension.X == layoutConfig.getDimension()) {
-            double left = event.getClientX() - offset;
+            double left = x - offset;
             left = constrain(left, min, max);
             setMarkerCursor(Dimension.X);
             showMarker(left,
@@ -848,7 +881,7 @@ public class FlexLayout extends Composite {
                     ElementUtil.getSubPixelOffsetWidth(elem),
                     ElementUtil.getSubPixelOffsetHeight(elem));
         } else {
-            double top = event.getClientY() - offset;
+            double top = y - offset;
             top = constrain(top, min, max);
             setMarkerCursor(Dimension.Y);
             showMarker(ElementUtil.getClientLeft(elem),
@@ -1005,6 +1038,7 @@ public class FlexLayout extends Composite {
                     pos,
                     null,
                     null,
+                    null,
                     -1,
                     null);
         }
@@ -1060,11 +1094,12 @@ public class FlexLayout extends Composite {
                                                 positionAndSize,
                                                 Pos.TAB,
                                                 tabLayout,
-                                                tabData,
+                                                layoutConfig,
+                                                Collections.singletonList(tabData),
                                                 i,
                                                 linkTab);
                                     }
-                                } else if (selection == null || !tabData.equals(selection.tab)) {
+                                } else if (selection == null || !tabData.equals(selection.getFirstTab())) {
                                     final double clientLeft = ElementUtil.getClientLeft(tabElement);
                                     final double clientRight = ElementUtil.getClientRight(tabElement);
 //                                    Console.log(tabData.getLabel() +
@@ -1083,7 +1118,8 @@ public class FlexLayout extends Composite {
                                                 positionAndSize,
                                                 Pos.TAB,
                                                 tabLayout,
-                                                tabData,
+                                                layoutConfig,
+                                                Collections.singletonList(tabData),
                                                 i,
                                                 linkTab);
 //                                        Console.log("tab");
@@ -1095,7 +1131,8 @@ public class FlexLayout extends Composite {
                                                 positionAndSize,
                                                 Pos.AFTER_TAB,
                                                 tabLayout,
-                                                tabData,
+                                                layoutConfig,
+                                                Collections.singletonList(tabData),
                                                 i + 1,
                                                 linkTab);
 //                                        Console.log("after tab");
@@ -1339,18 +1376,18 @@ public class FlexLayout extends Composite {
                     designSurfaceSize = outerSize;
                 }
 
-                GWT.log("visibleWidth=" +
-                        visibleWidth +
-                        " designWidth=" +
-                        designWidth +
-                        " visibleHeight=" +
-                        visibleHeight +
-                        " designHeight=" +
-                        designHeight +
-                        " width=" +
-                        width +
-                        " height=" +
-                        height);
+//                GWT.log("visibleWidth=" +
+//                        visibleWidth +
+//                        " designWidth=" +
+//                        designWidth +
+//                        " visibleHeight=" +
+//                        visibleHeight +
+//                        " designHeight=" +
+//                        designHeight +
+//                        " width=" +
+//                        width +
+//                        " height=" +
+//                        height);
 
                 designSurface.setSize(
                         designSurfaceSize.getWidth() + "px",
@@ -1678,10 +1715,6 @@ public class FlexLayout extends Composite {
         return positionAndSizeMap.get(object);
     }
 
-    public void setNewComponent(final Component newComponent) {
-        this.newComponent = newComponent;
-    }
-
     private enum Pos {
         TAB,
         AFTER_TAB,
@@ -1698,7 +1731,8 @@ public class FlexLayout extends Composite {
         private final PositionAndSize positionAndSize;
         private final Pos pos;
         private final TabLayout tabLayout;
-        private final TabData tab;
+        private final TabLayoutConfig currentParent;
+        private final List<TabData> tabs;
         private final int tabIndex;
         private final LinkTab tabWidget;
 
@@ -1706,16 +1740,25 @@ public class FlexLayout extends Composite {
                     final PositionAndSize positionAndSize,
                     final Pos pos,
                     final TabLayout tabLayout,
-                    final TabData tab,
+                    final TabLayoutConfig currentParent,
+                    final List<TabData> tabs,
                     final int tabIndex,
                     final LinkTab tabWidget) {
             this.layoutConfig = layoutConfig;
             this.positionAndSize = positionAndSize;
             this.pos = pos;
             this.tabLayout = tabLayout;
-            this.tab = tab;
+            this.currentParent = currentParent;
+            this.tabs = tabs;
             this.tabIndex = tabIndex;
             this.tabWidget = tabWidget;
+        }
+
+        TabData getFirstTab() {
+            if (tabs == null || tabs.size() == 0) {
+                return null;
+            }
+            return tabs.get(0);
         }
     }
 }

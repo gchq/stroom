@@ -70,17 +70,22 @@ import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -646,14 +651,8 @@ public class DashboardPresenter
     }
 
     public void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
-        Size preferredSize = null;
-        if (tabLayoutConfig.getPreferredSize() != null) {
-            preferredSize = tabLayoutConfig.getPreferredSize().copy().build();
-        }
-
         // Get sets of unique component ids and names.
         final ComponentNameSet componentNameSet = new ComponentNameSet(components);
-
         final Map<String, String> idMapping = new HashMap<>();
         final List<ComponentConfig> newComponents = new ArrayList<>();
         final Map<String, TabConfig> newTabConfigMap = new HashMap<>();
@@ -708,33 +707,31 @@ public class DashboardPresenter
             modifiedComponents.add(componentConfig.copy().settings(settings).build());
         }
 
-        final List<TabConfig> tabs = new ArrayList<>();
         // Now try and add all the duplicated components.
+        final List<Component> duplicatedComponents = new ArrayList<>();
         for (final ComponentConfig componentConfig : modifiedComponents) {
             final Component component = addComponent(componentConfig.getType(), componentConfig);
             if (component != null) {
                 final TabConfig newTabConfig = newTabConfigMap.get(component.getId());
-                tabs.add(newTabConfig);
+                component.setTabConfig(newTabConfig);
+                duplicatedComponents.add(component);
             }
         }
 
         // Now link all the components.
-        for (final ComponentConfig componentConfig : modifiedComponents) {
-            final Component component = components.get(componentConfig.getId());
-            if (component != null) {
-                component.link();
-            }
+        for (final Component component : duplicatedComponents) {
+            component.link();
         }
 
-        final TabLayoutConfig newTabLayoutConfig = TabLayoutConfig
-                .builder()
-                .preferredSize(preferredSize)
-                .tabs(tabs)
-                .selected(tabLayoutConfig.getSelected())
-                .build();
-
-        // Add the new tab layout panel.
-        addTabPanel(newTabLayoutConfig);
+        if (duplicatedComponents.size() > 0) {
+            final TabConfig firstTabConfig = getFirstTabConfig(tabLayoutConfig);
+            final Element selectedComponent = getFirstComponentElement(firstTabConfig);
+            final Rect rect = ElementUtil.getClientRect(selectedComponent);
+            layoutPresenter.enterNewComponentDestinationMode(
+                    duplicatedComponents,
+                    rect.getLeft() + (rect.getWidth() / 2),
+                    rect.getTop() + (rect.getHeight() / 2));
+        }
     }
 
     @Override
@@ -886,16 +883,63 @@ public class DashboardPresenter
                 final TabConfig tabConfig = new TabConfig(componentId.id, true);
                 componentPresenter.setTabConfig(tabConfig);
 
-                layoutPresenter.setNewComponent(componentPresenter);
+                final TabConfig firstTabConfig = getFirstTabConfig(layoutPresenter.getLayoutConfig());
+                if (firstTabConfig == null) {
+                    // Add the panel directly.
+                    final TabLayoutConfig tabLayoutConfig =
+                            new TabLayoutConfig(Size.builder().width(200).height(200).build(), null, 0);
+                    tabLayoutConfig.add(tabConfig);
+                    addTabPanel(tabLayoutConfig);
+                } else {
+                    final Element element = getFirstComponentElement(firstTabConfig);
+                    final Rect rect = ElementUtil.getClientRect(element);
+                    layoutPresenter.enterNewComponentDestinationMode(
+                            Collections.singletonList(componentPresenter),
+                            rect.getLeft() + (rect.getWidth() / 2),
+                            rect.getTop() + (rect.getHeight() / 2));
+                }
             }
-
-
-//            final TabLayoutConfig tabLayoutConfig = new TabLay
-//            outConfig(tabConfig);
-//
-//            // Add the new tab layout.
-//            addTabPanel(tabLayoutConfig);
         }
+    }
+
+    private Element getFirstComponentElement(final TabConfig firstTabConfig) {
+        if (firstTabConfig != null) {
+            final Component component = components.get(firstTabConfig.getId());
+            if (component != null) {
+                final MyPresenterWidget<?> myPresenterWidget = (MyPresenterWidget<?>) component;
+                return myPresenterWidget.getWidget().getElement();
+            }
+        }
+        return getWidget().getElement();
+    }
+
+    private TabConfig getFirstTabConfig(final LayoutConfig layoutConfig) {
+        if (layoutConfig != null) {
+            if (layoutConfig instanceof SplitLayoutConfig) {
+                final SplitLayoutConfig splitLayoutConfig = (SplitLayoutConfig) layoutConfig;
+                final List<LayoutConfig> list = splitLayoutConfig.getChildren();
+                if (list != null) {
+                    for (final LayoutConfig child : list) {
+                        final TabConfig tabConfig = getFirstTabConfig(child);
+                        if (tabConfig != null) {
+                            return tabConfig;
+                        }
+                    }
+                }
+
+            } else if (layoutConfig instanceof TabLayoutConfig) {
+                final TabLayoutConfig tabLayoutConfig = (TabLayoutConfig) layoutConfig;
+                if (tabLayoutConfig.getTabs().size() > 0) {
+                    if (tabLayoutConfig.getSelected() >= 0 &&
+                            tabLayoutConfig.getSelected() < tabLayoutConfig.getTabs().size()) {
+                        return tabLayoutConfig.get(tabLayoutConfig.getSelected());
+                    } else {
+                        return tabLayoutConfig.get(0);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private void addTabPanel(final TabLayoutConfig tabLayoutConfig) {
