@@ -1,6 +1,8 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.FunctionSignature;
+import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -12,16 +14,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class QueryHelpItem implements Comparable<QueryHelpItem> {
+public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
-    final String text;
+    final String title;
     private final boolean heading;
     private final int depth;
 
     private Map<QueryHelpItem, QueryHelpItem> children;
 
-    public QueryHelpItem(final String text, final boolean heading, final int depth) {
-        this.text = text;
+    public QueryHelpItem(final String title, final boolean heading, final int depth) {
+        this.title = title;
         this.heading = heading;
         this.depth = depth;
     }
@@ -50,7 +52,13 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
     }
 
     public String getInsertText() {
-        return text;
+        return title;
+    }
+
+    public abstract InsertType getInsertType();
+
+    public String getTitle() {
+        return title;
     }
 
     public int getDepth() {
@@ -64,7 +72,7 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
     public SafeHtml getLabel() {
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendHtmlConstant("<div class=\"" + getClassName() + "\">");
-        builder.appendEscaped(text);
+        builder.appendEscaped(title);
         builder.appendHtmlConstant("</div>");
         return builder.toSafeHtml();
     }
@@ -76,7 +84,7 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
     @Override
     public int compareTo(final QueryHelpItem o) {
         if (heading == o.heading) {
-            return text.compareTo(o.text);
+            return title.compareTo(o.title);
         }
         return Boolean.compare(o.heading, heading);
     }
@@ -90,15 +98,19 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
             return false;
         }
         final QueryHelpItem that = (QueryHelpItem) o;
-        return heading == that.heading && Objects.equals(text, that.text);
+        return heading == that.heading && Objects.equals(title, that.title);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(text, heading);
+        return Objects.hash(title, heading);
     }
 
-    public static class QueryHelpItemHeading extends QueryHelpItem {
+
+    // --------------------------------------------------------------------------------
+
+
+    public abstract static class QueryHelpItemHeading extends QueryHelpItem {
 
         public QueryHelpItemHeading(final String text, final int depth) {
             super(text, true, depth);
@@ -108,14 +120,52 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
         String getClassName() {
             return super.getClassName() + " " + "queryHelpItem-heading";
         }
+
+        @Override
+        public InsertType getInsertType() {
+            return InsertType.NOT_INSERTABLE;
+        }
     }
 
-    public static class FunctionHeadingItem extends QueryHelpItemHeading {
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class TopLevelHeadingItem extends QueryHelpItemHeading {
+
+        private final SafeHtml detail;
+
+        public TopLevelHeadingItem(final String text, final int depth, final SafeHtml detail) {
+            super(text, depth);
+            this.detail = detail;
+        }
+
+        @Override
+        public SafeHtml getDetail() {
+            return detail;
+        }
+
+        @Override
+        String getClassName() {
+            return super.getClassName() + " " + "queryHelpItem-topLevel";
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public abstract static class FunctionHeadingItem extends QueryHelpItemHeading {
 
         public FunctionHeadingItem(final String text, final int depth) {
             super(text, depth);
         }
+
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class FunctionCategoryItem extends FunctionHeadingItem {
 
@@ -129,15 +179,41 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class OverloadedFunctionHeadingItem extends FunctionHeadingItem {
+
+        public OverloadedFunctionHeadingItem(final String heading, final int depth) {
+            super(heading, depth);
+        }
+
+        @Override
+        String getClassName() {
+            return super.getClassName() + " queryHelpItem-functionHeading";
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public static class FunctionItem extends QueryHelpItem {
 
         private final FunctionSignature signature;
         private final String helpUrl;
+        private final String snippetText;
 
-        public FunctionItem(final FunctionSignature signature, final String helpUrl, final int depth) {
-            super(signature.getName(), false, depth);
+        public FunctionItem(final String title,
+                            final FunctionSignature signature,
+                            final String helpUrl,
+                            final int depth) {
+            super(title, false, depth);
             this.signature = signature;
             this.helpUrl = helpUrl;
+            this.snippetText = FunctionSignatureUtil.buildSnippetText(signature);
+//            GWT.log("snippet: " + snippetText);
         }
 
         @Override
@@ -147,7 +223,19 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         @Override
         String getClassName() {
-            return super.getClassName() + " " + "queryHelpItem-function";
+            return super.getClassName() + " queryHelpItem-function queryHelpItem-leaf";
+        }
+
+        @Override
+        public String getInsertText() {
+            return snippetText;
+        }
+
+        @Override
+        public InsertType getInsertType() {
+            return GwtNullSafe.isBlankString(snippetText)
+                    ? InsertType.BLANK
+                    : InsertType.SNIPPET;
         }
     }
 }

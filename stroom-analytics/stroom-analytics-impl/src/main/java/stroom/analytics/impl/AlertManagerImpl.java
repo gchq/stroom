@@ -70,7 +70,7 @@ public class AlertManagerImpl implements AlertManager {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final Provider<DetectionsWriter> detectionsWriterProvider;
+    private final Provider<RecordsWriter> recordsWriterProvider;
     private final MultiValuesReceiverFactory multiValuesReceiverFactory;
     private final Provider<AlertConfig> alertConfigProvider;
     private final Provider<SearchConfig> searchConfigProvider;
@@ -92,7 +92,7 @@ public class AlertManagerImpl implements AlertManager {
                      final PipelineStore pipelineStore,
                      final PipelineDataCache pipelineDataCache,
                      final Provider<ExtractionTaskHandler> handlerProvider,
-                     final Provider<DetectionsWriter> detectionsWriterProvider,
+                     final Provider<RecordsWriter> recordsWriterProvider,
                      final MultiValuesReceiverFactory multiValuesReceiverFactory,
                      final Provider<AnalyticRuleStore> analyticRuleStoreProvider,
                      final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
@@ -107,7 +107,7 @@ public class AlertManagerImpl implements AlertManager {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
-        this.detectionsWriterProvider = detectionsWriterProvider;
+        this.recordsWriterProvider = recordsWriterProvider;
         this.multiValuesReceiverFactory = multiValuesReceiverFactory;
         this.analyticRuleStoreProvider = analyticRuleStoreProvider;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
@@ -128,7 +128,7 @@ public class AlertManagerImpl implements AlertManager {
                 final AlertProcessorImpl processor = new AlertProcessorImpl(
                         taskContextFactory.current(),
                         handlerProvider,
-                        detectionsWriterProvider,
+                        recordsWriterProvider,
                         multiValuesReceiverFactory,
                         rules,
                         indexStructure,

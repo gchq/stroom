@@ -168,7 +168,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
-                          final Provider<ExpressionPresenter> expressionPresenterProvider,
+                          final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
@@ -1101,6 +1101,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         return null;
+    }
+
+    @Override
+    public void setDesignMode(final boolean designMode) {
+        super.setDesignMode(designMode);
+        dataGrid.setAllowMove(designMode);
+        dataGrid.setAllowHeaderSelection(designMode);
+        addFieldButton.setVisible(designMode);
     }
 
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {

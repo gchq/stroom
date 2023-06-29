@@ -118,6 +118,7 @@ public class ProxyModule extends AbstractModule {
         install(new DropwizardModule());
         install(new DbModule());
         install(new ProxyDbModule());
+        install(new DropwizardModule());
         install(new MockCollectionModule());
 
         install(new DictionaryModule());

@@ -3987,9 +3987,6 @@ export interface ViewDoc {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
   description?: string;
-
-  /** A logical addOperator term in a query expression tree */
-  filter?: ExpressionOperator;
   name?: string;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -9998,6 +9995,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   view = {
+    /**
+     * No description
+     *
+     * @tags Views
+     * @name ListViews
+     * @summary Fetch view names
+     * @request GET:/view/v1/list
+     * @secure
+     */
+    listViews: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/view/v1/list`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
     /**
      * No description
      *

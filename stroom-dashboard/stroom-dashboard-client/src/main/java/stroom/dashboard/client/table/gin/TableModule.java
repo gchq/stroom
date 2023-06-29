@@ -19,12 +19,12 @@ package stroom.dashboard.client.table.gin;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
+import stroom.dashboard.client.table.ColumnFunctionEditorPresenter;
+import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
+import stroom.dashboard.client.table.ColumnFunctionEditorViewImpl;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.client.table.DownloadViewImpl;
-import stroom.dashboard.client.table.ExpressionPresenter;
-import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
-import stroom.dashboard.client.table.ExpressionViewImpl;
 import stroom.dashboard.client.table.FilterPresenter;
 import stroom.dashboard.client.table.FilterPresenter.FilterView;
 import stroom.dashboard.client.table.FilterViewImpl;
@@ -58,16 +58,21 @@ public class TableModule extends AbstractPresenterModule {
 
 
         bindPresenterWidget(TablePresenter.class, TableView.class, TableViewImpl.class);
-        bindPresenterWidget(BasicTableSettingsPresenter.class,
+        bindPresenterWidget(
+                BasicTableSettingsPresenter.class,
                 BasicTableSettingsView.class,
                 BasicTableSettingsViewImpl.class);
-        bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
+        bindPresenterWidget(
+                ColumnFunctionEditorPresenter.class,
+                ColumnFunctionEditorView.class,
+                ColumnFunctionEditorViewImpl.class);
         bindPresenterWidget(FormatPresenter.class, FormatView.class, FormatViewImpl.class);
         bindPresenterWidget(FilterPresenter.class, FilterView.class, FilterViewImpl.class);
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RenameFieldPresenter.class, RenameFieldView.class, RenameFieldViewImpl.class);
 
-        bindPresenterWidget(EditExpressionPresenter.class,
+        bindPresenterWidget(
+                EditExpressionPresenter.class,
                 EditExpressionPresenter.EditExpressionView.class,
                 EditExpressionViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);

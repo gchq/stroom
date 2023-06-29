@@ -281,6 +281,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         GwtNullSafe.map(request.getStepFilterMap())
                 .values()
                 .forEach(SteppingFilterSettings::clearAllFilters);
+        // Update the model so the filter icon in the pipe elements is updated
+        pipelineModel.setStepFilters(request.getStepFilterMap());
         pipelineTreePresenter.getView().refresh();
     }
 
@@ -291,6 +293,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     .get(selectedPipeElement.getId());
             if (steppingFilterSettings != null) {
                 steppingFilterSettings.clearAllFilters();
+                // Update the model so the filter icon in the pipe elements is updated
+                pipelineModel.setStepFilters(request.getStepFilterMap());
             }
         }
         pipelineTreePresenter.getView().refresh();

@@ -42,6 +42,10 @@ public class Splitter extends Widget {
             element.addClassName("flexLayout-splitterDown");
         }
 
+        final Element dragger = DOM.createDiv();
+        dragger.setClassName("flexLayout-splitter-dragger");
+        element.appendChild(dragger);
+
         setElement(element);
     }
 

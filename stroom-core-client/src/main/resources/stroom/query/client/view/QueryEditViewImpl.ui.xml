@@ -4,8 +4,8 @@
     <g:MySplitLayoutPanel styleName="DashboardViewImpl max">
         <g:north size="400">
             <g:MySplitLayoutPanel styleName="max">
-                <g:east size="500">
-                    <g:SimplePanel ui:field="queryHelpContainer" styleName="max control__padding-right"/>
+                <g:east size="700">
+                    <g:SimplePanel ui:field="queryHelpContainer" styleName="max"/>
                 </g:east>
                 <g:center>
                     <g:SimplePanel ui:field="queryEditorContainer" styleName="max"/>
@@ -14,7 +14,7 @@
         </g:north>
         <g:center>
             <g:SimplePanel ui:field="tableContainer"
-                           styleName="max control__padding-right control__padding-bottom"/>
+                           styleName="max"/>
         </g:center>
     </g:MySplitLayoutPanel>
 </ui:UiBinder>

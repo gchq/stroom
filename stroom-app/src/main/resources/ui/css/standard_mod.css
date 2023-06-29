@@ -412,16 +412,21 @@ td.datePickerYear {
 	border: 1px solid var(--control__border-color);
 }
 
-.gwt-SplitLayoutPanel-Dragger {
-    /* cursor set by .gwt-SplitLayoutPanel-(V|H)Dragger in standard.css */
-    background: none;
-	opacity: 0;
-	transition: opacity 0.3s;
-    border-style: solid;
-    border-color: var(--splitter__border-color);
+.gwt-SplitLayoutPanel-Dragger-Outer {
+    overflow: visible !important;
     background-color: var(--splitter__background-color);
+    z-index: 10;
 }
 
+.gwt-SplitLayoutPanel-Dragger {
+    position: absolute;
+    background: none;
+    width: 100%;
+    height: 100%;
+    border: none;
+    inset: initial !important;
+}
+/*
 .gwt-SplitLayoutPanel-Dragger:hover {
     opacity: 1;
 }
@@ -429,17 +434,19 @@ td.datePickerYear {
 .gwt-SplitLayoutPanel-Dragger--dragging {
     opacity: 1;
 }
-
+*/
 .gwt-SplitLayoutPanel-HDragger {
-	border-width: 0 1px 0 1px;
+	width: var(--split__size) !important;
+	height: 100% !important;
+	left: var(--split__offset) !important;
+	cursor: col-resize;
 }
 
 .gwt-SplitLayoutPanel-VDragger {
-    border-width: 1px 0 1px 0;
-}
-
-.gwt-SplitLayoutPanel-EAST,.gwt-SplitLayoutPanel-WEST,.gwt-SplitLayoutPanel-NORTH,.gwt-SplitLayoutPanel-SOUTH,.gwt-SplitLayoutPanel-CENTER {
-	border: 1px solid var(--border-color);
+	width: 100% !important;
+	height: var(--split__size) !important;
+	top: var(--split__offset) !important;
+    cursor: row-resize;
 }
 
 .gwt-SuggestBox {

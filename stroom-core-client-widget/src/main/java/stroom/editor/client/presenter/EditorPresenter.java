@@ -119,6 +119,14 @@ public class EditorPresenter
         setText(text, false);
     }
 
+    public boolean isClean() {
+        return getView().isClean();
+    }
+
+    public void markClean() {
+        getView().markClean();
+    }
+
     /**
      * Replaces the editor with some html showing the errorText and its title
      */

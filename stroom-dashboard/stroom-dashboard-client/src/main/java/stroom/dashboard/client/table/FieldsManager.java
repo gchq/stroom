@@ -51,7 +51,7 @@ public class FieldsManager implements HeadingListener {
 
     private final TablePresenter tablePresenter;
     private final Provider<RenameFieldPresenter> renameFieldPresenterProvider;
-    private final Provider<ExpressionPresenter> expressionPresenterProvider;
+    private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
     private int fieldsStartIndex;
@@ -60,7 +60,7 @@ public class FieldsManager implements HeadingListener {
 
     public FieldsManager(final TablePresenter tablePresenter,
                          final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
-                         final Provider<ExpressionPresenter> expressionPresenterProvider,
+                         final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                          final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
         this.tablePresenter = tablePresenter;

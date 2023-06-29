@@ -38,17 +38,14 @@ import javax.inject.Singleton;
 public class XmlSchemaCache implements EntityEvent.Handler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaCache.class);
-    private static final long TEN_MINUTES = 1000 * 60 * 10;
 
     private final XmlSchemaStore xmlSchemaStore;
     private final List<ClearHandler> clearHandlers = new ArrayList<>();
     private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<>();
-    private volatile long lastClearTime;
 
     @Inject
     public XmlSchemaCache(final XmlSchemaStore xmlSchemaStore) {
         this.xmlSchemaStore = xmlSchemaStore;
-        lastClearTime = System.currentTimeMillis();
     }
 
     /**
@@ -59,7 +56,7 @@ public class XmlSchemaCache implements EntityEvent.Handler {
         clear();
     }
 
-    private void clear() {
+    void clear() {
         LOGGER.debug("Clearing XML schema cache");
         schemaSets.clear();
 
@@ -132,22 +129,11 @@ public class XmlSchemaCache implements EntityEvent.Handler {
             }
         }
 
-        clearIfOld();
-
         return schemaSet;
     }
 
     private void addToMap(final Map<String, List<XmlSchemaDoc>> map, final String name, final XmlSchemaDoc xmlSchema) {
         map.computeIfAbsent(name, k -> new ArrayList<>()).add(xmlSchema);
-    }
-
-    private void clearIfOld() {
-        // If the cache is more than 10 minutes old then clear it for the next
-        // request to rebuild it.
-        if (lastClearTime < System.currentTimeMillis() - TEN_MINUTES) {
-            clear();
-            lastClearTime = System.currentTimeMillis();
-        }
     }
 
     public void addClearHandler(final ClearHandler clearHandler) {

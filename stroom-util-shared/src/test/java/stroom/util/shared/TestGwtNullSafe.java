@@ -9,6 +9,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -967,6 +968,25 @@ class TestGwtNullSafe {
                                 Level2::getNullLevel3,
                                 Level3::getLevel),
                         -1L)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRun() {
+        final MutableBoolean didRun = new MutableBoolean(false);
+        final Runnable nonNullRunnable = didRun::setTrue;
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Runnable.class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(runnable -> {
+                    didRun.setFalse();
+                    GwtNullSafe.run(runnable);
+                    return didRun.getValue();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(nonNullRunnable, true)
+                .addCase(null, false)
                 .build();
     }
 

@@ -60,7 +60,7 @@ public class CurveTabBar extends AbstractTabBar implements HasShowTabMenuHandler
 
     @Override
     protected int getTabGap() {
-        return 5;
+        return 0;
     }
 
     @Override

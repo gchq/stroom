@@ -63,8 +63,6 @@
 
 .markdown hr {
   border-top: 1px solid var(--text-color);
-  /* Bit of a gap at either end to make it look more like a section seprator */
-  max-width: 98%;
 }
 
 .markdown table th {
@@ -154,10 +152,10 @@ hide the standard control and replace it with something more fancy that we can c
 .markdown h1,
 .markdown h2,
 .markdown h3 {
-  /* Sensible max line length for text */
+  /* Sensible max line length for normal text (Note fenced blocks are not wrapped) */
   max-width: 60em;
   white-space: normal;
-  line-height: 1.4em;
+  line-height: 1.5em;
 }
 
 .markdown blockquote {
@@ -169,3 +167,23 @@ hide the standard control and replace it with something more fancy that we can c
   padding-top: 0.2em;
 }
 
+/* Fenced blocks */
+.markdown pre[class*=language-] {
+  /* The standard prism padding for fenced blocks is 1em so a bit big */
+  padding: 0.3em 0.5em;
+}
+
+/* force the font family/size for inline and fenced blocks,
+   else we get a bit of a mix of prism/bootstrap/stroom css */
+.markdown code,
+.markdown pre code[class*=language-],
+.markdown pre code[class*=language-] span {
+  font-size: var(--font-size-12);
+  font-family: var(--monospace-font-family);
+  line-height: 1em;
+}
+
+.markdown p code {
+  font-size: var(--font-size-13);
+  line-height: 1em;
+}
