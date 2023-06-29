@@ -52,7 +52,7 @@ public class TabLayoutConfig extends LayoutConfig {
      */
     @XmlElement(name = "preferredSize")
     @JsonProperty("preferredSize")
-    private Size preferredSize;
+    private final Size preferredSize;
     @XmlElementWrapper(name = "tabs")
     @XmlElements({@XmlElement(name = "tab", type = TabConfig.class)})
     @JsonProperty("tabs")
@@ -62,19 +62,7 @@ public class TabLayoutConfig extends LayoutConfig {
     private Integer selected;
 
     public TabLayoutConfig() {
-        id = "TabLayoutConfig_" + RandomId.createId(10);
-        preferredSize = new Size();
-    }
-
-    public TabLayoutConfig(final TabConfig... tabs) {
-        id = "TabLayoutConfig_" + RandomId.createId(10);
-        preferredSize = new Size();
-
-        if (tabs != null) {
-            for (final TabConfig tab : tabs) {
-                add(tab);
-            }
-        }
+        this(new Size(), null, null);
     }
 
     @JsonCreator
@@ -82,13 +70,13 @@ public class TabLayoutConfig extends LayoutConfig {
                            @JsonProperty("tabs") final List<TabConfig> tabs,
                            @JsonProperty("selected") final Integer selected) {
         id = "TabLayoutConfig_" + RandomId.createId(10);
-        this.preferredSize = preferredSize;
+        if (preferredSize == null) {
+            this.preferredSize = new Size();
+        } else {
+            this.preferredSize = preferredSize;
+        }
         this.tabs = tabs;
         this.selected = selected;
-
-        if (this.preferredSize == null) {
-            this.preferredSize = new Size();
-        }
     }
 
     @Override
@@ -178,6 +166,11 @@ public class TabLayoutConfig extends LayoutConfig {
 
     public void setSelected(final Integer selected) {
         this.selected = selected;
+    }
+
+    @Override
+    public String toString() {
+        return id;
     }
 
     public static Builder builder() {

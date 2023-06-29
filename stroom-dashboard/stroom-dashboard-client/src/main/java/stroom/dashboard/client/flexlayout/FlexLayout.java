@@ -578,11 +578,15 @@ public class FlexLayout extends Composite {
                 // a new split layout.
                 parent.remove(targetTabLayoutConfig);
 
-                SplitLayoutConfig newSplit;
+                final stroom.dashboard.shared.Size preferredSize =
+                        targetTabLayoutConfig.getPreferredSize().copy().build();
+                final SplitLayoutConfig newSplit = new SplitLayoutConfig(preferredSize, dim, null);
                 if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
-                    newSplit = new SplitLayoutConfig(dim, targetTabLayoutConfig, newTabLayout);
+                    newSplit.add(targetTabLayoutConfig);
+                    newSplit.add(newTabLayout);
                 } else {
-                    newSplit = new SplitLayoutConfig(dim, newTabLayout, targetTabLayoutConfig);
+                    newSplit.add(newTabLayout);
+                    newSplit.add(targetTabLayoutConfig);
                 }
                 parent.add(insertPos, newSplit);
             }
@@ -619,14 +623,16 @@ public class FlexLayout extends Composite {
                 if (targetSplitLayoutConfig.getDimension() != dim) {
                     splitLayoutConfig = targetSplitLayoutConfig.getParent();
                     if (splitLayoutConfig == null) {
-                        splitLayoutConfig = new SplitLayoutConfig(dim);
+                        splitLayoutConfig =
+                                new SplitLayoutConfig(dim);
                         splitLayoutConfig.add(targetSplitLayoutConfig);
                         layoutConfig = splitLayoutConfig;
                     } else if (splitLayoutConfig.getDimension() != dim) {
                         final int insertPos = splitLayoutConfig.indexOf(targetSplitLayoutConfig);
                         splitLayoutConfig.remove(targetSplitLayoutConfig);
 
-                        final SplitLayoutConfig newSplitLayoutConfig = new SplitLayoutConfig(dim);
+                        final SplitLayoutConfig newSplitLayoutConfig =
+                                new SplitLayoutConfig(dim);
                         newSplitLayoutConfig.add(targetSplitLayoutConfig);
                         splitLayoutConfig.add(insertPos, newSplitLayoutConfig);
 
@@ -1436,6 +1442,14 @@ public class FlexLayout extends Composite {
         double containerSize = 0;
 
         if (layoutConfig != null) {
+//            Console.log(layoutConfig.toString());
+//            Console.log("Preferred size: " +
+//                    layoutConfig.getPreferredSize().get(dim) +
+//                    " dimension " +
+//                    (dim == 0
+//                            ? "X"
+//                            : "Y"));
+
             // Get the minimum size in this dimension that this splitter can be
             // to fit its contents.
             final double minSize = getMinRequired(layoutConfig, dim);

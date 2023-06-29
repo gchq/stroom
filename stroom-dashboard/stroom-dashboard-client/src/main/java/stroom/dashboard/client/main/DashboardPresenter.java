@@ -621,18 +621,11 @@ public class DashboardPresenter
         final ComponentType type = originalComponent.getType();
 
         // Get sets of unique component ids and names.
-        final Set<String> currentIdSet = new HashSet<>();
-        final Set<String> currentNameSet = new HashSet<>();
-        for (final Component component : components.getComponents()) {
-            currentIdSet.add(component.getId());
-            currentNameSet.add(component.getLabel());
-        }
-
-        final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
-        final String newName = UniqueUtil.makeUniqueName(originalComponent.getLabel(), currentNameSet);
+        final ComponentId componentId = new ComponentNameSet(components)
+                .createUnique(type, originalComponent.getLabel());
         final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
-                .id(id)
-                .name(newName)
+                .id(componentId.id)
+                .name(componentId.name)
                 .build();
 
         // Try and add the component.
@@ -658,11 +651,8 @@ public class DashboardPresenter
             preferredSize = tabLayoutConfig.getPreferredSize().copy().build();
         }
 
-        // Get a set of unique component ids.
-        final Set<String> currentIdSet = new HashSet<>();
-        for (final Component component : components.getComponents()) {
-            currentIdSet.add(component.getId());
-        }
+        // Get sets of unique component ids and names.
+        final ComponentNameSet componentNameSet = new ComponentNameSet(components);
 
         final Map<String, String> idMapping = new HashMap<>();
         final List<ComponentConfig> newComponents = new ArrayList<>();
@@ -674,18 +664,17 @@ public class DashboardPresenter
                 originalComponent.write();
                 final ComponentType type = originalComponent.getType();
 
-                final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
-                currentIdSet.add(id);
-
+                final ComponentId componentId = componentNameSet.createUnique(type, originalComponent.getLabel());
                 final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
-                        .id(id)
+                        .id(componentId.id)
+                        .name(componentId.name)
                         .build();
 
-                idMapping.put(tabConfig.getId(), id);
+                idMapping.put(tabConfig.getId(), componentId.id);
                 newComponents.add(componentConfig);
 
-                final TabConfig newTabConfig = tabConfig.copy().id(id).build();
-                newTabConfigMap.put(id, newTabConfig);
+                final TabConfig newTabConfig = tabConfig.copy().id(componentId.id).build();
+                newTabConfigMap.put(componentId.id, newTabConfig);
             }
         }
 
@@ -881,26 +870,20 @@ public class DashboardPresenter
         if (type != null) {
 
             // Get sets of unique component ids and names.
-            final Set<String> currentIdSet = new HashSet<>();
-            final Set<String> currentNameSet = new HashSet<>();
-            for (final Component component : components.getComponents()) {
-                currentIdSet.add(component.getId());
-                currentNameSet.add(component.getLabel());
-            }
-
-            final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
-            final String name = UniqueUtil.makeUniqueName(type.getName(), currentNameSet);
+            // Get sets of unique component ids and names.
+            final ComponentId componentId = new ComponentNameSet(components)
+                    .createUnique(type, type.getName());
             final ComponentConfig componentConfig = ComponentConfig
                     .builder()
                     .type(type.getId())
-                    .id(id)
-                    .name(name)
+                    .id(componentId.id)
+                    .name(componentId.name)
                     .build();
 
             final Component componentPresenter = addComponent(componentConfig.getType(), componentConfig);
             if (componentPresenter != null) {
                 componentPresenter.link();
-                final TabConfig tabConfig = new TabConfig(id, true);
+                final TabConfig tabConfig = new TabConfig(componentId.id, true);
                 componentPresenter.setTabConfig(tabConfig);
 
                 layoutPresenter.setNewComponent(componentPresenter);
@@ -927,7 +910,12 @@ public class DashboardPresenter
         } else if (layoutConfig instanceof TabLayoutConfig) {
             // If the layout is a single item then replace it with a
             // split layout.
-            layoutConfig = new SplitLayoutConfig(Dimension.Y, layoutConfig, tabLayoutConfig);
+            final SplitLayoutConfig splitLayoutConfig =
+                    new SplitLayoutConfig(layoutConfig.getPreferredSize().copy().build(), Dimension.Y);
+            splitLayoutConfig.add(layoutConfig);
+            splitLayoutConfig.add(tabLayoutConfig);
+            layoutConfig = splitLayoutConfig;
+
         } else {
             // If the layout is already a split then add a new component
             // to the split.
@@ -1075,6 +1063,38 @@ public class DashboardPresenter
     @Override
     public void onError(final List<String> errors) {
         queryToolbarPresenter.onError(getCombinedErrors());
+    }
+
+    private static class ComponentNameSet {
+
+        private final Set<String> currentIdSet = new HashSet<>();
+        private final Set<String> currentNameSet = new HashSet<>();
+
+        public ComponentNameSet(final Components components) {
+            for (final Component component : components.getComponents()) {
+                currentIdSet.add(component.getId());
+                currentNameSet.add(component.getLabel());
+            }
+        }
+
+        public ComponentId createUnique(final ComponentType type, final String currentName) {
+            final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+            final String name = UniqueUtil.makeUniqueName(currentName, currentNameSet);
+            currentIdSet.add(id);
+            currentNameSet.add(name);
+            return new ComponentId(id, name);
+        }
+    }
+
+    private static class ComponentId {
+
+        private final String id;
+        private final String name;
+
+        private ComponentId(final String id, final String name) {
+            this.id = id;
+            this.name = name;
+        }
     }
 }
 
