@@ -882,28 +882,36 @@ public class DashboardPresenter
 
             // Get sets of unique component ids and names.
             final Set<String> currentIdSet = new HashSet<>();
+            final Set<String> currentNameSet = new HashSet<>();
             for (final Component component : components.getComponents()) {
                 currentIdSet.add(component.getId());
+                currentNameSet.add(component.getLabel());
             }
 
             final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+            final String name = UniqueUtil.makeUniqueName(type.getName(), currentNameSet);
             final ComponentConfig componentConfig = ComponentConfig
                     .builder()
                     .type(type.getId())
                     .id(id)
-                    .name(type.getName())
+                    .name(name)
                     .build();
 
             final Component componentPresenter = addComponent(componentConfig.getType(), componentConfig);
             if (componentPresenter != null) {
                 componentPresenter.link();
+                final TabConfig tabConfig = new TabConfig(id, true);
+                componentPresenter.setTabConfig(tabConfig);
+
+                layoutPresenter.setNewComponent(componentPresenter);
             }
 
-            final TabConfig tabConfig = new TabConfig(id, true);
-            final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
 
-            // Add the new tab layout.
-            addTabPanel(tabLayoutConfig);
+//            final TabLayoutConfig tabLayoutConfig = new TabLay
+//            outConfig(tabConfig);
+//
+//            // Add the new tab layout.
+//            addTabPanel(tabLayoutConfig);
         }
     }
 
