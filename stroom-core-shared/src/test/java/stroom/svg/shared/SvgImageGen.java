@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  */
 public class SvgImageGen {
 
-    private static final String WIDGET_DIR = "stroom-core-client-widget";
+    private static final String CORE_SHARED_DIR = "stroom-core-shared";
     private static final String APP_DIR = "stroom-app";
 
     // Hex colour => css colour variable
@@ -46,7 +46,7 @@ public class SvgImageGen {
             "#010101", "currentColor");
 
     private static final String ENUM_HEADER = """
-            package stroom.svg.client;
+            package stroom.svg.shared;
             
             import javax.annotation.processing.Generated;
             
@@ -85,7 +85,7 @@ public class SvgImageGen {
             }
             """;
     private static final Path ENUM_REL_FILE_PATH = Path.of(
-            "src", "main", "java", "stroom", "svg", "client", "SvgImage.java");
+            "src", "main", "java", "stroom", "svg", "shared", "SvgImage.java");
 
     private static final Path UI_RESOURCE_REL_PATH = Path.of(
             "src", "main", "resources", "ui");
@@ -95,12 +95,12 @@ public class SvgImageGen {
 
     public static void main(final String[] args) {
 
-        Path widgetPath = Paths.get(".").resolve(WIDGET_DIR).toAbsolutePath();
-        while (!widgetPath.getFileName().toString().equals(WIDGET_DIR)) {
-            widgetPath = widgetPath.getParent();
+        Path coreSharedPath = Paths.get(".").resolve(CORE_SHARED_DIR).toAbsolutePath();
+        while (!coreSharedPath.getFileName().toString().equals(CORE_SHARED_DIR)) {
+            coreSharedPath = coreSharedPath.getParent();
         }
 
-        final Path appPath = widgetPath.getParent().resolve(APP_DIR);
+        final Path appPath = coreSharedPath.getParent().resolve(APP_DIR);
         final Path sourceBasePath = appPath.resolve(UI_RESOURCE_REL_PATH)
                 .resolve("raw-images");
         final Path destBasePath = appPath.resolve(UI_RESOURCE_REL_PATH)
@@ -204,9 +204,10 @@ public class SvgImageGen {
         sb.replace(sb.length() - 3, sb.length() - 1, ";\n\n");
         sb.append(ENUM_FOOTER);
 
-        final Path outPath = widgetPath.resolve(ENUM_REL_FILE_PATH);
+        final Path outPath = coreSharedPath.resolve(ENUM_REL_FILE_PATH);
         try (final OutputStream outputStream = Files.newOutputStream(outPath)) {
             outputStream.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+            System.out.println("Written enum file " + outPath.toAbsolutePath());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
