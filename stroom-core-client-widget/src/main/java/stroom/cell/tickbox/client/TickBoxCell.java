@@ -17,7 +17,7 @@
 package stroom.cell.tickbox.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -242,7 +242,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             switch (value) {
                 case TICK:
                     className = TICK;
-                    svg = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_TICK.getSvg());
+                    svg = SafeHtmlUtils.fromTrustedString(SvgImage.TICK.getSvg());
                     break;
                 case HALF_TICK:
                     className = HALF_TICK;

@@ -16,7 +16,7 @@
 
 package stroom.cell.expander.client;
 
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -109,12 +109,12 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
             SafeHtml expanderIcon;
             if (value.isLeaf()) {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_DOT.getSvg());
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.DOT.getSvg());
             } else if (value.isExpanded()) {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_DOWN.getSvg());
                 className = " active";
             } else {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_RIGHT.getSvg());
                 className = " active";
             }
 

@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
@@ -103,7 +104,6 @@ public class ResizableDialog extends AbstractPopupPanel {
         this.popupSize = popupSize;
 
         setStyleName("resizableDialog-popup");
-
         setWidget(binder.createAndBindUi(this));
 
         windowWidth = Window.getClientWidth();
@@ -116,6 +116,8 @@ public class ResizableDialog extends AbstractPopupPanel {
 
         setResizeEnabled((popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable()) ||
                 (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
+
+        resizeHandle.getElement().setInnerHTML(SvgImage.RESIZE_HANDLE.getSvg());
     }
 
     @Override

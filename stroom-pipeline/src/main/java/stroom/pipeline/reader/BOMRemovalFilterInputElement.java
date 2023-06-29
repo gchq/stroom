@@ -17,13 +17,14 @@
 package stroom.pipeline.reader;
 
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.svg.shared.SvgImage;
 
 import java.io.InputStream;
 
-@ConfigurableElement(type = "BOMRemovalFilterInput",
+@ConfigurableElement(
+        type = "BOMRemovalFilterInput",
         description = """
                 Removes the Byte Order Mark (if present) from the stream.""",
         category = Category.READER,
@@ -32,7 +33,7 @@ import java.io.InputStream;
                 PipelineElementType.ROLE_READER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STREAM)
+        icon = SvgImage.PIPELINE_STREAM)
 public class BOMRemovalFilterInputElement extends AbstractInputElement {
 
     private BOMRemovalInputStream bomRemovalInputStream;

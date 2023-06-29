@@ -77,8 +77,8 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -745,8 +745,8 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(new IconMenuItem.Builder()
                     .priority(priority)
                     .icon(isFavourite
-                            ? SvgPresets.FAVOURITES_OUTLINE
-                            : SvgPresets.FAVOURITES)
+                            ? SvgImage.FAVOURITES_OUTLINE
+                            : SvgImage.FAVOURITES)
                     .text(isFavourite
                             ? "Remove from Favourites"
                             : "Add to Favourites")
@@ -781,7 +781,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         final Item newItem = new IconParentMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.NEW_ITEM)
+                .icon(SvgImage.ADD)
                 .text("New")
                 .children(children)
                 .enabled(enabled)
@@ -848,7 +848,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(Icon.create(documentType.getIconClassName()))
+                .icon(documentType.getIcon())
                 .text(documentType.getDisplayType())
                 .command(() ->
                         ShowCreateDocumentDialogEvent.fire(
@@ -928,7 +928,8 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createCloseMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.CLOSE)
+                .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close")
                 .action(Action.ITEM_CLOSE)
                 .enabled(isTabItemSelected(selectedTab))
@@ -939,7 +940,8 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createCloseOthersMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.CLOSE)
+                .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close Others")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
@@ -949,7 +951,8 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createCloseSavedMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.CLOSE)
+                .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close Saved")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
@@ -959,7 +962,8 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createCloseAllMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.CLOSE)
+                .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
                 .text("Close All")
                 .action(Action.ITEM_CLOSE_ALL)
                 .enabled(isTabItemSelected(selectedTab))
@@ -970,7 +974,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createSaveMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.SAVE)
+                .icon(SvgImage.SAVE)
                 .text("Save")
                 .action(Action.ITEM_SAVE)
                 .enabled(isDirty(selectedTab))
@@ -986,7 +990,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createSaveAllMenuItem(final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.SAVE)
+                .icon(SvgImage.SAVE)
                 .text("Save All")
                 .action(Action.ITEM_SAVE_ALL)
                 .enabled(hasSaveRegistry.isDirty())
@@ -1014,7 +1018,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.INFO)
+                .icon(SvgImage.INFO)
                 .text("Info")
                 .enabled(enabled)
                 .command(command)
@@ -1032,7 +1036,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.SHARE)
+                .icon(SvgImage.SHARE)
                 .text("Copy Link to Clipboard")
                 .command(() -> ClipboardUtil.copy(docUrl))
                 .build();
@@ -1046,7 +1050,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.COPY)
+                .icon(SvgImage.COPY)
                 .text("Copy")
                 .enabled(enabled)
                 .command(command)
@@ -1061,7 +1065,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.MOVE)
+                .icon(SvgImage.MOVE)
                 .text("Move")
                 .enabled(enabled)
                 .command(command)
@@ -1076,7 +1080,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.EDIT)
+                .icon(SvgImage.EDIT)
                 .text("Rename")
                 .enabled(enabled)
                 .command(command)
@@ -1091,7 +1095,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Delete")
                 .enabled(enabled)
                 .command(command)
@@ -1109,7 +1113,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.LOCKED_AMBER)
+                .icon(SvgImage.LOCKED)
                 .text("Permissions")
                 .enabled(enabled)
                 .command(command)
@@ -1119,7 +1123,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createImportMenuItem(final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.UPLOAD)
+                .icon(SvgImage.UPLOAD)
                 .text("Import")
                 .command(() -> ImportConfigEvent.fire(DocumentPluginEventManager.this))
                 .build();
@@ -1129,7 +1133,7 @@ public class DocumentPluginEventManager extends Plugin {
                                           final List<ExplorerNode> readableItems) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.DOWNLOAD)
+                .icon(SvgImage.DOWNLOAD)
                 .text("Export")
                 .command(() -> ExportConfigEvent.fire(DocumentPluginEventManager.this, readableItems))
                 .build();
@@ -1138,7 +1142,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createShowDependenciesMenuItem(final ExplorerNode explorerNode, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
-                .icon(SvgPresets.DEPENDENCIES)
+                .icon(SvgImage.DEPENDENCIES)
                 .text("Dependencies")
                 .command(() -> ShowDocRefDependenciesEvent.fire(DocumentPluginEventManager.this,
                         explorerNode.getDocRef()))

@@ -47,8 +47,8 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.svg.client.Preset;
-import stroom.svg.client.SvgImages;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.DataRange;
@@ -167,7 +167,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         saveButton = addButtonLeft(SvgPresets.SAVE);
         // Create but don't add yet
         toggleLogPaneButton = new InlineSvgToggleButton();
-        toggleLogPaneButton.setSvg(SvgImages.EXCLAMATION);
+        toggleLogPaneButton.setSvg(SvgImage.EXCLAMATION);
         toggleLogPaneButton.setOn();
         toggleLogPaneButton.setTitle("Toggle Log Pane");
         leftButtons.addButton(toggleLogPaneButton);
@@ -254,21 +254,21 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         menuItems.add(new IconMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.EDIT)
+                .icon(SvgImage.EDIT)
                 .text("Manage step filters")
                 .enabled(true)
                 .command(this::showChangeFiltersDialog)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Clear step filters on this element")
                 .enabled(isClearFiltersOnSelectedEnabled)
                 .command(this::clearFiltersOnSelected)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Clear step filters on all elements")
                 .enabled(isClearAllFiltersEnabled)
                 .command(this::clearAllFilters)

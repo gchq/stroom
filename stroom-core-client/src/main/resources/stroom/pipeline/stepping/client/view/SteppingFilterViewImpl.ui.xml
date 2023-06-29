@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="steppingFilterViewImpl  max">
+    <g:MySplitLayoutPanel styleName="steppingFilterViewImpl max">
         <g:west size="245">
             <g:MaxScrollPanel styleName="max stroom-control">
                 <g:SimplePanel ui:field="elementChooser"/>

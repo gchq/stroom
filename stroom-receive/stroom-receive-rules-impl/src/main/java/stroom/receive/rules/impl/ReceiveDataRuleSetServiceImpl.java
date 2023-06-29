@@ -92,7 +92,11 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.CONFIGURATION, ReceiveDataRules.DOCUMENT_TYPE, "Rule Set");
+        return new DocumentType(
+                DocumentTypeGroup.CONFIGURATION,
+                ReceiveDataRules.DOCUMENT_TYPE,
+                "Rule Set",
+                ReceiveDataRules.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

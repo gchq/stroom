@@ -36,8 +36,7 @@ import stroom.main.client.event.UrlQueryParameterChangeEvent.UrlQueryParameterCh
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -252,8 +251,8 @@ public class ExplorerTreePresenter
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.FOLDER_TREE;
+    public SvgImage getIcon() {
+        return SvgImage.FOLDER_TREE;
     }
 
     @Override

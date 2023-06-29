@@ -202,7 +202,7 @@ public class AnalyticsExecutor {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         info(() -> "Deleting old stores");
         analyticDataStores.deleteOldStores();
-        info(() -> LogUtil.message("Deleted old stores in ", logExecutionTime));
+        info(() -> LogUtil.message("Deleted old stores in {}", logExecutionTime));
     }
 
     private void processAnalytic(final AnalyticRuleDoc analyticRuleDoc) {

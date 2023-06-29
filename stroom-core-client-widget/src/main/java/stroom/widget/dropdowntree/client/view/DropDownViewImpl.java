@@ -16,7 +16,7 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -58,7 +58,7 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
         }, KeyDownEvent.getType());
         widget.getElement().setTabIndex(0);
 
-        button.getElement().setInnerHTML(SvgImages.MONO_ELLIPSES.getSvg());
+        button.getElement().setInnerHTML(SvgImage.ELLIPSES_HORIZONTAL.getSvg());
     }
 
     @Override

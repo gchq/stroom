@@ -18,6 +18,7 @@ package stroom.kafka.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,6 +45,7 @@ import java.util.Objects;
 public class KafkaConfigDoc extends Doc implements HasData {
 
     public static final String DOCUMENT_TYPE = "KafkaConfig";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_KAFKA_CONFIG;
 
     @JsonProperty
     private String description = "";

@@ -24,8 +24,9 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.svg.client.Icon;
+import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -153,8 +154,13 @@ public class ManageFSVolumesPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.VOLUMES;
+    public SvgImage getIcon() {
+        return SvgImage.VOLUMES;
+    }
+
+    @Override
+    public IconColour getIconColour() {
+        return IconColour.GREY;
     }
 
     @Override

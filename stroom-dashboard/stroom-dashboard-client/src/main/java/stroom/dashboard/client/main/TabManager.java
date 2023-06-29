@@ -22,7 +22,7 @@ import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -173,7 +173,7 @@ public class TabManager {
                                   final Consumer<String> nameChangeConsumer) {
         return new IconMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.EDIT)
+                .icon(SvgImage.EDIT)
                 .text("Rename")
                 .command(() -> showRename(componentConfig, nameChangeConsumer))
                 .build();
@@ -182,7 +182,7 @@ public class TabManager {
     private Item createSettingsMenu(final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.SETTINGS_BLUE)
+                .icon(SvgImage.SETTINGS)
                 .text("Settings")
                 .command(() -> showSettings(tabConfig))
                 .build();
@@ -191,7 +191,7 @@ public class TabManager {
     private Item createDuplicateMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(6)
-                .icon(SvgPresets.COPY)
+                .icon(SvgImage.COPY)
                 .text("Duplicate")
                 .command(() -> duplicateTab(tabLayoutConfig, tabConfig))
                 .build();
@@ -200,7 +200,7 @@ public class TabManager {
     private Item createDuplicateTabPanelMenu(final TabLayoutConfig tabLayoutConfig) {
         return new IconMenuItem.Builder()
                 .priority(7)
-                .icon(SvgPresets.COPY)
+                .icon(SvgImage.COPY)
                 .text("Duplicate All")
                 .command(() -> duplicateTabPanel(tabLayoutConfig))
                 .build();
@@ -209,7 +209,7 @@ public class TabManager {
     private Item createHideMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(8)
-                .icon(SvgPresets.HIDE)
+                .icon(SvgImage.HIDE)
                 .text("Hide")
                 .command(() -> hideTab(tabLayoutConfig, tabConfig))
                 .build();
@@ -225,7 +225,7 @@ public class TabManager {
                 if (component != null) {
                     final Item item2 = new IconMenuItem.Builder()
                             .priority(i++)
-                            .icon(SvgPresets.SHOW)
+                            .icon(SvgImage.SHOW)
                             .text(component.getComponentConfig().getName())
                             .command(() -> showTab(tc))
                             .build();
@@ -240,7 +240,7 @@ public class TabManager {
 
         return new IconParentMenuItem.Builder()
                 .priority(9)
-                .icon(SvgPresets.SHOW)
+                .icon(SvgImage.SHOW)
                 .text("Show")
                 .children(menuItems)
                 .build();
@@ -249,7 +249,7 @@ public class TabManager {
     private Item createRemoveMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(10)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Remove")
                 .command(() -> removeTab(tabLayoutConfig, tabConfig))
                 .build();

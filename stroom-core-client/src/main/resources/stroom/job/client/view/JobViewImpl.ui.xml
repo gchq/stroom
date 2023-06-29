@@ -1,13 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:SimplePanel styleName="max">
-        <g:MySplitLayoutPanel styleName="max">
+        <g:ThinSplitLayoutPanel styleName="max">
             <g:north size="400">
                 <g:SimplePanel ui:field="jobList" styleName="max dashboard-panel"/>
             </g:north>
             <g:center>
                 <g:SimplePanel ui:field="jobNodeList" styleName="max dashboard-panel"/>
             </g:center>
-        </g:MySplitLayoutPanel>
+        </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
 </ui:UiBinder>

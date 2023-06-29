@@ -105,8 +105,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.CONFIGURATION, DataRetentionRules.DOCUMENT_TYPE,
-                "Data Retention Rules");
+        return new DocumentType(
+                DocumentTypeGroup.CONFIGURATION,
+                DataRetentionRules.DOCUMENT_TYPE,
+                "Data Retention Rules",
+                DataRetentionRules.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

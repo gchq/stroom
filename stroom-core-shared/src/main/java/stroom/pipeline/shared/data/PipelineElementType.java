@@ -18,6 +18,7 @@ package stroom.pipeline.shared.data;
 
 import stroom.docref.HasDisplayValue;
 import stroom.docref.HasType;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -76,7 +77,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     @JsonProperty
     private final String[] roles;
     @JsonProperty
-    private final String icon;
+    private final SvgImage icon;
 
     @JsonIgnore
     private Set<String> roleSet;
@@ -85,7 +86,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     public PipelineElementType(@JsonProperty("type") final String type,
                                @JsonProperty("category") final Category category,
                                @JsonProperty("roles") final String[] roles,
-                               @JsonProperty("icon") final String icon) {
+                               @JsonProperty("icon") final SvgImage icon) {
         this.type = type;
         this.category = category;
         this.roles = roles;
@@ -105,7 +106,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return roles;
     }
 
-    public String getIcon() {
+    public SvgImage getIcon() {
         return icon;
     }
 
@@ -147,13 +148,16 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return type.compareTo(o.type);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Category implements HasDisplayValue {
         INTERNAL("Internal", -1),
         READER("Reader", 0),
         PARSER("Parser", 1),
         FILTER("Filter", 2),
-        WRITER("Writer",
-                3),
+        WRITER("Writer", 3),
         DESTINATION("Destination", 4);
 
         private final String displayValue;

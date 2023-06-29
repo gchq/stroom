@@ -21,7 +21,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
@@ -50,7 +50,7 @@ public class ImportConfigPlugin extends Plugin {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()
                             .priority(201)
-                            .icon(SvgPresets.UPLOAD)
+                            .icon(SvgImage.UPLOAD)
                             .text("Import")
                             .command(() -> ImportConfigEvent.fire(ImportConfigPlugin.this))
                             .build());

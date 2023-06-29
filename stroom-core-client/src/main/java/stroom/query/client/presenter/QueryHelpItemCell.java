@@ -1,6 +1,6 @@
 package stroom.query.client.presenter;
 
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -40,9 +40,9 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
             if (item.hasChildren()) {
                 final boolean open = openItems.contains(item);
                 if (open) {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
+                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_DOWN.getSvg());
                 } else {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
+                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_RIGHT.getSvg());
                 }
             } else {
                 expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");

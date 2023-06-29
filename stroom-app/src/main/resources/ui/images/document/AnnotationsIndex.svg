@@ -8,11 +8,11 @@
     <line x1="135" y1="150" x2="200" y2="150" style="stroke:grey;stroke-width:5" />
 
     <!-- Main Body -->
-    <polygon points="50,20 150,120 150,150 120,150 20,50" style="fill:yellow;stroke:black;stroke-width:5" />
+    <polygon points="50,20 150,120 150,150 120,150 20,50" style="fill:yellow;stroke:currentColor;stroke-width:5" />
 
     <!-- Eraser-->
-    <polygon points="50,20 65,35 35,65 20,50" style="fill:pink;stroke:black;stroke-width:5" />
+    <polygon points="50,20 65,35 35,65 20,50" style="fill:pink;stroke:currentColor;stroke-width:5" />
 
     <!-- Tip -->
-    <polygon points="150,135 150,150, 135,150" style="fill:black;stroke:black;stroke-width:5" />
+    <polygon points="150,135 150,150, 135,150" style="fill:#000;stroke:currentColor;stroke-width:5" />
 </svg>

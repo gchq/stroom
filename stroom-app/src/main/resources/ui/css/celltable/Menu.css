@@ -52,6 +52,12 @@
 
 .menuItem-icon {
 	display: flex;
+	color: var(--icon-colour__grey);
+}
+
+.menuItem-icon svg {
+	width: var(--icon-width);
+	height: var(--icon-height);
 }
 
 .menuItem-disabled {
@@ -81,4 +87,9 @@
 
 .menuItem-expandArrow {
 	display: flex;
+}
+
+.menuItem-expandArrow svg {
+	width: 10px;
+	height: 10px;
 }

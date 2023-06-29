@@ -19,8 +19,8 @@
   margin: 1px;
   padding: 0px;
   border-radius: 2px;
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
   vertical-align: top;
 }
 

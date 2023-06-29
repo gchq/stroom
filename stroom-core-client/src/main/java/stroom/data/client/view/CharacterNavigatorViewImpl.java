@@ -23,7 +23,6 @@ import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.widget.button.client.SvgButton;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.NumberFormat;

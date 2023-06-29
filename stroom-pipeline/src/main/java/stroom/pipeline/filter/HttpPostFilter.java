@@ -20,9 +20,9 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.HTTPAppender;
+import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
@@ -40,9 +40,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Deprecated // This is pretty limited in what it can do. HttpAppender is much better and more configurable
-@ConfigurableElement(type = "HttpPostFilter", category = PipelineElementType.Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
-        PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "HttpPostFilter",
+        category = PipelineElementType.Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE},
+        icon = SvgImage.PIPELINE_STREAM)
 public class HttpPostFilter extends AbstractSamplingFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpPostFilter.class);

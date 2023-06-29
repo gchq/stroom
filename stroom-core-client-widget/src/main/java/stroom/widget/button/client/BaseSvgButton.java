@@ -66,13 +66,12 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         setEnabled(preset.isEnabled());
     }
 
-    void toggleSvgPreset(final Preset oldPreset, final Preset newPreset) {
-        face.removeClassName(oldPreset.getClassName());
+    void toggleSvgPreset(final Preset newPreset) {
         setSvgPreset(newPreset);
     }
 
     void setSvgPreset(final Preset svgPreset) {
-        face.addClassName(svgPreset.getClassName());
+        face.setInnerHTML(svgPreset.getSvgImage().getSvg());
 
         // Add the button tool-tip
         if (svgPreset.hasTitle()) {

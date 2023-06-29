@@ -27,8 +27,8 @@ import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.SandboxOption;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.svg.client.SvgImages;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
@@ -92,7 +92,7 @@ public class MarkdownEditPresenter
         view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
-        editModeButton.setSvg(SvgImages.MONO_EDIT);
+        editModeButton.setSvg(SvgImage.EDIT);
         editModeButton.setTitle("Edit");
         editModeButton.setEnabled(true);
 

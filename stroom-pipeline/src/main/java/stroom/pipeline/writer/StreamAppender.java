@@ -32,7 +32,6 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
@@ -44,6 +43,7 @@ import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;
@@ -54,9 +54,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import javax.inject.Inject;
 
-@ConfigurableElement(type = "StreamAppender", category = Category.DESTINATION, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "StreamAppender",
+        category = Category.DESTINATION,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = SvgImage.PIPELINE_STREAM)
 public class StreamAppender extends AbstractAppender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);

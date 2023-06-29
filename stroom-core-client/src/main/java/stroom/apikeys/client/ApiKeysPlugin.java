@@ -6,8 +6,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -35,7 +34,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
             clientPropertyCache.get()
                     .onSuccess(result -> {
                         final IconMenuItem apiKeysMenuItem;
-                        final Preset icon = SvgPresets.KEY;
+                        final SvgImage icon = SvgImage.KEY;
                         apiKeysMenuItem = new IconMenuItem.Builder()
                                 .priority(5)
                                 .icon(icon)

@@ -38,7 +38,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.InlineSvgButton;
@@ -107,25 +107,25 @@ public class NavigationPresenter
         this.currentActivity = currentActivity;
 
         add = new InlineSvgButton();
-        add.setSvg(SvgImages.MONO_ADD);
+        add.setSvg(SvgImage.ADD);
         add.getElement().addClassName("navigation-header-button add");
         add.setTitle("New");
         add.setEnabled(false);
 
         delete = new InlineSvgButton();
-        delete.setSvg(SvgImages.MONO_DELETE);
+        delete.setSvg(SvgImage.DELETE);
         delete.getElement().addClassName("navigation-header-button delete");
         delete.setTitle("Delete");
         delete.setEnabled(false);
 
         filter = new InlineSvgButton();
-        filter.setSvg(SvgImages.MONO_FILTER);
+        filter.setSvg(SvgImage.FILTER);
         filter.getElement().addClassName("navigation-header-button filter");
         filter.setTitle("Filter");
         filter.setEnabled(true);
 
         find = new InlineSvgButton();
-        find.setSvg(SvgImages.MONO_SEARCH);
+        find.setSvg(SvgImage.FIND);
         find.getElement().addClassName("navigation-header-button find");
         find.setTitle("Find Content");
         find.setEnabled(true);

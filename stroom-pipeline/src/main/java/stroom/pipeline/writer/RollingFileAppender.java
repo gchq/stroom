@@ -22,9 +22,9 @@ import stroom.pipeline.destination.RollingFileDestination;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.svg.shared.SvgImage;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
@@ -58,7 +58,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.FILES)
+        icon = SvgImage.PIPELINE_FILES)
 public class RollingFileAppender extends AbstractRollingAppender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingFileAppender.class);

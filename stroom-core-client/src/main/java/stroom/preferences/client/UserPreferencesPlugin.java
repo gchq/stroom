@@ -19,7 +19,7 @@ package stroom.preferences.client;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
@@ -55,7 +55,7 @@ public class UserPreferencesPlugin extends Plugin {
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()
                         .priority(1)
-                        .icon(SvgPresets.SETTINGS_BLUE)
+                        .icon(SvgImage.SETTINGS)
                         .text("Preferences")
                         .command(() -> preferencesPresenterProvider.get().show())
                         .build());

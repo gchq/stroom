@@ -111,7 +111,8 @@ public class PipelineStoreImpl implements PipelineStore {
         return new DocumentType(
                 DocumentTypeGroup.DATA_PROCESSING,
                 PipelineDoc.DOCUMENT_TYPE,
-                PipelineDoc.DOCUMENT_TYPE);
+                PipelineDoc.DOCUMENT_TYPE,
+                PipelineDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

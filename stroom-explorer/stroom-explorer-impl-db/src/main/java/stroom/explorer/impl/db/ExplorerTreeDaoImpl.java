@@ -8,6 +8,7 @@ import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.svg.shared.SvgImage;
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -142,21 +143,21 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     @Override
     public ExplorerTreeNode getRoot(final ExplorerTreeNode node) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> Optional.ofNullable(context
-                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
-                .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
-                .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
-                .orderBy(p.DEPTH.desc())
-                .fetchAny()).map(r ->
-                new ExplorerTreeNode(r.get(n.ID),
-                        r.get(n.TYPE),
-                        r.get(n.UUID),
-                        r.get(n.NAME),
-                        r.get(n.TAGS)))
+                        .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
+                        .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
+                        .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                        .orderBy(p.DEPTH.desc())
+                        .fetchAny()).map(r ->
+                        new ExplorerTreeNode(r.get(n.ID),
+                                r.get(n.TYPE),
+                                r.get(n.UUID),
+                                r.get(n.NAME),
+                                r.get(n.TAGS)))
                 .orElse(node));
     }
 
     @Override
-    public TreeModel createModel(final Function<String, String> iconUrlProvider,
+    public TreeModel createModel(final Function<String, SvgImage> iconProvider,
                                  final long id,
                                  final long creationTime) {
         final TreeModel treeModel = new TreeModel(id, creationTime);
@@ -186,7 +187,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .uuid(r.getUuid())
                                     .name(r.getName())
                                     .tags(r.getTags())
-                                    .iconClassName(iconUrlProvider.apply(r.getType()))
+                                    .icon(iconProvider.apply(r.getType()))
                                     .build()));
 
             // Add the roots.
