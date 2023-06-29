@@ -18,6 +18,7 @@ package stroom.statistics.impl.hbase.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -50,6 +51,7 @@ import java.util.Set;
 public class StroomStatsStoreDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "StroomStatsStore";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_STROOM_STATS_STORE;
 
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 

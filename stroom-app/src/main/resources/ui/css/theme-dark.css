@@ -24,7 +24,7 @@
     --heading-color: var(--blue-300);
     /* <code> blocks, e.g. in markdown */
     --code-color: var(--pink-300);
-    --border-color: #14161b;
+    --border-color: #353944;
 
     --header__border-color: transparent;
     --row__background-color--even: #15161b;
@@ -63,7 +63,7 @@
     --icon-button__color--on: var(--app__background);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
-    --icon-button__color: var(--blue-500);
+    --icon-button__color: var(--blue-300);
     --navigation-icon-button__background-color--on: #262a32;
     --navigation-icon-button__border-color--on: #444;
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
@@ -129,7 +129,7 @@
     --page__text-color: #cacbcb;
 
     /* Splitter */
-    --splitter__background-color: #353944; /*#27252c;*/
+    --splitter__background-color: var(--border-color);
     --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */

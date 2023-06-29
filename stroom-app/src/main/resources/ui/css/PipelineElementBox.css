@@ -104,8 +104,8 @@
 }
 
 .pipelineElementBox-image {
-	width: 16px;
-	height: 16px;
+	width: var(--icon-width);
+	height: var(--icon-height);
 	cursor: pointer;
 }
 

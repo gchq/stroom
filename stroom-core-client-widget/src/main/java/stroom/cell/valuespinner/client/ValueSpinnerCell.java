@@ -18,7 +18,7 @@ package stroom.cell.valuespinner.client;
 
 import stroom.cell.valuespinner.shared.Editable;
 import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.ElementUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
@@ -40,11 +40,11 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     private static volatile Template template;
     private static final SafeHtml arrowUpHtml =
             SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowUp\">" +
-                    SvgImages.MONO_ARROW_UP.getSvg() +
+                    SvgImage.ARROW_UP.getSvg() +
                     "</div>");
     private static final SafeHtml arrowDownHtml =
             SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">" +
-                    SvgImages.MONO_ARROW_DOWN.getSvg() +
+                    SvgImage.ARROW_DOWN.getSvg() +
                     "</div>");
     private static volatile Spinner spinner;
     private long min = 0;

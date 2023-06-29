@@ -17,6 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.DocumentType;
+import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -123,7 +124,7 @@ class ExplorerTreeModel {
         TreeModel newModel;
         performingRebuild.incrementAndGet();
         try {
-            newModel = explorerTreeDao.createModel(this::getIconClassName, id, creationTime);
+            newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
             setCurrentModel(newModel);
         } finally {
             performingRebuild.decrementAndGet();
@@ -131,13 +132,13 @@ class ExplorerTreeModel {
         return newModel;
     }
 
-    private String getIconClassName(final String type) {
+    private SvgImage getIcon(final String type) {
         final DocumentType documentType = explorerActionHandlers.getType(type);
         if (documentType == null) {
             return null;
         }
 
-        return documentType.getIconClassName();
+        return documentType.getIcon();
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {

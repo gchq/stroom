@@ -19,6 +19,7 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -47,6 +48,7 @@ import java.util.Objects;
 public class PipelineDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Pipeline";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_PIPELINE;
 
     @JsonProperty
     private String description;

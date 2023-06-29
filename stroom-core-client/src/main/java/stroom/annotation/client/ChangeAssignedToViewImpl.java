@@ -17,7 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -46,7 +46,7 @@ public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedT
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        assignedToIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
+        assignedToIcon.setSvg(SvgImage.ARROW_DOWN);
     }
 
     @Override

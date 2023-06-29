@@ -16,7 +16,8 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.svg.client.Icon;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -25,7 +26,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.SafeUri;
 
 public class MenuItemCell extends AbstractCell<Item> {
 
@@ -116,25 +116,31 @@ public class MenuItemCell extends AbstractCell<Item> {
                            final SafeHtmlBuilder sb) {
             if (value.getText() != null) {
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
-                final Icon enabledIcon = value.getEnabledIcon();
-                final Icon disabledIcon = value.getDisabledIcon();
+                final SvgImage enabledIcon = value.getEnabledIcon();
+                final SvgImage disabledIcon = value.getDisabledIcon();
+
+                IconColour iconColour = IconColour.BLUE;
+                if (value.getIconColour() != null) {
+                    iconColour = value.getIconColour();
+                }
+                final String iconClassName = "menuItem-icon" + " " + iconColour.getClassName();
 
                 if (value.isEnabled()) {
                     if (enabledIcon != null) {
-                        inner.append(TEMPLATE.inner("menuItem-icon",
-                                SafeHtmlUtils.fromTrustedString(enabledIcon.asWidget().getElement().getString())));
+                        inner.append(TEMPLATE.inner(iconClassName,
+                                SafeHtmlUtils.fromSafeConstant(enabledIcon.getSvg())));
                     } else {
-                        inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
+                        inner.append(TEMPLATE.inner(iconClassName, SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 } else {
                     if (disabledIcon != null) {
-                        inner.append(TEMPLATE.inner("menuItem-icon",
-                                SafeHtmlUtils.fromTrustedString(disabledIcon.asWidget().getElement().getString())));
+                        inner.append(TEMPLATE.inner(iconClassName,
+                                SafeHtmlUtils.fromSafeConstant(disabledIcon.getSvg())));
                     } else if (enabledIcon != null) {
-                        inner.append(TEMPLATE.inner("menuItem-icon",
-                                SafeHtmlUtils.fromTrustedString(enabledIcon.asWidget().getElement().getString())));
+                        inner.append(TEMPLATE.inner(iconClassName,
+                                SafeHtmlUtils.fromSafeConstant(enabledIcon.getSvg())));
                     } else {
-                        inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
+                        inner.append(TEMPLATE.inner(iconClassName, SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 }
 
@@ -153,9 +159,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 // If this is a parent menu item, render an arrow to the right-hand side
                 if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem) &&
                         value.isEnabled()) {
-                    final Icon expandIcon = Icon.create("svgIcon-arrow-solid-right");
                     inner.append(TEMPLATE.expandArrow("menuItem-expandArrow",
-                            SafeHtmlUtils.fromTrustedString(expandIcon.asWidget().getElement().getString())));
+                            SafeHtmlUtils.fromSafeConstant(SvgImage.ARROW_RIGHT.getSvg())));
                 }
 
                 String className = "menuItem-outer";
@@ -177,8 +182,8 @@ public class MenuItemCell extends AbstractCell<Item> {
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
 
-            @Template("<img class=\"{0}\" src=\"{1}\">")
-            SafeHtml icon(String className, SafeUri url);
+//            @Template("<img class=\"{0}\" src=\"{1}\">")
+//            SafeHtml icon(String className, SafeUri url);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);

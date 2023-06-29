@@ -1,20 +1,20 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:MySplitLayoutPanel styleName="DashboardViewImpl max">
+    <g:ThinSplitLayoutPanel styleName="DashboardViewImpl max">
         <g:north size="400">
-            <g:MySplitLayoutPanel styleName="max">
+            <g:ThinSplitLayoutPanel styleName="max">
                 <g:east size="700">
                     <g:SimplePanel ui:field="queryHelpContainer" styleName="max"/>
                 </g:east>
                 <g:center>
                     <g:SimplePanel ui:field="queryEditorContainer" styleName="max"/>
                 </g:center>
-            </g:MySplitLayoutPanel>
+            </g:ThinSplitLayoutPanel>
         </g:north>
         <g:center>
             <g:SimplePanel ui:field="tableContainer"
                            styleName="max"/>
         </g:center>
-    </g:MySplitLayoutPanel>
+    </g:ThinSplitLayoutPanel>
 </ui:UiBinder>

@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,6 +43,7 @@ import java.util.Objects;
 public class DashboardDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Dashboard";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_DASHBOARD;
 
     @JsonProperty
     private String description;

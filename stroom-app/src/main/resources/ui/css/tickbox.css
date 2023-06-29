@@ -16,8 +16,8 @@
 
 .tickBox {
     display: flex;
-    width: 16px !important;
-    height: 16px !important;
+    width: var(--icon-width) !important;
+    height: var(--icon-height) !important;
     background-color: var(--control__background-color);
     border: 1px solid var(--control__border-color);
     border-radius: .25rem;

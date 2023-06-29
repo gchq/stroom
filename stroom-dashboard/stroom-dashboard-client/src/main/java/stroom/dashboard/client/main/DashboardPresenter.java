@@ -48,7 +48,6 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.explorer.shared.DocumentType;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.ResultStoreInfo;
@@ -57,8 +56,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgButton;
@@ -160,16 +158,16 @@ public class DashboardPresenter
         view.setContent(flexLayout);
 
         editModeButton = new InlineSvgToggleButton();
-        editModeButton.setSvg(SvgImages.MONO_EDIT);
+        editModeButton.setSvg(SvgImage.EDIT);
         editModeButton.setTitle("Enter Design Mode");
 
         addWidgetButton = new InlineSvgButton();
-        addWidgetButton.setSvg(SvgImages.ADD);
+        addWidgetButton.setSvg(SvgImage.ADD);
         addWidgetButton.setTitle("Add Component");
         addWidgetButton.setVisible(false);
 
         setConstraintsButton = new InlineSvgButton();
-        setConstraintsButton.setSvg(SvgImages.MONO_RESIZE);
+        setConstraintsButton.setSvg(SvgImage.RESIZE);
         setConstraintsButton.setTitle("Set Constraints");
         setConstraintsButton.setVisible(false);
 
@@ -835,8 +833,8 @@ public class DashboardPresenter
     }
 
     @Override
-    public Icon getIcon() {
-        return Icon.create(DocumentType.DOC_IMAGE_CLASS_NAME + getType());
+    public SvgImage getIcon() {
+        return SvgImage.DOCUMENT_DASHBOARD;
     }
 
     @Override

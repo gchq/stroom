@@ -7,20 +7,20 @@
             <g:Label ui:field="backLink" styleName="gwt-Label link" text="Back"/>
             <g:Label ui:field="forwardLink" styleName="gwt-Label link" text="Forward"/>
         </g:FlowPanel>
-        <g:MySplitLayoutPanel styleName="dock-max">
+        <g:ThinSplitLayoutPanel styleName="dock-max">
             <g:east size="200">
-                <g:MySplitLayoutPanel vSplits="0.5" styleName="max">
+                <g:ThinSplitLayoutPanel vSplits="0.5" styleName="max">
                     <g:north size="300">
                         <g:HTML ui:field="documentation" styleName="dashboard-panel xsdBrowser-documentation"/>
                     </g:north>
                     <g:center>
                         <view:XSDConstraintDisplay ui:field="constraints" styleName="dashboard-panel xsdBrowser-constraints" />
                     </g:center>
-                </g:MySplitLayoutPanel>
+                </g:ThinSplitLayoutPanel>
             </g:east>
             <g:center>
                 <view:XSDDisplay ui:field="diagram" styleName="dashboard-panel xsdBrowser-content" />
             </g:center>
-        </g:MySplitLayoutPanel>
+        </g:ThinSplitLayoutPanel>
     </g:FlowPanel>
 </ui:UiBinder> 

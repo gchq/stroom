@@ -19,7 +19,7 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -67,13 +67,13 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
         final Element logoImage = DOM.createDiv();
         logoImage.setClassName("navigation-logo-image");
-        logoImage.setInnerHTML(SvgImages.MONO_LOGO.getSvg());
+        logoImage.setInnerHTML(SvgImage.LOGO.getSvg());
 
         logo.getElement().appendChild(logoImage);
 
         final Element mainMenuButtonImage = DOM.createDiv();
         mainMenuButtonImage.setClassName("main-menu");
-        mainMenuButtonImage.setInnerHTML(SvgImages.MONO_MENU.getSvg());
+        mainMenuButtonImage.setInnerHTML(SvgImage.MENU.getSvg());
         mainMenuButton.getElement().appendChild(mainMenuButtonImage);
 
         uiConfigCache.get()

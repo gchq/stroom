@@ -23,13 +23,11 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -104,8 +102,8 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements Docume
     }
 
     @Override
-    public Icon getIcon() {
-        return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getLabel(), null, true);
+    public SvgImage getIcon() {
+        return SvgImage.DOCUMENT_SYSTEM;
     }
 
     @Override

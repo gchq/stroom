@@ -19,6 +19,7 @@ package stroom.analytics.shared;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.QueryKey;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,6 +36,7 @@ import java.util.Objects;
 public class AnalyticRuleDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "AnalyticRule";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_ANALYTIC_RULE;
 
     @JsonProperty
     private final String description;

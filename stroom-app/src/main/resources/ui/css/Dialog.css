@@ -29,7 +29,6 @@
 	height: 100%;
 	border: thin solid var(--dialog__border-color);
 	border-radius: 6px;
-	background-image: var(--dialog-background-image);
 	background-color: var(--dialog__background-color);
 	box-shadow: var(--dialog__shadow);
 	overflow: hidden;

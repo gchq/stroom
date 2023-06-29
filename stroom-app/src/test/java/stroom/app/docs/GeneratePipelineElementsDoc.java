@@ -123,7 +123,8 @@ public class GeneratePipelineElementsDoc {
     }
 
     /**
-     * The output goes into layouts/shortcodes/pipe-elm.html in stroom-docs
+     * The output needs to be manually copied into
+     * layouts/shortcodes/pipe-elm.html in stroom-docs
      */
     @Disabled // Manual only
     @Test
@@ -183,7 +184,7 @@ public class GeneratePipelineElementsDoc {
                     // Add the &nbsp; at the end so the markdown processor treats the line as a <p>
                     final String iconText = elementInfo.iconFilename != null
                             ? LogUtil.message("""
-                                    {{< pipe-elm "{}" >}}&nbsp;""", elementInfo.type)
+                            {{< pipe-elm "{}" >}}&nbsp;""", elementInfo.type)
                             : "";
 
                     final String rolesText = buildRolesText(elementInfo.roles);
@@ -264,7 +265,7 @@ public class GeneratePipelineElementsDoc {
             final ConfigurableElement elementAnno = clazz.getAnnotation(ConfigurableElement.class);
 
             final String description = getStringValue(elementAnno.description());
-            final String iconFileName = getStringValue(elementAnno.icon());
+            final String iconFileName = getStringValue(elementAnno.icon().getRelativePathStr());
             final String type = getStringValue(elementAnno.type());
             final Category category = elementAnno.category();
             final Set<String> roles = new HashSet<>(Arrays.asList(elementAnno.roles()));
@@ -306,6 +307,10 @@ public class GeneratePipelineElementsDoc {
         name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
         return name;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ElementInfo {
 

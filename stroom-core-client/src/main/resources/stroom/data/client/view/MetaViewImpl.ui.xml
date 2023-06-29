@@ -2,12 +2,12 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:SimplePanel styleName="max">
-        <g:MySplitLayoutPanel styleName="max">
+        <g:ThinSplitLayoutPanel styleName="max">
             <g:north size="200">
                 <g:SimplePanel ui:field="streamList" styleName="max"/>
             </g:north>
             <g:center>
-                <g:MySplitLayoutPanel styleName="max">
+                <g:ThinSplitLayoutPanel styleName="max">
                     <g:north size="150">
                         <g:SimplePanel ui:field="streamRelationList" styleName="max">
                         </g:SimplePanel>
@@ -15,8 +15,8 @@
                     <g:center>
                         <g:SimplePanel ui:field="data" styleName="max"/>
                     </g:center>
-                </g:MySplitLayoutPanel>
+                </g:ThinSplitLayoutPanel>
             </g:center>
-        </g:MySplitLayoutPanel>
+        </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
 </ui:UiBinder>

@@ -953,7 +953,34 @@ export interface DocumentPermissions {
 export interface DocumentType {
   displayType?: string;
   group?: "STRUCTURE" | "DATA_PROCESSING" | "TRANSFORMATION" | "SEARCH" | "INDEXING" | "CONFIGURATION" | "SYSTEM";
-  iconClassName?: string;
+  icon?:
+    | "ANALYTIC_RULE"
+    | "ANALYTIC_OUTPUT_STORE"
+    | "ANNOTATIONS_INDEX"
+    | "DASHBOARD"
+    | "DICTIONARY"
+    | "ELASTIC_CLUSTER"
+    | "ELASTIC_INDEX"
+    | "FAVOURITES"
+    | "FEED"
+    | "FOLDER"
+    | "INDEX"
+    | "KAFKA_CONFIG"
+    | "PIPELINE"
+    | "QUERY"
+    | "RECEIVE_DATA_RULE_SET"
+    | "SCRIPT"
+    | "SEARCHABLE"
+    | "SELECT_ALL_OR_NONE"
+    | "SOLR_INDEX"
+    | "STATISTIC_STORE"
+    | "STROOM_STATS_STORE"
+    | "SYSTEM"
+    | "TEXT_CONVERTER"
+    | "VIEW"
+    | "VISUALISATION"
+    | "XML_SCHEMA"
+    | "XSLT";
   type?: string;
 }
 
@@ -1124,7 +1151,34 @@ export interface Expander {
 
 export interface ExplorerDocContentMatch {
   docContentMatch?: DocContentMatch;
-  iconClassName?: string;
+  icon?:
+    | "ANALYTIC_RULE"
+    | "ANALYTIC_OUTPUT_STORE"
+    | "ANNOTATIONS_INDEX"
+    | "DASHBOARD"
+    | "DICTIONARY"
+    | "ELASTIC_CLUSTER"
+    | "ELASTIC_INDEX"
+    | "FAVOURITES"
+    | "FEED"
+    | "FOLDER"
+    | "INDEX"
+    | "KAFKA_CONFIG"
+    | "PIPELINE"
+    | "QUERY"
+    | "RECEIVE_DATA_RULE_SET"
+    | "SCRIPT"
+    | "SEARCHABLE"
+    | "SELECT_ALL_OR_NONE"
+    | "SOLR_INDEX"
+    | "STATISTIC_STORE"
+    | "STROOM_STATS_STORE"
+    | "SYSTEM"
+    | "TEXT_CONVERTER"
+    | "VIEW"
+    | "VISUALISATION"
+    | "XML_SCHEMA"
+    | "XSLT";
   isFavourite?: boolean;
   path?: string;
 }
@@ -1134,7 +1188,34 @@ export interface ExplorerNode {
 
   /** @format int32 */
   depth?: number;
-  iconClassName?: string;
+  icon?:
+    | "ANALYTIC_RULE"
+    | "ANALYTIC_OUTPUT_STORE"
+    | "ANNOTATIONS_INDEX"
+    | "DASHBOARD"
+    | "DICTIONARY"
+    | "ELASTIC_CLUSTER"
+    | "ELASTIC_INDEX"
+    | "FAVOURITES"
+    | "FEED"
+    | "FOLDER"
+    | "INDEX"
+    | "KAFKA_CONFIG"
+    | "PIPELINE"
+    | "QUERY"
+    | "RECEIVE_DATA_RULE_SET"
+    | "SCRIPT"
+    | "SEARCHABLE"
+    | "SELECT_ALL_OR_NONE"
+    | "SOLR_INDEX"
+    | "STATISTIC_STORE"
+    | "STROOM_STATS_STORE"
+    | "SYSTEM"
+    | "TEXT_CONVERTER"
+    | "VIEW"
+    | "VISUALISATION"
+    | "XML_SCHEMA"
+    | "XSLT";
   isFavourite?: boolean;
   name?: string;
   nodeState?: "OPEN" | "CLOSED" | "LEAF";
@@ -2291,7 +2372,29 @@ export interface PipelineElement {
 
 export interface PipelineElementType {
   category?: "INTERNAL" | "READER" | "PARSER" | "FILTER" | "WRITER" | "DESTINATION";
-  icon?: string;
+  icon?:
+    | "FILE"
+    | "FILES"
+    | "HADOOP"
+    | "ELASTIC_INDEX"
+    | "ID"
+    | "INDEX"
+    | "JSON"
+    | "KAFKA"
+    | "RECORD_COUNT"
+    | "RECORD_OUTPUT"
+    | "REFERENCE_DATA"
+    | "SEARCH_OUTPUT"
+    | "XML_SEARCH"
+    | "SOLR"
+    | "SPLIT"
+    | "STATISTICS"
+    | "STREAM"
+    | "STROOM_STATS"
+    | "TEXT"
+    | "XML"
+    | "XSD"
+    | "XSLT";
   roles?: string[];
   type?: string;
 }

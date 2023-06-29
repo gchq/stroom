@@ -18,7 +18,7 @@ package stroom.explorer.client.view;
 
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgToggleButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -51,11 +51,11 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
     public FindViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        toggleMatchCase.setSvg(SvgImages.MONO_CASE_SENSITIVE);
+        toggleMatchCase.setSvg(SvgImage.CASE_SENSITIVE);
         toggleMatchCase.setTitle("Match case");
         toggleMatchCase.setEnabled(true);
 
-        toggleRegex.setSvg(SvgImages.MONO_REGEX);
+        toggleRegex.setSvg(SvgImage.REGEX);
         toggleRegex.setTitle("Regex");
         toggleRegex.setEnabled(true);
     }

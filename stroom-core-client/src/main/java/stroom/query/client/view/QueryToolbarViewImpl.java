@@ -20,7 +20,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.QueryToolbarUiHandlers;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 
@@ -51,7 +51,7 @@ public class QueryToolbarViewImpl
                                 final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         timeRangeSelector.setUtc(userPreferencesManager.isUtc());
-        warnings.setSvg(SvgImages.WARNING);
+        warnings.setSvg(SvgImage.WARNING);
     }
 
     @Override

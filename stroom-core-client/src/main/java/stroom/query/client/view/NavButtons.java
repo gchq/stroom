@@ -17,8 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.query.client.presenter.NavUiHandlers;
-import stroom.query.client.presenter.QueryUiHandlers;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.GWT;
@@ -26,7 +25,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -44,8 +42,8 @@ public class NavButtons extends Composite implements HasUiHandlers<NavUiHandlers
 
     public NavButtons() {
         initWidget(BINDER.createAndBindUi(this));
-        backward.setSvg(SvgImages.MONO_BACKWARD);
-        forward.setSvg(SvgImages.MONO_FORWARD);
+        backward.setSvg(SvgImage.BACKWARD);
+        forward.setSvg(SvgImage.FORWARD);
     }
 
     @Override

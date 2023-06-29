@@ -2,13 +2,13 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:SimplePanel addStyleNames="max">
-        <g:MySplitLayoutPanel vSplits="0.5" styleName="max">
+        <g:ThinSplitLayoutPanel vSplits="0.5" styleName="max">
             <g:north size="200">
                 <g:SimplePanel ui:field="processorList"
                                addStyleNames="max dashboard-panel"/>
             </g:north>
             <g:center>
-                <g:MySplitLayoutPanel vSplits="0.5" addStyleNames="max">
+                <g:ThinSplitLayoutPanel vSplits="0.5" addStyleNames="max">
                     <g:north size="200">
                         <g:MaxScrollPanel addStyleNames="max dashboard-panel">
                             <g:SimplePanel ui:field="info"/>
@@ -19,9 +19,9 @@
                             <g:SimplePanel ui:field="details"/>
                         </g:MaxScrollPanel>
                     </g:center>
-                </g:MySplitLayoutPanel>
+                </g:ThinSplitLayoutPanel>
             </g:center>
-        </g:MySplitLayoutPanel>
+        </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
 </ui:UiBinder>
  
