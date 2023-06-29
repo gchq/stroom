@@ -58,9 +58,12 @@ class ViewResourceImpl implements ViewResource {
     }
 
     @Override
-    public List<String> list() {
+    public List<DocRef> list() {
         return securityContextProvider.get().useAsReadResult(() ->
-                viewStoreProvider.get().list().stream().map(DocRef::getName).toList());
+                viewStoreProvider.get()
+                        .list()
+                        .stream()
+                        .toList());
     }
 
     private DocRef getDocRef(final String uuid) {

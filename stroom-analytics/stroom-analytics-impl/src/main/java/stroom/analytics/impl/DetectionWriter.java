@@ -1,0 +1,243 @@
+package stroom.analytics.impl;
+
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.filter.XMLFilter;
+import stroom.util.date.DateUtil;
+import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Locale;
+import javax.inject.Inject;
+
+public class DetectionWriter implements DetectionConsumer, ProcessLifecycleAware {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DetectionWriter.class);
+
+    private static final String XSI_SCHEMA_LOCATION = "xsi:schemaLocation";
+    private static final String SCHEMA_LOCATION = "schemaLocation";
+    private static final String XMLNS_XSI = "xmlns:xsi";
+    private static final String XML_TYPE_STRING = "string";
+    private static final String XMLNS = "xmlns";
+    private static final String XMLSCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance";
+    private static final String XSI = "xsi";
+    private static final String EMPTY_STRING = "";
+
+
+    //    private static final String XML_ATTRIBUTE_VERSION = "version";
+    private static final String NAMESPACE = "detection:1";
+    private static final String LOCATION = "file://detection-v1.1.xsd";
+//    private static final String VERSION = "2.0";
+
+
+    private static final Attributes EMPTY_ATTS = new AttributesImpl();
+    private static final AttributesImpl ROOT_ATTS = new AttributesImpl();
+
+    static {
+        ROOT_ATTS.addAttribute(EMPTY_STRING, XMLNS, XMLNS, XML_TYPE_STRING, NAMESPACE);
+        ROOT_ATTS.addAttribute(EMPTY_STRING, XSI, XMLNS_XSI, XML_TYPE_STRING, XMLSCHEMA_INSTANCE);
+        ROOT_ATTS.addAttribute(XMLSCHEMA_INSTANCE, SCHEMA_LOCATION, XSI_SCHEMA_LOCATION, XML_TYPE_STRING,
+                NAMESPACE + " " + LOCATION);
+//        ROOT_ATTS.addAttribute(EMPTY_STRING, XML_ATTRIBUTE_VERSION, XML_ATTRIBUTE_VERSION, XML_TYPE_STRING, VERSION);
+    }
+
+    private static final String DETECTIONS = "detections";
+    private static final String DETECTION = "detection";
+    private static final String DETECT_TIME = "detectTime";
+    private static final String DETECTOR_NAME = "detectorName";
+    private static final String DETECTOR_UUID = "detectorUuid";
+    private static final String DETECTOR_VERSION = "detectorVersion";
+    private static final String DETECTOR_ENVIRONMENT = "detectorEnvironment";
+    private static final String HEADLINE = "headline";
+    private static final String DETAILED_DESCRIPTION = "detailedDescription";
+    private static final String FULL_DESCRIPTION = "fullDescription";
+    private static final String DETECTION_UNIQUE_ID = "detectionUniqueId";
+    private static final String DETECTION_REVISION = "detectionRevision";
+    private static final String DEFUNCT = "defunct";
+    private static final String VALUE = "value";
+    private static final String NAME = "name";
+    private static final String LINKED_EVENTS = "linkedEvents";
+    private static final String LINKED_EVENT = "linkedEvent";
+    private static final String STROOM = "stroom";
+    private static final String STREAM_ID = "streamId";
+    private static final String EVENT_ID = "eventId";
+
+
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private XMLFilter handler;
+    private boolean written;
+
+    @Inject
+    public DetectionWriter(final ErrorReceiverProxy errorReceiverProxy) {
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
+
+    public void setHandler(final XMLFilter handler) {
+        this.handler = handler;
+    }
+
+    @Override
+    public synchronized void start() {
+    }
+
+    @Override
+    public synchronized void end() {
+        try {
+            if (written) {
+                writeEndElement(DETECTIONS);
+                handler.endDocument();
+                handler.endStream();
+                handler.endProcessing();
+            }
+        } catch (final SAXException e) {
+            log(Severity.ERROR, e.getMessage(), e);
+        }
+    }
+
+    private void log(final Severity severity, final String message, final Exception e) {
+        LOGGER.error(message, e);
+        errorReceiverProxy.log(severity, null,
+                getClass().getSimpleName(), message, e);
+    }
+
+    @Override
+    public synchronized void accept(final Detection detection) {
+        try {
+            if (!written) {
+                handler.startProcessing();
+                handler.startStream();
+                handler.startDocument();
+                handler.startPrefixMapping(EMPTY_STRING, NAMESPACE);
+                handler.startPrefixMapping(XSI, XMLSCHEMA_INSTANCE);
+                writeStartElement(DETECTIONS, ROOT_ATTS);
+                written = true;
+            }
+
+            writeStartElement(DETECTION);
+            writeOptionalDataElement(DETECT_TIME, detection.detectTime());
+            writeOptionalDataElement(DETECTOR_NAME, detection.detectorName());
+            writeOptionalDataElement(DETECTOR_UUID, detection.detectorUuid());
+            writeOptionalDataElement(DETECTOR_VERSION, detection.detectorVersion());
+            writeOptionalDataElement(DETECTOR_ENVIRONMENT, detection.detectorEnvironment());
+            writeOptionalDataElement(HEADLINE, detection.headline());
+            writeOptionalDataElement(DETAILED_DESCRIPTION, detection.detailedDescription());
+            writeOptionalDataElement(FULL_DESCRIPTION, detection.fullDescription());
+            writeOptionalDataElement(DETECTION_UNIQUE_ID, detection.detectionUniqueId());
+            writeOptionalDataElement(DETECTION_REVISION, detection.detectionRevision());
+            writeOptionalDataElement(DEFUNCT, detection.defunct());
+            writeValues(detection.values());
+            writeLinkedEvents(detection.linedEvents());
+            writeEndElement(DETECTION);
+
+        } catch (final SAXException e) {
+            log(Severity.ERROR, e.getMessage(), e);
+        }
+    }
+
+    private void writeValues(List<Value> values) throws SAXException {
+        if (values != null && values.size() > 0) {
+            for (final Value value : values) {
+                writeValue(value);
+            }
+        }
+    }
+
+    private void writeValue(final Value value) throws SAXException {
+        final AttributesImpl attrs = new AttributesImpl();
+        if (value.name() != null) {
+            attrs.addAttribute(NAMESPACE, NAME, NAME, XML_TYPE_STRING, value.name());
+        }
+        writeDataElement(VALUE, attrs, value.value());
+    }
+
+
+    private void writeLinkedEvents(final List<LinkedEvent> linkedEvents) throws SAXException {
+        if (linkedEvents != null && linkedEvents.size() > 0) {
+            writeStartElement(LINKED_EVENTS);
+            for (final LinkedEvent linkedEvent : linkedEvents) {
+                writeLinkedEvent(linkedEvent);
+            }
+            writeEndElement(LINKED_EVENTS);
+        }
+    }
+
+    private void writeLinkedEvent(final LinkedEvent linkedEvent) throws SAXException {
+        writeStartElement(LINKED_EVENT);
+        if (linkedEvent.stroom() != null) {
+            writeDataElement(STROOM, linkedEvent.stroom());
+        }
+        if (linkedEvent.streamId() != null) {
+            writeDataElement(STREAM_ID, linkedEvent.streamId().toString());
+        }
+        if (linkedEvent.eventId() != null) {
+            writeDataElement(EVENT_ID, linkedEvent.eventId().toString());
+        }
+        writeEndElement(LINKED_EVENT);
+    }
+
+    private void writeOptionalDataElement(final String elementName,
+                                          final Instant instant) throws SAXException {
+        if (instant != null) {
+            writeDataElement(elementName, EMPTY_ATTS, DateUtil.createNormalDateTimeString(instant));
+        }
+    }
+
+    private void writeOptionalDataElement(final String elementName,
+                                          final Integer integer) throws SAXException {
+        if (integer != null) {
+            writeDataElement(elementName, EMPTY_ATTS, integer.toString());
+        }
+    }
+
+    private void writeOptionalDataElement(final String elementName,
+                                          final Boolean bool) throws SAXException {
+        if (bool != null) {
+            writeDataElement(elementName, EMPTY_ATTS, bool.toString().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private void writeOptionalDataElement(final String elementName,
+                                          final String text) throws SAXException {
+        if (text != null && text.length() > 0) {
+            writeDataElement(elementName, EMPTY_ATTS, text);
+        }
+    }
+
+    private void writeDataElement(final String elementName,
+                                  final String text) throws SAXException {
+        writeDataElement(elementName, EMPTY_ATTS, text);
+    }
+
+    private void writeDataElement(final String elementName,
+                                  final Attributes attributes,
+                                  final String text) throws SAXException {
+        writeStartElement(elementName, attributes);
+        writeText(text);
+        writeEndElement(elementName);
+    }
+
+    private void writeStartElement(final String elementName) throws SAXException {
+        writeStartElement(elementName, EMPTY_ATTS);
+    }
+
+    private void writeStartElement(final String elementName, final Attributes attributes) throws SAXException {
+        handler.startElement(NAMESPACE, elementName, elementName, attributes);
+    }
+
+    private void writeEndElement(final String elementName) throws SAXException {
+        handler.endElement(NAMESPACE, elementName, elementName);
+    }
+
+    private void writeText(final String text) throws SAXException {
+        if (text != null) {
+            final char[] chars = text.toCharArray();
+            handler.characters(chars, 0, chars.length);
+        }
+    }
+}

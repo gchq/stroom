@@ -1019,18 +1019,19 @@
     padding-left: 5px;
 }
 
-.expressionViewImpl-resizePanel {
+.columnFunctionEditorViewImpl-resizePanel {
     display: block;
 }
 
-.expressionViewImpl-editorContainer {
+.columnFunctionEditorViewImpl-editorContainer {
     border: 1px solid var(--control__border-color);
     background-color: var(--control__background-color);
 }
 
-.expressionViewImpl-labelPanel {
+.columnFunctionEditorViewImpl-labelPanel {
     display: flex;
-    align-items: center;
+    /* align-items: center; */
+    justify-content: flex-end;
 }
 
 .characterNavigator {
@@ -1692,29 +1693,37 @@ button.main-menu svg {
     font-weight: 500;
 }
 
-.functionSignatureInfo {
+.queryHelpDetail {
     max-width: 600px;
 }
 
-.functionSignatureInfo-description {
+.queryHelpDetail-description {
     white-space: pre-wrap !important;
 }
 
-.functionSignatureTable {
+.queryHelpDetail-description td {
+    padding: 5px;
+}
+
+.queryHelpDetail-table {
     user-select: text;
 }
 
-.functionSignatureTable tr {
+.queryHelpDetail-table tr {
     height: 10px;
 }
 
-.functionSignatureTable th {
+.queryHelpDetail-table th {
     padding-right: var(--row__gap--horizontal);
+    padding-top: var(--row__gap--vertical);
+    padding-bottom: var(--row__gap--vertical);
     font-weight: bold;
 }
 
-.functionSignatureTable td {
+.queryHelpDetail-table td {
     padding-right: var(--row__gap--horizontal);
+    padding-top: var(--row__gap--vertical);
+    padding-bottom: var(--row__gap--vertical);
     white-space: normal;
 }
 
@@ -1838,29 +1847,36 @@ button.main-menu svg {
     visibility: hidden;
 }
 
-/*
+
+
+
 .queryHelpItemCell {
+/*
     padding: 5px;
     min-width: 200px;
+    */
+}
+
+.queryHelpItem-heading.queryHelpItem-topLevel {
+    color: var(--heading-color);
 }
 
 .queryHelpItem-heading {
-    font-size: var(--font-size-14);
+    font-size: var(--font-size-15);
     font-weight: 500;
 }
 
-.queryHelpItem-functionCategory {
-    font-size: var(--font-size-12);
+.queryHelpItem-heading.queryHelpItem-functionCategory {
+    font-size: var(--font-size-13);
     font-weight: 500;
 }
 
-.queryHelpItem-function {
-    text-decoration: italic;
+.queryHelpItem-functionHeading,
+.queryHelpItem-leaf {
+    font-style: italic;
+    font-size: var(--font-size-13);
+    font-weight: 400;
 }
-*/
-
-
-
 
  .queryHelpTree {
     width: 100%;
@@ -1881,6 +1897,7 @@ button.main-menu svg {
 }
 
 .queryHelpItemCell-expander {
+    color: var(--grey-600);
 	display: flex;
 }
 
@@ -1902,3 +1919,4 @@ button.main-menu svg {
 .queryHelp-details {
     padding: 5px;
 }
+

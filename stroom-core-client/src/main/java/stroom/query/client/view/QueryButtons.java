@@ -77,6 +77,10 @@ public class QueryButtons
         start.setEnabled(enabled);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, QueryButtons> {
 
     }

@@ -79,7 +79,7 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final TaskContext taskContext;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final Provider<DetectionsWriter> detectionsWriterProvider;
+    private final Provider<RecordsWriter> recordsWriterProvider;
     private final MultiValuesReceiverFactory multiValuesReceiverFactory;
 
     private Long currentStreamId = null;
@@ -90,7 +90,7 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     public AlertProcessorImpl(final TaskContext taskContext,
                               final Provider<ExtractionTaskHandler> handlerProvider,
-                              final Provider<DetectionsWriter> detectionsWriterProvider,
+                              final Provider<RecordsWriter> recordsWriterProvider,
                               final MultiValuesReceiverFactory multiValuesReceiverFactory,
                               final List<RuleConfig> rules,
                               final IndexStructure indexStructure,
@@ -117,7 +117,7 @@ public class AlertProcessorImpl implements AlertProcessor {
         alertQueryHits = new AlertQueryHits();
         this.taskContext = taskContext;
         this.handlerProvider = handlerProvider;
-        this.detectionsWriterProvider = detectionsWriterProvider;
+        this.recordsWriterProvider = recordsWriterProvider;
         this.multiValuesReceiverFactory = multiValuesReceiverFactory;
         this.dateTimeSettings = dateTimeSettings;
     }
@@ -211,7 +211,7 @@ public class AlertProcessorImpl implements AlertProcessor {
                 LOGGER.trace("--Iterating ruleConfig {}", ruleConfig.getName());
                 long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
                 if (eventIds != null && eventIds.length > 0) {
-                    final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
+                    final RecordsWriter detectionsWriter = recordsWriterProvider.get();
                     multiValuesReceiverFactory.create(ruleConfig, detectionsWriter);
 
                     final ErrorConsumer errorConsumer = new ErrorConsumerImpl();

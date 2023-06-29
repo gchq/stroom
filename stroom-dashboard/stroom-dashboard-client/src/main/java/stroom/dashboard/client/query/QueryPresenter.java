@@ -71,8 +71,8 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Preset;
-import stroom.svg.shared.SvgImage;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
@@ -89,6 +89,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -489,8 +490,10 @@ public class QueryPresenter
         // Only allow searching if we have a data source and have loaded fields from it successfully.
         getView().setEnabled(dataSourceRef != null && fields.size() > 0);
 
-        init();
         setButtonsEnabled();
+
+        // Defer init until all data source load handlers have had a chance to update the loaded data source.
+        Scheduler.get().scheduleDeferred(this::init);
     }
 
     private void addOperator() {

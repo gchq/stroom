@@ -4,7 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client">
 
     <g:ThinSplitLayoutPanel styleName="QueryHelpViewImpl max">
-        <g:west size="200">
+        <g:west size="270">
             <g:SimplePanel styleName="QueryHelpViewImpl max dashboard-panel">
                 <g:MaxScrollPanel styleName="max queryHelpTree">
                     <g:SimplePanel ui:field="elementChooser"/>
@@ -23,4 +23,4 @@
             </g:FlowPanel>
         </g:center>
     </g:ThinSplitLayoutPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

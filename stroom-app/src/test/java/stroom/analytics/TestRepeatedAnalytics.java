@@ -157,7 +157,7 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         Meta newestMeta = analyticsDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
-            assertThat(result.split("<record>").length).isEqualTo(2);
+            assertThat(result.split("<detection>").length).isEqualTo(2);
             assertThat(result).contains("user5");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -177,7 +177,7 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         newestMeta = analyticsDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
-            assertThat(result.split("<record>").length).isEqualTo(2);
+            assertThat(result.split("<detection>").length).isEqualTo(2);
             assertThat(result).contains("user5");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

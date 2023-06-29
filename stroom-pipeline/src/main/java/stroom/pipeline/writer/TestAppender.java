@@ -28,7 +28,7 @@ import javax.inject.Inject;
         type = "TestAppender",
         roles = {
                 PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_DESTINATION},
+                PipelineElementType.ROLE_DESTINATION},
         icon = SvgImage.PIPELINE_STREAM)
 public class TestAppender extends AbstractAppender {
 
