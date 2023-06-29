@@ -25,8 +25,8 @@ import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
-import stroom.svg.shared.SvgImage;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;

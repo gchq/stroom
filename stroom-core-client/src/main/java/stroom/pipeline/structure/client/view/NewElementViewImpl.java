@@ -18,7 +18,6 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

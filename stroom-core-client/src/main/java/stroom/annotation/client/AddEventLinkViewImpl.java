@@ -18,7 +18,6 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

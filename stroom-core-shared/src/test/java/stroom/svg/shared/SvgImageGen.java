@@ -47,9 +47,9 @@ public class SvgImageGen {
 
     private static final String ENUM_HEADER = """
             package stroom.svg.shared;
-            
+
             import javax.annotation.processing.Generated;
-            
+
             @Generated("@@CLASS_NAME@@")
             @SuppressWarnings({"ConcatenationWithEmptyString", "TextBlockMigration", "unused"})
             public enum SvgImage {
@@ -63,7 +63,7 @@ public class SvgImageGen {
     private static final String ENUM_FOOTER = """
                 private final String relativePathStr;
                 private final String svg;
-                
+
                 SvgImage(final String relativePathStr, final String svg) {
                     this.relativePathStr = relativePathStr;
                     this.svg = svg;
@@ -75,7 +75,7 @@ public class SvgImageGen {
                 public String getSvg() {
                     return svg;
                 }
-                
+
                 /**
                  * @return The path of the SVG file relative to stroom-app/src/main/resources/ui/images/
                  */
