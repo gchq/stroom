@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.2-beta.36-open-id-1] - 2023-06-29
+
 * Issue **#3536** : Analytic notifications are now written using the detection schema.
 
 * Issue **#3534** : Improve query help picker: add more detail text, improve styling, fix keyboard navigation, fix missing overloaded functions. Change the help picker to show markdown detail text. Remove single quotes from function snippet arguments as the Ace editor has a nice way to handle quotes. Fix broken help links for functions. Change the dashboard column expression editor to use the new query help menu.
@@ -5539,7 +5542,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.33-open-id-1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.36-open-id-1...HEAD
+[v7.2-beta.36-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.33-open-id-1...v7.2-beta.36-open-id-1
 [v7.2-beta.33-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.27-open-id-1...v7.2-beta.33-open-id-1
 [v7.2-beta.27-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.18-open-id-1...v7.2-beta.27-open-id-1
 [v7.2-beta.18-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-7...v7.2-beta.18-open-id-1
