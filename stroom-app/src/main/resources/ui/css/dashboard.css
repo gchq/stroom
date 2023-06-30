@@ -283,7 +283,7 @@
     flex-grow: 0;
     flex-shrink: 0;
     gap: 5px;
-    padding: 5px 5px 0 5px;
+    padding: 5px 0 0 5px;
     cursor: default;
     z-index: 5;
     min-height: 31px;
