@@ -218,6 +218,13 @@ public class MenuItemCell extends AbstractCell<Item> {
                     }
                 }
 
+                // If this is a parent menu item, render an arrow to the right-hand side
+                if ((value instanceof SimpleParentMenuItem) &&
+                        value.isEnabled()) {
+                    inner.append(TEMPLATE.expandArrow("menuItem-expandArrow",
+                            SafeHtmlUtils.fromSafeConstant(SvgImage.ARROW_RIGHT.getSvg())));
+                }
+
                 String className = "menuItem-outer";
                 className += value.isEnabled()
                         ? ""
@@ -236,6 +243,9 @@ public class MenuItemCell extends AbstractCell<Item> {
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml expandArrow(String className, SafeHtml icon);
         }
     }
 

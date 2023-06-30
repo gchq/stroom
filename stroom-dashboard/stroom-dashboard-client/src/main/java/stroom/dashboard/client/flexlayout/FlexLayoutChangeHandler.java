@@ -20,7 +20,10 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 
 public interface FlexLayoutChangeHandler {
-    void requestTabClose(final TabLayoutConfig tabLayoutConfig, TabConfig tabConfig);
+
+    void removeTab(TabLayoutConfig tabLayoutConfig, TabConfig tab);
+
+    void removeTabPanel(TabLayoutConfig tabLayoutConfig);
 
     void onDirty();
 }

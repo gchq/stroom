@@ -34,7 +34,6 @@
     cursor: pointer;
     gap: var(--row__gap--horizontal);
     border: 1px solid transparent;
-    border-radius: .25rem;
     min-width: 180px;
 
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
@@ -71,11 +70,14 @@
 }
 
 .menuItem-simpleText {
+/*
 	display: inline-block;
 	vertical-align: top;
 	padding-top: 1px;
 	margin-left: 5px;
-	margin-right: 5px;
+	margin-right: 5px;*/
+    white-space: nowrap;
+	flex-grow: 1;
 }
 
 .menuItem-shortcut {

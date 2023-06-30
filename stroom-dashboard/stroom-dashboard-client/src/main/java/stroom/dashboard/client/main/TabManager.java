@@ -134,8 +134,12 @@ public class TabManager {
         }
     }
 
-    private void removeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        dashboardPresenter.requestTabClose(tabLayoutConfig, tabConfig);
+    private void removeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {
+        dashboardPresenter.removeTab(tabLayoutConfig, tab);
+    }
+
+    private void removeTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        dashboardPresenter.removeTabPanel(tabLayoutConfig);
     }
 
     private List<Item> updateMenuItems(final TabLayoutConfig tabLayoutConfig,
@@ -163,8 +167,9 @@ public class TabManager {
             menuItems.add(showMenu);
         }
 
-        // Create remove menu.
+        // Create remove menus.
         menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
+        menuItems.add(createRemoveTabPanel(tabLayoutConfig));
 
         return menuItems;
     }
@@ -252,6 +257,15 @@ public class TabManager {
                 .icon(SvgImage.DELETE)
                 .text("Remove")
                 .command(() -> removeTab(tabLayoutConfig, tabConfig))
+                .build();
+    }
+
+    private Item createRemoveTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        return new IconMenuItem.Builder()
+                .priority(11)
+                .icon(SvgImage.DELETE)
+                .text("Remove All")
+                .command(() -> removeTabPanel(tabLayoutConfig))
                 .build();
     }
 }

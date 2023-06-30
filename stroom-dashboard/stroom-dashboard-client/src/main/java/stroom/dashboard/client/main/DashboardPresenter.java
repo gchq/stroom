@@ -130,7 +130,7 @@ public class DashboardPresenter
 
 
     private final InlineSvgToggleButton editModeButton;
-    private final InlineSvgButton addWidgetButton;
+    private final InlineSvgButton addComponentButton;
     private final InlineSvgButton setConstraintsButton;
     private final ButtonPanel editToolbar;
 
@@ -161,10 +161,10 @@ public class DashboardPresenter
         editModeButton.setSvg(SvgImage.EDIT);
         editModeButton.setTitle("Enter Design Mode");
 
-        addWidgetButton = new InlineSvgButton();
-        addWidgetButton.setSvg(SvgImage.ADD);
-        addWidgetButton.setTitle("Add Component");
-        addWidgetButton.setVisible(false);
+        addComponentButton = new InlineSvgButton();
+        addComponentButton.setSvg(SvgImage.ADD);
+        addComponentButton.setTitle("Add Component");
+        addComponentButton.setVisible(false);
 
         setConstraintsButton = new InlineSvgButton();
         setConstraintsButton.setSvg(SvgImage.RESIZE);
@@ -189,7 +189,7 @@ public class DashboardPresenter
 
         editToolbar = new ButtonPanel();
         editToolbar.addButton(editModeButton);
-        editToolbar.addButton(addWidgetButton);
+        editToolbar.addButton(addComponentButton);
         editToolbar.addButton(setConstraintsButton);
     }
 
@@ -214,7 +214,7 @@ public class DashboardPresenter
                 onDesign();
             }
         }));
-        registerHandler(addWidgetButton.addClickHandler(e -> {
+        registerHandler(addComponentButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 onAdd(e);
             }
@@ -261,7 +261,7 @@ public class DashboardPresenter
 
     private void setDesignMode(final boolean designMode) {
         this.designMode = designMode;
-        addWidgetButton.setVisible(designMode);
+        addComponentButton.setVisible(designMode);
         setConstraintsButton.setVisible(designMode);
         layoutPresenter.setDesignMode(designMode);
         getView().setDesignMode(designMode);
@@ -295,8 +295,8 @@ public class DashboardPresenter
         }
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new SimpleParentMenuItem(1, "Add Panel", panels));
-        menuItems.add(new SimpleParentMenuItem(2, "Add Input", inputs));
+        menuItems.add(new SimpleParentMenuItem(1, "Input", inputs));
+        menuItems.addAll(panels);
 
         ShowMenuEvent
                 .builder()
@@ -508,7 +508,7 @@ public class DashboardPresenter
             }
         }
 
-        addWidgetButton.setEnabled(!readOnly && !embedded);
+        addComponentButton.setEnabled(!readOnly && !embedded);
         setConstraintsButton.setEnabled(!readOnly && !embedded);
     }
 
@@ -617,45 +617,22 @@ public class DashboardPresenter
         }
     }
 
-    public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig originalTabConfig) {
-        // Duplicate the referenced component.
-        final Component originalComponent = components.get(originalTabConfig.getId());
-        originalComponent.write();
-        final ComponentType type = originalComponent.getType();
-
-        // Get sets of unique component ids and names.
-        final ComponentId componentId = new ComponentNameSet(components)
-                .createUnique(type, originalComponent.getLabel());
-        final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
-                .id(componentId.id)
-                .name(componentId.name)
-                .build();
-
-        // Try and add the component.
-        final Component component = addComponent(componentConfig.getType(), componentConfig);
-        if (component != null) {
-            final TabConfig newTabConfig = originalTabConfig.copy().id(component.getId()).build();
-            tabLayoutConfig.add(newTabConfig);
-            tabLayoutConfig.setSelected(tabLayoutConfig.getTabs().size() - 1);
-
-            // Link new component.
-            components.get(newTabConfig.getId()).link();
-
-            layoutPresenter.clear();
-            layoutPresenter.refresh();
-
-            setDirty(true);
-        }
+    public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {
+        duplicateTabs(tabLayoutConfig, Collections.singletonList(tab));
     }
 
     public void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        duplicateTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()));
+    }
+
+    public void duplicateTabs(final TabLayoutConfig tabLayoutConfig, final List<TabConfig> tabs) {
         // Get sets of unique component ids and names.
         final ComponentNameSet componentNameSet = new ComponentNameSet(components);
         final Map<String, String> idMapping = new HashMap<>();
         final List<ComponentConfig> newComponents = new ArrayList<>();
         final Map<String, TabConfig> newTabConfigMap = new HashMap<>();
-        if (tabLayoutConfig.getTabs() != null) {
-            for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
+        if (tabs != null) {
+            for (final TabConfig tabConfig : tabs) {
                 // Duplicate the referenced component.
                 final Component originalComponent = components.get(tabConfig.getId());
                 originalComponent.write();
@@ -733,12 +710,21 @@ public class DashboardPresenter
     }
 
     @Override
-    public void requestTabClose(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    public void removeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {
+        removeTabs(tabLayoutConfig, Collections.singletonList(tab));
+    }
+
+    @Override
+    public void removeTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        removeTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()));
+    }
+
+    private void removeTabs(final TabLayoutConfig tabLayoutConfig, final List<TabConfig> tabs) {
         // Figure out what tabs would remain after removal.
         int hiddenCount = 0;
         int totalCount = 0;
         for (final TabConfig tab : tabLayoutConfig.getTabs()) {
-            if (tab != tabConfig) {
+            if (!tabs.contains(tab)) {
                 if (!tab.visible()) {
                     hiddenCount++;
                 }
@@ -750,19 +736,26 @@ public class DashboardPresenter
         if (totalCount > 0 && totalCount == hiddenCount) {
             AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
         } else {
-            ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
+            String message = "Are you sure you want to remove this tab?";
+            if (tabs.size() > 1) {
+                message = "Are you sure you want to remove these tabs?";
+            }
+
+            ConfirmEvent.fire(this, message, ok -> {
                 if (ok) {
-                    layoutPresenter.closeTab(tabConfig);
-                    final Component component = components.get(tabConfig.getId());
-                    if (component != null) {
-                        if (component instanceof Queryable) {
-                            final Queryable queryable = (Queryable) component;
-                            queryable.removeSearchStateListener(this);
-                            queryable.removeSearchErrorListener(this);
+                    for (final TabConfig tab : tabs) {
+                        layoutPresenter.closeTab(tab);
+                        final Component component = components.get(tab.getId());
+                        if (component != null) {
+                            if (component instanceof Queryable) {
+                                final Queryable queryable = (Queryable) component;
+                                queryable.removeSearchStateListener(this);
+                                queryable.removeSearchErrorListener(this);
+                            }
+                            components.remove(tab.getId(), true);
                         }
-                        components.remove(tabConfig.getId(), true);
-                        enableQueryButtons();
                     }
+                    enableQueryButtons();
                 }
             });
         }
