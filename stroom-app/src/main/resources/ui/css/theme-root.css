@@ -81,7 +81,7 @@
     --pipeline-element-box__background-color--selected: #bbdefb;
     --pipeline-element-box__background-color--selected--hover: #bbdefb;
     --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.3);
-    --pipeline-element-box__text-color: #888;
+    --pipeline-element-box__text-color: #666;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
     --pipeline-element-box__border-color--info: #378cff;
