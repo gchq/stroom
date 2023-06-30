@@ -1,3 +1,9 @@
+/**************************************************
+*  NOTE: This file gets copied into stroom-docs by 
+*  stroom-docs/update_stroom_icons.sh
+*  so any significant changes may break the docs.
+***************************************************/
+
 :root {
     --icon-colour__foreground: var(--black);
     --icon-colour__blue: var(--blue-500);

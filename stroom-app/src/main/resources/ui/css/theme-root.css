@@ -7,6 +7,12 @@
  * --<object>-<inner_object>__<attribute>--<modifier>--<modifier>
  */
 
+/**************************************************
+*  NOTE: This file gets copied into stroom-docs by 
+*  stroom-docs/update_stroom_icons.sh
+*  so any significant changes may break the docs.
+***************************************************/
+
 :root {
     --focus-border: var(--blue-500);
     --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
