@@ -37,8 +37,6 @@ import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.index.shared.IndexShardFields;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -294,13 +292,13 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                     // Not ideal defining it here but adding it fetchDocumentTypes causes problems
                     // with the explorer context menus.
                     typeToSvgMap.putIfAbsent(
-                            IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF.getType(),
+                            "Searchable",
                             SvgImage.DOCUMENT_SEARCHABLE);
                     typeToSvgMap.putIfAbsent(
                             "Analytics",
                             SvgImage.DOCUMENT_SEARCHABLE);
                     typeToSvgMap.putIfAbsent(
-                            ProcessorFilter.ENTITY_TYPE,
+                            "ProcessorFilter",
                             SvgImage.FILTER);
                 })
                 .call(EXPLORER_RESOURCE)
