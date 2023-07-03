@@ -1,11 +1,14 @@
 /**************************************************
-*  NOTE: This file gets copied into stroom-docs by 
+*  NOTE: This file gets copied into stroom-docs by
 *  stroom-docs/update_stroom_icons.sh
 *  so any significant changes may break the docs.
 ***************************************************/
 
 :root {
     --icon-colour__foreground: var(--black);
+    --icon-colour__foreground__on: var(--app__background-color);
+    --icon-colour__highlight: var(--app__background-color);
+    --icon-colour__highlight__on: var(--icon-button__background-color--on);
     --icon-colour__blue: var(--blue-500);
     --icon-colour__green: #4caf50;
     --icon-colour__grey: #767e86;
@@ -18,10 +21,14 @@
     --icon-height: 16px;
 }
 
-
 .navigation,
 .stroom-theme-dark {
     --icon-colour__foreground: var(--white);
+    /* For toggle buttons like exclamation.svg on stepper */
+    --icon-colour__foreground__on: var(--app__background-color);
+    --icon-colour__highlight: var(--app__background-color);
+    /* For toggle buttons like exclamation.svg on stepper */
+    --icon-colour__highlight__on: var(--icon-button__background-color--on);
     --icon-colour__blue: var(--blue-300);
     --icon-colour__green: #4caf50;
     --icon-colour__grey: #e6e1dc;

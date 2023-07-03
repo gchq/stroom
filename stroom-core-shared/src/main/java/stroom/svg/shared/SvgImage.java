@@ -1640,10 +1640,12 @@ public enum SvgImage {
             "    <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com Lice" +
             "nse - https://fontawesome.com/license (Commercial License) Copyright 2023 Fontic" +
             "ons, Inc. -->\n" +
-            "    <path style=\"fill:#ffffff;fill-opacity:1;stroke-width:4.58448\"\n" +
+            "    <path style=\"fill:var(--icon-colour__highlight);fill-opacity:1;stroke-width:" +
+            "4.58448\"\n" +
             "          d=\"m 749.29634,1336.062 a 146.70369,146.70369 0 1 1 293.40736,0 146.70" +
             "369,146.70369 0 1 1 -293.40736,0 z\"/>\n" +
-            "    <path style=\"fill:#ffffff;fill-opacity:1;stroke-width:4.58448\"\n" +
+            "    <path style=\"fill:var(--icon-colour__highlight);fill-opacity:1;stroke-width:" +
+            "4.58448\"\n" +
             "          d=\"m 896.00006,309.13656 c 60.97368,0 110.02774,49.05404 110.02774,110" +
             ".02775 v 513.46292 c 0,60.97372 -49.05406,110.02767 -110.02774,110.02767 -60.973" +
             "81,0 -110.0278,-49.05395 -110.0278,-110.02767 V 419.16431 c 0,-60.97371 49.05399" +

@@ -144,6 +144,13 @@
 	-o-transition: background-color .5s;
 }
 
+/* Flip the colours when toggled on */
+.inline-svg-button.icon-button.on svg {
+    --icon-colour__foreground: var(--icon-colour__foreground__on);
+    --icon-colour__highlight: var(--icon-colour__highlight__on);
+    color: var(--app__background-color);
+}
+
 .stroom-button-fab .face--disabled {
 	cursor: default;
 	opacity: 0;
