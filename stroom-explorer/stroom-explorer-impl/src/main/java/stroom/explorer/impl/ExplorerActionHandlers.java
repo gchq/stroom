@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -42,7 +41,7 @@ class ExplorerActionHandlers {
         this.explorerActionHandlers = explorerActionHandlers;
     }
 
-    List<DocumentType> getNonSystemTypes() {
+    List<DocumentType> getTypes() {
         return getHandlers().documentTypes;
     }
 
@@ -85,7 +84,7 @@ class ExplorerActionHandlers {
             final List<DocumentType> list = allTypes.values().stream()
                     .filter(type -> !DocumentTypes.isSystem(type.getType()))
                     .sorted(Comparator.comparingInt(t -> t.getGroup().getPriority()))
-                    .collect(Collectors.toList());
+                    .toList();
             this.documentTypes = new ArrayList<>(list);
         }
 

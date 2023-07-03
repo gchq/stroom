@@ -795,7 +795,7 @@ public class DocumentPluginEventManager extends Plugin {
                                           final DocumentTypes documentTypes) {
         final List<Item> children = new ArrayList<>();
         //noinspection SimplifyStreamApiCallChains
-        final List<DocumentType> availableTypes = documentTypes.getNonSystemTypes()
+        final List<DocumentType> availableTypes = documentTypes.getTypes()
                 .stream()
                 .filter(documentPermissions::hasCreatePermission)
                 .collect(Collectors.toList());

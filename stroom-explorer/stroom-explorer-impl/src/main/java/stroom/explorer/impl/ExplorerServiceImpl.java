@@ -26,7 +26,6 @@ import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerDocContentMatch;
@@ -228,7 +227,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .icon(SvgImage.FAVOURITES);
         final ExplorerNode favNode = favNodeBuilder.build();
 
-        final Map<String, SvgImage> iconMap = getNonSystemTypes()
+        final Map<String, SvgImage> iconMap = getTypes()
                 .stream()
                 .collect(Collectors.toMap(DocumentType::getType, DocumentType::getIcon));
 
@@ -978,8 +977,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     @Override
-    public List<DocumentType> getNonSystemTypes() {
-        return explorerActionHandlers.getNonSystemTypes();
+    public List<DocumentType> getTypes() {
+        return explorerActionHandlers.getTypes();
     }
 
     @Override
@@ -1023,7 +1022,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
-        return getNonSystemTypes().stream()
+        return getTypes().stream()
                 .filter(type -> visibleTypes.contains(type.getType()))
                 .collect(Collectors.toList());
     }
@@ -1053,7 +1052,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     @Override
     public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
         final List<ExplorerDocContentMatch> list = new ArrayList<>();
-        for (final DocumentType documentType : explorerActionHandlers.getNonSystemTypes()) {
+        for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
             final ExplorerActionHandler explorerActionHandler =
                     explorerActionHandlers.getHandler(documentType.getType());
             final List<DocContentMatch> matches = explorerActionHandler
