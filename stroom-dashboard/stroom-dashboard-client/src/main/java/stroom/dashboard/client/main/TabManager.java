@@ -154,10 +154,6 @@ public class TabManager {
         // Create settings menu.
         menuItems.add(createSettingsMenu(tabConfig));
 
-        // Create duplicate menus.
-        menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
-        menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
-
         // Create hide menu.
         menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
 
@@ -166,6 +162,10 @@ public class TabManager {
         if (showMenu != null) {
             menuItems.add(showMenu);
         }
+
+        // Create duplicate menus.
+        menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
+        menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
 
         // Create remove menus.
         menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
@@ -193,27 +193,9 @@ public class TabManager {
                 .build();
     }
 
-    private Item createDuplicateMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        return new IconMenuItem.Builder()
-                .priority(6)
-                .icon(SvgImage.COPY)
-                .text("Duplicate")
-                .command(() -> duplicateTab(tabLayoutConfig, tabConfig))
-                .build();
-    }
-
-    private Item createDuplicateTabPanelMenu(final TabLayoutConfig tabLayoutConfig) {
-        return new IconMenuItem.Builder()
-                .priority(7)
-                .icon(SvgImage.COPY)
-                .text("Duplicate All")
-                .command(() -> duplicateTabPanel(tabLayoutConfig))
-                .build();
-    }
-
     private Item createHideMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
-                .priority(8)
+                .priority(6)
                 .icon(SvgImage.HIDE)
                 .text("Hide")
                 .command(() -> hideTab(tabLayoutConfig, tabConfig))
@@ -244,10 +226,28 @@ public class TabManager {
         }
 
         return new IconParentMenuItem.Builder()
-                .priority(9)
+                .priority(7)
                 .icon(SvgImage.SHOW)
                 .text("Show")
                 .children(menuItems)
+                .build();
+    }
+
+    private Item createDuplicateMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        return new IconMenuItem.Builder()
+                .priority(8)
+                .icon(SvgImage.COPY)
+                .text("Duplicate")
+                .command(() -> duplicateTab(tabLayoutConfig, tabConfig))
+                .build();
+    }
+
+    private Item createDuplicateTabPanelMenu(final TabLayoutConfig tabLayoutConfig) {
+        return new IconMenuItem.Builder()
+                .priority(9)
+                .icon(SvgImage.COPY)
+                .text("Duplicate All")
+                .command(() -> duplicateTabPanel(tabLayoutConfig))
                 .build();
     }
 

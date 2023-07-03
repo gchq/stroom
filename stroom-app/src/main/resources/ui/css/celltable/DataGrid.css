@@ -96,15 +96,6 @@
 	white-space: normal;
 }
 
-.dataGridCell .svgCell-button {
-	vertical-align: middle;
-}
-
-.dataGridCell .svgCell-button svg {
-    width: var(--icon-width);
-    height: var(--icon-height);
-}
-
 .dataGridResizableCell {
 	border-right: 5px solid transparent;
 	white-space: nowrap;

@@ -92,7 +92,7 @@ public class ActionCell<R> extends AbstractCell<R> {
         if (row == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final String className = "svgCell-button";
+            final String className = "svgCell-icon svgCell-button";
 
             if (svgPreset.getTitle() != null && !svgPreset.getTitle().isEmpty()) {
                 sb.append(template.icon(

@@ -51,7 +51,7 @@ public class QueryToolbarViewImpl
                                 final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         timeRangeSelector.setUtc(userPreferencesManager.isUtc());
-        warnings.setSvg(SvgImage.WARNING);
+        warnings.setSvg(SvgImage.ALERT);
     }
 
     @Override

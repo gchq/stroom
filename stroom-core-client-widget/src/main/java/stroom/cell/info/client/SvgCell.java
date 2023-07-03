@@ -89,9 +89,10 @@ public class SvgCell extends AbstractCell<Preset> {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            String className = isButton
-                    ? "svgCell-button"
-                    : "svgCell-icon";
+            String className = "svgCell-icon";
+            if (isButton) {
+                className += " svgCell-button";
+            }
 
             if (!value.isEnabled()) {
                 className += " " + "svgCell-disabled";

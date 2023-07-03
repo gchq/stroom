@@ -201,20 +201,20 @@ public class QueryPresenter
             }
         });
 
-        addTermButton = view.addButton(SvgPresets.ADD);
+        addTermButton = view.addButtonLeft(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
-        disableItemButton = view.addButton(SvgPresets.DISABLE);
-        deleteItemButton = view.addButton(SvgPresets.DELETE);
-        historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
-        favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
-        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
+        addOperatorButton = view.addButtonLeft(SvgPresets.OPERATOR);
+        disableItemButton = view.addButtonLeft(SvgPresets.DISABLE);
+        deleteItemButton = view.addButtonLeft(SvgPresets.DELETE);
+        historyButton = view.addButtonLeft(SvgPresets.HISTORY.enabled(true));
+        favouriteButton = view.addButtonLeft(SvgPresets.FAVOURITES.enabled(true));
+        downloadQueryButton = view.addButtonLeft(SvgPresets.DOWNLOAD);
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
+            processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton = view.addButtonRight(SvgPresets.ALERT.title("Show Warnings"));
         setWarningsVisible(false);
 
         searchModel = new SearchModel(
@@ -947,7 +947,9 @@ public class QueryPresenter
 
     public interface QueryView extends View, SearchStateListener {
 
-        ButtonView addButton(Preset preset);
+        ButtonView addButtonLeft(Preset preset);
+
+        ButtonView addButtonRight(Preset preset);
 
         void setExpressionView(View view);
 

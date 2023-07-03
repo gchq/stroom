@@ -1623,6 +1623,7 @@ button.main-menu svg {
     color: var(--link__text-color);
     cursor: pointer;
     font-size: var(--font-size-14);
+    padding-right: 5px;
 }
 
 .timeRange-selector:hover {
