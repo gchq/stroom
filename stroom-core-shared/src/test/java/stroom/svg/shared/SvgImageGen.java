@@ -65,7 +65,6 @@ public class SvgImageGen {
             """.replace("@@CLASS_NAME@@", SvgImageGen.class.getName());
 
     private static final String ENUM_FOOTER = """
-                
 
                 private final String relativePathStr;
                 private final String className;
@@ -90,7 +89,7 @@ public class SvgImageGen {
                 public String getRelativePathStr() {
                     return relativePathStr;
                 }
-                
+
                 /**
                  * @return The CSS class name for the icon.
                  */
