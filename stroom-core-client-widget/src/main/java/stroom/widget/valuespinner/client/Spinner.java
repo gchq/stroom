@@ -17,7 +17,9 @@
 package stroom.widget.valuespinner.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
@@ -29,6 +31,7 @@ import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -124,18 +127,31 @@ public class Spinner implements HasHandlers {
 
     public Spinner() {
         this.initialSpeed = INITIAL_SPEED;
-        incrementArrow.getElement().setInnerHTML(SvgImage.ARROW_UP.getSvg());
+        final SafeHtml upSafeHtml = SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP);
+        GWT.log("up: " + upSafeHtml.asString());
+        incrementArrow.getElement().setInnerSafeHtml(upSafeHtml);
+//                "valueSpinner-arrow",
+//                "valueSpinner-arrowUp"));
         incrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
         incrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
         incrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
         incrementArrow.addDomHandler(mouseOutHandler, MouseOutEvent.getType());
         incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
-        decrementArrow.getElement().setInnerHTML(SvgImage.ARROW_DOWN.getSvg());
+//        incrementArrow.getElement().addClassName("valueSpinner-arrow");
+//        incrementArrow.getElement().addClassName("valueSpinner-arrowUp");
+
+        final SafeHtml downSafeHtml = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
+        GWT.log("down: " + upSafeHtml.asString());
+        decrementArrow.getElement().setInnerSafeHtml(downSafeHtml);
+//                "valueSpinner-arrow",
+//                "valueSpinner-arrowDown"));
         decrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
         decrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
         decrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
         decrementArrow.addDomHandler(mouseOutHandler, MouseOutEvent.getType());
         decrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDown");
+//        decrementArrow.getElement().addClassName("valueSpinner-arrow");
+//        decrementArrow.getElement().addClassName("valueSpinner-arrowDown");
 
         SpinnerEvent.fire(this, value);
     }

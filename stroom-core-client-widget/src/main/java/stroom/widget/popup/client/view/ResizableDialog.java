@@ -21,6 +21,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -117,7 +118,7 @@ public class ResizableDialog extends AbstractPopupPanel {
         setResizeEnabled((popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable()) ||
                 (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
 
-        resizeHandle.getElement().setInnerHTML(SvgImage.RESIZE_HANDLE.getSvg());
+        SvgImageUtil.setSvgAsInnerHtml(resizeHandle, SvgImage.RESIZE_HANDLE);
     }
 
     @Override

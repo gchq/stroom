@@ -18,15 +18,13 @@ package stroom.cell.info.client;
 
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
@@ -34,7 +32,6 @@ import java.util.function.BiConsumer;
 
 public class ActionCell<R> extends AbstractCell<R> {
 
-    private static Template template;
     private final Preset svgPreset;
     private final BiConsumer<R, NativeEvent> action;
 
@@ -47,10 +44,6 @@ public class ActionCell<R> extends AbstractCell<R> {
         super("click");
         this.action = action;
         this.svgPreset = svgPreset;
-
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
@@ -94,25 +87,17 @@ public class ActionCell<R> extends AbstractCell<R> {
         } else {
             final String className = "svgCell-icon svgCell-button";
 
-            if (svgPreset.getTitle() != null && !svgPreset.getTitle().isEmpty()) {
-                sb.append(template.icon(
-                        className,
-                        svgPreset.getTitle(),
-                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
-            } else {
-                sb.append(template.icon(
-                        className,
-                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
-            }
+//            if (svgPreset.getTitle() != null && !svgPreset.getTitle().isEmpty()) {
+//                sb.append(template.icon(
+//                        className,
+//                        svgPreset.getTitle(),
+//                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
+//            } else {
+//                sb.append(template.icon(
+//                        className,
+//                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
+//            }
+            sb.append(SvgImageUtil.toSafeHtml(svgPreset));
         }
-    }
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml icon(String className, SafeHtml icon);
-
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml icon(String className, String title, SafeHtml icon);
     }
 }

@@ -19,6 +19,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -48,10 +49,18 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Appearance<I extends Item> {
 
         void render(MenuItemCell cell, Context context, I value, SafeHtmlBuilder sb);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class SeparatorAppearance implements Appearance<Separator> {
 
@@ -66,12 +75,20 @@ public class MenuItemCell extends AbstractCell<Item> {
             sb.append(TEMPLATE.separator("menuItem-separator"));
         }
 
+
+        // --------------------------------------------------------------------------------
+
+
         public interface Template extends SafeHtmlTemplates {
 
             @Template("<div class=\"{0}\"></div>")
             SafeHtml separator(String className);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class GroupHeadingAppearance implements Appearance<GroupHeading> {
 
@@ -87,12 +104,20 @@ public class MenuItemCell extends AbstractCell<Item> {
                     SafeHtmlUtils.fromTrustedString(value.getGroupName())));
         }
 
+
+        // --------------------------------------------------------------------------------
+
+
         public interface Template extends SafeHtmlTemplates {
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml groupHeading(String className, SafeHtml groupName);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MenuItemAppearance implements Appearance<MenuItem> {
 
@@ -104,6 +129,10 @@ public class MenuItemCell extends AbstractCell<Item> {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class IconMenuItemAppearance implements Appearance<IconMenuItem> {
 
@@ -127,18 +156,15 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 if (value.isEnabled()) {
                     if (enabledIcon != null) {
-                        inner.append(TEMPLATE.inner(iconClassName,
-                                SafeHtmlUtils.fromSafeConstant(enabledIcon.getSvg())));
+                        inner.append(SvgImageUtil.toSafeHtml(enabledIcon, iconClassName));
                     } else {
                         inner.append(TEMPLATE.inner(iconClassName, SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 } else {
                     if (disabledIcon != null) {
-                        inner.append(TEMPLATE.inner(iconClassName,
-                                SafeHtmlUtils.fromSafeConstant(disabledIcon.getSvg())));
+                        inner.append(SvgImageUtil.toSafeHtml(disabledIcon, iconClassName));
                     } else if (enabledIcon != null) {
-                        inner.append(TEMPLATE.inner(iconClassName,
-                                SafeHtmlUtils.fromSafeConstant(enabledIcon.getSvg())));
+                        inner.append(SvgImageUtil.toSafeHtml(enabledIcon, iconClassName));
                     } else {
                         inner.append(TEMPLATE.inner(iconClassName, SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
@@ -157,10 +183,9 @@ public class MenuItemCell extends AbstractCell<Item> {
                 }
 
                 // If this is a parent menu item, render an arrow to the right-hand side
-                if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem) &&
-                        value.isEnabled()) {
-                    inner.append(TEMPLATE.expandArrow("menuItem-expandArrow",
-                            SafeHtmlUtils.fromSafeConstant(SvgImage.ARROW_RIGHT.getSvg())));
+                if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem)
+                        && value.isEnabled()) {
+                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menuItem-expandArrow"));
                 }
 
                 String className = "menuItem-outer";
@@ -174,6 +199,10 @@ public class MenuItemCell extends AbstractCell<Item> {
             }
         }
 
+
+        // --------------------------------------------------------------------------------
+
+
         public interface Template extends SafeHtmlTemplates {
 
             @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
@@ -182,16 +211,14 @@ public class MenuItemCell extends AbstractCell<Item> {
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
 
-//            @Template("<img class=\"{0}\" src=\"{1}\">")
-//            SafeHtml icon(String className, SafeUri url);
-
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
-
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml expandArrow(String className, SafeHtml icon);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class SimpleMenuItemAppearance implements Appearance<SimpleMenuItem> {
 
@@ -219,10 +246,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 }
 
                 // If this is a parent menu item, render an arrow to the right-hand side
-                if ((value instanceof SimpleParentMenuItem) &&
-                        value.isEnabled()) {
-                    inner.append(TEMPLATE.expandArrow("menuItem-expandArrow",
-                            SafeHtmlUtils.fromSafeConstant(SvgImage.ARROW_RIGHT.getSvg())));
+                if ((value instanceof SimpleParentMenuItem) && value.isEnabled()) {
+                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menuItem-expandArrow"));
                 }
 
                 String className = "menuItem-outer";
@@ -232,6 +257,10 @@ public class MenuItemCell extends AbstractCell<Item> {
                 sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
             }
         }
+
+
+        // --------------------------------------------------------------------------------
+
 
         public interface Template extends SafeHtmlTemplates {
 
@@ -243,11 +272,12 @@ public class MenuItemCell extends AbstractCell<Item> {
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
-
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml expandArrow(String className, SafeHtml icon);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
 
@@ -270,6 +300,10 @@ public class MenuItemCell extends AbstractCell<Item> {
                         inner.toSafeHtml()));
             }
         }
+
+
+        // --------------------------------------------------------------------------------
+
 
         public interface Template extends SafeHtmlTemplates {
 

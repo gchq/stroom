@@ -20,6 +20,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Sort;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.HasCell;
@@ -137,7 +138,6 @@ public class FieldCell extends CompositeCell<Field> {
     }
 
     private static SafeHtml getSafeHtml(final SvgImage svgImage) {
-        return SafeHtmlUtils.fromSafeConstant(
-                "<div class=\"svgIcon\">" + svgImage.getSvg() + "</div>");
+        return SvgImageUtil.toSafeHtml(svgImage, "svgIcon");
     }
 }

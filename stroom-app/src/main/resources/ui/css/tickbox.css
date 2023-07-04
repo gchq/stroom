@@ -25,6 +25,11 @@
     overflow: hidden;
 }
 
+.tickBox .svg-image {
+  width: 100%;
+  height: 100%;
+}
+
 .tickBox-text {
     display: inline-block;
     margin-left: 4px;

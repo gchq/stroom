@@ -10,8 +10,7 @@ public enum SvgImage {
     // Do not edit it directly!
     // ================================================================================
 
-    ADD("add.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    ADD("add.svg", "svg-image__add", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -23,8 +22,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ADD_ABOVE("add-above.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    ADD_ABOVE("add-above.svg", "svg-image__add-above", "" +
             "<svg\n" +
             "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
             "   width=\"1792\"\n" +
@@ -54,8 +52,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ADD_BELOW("add-below.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    ADD_BELOW("add-below.svg", "svg-image__add-below", "" +
             "<svg\n" +
             "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
             "   width=\"1792\"\n" +
@@ -84,8 +81,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ALERT("alert.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    ALERT("alert.svg", "svg-image__alert", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"-120" +
             " -200 2032 2032\">\n" +
             "<path style=\"fill:#ffde81\" d=\"m 1008,67 768,1408 c 19.1682,31.4648 23.1567,86.20" +
@@ -115,8 +111,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ARROW_DOWN("arrow-down.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    ARROW_DOWN("arrow-down.svg", "svg-image__arrow-down", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
             "wBox=\"0 0 1427.7665 1427.7665\">\n" +
             "    <g style=\"stroke:currentColor;stroke-width:167.567\">\n" +
@@ -133,8 +128,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ARROW_RIGHT("arrow-right.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    ARROW_RIGHT("arrow-right.svg", "svg-image__arrow-right", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
             "wBox=\"0 0 1427.7665 1427.7665\">\n" +
             "    <g style=\"stroke:currentColor;stroke-width:167.567\">\n" +
@@ -151,8 +145,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ARROW_UP("arrow-up.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    ARROW_UP("arrow-up.svg", "svg-image__arrow-up", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
             "wBox=\"0 0 1427.7665 1427.7665\">\n" +
             "    <g style=\"stroke:currentColor;stroke-width:167.567\">\n" +
@@ -169,8 +162,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    BACKWARD("backward.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    BACKWARD("backward.svg", "svg-image__backward", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -221,8 +213,7 @@ public enum SvgImage {
             "5875,1.5875\" /></g></svg>\n" +
             ""),
 
-    CASE_SENSITIVE("case-sensitive.svg", "" +
-            "<?xml version=\"1.0\"?>\n" +
+    CASE_SENSITIVE("case-sensitive.svg", "svg-image__case-sensitive", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 2" +
             "4\">\n" +
             "    <g style=\"fill:currentColor\">\n" +
@@ -239,8 +230,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    CLEAR("clear.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    CLEAR("clear.svg", "svg-image__clear", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -265,8 +255,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    CLIPBOARD("clipboard.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    CLIPBOARD("clipboard.svg", "svg-image__clipboard", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path fill=\"currentColor\" d=\"M 204.392 1630.946 C 170.389 1630.946 141.519 1" +
@@ -306,8 +295,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    CLOSE("close.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    CLOSE("close.svg", "svg-image__close", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -318,8 +306,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    CODE("code.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    CODE("code.svg", "svg-image__code", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 512\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
             "          d=\"M278.9 511.5l-61-17.7c-6.4-1.8-10-8.5-8.2-14.9L346.2 8.7c1.8-6.4 8." +
@@ -332,8 +319,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    COLLAPSE_UP("collapse-up.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    COLLAPSE_UP("collapse-up.svg", "svg-image__collapse-up", "" +
             "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
             "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
@@ -358,8 +344,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    COPY("copy.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    COPY("copy.svg", "svg-image__copy", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -372,8 +357,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DATABASE("database.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DATABASE("database.svg", "svg-image__database", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -387,8 +371,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DELETE("delete.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DELETE("delete.svg", "svg-image__delete", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -402,8 +385,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DEPENDENCIES("dependencies.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DEPENDENCIES("dependencies.svg", "svg-image__dependencies", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -424,8 +406,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DISABLE("disable.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DISABLE("disable.svg", "svg-image__disable", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#d32f2f\"\n" +
@@ -437,8 +418,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_ANALYTIC_OUTPUT_STORE("document/AnalyticOutputStore.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_ANALYTIC_OUTPUT_STORE("document/AnalyticOutputStore.svg", "svg-image__document-analytic-output-store", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#388e3c\"\n" +
@@ -452,8 +432,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_ANALYTIC_RULE("document/AnalyticRule.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_ANALYTIC_RULE("document/AnalyticRule.svg", "svg-image__document-analytic-rule", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -463,8 +442,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_ANNOTATIONS_INDEX("document/AnnotationsIndex.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_ANNOTATIONS_INDEX("document/AnnotationsIndex.svg", "svg-image__document-annotations-index", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 20" +
             "0 200\">\n" +
             "    <!-- Paper Lines -->\n" +
@@ -490,8 +468,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_DASHBOARD("document/Dashboard.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    DOCUMENT_DASHBOARD("document/Dashboard.svg", "svg-image__document-dashboard", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -575,8 +552,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_DICTIONARY("document/Dictionary.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_DICTIONARY("document/Dictionary.svg", "svg-image__document-dictionary", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -594,7 +570,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_ELASTIC_CLUSTER("document/ElasticCluster.svg", "" +
+    DOCUMENT_ELASTIC_CLUSTER("document/ElasticCluster.svg", "svg-image__document-elastic-cluster", "" +
             "<svg width=\"2500\" height=\"2500\" viewBox=\"0 0 256 256\" xmlns=\"http://www.w3.org/2" +
             "000/svg\" preserveAspectRatio=\"xMinYMin meet\"><path d=\"M255.96 134.393c0-21.521-1" +
             "3.373-40.117-33.223-47.43a75.239 75.239 0 0 0 1.253-13.791c0-39.909-32.386-72.29" +
@@ -620,8 +596,7 @@ public enum SvgImage {
             ".415 49.311 11.492 21.94z\" fill=\"#176655\"/></svg>\n" +
             ""),
 
-    DOCUMENT_ELASTIC_INDEX("document/ElasticIndex.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_ELASTIC_INDEX("document/ElasticIndex.svg", "svg-image__document-elastic-index", "" +
             "<!-- Generator: Adobe Illustrator 25.2.0, SVG Export Plug-In . SVG Version: 6.00" +
             " Build 0)  -->\n" +
             "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\" x=\"0px\" y=\"0p" +
@@ -689,8 +664,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_FAVOURITES("document/Favourites.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_FAVOURITES("document/Favourites.svg", "svg-image__document-favourites", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -701,8 +675,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_FEED("document/Feed.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_FEED("document/Feed.svg", "svg-image__document-feed", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__green)\"\n" +
@@ -727,8 +700,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_FOLDER("document/Folder.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_FOLDER("document/Folder.svg", "svg-image__document-folder", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -737,8 +709,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_INDEX("document/Index.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_INDEX("document/Index.svg", "svg-image__document-index", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -752,8 +723,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_KAFKA_CONFIG("document/KafkaConfig.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_KAFKA_CONFIG("document/KafkaConfig.svg", "svg-image__document-kafka-config", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__foreground)\"\n" +
@@ -800,8 +770,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_PIPELINE("document/Pipeline.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_PIPELINE("document/Pipeline.svg", "svg-image__document-pipeline", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -853,8 +822,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_QUERY("document/Query.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_QUERY("document/Query.svg", "svg-image__document-query", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "  <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -866,8 +834,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_RECEIVE_DATA_RULE_SET("document/ReceiveDataRuleSet.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_RECEIVE_DATA_RULE_SET("document/ReceiveDataRuleSet.svg", "svg-image__document-receive-data-rule-set", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -877,8 +844,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_SCRIPT("document/Script.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_SCRIPT("document/Script.svg", "svg-image__document-script", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -901,8 +867,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_SEARCHABLE("document/searchable.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_SEARCHABLE("document/searchable.svg", "svg-image__document-searchable", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#555\"\n" +
@@ -916,8 +881,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_SELECT_ALL_OR_NONE("document/SelectAllOrNone.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_SELECT_ALL_OR_NONE("document/SelectAllOrNone.svg", "svg-image__document-select-all-or-none", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__green)\"\n" +
@@ -927,8 +891,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_SIGMA_RULE("document/SigmaRule.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    DOCUMENT_SIGMA_RULE("document/SigmaRule.svg", "svg-image__document-sigma-rule", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -998,8 +961,7 @@ public enum SvgImage {
             "       sodipodi:nodetypes=\"ccccccc\" /></g></svg>\n" +
             ""),
 
-    DOCUMENT_SOLR_INDEX("document/SolrIndex.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    DOCUMENT_SOLR_INDEX("document/SolrIndex.svg", "svg-image__document-solr-index", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\"\n" +
             "     width=\"67.015625pt\"\n" +
             "     height=\"67.03125pt\"\n" +
@@ -1024,8 +986,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_STATISTIC_STORE("document/StatisticStore.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_STATISTIC_STORE("document/StatisticStore.svg", "svg-image__document-statistic-store", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -1039,8 +1000,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_STROOM_STATS_STORE("document/StroomStatsStore.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_STROOM_STATS_STORE("document/StroomStatsStore.svg", "svg-image__document-stroom-stats-store", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#9c27b0\"\n" +
@@ -1054,8 +1014,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_SYSTEM("document/System.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_SYSTEM("document/System.svg", "svg-image__document-system", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff6f00\"\n" +
@@ -1082,8 +1041,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_TEXT_CONVERTER("document/TextConverter.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_TEXT_CONVERTER("document/TextConverter.svg", "svg-image__document-text-converter", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__foreground)\"\n" +
@@ -1098,8 +1056,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_VIEW("document/View.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_VIEW("document/View.svg", "svg-image__document-view", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <!--\n" +
@@ -1169,8 +1126,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_VISUALISATION("document/Visualisation.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_VISUALISATION("document/Visualisation.svg", "svg-image__document-visualisation", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -1185,8 +1141,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_XMLSCHEMA("document/XMLSchema.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_XMLSCHEMA("document/XMLSchema.svg", "svg-image__document-xmlschema", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__xsd-background)\"\n" +
@@ -1246,8 +1201,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOCUMENT_XSLT("document/XSLT.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOCUMENT_XSLT("document/XSLT.svg", "svg-image__document-xslt", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__xsl-background)\"\n" +
@@ -1301,16 +1255,14 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOT("dot.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOT("dot.svg", "svg-image__dot", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
             "wBox=\"0 0 1427.7665 1427.7665\">\n" +
             "    <circle style=\"fill:currentColor\" cx=\"713.88324\" cy=\"713.88324\" r=\"400\"/>\n" +
             "</svg>\n" +
             ""),
 
-    DOUBLE_ARROW("double-arrow.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    DOUBLE_ARROW("double-arrow.svg", "svg-image__double-arrow", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1656.0414\" height=\"1430.6364\" vie" +
             "wBox=\"0 0 1656.0414 1430.6364\">\n" +
             "    <g style=\"stroke:currentColor;stroke-width:167.567\">\n" +
@@ -1335,8 +1287,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOWN("down.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOWN("down.svg", "svg-image__down", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -1346,8 +1297,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DOWNLOAD("download.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    DOWNLOAD("download.svg", "svg-image__download", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__green)\"\n" +
@@ -1357,8 +1307,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DROP_DOWN("drop-down.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    DROP_DOWN("drop-down.svg", "svg-image__drop-down", "" +
             "<svg\n" +
             "        xmlns:osb=\"http://www.openswatchbook.org/uri/2009/osb\"\n" +
             "        xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
@@ -1432,8 +1381,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    DROP_DOWN_DARK("drop-down-dark.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    DROP_DOWN_DARK("drop-down-dark.svg", "svg-image__drop-down-dark", "" +
             "<svg\n" +
             "        xmlns:osb=\"http://www.openswatchbook.org/uri/2009/osb\"\n" +
             "        xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
@@ -1507,8 +1455,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    EDIT("edit.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    EDIT("edit.svg", "svg-image__edit", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -1519,8 +1466,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ELLIPSES_HORIZONTAL("ellipses-horizontal.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    ELLIPSES_HORIZONTAL("ellipses-horizontal.svg", "svg-image__ellipses-horizontal", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\"" +
             " viewBox=\"0 0 1792 1792\">\n" +
             "  <g style=\"fill:currentColor\">\n" +
@@ -1531,8 +1477,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ELLIPSES_VERTICAL("ellipses-vertical.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    ELLIPSES_VERTICAL("ellipses-vertical.svg", "svg-image__ellipses-vertical", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColo" +
             "r\" viewBox=\"0 0 16 16\">\n" +
             "    <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 " +
@@ -1540,8 +1485,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    ERROR("error.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    ERROR("error.svg", "svg-image__error", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#d32f2f\"\n" +
@@ -1566,8 +1510,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    EXCLAMATION("exclamation.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    EXCLAMATION("exclamation.svg", "svg-image__exclamation", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\"\n" +
             "     width=\"1792\"\n" +
             "     height=\"1792\"\n" +
@@ -1592,8 +1535,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    EXPAND_DOWN("expand-down.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    EXPAND_DOWN("expand-down.svg", "svg-image__expand-down", "" +
             "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
             "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
@@ -1618,8 +1560,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    EXPLORER("explorer.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    EXPLORER("explorer.svg", "svg-image__explorer", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -1632,8 +1573,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FAST_BACKWARD("fast-backward.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FAST_BACKWARD("fast-backward.svg", "svg-image__fast-backward", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\">\n" +
             "    <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Lice" +
             "nse - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1" +
@@ -1646,8 +1586,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FAST_FORWARD("fast-forward.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FAST_FORWARD("fast-forward.svg", "svg-image__fast-forward", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\">\n" +
             "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
             "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
@@ -1660,8 +1599,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FATAL("fatal.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FATAL("fatal.svg", "svg-image__fatal", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#000\"\n" +
@@ -1686,8 +1624,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FATAL_DARK("fatal-dark.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FATAL_DARK("fatal-dark.svg", "svg-image__fatal-dark", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#000;stroke:#fff;stroke-width:150\"\n" +
@@ -1712,8 +1649,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FAVOURITES("favourites.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FAVOURITES("favourites.svg", "svg-image__favourites", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path fill=\"#ff8f00\" stroke=\"#ff8f00\" stroke-width=\"100\"\n" +
@@ -1733,8 +1669,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FAVOURITES_OUTLINE("favourites-outline.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FAVOURITES_OUTLINE("favourites-outline.svg", "svg-image__favourites-outline", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path fill=\"transparent\" stroke=\"#ff8f00\" stroke-width=\"100\"\n" +
@@ -1754,8 +1689,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FEED("feed.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FEED("feed.svg", "svg-image__feed", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__green)\"\n" +
@@ -1780,8 +1714,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIELD("field.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FIELD("field.svg", "svg-image__field", "" +
             "<svg\n" +
             "   xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
             "   xmlns:cc=\"http://creativecommons.org/ns#\"\n" +
@@ -1897,8 +1830,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIELDS_EXPRESSION("fields/expression.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FIELDS_EXPRESSION("fields/expression.svg", "svg-image__fields-expression", "" +
             "<svg\n" +
             "        xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
             "        xmlns:cc=\"http://creativecommons.org/ns#\"\n" +
@@ -2017,8 +1949,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIELDS_FILTER("fields/filter.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FIELDS_FILTER("fields/filter.svg", "svg-image__fields-filter", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2027,8 +1958,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIELDS_FORMAT("fields/format.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FIELDS_FORMAT("fields/format.svg", "svg-image__fields-format", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -2088,8 +2018,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIELDS_GROUP("fields/group.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FIELDS_GROUP("fields/group.svg", "svg-image__fields-group", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2129,8 +2058,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIELDS_SORTAZ("fields/sortaz.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FIELDS_SORTAZ("fields/sortaz.svg", "svg-image__fields-sortaz", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -2222,8 +2150,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIELDS_SORTZA("fields/sortza.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FIELDS_SORTZA("fields/sortza.svg", "svg-image__fields-sortza", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -2314,7 +2241,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FILE("file.svg", "" +
+    FILE("file.svg", "svg-image__file", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">\n" +
             "    <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Lice" +
             "nse - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1" +
@@ -2326,7 +2253,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FILE_FORMATTED("file-formatted.svg", "" +
+    FILE_FORMATTED("file-formatted.svg", "svg-image__file-formatted", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">\n" +
             "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
             "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
@@ -2364,7 +2291,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FILE_RAW("file-raw.svg", "" +
+    FILE_RAW("file-raw.svg", "svg-image__file-raw", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">\n" +
             "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
             "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
@@ -2426,8 +2353,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FILTER("filter.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FILTER("filter.svg", "svg-image__filter", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2436,8 +2362,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FIND("find.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    FIND("find.svg", "svg-image__find", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2449,8 +2374,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FOLDER("folder.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FOLDER("folder.svg", "svg-image__folder", "" +
             "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
             "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
@@ -2463,8 +2387,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FOLDER_TREE("folder-tree.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FOLDER_TREE("folder-tree.svg", "svg-image__folder-tree", "" +
             "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
             "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
@@ -2490,8 +2413,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FORMAT("format.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FORMAT("format.svg", "svg-image__format", "" +
             "<svg id=\"svg4232\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=" +
             "\"http://www.w3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"" +
             "http://creativecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" view" +
@@ -2522,8 +2444,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    FORWARD("forward.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FORWARD("forward.svg", "svg-image__forward", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -2574,8 +2495,7 @@ public enum SvgImage {
             ".5875,-1.5875\" /></g></svg>\n" +
             ""),
 
-    FUNCTION("function.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    FUNCTION("function.svg", "svg-image__function", "" +
             "<svg\n" +
             "   xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
             "   xmlns:cc=\"http://creativecommons.org/ns#\"\n" +
@@ -2695,8 +2615,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    GENERATE("generate.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    GENERATE("generate.svg", "svg-image__generate", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2709,8 +2628,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    HELP("help.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    HELP("help.svg", "svg-image__help", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -2741,8 +2659,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    HIDE("hide.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    HIDE("hide.svg", "svg-image__hide", "" +
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
             "/2000/svg\"><path style=\"fill:var(--icon-colour__blue)\" d=\"M555 1335l78-141q-87-6" +
             "3-136-159t-49-203q0-121 61-225-229 117-381 353 167 258 427 375zm389-759q0-20-14-" +
@@ -2756,8 +2673,7 @@ public enum SvgImage {
             " 34 20 69z\"/></svg>\n" +
             ""),
 
-    HIDE_MENU("hide-menu.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    HIDE_MENU("hide-menu.svg", "svg-image__hide-menu", "" +
             "<svg height=\"16\" viewBox=\"0 0 16 16\" width=\"16\" xmlns=\"http://www.w3.org/2000/sv" +
             "g\">\n" +
             "    <path style=\"fill:currentColor\" fill-rule=\"evenodd\" d=\"M4.177 7.823l2.396-2." +
@@ -2770,8 +2686,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    HISTORY("history.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    HISTORY("history.svg", "svg-image__history", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2783,8 +2698,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    INFO("info.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    INFO("info.svg", "svg-image__info", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#2196f2\"\n" +
@@ -2809,8 +2723,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    INSERT("insert.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    INSERT("insert.svg", "svg-image__insert", "" +
             "<svg\n" +
             "   width=\"1792\"\n" +
             "   height=\"1792\"\n" +
@@ -2842,8 +2755,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    JOBS("jobs.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    JOBS("jobs.svg", "svg-image__jobs", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2855,8 +2767,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    KEY("key.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    KEY("key.svg", "svg-image__key", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"512\" height=\"512\" viewBox=\"0 0 51" +
             "2 512\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -2869,8 +2780,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    LOCKED("locked.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    LOCKED("locked.svg", "svg-image__locked", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
             "  <path style=\"fill:#ff8f00\"\n" +
             "        d=\"m 382.4,227.2 -21.6,0 0,-64.8 C 360.8,86.98 299.42,25.6 224,25.6 148." +
@@ -2881,8 +2791,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    LOGO("logo.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    LOGO("logo.svg", "svg-image__logo", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"2848.165\" height=\"772.48242\" view" +
             "Box=\"0 0 2278.5303 617.98476\">\n" +
             "    <g style=\"fill:currentColor\">\n" +
@@ -2928,8 +2837,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    LOGOUT("logout.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    LOGOUT("logout.svg", "svg-image__logout", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2942,8 +2850,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    MENU("menu.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    MENU("menu.svg", "svg-image__menu", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"122.879\" height=\"103.609\" viewBox" +
             "=\"0 0 122.879 103.609\">\n" +
             "    <g style=\"fill:currentColor\">\n" +
@@ -2959,8 +2866,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    MONITORING("monitoring.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    MONITORING("monitoring.svg", "svg-image__monitoring", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2976,8 +2882,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    MOVE("move.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    MOVE("move.svg", "svg-image__move", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -2990,8 +2895,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    NODES("nodes.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    NODES("nodes.svg", "svg-image__nodes", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -3003,8 +2907,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    OO("oo.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    OO("oo.svg", "svg-image__oo", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff6f00\"\n" +
@@ -3031,8 +2934,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    OPEN("open.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    OPEN("open.svg", "svg-image__open", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 2" +
             "0\">\n" +
             "    <path style=\"fill:currentColor\" d=\"M17 17H3V3h5V1H3a2 2 0 0 0-2 2v14a2 2 0 0" +
@@ -3042,8 +2944,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    OPERATOR("operator.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    OPERATOR("operator.svg", "svg-image__operator", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -3083,8 +2984,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PASSWORD("password.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PASSWORD("password.svg", "svg-image__password", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -3097,8 +2997,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PAUSE("pause.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PAUSE("pause.svg", "svg-image__pause", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
             "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
             "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
@@ -3110,8 +3009,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_ELASTIC_INDEX("pipeline/elastic_index.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_ELASTIC_INDEX("pipeline/elastic_index.svg", "svg-image__pipeline-elastic-index", "" +
             "<!-- Generator: Adobe Illustrator 25.2.0, SVG Export Plug-In . SVG Version: 6.00" +
             " Build 0)  -->\n" +
             "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"" +
@@ -3179,8 +3077,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_FILE("pipeline/file.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_FILE("pipeline/file.svg", "svg-image__pipeline-file", "" +
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
             "/2000/svg\">\n" +
             "    <path\n" +
@@ -3192,8 +3089,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_FILES("pipeline/files.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_FILES("pipeline/files.svg", "svg-image__pipeline-files", "" +
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
             "/2000/svg\">\n" +
             "    <path\n" +
@@ -3207,8 +3103,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_HADOOP("pipeline/hadoop.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    PIPELINE_HADOOP("pipeline/hadoop.svg", "svg-image__pipeline-hadoop", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +
             "<svg\n" +
@@ -4005,8 +3900,7 @@ public enum SvgImage {
             "       inkscape:connector-curvature=\"0\" /></g></svg>\n" +
             ""),
 
-    PIPELINE_ID("pipeline/id.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    PIPELINE_ID("pipeline/id.svg", "svg-image__pipeline-id", "" +
             "<svg\n" +
             "        xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
             "        xmlns:cc=\"http://creativecommons.org/ns#\"\n" +
@@ -4071,8 +3965,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_INDEX("pipeline/index.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_INDEX("pipeline/index.svg", "svg-image__pipeline-index", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -4086,8 +3979,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_JSON("pipeline/json.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_JSON("pipeline/json.svg", "svg-image__pipeline-json", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4100,8 +3992,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_KAFKA("pipeline/kafka.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_KAFKA("pipeline/kafka.svg", "svg-image__pipeline-kafka", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -4148,8 +4039,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_RECORD_COUNT("pipeline/record_count.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_RECORD_COUNT("pipeline/record_count.svg", "svg-image__pipeline-record-count", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4220,8 +4110,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_RECORD_OUTPUT("pipeline/record_output.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_RECORD_OUTPUT("pipeline/record_output.svg", "svg-image__pipeline-record-output", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__green)\"\n" +
@@ -4231,8 +4120,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_REFERENCE_DATA("pipeline/reference_data.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_REFERENCE_DATA("pipeline/reference_data.svg", "svg-image__pipeline-reference-data", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4256,8 +4144,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_SEARCH_OUTPUT("pipeline/search_output.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_SEARCH_OUTPUT("pipeline/search_output.svg", "svg-image__pipeline-search-output", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4269,8 +4156,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_SOLR("pipeline/solr.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    PIPELINE_SOLR("pipeline/solr.svg", "svg-image__pipeline-solr", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\"\n" +
             "     width=\"67.015625pt\"\n" +
             "     height=\"67.03125pt\"\n" +
@@ -4295,8 +4181,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_SPLIT("pipeline/split.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_SPLIT("pipeline/split.svg", "svg-image__pipeline-split", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4350,8 +4235,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_STATISTICS("pipeline/statistics.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_STATISTICS("pipeline/statistics.svg", "svg-image__pipeline-statistics", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4365,8 +4249,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_STREAM("pipeline/stream.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_STREAM("pipeline/stream.svg", "svg-image__pipeline-stream", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4409,8 +4292,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_STROOM_STATS("pipeline/stroom_stats.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_STROOM_STATS("pipeline/stroom_stats.svg", "svg-image__pipeline-stroom-stats", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#9c27b0\"\n" +
@@ -4424,8 +4306,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_STROOM_STATS_STORE("pipeline/stroom_stats_store.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_STROOM_STATS_STORE("pipeline/stroom_stats_store.svg", "svg-image__pipeline-stroom-stats-store", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#9c27b0\"\n" +
@@ -4439,8 +4320,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_TEXT("pipeline/text.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_TEXT("pipeline/text.svg", "svg-image__pipeline-text", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -4455,8 +4335,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_XML("pipeline/xml.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_XML("pipeline/xml.svg", "svg-image__pipeline-xml", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__xml-background)\"\n" +
@@ -4494,8 +4373,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_XML_SEARCH("pipeline/xml_search.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    PIPELINE_XML_SEARCH("pipeline/xml_search.svg", "svg-image__pipeline-xml-search", "" +
             "<svg\n" +
             "   xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
             "   xmlns:cc=\"http://creativecommons.org/ns#\"\n" +
@@ -4570,8 +4448,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_XSD("pipeline/xsd.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_XSD("pipeline/xsd.svg", "svg-image__pipeline-xsd", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__xsd-background)\"\n" +
@@ -4631,8 +4508,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PIPELINE_XSLT("pipeline/xslt.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PIPELINE_XSLT("pipeline/xslt.svg", "svg-image__pipeline-xslt", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__xsl-background)\"\n" +
@@ -4686,8 +4562,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PLAY("play.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PLAY("play.svg", "svg-image__play", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-100 -25 598 562\">\n" +
             "    <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Lice" +
             "nse - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1" +
@@ -4698,8 +4573,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PROCESS("process.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PROCESS("process.svg", "svg-image__process", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4751,8 +4625,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    PROPERTIES("properties.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    PROPERTIES("properties.svg", "svg-image__properties", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -4769,8 +4642,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    QUESTION("question.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    QUESTION("question.svg", "svg-image__question", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "  <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -4835,8 +4707,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    RAW("raw.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    RAW("raw.svg", "svg-image__raw", "" +
             "<svg id=\"svg4232\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=" +
             "\"http://www.w3.org/2000/svg\" height=\"1792\" viewBox=\"0 0 1792 1792\" width=\"1792\" " +
             "version=\"1.1\" xmlns:cc=\"http://creativecommons.org/ns#\" xmlns:dc=\"http://purl.or" +
@@ -4875,8 +4746,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    REFRESH("refresh.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    REFRESH("refresh.svg", "svg-image__refresh", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -4890,7 +4760,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    REGEX("regex.svg", "" +
+    REGEX("regex.svg", "svg-image__regex", "" +
             "<svg class=\"svg-icon\"\n" +
             "     style=\"width: 1em; height: 1em;vertical-align: middle;fill: currentColor;ov" +
             "erflow: hidden;\"\n" +
@@ -4913,8 +4783,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    REMOVE("remove.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    REMOVE("remove.svg", "svg-image__remove", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -4923,7 +4792,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    RESIZE("resize.svg", "" +
+    RESIZE("resize.svg", "svg-image__resize", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"4 4 23 23\">\n" +
             "    <path style=\"fill: currentColor\" d=\"M 5 5 L 5 6 L 5 7 L 6 7 L 7 7 L 7 6 L 7 " +
             "5 L 6 5 L 5 5 z M 9 5 L 9 7 L 11 7 L 11 5 L 9 5 z M 13 5 L 13 7 L 15 7 L 15 5 L " +
@@ -4941,8 +4810,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    RESIZE_HANDLE("resize-handle.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    RESIZE_HANDLE("resize-handle.svg", "svg-image__resize-handle", "" +
             "<svg\n" +
             "   width=\"20\"\n" +
             "   height=\"20\"\n" +
@@ -5000,8 +4868,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    RULESET("ruleset.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    RULESET("ruleset.svg", "svg-image__ruleset", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -5011,8 +4878,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SAVE("save.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SAVE("save.svg", "svg-image__save", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path id=\"background\"\n" +
@@ -5041,8 +4907,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SAVEAS("saveas.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SAVEAS("saveas.svg", "svg-image__saveas", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path id=\"background\"\n" +
@@ -5126,8 +4991,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SEARCH("search.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SEARCH("search.svg", "svg-image__search", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -5139,8 +5003,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SEARCH_DARK("search-dark.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SEARCH_DARK("search-dark.svg", "svg-image__search-dark", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#e6e1dc\"\n" +
@@ -5152,8 +5015,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SETTINGS("settings.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SETTINGS("settings.svg", "svg-image__settings", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -5170,8 +5032,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SHARD_CLOSE("shard-close.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SHARD_CLOSE("shard-close.svg", "svg-image__shard-close", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -5202,8 +5063,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SHARD_FLUSH("shard-flush.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SHARD_FLUSH("shard-flush.svg", "svg-image__shard-flush", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
@@ -5234,8 +5094,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SHARE("share.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SHARE("share.svg", "svg-image__share", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path fill=\"currentColor\" d=\"M 1440.207 1768.614 C 1371.954 1768.614 1313.50" +
@@ -5281,8 +5140,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    SHOW("show.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SHOW("show.svg", "svg-image__show", "" +
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
             "/2000/svg\"><path style=\"fill:currentColor\" d=\"M1664 960q-152-236-381-353 61 104 " +
             "61 225 0 185-131.5 316.5t-316.5 131.5-316.5-131.5-131.5-316.5q0-121 61-225-229 1" +
@@ -5293,8 +5151,7 @@ public enum SvgImage {
             "376.5 368q20 35 20 69z\"/></svg>\n" +
             ""),
 
-    SHOW_MENU("show-menu.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    SHOW_MENU("show-menu.svg", "svg-image__show-menu", "" +
             "<svg height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" xmlns=\"http://www." +
             "w3.org/2000/svg\">\n" +
             "    <path style=\"fill:currentColor\" fill-rule=\"evenodd\" d=\"M6.823 7.823L4.427 5." +
@@ -5307,8 +5164,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    STEP("step.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    STEP("step.svg", "svg-image__step", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\">\n" +
             "    <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Lice" +
             "nse - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1" +
@@ -5323,8 +5179,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    STEPPING("stepping.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    STEPPING("stepping.svg", "svg-image__stepping", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1792 1792\" height=\"1792\" wi" +
             "dth=\"1792\">\n" +
             "    <path style=\"fill:#ffffff\"\n" +
@@ -5338,8 +5193,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    STEPPING_CIRCLE("stepping-circle.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    STEPPING_CIRCLE("stepping-circle.svg", "svg-image__stepping-circle", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1792 1792\" height=\"1792\" wi" +
             "dth=\"1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__blue)\"\n" +
@@ -5362,8 +5216,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    STEP_BACKWARD("step-backward.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    STEP_BACKWARD("step-backward.svg", "svg-image__step-backward", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\">\n" +
             "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
             "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
@@ -5376,8 +5229,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    STEP_FORWARD("step-forward.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    STEP_FORWARD("step-forward.svg", "svg-image__step-forward", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\">\n" +
             "  <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Licens" +
             "e - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, " +
@@ -5392,8 +5244,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    STOP("stop.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    STOP("stop.svg", "svg-image__stop", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-5 0 448 512\">\n" +
             "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
             "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
@@ -5404,8 +5255,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    TABLE("table.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    TABLE("table.svg", "svg-image__table", "" +
             "<svg id=\"svg5453\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=" +
             "\"http://www.w3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"" +
             "http://creativecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" view" +
@@ -5445,8 +5295,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    TABLE_NESTED("table-nested.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    TABLE_NESTED("table-nested.svg", "svg-image__table-nested", "" +
             "<svg\n" +
             "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
             "   height=\"1792\"\n" +
@@ -5573,8 +5422,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    TAB_CLOSE("tab_close.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    TAB_CLOSE("tab_close.svg", "svg-image__tab-close", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" height=\"45\" width=\"45\" vie" +
             "wBox=\"0 0 45 45\">\n" +
             "    <g style=\"stroke:currentColor;stroke-width:4.5;stroke-linecap:round;\"\n" +
@@ -5585,7 +5433,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    TICK("tick.svg", "" +
+    TICK("tick.svg", "svg-image__tick", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><!-- Font Awesome " +
             "Free 5.15.3 by @fontawesome - https://fontawesome.com License - https://fontawes" +
             "ome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) -" +
@@ -5595,8 +5443,7 @@ public enum SvgImage {
             "206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z\"/></svg>\n" +
             ""),
 
-    UNDO("undo.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    UNDO("undo.svg", "svg-image__undo", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -5609,8 +5456,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    UNLOCK("unlock.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    UNLOCK("unlock.svg", "svg-image__unlock", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
             "    <path style=\"fill:#ff8f00\"\n" +
             "          d=\"m 382.4,255.99995 -223.2,0 0,-92.79 c 0,-35.64 28.53,-65.249999 64." +
@@ -5623,8 +5469,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    UP("up.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    UP("up.svg", "svg-image__up", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -5635,8 +5480,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    UPLOAD("upload.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    UPLOAD("upload.svg", "svg-image__upload", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:var(--icon-colour__green)\"\n" +
@@ -5647,8 +5491,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    USER("user.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    USER("user.svg", "svg-image__user", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -5659,8 +5502,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    USERS("users.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    USERS("users.svg", "svg-image__users", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -5678,8 +5520,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    VOLUMES("volumes.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    VOLUMES("volumes.svg", "svg-image__volumes", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:currentColor\"\n" +
@@ -5693,8 +5534,7 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
-    WARNING("warning.svg", "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    WARNING("warning.svg", "svg-image__warning", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"-20 " +
             "-20 1832 1832\">\n" +
             "    <path style=\"fill:#ffde81\"\n" +
@@ -5724,12 +5564,15 @@ public enum SvgImage {
             "</svg>\n" +
             "");
 
+    public static final String BASE_CLASS_NAME = "svg-image";
 
     private final String relativePathStr;
+    private final String className;
     private final String svg;
 
-    SvgImage(final String relativePathStr, final String svg) {
+    SvgImage(final String relativePathStr, final String className, final String svg) {
         this.relativePathStr = relativePathStr;
+        this.className = className;
         this.svg = svg;
     }
 
@@ -5745,5 +5588,12 @@ public enum SvgImage {
      */
     public String getRelativePathStr() {
         return relativePathStr;
+    }
+
+    /**
+     * @return The CSS class name for the icon.
+     */
+    public String getClassName() {
+        return className;
     }
 }

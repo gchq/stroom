@@ -18,6 +18,7 @@ package stroom.job.client;
 
 import stroom.job.shared.JobNode.JobType;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.SelectionCell;
@@ -35,7 +36,7 @@ public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
      */
     public JobTypeCell() {
         super("change", "click");
-        button = "<div class=\"svgIcon icon-colour__blue\">" + SvgImage.HISTORY.getSvg() + "</div>";
+        button = SvgImageUtil.toSafeHtml(SvgImage.HISTORY, "svgIcon icon-colour__blue").asString();
     }
 
     @Override

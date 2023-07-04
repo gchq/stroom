@@ -6,6 +6,7 @@ import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -61,10 +62,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
                         break;
                     case OPEN:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_DOWN.getSvg());
+                        expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
                         break;
                     case CLOSED:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_RIGHT.getSvg());
+                        expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT);
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
@@ -76,7 +77,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
             // Add expander.
-            content.append(template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon));
+            content.append(template.expander(
+                    getCellClassName() + "-expander",
+                    paddingLeft,
+                    expanderIcon));
 
             if (tickBoxCell != null) {
                 final SafeHtmlBuilder tb = new SafeHtmlBuilder();
@@ -89,9 +93,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (item.getIcon() != null) {
                 // Add icon
-                content.append(template.icon(getCellClassName() + "-icon",
+                content.append(SvgImageUtil.toSafeHtml(
                         item.getType(),
-                        SafeHtmlUtils.fromSafeConstant(item.getIcon().getSvg())));
+                                item.getIcon(),
+                                getCellClassName() + "-icon"));
             }
 
             if (item.getDisplayValue() != null) {
@@ -103,9 +108,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             // If the item is a favourite and not part of the Favourites node, display a star next to it
             if (item.getIsFavourite() && item.getRootNodeUuid() != null &&
                     !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(item.getRootNodeUuid())) {
-                content.append(template.favIcon("svgIcon small",
+                content.append(SvgImageUtil.toSafeHtml(
                         "Item is a favourite",
-                        SafeHtmlUtils.fromSafeConstant(SvgImage.FAVOURITES.getSvg())));
+                                SvgImage.FAVOURITES,
+                                "svgIcon", "small"));
             }
 
             sb.append(template.outer(content.toSafeHtml()));
@@ -132,14 +138,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml icon(String iconClass, String typeName, SafeHtml icon);
-
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
-
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml favIcon(String iconClass, String title, SafeHtml icon);
 
         @Template("<div class=\"explorerCell\">{0}</div>")
         SafeHtml outer(SafeHtml content);

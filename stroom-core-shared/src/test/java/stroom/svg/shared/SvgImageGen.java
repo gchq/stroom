@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -33,10 +34,13 @@ public class SvgImageGen {
 
     private static final String CORE_SHARED_DIR = "stroom-core-shared";
     private static final String APP_DIR = "stroom-app";
+    private static final String BASE_CLASS_NAME = "svg-image";
+    private static final Pattern XML_DECLARATION_PATTERN = Pattern.compile("<\\?xml[^?]+\\?>\\n?");
 
     // Hex colour => css colour variable
     private static final Map<String, String> COLOUR_MAPPINGS = Map.of(
             "#000000", "var(--icon-colour__foreground)",
+            "#fefefe", "var(--icon-colour__highlight)",
             "#2196f4", "var(--icon-colour__xsd-background)",
             "#aed581", "var(--icon-colour__xsl-background)",
             "#ce93d8", "var(--icon-colour__xml-background)",
@@ -61,11 +65,15 @@ public class SvgImageGen {
             """.replace("@@CLASS_NAME@@", SvgImageGen.class.getName());
 
     private static final String ENUM_FOOTER = """
+                
+
                 private final String relativePathStr;
+                private final String className;
                 private final String svg;
 
-                SvgImage(final String relativePathStr, final String svg) {
+                SvgImage(final String relativePathStr, final String className, final String svg) {
                     this.relativePathStr = relativePathStr;
+                    this.className = className;
                     this.svg = svg;
                 }
 
@@ -81,6 +89,13 @@ public class SvgImageGen {
                  */
                 public String getRelativePathStr() {
                     return relativePathStr;
+                }
+                
+                /**
+                 * @return The CSS class name for the icon.
+                 */
+                public String getClassName() {
+                    return className;
                 }
             }
             """;
@@ -127,14 +142,21 @@ public class SvgImageGen {
                             final String cssColourVariable = entry.getValue();
                             xml = xml.replaceAll(hex, cssColourVariable);
                         }
+                        // Remove the XML declaration
+                        xml = XML_DECLARATION_PATTERN.matcher(xml).replaceAll("");
+
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
+                        final String className = "svg-image__"
+                                + enumFieldName.toLowerCase().replace("_", "-");
                         final boolean isNewName = enumFieldNameSet.add(enumFieldName);
                         if (!isNewName) {
                             System.err.println("Enum field name clash: " + enumFieldName);
                         }
 
-                        final SvgFile svgFile = new SvgFile(relSourcePath,
+                        final SvgFile svgFile = new SvgFile(
+                                relSourcePath,
                                 enumFieldName,
+                                className,
                                 xml);
 
                         if (Files.exists(output)) {
@@ -176,6 +198,8 @@ public class SvgImageGen {
                     sb.append(svgFile.enumFieldName);
                     sb.append("(\"");
                     sb.append(svgFile.relPath.toString());
+                    sb.append("\", \"");
+                    sb.append(svgFile.className);
                     sb.append("\", \"\" +\n");
 
                     final String[] parts = svgFile.xml.split("\n");
@@ -201,7 +225,10 @@ public class SvgImageGen {
                     sb.append("            \"\"),\n\n");
                 });
 
-        sb.replace(sb.length() - 3, sb.length() - 1, ";\n\n");
+        sb.replace(sb.length() - 3, sb.length() - 1, ";\n");
+        sb.append("    public static final String BASE_CLASS_NAME = \"");
+        sb.append(BASE_CLASS_NAME);
+        sb.append("\";");
         sb.append(ENUM_FOOTER);
 
         final Path outPath = coreSharedPath.resolve(ENUM_REL_FILE_PATH);
@@ -253,6 +280,7 @@ public class SvgImageGen {
     private record SvgFile(
             Path relPath,
             String enumFieldName,
+            String className,
             String xml) {
 
     }

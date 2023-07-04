@@ -58,6 +58,7 @@
 
 .icon-button.disabled {
     opacity: .4;
+    cursor: default;
 }
 
 .icon-button.disabled .background {

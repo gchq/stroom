@@ -19,6 +19,7 @@ package stroom.alert.client.view;
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -80,25 +81,25 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Override
     public void setQuestion(final SafeHtml text) {
-        image.getElement().setInnerHTML(SvgImage.QUESTION.getSvg());
+        image.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.QUESTION));
         setHTML(text);
     }
 
     @Override
     public void setInfo(final SafeHtml text) {
-        image.getElement().setInnerHTML(SvgImage.INFO.getSvg());
+        image.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.INFO));
         setHTML(text);
     }
 
     @Override
     public void setWarn(final SafeHtml text) {
-        image.getElement().setInnerHTML(SvgImage.WARNING.getSvg());
+        image.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.WARNING));
         setHTML(text);
     }
 
     @Override
     public void setError(final SafeHtml text) {
-        image.getElement().setInnerHTML(SvgImage.ERROR.getSvg());
+        image.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.ERROR));
         setHTML(text);
     }
 
