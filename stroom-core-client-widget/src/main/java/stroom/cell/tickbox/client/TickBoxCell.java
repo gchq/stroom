@@ -245,44 +245,39 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         @Override
         public SafeHtml getHTML(final TickBoxState value) {
-            String className = null;
-            final SafeHtml svg;
-            switch (value) {
-                case TICK:
-                    className = TICK;
-                    svg = SvgImageUtil.toSafeHtml(SvgImage.TICK);
-                    break;
-                case HALF_TICK:
-                    className = HALF_TICK;
-                    svg = SvgImageUtil.emptySvg(HALF_TICK_INNER);
-                    break;
-                case UNTICK:
-                    className = UNTICK;
-                    svg = SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    break;
-                default:
-                    svg = SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    break;
-            }
-
             if (template == null) {
                 template = GWT.create(Template.class);
             }
 
-            return template.div(
-                    TICKBOX_CLASSNAME + additionalClassNames + className,
-                    svg);
+            final SafeHtml safeHtml;
+            switch (value) {
+                case TICK:
+                    safeHtml = SvgImageUtil.toSafeHtml(SvgImage.TICK, TICKBOX_CLASSNAME, additionalClassNames, TICK);
+                    break;
+                case HALF_TICK:
+                    safeHtml = template.halfTick(
+                            TICKBOX_CLASSNAME + additionalClassNames + HALF_TICK,
+                            HALF_TICK_INNER);
+                    break;
+                case UNTICK:
+                    safeHtml = template.untick(TICKBOX_CLASSNAME + additionalClassNames + UNTICK);
+                    break;
+                default:
+                    safeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    break;
+            }
+
+            return safeHtml;
         }
+    }
 
+    public interface Template extends SafeHtmlTemplates {
 
-        // --------------------------------------------------------------------------------
+        @Template("<div class=\"{0}\"><div class=\"{1}\"></div></div>")
+        SafeHtml halfTick(String outerClassName, String innerClassName);
 
-
-        public interface Template extends SafeHtmlTemplates {
-
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml div(String className, SafeHtml content);
-        }
+        @Template("<div class=\"{0}\"></div>")
+        SafeHtml untick(String outerClassName);
     }
 
 

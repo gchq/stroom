@@ -2,7 +2,6 @@ package stroom.explorer.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.explorer.shared.DocumentType;
-import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;

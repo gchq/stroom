@@ -86,18 +86,7 @@ public class ActionCell<R> extends AbstractCell<R> {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final String className = "svgCell-icon svgCell-button";
-
-//            if (svgPreset.getTitle() != null && !svgPreset.getTitle().isEmpty()) {
-//                sb.append(template.icon(
-//                        className,
-//                        svgPreset.getTitle(),
-//                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
-//            } else {
-//                sb.append(template.icon(
-//                        className,
-//                        SafeHtmlUtils.fromSafeConstant(svgPreset.getSvgImage().getSvg())));
-//            }
-            sb.append(SvgImageUtil.toSafeHtml(svgPreset));
+            sb.append(SvgImageUtil.toSafeHtml(svgPreset, className));
         }
     }
 }
