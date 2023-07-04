@@ -36,6 +36,8 @@ public class SvgImageGen {
     private static final String APP_DIR = "stroom-app";
     private static final String BASE_CLASS_NAME = "svg-image";
     private static final Pattern XML_DECLARATION_PATTERN = Pattern.compile("<\\?xml[^?]+\\?>\\n?");
+    private static final Pattern XML_INDENT_PATTERN = Pattern.compile(">\\s*<");
+    private static final Pattern EXCESS_WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     // Hex colour => css colour variable
     private static final Map<String, String> COLOUR_MAPPINGS = Map.of(
@@ -65,6 +67,7 @@ public class SvgImageGen {
             """.replace("@@CLASS_NAME@@", SvgImageGen.class.getName());
 
     private static final String ENUM_FOOTER = """
+
 
                 private final String relativePathStr;
                 private final String className;
@@ -143,6 +146,8 @@ public class SvgImageGen {
                         }
                         // Remove the XML declaration
                         xml = XML_DECLARATION_PATTERN.matcher(xml).replaceAll("");
+                        xml = XML_INDENT_PATTERN.matcher(xml).replaceAll("><");
+                        xml = EXCESS_WHITESPACE_PATTERN.matcher(xml).replaceAll(" ");
 
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
                         final String className = "svg-image__"
