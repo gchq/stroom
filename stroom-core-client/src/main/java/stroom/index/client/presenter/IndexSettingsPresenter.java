@@ -89,11 +89,6 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
     }
 
     @Override
-    public String getType() {
-        return IndexDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final IndexDoc index, final boolean readOnly) {
         getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
         getView().setShardsPerPartition(index.getShardsPerPartition());

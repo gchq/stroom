@@ -41,11 +41,6 @@ public class ScriptSettingsPresenter extends DocumentEditPresenter<ScriptSetting
     }
 
     @Override
-    public String getType() {
-        return ScriptDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     protected void onBind() {
         final DirtyHandler dirtyHandler = event -> setDirty(true);
         registerHandler(scriptDependencyListPresenter.addDirtyHandler(dirtyHandler));

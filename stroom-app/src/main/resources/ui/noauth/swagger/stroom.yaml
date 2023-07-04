@@ -8109,6 +8109,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED
@@ -8217,7 +8218,7 @@ components:
     DocumentTypes:
       type: object
       properties:
-        nonSystemTypes:
+        types:
           type: array
           items:
             $ref: '#/components/schemas/DocumentType'
@@ -8543,6 +8544,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED
@@ -8726,6 +8728,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED
@@ -10836,6 +10839,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED

@@ -103,11 +103,6 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         return entity;
     }
 
-    @Override
-    public String getType() {
-        return ViewDoc.DOCUMENT_TYPE;
-    }
-
     public interface ViewSettingsView extends View {
 
         void setDataSourceSelectionView(View view);

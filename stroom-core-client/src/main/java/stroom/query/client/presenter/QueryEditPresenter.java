@@ -231,8 +231,10 @@ public class QueryEditPresenter
         queryModel.init(docRef.getUuid(), "query");
         if (query != null) {
             reading = true;
-            editorPresenter.setText(query);
-            queryHelpPresenter.setQuery(query, indexLoader::loadDataSource);
+            if (editorPresenter.getText().length() == 0 || !editorPresenter.getText().equals(query)) {
+                editorPresenter.setText(query);
+                queryHelpPresenter.setQuery(query, indexLoader::loadDataSource);
+            }
             reading = false;
         }
         queryToolbarPresenter.setEnabled(true);

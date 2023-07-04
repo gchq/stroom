@@ -157,7 +157,9 @@ public class MarkdownEditPresenter
         }
 
         reading = true;
-        codePresenter.setText(rawMarkdown);
+        if (!codePresenter.getText().equals(rawMarkdown)) {
+            codePresenter.setText(rawMarkdown);
+        }
         reading = false;
         updateMarkdownOnIFramePresenter();
     }
