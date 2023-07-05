@@ -37,7 +37,7 @@
 }
 
 .tickBox-halfTick {
-    padding: 3px;
+    padding: 3px !important;
 }
 
 .tickBox-halfTick-inner {
