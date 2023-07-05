@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.40] - 2023-07-05
+
+* Issue **#3575** : Duplicate tab now allows user to choose destination.
+
+* Issue **#3574** : Add remove all to dashboards.
+
+* Issue **#3556** : Fix dashboard icon sizes.
+
+* Issue **#3548** : Fix dependency screen icons.
+
+* Issue **#3507** : Reinstate TabContentProvider to lazy load UI tabs.
+
+* Issue **#3581** : Make button appearance more consistent.
+
+* Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
+
+* Issue **#3569** : Fix stuck extraction tasks.
+
+
 ## [v7.2-beta.39] - 2023-06-29
 
 * Issue **#3559** : Allow user to choose the location of new dashboard components.
@@ -5562,7 +5581,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.39...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.40...HEAD
+[v7.2-beta.40]: https://github.com/gchq/stroom/compare/v7.2-beta.39...v7.2-beta.40
 [v7.2-beta.39]: https://github.com/gchq/stroom/compare/v7.2-beta.38...v7.2-beta.39
 [v7.2-beta.38]: https://github.com/gchq/stroom/compare/v7.2-beta.36...v7.2-beta.38
 [v7.2-beta.36]: https://github.com/gchq/stroom/compare/v7.2-beta.35-restyle...v7.2-beta.36
