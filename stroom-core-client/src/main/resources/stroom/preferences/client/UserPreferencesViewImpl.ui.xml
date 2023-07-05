@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:item="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
@@ -57,8 +58,8 @@
         </form:FormGroup>
 
         <g:FlowPanel styleName="preferencesViewImpl-buttons button-group">
-            <g:Button ui:field="setAsDefault" addStyleNames="allow-focus" text="Set As Default"/>
-            <g:Button ui:field="revertToDefault" addStyleNames="allow-focus" text="Revert To Default"/>
+            <b:Button ui:field="setAsDefault" addStyleNames="allow-focus" text="Set As Default"/>
+            <b:Button ui:field="revertToDefault" addStyleNames="allow-focus" text="Revert To Default"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

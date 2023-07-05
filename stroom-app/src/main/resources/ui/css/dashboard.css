@@ -408,6 +408,7 @@
 
 .fields-field * {
     vertical-align: middle;
+    display: inline-block;
 }
 
 .fields-fieldLabel {

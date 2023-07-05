@@ -151,7 +151,7 @@
 
 .annotationAssignYourself {
     display: inline-block;
-    color: #0366d6;
+    color: var(--link__text-color);
     cursor: pointer;
     text-decoration: underline;
     padding-left: 10px;
@@ -162,7 +162,7 @@
 }
 
 .annotationDurationLabel:hover {
-    color: #0366d6;
+    color: var(--link__text-color);
 }
 
 .annotationHistoryContainer {
@@ -204,6 +204,7 @@
 .annotationHistoryCommentBorder {
     flex-grow: 1;
     border: 1px solid var(--border-color);
+    background-color: var(--control__background-color);
     border-radius: 5px;
 }
 
@@ -213,7 +214,6 @@
     white-space: pre-wrap;
     word-break: break-word;
     border-bottom: 1px solid var(--border-color);
-    background-color: var(--navigation__background-color);
     color: var(--navigation__text-color);
 }
 
@@ -222,7 +222,6 @@
     padding: 5px;
     white-space: pre-wrap;
     word-break: break-word;
-    background-color: var(--control__background-color);
     color: var(--control__text-color);
 }
 
@@ -253,7 +252,7 @@
 
 .showLinkedEvents {
     display: inline-block;
-    color: #0366d6;
+    color: var(--link__text-color);
     cursor: pointer;
     text-decoration: underline;
     text-align: right;

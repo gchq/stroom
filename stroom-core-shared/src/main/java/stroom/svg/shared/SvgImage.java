@@ -221,6 +221,18 @@ public enum SvgImage {
             "5875,1.5875\" /></g></svg>\n" +
             ""),
 
+    CANCEL("cancel.svg", "" +
+            "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"times\" cl" +
+            "ass=\"svg-inline--fa fa-times fa-w-11 fa-lg \" role=\"img\" xmlns=\"http://www.w3.org" +
+            "/2000/svg\" viewBox=\"0 0 352 512\"><path fill=\"currentColor\" d=\"M242.72 256l100.07" +
+            "-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44" +
+            ".48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28" +
+            " 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44." +
+            "48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12." +
+            "28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z\"><" +
+            "/path></svg>\n" +
+            ""),
+
     CASE_SENSITIVE("case-sensitive.svg", "" +
             "<?xml version=\"1.0\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 2" +
@@ -3001,6 +3013,16 @@ public enum SvgImage {
             "</svg>\n" +
             ""),
 
+    OK("ok.svg", "" +
+            "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"check\" cl" +
+            "ass=\"svg-inline--fa fa-check fa-w-16 fa-lg \" role=\"img\" xmlns=\"http://www.w3.org" +
+            "/2000/svg\" viewBox=\"0 0 512 512\"><path fill=\"currentColor\" d=\"M173.898 439.404l-" +
+            "166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-" +
+            "9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.20" +
+            "3 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9." +
+            "997-36.204-.001z\"></path></svg>\n" +
+            ""),
+
     OO("oo.svg", "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
@@ -4941,60 +4963,20 @@ public enum SvgImage {
 
     RESIZE_HANDLE("resize-handle.svg", "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
-            "<svg\n" +
-            "   width=\"20\"\n" +
-            "   height=\"20\"\n" +
-            "   viewBox=\"0 0 20 20\"\n" +
-            "   version=\"1.1\"\n" +
-            "   id=\"svg40\"\n" +
-            "   sodipodi:docname=\"resize-handle.svg\"\n" +
-            "   inkscape:version=\"1.2.2 (b0a8486541, 2022-12-01)\"\n" +
-            "   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n" +
-            "   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n" +
-            "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
-            "   xmlns:svg=\"http://www.w3.org/2000/svg\">\n" +
-            "  <defs\n" +
-            "     id=\"defs44\" />\n" +
-            "  <sodipodi:namedview\n" +
-            "     id=\"namedview42\"\n" +
-            "     pagecolor=\"#ffffff\"\n" +
-            "     bordercolor=\"#666666\"\n" +
-            "     borderopacity=\"1.0\"\n" +
-            "     inkscape:showpageshadow=\"2\"\n" +
-            "     inkscape:pageopacity=\"0.0\"\n" +
-            "     inkscape:pagecheckerboard=\"0\"\n" +
-            "     inkscape:deskcolor=\"#d1d1d1\"\n" +
-            "     showgrid=\"false\"\n" +
-            "     inkscape:zoom=\"78.777776\"\n" +
-            "     inkscape:cx=\"7.8004233\"\n" +
-            "     inkscape:cy=\"6.5056419\"\n" +
-            "     inkscape:window-width=\"1444\"\n" +
-            "     inkscape:window-height=\"1236\"\n" +
-            "     inkscape:window-x=\"6025\"\n" +
-            "     inkscape:window-y=\"46\"\n" +
-            "     inkscape:window-maximized=\"0\"\n" +
-            "     inkscape:current-layer=\"svg40\" />\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 2" +
+            "0\">\n" +
             "  <path\n" +
-            "     style=\"fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;" +
-            "stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" +
-            "\"\n" +
-            "     d=\"M 0.64999998,10.65 10.65,0.64999998\"\n" +
-            "     id=\"path36\" />\n" +
+            "          style=\"fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:r" +
+            "ound;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opac" +
+            "ity:1\"\n" +
+            "          d=\"M 0.64999998,10.65 10.65,0.64999998\"\n" +
+            "  />\n" +
             "  <path\n" +
-            "     style=\"fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;" +
-            "stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" +
-            "\"\n" +
-            "     d=\"m 4.0679882,10.65 v 0 L 10.65,4.0745422\"\n" +
-            "     id=\"path38-3\"\n" +
-            "     sodipodi:nodetypes=\"ccc\" />\n" +
-            "  <rect\n" +
-            "     style=\"stroke-width:1.75748;stroke-linecap:round;stroke-linejoin:round;fill" +
-            ":none\"\n" +
-            "     id=\"rect454\"\n" +
-            "     width=\"10\"\n" +
-            "     height=\"10\"\n" +
-            "     x=\"0.64999998\"\n" +
-            "     y=\"0.64999998\" />\n" +
+            "          style=\"fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:r" +
+            "ound;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opac" +
+            "ity:1\"\n" +
+            "          d=\"M 10.65,5.5292547 5.5230786,10.65 v 0\"\n" +
+            "  />\n" +
             "</svg>\n" +
             ""),
 

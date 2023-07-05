@@ -20,12 +20,12 @@
 
 /* Resize handle */
 .resizableDialog-resizeHandle {
-	position: absolute;
-	right: -9px;
-	bottom: -9px;
-	width: 20px;
-	height: 20px;
-	cursor: nw-resize;
+    position: absolute;
+    right: -16px;
+    bottom: -16px;
+    width: 32px;
+    height: 32px;
+    cursor: nw-resize;
 }
 
 .resizableDialog-resizeHandle svg {

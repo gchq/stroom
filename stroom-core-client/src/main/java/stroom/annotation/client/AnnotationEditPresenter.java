@@ -32,6 +32,7 @@ import stroom.hyperlink.client.HyperlinkType;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -44,7 +45,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.Button;
+import stroom.widget.button.client.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
@@ -438,7 +439,9 @@ public class AnnotationEditPresenter
                 textCopy.setStyleName("annotationHistoryText");
                 textCopy.setText(text.toString());
 
-                final Button copyToClipboard = new Button("Copy History");
+                final Button copyToClipboard = new Button();
+                copyToClipboard.setIcon(SvgImage.COPY);
+                copyToClipboard.setText("Copy History");
                 copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
                 copyToClipboard.addClickHandler(e -> {
                     textCopy.selectAll();
