@@ -150,7 +150,6 @@ public final class ExpressionOperator extends ExpressionItem {
     /**
      * @return True if it has at least one child that is enabled
      */
-    @JsonIgnore
     public boolean hasEnabledChildren() {
         return children != null
                 && children.stream()
