@@ -210,25 +210,15 @@ General button styles
 }
 
 .Button:hover {
+/*
   text-decoration: none;
+    border-color: var(--color-btn-hover-border);
+    */
 
   background-color: var(--color-btn-hover-bg);
-  border-color: var(--color-btn-hover-border);
   transition-duration: .1s;
 }
 
-
-
-
-
-
-
-
-.Button:hover {
-  /* .j9la4jl:hover */
-  text-decoration: none;
-  background-color: rgba(0, 0, 0, 0.08);
-}
 
 .Button.Button--disabled {
   /* .j9la4jl.j1p4cocs { */
