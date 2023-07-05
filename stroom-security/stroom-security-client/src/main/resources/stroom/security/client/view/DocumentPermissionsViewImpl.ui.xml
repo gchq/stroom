@@ -3,7 +3,7 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="max dock-container-vertical">
+    <g:FlowPanel styleName="max dock-container-vertical form">
         <g:SimplePanel ui:field="tabs" styleName="dock-max"/>
         <g:FlowPanel ui:field="innerLayout" styleName="dock-min form">
             <form:FormGroup ui:field="cascadeGrid" identity="documentPermissionsCascade" label="Cascade">
