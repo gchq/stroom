@@ -71,11 +71,6 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
     }
 
     @Override
-    public String getType() {
-        return VisualisationDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     protected void onBind() {
         registerHandler(scriptPresenter.addDataSelectionHandler(event -> {
             if (!EqualsUtil.isEquals(scriptPresenter.getSelectedEntityReference(),

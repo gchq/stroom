@@ -18,10 +18,11 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -29,68 +30,40 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Provider;
+
 public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticClusterDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final ElasticClusterSettingsPresenter clusterSettingsPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
     @Inject
     public ElasticClusterPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final ElasticClusterSettingsPresenter clusterSettingsPresenter,
-            final MarkdownEditPresenter markdownEditPresenter) {
+            final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenterProvider,
+            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.clusterSettingsPresenter = clusterSettingsPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        addTab(SETTINGS);
-        addTab(DOCUMENTATION);
+        addTab(SETTINGS, new DocumentEditTabProvider<>(clusterSettingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticClusterDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final ElasticClusterDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public ElasticClusterDoc onWrite(final MarkdownEditPresenter presenter,
+                                             final ElasticClusterDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(SETTINGS);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(clusterSettingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS.equals(tab)) {
-            callback.onReady(clusterSettingsPresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final ElasticClusterDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
-        clusterSettingsPresenter.read(docRef, doc, readOnly);
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected ElasticClusterDoc onWrite(ElasticClusterDoc doc) {
-        doc = clusterSettingsPresenter.write(doc);
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
     }
 
     @Override
