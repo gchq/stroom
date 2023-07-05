@@ -8,10 +8,13 @@ import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionOperator {
 
@@ -161,5 +164,57 @@ class TestExpressionOperator {
                         true)
 
                 .build();
+    }
+
+    @Test
+    void testHasEnabledChildren_noChildren() {
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .build();
+
+        assertThat(expressionOperator.hasEnabledChildren())
+                .isFalse();
+        assertThat(expressionOperator.getEnabledChildren())
+                .isEmpty();
+    }
+
+    @Test
+    void testHasEnabledChildren_oneEnabledChild() {
+        final ExpressionTerm term = ExpressionTerm.builder().field("foo").build();
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .addTerm(term)
+                .build();
+
+        assertThat(expressionOperator.hasEnabledChildren())
+                .isTrue();
+        assertThat(expressionOperator.getEnabledChildren())
+                .containsExactly(term);
+    }
+
+    @Test
+    void testHasEnabledChildren_oneDisabled() {
+        final ExpressionTerm term = ExpressionTerm.builder().field("foo").enabled(false).build();
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .addTerm(term)
+                .build();
+
+        assertThat(expressionOperator.hasEnabledChildren())
+                .isFalse();
+        assertThat(expressionOperator.getEnabledChildren())
+                .isEmpty();
+    }
+
+    @Test
+    void testHasEnabledChildren_oneDisabledOneEnabled() {
+        final ExpressionTerm term1 = ExpressionTerm.builder().field("foo").enabled(false).build();
+        final ExpressionTerm term2 = ExpressionTerm.builder().field("bar").enabled(true).build();
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .addTerm(term1)
+                .addTerm(term2)
+                .build();
+
+        assertThat(expressionOperator.hasEnabledChildren())
+                .isTrue();
+        assertThat(expressionOperator.getEnabledChildren())
+                .containsExactly(term2);
     }
 }
