@@ -18,17 +18,19 @@
 package stroom.statistics.impl.hbase.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
-import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+
+import javax.inject.Provider;
 
 public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StroomStatsStoreDoc> {
 
@@ -37,98 +39,42 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final StroomStatsStoreSettingsPresenter stroomStatsStoreSettingsPresenter;
-    private final StroomStatsStoreFieldListPresenter stroomStatsStoreFieldListPresenter;
-    private final StroomStatsStoreCustomMaskListPresenter stroomStatsStoreCustomMaskListPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
     @Inject
     public StroomStatsStorePresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final StroomStatsStoreSettingsPresenter stroomStatsStoreSettingsPresenter,
+            final Provider<StroomStatsStoreSettingsPresenter> stroomStatsStoreSettingsPresenterProvider,
             final StroomStatsStoreFieldListPresenter stroomStatsStoreFieldListPresenter,
             final StroomStatsStoreCustomMaskListPresenter stroomStatsStoreCustomMaskListPresenter,
-            final MarkdownEditPresenter markdownEditPresenter) {
+            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.stroomStatsStoreSettingsPresenter = stroomStatsStoreSettingsPresenter;
-        this.stroomStatsStoreFieldListPresenter = stroomStatsStoreFieldListPresenter;
-        this.stroomStatsStoreCustomMaskListPresenter = stroomStatsStoreCustomMaskListPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
-
-        addTab(SETTINGS);
-        addTab(FIELDS);
-        addTab(CUSTOM_ROLLUPS);
-        addTab(DOCUMENTATION);
-
-        selectTab(SETTINGS);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(stroomStatsStoreSettingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(stroomStatsStoreFieldListPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(stroomStatsStoreCustomMaskListPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS.equals(tab)) {
-            callback.onReady(stroomStatsStoreSettingsPresenter);
-        } else if (FIELDS.equals(tab)) {
-            callback.onReady(stroomStatsStoreFieldListPresenter);
-        } else if (CUSTOM_ROLLUPS.equals(tab)) {
-            callback.onReady(stroomStatsStoreCustomMaskListPresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final StroomStatsStoreDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
-        if (doc.getConfig() == null) {
-            doc.setConfig(new StroomStatsStoreEntityData());
-        }
-
-        stroomStatsStoreSettingsPresenter.read(docRef, doc, readOnly);
-        stroomStatsStoreFieldListPresenter.read(docRef, doc, readOnly);
-        stroomStatsStoreCustomMaskListPresenter.read(docRef, doc, readOnly);
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
 
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other
         stroomStatsStoreFieldListPresenter.setCustomMaskListPresenter(stroomStatsStoreCustomMaskListPresenter);
-    }
 
-    @Override
-    protected StroomStatsStoreDoc onWrite(StroomStatsStoreDoc doc) {
-        doc = stroomStatsStoreSettingsPresenter.write(doc);
-        doc = stroomStatsStoreFieldListPresenter.write(doc);
-        doc = stroomStatsStoreCustomMaskListPresenter.write(doc);
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
+        addTab(SETTINGS, new DocumentEditTabProvider<>(stroomStatsStoreSettingsPresenterProvider::get));
+        addTab(FIELDS, new DocumentEditTabProvider<>(() -> stroomStatsStoreFieldListPresenter));
+        addTab(CUSTOM_ROLLUPS, new DocumentEditTabProvider<>(() -> stroomStatsStoreCustomMaskListPresenter));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<StroomStatsStoreDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final StroomStatsStoreDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public StroomStatsStoreDoc onWrite(final MarkdownEditPresenter presenter,
+                                               final StroomStatsStoreDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
+
+        selectTab(SETTINGS);
     }
 
     @Override

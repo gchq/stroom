@@ -25,7 +25,7 @@ import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.api.v2.Result;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
@@ -36,15 +36,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Collections;
 import java.util.List;
 
 public class AnalyticDataShardsPresenter
-        extends MyPresenterWidget<AnalyticDataShardsView>
-        implements HasDocumentRead<AnalyticRuleDoc>, HasToolbar {
+        extends DocumentEditPresenter<AnalyticDataShardsView, AnalyticRuleDoc>
+        implements HasToolbar {
 
     private static final AnalyticDataShardResource ANALYTIC_DATA_SHARD_RESOURCE =
             GWT.create(AnalyticDataShardResource.class);
@@ -120,9 +119,14 @@ public class AnalyticDataShardsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
         this.analyticRuleUuid = docRef.getUuid();
         analyticDataShardListPresenter.read(docRef);
+    }
+
+    @Override
+    protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc document) {
+        return document;
     }
 
     public interface AnalyticDataShardsView extends View {

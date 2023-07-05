@@ -127,11 +127,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     }
 
     @Override
-    public String getType() {
-        return ElasticIndexDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
         clusterPresenter.setSelectedEntityReference(index.getClusterRef());
         getView().setIndexName(index.getIndexName());
