@@ -24,20 +24,19 @@ public class Button extends ButtonBase implements ButtonView {
      * Creates a button with no caption.
      */
     public Button() {
-        /**
-         * <button class="Button Button--base Button Button--contained Button--contained-primary has-text ">
-         *    <div class="ripple-container"></div>
-         *    <div class="Button__content">
-         *       <span class="Button__spinner">
-         *          <span role="status" aria-hidden="true" class="spinner-border spinner-border-sm"></span>
-         *       </span>
-         *       <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="check" class="svg-inline--fa fa-check fa-w-16 fa-lg " role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"></path>
-         *       </svg>
-         *       <span class="Button__margin"></span>
-         *       <span class="Button__text">Close</span>
-         *    </div>
-         * </button>
-         */
+
+        //  <button class="Button Button--base Button Button--contained Button--contained-primary has-text ">
+        //     <div class="ripple-container"></div>
+        //     <div class="Button__content">
+        //        <span class="Button__spinner">
+        //           <span role="status" aria-hidden="true" class="spinner-border spinner-border-sm"></span>
+        //        </span>
+        //        <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="check" class="svg-inline--fa fa-check fa-w-16 fa-lg " role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"></path>
+        //        </svg>
+        //        <span class="Button__margin"></span>
+        //        <span class="Button__text">Close</span>
+        //     </div>
+        //  </button>
 
         super(Document.get().createPushButtonElement());
         DOM.sinkEvents(getElement(),

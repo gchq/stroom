@@ -8054,6 +8054,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -8146,6 +8147,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR
@@ -8489,6 +8491,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -8581,6 +8584,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR
@@ -8673,6 +8677,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -8765,6 +8770,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR
@@ -10784,6 +10790,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -10876,6 +10883,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR
