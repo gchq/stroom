@@ -1,0 +1,46 @@
+body {
+  background-color: #777;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+  margin-bottom: 10px;
+}
+
+.colour-swatch {
+  width: 70px;
+  min-height: 70px;
+  border-radius: 5px;
+  border: 1px solid black;
+}
+
+.colour-hex {
+  width: 60px;
+}
+
+.file-list {
+  display: grid;
+  grid-template-columns: 300px 300px 300px 300px 300px;
+  row-gap: 5px;
+  column-gap: 5px;
+  height: fit-content;
+}
+
+.svg-file {
+  display: flex;
+  column-gap: 5px;
+  align-items: center;
+}
+
+.svg svg {
+ width: 30px;
+ height: 30px;
+}

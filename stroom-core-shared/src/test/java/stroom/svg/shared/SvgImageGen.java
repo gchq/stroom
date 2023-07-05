@@ -32,9 +32,10 @@ import java.util.stream.Stream;
  */
 public class SvgImageGen {
 
-    private static final String CORE_SHARED_DIR = "stroom-core-shared";
-    private static final String APP_DIR = "stroom-app";
-    private static final String BASE_CLASS_NAME = "svg-image";
+    static final String CORE_SHARED_DIR = "stroom-core-shared";
+    static final String APP_DIR = "stroom-app";
+    static final String BASE_CLASS_NAME = "svg-image";
+
     private static final Pattern XML_DECLARATION_PATTERN = Pattern.compile("<\\?xml[^?]+\\?>\\n?");
     private static final Pattern XML_INDENT_PATTERN = Pattern.compile(">\\s*<");
     private static final Pattern EXCESS_WHITESPACE_PATTERN = Pattern.compile("\\s+");
@@ -112,16 +113,10 @@ public class SvgImageGen {
 
     public static void main(final String[] args) {
 
-        Path coreSharedPath = Paths.get(".").resolve(CORE_SHARED_DIR).toAbsolutePath();
-        while (!coreSharedPath.getFileName().toString().equals(CORE_SHARED_DIR)) {
-            coreSharedPath = coreSharedPath.getParent();
-        }
-
-        final Path appPath = coreSharedPath.getParent().resolve(APP_DIR);
-        final Path sourceBasePath = appPath.resolve(UI_RESOURCE_REL_PATH)
-                .resolve("raw-images");
-        final Path destBasePath = appPath.resolve(UI_RESOURCE_REL_PATH)
-                .resolve("images");
+        final Path coreSharedPath = getCoreSharedPath();
+        final Path appPath = getAppPath(coreSharedPath);
+        final Path sourceBasePath = getImagesSourceBasePath(appPath);
+        final Path destBasePath = getImagesDestBasePath(appPath);
 
         final Map<Path, SvgFile> relPathToSvgObjMap = new HashMap<>();
         final Set<String> enumFieldNameSet = new HashSet<>();
@@ -242,6 +237,46 @@ public class SvgImageGen {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    static Path getImagesDestBasePath() {
+        final Path appPath = getAppPath();
+        return getImagesDestBasePath(appPath);
+    }
+
+    static Path getImagesDestBasePath(final Path appPath) {
+        final Path destBasePath = appPath.resolve(UI_RESOURCE_REL_PATH)
+                .resolve("images");
+        return destBasePath;
+    }
+
+    static Path getImagesSourceBasePath() {
+        final Path appPath = getAppPath();
+        return getImagesSourceBasePath(appPath);
+    }
+
+    static Path getImagesSourceBasePath(final Path appPath) {
+        final Path sourceBasePath = appPath.resolve(UI_RESOURCE_REL_PATH)
+                .resolve("raw-images");
+        return sourceBasePath;
+    }
+
+    static Path getAppPath(final Path coreSharedPath) {
+        final Path appPath = coreSharedPath.getParent().resolve(APP_DIR);
+        return appPath;
+    }
+
+    static Path getAppPath() {
+        final Path coreSharedPath = getCoreSharedPath();
+        return getAppPath(coreSharedPath);
+    }
+
+    static Path getCoreSharedPath() {
+        Path coreSharedPath = Paths.get(".").resolve(CORE_SHARED_DIR).toAbsolutePath();
+        while (!coreSharedPath.getFileName().toString().equals(CORE_SHARED_DIR)) {
+            coreSharedPath = coreSharedPath.getParent();
+        }
+        return coreSharedPath;
     }
 
     static void deleteDirectory(Path directoryToBeDeleted) {
