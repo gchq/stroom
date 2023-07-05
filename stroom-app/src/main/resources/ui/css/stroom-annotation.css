@@ -62,6 +62,7 @@
 .annotationTextBox {
     opacity: 0.8;
     border-color: transparent !important;
+    background: transparent !important;
     cursor: pointer;
 }
 

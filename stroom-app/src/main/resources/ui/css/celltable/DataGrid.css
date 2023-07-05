@@ -78,7 +78,8 @@
 }
 
 .dataGridHeader > div,
-.dataGridCell > div {
+.dataGridCell > div,
+.cellTableCell > div {
 	text-overflow: ellipsis;
 	overflow-x: hidden;
 	padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical) var(--row__padding--horizontal);
