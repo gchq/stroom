@@ -350,10 +350,10 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
         final String commonStyles = "font-weight:bold";
         if (row.isOk()) {
             value = "OK";
-            builder.appendHtmlConstant("<span style=\"color:green;" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__green);" + commonStyles + "\">");
         } else {
             value = "Missing";
-            builder.appendHtmlConstant("<span style=\"color:red;" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__red);" + commonStyles + "\">");
         }
         builder.appendEscaped(value);
         builder.appendHtmlConstant("</span>");

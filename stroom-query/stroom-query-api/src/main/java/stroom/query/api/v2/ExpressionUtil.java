@@ -260,7 +260,7 @@ public class ExpressionUtil {
     }
 
     public static boolean validateExpressionTerms(final ExpressionItem expressionItem,
-                                           final Predicate<ExpressionTerm> predicate) {
+                                                  final Predicate<ExpressionTerm> predicate) {
         final AtomicBoolean isValid = new AtomicBoolean(false);
         walkExpressionTree(expressionItem, expressionItem2 -> {
             if (expressionItem2 instanceof ExpressionTerm) {
@@ -274,7 +274,7 @@ public class ExpressionUtil {
     }
 
     public static boolean walkExpressionTree(final ExpressionItem expressionItem,
-                                      final ExpressionItemVisitor itemVisitor) {
+                                             final ExpressionItemVisitor itemVisitor) {
 
         boolean continueWalking = true;
         if (expressionItem != null) {

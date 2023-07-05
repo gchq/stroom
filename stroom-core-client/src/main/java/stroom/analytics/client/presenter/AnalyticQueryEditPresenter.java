@@ -24,7 +24,6 @@ import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.query.shared.QueryDoc;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -75,10 +74,5 @@ public class AnalyticQueryEditPresenter
     public void onClose() {
         queryEditPresenter.onClose();
         super.onClose();
-    }
-
-    @Override
-    public String getType() {
-        return QueryDoc.DOCUMENT_TYPE;
     }
 }

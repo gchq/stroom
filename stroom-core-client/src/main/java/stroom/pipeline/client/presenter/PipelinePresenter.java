@@ -20,10 +20,12 @@ package stroom.pipeline.client.presenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
@@ -35,6 +37,8 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Provider;
+
 public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView, PipelineDoc> {
 
     public static final TabData DATA = new TabDataImpl("Data");
@@ -43,44 +47,76 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     public static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final MetaPresenter metaPresenter;
-    private final PipelineStructurePresenter structurePresenter;
     private final ProcessorPresenter processorPresenter;
-    private final ProcessorTaskPresenter taskPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
 
     private boolean hasManageProcessorsPermission;
 
     @Inject
     public PipelinePresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final MetaPresenter metaPresenter,
-                             final PipelineStructurePresenter structurePresenter,
+                             final Provider<MetaPresenter> metaPresenterProvider,
+                             final Provider<PipelineStructurePresenter> structurePresenterProvider,
                              final ProcessorPresenter processorPresenter,
-                             final ProcessorTaskPresenter taskPresenter,
-                             final MarkdownEditPresenter markdownEditPresenter,
+                             final Provider<ProcessorTaskPresenter> taskPresenterProvider,
+                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, view);
-        this.metaPresenter = metaPresenter;
-        this.structurePresenter = structurePresenter;
         this.processorPresenter = processorPresenter;
-        this.taskPresenter = taskPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
         TabData selectedTab = null;
 
         if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
-            addTab(DATA);
+            addTab(DATA, new AbstractTabProvider<PipelineDoc, MetaPresenter>(eventBus) {
+                @Override
+                protected MetaPresenter createPresenter() {
+                    return metaPresenterProvider.get();
+                }
+
+                @Override
+                public void onRead(final MetaPresenter presenter,
+                                   final DocRef docRef,
+                                   final PipelineDoc document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                }
+            });
             selectedTab = DATA;
         }
 
-        addTab(STRUCTURE);
+        addTab(STRUCTURE, new DocumentEditTabProvider<>(structurePresenterProvider::get));
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             hasManageProcessorsPermission = true;
 
-            addTab(PROCESSORS);
-            addTab(TASKS);
+            addTab(PROCESSORS, new AbstractTabProvider<PipelineDoc, ProcessorPresenter>(eventBus) {
+                @Override
+                protected ProcessorPresenter createPresenter() {
+                    return processorPresenter;
+                }
+
+                @Override
+                public void onRead(final ProcessorPresenter presenter,
+                                   final DocRef docRef,
+                                   final PipelineDoc document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                    presenter.setAllowUpdate(hasManageProcessorsPermission && !isReadOnly());
+                }
+            });
+            addTab(TASKS, new AbstractTabProvider<PipelineDoc, ProcessorTaskPresenter>(eventBus) {
+                @Override
+                protected ProcessorTaskPresenter createPresenter() {
+                    return taskPresenterProvider.get();
+                }
+
+                @Override
+                public void onRead(final ProcessorTaskPresenter presenter,
+                                   final DocRef docRef,
+                                   final PipelineDoc document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                }
+            });
 
             if (selectedTab == null) {
                 selectedTab = PROCESSORS;
@@ -91,61 +127,24 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             selectedTab = STRUCTURE;
         }
 
-        addTab(DOCUMENTATION);
+        addTab(DOCUMENTATION, new MarkdownTabProvider<PipelineDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final PipelineDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public PipelineDoc onWrite(final MarkdownEditPresenter presenter,
+                                       final PipelineDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(selectedTab);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(structurePresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (DATA.equals(tab)) {
-            callback.onReady(metaPresenter);
-        } else if (STRUCTURE.equals(tab)) {
-            callback.onReady(structurePresenter);
-        } else if (PROCESSORS.equals(tab)) {
-            callback.onReady(processorPresenter);
-        } else if (TASKS.equals(tab)) {
-            callback.onReady(taskPresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final PipelineDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
-
-        metaPresenter.read(docRef, doc, readOnly);
-        structurePresenter.read(docRef, doc, readOnly);
-        processorPresenter.read(docRef, doc, readOnly);
-        taskPresenter.read(docRef, doc, readOnly);
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-
-        processorPresenter.setAllowUpdate(hasManageProcessorsPermission && !readOnly);
-    }
-
-    @Override
-    protected PipelineDoc onWrite(PipelineDoc doc) {
-        doc = structurePresenter.write(doc);
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
     }
 
     @Override

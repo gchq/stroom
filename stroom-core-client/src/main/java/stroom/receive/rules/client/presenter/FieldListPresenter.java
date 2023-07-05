@@ -25,10 +25,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasDocumentWrite;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -39,16 +36,13 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class FieldListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<ReceiveDataRules>, HasDocumentWrite<ReceiveDataRules>, HasDirtyHandlers {
+public class FieldListPresenter extends DocumentEditPresenter<PagerView, ReceiveDataRules> {
 
     private final MyDataGrid<AbstractField> dataGrid;
     private final MultiSelectionModelImpl<AbstractField> selectionModel;
@@ -60,8 +54,6 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
     private final ButtonView upButton;
     private final ButtonView downButton;
     private List<AbstractField> fields;
-
-    private boolean readOnly = true;
 
     @Inject
     public FieldListPresenter(final EventBus eventBus,
@@ -96,42 +88,42 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
         super.onBind();
 
         registerHandler(newButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     onAdd();
                 }
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     onEdit();
                 }
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     onRemove();
                 }
             }
         }));
         registerHandler(upButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     moveSelectedFieldUp();
                 }
             }
         }));
         registerHandler(downButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     moveSelectedFieldDown();
                 }
             }
         }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 enableButtons();
                 if (event.getSelectionType().isDoubleSelect()) {
                     onEdit();
@@ -141,9 +133,9 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void enableButtons() {
-        newButton.setEnabled(!readOnly);
+        newButton.setEnabled(!isReadOnly());
 
-        if (!readOnly && fields != null) {
+        if (!isReadOnly() && fields != null) {
             final AbstractField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
@@ -292,8 +284,7 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
-        this.readOnly = readOnly;
+    protected void onRead(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
         enableButtons();
         if (document != null) {
             fields = document.getFields();
@@ -302,13 +293,8 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public ReceiveDataRules write(final ReceiveDataRules document) {
+    protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
         document.setFields(fields);
         return document;
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 }

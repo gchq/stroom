@@ -8054,6 +8054,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -8109,6 +8110,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED
@@ -8145,6 +8147,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR
@@ -8217,7 +8220,7 @@ components:
     DocumentTypes:
       type: object
       properties:
-        nonSystemTypes:
+        types:
           type: array
           items:
             $ref: '#/components/schemas/DocumentType'
@@ -8488,6 +8491,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -8543,6 +8547,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED
@@ -8579,6 +8584,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR
@@ -8671,6 +8677,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -8726,6 +8733,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED
@@ -8762,6 +8770,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR
@@ -10781,6 +10790,7 @@ components:
           - ARROW_RIGHT
           - ARROW_UP
           - BACKWARD
+          - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
@@ -10836,6 +10846,7 @@ components:
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
+          - FATAL_DARK
           - FAVOURITES
           - FAVOURITES_OUTLINE
           - FEED
@@ -10872,6 +10883,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - OK
           - OO
           - OPEN
           - OPERATOR

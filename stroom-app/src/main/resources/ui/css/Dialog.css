@@ -60,7 +60,7 @@
 .dialog-content {
     flex-grow: 1;
     overflow: auto;
-    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
 }
 
 .dialog-buttons {

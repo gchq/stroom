@@ -18,10 +18,11 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -29,81 +30,42 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Provider;
+
 public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, SolrIndexDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final SolrIndexSettingsPresenter indexSettingsPresenter;
-    private final SolrIndexFieldListPresenter indexFieldListPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
     @Inject
     public SolrIndexPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
-                              final SolrIndexSettingsPresenter indexSettingsPresenter,
-                              final SolrIndexFieldListPresenter indexFieldListPresenter,
-                              final MarkdownEditPresenter markdownEditPresenter) {
+                              final Provider<SolrIndexSettingsPresenter> indexSettingsPresenterProvider,
+                              final Provider<SolrIndexFieldListPresenter> indexFieldListPresenterProvider,
+                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.indexSettingsPresenter = indexSettingsPresenter;
-        this.indexFieldListPresenter = indexFieldListPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        addTab(FIELDS);
-        addTab(SETTINGS);
-        addTab(DOCUMENTATION);
+        addTab(FIELDS, new DocumentEditTabProvider<>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocumentEditTabProvider<>(indexSettingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final SolrIndexDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public SolrIndexDoc onWrite(final MarkdownEditPresenter presenter,
+                                        final SolrIndexDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(FIELDS);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(indexSettingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(indexFieldListPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS.equals(tab)) {
-            callback.onReady(indexSettingsPresenter);
-        } else if (FIELDS.equals(tab)) {
-            callback.onReady(indexFieldListPresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final SolrIndexDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
-        indexSettingsPresenter.read(docRef, doc, readOnly);
-        indexFieldListPresenter.read(docRef, doc, readOnly);
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected SolrIndexDoc onWrite(SolrIndexDoc doc) {
-        doc = indexSettingsPresenter.write(doc);
-        doc = indexFieldListPresenter.write(doc);
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
     }
 
     @Override

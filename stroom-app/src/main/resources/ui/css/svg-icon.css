@@ -1,5 +1,5 @@
 .svgIcon {
-  display: inline-block;
+  display: flex;
 }
 
 .svgIcon svg {

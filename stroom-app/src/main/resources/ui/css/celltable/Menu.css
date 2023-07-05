@@ -13,6 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+ .menuCellTable .cellTableCell > div {
+    padding: 0;
+ }
+
 .menuItem-separator {
 	border-top: 1px solid var(--menu-separator__color);
 	cursor: default;

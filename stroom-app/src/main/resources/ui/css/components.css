@@ -1285,7 +1285,7 @@
 
 .chooserViewImpl-clearSelection {
     display: none;
-    color: #0366d6;
+    color: var(--link__text-color);
     cursor: pointer;
     text-decoration: underline;
     padding: 6px 8px;

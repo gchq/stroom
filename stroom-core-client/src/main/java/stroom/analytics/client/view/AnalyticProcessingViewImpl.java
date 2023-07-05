@@ -19,6 +19,8 @@ package stroom.analytics.client.view;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
 import stroom.item.client.StringListBox;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.MouseUtil;
@@ -29,7 +31,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -65,6 +66,7 @@ public class AnalyticProcessingViewImpl
     @Inject
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        refresh.setIcon(SvgImage.REFRESH);
     }
 
     @Override
