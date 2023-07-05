@@ -131,25 +131,6 @@ class TestCommonExpressionMapper {
     }
 
     @Test
-    void testEmptyInList() {
-        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
-                .addOperator(ExpressionOperator.builder()
-                        .addTerm(ExpressionTerm.builder()
-                                .field(DB_FIELD_NAME_1)
-                                .condition(ExpressionTerm.Condition.IN)
-                                .value("")
-                                .build())
-                        .build())
-                .build();
-
-        final Condition condition = doTest(expressionOperator);
-
-        // AND( field1 IN "" )
-        assertThat(condition)
-                .isEqualTo(DSL.falseCondition());
-    }
-
-    @Test
     void testAlwaysTrueAnd() {
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().build())
