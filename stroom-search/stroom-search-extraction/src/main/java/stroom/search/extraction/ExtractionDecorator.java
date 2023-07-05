@@ -196,7 +196,11 @@ public class ExtractionDecorator {
                         info(taskContext, () -> "Finished creating extraction tasks");
                         // We have finished mapping streams so mark the stream event map as complete.
                         LOGGER.debug(() -> "Completed stream mapping");
-                        streamEventMap.complete();
+                        if (taskContext.isTerminated()) {
+                            streamEventMap.terminate();
+                        } else {
+                            streamEventMap.complete();
+                        }
                     }
                 });
     }
@@ -267,6 +271,13 @@ public class ExtractionDecorator {
                         }).run();
                 LOGGER.debug("Completed extraction thread");
             }
+
+            if (parentContext.isTerminated()) {
+                streamEventMap.terminate();
+            } else {
+                streamEventMap.complete();
+            }
+
         } catch (final CompleteException e) {
             LOGGER.debug(() -> "Complete");
             LOGGER.trace(e::getMessage, e);
