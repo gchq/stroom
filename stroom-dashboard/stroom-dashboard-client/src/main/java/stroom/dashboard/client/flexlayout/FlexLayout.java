@@ -20,7 +20,6 @@ import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.TabManager;
-import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.LayoutConstraints;
@@ -65,6 +64,7 @@ public class FlexLayout extends Composite {
     private static final double MIN_COMPONENT_WIDTH = 50;
     private static final double SPLIT_SIZE = 1;
     private static final double SPLIT_OFFSET = 0;
+    private static final double OUTER_SPLIT_BOUNDARY = 5;
     private static Glass marker;
     private static Glass glass;
     private final EventBus eventBus;
@@ -92,7 +92,6 @@ public class FlexLayout extends Composite {
     private TabManager tabManager;
 
     private FlexLayoutChangeHandler changeHandler;
-    private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
 
     private Size outerSize;
     private Size designSurfaceSize;
@@ -438,6 +437,7 @@ public class FlexLayout extends Composite {
                                    final List<TabConfig> tabGroup,
                                    final TabLayoutConfig targetTabLayoutConfig,
                                    final Pos targetPos) {
+//        GWT.log("moveTabOntoTab");
         boolean moved = false;
 
         for (final TabConfig tabConfig : tabGroup) {
@@ -464,10 +464,9 @@ public class FlexLayout extends Composite {
                 // If dropping a tab onto the same container that
                 // only has this one tab then do nothing.
 
-                int sourceIndex = -1;
                 // Change the selected tab in the source tab
                 // layout if we have moved the selected tab.
-                sourceIndex = currentParent.indexOf(tabConfig);
+                int sourceIndex = currentParent.indexOf(tabConfig);
                 final Integer selectedIndex = currentParent.getSelected();
                 if (selectedIndex != null && selectedIndex.equals(sourceIndex)) {
                     currentParent.setSelected(sourceIndex - 1);
@@ -519,6 +518,7 @@ public class FlexLayout extends Composite {
                                    final List<TabConfig> tabGroup,
                                    final TabLayoutConfig targetTabLayoutConfig,
                                    final Pos targetPos) {
+//        GWT.log("moveTabOutside");
         boolean moved = false;
 
         // Ensure we have a parent.
@@ -590,12 +590,10 @@ public class FlexLayout extends Composite {
             // Set the size of the target layout and the new
             // layout to be half the size of the original so
             // combined they take up the same space.
-            final double oldLayoutSize = positionAndSizeMap.get(targetTabLayoutConfig).getSize(dim);
-            double newLayoutSize = oldLayoutSize / 2D;
-            newLayoutSize = Math.max(newLayoutSize, MIN_COMPONENT_WIDTH);
-
-            targetTabLayoutConfig.getPreferredSize().set(dim, (int) newLayoutSize);
-            newTabLayout.getPreferredSize().set(dim, (int) newLayoutSize);
+            divideSize(targetTabLayoutConfig,
+                    targetTabLayoutConfig,
+                    newTabLayout,
+                    dim);
 
             if (parent.getDimension() == dim) {
                 if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
@@ -634,6 +632,7 @@ public class FlexLayout extends Composite {
                                      final List<TabConfig> tabGroup,
                                      final SplitLayoutConfig targetSplitLayoutConfig,
                                      final Pos targetPos) {
+//        GWT.log("moveTabOntoSplit");
         boolean moved = false;
 
         for (final TabConfig tabConfig : tabGroup) {
@@ -645,38 +644,108 @@ public class FlexLayout extends Composite {
                 }
 
                 // Remove the tab.
-                currentParent.remove(tabConfig);
+                if (currentParent != null) {
+                    currentParent.remove(tabConfig);
+                }
 
                 // Create a new tab layout for the tab being moved.
                 final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig();
                 tabLayoutConfig.add(tabConfig);
                 tabLayoutConfig.setSelected(0);
 
-                SplitLayoutConfig splitLayoutConfig = targetSplitLayoutConfig;
+                // We can add the new tab layout to the target split if the dimension is the same. If it isn't then we
+                // need to create a new split layout with the correct split dimension and insert it.
                 if (targetSplitLayoutConfig.getDimension() != dim) {
-                    splitLayoutConfig = targetSplitLayoutConfig.getParent();
-                    if (splitLayoutConfig == null) {
-                        splitLayoutConfig =
-                                new SplitLayoutConfig(dim);
-                        splitLayoutConfig.add(targetSplitLayoutConfig);
-                        layoutConfig = splitLayoutConfig;
-                    } else if (splitLayoutConfig.getDimension() != dim) {
-                        final int insertPos = splitLayoutConfig.indexOf(targetSplitLayoutConfig);
-                        splitLayoutConfig.remove(targetSplitLayoutConfig);
+                    // The target split layout is not the correct dimension so we will need to look at the parent
+                    // layout.
+                    SplitLayoutConfig parentSplitLayoutConfig = targetSplitLayoutConfig.getParent();
+                    if (parentSplitLayoutConfig == null) {
+                        // There is no parent of the target so we will create a new parent split to wrap the current
+                        // target and insert the new tab layout in the correct location.
+                        final SplitLayoutConfig newSplitLayoutConfig =
+                                new SplitLayoutConfig(targetSplitLayoutConfig.getPreferredSize().copy().build(), dim);
+
+                        // Divide the original size between the new children.
+                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                        final PositionAndSize positionAndSize = positionAndSizeMap.get(targetSplitLayoutConfig);
+                        positionAndSizeMap.put(newSplitLayoutConfig, positionAndSize.copy());
+                        divideSize(targetSplitLayoutConfig,
+                                targetSplitLayoutConfig,
+                                tabLayoutConfig,
+                                dim);
+
+                        if (Pos.LEFT == targetPos || Pos.TOP == targetPos) {
+                            newSplitLayoutConfig.add(tabLayoutConfig);
+                            newSplitLayoutConfig.add(targetSplitLayoutConfig);
+                        } else {
+                            newSplitLayoutConfig.add(targetSplitLayoutConfig);
+                            newSplitLayoutConfig.add(tabLayoutConfig);
+                        }
+
+                        layoutConfig = newSplitLayoutConfig;
+
+                    } else if (parentSplitLayoutConfig.getDimension() != dim) {
+                        // If the parent split dimension is still not what we want then insert a new split layout to
+                        // wrap the current target and insert the new tab layout in the correct location.
+                        final int insertPos = parentSplitLayoutConfig.indexOf(targetSplitLayoutConfig);
+                        parentSplitLayoutConfig.remove(targetSplitLayoutConfig);
 
                         final SplitLayoutConfig newSplitLayoutConfig =
-                                new SplitLayoutConfig(dim);
-                        newSplitLayoutConfig.add(targetSplitLayoutConfig);
-                        splitLayoutConfig.add(insertPos, newSplitLayoutConfig);
+                                new SplitLayoutConfig(targetSplitLayoutConfig.getPreferredSize().copy().build(), dim);
 
-                        splitLayoutConfig = newSplitLayoutConfig;
+                        // Divide the original size between the new children.
+                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                        final PositionAndSize positionAndSize = positionAndSizeMap.get(targetSplitLayoutConfig);
+                        positionAndSizeMap.put(newSplitLayoutConfig, positionAndSize.copy());
+                        divideSize(targetSplitLayoutConfig,
+                                targetSplitLayoutConfig,
+                                tabLayoutConfig,
+                                dim);
+
+                        if (Pos.LEFT == targetPos || Pos.TOP == targetPos) {
+                            newSplitLayoutConfig.add(tabLayoutConfig);
+                            newSplitLayoutConfig.add(targetSplitLayoutConfig);
+                        } else {
+                            newSplitLayoutConfig.add(targetSplitLayoutConfig);
+                            newSplitLayoutConfig.add(tabLayoutConfig);
+                        }
+
+                        parentSplitLayoutConfig.add(insertPos, newSplitLayoutConfig);
+
+                    } else {
+                        // The parent split dimension is correct so just insert the new tab layout in the correct
+                        // location.
+
+                        // Divide the original size between the new children.
+                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                        divideSize(targetSplitLayoutConfig,
+                                targetSplitLayoutConfig,
+                                tabLayoutConfig,
+                                dim);
+
+                        final int insertPos = parentSplitLayoutConfig.indexOf(targetSplitLayoutConfig);
+                        if (Pos.LEFT == targetPos || Pos.TOP == targetPos) {
+                            parentSplitLayoutConfig.add(insertPos, tabLayoutConfig);
+                        } else {
+                            parentSplitLayoutConfig.add(insertPos + 1, tabLayoutConfig);
+                        }
                     }
-                }
-
-                if (Pos.LEFT == targetPos || Pos.TOP == targetPos) {
-                    splitLayoutConfig.add(0, tabLayoutConfig);
                 } else {
-                    splitLayoutConfig.add(tabLayoutConfig);
+                    // The target layout has the correct split dimension so just insert the new tab layout in the
+                    // correct location.
+
+                    // Divide the original size between the new children.
+                    tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                    divideSize(targetSplitLayoutConfig,
+                            tabLayoutConfig,
+                            tabLayoutConfig,
+                            dim);
+
+                    if (Pos.LEFT == targetPos || Pos.TOP == targetPos) {
+                        targetSplitLayoutConfig.add(0, tabLayoutConfig);
+                    } else {
+                        targetSplitLayoutConfig.add(tabLayoutConfig);
+                    }
                 }
 
                 // Cascade removal if necessary.
@@ -687,6 +756,21 @@ public class FlexLayout extends Composite {
         }
 
         return moved;
+    }
+
+    private void divideSize(final LayoutConfig originalLayout,
+                            final LayoutConfig layout1,
+                            final LayoutConfig layout2,
+                            final int dim) {
+        // Set the size of the target layout and the new
+        // layout to be half the size of the original so
+        // combined they take up the same space.
+        final double oldLayoutSize = positionAndSizeMap.get(originalLayout).getSize(dim);
+        double newLayoutSize = oldLayoutSize / 2D;
+        newLayoutSize = Math.max(newLayoutSize, MIN_COMPONENT_WIDTH);
+
+        layout1.getPreferredSize().set(dim, (int) newLayoutSize);
+        layout2.getPreferredSize().set(dim, (int) newLayoutSize);
     }
 
     private void capture() {
@@ -703,7 +787,7 @@ public class FlexLayout extends Composite {
     }
 
     private void cascadeRemoval(final TabLayoutConfig tabLayoutConfig) {
-        if (tabLayoutConfig.getAllTabCount() == 0) {
+        if (tabLayoutConfig != null && tabLayoutConfig.getAllTabCount() == 0) {
             LayoutConfig child = tabLayoutConfig;
             SplitLayoutConfig parent = child.getParent();
 
@@ -843,6 +927,11 @@ public class FlexLayout extends Composite {
     }
 
     private double resizeChildren(final SplitLayoutConfig layoutConfig,
+                                  final double change) {
+        return resizeChildren(layoutConfig, change, 1, 0);
+    }
+
+    private double resizeChildren(final SplitLayoutConfig layoutConfig,
                                   final double change,
                                   final int step,
                                   final int splitIndex) {
@@ -974,7 +1063,7 @@ public class FlexLayout extends Composite {
         // activation.
         double border = 0;
         if (splitter) {
-            border = 5;
+            border = OUTER_SPLIT_BOUNDARY;
         }
 
         // First see if the mouse is even over the layout.
@@ -994,8 +1083,8 @@ public class FlexLayout extends Composite {
 
             final double xDiff = Math.min(x - left, right - x);
             final double yDiff = Math.min(y - top, bottom - y);
-            double activeWidth = 0;
-            double activeHeight = 0;
+            double activeWidth = OUTER_SPLIT_BOUNDARY;
+            double activeHeight = OUTER_SPLIT_BOUNDARY;
 
             if (!splitter) {
                 activeWidth = width / 3;
@@ -1287,16 +1376,20 @@ public class FlexLayout extends Composite {
         Scheduler.get().scheduleDeferred(this::doRefresh);
     }
 
+    public stroom.dashboard.shared.Size getVisibleSize() {
+        final double visibleWidth = Math.floor(ElementUtil.getSubPixelOffsetWidth(getElement()));
+        final double visibleHeight = Math.floor(ElementUtil.getSubPixelOffsetHeight(getElement()));
+        return new stroom.dashboard.shared.Size((int) visibleWidth, (int) visibleHeight);
+    }
+
     public void doRefresh() {
         if (layoutConfig != null) {
             double minWidth = getMinRequired(layoutConfig, Dimension.X);
             double minHeight = getMinRequired(layoutConfig, Dimension.Y);
-            final double panelWidth = Math.floor(ElementUtil.getSubPixelOffsetWidth(getElement()));
-            final double panelHeight = Math.floor(ElementUtil.getSubPixelOffsetHeight(getElement()));
-//            GWT.log(getElement() + " panelWidth=" + panelWidth + " panelHeight=" + panelHeight);
 
-            double visibleWidth = panelWidth;
-            double visibleHeight = panelHeight;
+            final double visibleWidth = Math.floor(ElementUtil.getSubPixelOffsetWidth(getElement()));
+            final double visibleHeight = Math.floor(ElementUtil.getSubPixelOffsetHeight(getElement()));
+//            GWT.log(getElement() + " visibleWidth=" + visibleWidth + " visibleHeight=" + visibleHeight);
 //            double barWidth = 12;
 //            boolean scrollX = false;
 //            boolean scrollY = false;
@@ -1651,7 +1744,6 @@ public class FlexLayout extends Composite {
                     layoutToWidgetMap.put(tabLayoutConfig, tabLayout);
                 }
                 setPositionAndSize(tabLayout.getElement(), entry.getValue());
-                tabLayout.setTabVisibility(tabVisibility);
                 tabLayout.onResize();
 
             } else if (key instanceof SplitInfo) {
@@ -1705,14 +1797,6 @@ public class FlexLayout extends Composite {
 
     public void setChangeHandler(final FlexLayoutChangeHandler changeHandler) {
         this.changeHandler = changeHandler;
-    }
-
-    public void setTabVisibility(final TabVisibility tabVisibility) {
-        this.tabVisibility = tabVisibility;
-    }
-
-    public PositionAndSize getPositionAndSize(final Object object) {
-        return positionAndSizeMap.get(object);
     }
 
     private enum Pos {

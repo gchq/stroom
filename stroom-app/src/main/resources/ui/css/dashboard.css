@@ -119,6 +119,8 @@
 .dashboard-designSurface {
     position: absolute;
     overflow: hidden;
+    min-width: 100%;
+    min-height: 100%;
 }
 
 .dashboard__designMode .dashboard-designSurface {

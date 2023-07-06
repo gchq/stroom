@@ -17,7 +17,6 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.svg.shared.SvgImage;
@@ -46,9 +45,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
-
-    private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
-    private boolean tabsVisible = true;
 
     public TabLayout(final EventBus eventBus,
                      final TabLayoutConfig tabLayoutConfig,
@@ -148,8 +144,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         component.setTabLayout(this);
         component.setTabConfig(tabConfig);
 
-        checkTabVisibility();
-
         layerContainer.show(component);
     }
 
@@ -191,26 +185,5 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
     public TabLayoutConfig getTabLayoutConfig() {
         return tabLayoutConfig;
-    }
-
-    public void setTabVisibility(final TabVisibility tabVisibility) {
-        this.tabVisibility = tabVisibility;
-        checkTabVisibility();
-    }
-
-    private void checkTabVisibility() {
-        if (tabVisibility == TabVisibility.SHOW_ALL) {
-            setTabsVisibile(true);
-        } else if (tabVisibility == TabVisibility.HIDE_ALL) {
-            setTabsVisibile(false);
-        } else if (tabVisibility == TabVisibility.HIDE_SINGLE) {
-            setTabsVisibile(tabBar.getTabs().size() > 1);
-        }
-    }
-
-    private void setTabsVisibile(final boolean tabsVisible) {
-        if (this.tabsVisible != tabsVisible) {
-            this.tabsVisible = tabsVisible;
-        }
     }
 }
