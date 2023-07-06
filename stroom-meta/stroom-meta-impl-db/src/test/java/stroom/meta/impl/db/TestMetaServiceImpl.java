@@ -25,6 +25,7 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
@@ -36,6 +37,7 @@ import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.TimePeriod;
 
@@ -761,6 +763,47 @@ class TestMetaServiceImpl {
             }
             LOGGER.info("Outer Lambda {} {}", counter, outer);
         }
+    }
+
+    @Test
+    void testFind_all() {
+        final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));
+        final Meta meta2 = metaService.create(createProperties(FEED_2, Instant.now()));
+        final Meta meta3 = metaService.create(createProperties(FEED_3, Instant.now()));
+
+        final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder().op(Op.AND).build());
+        final ResultPage<Meta> resultPage = metaService.find(criteria);
+        assertThat(resultPage)
+                .isNotNull();
+        assertThat(resultPage.getValues())
+                .containsExactlyInAnyOrder(meta1, meta2, meta3);
+    }
+
+    @Test
+    void testFind_withExpression() {
+        final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));
+        final Meta meta2 = metaService.create(createProperties(FEED_2, Instant.now()));
+        final Meta meta3 = metaService.create(createProperties(FEED_3, Instant.now()));
+
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(ExpressionTerm.builder()
+                        .field(MetaFields.FIELD_FEED)
+                        .condition(Condition.EQUALS)
+                        .value(FEED_1)
+                        .build())
+                .addTerm(ExpressionTerm.builder()
+                        .field(MetaFields.FIELD_FEED)
+                        .condition(Condition.EQUALS)
+                        .value(FEED_2)
+                        .build())
+                .build();
+        final FindMetaCriteria criteria = new FindMetaCriteria(expressionOperator);
+        final ResultPage<Meta> resultPage = metaService.find(criteria);
+        assertThat(resultPage)
+                .isNotNull();
+        assertThat(resultPage.getValues())
+                .containsExactlyInAnyOrder(meta1, meta2);
     }
 
     private void assertTotalRowCount(final int expectedRowCount, final Status status) {
