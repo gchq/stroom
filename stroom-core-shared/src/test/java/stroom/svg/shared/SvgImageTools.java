@@ -4,7 +4,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -103,25 +102,11 @@ public class SvgImageTools {
                     })
                     .collect(Collectors.groupingBy(ColourInstance::colour, Collectors.toSet()));
 
-//            colourToFilesMap.entrySet()
-//                    .stream()
-//                    .sorted(Entry.comparingByKey())
-//                    .map(entry ->
-//                            padColour(entry.getKey())
-//                                    + " - "
-//                                    + entry.getValue()
-//                                    .stream()
-//                                    .map(ColourInstance::svgFile)
-//                                    .sorted()
-//                                    .map(file -> rawImagesBasePath.relativize(file).toString())
-//                                    .collect(Collectors.joining(", "))
-//                    )
-//                    .forEach(System.out::println);
-
             // Compare colours roughly based on dark -> light
             final Comparator<Entry<String, ?>> hexColourComparator = (o1, o2) -> {
-                final Color colour1 = Color.decode(toLongForm(o1.getKey()));
-                final Color colour2 = Color.decode(toLongForm(o2.getKey()));
+                // For some reason IJ adds java.awt.* import which breaks checkstyle
+                final java.awt.Color colour1 = java.awt.Color.decode(toLongForm(o1.getKey()));
+                final java.awt.Color colour2 = java.awt.Color.decode(toLongForm(o2.getKey()));
                 return Integer.compare(
                         colour1.getRed() + colour1.getGreen() + colour1.getBlue(),
                         colour2.getRed() + colour2.getGreen() + colour2.getBlue());
