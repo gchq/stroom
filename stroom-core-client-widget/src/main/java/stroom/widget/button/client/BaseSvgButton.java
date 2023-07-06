@@ -20,6 +20,7 @@ import stroom.svg.client.Preset;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -71,14 +72,14 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     }
 
     void setSvgPreset(final Preset svgPreset) {
-        face.setInnerHTML(svgPreset.getSvgImage().getSvg());
+        SvgImageUtil.setSvgAsInnerHtml(face, svgPreset);
 
         // Add the button tool-tip
-        if (svgPreset.hasTitle()) {
-            setTitle(svgPreset.getTitle());
-        } else {
-            setTitle("");
-        }
+//        if (svgPreset.hasTitle()) {
+//            setTitle(svgPreset.getTitle());
+//        } else {
+//            setTitle("");
+//        }
     }
 
     @Override

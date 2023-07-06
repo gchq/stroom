@@ -18,6 +18,7 @@ package stroom.cell.expander.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -107,27 +108,37 @@ public class ExpanderCell extends AbstractCell<Expander> {
             final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
             String className = "";
 
-            SafeHtml expanderIcon;
+            final SvgImage expanderIcon;
             if (value.isLeaf()) {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.DOT.getSvg());
+                expanderIcon = SvgImage.DOT;
             } else if (value.isExpanded()) {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_DOWN.getSvg());
+                expanderIcon = SvgImage.ARROW_DOWN;
                 className = " active";
             } else {
-                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_RIGHT.getSvg());
+                expanderIcon = SvgImage.ARROW_RIGHT;
                 className = " active";
             }
 
-            sb.append(template.expander("expanderCell", "expanderIcon" + className, style, expanderIcon));
+            final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
+                    expanderIcon,
+                    "expanderIcon" + className);
+            sb.append(template.expander(
+                    "expanderCell",
+                    style,
+                    iconSafeHtml));
 
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" style=\"{2}\"><div class=\"{1}\">{3}</div></div>")
-        SafeHtml expander(String expanderClass, String iconClass, SafeStyles styles, SafeHtml icon);
+        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml expander(String expanderClass, SafeStyles styles, SafeHtml icon);
     }
 }

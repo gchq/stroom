@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -38,8 +39,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiHandlers> implements CurveTabLayoutView {
 
-    private static final String SHOW_SIDEBAR = "Show Sidebar";
-    private static final String HIDE_SIDEBAR = "Hide Sidebar";
+    private static final String SHOW_SIDEBAR_TITLE = "Show Sidebar";
+    private static final String HIDE_SIDEBAR_TITLE = "Hide Sidebar";
     private final Widget widget;
 
     @UiField(provided = true)
@@ -64,8 +65,8 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
             }
         };
         widget = binder.createAndBindUi(this);
-        menu.getElement().setInnerHTML(SvgImage.HIDE_MENU.getSvg());
-        menu.getElement().setTitle(HIDE_SIDEBAR);
+        SvgImageUtil.setSvgAsInnerHtml(menu, HIDE_SIDEBAR_TITLE, SvgImage.HIDE_MENU);
+
         menuVisible = true;
     }
 
@@ -103,15 +104,17 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     void onMenu(final ClickEvent event) {
         if (menuVisible) {
             menuVisible = false;
-            menu.getElement().setInnerHTML(SvgImage.SHOW_MENU.getSvg());
-            menu.getElement().setTitle(SHOW_SIDEBAR);
+            SvgImageUtil.setSvgAsInnerHtml(menu, SHOW_SIDEBAR_TITLE, SvgImage.SHOW_MENU);
         } else {
             menuVisible = true;
-            menu.getElement().setInnerHTML(SvgImage.HIDE_MENU.getSvg());
-            menu.getElement().setTitle(HIDE_SIDEBAR);
+            SvgImageUtil.setSvgAsInnerHtml(menu, HIDE_SIDEBAR_TITLE, SvgImage.HIDE_MENU);
         }
         getUiHandlers().maximise();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, CurveTabLayoutViewImpl> {
 

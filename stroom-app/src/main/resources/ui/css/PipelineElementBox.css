@@ -119,11 +119,11 @@
 	color: var(--pipeline-element-box__text-color--selected);
 }
 
-.pipelineElementBox-filterImage.pipelineElementBox-filterOff.svgIcon {
+.pipelineElementBox-filterOff .pipelineElementBox-filterImage.svgIcon {
     visibility: hidden;
     display: none;
 }
 
-.pipelineElementBox-filterImage.pipelineElementBox-filterOn.svgIcon {
+.pipelineElementBox-filterOn .pipelineElementBox-filterImage.svgIcon {
 
 }

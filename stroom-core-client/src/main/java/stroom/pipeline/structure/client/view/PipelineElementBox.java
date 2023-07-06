@@ -22,6 +22,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -68,17 +69,23 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
         if (icon != null) {
             final SimplePanel image = new SimplePanel();
-            image.getElement().setInnerHTML(icon.getSvg());
-            image.addStyleName("svgIcon " + BASE_CLASS + "-image");
+            SvgImageUtil.setSvgAsInnerHtml(
+                    image,
+                    icon,
+                    "svgIcon",
+                    BASE_CLASS + "-image");
             background.add(image);
         }
 
         background.add(label);
 
         filterIcon = new SimplePanel();
-        filterIcon.getElement().setInnerHTML(SvgImage.FILTER.getSvg());
-        filterIcon.addStyleName("svgIcon "
-                + BASE_CLASS + "-filterImage icon-colour__green");
+        SvgImageUtil.setSvgAsInnerHtml(
+                filterIcon,
+                SvgImage.FILTER,
+                "svgIcon",
+                BASE_CLASS + "-filterImage icon-colour__green");
+
         background.add(filterIcon);
         updateFilterState();
 

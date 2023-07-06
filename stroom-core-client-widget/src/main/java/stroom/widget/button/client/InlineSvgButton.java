@@ -20,18 +20,24 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 public class InlineSvgButton extends ButtonBase implements ButtonView {
 
-    final Element background;
-    final Element face;
+    // This is used for styling hover/focus and toggle buttons
+    private static final SafeHtml BACKGROUND_DIV = SafeHtmlUtils.fromSafeConstant(
+            "<div class=\"background\"></div>");
+
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
@@ -51,20 +57,15 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
         getElement().setClassName("inline-svg-button icon-button");
-
-        background = Document.get().createDivElement();
-        background.setClassName("background");
-
-        face = Document.get().createDivElement();
-        face.setClassName("face");
-
-        getElement().appendChild(background);
-        getElement().appendChild(face);
+        getElement().setInnerSafeHtml(BACKGROUND_DIV);
         setEnabled(true);
     }
 
     public void setSvg(final SvgImage svgImage) {
-        face.setInnerHTML(svgImage.getSvg());
+        final SafeHtml safeHtml = new SafeHtmlBuilder().append(BACKGROUND_DIV)
+                .append(SvgImageUtil.toSafeHtml(svgImage, "face"))
+                .toSafeHtml();
+        getElement().setInnerSafeHtml(safeHtml);
     }
 
     @Override

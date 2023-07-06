@@ -20,6 +20,7 @@ import stroom.cell.valuespinner.shared.Editable;
 import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -38,14 +39,26 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
         implements HasSpinnerConstraints {
 
     private static volatile Template template;
-    private static final SafeHtml arrowUpHtml =
-            SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowUp\">" +
-                    SvgImage.ARROW_UP.getSvg() +
-                    "</div>");
-    private static final SafeHtml arrowDownHtml =
-            SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">" +
-                    SvgImage.ARROW_DOWN.getSvg() +
-                    "</div>");
+    private static final SafeHtml arrowUpHtml = new SafeHtmlBuilder()
+            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowUp\">")
+            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP))
+            .appendHtmlConstant("</div>")
+            .toSafeHtml();
+//    private static final SafeHtml arrowUpHtml = SvgImageUtil.toSafeHtml(
+//            SvgImage.ARROW_UP, "valueSpinner-arrow", "valueSpinner-arrowUp");
+
+//    private static final SafeHtml arrowDownHtml =
+//            SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">" +
+//                    SvgImage.ARROW_DOWN.getSvg() +
+//                    "</div>");
+//    private static final SafeHtml arrowDownHtml = SvgImageUtil.toSafeHtml(
+//            SvgImage.ARROW_DOWN, "valueSpinner-arrow", "valueSpinner-arrowDown");
+    private static final SafeHtml arrowDownHtml = new SafeHtmlBuilder()
+            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">")
+            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN))
+            .appendHtmlConstant("</div>")
+            .toSafeHtml();
+
     private static volatile Spinner spinner;
     private long min = 0;
     private long max = 100;
