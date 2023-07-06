@@ -147,8 +147,8 @@
 
 /* Flip the colours when toggled on */
 .inline-svg-button.icon-button.on svg {
-    --icon-colour__foreground: var(--icon-colour__foreground__on);
-    --icon-colour__highlight: var(--icon-colour__highlight__on);
+    --icon-colour__black: var(--icon-colour__black__on);
+    --icon-colour__white: var(--icon-colour__white__on);
     color: var(--app__background-color);
 }
 

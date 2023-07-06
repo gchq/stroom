@@ -26,6 +26,10 @@ body {
   width: 60px;
 }
 
+.colour-class {
+  width: 200px;
+}
+
 .file-list {
   display: grid;
   grid-template-columns: 300px 300px 300px 300px 300px;
@@ -41,6 +45,6 @@ body {
 }
 
 .svg svg {
- width: 30px;
- height: 30px;
+ width: 40px;
+ height: 40px;
 }

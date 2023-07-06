@@ -4,15 +4,16 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -25,67 +26,110 @@ public class SvgImageTools {
 
 //    private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile("#[0-9a-fA-F]+");
     private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile("(?<=(fill|stroke):)#[0-9a-fA-F]+");
-    private static final String HTML_HEADER = """
+    private static final String COLOURS_HTML_HEADER = """
             <!DOCTYPE html>
             <html lang="en">
             <head>
-              <link rel="stylesheet" href="svg-image-tools.css">
+              <link rel="stylesheet" href="colour-swatches.css">
             </head>
             <!-- Google thinks this is danish -->
             <meta name="google" content="notranslate">
             """;
+
+    private static final String THEMES_HTML_HEADER = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <link rel="stylesheet" href="themed-icons.css">
+              <link rel="stylesheet" href="css-symlink/app.css">
+              <script type="text/javascript" src="themed-icons.js"></script>
+            </head>
+            <!-- Google thinks this is danish -->
+            <meta name="google" content="notranslate">
+            """;
+
+    private static final List<String> BACKGROUND_VARIABLES = List.of(
+            "--app__background-color",
+            "--row__background-color--even",
+            "--row__background-color--odd",
+            "--row__background-color--hovered",
+            "--row__background-color--selected",
+            "--row__background-color--selected--hovered",
+            "--row__background-color--focussed",
+            "--row__background-color--selected--focussed",
+
+            "--pipeline-element-box__background-color",
+            "--pipeline-element-box__background-color--hover",
+            "--pipeline-element-box__background-color--selected",
+            "--pipeline-element-box__background-color--selected--hover",
+            "--pipeline-element-box__background-color--hotspot"
+    );
+
     private static final Set<Path> THIRD_PARTY_SVGS = Set.of(
             Paths.get("document", "ElasticCluster.svg"),
-            Paths.get("document", "ElasticIndex.svg"),
+//            Paths.get("document", "ElasticIndex.svg"),
             Paths.get("document", "SolrIndex.svg"),
             Paths.get("pipeline", "elastic_index.svg"),
             Paths.get("pipeline", "hadoop.svg"),
             Paths.get("pipeline", "solr.svg")
     );
+    public static final String THEMED_ICONS_HTML_FILENAME = "themedIcons.html";
 
-    @Disabled // Not a test, manual running only
-    @Test
-    void listUniqueSvgColours() throws IOException {
-        final Path imagesSourceBasePath = getImagesSourceBasePath();
+    public static void main(String[] args) throws IOException {
+        generateUniqueColoursContactSheet();
+        generateThemedIconsContactSheet();
+    }
+
+    static void generateUniqueColoursContactSheet() throws IOException {
+        final Path rawImagesBasePath = getRawImagesBasePath();
         final Path outputPath = getOutputPath();
 
-        try (Stream<Path> fileStream = Files.walk(imagesSourceBasePath)) {
+        try (Stream<Path> fileStream = Files.walk(rawImagesBasePath)) {
             final Map<String, Set<ColourInstance>> colourToFilesMap = fileStream.filter(Files::isRegularFile)
                     .filter(path -> path.getFileName().toString().endsWith(".svg"))
-                    .filter(path -> !THIRD_PARTY_SVGS.contains(imagesSourceBasePath.relativize(path)))
+                    .filter(path -> !THIRD_PARTY_SVGS.contains(rawImagesBasePath.relativize(path)))
                     .flatMap(svgFile -> {
                         try {
                             final String svgStr = Files.readString(svgFile);
                             return HEX_COLOUR_PATTERN.matcher(svgStr)
                                     .results()
                                     .map(MatchResult::group)
-                                    .map(match -> new ColourInstance(
+                                    .map(colourHex -> new ColourInstance(
                                             svgFile,
-                                            match));
+                                            colourHex.toLowerCase()));
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     })
                     .collect(Collectors.groupingBy(ColourInstance::colour, Collectors.toSet()));
 
-            colourToFilesMap.entrySet()
-                    .stream()
-                    .sorted(Entry.comparingByKey())
-                    .map(entry ->
-                            padColour(entry.getKey())
-                                    + " - "
-                                    + entry.getValue()
-                                    .stream()
-                                    .map(ColourInstance::svgFile)
-                                    .sorted()
-                                    .map(file -> imagesSourceBasePath.relativize(file).toString())
-                                    .collect(Collectors.joining(", "))
-                    )
-                    .forEach(System.out::println);
+//            colourToFilesMap.entrySet()
+//                    .stream()
+//                    .sorted(Entry.comparingByKey())
+//                    .map(entry ->
+//                            padColour(entry.getKey())
+//                                    + " - "
+//                                    + entry.getValue()
+//                                    .stream()
+//                                    .map(ColourInstance::svgFile)
+//                                    .sorted()
+//                                    .map(file -> rawImagesBasePath.relativize(file).toString())
+//                                    .collect(Collectors.joining(", "))
+//                    )
+//                    .forEach(System.out::println);
+
+            // Compare colours roughly based on dark -> light
+            final Comparator<Entry<String, ?>> hexColourComparator = (o1, o2) -> {
+                final Color colour1 = Color.decode(toLongForm(o1.getKey()));
+                final Color colour2 = Color.decode(toLongForm(o2.getKey()));
+                return Integer.compare(
+                        colour1.getRed() + colour1.getGreen() + colour1.getBlue(),
+                        colour2.getRed() + colour2.getGreen() + colour2.getBlue());
+            };
 
             final String rowsHtml = colourToFilesMap.entrySet()
                     .stream()
-                    .sorted(Entry.comparingByKey())
+                    .sorted(hexColourComparator)
                     .map(entry -> {
                         final String colourHex = entry.getKey();
                         final String fileHtml = entry.getValue().stream()
@@ -100,12 +144,18 @@ public class SvgImageTools {
                                                       <div class="file-path">{}</div>
                                                     </div>""",
                                                 svg,
-                                                imagesSourceBasePath.relativize(path).toString());
+                                                rawImagesBasePath.relativize(path).toString());
                                     } catch (IOException e) {
                                         throw new RuntimeException(e);
                                     }
                                 })
                                 .collect(Collectors.joining("\n"));
+
+                        final String colourClass = Objects.requireNonNullElse(
+                                SvgImageGen.COLOUR_MAPPINGS.get(colourHex),
+                                "")
+                                .replace("var(", "")
+                                .replace(")", "");
 
                         return LogUtil.message("""
                                         <div class="row">
@@ -113,6 +163,7 @@ public class SvgImageTools {
                                                style="background-color:{};"
                                                title="{}" ></div>
                                           <div class="colour-hex">{}</div>
+                                          <div class="colour-class">{}</div>
                                           <div class="file-list">
                                             {}
                                           </div>
@@ -120,6 +171,7 @@ public class SvgImageTools {
                                 colourHex,
                                 colourHex,
                                 colourHex,
+                                colourClass,
                                 fileHtml);
                     })
                     .collect(Collectors.joining("\n"));
@@ -130,46 +182,128 @@ public class SvgImageTools {
                               {}
                             </div>
                             """,
-                    HTML_HEADER,
+                    COLOURS_HTML_HEADER,
                     rowsHtml);
 
             Files.writeString(outputPath.resolve("colourSwatches.html"), html);
         }
     }
 
-    private String padColour(final String colour) {
+    static void generateThemedIconsContactSheet() throws IOException {
+        final Path generatedImagesBasePath = getGeneratedImagesBasePath();
+        final Path outputPath = getOutputPath();
+
+        try (Stream<Path> fileStream = Files.walk(generatedImagesBasePath)) {
+            final String mainHtml = fileStream.filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".svg"))
+                    .sorted()
+                    .map(svgFile -> {
+                        final Path relPath = generatedImagesBasePath.relativize(svgFile);
+//                        LOGGER.debug("{}", svgFile);
+                        try {
+                            final String svgStr = Files.readString(svgFile);
+
+                            return LogUtil.message("""
+                                    <div class="themed-icons-row svg-pair">
+                                      <div class="svg-name">{}</div>
+                                      <div class="themed-icons-panel stroom-theme-light">
+                                        <div class="svgIcon themed-icons-svg svg-image svg-light">{}</div>
+                                      </div>
+                                      <div class="themed-icons-panel stroom-theme-dark">
+                                        <div class="svgIcon themed-icons-svg svg-image svg-dark">{}</div>
+                                      </div>
+                                    </div>""", relPath, svgStr, svgStr);
+
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.joining("\n"));
+
+            final String optionsHtml = BACKGROUND_VARIABLES.stream()
+                    .map(var -> LogUtil.message("""
+                                    <option value="var({})">{}</option>""",
+                            var, var))
+                    .collect(Collectors.joining("\n"));
+
+            @SuppressWarnings("checkstyle:LineLength")
+            final String html = LogUtil.message("""
+                            {}
+                            <body>
+                              <div class="themed-icons-toolbar">
+                                <label for="variables">Choose a background:</label>
+                                <select name="variables" id="variables" onchange="onBackgroundVariableChange()" onkeyup="onBackgroundVariableChange()" >
+                                  {}
+                                </select>
+                              </div>
+                              <div class="themed-icons-container max">
+                                {}
+                              </div>
+                            </body>
+                            """,
+                    THEMES_HTML_HEADER,
+                    optionsHtml,
+                    mainHtml);
+
+            Files.writeString(outputPath.resolve(THEMED_ICONS_HTML_FILENAME), html);
+        }
+        System.out.println("\nTo view the icon contact sheets do:\n" +
+                "  cd "
+                + outputPath.toAbsolutePath().normalize()
+                + "; python -m http.server 8888\n"
+                + "Then visit http://localhost:8888");
+    }
+
+    private static String padColour(final String colour) {
         if (colour.length() < 7) {
             final int diff = 7 - colour.length();
-            final StringBuilder sb = new StringBuilder(7)
-                    .append(colour);
-            for (int i = 0; i < diff; i++) {
-                sb.append(" ");
-            }
-            return sb.toString();
+            return colour + " ".repeat(diff);
         } else {
             return colour;
         }
     }
 
-    private static Path getImagesSourceBasePath() {
-        final Path coreSharedPath = getCoreSharedPath();
+    private static Path getRawImagesBasePath() {
+        final Path coreSharedPath = SvgImageGen.getCoreSharedPath();
         final Path appPath = SvgImageGen.getAppPath(coreSharedPath);
         final Path imagesSourceBasePath = SvgImageGen.getImagesSourceBasePath(appPath);
-        LOGGER.info("Scanning dir: {}", imagesSourceBasePath.toAbsolutePath().normalize());
+        LOGGER.debug("Scanning dir: {}", imagesSourceBasePath.toAbsolutePath().normalize());
         return imagesSourceBasePath;
     }
 
+    private static Path getGeneratedImagesBasePath() {
+        final Path coreSharedPath = SvgImageGen.getCoreSharedPath();
+        final Path appPath = SvgImageGen.getAppPath(coreSharedPath);
+        final Path imagesDestBasePath = SvgImageGen.getImagesDestBasePath(appPath);
+        LOGGER.debug("Scanning dir: {}", imagesDestBasePath.toAbsolutePath().normalize());
+        return imagesDestBasePath;
+    }
+
     private static Path getOutputPath() {
-        final Path coreSharedPath = getCoreSharedPath();
-        return coreSharedPath.resolve("src")
+        final Path coreSharedPath = SvgImageGen.getCoreSharedPath();
+        final Path path = coreSharedPath.resolve("src")
                 .resolve("test")
                 .resolve("resources")
                 .resolve(SvgImageTools.class.getSimpleName());
+        LOGGER.debug("Using output path: " + path.toAbsolutePath().normalize());
+        return path;
     }
 
     private static Path getCoreSharedPath() {
         final Path coreSharedPath = Paths.get(".").toAbsolutePath().normalize();
         return coreSharedPath;
+    }
+
+    private static String toLongForm(final String colourHex) {
+        if (colourHex.length() == 4) {
+            return
+                    "#"
+                            + colourHex.charAt(1) + colourHex.charAt(1)
+                            + colourHex.charAt(2) + colourHex.charAt(2)
+                            + colourHex.charAt(3) + colourHex.charAt(3);
+        } else {
+            return colourHex;
+        }
     }
 
 
@@ -179,6 +313,5 @@ public class SvgImageTools {
     private record ColourInstance(
             Path svgFile,
             String colour) {
-
     }
 }

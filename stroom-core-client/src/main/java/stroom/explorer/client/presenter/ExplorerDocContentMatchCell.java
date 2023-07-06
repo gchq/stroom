@@ -51,7 +51,8 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
             main.append(SvgImageUtil.toSafeHtml(
                     value.getDocContentMatch().getDocRef().getType(),
                     value.getIcon(),
-                    getCellClassName() + "-icon"));
+                    getCellClassName() + "-icon",
+                    "svgIcon"));
 
             // Add sample
             main.append(template.div(getCellClassName() + "-sample",

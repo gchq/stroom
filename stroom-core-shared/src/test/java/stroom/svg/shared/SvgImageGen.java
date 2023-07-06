@@ -40,17 +40,33 @@ public class SvgImageGen {
     private static final Pattern XML_INDENT_PATTERN = Pattern.compile(">\\s*<");
     private static final Pattern EXCESS_WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
+    @SuppressWarnings("checkstyle:LineLength")
+    private static final Pattern INKSCAPE_CLEAN_PATTERN = Pattern.compile(
+            "\\s*((sodipodi:docname|inkscape:version|xmlns:(inkscape|sodipodi|svg)|id)=\"[^\"]+\"|<sodipodi:namedview[^>]*/>)");
+
+    // #000 stays as black without a variable, e.g. hadoop.svg
+    // #fff stays as white without a variable, e.g. help.svg
     // Hex colour => css colour variable
-    private static final Map<String, String> COLOUR_MAPPINGS = Map.of(
-            "#000000", "var(--icon-colour__foreground)",
-            "#fefefe", "var(--icon-colour__highlight)",
-            "#2196f4", "var(--icon-colour__xsd-background)",
-            "#aed581", "var(--icon-colour__xsl-background)",
-            "#ce93d8", "var(--icon-colour__xml-background)",
-            "#2196f3", "var(--icon-colour__blue)",
-            "#4caf50", "var(--icon-colour__green)",
-            "#4A4B4C", "var(--icon-colour__grey)",
-            "#010101", "currentColor");
+    static final Map<String, String> COLOUR_MAPPINGS = Map.ofEntries(
+            Map.entry("#000000", "var(--icon-colour__black)"),
+            Map.entry("#ffffff", "var(--icon-colour__white)"),
+            Map.entry("#e6e1dc", "var(--icon-colour__off-white)"),
+            Map.entry("#2196f4", "var(--icon-colour__xsd-background)"),
+            Map.entry("#aed581", "var(--icon-colour__xsl-background)"),
+            Map.entry("#ce93d8", "var(--icon-colour__xml-background)"),
+            Map.entry("#2196f3", "var(--icon-colour__blue)"),
+            Map.entry("#1976d2", "var(--icon-colour__info-blue)"),
+            Map.entry("#d32f2f", "var(--icon-colour__red)"),
+            Map.entry("#ff6f00", "var(--icon-colour__dirty-amber)"),
+            Map.entry("#ff8f00", "var(--icon-colour__orange)"),
+            Map.entry("#ffeb3b", "var(--icon-colour__yellow)"),
+            Map.entry("#ffde81", "var(--icon-colour__pale-yellow)"),
+            Map.entry("#4caf50", "var(--icon-colour__green)"),
+            Map.entry("#388e3c", "var(--icon-colour__dark-green)"),
+            Map.entry("#555555", "var(--icon-colour__grey)"),
+            Map.entry("#9c27b0", "var(--icon-colour__purple)"),
+            Map.entry("#010101", "currentColor")
+    );
 
     private static final String ENUM_HEADER = """
             package stroom.svg.shared;
@@ -111,7 +127,7 @@ public class SvgImageGen {
     private SvgImageGen() {
     }
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws IOException {
 
         final Path coreSharedPath = getCoreSharedPath();
         final Path appPath = getAppPath(coreSharedPath);
@@ -137,12 +153,17 @@ public class SvgImageGen {
                         for (final Entry<String, String> entry : COLOUR_MAPPINGS.entrySet()) {
                             final String hex = entry.getKey();
                             final String cssColourVariable = entry.getValue();
-                            xml = xml.replaceAll(hex, cssColourVariable);
+                            xml = xml.replaceAll(
+                                    "(?i)" + Pattern.quote(hex),
+                                    cssColourVariable);
                         }
                         // Remove the XML declaration
                         xml = XML_DECLARATION_PATTERN.matcher(xml).replaceAll("");
                         xml = XML_INDENT_PATTERN.matcher(xml).replaceAll("><");
                         xml = EXCESS_WHITESPACE_PATTERN.matcher(xml).replaceAll(" ");
+                        // TODO: 06/07/2023 Would be nice to clean all the inkscape clutter from the svg
+                        //  but the regex needs more work
+//                        xml = INKSCAPE_CLEAN_PATTERN.matcher(xml).replaceAll("");
 
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
                         final String className = "svg-image__"
@@ -161,7 +182,7 @@ public class SvgImageGen {
                         if (Files.exists(output)) {
                             System.err.println("File exists: " + output);
                         } else {
-                            System.out.println(relSourcePath + " => " + output);
+//                            System.out.println(relSourcePath + " => " + output);
                             Files.writeString(output, xml);
                             relPathToSvgObjMap.put(relSourcePath, svgFile);
                         }
@@ -237,6 +258,27 @@ public class SvgImageGen {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        System.out.println("\nLight mode css variable definitions:");
+        COLOUR_MAPPINGS.entrySet()
+                .stream()
+                .sorted(Entry.comparingByValue())
+                .forEach(entry -> {
+                    final String hex = entry.getKey();
+                    final String variable = entry.getValue()
+                            .replace("var(", "")
+                            .replace(")", "");
+                    if (!variable.equals("currentColor")) {
+                        System.out.println("    "
+                                + variable
+                                + ": "
+                                + hex
+                                + ";");
+                    }
+                });
+
+        SvgImageTools.generateUniqueColoursContactSheet();
+        SvgImageTools.generateThemedIconsContactSheet();
     }
 
     static Path getImagesDestBasePath() {
