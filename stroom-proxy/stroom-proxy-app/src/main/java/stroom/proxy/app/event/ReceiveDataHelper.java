@@ -54,8 +54,8 @@ public class ReceiveDataHelper {
     }
 
     public String process(final HttpServletRequest request,
-                           final Handler consumeHandler,
-                           final Handler dropHandler) throws StroomStreamException {
+                          final Handler consumeHandler,
+                          final Handler dropHandler) throws StroomStreamException {
         final long startTimeMs = System.currentTimeMillis();
 
         // Create attribute map from headers.
