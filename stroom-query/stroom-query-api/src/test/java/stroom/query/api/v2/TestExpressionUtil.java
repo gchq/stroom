@@ -21,7 +21,7 @@ class TestExpressionUtil {
 
         final ExpressionOperator expressionOperator2 = ExpressionUtil.replaceExpressionParameters(
                 expressionOperator,
-                null);
+                (List<Param>) null);
 
         assertThat(expressionOperator2)
                 .isNotEqualTo(expressionOperator);
