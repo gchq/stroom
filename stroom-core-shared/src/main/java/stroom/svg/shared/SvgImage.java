@@ -1079,19 +1079,28 @@ public enum SvgImage {
             ""),
 
     EXCLAMATION("exclamation.svg", "svg-image__exclamation", "" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\" version=\"1.1\"><path style=\"fill:currentColor;fill-opacity:1;stroke-wi" +
-            "dth:3.09787\" d=\"m 896,1689.0561 a 793.05621,793.05621 0 1 0 0,-1586.1122 793.056" +
-            "21,793.05621 0 1 0 0,1586.1122 z\"/><!--! Font Awesome Free 6.4.0 by @fontawesome" +
-            " - https://fontawesome.com License - https://fontawesome.com/license (Commercial" +
-            " License) Copyright 2023 Fonticons, Inc. --><path style=\"fill:var(--icon-colour_" +
-            "_white);fill-opacity:1;stroke-width:4.58448\" d=\"m 749.29634,1336.062 a 146.70369" +
-            ",146.70369 0 1 1 293.40736,0 146.70369,146.70369 0 1 1 -293.40736,0 z\"/><path st" +
-            "yle=\"fill:var(--icon-colour__white);fill-opacity:1;stroke-width:4.58448\" d=\"m 89" +
-            "6.00006,309.13656 c 60.97368,0 110.02774,49.05404 110.02774,110.02775 v 513.4629" +
-            "2 c 0,60.97372 -49.05406,110.02767 -110.02774,110.02767 -60.97381,0 -110.0278,-4" +
-            "9.05395 -110.0278,-110.02767 V 419.16431 c 0,-60.97371 49.05399,-110.02775 110.0" +
-            "278,-110.02775 z\"/></svg> \n" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" xmlns=\"htt" +
+            "p://www.w3.org/2000/svg\"><path style=\"fill:currentColor\" d=\"M 896 128 C 756.6668" +
+            "1 128 628.16655 162.3334 510.5 231 C 392.83345 299.6666 299.6666 392.83345 231 5" +
+            "10.5 C 162.3334 628.16655 128 756.66681 128 896 C 128 1035.3332 162.3334 1163.83" +
+            "35 231 1281.5 C 299.6666 1399.1665 392.83345 1492.3334 510.5 1561 C 628.16655 16" +
+            "29.6666 756.66681 1664 896 1664 C 1035.3332 1664 1163.8335 1629.6666 1281.5 1561" +
+            " C 1399.1665 1492.3334 1492.3334 1399.1665 1561 1281.5 C 1629.6666 1163.8335 166" +
+            "4 1035.3332 1664 896 C 1664 756.66681 1629.6666 628.16655 1561 510.5 C 1492.3334" +
+            " 392.83345 1399.1665 299.6666 1281.5 231 C 1163.8335 162.3334 1035.3332 128 896 " +
+            "128 z M 896 352 C 994.66657 352 1085.6668 376.33338 1169 425 C 1252.3332 473.666" +
+            "62 1318.3334 539.66675 1367 623 C 1415.6666 706.33325 1440 797.33343 1440 896 C " +
+            "1440 994.66657 1415.6666 1085.6668 1367 1169 C 1318.3334 1252.3332 1252.3332 131" +
+            "8.3334 1169 1367 C 1085.6668 1415.6666 994.66657 1440 896 1440 C 797.33343 1440 " +
+            "706.33325 1415.6666 623 1367 C 539.66675 1318.3334 473.66662 1252.3332 425 1169 " +
+            "C 376.33338 1085.6668 352 994.66657 352 896 C 352 797.33343 376.33338 706.33325 " +
+            "425 623 C 473.66662 539.66675 539.66675 473.66662 623 425 C 706.33325 376.33338 " +
+            "797.33343 352 896 352 z \" /><path style=\"fill:currentColor;fill-opacity:1;stroke" +
+            "-width:3.80567\" d=\"m 896.00012,408.87347 c 50.6154,0 91.33614,40.72074 91.33614," +
+            "91.33624 v 426.23583 c 0,50.61551 -40.72074,91.33616 -91.33614,91.33616 -50.6155" +
+            "8,0 -91.33627,-40.72065 -91.33627,-91.33616 V 500.2097 c 0,-50.61549 40.72069,-9" +
+            "1.33624 91.33627,-91.33623 z M 774.21834,1261.3449 a 121.78168,121.78168 0 1 1 2" +
+            "43.56336,0 121.78168,121.78168 0 1 1 -243.56336,0 z\" /></svg> \n" +
             ""),
 
     EXPAND_DOWN("expand-down.svg", "svg-image__expand-down", "" +
@@ -2116,27 +2125,17 @@ public enum SvgImage {
             ""),
 
     PEN("pen.svg", "svg-image__pen", "" +
-            "<svg height=\"1792\" width=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" id=\"svg426" +
-            "7\" sodipodi:docname=\"pen.svg\" inkscape:version=\"1.2.2 (b0a8486541, 2022-12-01)\" " +
-            "xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" xmlns:sodipodi=\"htt" +
-            "p://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/2000/s" +
-            "vg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs id=\"defs4271\" /><sodipodi:named" +
-            "view id=\"namedview4269\" pagecolor=\"var(--icon-colour__white)\" bordercolor=\"var(-" +
-            "-icon-colour__black)\" borderopacity=\"0.25\" inkscape:showpageshadow=\"2\" inkscape:" +
-            "pageopacity=\"0.0\" inkscape:pagecheckerboard=\"0\" inkscape:deskcolor=\"#d1d1d1\" sho" +
-            "wgrid=\"false\" inkscape:zoom=\"0.26339286\" inkscape:cx=\"189.83051\" inkscape:cy=\"56" +
-            "7.59322\" inkscape:window-width=\"1920\" inkscape:window-height=\"1172\" inkscape:win" +
-            "dow-x=\"0\" inkscape:window-y=\"0\" inkscape:window-maximized=\"1\" inkscape:current-l" +
-            "ayer=\"svg4267\" /><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawe" +
-            "some.com License - https://fontawesome.com/license (Commercial License) Copyrigh" +
-            "t 2023 Fonticons, Inc. --><path id=\"path4265\" d=\"m 1539.7411,173.94898 c -91.422" +
-            "5,-91.422429 -239.2011,-91.422429 -330.6236,0 l -125.6537,125.23621 408.6875,408" +
-            ".68749 125.6537,-125.65366 c 91.4225,-91.42243 91.4225,-239.20116 0,-330.62359 z" +
-            " M 290.71866,1092.3479 c -25.4647,25.4646 -45.08503,56.7737 -56.35629,91.4223 l " +
-            "-123.56639,370.6992 c -12.10617,35.9011 -2.50473,75.5592 24.21233,102.6937 26.71" +
-            "705,27.1345 66.37519,36.3185 102.69369,24.2124 l 370.69918,-123.5664 c 34.23122," +
-            "-11.2713 65.54028,-30.8917 91.42243,-56.3563 L 1398.2242,802.63474 989.11933,393" +
-            ".5298 Z\" style=\"fill:currentColor;fill-opacity:1\" /></svg> \n" +
+            "<svg height=\"1792\" width=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" xmlns=\"htt" +
+            "p://www.w3.org/2000/svg\"><!--! Font Awesome Free 6.4.0 by @fontawesome - https:/" +
+            "/fontawesome.com License - https://fontawesome.com/license (Commercial License) " +
+            "Copyright 2023 Fonticons, Inc. --><path d=\"m 1539.7411,173.94898 c -91.4225,-91." +
+            "422429 -239.2011,-91.422429 -330.6236,0 l -125.6537,125.23621 408.6875,408.68749" +
+            " 125.6537,-125.65366 c 91.4225,-91.42243 91.4225,-239.20116 0,-330.62359 z M 290" +
+            ".71866,1092.3479 c -25.4647,25.4646 -45.08503,56.7737 -56.35629,91.4223 l -123.5" +
+            "6639,370.6992 c -12.10617,35.9011 -2.50473,75.5592 24.21233,102.6937 26.71705,27" +
+            ".1345 66.37519,36.3185 102.69369,24.2124 l 370.69918,-123.5664 c 34.23122,-11.27" +
+            "13 65.54028,-30.8917 91.42243,-56.3563 L 1398.2242,802.63474 989.11933,393.5298 " +
+            "Z\" style=\"fill:currentColor;fill-opacity:1\" /></svg> \n" +
             ""),
 
     PIPELINE_ELASTIC_INDEX("pipeline/elastic_index.svg", "svg-image__pipeline-elastic-index", "" +
