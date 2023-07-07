@@ -243,6 +243,7 @@ class DashboardServiceImpl implements DashboardService {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             final Search search = searchRequest.getSearch();
+            Integer rowCount = null;
 
             try {
                 if (queryKey == null) {
@@ -298,18 +299,14 @@ class DashboardServiceImpl implements DashboardService {
                 final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
                 final List<Field> fields = tableResultRequest.getTableSettings().getFields();
                 final List<Row> rows = tableResult.getRows();
+                rowCount = tableResult.getTotalResults();
 
                 download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent(),
                         searchRequest.getDateTimeSettings());
 
-                searchEventLog.downloadResults(search.getDataSourceRef(),
-                        search.getExpression(),
-                        search.getQueryInfo());
+                searchEventLog.downloadResults(request, rowCount);
             } catch (final RuntimeException e) {
-                searchEventLog.downloadResults(search.getDataSourceRef(),
-                        search.getExpression(),
-                        search.getQueryInfo(),
-                        e);
+                searchEventLog.downloadResults(request, rowCount, e);
                 throw EntityServiceExceptionUtil.create(e);
             }
 
@@ -529,7 +526,10 @@ class DashboardServiceImpl implements DashboardService {
 
                 if (newSearch) {
                     // Log this search request for the current user.
-                    searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
+                    searchEventLog.search(search.getDataSourceRef(),
+                            search.getExpression(),
+                            search.getQueryInfo(),
+                            search.getParams());
                 }
 
             } catch (final RuntimeException e) {
@@ -537,7 +537,11 @@ class DashboardServiceImpl implements DashboardService {
                 LOGGER.debug(() -> "Error processing search " + finalSearch, e);
 
                 if (newSearch) {
-                    searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                    searchEventLog.search(search.getDataSourceRef(),
+                            search.getExpression(),
+                            search.getQueryInfo(),
+                            search.getParams(),
+                            e);
                 }
 
                 result = new DashboardSearchResponse(

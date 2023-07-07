@@ -76,12 +76,13 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
         return dashboardServiceProvider.get().downloadSearchResults(request);
     }
 
     @Override
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public DashboardSearchResponse search(final DashboardSearchRequest request) {
         return dashboardServiceProvider.get().search(request);
     }
