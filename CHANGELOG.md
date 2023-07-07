@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.29] - 2023-07-07
+
+* Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
+
+* Issue **#3588** : Fix query parameters not being de-referenced in audit logs for dashboard search and download results. Fix double logging of download results.
+
+
 ## [v7.0.28] - 2023-06-27
 
 * Issue **#3504** : Fix XML schema cache deadlock.
@@ -4854,7 +4861,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.28...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.29...HEAD
+[v7.0.29]: https://github.com/gchq/stroom/compare/v7.0.28...v7.0.29
 [v7.0.28]: https://github.com/gchq/stroom/compare/v7.0.27...v7.0.28
 [v7.0.27]: https://github.com/gchq/stroom/compare/v7.0.26...v7.0.27
 [v7.0.26]: https://github.com/gchq/stroom/compare/v7.0.25...v7.0.26
