@@ -230,6 +230,18 @@ public class ExpressionUtil {
         return result;
     }
 
+    public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
+                                                                  final List<Param> params) {
+        final ExpressionOperator result;
+        if (operator != null) {
+            final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(params);
+            result = replaceExpressionParameters(operator, paramMap);
+        } else {
+            result = null;
+        }
+        return result;
+    }
+
     private static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
                                                                   final Map<String, String> paramMap) {
         final ExpressionOperator.Builder builder = ExpressionOperator
