@@ -234,7 +234,7 @@ public final class LogUtil {
         if (t == null) {
             return null;
         } else {
-            return t.getClass() + " " + t.getMessage();
+            return NullSafe.get(t.getClass(), Class::getSimpleName) + " " + t.getMessage();
         }
     }
 
