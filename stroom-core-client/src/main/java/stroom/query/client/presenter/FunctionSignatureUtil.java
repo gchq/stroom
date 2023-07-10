@@ -392,7 +392,7 @@ public class FunctionSignatureUtil {
             argsStr = "()";
         } else if (signature.getArgs().size() > 3) {
             // Funcs with long arg lists get truncated. Help text explains all the args.
-            argsStr = "(...";
+            argsStr = "(......)";
         } else {
             final AtomicBoolean foundOptArg = new AtomicBoolean(false);
             argsStr = signature.getArgs()
