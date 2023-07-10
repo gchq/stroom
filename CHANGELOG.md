@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.41] - 2023-07-10
+
+* Fix styling for log pane toggle button in the stepper screen.
+
+* Issue **#3573** : Fix new dashboard panel size.
+
+* Fix various icon styling issues.
+
+* Issue **#3588** : Fix query parameters not being de-referenced in audit logs for dashboard search and download results. Fix double logging of download results.
+
+
 ## [v7.2-beta.40] - 2023-07-05
 
 * Issue **#3575** : Duplicate tab now allows user to choose destination.
@@ -5581,7 +5592,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.40...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.41...HEAD
+[v7.2-beta.41]: https://github.com/gchq/stroom/compare/v7.2-beta.40...v7.2-beta.41
 [v7.2-beta.40]: https://github.com/gchq/stroom/compare/v7.2-beta.39...v7.2-beta.40
 [v7.2-beta.39]: https://github.com/gchq/stroom/compare/v7.2-beta.38...v7.2-beta.39
 [v7.2-beta.38]: https://github.com/gchq/stroom/compare/v7.2-beta.36...v7.2-beta.38
