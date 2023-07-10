@@ -53,7 +53,9 @@ public class QueryStructure implements HasHandlers {
         this.markdownConverter = markdownConverter;
     }
 
-    public void fetchStructureElements(final Consumer<List<StructureQueryHelpItem>> consumer) {
+    public void fetchStructureElements(
+            final QueryHelpItem parent,
+            final Consumer<List<StructureQueryHelpItem>> consumer) {
         // Theme is baked into the html due to the way prism works, so we need to rebuild
         // if the theme has changed
         if (items != null && !hasThemeChanged()) {
@@ -69,7 +71,9 @@ public class QueryStructure implements HasHandlers {
                                         final SafeHtml detailHtml = buildDescriptionHtml(
                                                 structureElement.getDescription());
 
+                                        // ctor adds the item to its parent
                                         return new StructureQueryHelpItem(
+                                                parent,
                                                 structureElement.getTitle(),
                                                 detailHtml,
                                                 structureElement.getSnippets(),
@@ -133,11 +137,12 @@ public class QueryStructure implements HasHandlers {
         private final SafeHtml detail;
         private final List<String> snippets;
 
-        public StructureQueryHelpItem(final String title,
+        public StructureQueryHelpItem(final QueryHelpItem parent,
+                                      final String title,
                                       final SafeHtml detail,
                                       final List<String> snippets,
                                       final String helpUrl) {
-            super(title, false, 1);
+            super(parent, title, false);
             this.detail = buildDetailHtml(title, detail, helpUrl);
             this.snippets = new ArrayList<>(snippets);
         }
