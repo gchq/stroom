@@ -212,7 +212,7 @@ public class QueryHelpPresenter
                 functionSignatures.fetchFunctions(functions -> {
                     keyedAceCompletionProvider.clear(FUNCTIONS_COMPLETION_KEY);
                     functions.stream()
-                            .filter(FunctionSignatureUtil::isBracketedForm)
+                            .flatMap(funcSig -> funcSig.asAliases().stream()) // One item for each alias
                             .forEach(functionSignature -> {
                                 // Initial parent is the top level heading
                                 QueryHelpItem parent = functionsHeading;

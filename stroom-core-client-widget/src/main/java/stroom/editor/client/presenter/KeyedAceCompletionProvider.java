@@ -2,7 +2,6 @@ package stroom.editor.client.presenter;
 
 import stroom.util.shared.GwtNullSafe;
 
-import com.google.gwt.core.client.GWT;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionCallback;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class KeyedAceCompletionProvider implements AceCompletionProvider {
 
@@ -30,11 +28,10 @@ public class KeyedAceCompletionProvider implements AceCompletionProvider {
                 .flatMap(List::stream)
                 .toArray(AceCompletion[]::new);
 
-        GWT.log("getProposals, counts: " + completionsMap.entrySet()
-                .stream()
-                        .map(entry -> entry.getKey() + ":" + entry.getValue().size())
-                        .collect(Collectors.joining(", ")));
-
+//        GWT.log("getProposals, counts: " + completionsMap.entrySet()
+//                .stream()
+//                        .map(entry -> entry.getKey() + ":" + entry.getValue().size())
+//                        .collect(Collectors.joining(", ")));
         callback.invokeWithCompletions(completionsArr);
     }
 
