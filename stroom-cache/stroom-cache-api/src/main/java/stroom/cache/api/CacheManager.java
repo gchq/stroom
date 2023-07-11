@@ -110,6 +110,12 @@ public interface CacheManager extends AutoCloseable {
                 null);
     }
 
+    boolean exists(final String name);
+
+    <K, V> StroomCache<K, V> getCache(final String name);
+
+    <K, V> LoadingStroomCache<K, V> getLoadingCache(final String name);
+
     /**
      * Clears down all caches registered with {@link CacheManager}.
      */
