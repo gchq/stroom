@@ -45,7 +45,7 @@ public class MockDocRefInfoModule extends AbstractModule {
             }
 
             @Override
-            public DocRef decorate(final DocRef docRef) {
+            public DocRef decorate(final DocRef docRef, final boolean force) {
                 throw new UnsupportedOperationException();
             }
 

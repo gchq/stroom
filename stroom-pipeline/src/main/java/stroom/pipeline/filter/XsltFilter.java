@@ -18,6 +18,7 @@
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.PoolItem;
@@ -128,7 +129,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator,
                       final Provider<FeedHolder> feedHolder,
-                      final Provider<PipelineHolder> pipelineHolder) {
+                      final Provider<PipelineHolder> pipelineHolder,
+                      final DocRefInfoService docRefInfoService) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
@@ -138,7 +140,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
+        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore, docRefInfoService);
     }
 
     @Override
