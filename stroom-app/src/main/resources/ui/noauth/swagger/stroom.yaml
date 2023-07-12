@@ -8147,6 +8147,7 @@ components:
           - OPERATOR
           - PASSWORD
           - PAUSE
+          - PEN
           - PIPELINE_ELASTIC_INDEX
           - PIPELINE_FILE
           - PIPELINE_FILES
@@ -8584,6 +8585,7 @@ components:
           - OPERATOR
           - PASSWORD
           - PAUSE
+          - PEN
           - PIPELINE_ELASTIC_INDEX
           - PIPELINE_FILE
           - PIPELINE_FILES
@@ -8770,6 +8772,7 @@ components:
           - OPERATOR
           - PASSWORD
           - PAUSE
+          - PEN
           - PIPELINE_ELASTIC_INDEX
           - PIPELINE_FILE
           - PIPELINE_FILES
@@ -10883,6 +10886,7 @@ components:
           - OPERATOR
           - PASSWORD
           - PAUSE
+          - PEN
           - PIPELINE_ELASTIC_INDEX
           - PIPELINE_FILE
           - PIPELINE_FILES
