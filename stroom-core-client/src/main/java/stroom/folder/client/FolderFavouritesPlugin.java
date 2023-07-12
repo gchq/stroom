@@ -18,9 +18,8 @@
 package stroom.folder.client;
 
 import stroom.core.client.presenter.Plugin;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.svg.client.Icon;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -34,8 +33,8 @@ public class FolderFavouritesPlugin extends Plugin implements TabData {
     }
 
     @Override
-    public Icon getIcon() {
-        return Icon.create(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
+    public SvgImage getIcon() {
+        return SvgImage.FAVOURITES;
     }
 
     @Override

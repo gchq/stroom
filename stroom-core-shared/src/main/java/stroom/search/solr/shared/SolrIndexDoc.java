@@ -19,6 +19,7 @@ package stroom.search.solr.shared;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -54,6 +55,7 @@ import java.util.Objects;
 public class SolrIndexDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "SolrIndex";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_SOLR_INDEX;
 
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 

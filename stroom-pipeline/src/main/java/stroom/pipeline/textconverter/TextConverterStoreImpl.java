@@ -85,7 +85,11 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.TRANSFORMATION, TextConverterDoc.DOCUMENT_TYPE, "Text Converter");
+        return new DocumentType(
+                DocumentTypeGroup.TRANSFORMATION,
+                TextConverterDoc.DOCUMENT_TYPE,
+                "Text Converter",
+                TextConverterDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

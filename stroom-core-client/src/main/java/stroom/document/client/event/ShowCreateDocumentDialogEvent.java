@@ -17,7 +17,6 @@
 
 package stroom.document.client.event;
 
-import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 
 import com.google.gwt.event.shared.EventHandler;

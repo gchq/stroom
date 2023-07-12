@@ -63,11 +63,6 @@ public class AnalyticRuleSettingsPresenter
         setDirty(true);
     }
 
-    @Override
-    public String getType() {
-        return AnalyticRuleDoc.DOCUMENT_TYPE;
-    }
-
     public interface AnalyticRuleSettingsView extends View, HasUiHandlers<DirtyUiHandlers> {
 
         QueryLanguageVersion getLanguageVersion();

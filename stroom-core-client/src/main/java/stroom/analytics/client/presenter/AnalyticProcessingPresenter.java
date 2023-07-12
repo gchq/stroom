@@ -246,11 +246,6 @@ public class AnalyticProcessingPresenter
         setDirty(true);
     }
 
-    @Override
-    public String getType() {
-        return AnalyticRuleDoc.DOCUMENT_TYPE;
-    }
-
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
 
         boolean isEnabled();

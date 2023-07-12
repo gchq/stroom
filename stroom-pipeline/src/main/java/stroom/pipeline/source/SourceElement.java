@@ -19,15 +19,18 @@ package stroom.pipeline.source;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.reader.AbstractInputElement;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.svg.shared.SvgImage;
 
-@ConfigurableElement(type = "Source",
+@ConfigurableElement(
+        type = "Source",
+        description = """
+                The source is the input to the pipeline.""",
         roles = {
                 PipelineElementType.ROLE_SOURCE,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE
         },
-        icon = ElementIcons.STREAM)
+        icon = SvgImage.PIPELINE_STREAM)
 public class SourceElement extends AbstractInputElement implements Element {
 }

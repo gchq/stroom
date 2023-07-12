@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +40,6 @@ import javax.xml.bind.annotation.XmlType;
         "components",
         "layout",
         "layoutConstraints",
-        "tabVisibility",
         "preferredSize",
         "designMode",
         "modelVersion"
@@ -54,7 +52,6 @@ import javax.xml.bind.annotation.XmlType;
         "components",
         "layout",
         "layoutConstraints",
-        "tabVisibility",
         "preferredSize",
         "designMode",
         "modelVersion"
@@ -78,9 +75,6 @@ public class DashboardConfig {
     private LayoutConfig layout;
     @JsonProperty("layoutConstraints")
     private LayoutConstraints layoutConstraints;
-    @XmlElement(name = "tabVisibility")
-    @JsonProperty("tabVisibility")
-    private TabVisibility tabVisibility;
     @JsonProperty("preferredSize")
     private Size preferredSize;
     @JsonProperty("designMode")
@@ -89,7 +83,6 @@ public class DashboardConfig {
     private String modelVersion;
 
     public DashboardConfig() {
-        tabVisibility = TabVisibility.SHOW_ALL;
     }
 
     @JsonCreator
@@ -98,7 +91,6 @@ public class DashboardConfig {
                            @JsonProperty("components") final List<ComponentConfig> components,
                            @JsonProperty("layout") final LayoutConfig layout,
                            @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
-                           @JsonProperty("tabVisibility") final TabVisibility tabVisibility,
                            @JsonProperty("preferredSize") Size preferredSize,
                            @JsonProperty("designMode") final Boolean designMode,
                            @JsonProperty("modelVersion") final String modelVersion) {
@@ -107,14 +99,9 @@ public class DashboardConfig {
         this.components = components;
         this.layout = layout;
         this.layoutConstraints = layoutConstraints;
-        this.tabVisibility = tabVisibility;
         this.preferredSize = preferredSize;
         this.designMode = designMode;
         this.modelVersion = modelVersion;
-
-        if (this.tabVisibility == null) {
-            this.tabVisibility = TabVisibility.SHOW_ALL;
-        }
     }
 
     @Deprecated
@@ -159,14 +146,6 @@ public class DashboardConfig {
         this.layoutConstraints = layoutConstraints;
     }
 
-    public TabVisibility getTabVisibility() {
-        return tabVisibility;
-    }
-
-    public void setTabVisibility(final TabVisibility tabVisibility) {
-        this.tabVisibility = tabVisibility;
-    }
-
     public Size getPreferredSize() {
         return preferredSize;
     }
@@ -189,22 +168,5 @@ public class DashboardConfig {
 
     public void setModelVersion(final String modelVersion) {
         this.modelVersion = modelVersion;
-    }
-
-    public enum TabVisibility implements HasDisplayValue {
-        SHOW_ALL("Show All"),
-        HIDE_SINGLE("Hide Single Tabs"),
-        HIDE_ALL("Hide All");
-
-        private final String displayValue;
-
-        TabVisibility(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
     }
 }

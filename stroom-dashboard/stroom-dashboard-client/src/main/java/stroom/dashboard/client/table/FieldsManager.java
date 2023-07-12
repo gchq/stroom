@@ -23,8 +23,7 @@ import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -440,7 +439,7 @@ public class FieldsManager implements HeadingListener {
     private Item createRenameMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.EDIT)
+                .icon(SvgImage.EDIT)
                 .text("Rename")
                 .command(() -> showRename(field))
                 .build();
@@ -459,7 +458,7 @@ public class FieldsManager implements HeadingListener {
 
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(Icon.create("fields-expression"))
+                .icon(SvgImage.FIELDS_EXPRESSION)
                 .text("Expression")
                 .command(() -> showExpression(field))
                 .highlight(highlight)
@@ -471,19 +470,19 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(
                 createSortOption(field,
                         0,
-                        "fields-sortaz",
+                        SvgImage.FIELDS_SORTAZ,
                         "Sort A to Z",
                         SortDirection.ASCENDING));
         menuItems.add(
                 createSortOption(field,
                         1,
-                        "fields-sortza",
+                        SvgImage.FIELDS_SORTZA,
                         "Sort Z to A",
                         SortDirection.DESCENDING));
         menuItems.add(createSortOption(field, 2, null, "Unsorted", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
-                .icon(Icon.create("fields-sortaz"))
+                .icon(SvgImage.FIELDS_SORTAZ)
                 .text("Sort")
                 .children(menuItems)
                 .highlight(field.getSort() != null)
@@ -492,12 +491,12 @@ public class FieldsManager implements HeadingListener {
 
     private Item createSortOption(final Field field,
                                   final int pos,
-                                  final String className,
+                                  final SvgImage icon,
                                   final String text,
                                   final SortDirection sortDirection) {
         return new IconMenuItem.Builder()
                 .priority(pos)
-                .icon(Icon.create(className))
+                .icon(icon)
                 .text(text)
                 .command(() -> changeSort(field, sortDirection))
                 .highlight(field.getSort() != null && field.getSort().getDirection() == sortDirection)
@@ -511,7 +510,7 @@ public class FieldsManager implements HeadingListener {
             final int group = i;
             final Item item = new IconMenuItem.Builder()
                     .priority(i)
-                    .icon(Icon.create("fields-group"))
+                    .icon(SvgImage.FIELDS_GROUP)
                     .text("Level " + (i + 1))
                     .command(() -> setGroup(field, group))
                     .highlight(field.getGroup() != null && field.getGroup() == i)
@@ -524,7 +523,7 @@ public class FieldsManager implements HeadingListener {
         if (addNextGroup(maxGroup, field)) {
             final Item item = new IconMenuItem.Builder()
                     .priority(maxGroup)
-                    .icon(Icon.create("fields-group"))
+                    .icon(SvgImage.FIELDS_GROUP)
                     .text("Level " + (maxGroup + 1))
                     .command(() -> setGroup(field, maxGroup))
                     .build();
@@ -540,7 +539,7 @@ public class FieldsManager implements HeadingListener {
 
         return new IconParentMenuItem.Builder()
                 .priority(3)
-                .icon(Icon.create("fields-group"))
+                .icon(SvgImage.FIELDS_GROUP)
                 .text("Group")
                 .children(menuItems)
                 .highlight(field.getGroup() != null)
@@ -609,8 +608,8 @@ public class FieldsManager implements HeadingListener {
     private Item createFilterMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(4)
-                .icon(SvgPresets.FILTER)
-                .disabledIcon(SvgPresets.FILTER)
+                .icon(SvgImage.FILTER)
+                .disabledIcon(SvgImage.FILTER)
                 .text("Filter")
                 .command(() -> filterField(field))
                 .highlight(field.getFilter() != null
@@ -624,7 +623,7 @@ public class FieldsManager implements HeadingListener {
     private Item createFormatMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(5)
-                .icon(Icon.create("fields-format"))
+                .icon(SvgImage.FIELDS_FORMAT)
                 .text("Format")
                 .command(() -> showFormat(field))
                 .highlight(field.getFormat() != null && field.getFormat().getSettings() != null
@@ -635,7 +634,7 @@ public class FieldsManager implements HeadingListener {
     private Item createMoveFirstMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(6)
-                .icon(SvgPresets.STEP_BACKWARD_BLUE)
+                .icon(SvgImage.STEP_BACKWARD)
                 .text("Move First")
                 .command(() -> moveFirst(field))
                 .build();
@@ -644,7 +643,7 @@ public class FieldsManager implements HeadingListener {
     private Item createMoveLastMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(7)
-                .icon(SvgPresets.STEP_FORWARD_BLUE)
+                .icon(SvgImage.STEP_FORWARD)
                 .text("Move Last")
                 .command(() -> moveLast(field))
                 .build();
@@ -653,7 +652,7 @@ public class FieldsManager implements HeadingListener {
     private Item createDuplicateMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(8)
-                .icon(SvgPresets.COPY)
+                .icon(SvgImage.COPY)
                 .text("Duplicate")
                 .command(() -> duplicateField(field))
                 .build();
@@ -662,7 +661,7 @@ public class FieldsManager implements HeadingListener {
     private Item createHideMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(9)
-                .icon(SvgPresets.HIDE)
+                .icon(SvgImage.HIDE)
                 .text("Hide")
                 .command(() -> hideField(field))
                 .build();
@@ -676,7 +675,7 @@ public class FieldsManager implements HeadingListener {
             if (!field.isVisible() && !field.isSpecial()) {
                 final Item item2 = new IconMenuItem.Builder()
                         .priority(i++)
-                        .icon(SvgPresets.SHOW)
+                        .icon(SvgImage.SHOW)
                         .text(field.getName())
                         .command(() -> showField(field))
                         .build();
@@ -690,7 +689,7 @@ public class FieldsManager implements HeadingListener {
 
         return new IconParentMenuItem.Builder()
                 .priority(10)
-                .icon(SvgPresets.SHOW)
+                .icon(SvgImage.SHOW)
                 .text("Show")
                 .children(menuItems)
                 .build();
@@ -699,7 +698,7 @@ public class FieldsManager implements HeadingListener {
     private Item createRemoveMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(11)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Remove")
                 .command(() -> deleteField(field))
                 .build();

@@ -86,11 +86,6 @@ public class ElasticClusterSettingsPresenter
     }
 
     @Override
-    public String getType() {
-        return ElasticClusterDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final ElasticClusterDoc cluster, final boolean readOnly) {
         final ElasticConnectionConfig connectionConfig = cluster.getConnection();
 

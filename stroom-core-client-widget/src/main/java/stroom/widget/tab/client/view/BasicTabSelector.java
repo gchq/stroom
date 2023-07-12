@@ -16,7 +16,8 @@
 
 package stroom.widget.tab.client.view;
 
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
@@ -29,7 +30,7 @@ public class BasicTabSelector extends AbstractTabSelector {
     public BasicTabSelector() {
         final Element arrows = DOM.createDiv();
         arrows.setClassName("basicTabSelector-arrows");
-        arrows.setInnerHTML(SvgImages.MONO_DOUBLE_ARROW.getSvg());
+        SvgImageUtil.setSvgAsInnerHtml(arrows, SvgImage.DOUBLE_ARROW);
 
         text = DOM.createDiv();
         text.setClassName("basicTabSelector-text");

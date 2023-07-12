@@ -19,10 +19,12 @@ package stroom.pipeline.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -39,97 +41,71 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     private static final TabData CONVERSION = new TabDataImpl("Conversion");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final TextConverterSettingsPresenter settingsPresenter;
-    private final Provider<EditorPresenter> editorPresenterProvider;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
-    private EditorPresenter codePresenter;
-
     @Inject
     public TextConverterPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
-                                  final TextConverterSettingsPresenter settingsPresenter,
+                                  final Provider<TextConverterSettingsPresenter> settingsPresenterProvider,
                                   final Provider<EditorPresenter> editorPresenterProvider,
-                                  final MarkdownEditPresenter markdownEditPresenter) {
+                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.settingsPresenter = settingsPresenter;
-        this.editorPresenterProvider = editorPresenterProvider;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        addTab(CONVERSION);
-        addTab(SETTINGS);
-        addTab(DOCUMENTATION);
+        addTab(CONVERSION, new AbstractTabProvider<TextConverterDoc, EditorPresenter>(eventBus) {
+
+            @Override
+            public EditorPresenter createPresenter() {
+                final EditorPresenter editorPresenter = editorPresenterProvider.get();
+                editorPresenter.setMode(AceEditorMode.XML);
+                editorPresenter.setReadOnly(isReadOnly());
+                editorPresenter.getFormatAction().setAvailable(!isReadOnly());
+                if (getEntity() != null && getEntity().getData() != null) {
+                    editorPresenter.setText(getEntity().getData());
+                }
+                registerHandler(editorPresenter.addValueChangeHandler(event -> fireDirtyEvent(true)));
+                registerHandler(editorPresenter.addFormatHandler(event -> fireDirtyEvent(true)));
+                return editorPresenter;
+            }
+
+            @Override
+            public void onRead(final EditorPresenter presenter,
+                               final DocRef docRef,
+                               final TextConverterDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getData());
+                presenter.setReadOnly(readOnly);
+                presenter.getFormatAction().setAvailable(!readOnly);
+            }
+
+            @Override
+            public TextConverterDoc onWrite(final EditorPresenter presenter, final TextConverterDoc document) {
+                document.setData(presenter.getText());
+                return document;
+            }
+        });
+
+        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final TextConverterDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public TextConverterDoc onWrite(final MarkdownEditPresenter presenter,
+                                            final TextConverterDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
+
         selectTab(CONVERSION);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (CONVERSION.equals(tab)) {
-            callback.onReady(getOrCreateCodePresenter());
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final TextConverterDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
-        settingsPresenter.read(docRef, doc, readOnly);
-        if (codePresenter != null) {
-            codePresenter.setText(doc.getData());
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-        }
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected TextConverterDoc onWrite(TextConverterDoc doc) {
-        doc = settingsPresenter.write(doc);
-        if (codePresenter != null) {
-            doc.setData(codePresenter.getText());
-        }
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
     }
 
     @Override
     public String getType() {
         return TextConverterDoc.DOCUMENT_TYPE;
-    }
-
-    private EditorPresenter getOrCreateCodePresenter() {
-        if (codePresenter == null) {
-            codePresenter = editorPresenterProvider.get();
-            codePresenter.setMode(AceEditorMode.XML);
-            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-            codePresenter.setReadOnly(isReadOnly());
-            codePresenter.getFormatAction().setAvailable(!isReadOnly());
-            if (getEntity() != null && getEntity().getData() != null) {
-                codePresenter.setText(getEntity().getData());
-            }
-        }
-        return codePresenter;
     }
 }

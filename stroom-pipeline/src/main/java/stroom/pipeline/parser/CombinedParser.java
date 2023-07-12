@@ -36,7 +36,6 @@ import stroom.pipeline.filter.DocFinder;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.reader.InvalidXmlCharFilter;
 import stroom.pipeline.reader.Xml10Chars;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -47,6 +46,7 @@ import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParser;
+import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -81,7 +81,7 @@ import javax.xml.parsers.SAXParserFactory;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.TEXT)
+        icon = SvgImage.PIPELINE_TEXT)
 public class CombinedParser extends AbstractParser implements SupportsCodeInjection {
 
     public static final String DEFAULT_NAME = "combinedParser";

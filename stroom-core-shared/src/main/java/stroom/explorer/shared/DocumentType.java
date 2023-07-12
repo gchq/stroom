@@ -17,6 +17,8 @@
 
 package stroom.explorer.shared;
 
+import stroom.svg.shared.SvgImage;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -25,8 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class DocumentType {
 
-    public static final String DOC_IMAGE_CLASS_NAME = "svgIcon-document svgIcon-document-";
-
     @JsonProperty
     private final DocumentTypeGroup group;
     @JsonProperty
@@ -34,24 +34,17 @@ public class DocumentType {
     @JsonProperty
     private final String displayType;
     @JsonProperty
-    private final String iconClassName;
-
-    public DocumentType(final DocumentTypeGroup group, final String type, final String displayType) {
-        this.group = group;
-        this.type = type;
-        this.displayType = displayType;
-        this.iconClassName = getIconClassName(type);
-    }
+    private final SvgImage icon;
 
     @JsonCreator
     public DocumentType(@JsonProperty("group") final DocumentTypeGroup group,
                         @JsonProperty("type") final String type,
                         @JsonProperty("displayType") final String displayType,
-                        @JsonProperty("iconClassName") final String iconClassName) {
+                        @JsonProperty("icon") final SvgImage icon) {
         this.group = group;
         this.type = type;
         this.displayType = displayType;
-        this.iconClassName = iconClassName;
+        this.icon = icon;
     }
 
     public DocumentTypeGroup getGroup() {
@@ -66,12 +59,8 @@ public class DocumentType {
         return type;
     }
 
-    public String getIconClassName() {
-        return iconClassName;
-    }
-
-    private String getIconClassName(final String type) {
-        return DOC_IMAGE_CLASS_NAME + type;
+    public SvgImage getIcon() {
+        return icon;
     }
 
     @Override

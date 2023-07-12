@@ -39,6 +39,7 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
@@ -60,8 +61,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -75,15 +78,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private static final int COL_WIDTH_TYPE = 120;
     private static final int COL_WIDTH_NAME = 300;
 
-    private static final Preset SEARCHABLE_PRESET = new Preset(
-            DocumentType.DOC_IMAGE_CLASS_NAME + "searchable.svg",
-            "Searchable",
-            true);
-    private static final Preset DOC_INFO_PRESET = SvgPresets.INFO.title("Properties");
-    private static final Preset DELETE_DOC_PRESET = SvgPresets.DELETE.title("Delete");
-    private static final Preset REVEAL_DOC_PRESET = SvgPresets.SHOW.title("Reveal in Explorer");
-    private static final Preset SHOW_DEPENDENCIES_PRESET = SvgPresets.DEPENDENCIES.title("Show dependencies");
-
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
@@ -92,7 +86,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private final MenuPresenter menuPresenter;
 
     // Holds all the doc type icons
-    private Map<String, Preset> typeToSvgMap = new HashMap<>();
+    private Map<String, SvgImage> typeToSvgMap = new HashMap<>();
+    private Set<String> openableTypes = new HashSet<>();
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus,
@@ -226,20 +221,20 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         return MenuBuilder.builder()
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(DOC_INFO_PRESET)
-                        .text(DOC_INFO_PRESET.getTitle())
+                        .icon(SvgImage.INFO)
+                        .text("Properties")
                         .command(() -> onDocInfo(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(DELETE_DOC_PRESET)
-                        .text(DELETE_DOC_PRESET.getTitle())
+                        .icon(SvgImage.DELETE)
+                        .text("Delete")
                         .command(() -> onDeleteDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(REVEAL_DOC_PRESET)
-                        .text(REVEAL_DOC_PRESET.getTitle())
+                        .icon(SvgImage.SHOW)
+                        .text("Reveal in Explorer")
                         .command(() -> onRevealDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(SHOW_DEPENDENCIES_PRESET)
-                        .text(SHOW_DEPENDENCIES_PRESET.getTitle())
+                        .icon(SvgImage.DEPENDENCIES)
+                        .text("Show dependencies")
                         .command(() -> onShowDependencies(docRef)))
                 .build();
     }
@@ -280,21 +275,31 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
         final Rest<DocumentTypes> rest = restFactory.create();
         rest
                 .onSuccess(documentTypes -> {
-                    typeToSvgMap = documentTypes.getVisibleTypes().stream()
+                    openableTypes = documentTypes
+                            .getTypes()
+                            .stream()
+                            .map(DocumentType::getType)
+                            .collect(Collectors.toSet());
+
+                    typeToSvgMap = documentTypes
+                            .getTypes()
+                            .stream()
                             .collect(Collectors.toMap(
                                     DocumentType::getType,
-                                    documentType ->
-                                            new Preset(
-                                                    documentType.getIconClassName(),
-                                                    documentType.getDisplayType(),
-                                                    true)));
+                                    DocumentType::getIcon));
 
                     // Special case for Searchable as it is not a normal doc type
                     // Not ideal defining it here but adding it fetchDocumentTypes causes problems
                     // with the explorer context menus.
                     typeToSvgMap.putIfAbsent(
                             "Searchable",
-                            SEARCHABLE_PRESET);
+                            SvgImage.DOCUMENT_SEARCHABLE);
+                    typeToSvgMap.putIfAbsent(
+                            "Analytics",
+                            SvgImage.DOCUMENT_SEARCHABLE);
+                    typeToSvgMap.putIfAbsent(
+                            "ProcessorFilter",
+                            SvgImage.FILTER);
                 })
                 .call(EXPLORER_RESOURCE)
                 .fetchDocumentTypes();
@@ -305,7 +310,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                                 final boolean from) {
         final DocRef docRef = docRefExtractor.apply(row);
         if (docRef != null) {
-            if (from | row.isOk()) {
+            if (from || (openableTypes.contains(docRef.getType()) && row.isOk())) {
                 return new CommandLink(docRef.getName(), () -> onOpenDoc(docRef));
             } else {
                 return new CommandLink(docRef.getName(), null);
@@ -328,9 +333,9 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
     private Preset getDocTypeIcon(final DocRef docRef) {
         if (docRef != null && docRef.getType() != null && !docRef.getType().isEmpty()) {
-            final Preset svgPreset = typeToSvgMap.get(docRef.getType());
+            final SvgImage svgPreset = typeToSvgMap.get(docRef.getType());
             if (svgPreset != null) {
-                return svgPreset;
+                return new Preset(svgPreset, docRef.getType(), true);
             } else {
                 return SvgPresets.ALERT.title("Unknown Document Type");
             }
@@ -345,10 +350,10 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
         final String commonStyles = "font-weight:bold";
         if (row.isOk()) {
             value = "OK";
-            builder.appendHtmlConstant("<span style=\"color:green;" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__green);" + commonStyles + "\">");
         } else {
             value = "Missing";
-            builder.appendHtmlConstant("<span style=\"color:red;" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__red);" + commonStyles + "\">");
         }
         builder.appendEscaped(value);
         builder.appendHtmlConstant("</span>");

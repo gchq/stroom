@@ -34,10 +34,10 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.svg.shared.SvgImage;
 
 import com.google.common.base.Strings;
 
@@ -58,7 +58,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STREAM)
+        icon = SvgImage.PIPELINE_STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
 
     private final Store streamStore;

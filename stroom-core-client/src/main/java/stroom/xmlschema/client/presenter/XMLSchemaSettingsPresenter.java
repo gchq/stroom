@@ -51,11 +51,6 @@ public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaS
     }
 
     @Override
-    public String getType() {
-        return XmlSchemaDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     public void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema, final boolean readOnly) {
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
         getView().getSystemId().setText(xmlSchema.getSystemId());

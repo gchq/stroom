@@ -33,19 +33,19 @@ public class DocumentTypes {
     };
 
     @JsonProperty
-    private final List<DocumentType> nonSystemTypes;
+    private final List<DocumentType> types;
     @JsonProperty
     private final List<DocumentType> visibleTypes;
 
     @JsonCreator
-    public DocumentTypes(@JsonProperty("nonSystemTypes") final List<DocumentType> nonSystemTypes,
+    public DocumentTypes(@JsonProperty("types") final List<DocumentType> types,
                          @JsonProperty("visibleTypes") final List<DocumentType> visibleTypes) {
-        this.nonSystemTypes = nonSystemTypes;
+        this.types = types;
         this.visibleTypes = visibleTypes;
     }
 
-    public List<DocumentType> getNonSystemTypes() {
-        return nonSystemTypes;
+    public List<DocumentType> getTypes() {
+        return types;
     }
 
     public List<DocumentType> getVisibleTypes() {

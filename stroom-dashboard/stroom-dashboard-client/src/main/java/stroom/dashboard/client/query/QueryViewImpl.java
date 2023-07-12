@@ -41,6 +41,8 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     @UiField
     ButtonPanel buttonPanelLeft;
     @UiField
+    ButtonPanel buttonPanelRight;
+    @UiField
     QueryButtons queryButtons;
 
     @Inject
@@ -59,8 +61,13 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     }
 
     @Override
-    public ButtonView addButton(final Preset preset) {
+    public ButtonView addButtonLeft(final Preset preset) {
         return buttonPanelLeft.addButton(preset);
+    }
+
+    @Override
+    public ButtonView addButtonRight(final Preset preset) {
+        return buttonPanelRight.addButton(preset);
     }
 
     @Override

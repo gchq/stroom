@@ -19,11 +19,12 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -33,6 +34,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import javax.inject.Provider;
 
 public class DashboardSuperPresenter
         extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc>
@@ -42,72 +44,39 @@ public class DashboardSuperPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     private final DashboardPresenter dashboardPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
 
     @Inject
     public DashboardSuperPresenter(final EventBus eventBus,
                                    final LinkTabPanelView view,
                                    final DashboardPresenter dashboardPresenter,
-                                   final MarkdownEditPresenter markdownEditPresenter) {
+                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
         this.dashboardPresenter = dashboardPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        addTab(DASHBOARD);
-        addTab(DOCUMENTATION);
+        addTab(DASHBOARD, new DocumentEditTabProvider<>(() -> dashboardPresenter));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final DashboardDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public DashboardDoc onWrite(final MarkdownEditPresenter presenter,
+                                        final DashboardDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(DASHBOARD);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dashboardPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
     }
 
     @Override
     public List<Widget> getToolbars() {
         return dashboardPresenter.getToolbars();
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (DASHBOARD.equals(tab)) {
-            callback.onReady(dashboardPresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final DashboardDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
-        dashboardPresenter.read(docRef, doc, readOnly);
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected DashboardDoc onWrite(DashboardDoc doc) {
-        doc = dashboardPresenter.write(doc);
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
-    }
-
-    @Override
-    public void onClose() {
-        dashboardPresenter.onClose();
-        super.onClose();
     }
 
     @Override

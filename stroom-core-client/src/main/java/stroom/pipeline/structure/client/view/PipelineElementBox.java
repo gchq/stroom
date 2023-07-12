@@ -18,14 +18,15 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -56,7 +57,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private final PipelineElement pipelineElement;
     private final Widget filterIcon;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final Icon icon) {
+    public PipelineElementBox(final PipelineElement pipelineElement, final SvgImage icon) {
 //        GWT.log("Creating pipe element " + pipelineElement.getId());
         this.pipelineElement = pipelineElement;
 
@@ -67,15 +68,24 @@ public class PipelineElementBox extends Box<PipelineElement> {
         label.addStyleName(BASE_CLASS + "-label");
 
         if (icon != null) {
-            final Widget image = icon.asWidget();
-            image.addStyleName(BASE_CLASS + "-image");
+            final SimplePanel image = new SimplePanel();
+            SvgImageUtil.setSvgAsInnerHtml(
+                    image,
+                    icon,
+                    "svgIcon",
+                    BASE_CLASS + "-image");
             background.add(image);
         }
 
         background.add(label);
 
-        filterIcon = SvgPresets.FILTER_GREEN.asWidget();
-        filterIcon.addStyleName(BASE_CLASS + "-filterImage");
+        filterIcon = new SimplePanel();
+        SvgImageUtil.setSvgAsInnerHtml(
+                filterIcon,
+                SvgImage.FILTER,
+                "svgIcon",
+                BASE_CLASS + "-filterImage icon-colour__green");
+
         background.add(filterIcon);
         updateFilterState();
 

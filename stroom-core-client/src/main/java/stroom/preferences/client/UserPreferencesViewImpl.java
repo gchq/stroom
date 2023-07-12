@@ -21,7 +21,9 @@ import stroom.item.client.StringListBox;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
+import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -33,7 +35,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -103,6 +104,8 @@ public final class UserPreferencesViewImpl
     @Inject
     public UserPreferencesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setAsDefault.setIcon(SvgImage.OK);
+        revertToDefault.setIcon(SvgImage.UNDO);
 
         theme.addChangeHandler(event -> {
             if (getUiHandlers() != null) {

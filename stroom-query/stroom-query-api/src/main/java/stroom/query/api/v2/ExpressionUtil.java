@@ -231,6 +231,18 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
+                                                                 final List<Param> params) {
+        final ExpressionOperator result;
+        if (operator != null) {
+            final Map<String, String> paramMap = ParamUtil.createParamMap(params);
+            result = replaceExpressionParameters(operator, paramMap);
+        } else {
+            result = null;
+        }
+        return result;
+    }
+
+    public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
                                                                  final Map<String, String> paramMap) {
         final ExpressionOperator.Builder builder = ExpressionOperator
                 .builder()
@@ -260,7 +272,7 @@ public class ExpressionUtil {
     }
 
     public static boolean validateExpressionTerms(final ExpressionItem expressionItem,
-                                           final Predicate<ExpressionTerm> predicate) {
+                                                  final Predicate<ExpressionTerm> predicate) {
         final AtomicBoolean isValid = new AtomicBoolean(false);
         walkExpressionTree(expressionItem, expressionItem2 -> {
             if (expressionItem2 instanceof ExpressionTerm) {
@@ -274,7 +286,7 @@ public class ExpressionUtil {
     }
 
     public static boolean walkExpressionTree(final ExpressionItem expressionItem,
-                                      final ExpressionItemVisitor itemVisitor) {
+                                             final ExpressionItemVisitor itemVisitor) {
 
         boolean continueWalking = true;
         if (expressionItem != null) {

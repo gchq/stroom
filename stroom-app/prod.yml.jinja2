@@ -65,7 +65,7 @@ server:
       discardingThreshold: 0
       # Rolled and gzipped every minute
       archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
-      archivedFileCount: 100
+      archivedFileCount: 10080
       logFormat: '%h %l "%u" [%t] "%r" %s %b "%i{Referer}" "%i{User-Agent}" %D'
 #
 logging:
@@ -92,7 +92,10 @@ logging:
           discardingThreshold: 0
           # Rolled every minute
           archivedLogFilenamePattern: logs/user/user-%d{yyyy-MM-dd'T'HH:mm}.log
-          archivedFileCount: 100
+          # Minute rolled logs older than a week will be deleted. Note rolled logs are deleted
+          # based on the age of the window they contain, not the number of them. This value should be greater
+          # than the maximum time stroom is not producing events for.
+          archivedFileCount: 10080
           logFormat: "%msg%n"
     # Logger and appender for the flyway DB migration SQL output
     org.flywaydb.core.internal.sqlscript:

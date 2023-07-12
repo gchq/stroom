@@ -24,10 +24,12 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
@@ -39,6 +41,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+
+import javax.inject.Provider;
 
 public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DictionaryDoc> {
 
@@ -53,54 +57,74 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
     private DocRef docRef;
 
-    private final DictionarySettingsPresenter settingsPresenter;
-    private final EditorPresenter codePresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
     @Inject
     public DictionaryPresenter(final EventBus eventBus,
                                final LinkTabPanelView view,
-                               final DictionarySettingsPresenter settingsPresenter,
-                               final EditorPresenter codePresenter,
-                               final MarkdownEditPresenter markdownEditPresenter,
+                               final Provider<DictionarySettingsPresenter> settingsPresenterProvider,
+                               final Provider<EditorPresenter> editorPresenterProvider,
+                               final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                final RestFactory restFactory,
                                final LocationManager locationManager) {
         super(eventBus, view);
-        this.settingsPresenter = settingsPresenter;
-        this.codePresenter = codePresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
-
-        codePresenter.setMode(AceEditorMode.TEXT);
-        // Text only, no styling or formatting
-        codePresenter.getStylesOption().setUnavailable();
-        codePresenter.getFormatAction().setUnavailable();
 
         downloadButton = SvgButton.create(SvgPresets.DOWNLOAD);
         toolbar.addButton(downloadButton);
 
-        addTab(WORDS);
-        addTab(IMPORTS);
-        addTab(DOCUMENTATION);
+        addTab(WORDS, new AbstractTabProvider<DictionaryDoc, EditorPresenter>(eventBus) {
+            @Override
+            protected EditorPresenter createPresenter() {
+                final EditorPresenter editorPresenter = editorPresenterProvider.get();
+                editorPresenter.setMode(AceEditorMode.TEXT);
+                // Text only, no styling or formatting
+                editorPresenter.getStylesOption().setUnavailable();
+                editorPresenter.getFormatAction().setUnavailable();
+
+                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                return editorPresenter;
+            }
+
+            @Override
+            public void onRead(final EditorPresenter presenter,
+                               final DocRef docRef,
+                               final DictionaryDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getData());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public DictionaryDoc onWrite(final EditorPresenter presenter, final DictionaryDoc document) {
+                document.setData(presenter.getText());
+                return document;
+            }
+        });
+        addTab(IMPORTS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<DictionaryDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final DictionaryDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public DictionaryDoc onWrite(final MarkdownEditPresenter presenter,
+                                         final DictionaryDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(WORDS);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-        registerHandler(settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
@@ -111,38 +135,10 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     }
 
     @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (IMPORTS.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (WORDS.equals(tab)) {
-            callback.onReady(codePresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
     public void onRead(final DocRef docRef, final DictionaryDoc doc, final boolean readOnly) {
         super.onRead(docRef, doc, readOnly);
         this.docRef = docRef;
         downloadButton.setEnabled(true);
-        settingsPresenter.read(docRef, doc, readOnly);
-
-        codePresenter.setReadOnly(readOnly);
-        codePresenter.setText(doc.getData());
-
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected DictionaryDoc onWrite(DictionaryDoc doc) {
-        doc = settingsPresenter.write(doc);
-        doc.setData(codePresenter.getText());
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
     }
 
     @Override

@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="scheduleExpression" label="Expression">
@@ -12,6 +13,6 @@
         <form:FormGroup identity="scheduleNextScheduledTime" label="Next Scheduled Time">
             <g:Label ui:field="nextScheduledTime"/>
         </form:FormGroup>
-        <g:Button ui:field="calculate" width="200px" addStyleNames="allow-focus" text="Calculate"/>
+        <b:Button ui:field="calculate" width="200px" addStyleNames="allow-focus" text="Calculate"/>
     </g:FlowPanel>
 </ui:UiBinder>

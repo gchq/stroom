@@ -17,6 +17,8 @@
 package stroom.about.client.view;
 
 import stroom.about.client.presenter.AboutPresenter;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -30,6 +32,9 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView {
 
     private final Widget widget;
+
+    @UiField
+    SimplePanel logo;
     @UiField
     SimplePanel html;
     @UiField
@@ -44,6 +49,7 @@ public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView 
     @Inject
     public AboutViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.LOGO));
     }
 
     @Override

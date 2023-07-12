@@ -21,7 +21,6 @@ import stroom.dictionary.client.presenter.DictionarySettingsPresenter.Dictionary
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.pipeline.shared.XsltDoc;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,11 +43,6 @@ public class DictionarySettingsPresenter extends DocumentEditPresenter<Dictionar
     protected void onBind() {
         super.onBind();
         registerHandler(dictionaryListPresenter.addDirtyHandler(event -> setDirty(true)));
-    }
-
-    @Override
-    public String getType() {
-        return XsltDoc.DOCUMENT_TYPE;
     }
 
     @Override

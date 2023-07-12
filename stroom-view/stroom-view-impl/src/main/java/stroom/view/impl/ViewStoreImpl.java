@@ -99,7 +99,11 @@ class ViewStoreImpl implements ViewStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.SEARCH, ViewDoc.DOCUMENT_TYPE, ViewDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.SEARCH,
+                ViewDoc.DOCUMENT_TYPE,
+                ViewDoc.DOCUMENT_TYPE,
+                ViewDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

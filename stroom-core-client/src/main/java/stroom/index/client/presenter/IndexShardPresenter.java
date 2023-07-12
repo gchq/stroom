@@ -32,7 +32,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
@@ -60,14 +60,12 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class IndexShardPresenter extends MyPresenterWidget<PagerView>
-        implements Refreshable, HasDocumentRead<IndexDoc> {
+public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexDoc> implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
@@ -419,7 +417,7 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final IndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final IndexDoc document, final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
 
@@ -459,6 +457,11 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
                         enableButtons();
                     });
         }
+    }
+
+    @Override
+    protected IndexDoc onWrite(final IndexDoc entity) {
+        return entity;
     }
 
     private void onChangeData(final ResultPage<IndexShard> data) {

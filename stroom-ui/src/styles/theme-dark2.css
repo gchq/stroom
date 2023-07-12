@@ -19,7 +19,7 @@
 
     --text-color: #e6e1dc;
     --text-color--disabled: #666;
-    --border-color: transparent; /*#c5cde2;*/
+    --border-color: #353944;
 
     --header__border-color: #333;
     --row__background-color--even: #1e1f22;
@@ -112,7 +112,7 @@
     --page__text-color: #cacbcb;
 
     /* Splitter */
-    --splitter__background-color: #353944; /*#27252c;*/
+    --splitter__background-color: var(--border-color);
     --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */

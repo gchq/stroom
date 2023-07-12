@@ -19,132 +19,72 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Provider;
+
 public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
-    private static final TabData QUERY_TAB = new TabDataImpl("Query");
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
-    private static final TabData NOTIFICATIONS_TAB = new TabDataImpl("Notifications");
-    private static final TabData PROCESSING_TAB = new TabDataImpl("Processing");
-    private static final TabData SHARDS_TAB = new TabDataImpl("Shards");
-    private static final TabData DOCUMENTATION_TAB = new TabDataImpl("Documentation");
-    private final AnalyticQueryEditPresenter queryEditPresenter;
-    private final AnalyticRuleSettingsPresenter settingsPresenter;
-    private final AnalyticNotificationsPresenter notificationsPresenter;
-    private final AnalyticProcessingPresenter processPresenter;
-    private final AnalyticDataShardsPresenter analyticDataShardsPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
+    private static final TabData QUERY = new TabDataImpl("Query");
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
+    private static final TabData PROCESSING = new TabDataImpl("Processing");
+    private static final TabData SHARDS = new TabDataImpl("Shards");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private AnalyticQueryEditPresenter queryEditPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final AnalyticQueryEditPresenter queryEditPresenter,
-                                 final AnalyticRuleSettingsPresenter settingsPresenter,
-                                 final AnalyticNotificationsPresenter notificationsPresenter,
-                                 final AnalyticProcessingPresenter processPresenter,
-                                 final AnalyticDataShardsPresenter analyticDataShardsPresenter,
-                                 final MarkdownEditPresenter markdownEditPresenter) {
+                                 final Provider<AnalyticQueryEditPresenter> queryEditPresenterProvider,
+                                 final Provider<AnalyticRuleSettingsPresenter> settingsPresenterProvider,
+                                 final Provider<AnalyticNotificationsPresenter> notificationsPresenterProvider,
+                                 final Provider<AnalyticProcessingPresenter> processPresenterProvider,
+                                 final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
+                                 final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.queryEditPresenter = queryEditPresenter;
-        this.settingsPresenter = settingsPresenter;
-        this.notificationsPresenter = notificationsPresenter;
-        this.processPresenter = processPresenter;
-        this.analyticDataShardsPresenter = analyticDataShardsPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        addTab(QUERY_TAB);
-        addTab(SETTINGS_TAB);
-        addTab(PROCESSING_TAB);
-        addTab(NOTIFICATIONS_TAB);
-        addTab(SHARDS_TAB);
-        addTab(DOCUMENTATION_TAB);
-        selectTab(QUERY_TAB);
-    }
+        addTab(QUERY, new DocumentEditTabProvider<>(() -> {
+            queryEditPresenter = queryEditPresenterProvider.get();
+            return queryEditPresenter;
+        }));
+        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(PROCESSING, new DocumentEditTabProvider<>(processPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationsPresenterProvider::get));
+        addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final AnalyticRuleDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+            @Override
+            public AnalyticRuleDoc onWrite(final MarkdownEditPresenter presenter,
+                                           final AnalyticRuleDoc document) {
+                return document.copy().description(presenter.getText()).build();
             }
-        }));
-        registerHandler(settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(notificationsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(processPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (QUERY_TAB.equals(tab)) {
-            callback.onReady(queryEditPresenter);
-        } else if (NOTIFICATIONS_TAB.equals(tab)) {
-            callback.onReady(notificationsPresenter);
-        } else if (SETTINGS_TAB.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (PROCESSING_TAB.equals(tab)) {
-            callback.onReady(processPresenter);
-        } else if (SHARDS_TAB.equals(tab)) {
-            callback.onReady(analyticDataShardsPresenter);
-        } else if (DOCUMENTATION_TAB.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final AnalyticRuleDoc entity, final boolean readOnly) {
-        super.onRead(docRef, entity, readOnly);
-        queryEditPresenter.read(docRef, entity, readOnly);
-        notificationsPresenter.read(docRef, entity, readOnly);
-        settingsPresenter.read(docRef, entity, readOnly);
-        processPresenter.read(docRef, entity, readOnly);
-        analyticDataShardsPresenter.read(docRef, entity, readOnly);
-        markdownEditPresenter.setText(entity.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc entity) {
-        AnalyticRuleDoc modified = entity;
-        modified = queryEditPresenter.write(modified);
-        modified = notificationsPresenter.write(modified);
-        modified = settingsPresenter.write(modified);
-        modified = processPresenter.write(modified);
-        modified = modified.copy().description(markdownEditPresenter.getText()).build();
-        return modified;
+        });
+        selectTab(QUERY);
     }
 
     @Override
     public void onClose() {
-        queryEditPresenter.onClose();
+        if (queryEditPresenter != null) {
+            queryEditPresenter.onClose();
+        }
     }
 
     @Override

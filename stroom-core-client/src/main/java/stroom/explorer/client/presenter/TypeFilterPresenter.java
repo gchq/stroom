@@ -26,6 +26,7 @@ import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -64,9 +65,11 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     private List<DocumentType> visibleTypes;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All / None";
-    private static final String SELECT_ALL_OR_NONE_ICON = "svgIcon-document svgIcon-document-SelectAllOrNone";
     private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SYSTEM, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
+            DocumentTypeGroup.SYSTEM,
+            SELECT_ALL_OR_NONE_TEXT,
+            SELECT_ALL_OR_NONE_TEXT,
+            SvgImage.DOCUMENT_SELECT_ALL_OR_NONE);
 
     private final CellTable<DocumentType> cellTable;
 

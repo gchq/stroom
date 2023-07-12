@@ -107,7 +107,7 @@ public class SteppingFilterPresenter extends
                                 return null;
                             }
                         })
-                .withStyleName(BASE_CLASS + "-iconCell")
+                .withStyleName(BASE_CLASS + "-iconCell svgIcon")
                 .build();
         elementChooser.addColumn(iconColumn);
 
@@ -128,8 +128,8 @@ public class SteppingFilterPresenter extends
         final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(
                         false,
                         (PipelineElement pipelineElement) ->
-                                SvgPresets.FILTER_GREEN.title("Has active filter(s)"))
-                .withStyleName(BASE_CLASS + "-filterIconCell")
+                                SvgPresets.FILTER.title("Has active filter(s)"))
+                .withStyleName(BASE_CLASS + "-filterIconCell svgIcon icon-colour__green")
                 .withConditionalStyleName(filterActiveStyleFunc)
                 .build();
         elementChooser.addColumn(filterIconColumn);

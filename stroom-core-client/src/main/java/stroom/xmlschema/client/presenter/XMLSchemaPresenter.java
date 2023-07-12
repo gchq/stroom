@@ -19,10 +19,12 @@ package stroom.xmlschema.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
@@ -34,6 +36,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import javax.inject.Provider;
+
 public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XmlSchemaDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
@@ -41,70 +45,87 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     private static final TabData TEXT = new TabDataImpl("Text");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final XSDBrowserPresenter xsdBrowserPresenter;
-    private final EditorPresenter codePresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
+    private XSDBrowserPresenter xsdBrowserPresenter;
+    private EditorPresenter codePresenter;
     private final XSDModel data = new XSDModel();
-    private final XMLSchemaSettingsPresenter settingsPresenter;
-    private boolean shownText;
     private boolean updateDiagram;
 
     @Inject
     public XMLSchemaPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
-                              final XMLSchemaSettingsPresenter settingsPresenter,
-                              final XSDBrowserPresenter xsdBrowserPresenter,
-                              final EditorPresenter codePresenter,
-                              final MarkdownEditPresenter markdownEditPresenter) {
+                              final Provider<XMLSchemaSettingsPresenter> settingsPresenterProvider,
+                              final Provider<XSDBrowserPresenter> xsdBrowserPresenterProvider,
+                              final Provider<EditorPresenter> codePresenterProvider,
+                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.settingsPresenter = settingsPresenter;
-        this.xsdBrowserPresenter = xsdBrowserPresenter;
-        this.codePresenter = codePresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        codePresenter.getIndicatorsOption().setAvailable(false);
-        codePresenter.getIndicatorsOption().setOn(false);
-        codePresenter.getLineNumbersOption().setAvailable(true);
-        codePresenter.getLineNumbersOption().setOn(true);
+        addTab(GRAPHICAL, new AbstractTabProvider<XmlSchemaDoc, XSDBrowserPresenter>(eventBus) {
+            @Override
+            protected XSDBrowserPresenter createPresenter() {
+                xsdBrowserPresenter = xsdBrowserPresenterProvider.get();
+                xsdBrowserPresenter.setModel(data);
+                return xsdBrowserPresenter;
+            }
+        });
+        addTab(TEXT, new AbstractTabProvider<XmlSchemaDoc, EditorPresenter>(eventBus) {
+            @Override
+            protected EditorPresenter createPresenter() {
+                codePresenter = codePresenterProvider.get();
+                codePresenter.setMode(AceEditorMode.XML);
+                codePresenter.getIndicatorsOption().setAvailable(false);
+                codePresenter.getIndicatorsOption().setOn(false);
+                codePresenter.getLineNumbersOption().setAvailable(true);
+                codePresenter.getLineNumbersOption().setOn(true);
+                codePresenter.setReadOnly(isReadOnly());
+                codePresenter.getFormatAction().setAvailable(!isReadOnly());
+                return codePresenter;
+            }
 
-        xsdBrowserPresenter.setModel(data);
+            @Override
+            protected void onBind() {
+                super.onBind();
+            }
 
-        addTab(GRAPHICAL);
-        addTab(TEXT);
-        addTab(SETTINGS);
-        addTab(DOCUMENTATION);
+            @Override
+            public void onRead(final EditorPresenter presenter,
+                               final DocRef docRef,
+                               final XmlSchemaDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getData(), true);
+                if (!readOnly) {
+                    // Enable controls based on user permission
+                    registerHandler(presenter.addValueChangeHandler(event -> {
+                        setDirty(true);
+                        updateDiagram = true;
+                    }));
+                }
+            }
+
+            @Override
+            public XmlSchemaDoc onWrite(final EditorPresenter presenter, final XmlSchemaDoc document) {
+                document.setData(presenter.getText().trim());
+                return document;
+            }
+        });
+        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final XmlSchemaDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public XmlSchemaDoc onWrite(final MarkdownEditPresenter presenter,
+                                        final XmlSchemaDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(GRAPHICAL);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (GRAPHICAL.equals(tab)) {
-            callback.onReady(xsdBrowserPresenter);
-        } else if (TEXT.equals(tab)) {
-            callback.onReady(codePresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
     }
 
     @Override
@@ -113,18 +134,11 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
             if (content.equals(xsdBrowserPresenter)) {
                 if (updateDiagram) {
                     updateDiagram = false;
-                    if (shownText) {
+                    if (codePresenter != null) {
                         data.setContents(codePresenter.getText());
                     } else {
                         data.setContents(getEntity().getData());
                     }
-                }
-            } else if (content.equals(codePresenter)) {
-                if (!shownText) {
-                    shownText = true;
-                    codePresenter.setMode(AceEditorMode.XML);
-                    codePresenter.getFormatAction().setAvailable(!isReadOnly());
-                    codePresenter.setText(getEntity().getData(), true);
                 }
             }
         }
@@ -133,36 +147,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     @Override
     protected void onRead(final DocRef docRef, final XmlSchemaDoc doc, final boolean readOnly) {
         super.onRead(docRef, doc, readOnly);
-        settingsPresenter.read(docRef, doc, readOnly);
-
-        shownText = false;
-        updateDiagram = false;
-
         data.setContents(doc.getData());
-
-        codePresenter.setReadOnly(readOnly);
-        codePresenter.getFormatAction().setAvailable(!readOnly);
-
-        if (!readOnly) {
-            // Enable controls based on user permission
-            registerHandler(codePresenter.addValueChangeHandler(event -> {
-                setDirty(true);
-                updateDiagram = true;
-            }));
-        }
-
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected XmlSchemaDoc onWrite(XmlSchemaDoc doc) {
-        doc = settingsPresenter.write(doc);
-        if (shownText) {
-            doc.setData(codePresenter.getText().trim());
-        }
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
     }
 
     @Override

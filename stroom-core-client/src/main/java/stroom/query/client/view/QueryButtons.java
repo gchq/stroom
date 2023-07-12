@@ -18,7 +18,7 @@ package stroom.query.client.view;
 
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.GWT;
@@ -43,7 +43,7 @@ public class QueryButtons
 
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
-        start.setSvg(SvgImages.MONO_PLAY);
+        start.setSvg(SvgImage.PLAY);
     }
 
     @Override
@@ -63,12 +63,12 @@ public class QueryButtons
         if (searching) {
             start.addStyleName("QueryButtons-button stop");
             start.removeStyleName("QueryButtons-button play");
-            start.setSvg(SvgImages.MONO_STOP);
+            start.setSvg(SvgImage.STOP);
             start.setTitle("Stop Query");
         } else {
             start.addStyleName("QueryButtons-button play");
             start.removeStyleName("QueryButtons-button stop");
-            start.setSvg(SvgImages.MONO_PLAY);
+            start.setSvg(SvgImage.PLAY);
             start.setTitle("Execute Query");
         }
     }

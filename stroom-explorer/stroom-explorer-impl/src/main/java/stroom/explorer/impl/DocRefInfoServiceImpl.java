@@ -67,7 +67,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
             return securityContext.asProcessingUserResult(() -> {
                 if (type == null) {
                     final List<DocRef> result = new ArrayList<>();
-                    for (final DocumentType documentType : explorerActionHandlers.getNonSystemTypes()) {
+                    for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
                         final ExplorerActionHandler handler =
                                 explorerActionHandlers.getHandler(documentType.toString());
                         if (handler != null) {

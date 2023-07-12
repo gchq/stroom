@@ -37,6 +37,27 @@ public class StreamEventMap {
         this.capacity = capacity;
     }
 
+    public void terminate() {
+        try {
+            lock.lockInterruptibly();
+            try {
+                count = 0;
+                streamIdQueue.clear();
+                storedDataMap.clear();
+
+                streamIdQueue.addLast(COMPLETE);
+                count++;
+                notEmpty.signal();
+                notFull.signal();
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw new UncheckedInterruptedException(e);
+        }
+    }
+
     public void complete() {
         try {
             lock.lockInterruptibly();

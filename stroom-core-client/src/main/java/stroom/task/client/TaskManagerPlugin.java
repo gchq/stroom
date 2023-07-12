@@ -22,7 +22,8 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -48,7 +49,8 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(13)
-                            .icon(SvgPresets.JOBS)
+                            .icon(SvgImage.JOBS)
+                            .iconColour(IconColour.GREY)
                             .text("Server Tasks")
                             .command(this::open)
                             .build());

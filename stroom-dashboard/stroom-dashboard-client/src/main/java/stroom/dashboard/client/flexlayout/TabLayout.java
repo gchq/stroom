@@ -17,10 +17,9 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
@@ -28,7 +27,6 @@ import stroom.widget.tab.client.view.LinkTabBar;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -47,9 +45,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
-
-    private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
-    private boolean tabsVisible = true;
 
     public TabLayout(final EventBus eventBus,
                      final TabLayoutConfig tabLayoutConfig,
@@ -84,18 +79,18 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         initWidget(panel);
 
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons");
+        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons icon-colour__grey");
         barOuter.add(buttons);
 
         settings = new InlineSvgButton();
         settings.addStyleName("tabLayout-settingsButton");
-        settings.setSvg(SvgImages.MONO_SETTINGS);
+        settings.setSvg(SvgImage.SETTINGS);
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new InlineSvgButton();
         close.addStyleName("tabLayout-closeButton");
-        close.setSvg(SvgImages.MONO_CLOSE);
+        close.setSvg(SvgImage.CLOSE);
         close.setTitle("Close");
         buttons.add(close);
 
@@ -133,7 +128,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 final TabData selectedTab = tabBar.getSelectedTab();
                 if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
-                    changeHandler.requestTabClose(tabLayoutConfig, component.getTabConfig());
+                    changeHandler.removeTab(tabLayoutConfig, component.getTabConfig());
                 }
             }
         }, ClickEvent.getType()));
@@ -148,8 +143,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
         component.setTabLayout(this);
         component.setTabConfig(tabConfig);
-
-        checkTabVisibility();
 
         layerContainer.show(component);
     }
@@ -192,26 +185,5 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
     public TabLayoutConfig getTabLayoutConfig() {
         return tabLayoutConfig;
-    }
-
-    public void setTabVisibility(final TabVisibility tabVisibility) {
-        this.tabVisibility = tabVisibility;
-        checkTabVisibility();
-    }
-
-    private void checkTabVisibility() {
-        if (tabVisibility == TabVisibility.SHOW_ALL) {
-            setTabsVisibile(true);
-        } else if (tabVisibility == TabVisibility.HIDE_ALL) {
-            setTabsVisibile(false);
-        } else if (tabVisibility == TabVisibility.HIDE_SINGLE) {
-            setTabsVisibile(tabBar.getTabs().size() > 1);
-        }
-    }
-
-    private void setTabsVisibile(final boolean tabsVisible) {
-        if (this.tabsVisible != tabsVisible) {
-            this.tabsVisible = tabsVisible;
-        }
     }
 }

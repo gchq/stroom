@@ -18,6 +18,7 @@ package stroom.script.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -45,6 +46,7 @@ import java.util.Objects;
 public class ScriptDoc extends Doc implements HasData {
 
     public static final String DOCUMENT_TYPE = "Script";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_SCRIPT;
 
     @JsonProperty
     private String description;

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client">
 
-    <g:MySplitLayoutPanel styleName="QueryHelpViewImpl max">
+    <g:ThinSplitLayoutPanel styleName="QueryHelpViewImpl max">
         <g:west size="270">
             <g:SimplePanel styleName="QueryHelpViewImpl max dashboard-panel">
                 <g:MaxScrollPanel styleName="max queryHelpTree">
@@ -22,5 +22,5 @@
                 </g:MaxScrollPanel>
             </g:FlowPanel>
         </g:center>
-    </g:MySplitLayoutPanel>
+    </g:ThinSplitLayoutPanel>
 </ui:UiBinder>

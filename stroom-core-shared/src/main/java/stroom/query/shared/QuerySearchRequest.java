@@ -37,7 +37,7 @@ import java.util.Set;
 public class QuerySearchRequest {
 
     @JsonProperty
-    private SearchRequestSource searchRequestSource;
+    private final SearchRequestSource searchRequestSource;
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
