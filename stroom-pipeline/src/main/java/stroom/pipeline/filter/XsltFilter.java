@@ -33,7 +33,6 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -42,6 +41,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Location;
@@ -83,7 +83,7 @@ import javax.xml.transform.sax.TransformerHandler;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.XSLT)
+        icon = SvgImage.PIPELINE_XSLT)
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
 
     private final XsltPool xsltPool;

@@ -71,9 +71,4 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         queryEditPresenter.onClose();
         super.onClose();
     }
-
-    @Override
-    public String getType() {
-        return QueryDoc.DOCUMENT_TYPE;
-    }
 }

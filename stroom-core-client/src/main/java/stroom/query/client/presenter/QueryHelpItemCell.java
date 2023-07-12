@@ -1,6 +1,7 @@
 package stroom.query.client.presenter;
 
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -9,7 +10,6 @@ import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.Set;
 
@@ -40,12 +40,12 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
             if (item.hasChildren()) {
                 final boolean open = openItems.contains(item);
                 if (open) {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
+                    expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
                 } else {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
+                    expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT);
                 }
             } else {
-                expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
+                expanderIcon = SvgImageUtil.emptySvg();
             }
 
             int indent = item.getDepth();

@@ -20,7 +20,6 @@ package stroom.pipeline.structure.testclient.presenter;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
@@ -31,6 +30,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import org.junit.jupiter.api.Test;
@@ -188,7 +188,7 @@ class TestPipelineModel {
                         PipelineElementType.ROLE_SOURCE,
                         PipelineElementType.ROLE_HAS_TARGETS,
                         PipelineElementType.VISABILITY_SIMPLE},
-                ElementIcons.STREAM);
+                SvgImage.PIPELINE_STREAM);
         final PipelineElementType parserType = new PipelineElementType(
                 "CombinedParser",
                 Category.PARSER,
@@ -199,7 +199,7 @@ class TestPipelineModel {
                         PipelineElementType.VISABILITY_STEPPING,
                         PipelineElementType.ROLE_MUTATOR,
                         PipelineElementType.ROLE_HAS_CODE},
-                ElementIcons.TEXT);
+                SvgImage.PIPELINE_TEXT);
         final PipelineElementType xsltType = new PipelineElementType(
                 "XSLTFilter",
                 Category.FILTER,
@@ -210,7 +210,7 @@ class TestPipelineModel {
                         PipelineElementType.VISABILITY_STEPPING,
                         PipelineElementType.ROLE_MUTATOR,
                         PipelineElementType.ROLE_HAS_CODE},
-                ElementIcons.XSLT);
+                SvgImage.PIPELINE_XSLT);
         final PipelineElementType schemaType = new PipelineElementType(
                 "SchemaFilter",
                 Category.FILTER,
@@ -219,7 +219,7 @@ class TestPipelineModel {
                         PipelineElementType.ROLE_HAS_TARGETS,
                         PipelineElementType.VISABILITY_STEPPING,
                         PipelineElementType.ROLE_VALIDATOR},
-                ElementIcons.XSD);
+                SvgImage.PIPELINE_XSD);
         final PipelineElementType writerType = new PipelineElementType(
                 "XMLWriter",
                 Category.WRITER,
@@ -229,7 +229,7 @@ class TestPipelineModel {
                         PipelineElementType.ROLE_WRITER,
                         PipelineElementType.ROLE_MUTATOR,
                         PipelineElementType.VISABILITY_STEPPING},
-                ElementIcons.XML);
+                SvgImage.PIPELINE_XML);
         final PipelineElementType appenderType = new PipelineElementType(
                 "StreamAppender",
                 Category.DESTINATION,
@@ -237,7 +237,7 @@ class TestPipelineModel {
                         PipelineElementType.ROLE_TARGET,
                         PipelineElementType.ROLE_DESTINATION,
                         PipelineElementType.VISABILITY_STEPPING},
-                ElementIcons.STREAM);
+                SvgImage.PIPELINE_STREAM);
 
 
         final List<PipelineData> baseStack = new ArrayList<>();

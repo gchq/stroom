@@ -17,21 +17,3 @@
 body {
 	background-color: @THEME_BACKGROUND_COLOUR@;
 }
-
-/*
-.navigation {
-	background-color: @THEME_BACKGROUND_COLOUR@  !important;
-}
-
-.stroom-background {
-	background-attachment: @THEME_BACKGROUND_ATTACHMENT@  !important;
-	background-image: @THEME_BACKGROUND_IMAGE@  !important;
-	background-position: @THEME_BACKGROUND_POSITION@  !important;
-	background-repeat: @THEME_BACKGROUND_REPEAT@  !important;
-	opacity: @THEME_BACKGROUND_OPACITY@  !important;
-}
-
-.menuBar .text {
-    color: @THEME_TOP_MENU_TEXT_COLOUR@  !important;
-}
-*/

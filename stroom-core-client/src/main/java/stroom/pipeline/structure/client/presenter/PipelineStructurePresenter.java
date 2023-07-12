@@ -22,13 +22,10 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasDocumentWrite;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.FetchPipelineXmlResponse;
@@ -42,9 +39,9 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -65,9 +62,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -78,9 +73,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
-        implements HasDocumentRead<PipelineDoc>, HasDocumentWrite<PipelineDoc>, HasDirtyHandlers,
-        PipelineStructureUiHandlers {
+public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineStructureView, PipelineDoc>
+        implements PipelineStructureUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
@@ -92,7 +86,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
     private final Provider<EditorPresenter> xmlEditorProvider;
     private final PipelineTreePresenter pipelineTreePresenter;
-    private boolean dirty;
     private PipelineElement selectedElement;
     private PipelineModel pipelineModel;
     private DocRef docRef;
@@ -100,7 +93,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private DocRef parentPipeline;
     private Map<Category, List<PipelineElementType>> elementTypes;
     private boolean advancedMode;
-    private boolean readOnly = true;
 
     private List<Item> addMenuItems;
     private List<Item> restoreMenuItems;
@@ -217,8 +209,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public void read(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
-        this.readOnly = readOnly;
+    protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
         pipelinePresenter.setEnabled(!readOnly);
         propertyListPresenter.setReadOnly(readOnly);
         pipelineReferenceListPresenter.setReadOnly(readOnly);
@@ -273,7 +264,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public PipelineDoc write(final PipelineDoc document) {
+    protected PipelineDoc onWrite(final PipelineDoc document) {
         // Only write if we have been revealed and therefore created a pipeline
         // model.
         if (pipelineModel != null) {
@@ -329,21 +320,21 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         menuItems.add(new IconParentMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.ADD)
+                .icon(SvgImage.ADD)
                 .text("Add")
                 .enabled(addMenuItems != null && addMenuItems.size() > 0)
                 .children(addMenuItems)
                 .build());
         menuItems.add(new IconParentMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.UNDO)
+                .icon(SvgImage.UNDO)
                 .text("Restore")
                 .enabled(restoreMenuItems != null && restoreMenuItems.size() > 0)
                 .children(restoreMenuItems)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(2)
-                .icon(SvgPresets.REMOVE)
+                .icon(SvgImage.REMOVE)
                 .text("Remove")
                 .enabled(selected != null)
                 .command(() -> onRemove(null))
@@ -372,7 +363,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     for (final PipelineElementType pipelineElementType : entry.getValue()) {
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
-                            final Icon icon = Icon.create(pipelineElementType.getIcon());
+                            final SvgImage icon = pipelineElementType.getIcon();
                             final Item item = new IconMenuItem.Builder()
                                     .priority(j++)
                                     .icon(icon)
@@ -426,7 +417,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final Category category = pipelineElementType.getCategory();
 
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
-                    final Icon icon = Icon.create(pipelineElementType.getIcon());
+                    final SvgImage icon = pipelineElementType.getIcon();
 
                     final Item item = new IconMenuItem.Builder()
                             .priority(pos++)
@@ -499,7 +490,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
     @Override
     public void viewSource() {
-        if (dirty) {
+        if (isDirty()) {
             AlertEvent.fireError(this, "You must save changes to this pipeline before you can view the source", null);
         } else {
             final EditorPresenter xmlEditor = xmlEditorProvider.get();
@@ -573,24 +564,12 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             restoreMenuItems = null;
         }
 
-        getView().setAddEnabled(!readOnly && addMenuItems != null && addMenuItems.size() > 0);
-        getView().setRestoreEnabled(!readOnly && restoreMenuItems != null && restoreMenuItems.size() > 0);
-        getView().setRemoveEnabled(!readOnly
+        getView().setAddEnabled(!isReadOnly() && addMenuItems != null && addMenuItems.size() > 0);
+        getView().setRestoreEnabled(!isReadOnly() && restoreMenuItems != null && restoreMenuItems.size() > 0);
+        getView().setRemoveEnabled(!isReadOnly()
                 && advancedMode
                 && selectedElement != null
                 && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
-
-    private void setDirty(final boolean dirty) {
-        this.dirty = dirty;
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
     }
 
     private DocRef getParentPipeline() {

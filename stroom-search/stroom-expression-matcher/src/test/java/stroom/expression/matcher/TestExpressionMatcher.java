@@ -31,17 +31,26 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * This ought to behave in a consistent way with CommonExpressionMapper
+ */
 @ExtendWith(MockitoExtension.class)
 class TestExpressionMatcher {
 
@@ -58,8 +67,55 @@ class TestExpressionMatcher {
             TYPE);
 
     @Test
-    void testSimpleMatch() {
+    void testSimpleMatch_match() {
         test(createAttributeMap(), createExpression(Op.AND, "TEST_FEED"), true);
+    }
+
+    @Test
+    void testSimpleMatch_noMatch() {
+        test(createAttributeMap(), createExpression(Op.AND, "XXX"), false);
+    }
+
+    @Test
+    void testEnabledState() {
+        // TEST_FEED term is disabled so there should be no match
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
+        builder.addTerm(FEED, Condition.EQUALS, "FOO");
+        final ExpressionTerm disabledTerm = ExpressionTerm.builder()
+                .field(FEED.getName())
+                .condition(Condition.EQUALS)
+                .value("TEST_FEED")
+                .enabled(false)
+                .build();
+        builder.addTerm(disabledTerm);
+        final ExpressionOperator expressionOperator = builder.build();
+
+        test(createAttributeMap(), expressionOperator, false);
+    }
+
+    @TestFactory
+    List<DynamicTest> makeEmptyOpTests() {
+        return Arrays.stream(ExpressionOperator.Op.values())
+                .map(opType -> DynamicTest.dynamicTest(opType.getDisplayValue(), () -> {
+                    final ExpressionOperator expressionOperator = ExpressionOperator.builder().op(opType).build();
+
+                    test(createAttributeMap(), expressionOperator, true);
+                }))
+                .collect(Collectors.toList());
+    }
+
+    @TestFactory
+    List<DynamicTest> makeDisabledEmptyOpTests() {
+        return Arrays.stream(ExpressionOperator.Op.values())
+                .map(opType -> DynamicTest.dynamicTest(opType.getDisplayValue(), () -> {
+                    final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                            .op(opType)
+                            .enabled(false)
+                            .build();
+
+                    test(createAttributeMap(), expressionOperator, true);
+                }))
+                .collect(Collectors.toList());
     }
 
     @Test
@@ -83,13 +139,28 @@ class TestExpressionMatcher {
     }
 
     @Test
+    void testRootDisabled() {
+        final ExpressionOperator rootOp = ExpressionOperator.builder()
+                .op(Op.AND)
+                .enabled(false)
+                .build();
+
+        test(createAttributeMap(), rootOp, true);
+    }
+
+    @Test
     void testMatchNone1() {
-        test(createAttributeMap(), null, false);
+        // Null expression same as match all
+        test(createAttributeMap(), null, true);
     }
 
     @Test
     void testMatchNone2() {
-        test(createAttributeMap(), ExpressionOperator.builder().enabled(false).build(), false);
+        test(createAttributeMap(),
+                ExpressionOperator.builder()
+                        .enabled(false)
+                        .build(),
+                true);
     }
 
     @Test
@@ -143,12 +214,14 @@ class TestExpressionMatcher {
     private void test(final Map<String, Object> attributeMap,
                       final ExpressionOperator expression,
                       final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP,
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(
+                FIELD_MAP,
                 null,
                 null,
                 null,
                 System.currentTimeMillis());
-        assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);
+        assertThat(expressionMatcher.match(attributeMap, expression))
+                .isEqualTo(outcome);
     }
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {

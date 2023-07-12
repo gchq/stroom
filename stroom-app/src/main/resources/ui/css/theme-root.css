@@ -7,6 +7,12 @@
  * --<object>-<inner_object>__<attribute>--<modifier>--<modifier>
  */
 
+/**************************************************
+*  NOTE: This file gets copied into stroom-docs by 
+*  stroom-docs/update_stroom_icons.sh
+*  so any significant changes may break the docs.
+***************************************************/
+
 :root {
     --focus-border: var(--blue-500);
     --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
@@ -23,7 +29,7 @@
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */
     --code-color: var(--pink-700);
-    --border-color: transparent; /*#c5cde2;*/
+    --border-color: #ebebeb;
 
     --header__border-color: #dddddd;
     --row__background-color--even: #ebebeb;
@@ -75,7 +81,7 @@
     --pipeline-element-box__background-color--selected: #bbdefb;
     --pipeline-element-box__background-color--selected--hover: #bbdefb;
     --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.3);
-    --pipeline-element-box__text-color: #888;
+    --pipeline-element-box__text-color: #666;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
     --pipeline-element-box__border-color--info: #378cff;
@@ -128,7 +134,7 @@
     --page__text-color: rgba(0, 0, 0, 0.8);
 
     /* Splitter */
-    --splitter__background-color: #ebebeb;
+    --splitter__background-color: var(--border-color);
     --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */

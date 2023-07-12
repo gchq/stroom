@@ -99,7 +99,11 @@ class QueryStoreImpl implements QueryStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.SEARCH, QueryDoc.DOCUMENT_TYPE, QueryDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.SEARCH,
+                QueryDoc.DOCUMENT_TYPE,
+                QueryDoc.DOCUMENT_TYPE,
+                QueryDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

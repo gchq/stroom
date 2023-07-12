@@ -17,7 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.docref.DocRef;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
@@ -41,7 +40,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CopyDocumentPresenter
         extends MyPresenter<CopyDocumentView, CopyDocumentProxy>

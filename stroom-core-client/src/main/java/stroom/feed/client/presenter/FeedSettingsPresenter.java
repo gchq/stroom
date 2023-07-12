@@ -151,11 +151,6 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
         return encoding;
     }
 
-    @Override
-    public String getType() {
-        return FeedDoc.DOCUMENT_TYPE;
-    }
-
     public interface FeedSettingsView extends View {
 
         TextBox getClassification();

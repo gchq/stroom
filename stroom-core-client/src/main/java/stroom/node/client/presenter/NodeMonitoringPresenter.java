@@ -36,8 +36,8 @@ import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
@@ -334,8 +334,13 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.NODES;
+    public SvgImage getIcon() {
+        return SvgImage.NODES;
+    }
+
+    @Override
+    public IconColour getIconColour() {
+        return IconColour.GREY;
     }
 
     @Override

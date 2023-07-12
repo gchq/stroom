@@ -18,7 +18,7 @@ package stroom.query.client.view;
 
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.client.presenter.QueryHelpUiHandlers;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -48,8 +48,8 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     public QueryHelpViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        copyButton.setSvg(SvgImages.COPY);
-        insertButton.setSvg(SvgImages.INSERT);
+        copyButton.setSvg(SvgImage.COPY);
+        insertButton.setSvg(SvgImage.INSERT);
     }
 
     @Override

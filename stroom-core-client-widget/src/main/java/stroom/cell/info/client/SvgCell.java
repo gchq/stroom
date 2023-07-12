@@ -17,23 +17,17 @@
 package stroom.cell.info.client;
 
 import stroom.svg.client.Preset;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class SvgCell extends AbstractCell<Preset> {
-
-    private static Template template;
 
     private final boolean isButton;
 
@@ -46,10 +40,6 @@ public class SvgCell extends AbstractCell<Preset> {
                 ? "click"
                 : null);
         this.isButton = isButton;
-
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
@@ -91,37 +81,29 @@ public class SvgCell extends AbstractCell<Preset> {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final SafeStylesBuilder builder = new SafeStylesBuilder();
-
-            String className = isButton
-                    ? "svgCell-button"
-                    : "svgCell-icon";
+            String className = "svgCell-icon";
+            if (isButton) {
+                className += " svgCell-button";
+            }
 
             if (!value.isEnabled()) {
                 className += " " + "svgCell-disabled";
             }
 
-            className += " " + value.getClassName();
-
-            if (value.getTitle() != null && !value.getTitle().isEmpty()) {
-                sb.append(template.icon(
-                        className,
-                        builder.toSafeStyles(),
-                        value.getTitle()));
-            } else {
-                sb.append(template.icon(
-                        className,
-                        builder.toSafeStyles()));
-            }
+            sb.append(SvgImageUtil.toSafeHtml(
+                    value.getTitle(),
+                    value.getSvgImage(),
+                    className));
+//            if (value.getTitle() != null && !value.getTitle().isEmpty()) {
+//                sb.append(template.icon(
+//                        className,
+//                        value.getTitle(),
+//                        SafeHtmlUtils.fromSafeConstant(value.getSvgImage().getSvg())));
+//            } else {
+//                sb.append(template.icon(
+//                        className,
+//                        SafeHtmlUtils.fromSafeConstant(value.getSvgImage().getSvg())));
+//            }
         }
-    }
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\" style=\"{1}\"></div>")
-        SafeHtml icon(String className, SafeStyles style);
-
-        @Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\"></div>")
-        SafeHtml icon(String className, SafeStyles style, String title);
     }
 }

@@ -10,6 +10,7 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
 import java.util.Collections;
@@ -122,8 +123,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.STRUCTURE, FolderExplorerActionHandler.FOLDER,
-                FolderExplorerActionHandler.FOLDER);
+        return new DocumentType(
+                DocumentTypeGroup.STRUCTURE,
+                FolderExplorerActionHandler.FOLDER,
+                FolderExplorerActionHandler.FOLDER,
+                SvgImage.FOLDER);
     }
 
     ////////////////////////////////////////////////////////////////////////

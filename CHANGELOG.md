@@ -13,6 +13,35 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Fix styling for log pane toggle button in the stepper screen.
+
+* Issue **#3573** : Fix new dashboard panel size.
+
+* Fix various icon styling issues.
+
+* Issue **#3588** : Fix query parameters not being de-referenced in audit logs for dashboard search and download results. Fix double logging of download results.
+
+* Issue **#3575** : Duplicate tab now allows user to choose destination.
+
+* Issue **#3574** : Add remove all to dashboards.
+
+* Issue **#3556** : Fix dashboard icon sizes.
+
+* Issue **#3548** : Fix dependency screen icons.
+
+* Issue **#3507** : Reinstate TabContentProvider to lazy load UI tabs.
+
+* Issue **#3581** : Make button appearance more consistent.
+
+* Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
+
+* Issue **#3569** : Fix stuck extraction tasks.
+
+* Issue **#3559** : Allow user to choose the location of new dashboard components.
+
+* Issue **#3567** : Improve analytics execution logging.
+
+
 ## [v7.2-beta.36-open-id-1] - 2023-06-29
 
 * Issue **#3536** : Analytic notifications are now written using the detection schema.
@@ -5554,6 +5583,38 @@ Improve error handling during reference data initialisation.
 [v7.2-beta.10-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...v7.2-beta.10-open-id-3
 [v7.2-beta.10-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...v7.2-beta.10-open-id-2
 [v7.2-beta.10-open-id]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.10-open-id
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.41...HEAD
+[v7.2-beta.41]: https://github.com/gchq/stroom/compare/v7.2-beta.40...v7.2-beta.41
+[v7.2-beta.40]: https://github.com/gchq/stroom/compare/v7.2-beta.39...v7.2-beta.40
+[v7.2-beta.39]: https://github.com/gchq/stroom/compare/v7.2-beta.38...v7.2-beta.39
+[v7.2-beta.38]: https://github.com/gchq/stroom/compare/v7.2-beta.36...v7.2-beta.38
+[v7.2-beta.36]: https://github.com/gchq/stroom/compare/v7.2-beta.35-restyle...v7.2-beta.36
+[v7.2-beta.35-restyle]: https://github.com/gchq/stroom/compare/v7.2-beta.35...v7.2-beta.35-restyle
+[v7.2-beta.35]: https://github.com/gchq/stroom/compare/v7.2-beta.34...v7.2-beta.35
+[v7.2-beta.34]: https://github.com/gchq/stroom/compare/v7.2-beta.33...v7.2-beta.34
+[v7.2-beta.33]: https://github.com/gchq/stroom/compare/v7.2-beta.32...v7.2-beta.33
+[v7.2-beta.32]: https://github.com/gchq/stroom/compare/v7.2-beta.31...v7.2-beta.32
+[v7.2-beta.31]: https://github.com/gchq/stroom/compare/v7.2-beta.30...v7.2-beta.31
+[v7.2-beta.30]: https://github.com/gchq/stroom/compare/v7.2-beta.29...v7.2-beta.30
+[v7.2-beta.29]: https://github.com/gchq/stroom/compare/v7.2-beta.28...v7.2-beta.29
+[v7.2-beta.28]: https://github.com/gchq/stroom/compare/v7.2-beta.27...v7.2-beta.28
+[v7.2-beta.27]: https://github.com/gchq/stroom/compare/v7.2-beta.26...v7.2-beta.27
+[v7.2-beta.26]: https://github.com/gchq/stroom/compare/v7.2-beta.25...v7.2-beta.26
+[v7.2-beta.25]: https://github.com/gchq/stroom/compare/v7.2-beta.24...v7.2-beta.25
+[v7.2-beta.24]: https://github.com/gchq/stroom/compare/v7.2-beta.23...v7.2-beta.24
+[v7.2-beta.23]: https://github.com/gchq/stroom/compare/v7.2-beta.22...v7.2-beta.23
+[v7.2-beta.22]: https://github.com/gchq/stroom/compare/v7.2-beta.21...v7.2-beta.22
+[v7.2-beta.21]: https://github.com/gchq/stroom/compare/v7.2-beta.20...v7.2-beta.21
+[v7.2-beta.20]: https://github.com/gchq/stroom/compare/v7.2-beta.19...v7.2-beta.20
+[v7.2-beta.19]: https://github.com/gchq/stroom/compare/v7.2-beta.18...v7.2-beta.19
+[v7.2-beta.18]: https://github.com/gchq/stroom/compare/v7.2-beta.17...v7.2-beta.18
+[v7.2-beta.17]: https://github.com/gchq/stroom/compare/v7.2-beta.16...v7.2-beta.17
+[v7.2-beta.16]: https://github.com/gchq/stroom/compare/v7.2-beta.15...v7.2-beta.16
+[v7.2-beta.15]: https://github.com/gchq/stroom/compare/v7.2-beta.14...v7.2-beta.15
+[v7.2-beta.14]: https://github.com/gchq/stroom/compare/v7.2-beta.13...v7.2-beta.14
+[v7.2-beta.13]: https://github.com/gchq/stroom/compare/v7.2-beta.12...v7.2-beta.13
+[v7.2-beta.12]: https://github.com/gchq/stroom/compare/v7.2-beta.11...v7.2-beta.12
+[v7.2-beta.11]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.11
 [v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
 [v7.2-beta.9]: https://github.com/gchq/stroom/compare/v7.2-beta.8...v7.2-beta.9
 [v7.2-beta.8]: https://github.com/gchq/stroom/compare/v7.2-beta.7...v7.2-beta.8

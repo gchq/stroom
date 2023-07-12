@@ -22,7 +22,7 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -64,7 +64,7 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
                 new IconMenuItem.Builder()
                         .priority(3)
-                        .icon(SvgPresets.ABOUT)
+                        .icon(SvgImage.OO)
                         .text("About")
                         .command(() -> provider.get().forceReveal())
                         .build());

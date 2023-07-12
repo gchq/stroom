@@ -24,7 +24,6 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -375,7 +374,8 @@ class QueryServiceImpl implements QueryService {
                     searchEventLog.search(
                             mappedRequest.getQuery().getDataSource(),
                             mappedRequest.getQuery().getExpression(),
-                            searchRequest.getQueryContext().getQueryInfo());
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams());
                 }
 
             } catch (final RuntimeException e) {

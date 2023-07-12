@@ -16,10 +16,12 @@
 
 package stroom.task.client.view;
 
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.presenter.UserTaskUiHandlers;
 import stroom.task.shared.TaskProgress;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -54,6 +56,7 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
         widget = binder.createAndBindUi(this);
         layout.setCellWidth(terminate, "18px");
         layout.setCellVerticalAlignment(terminate, HorizontalPanel.ALIGN_MIDDLE);
+        SvgImageUtil.setSvgAsInnerHtml(terminate, SvgImage.STOP);
     }
 
     @Override

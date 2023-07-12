@@ -31,7 +31,6 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.DocFinder;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -41,6 +40,7 @@ import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
+import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
@@ -64,7 +64,7 @@ import javax.inject.Provider;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.XML)
+        icon = SvgImage.PIPELINE_XML)
 public class XMLFragmentParser extends AbstractParser implements SupportsCodeInjection {
 
     private final ParserFactoryPool parserFactoryPool;

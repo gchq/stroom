@@ -16,12 +16,14 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -46,6 +48,8 @@ public class ResizableAcceptRejectContent extends Composite implements DialogBut
     public ResizableAcceptRejectContent(final HideRequestUiHandlers uiHandlers) {
         initWidget(binder.createAndBindUi(this));
         this.uiHandlers = uiHandlers;
+        accept.setIcon(SvgImage.OK);
+        reject.setIcon(SvgImage.CANCEL);
     }
 
     public void setContent(final Widget widget) {

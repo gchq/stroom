@@ -48,11 +48,6 @@ public class TextConverterSettingsPresenter
     }
 
     @Override
-    public String getType() {
-        return TextConverterDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final TextConverterDoc textConverter, final boolean readOnly) {
         getView().getConverterType().setSelectedItem(textConverter.getConverterType());
     }

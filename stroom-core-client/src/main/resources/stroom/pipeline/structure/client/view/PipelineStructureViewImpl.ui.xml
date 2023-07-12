@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.button.client">
     <g:SimplePanel addStyleNames="dock-container-vertical">
-        <g:MySplitLayoutPanel vSplits="0.4" styleName="dock-max">
+        <g:ThinSplitLayoutPanel vSplits="0.4" styleName="dock-max">
             <g:north size="200">
                 <g:FlowPanel styleName="max dashboard-panel dock-container-vertical">
                     <g:FlowPanel styleName="dock-min pipelineStructureViewImpl-bar">
@@ -24,7 +24,7 @@
                 </g:FlowPanel>
             </g:north>
             <g:center>
-                <g:MySplitLayoutPanel vSplits="0.5" styleName="max">
+                <g:ThinSplitLayoutPanel vSplits="0.5" styleName="max">
                     <g:north size="200">
                         <g:SimplePanel ui:field="properties"
                                        styleName="dashboard-panel"/>
@@ -33,9 +33,9 @@
                         <g:SimplePanel ui:field="pipelineReferences"
                                        styleName="dashboard-panel"/>
                     </g:center>
-                </g:MySplitLayoutPanel>
+                </g:ThinSplitLayoutPanel>
             </g:center>
-        </g:MySplitLayoutPanel>
+        </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
 </ui:UiBinder>
  

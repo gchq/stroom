@@ -19,10 +19,11 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -31,6 +32,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import javax.inject.Provider;
 
 public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ReceiveDataRules>
         implements HasDirtyHandlers {
@@ -39,83 +41,45 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final RuleSetSettingsPresenter settingsPresenter;
-    private final FieldListPresenter fieldListPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
     @Inject
     public RuleSetPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final RuleSetSettingsPresenter settingsPresenter,
-                            final FieldListPresenter fieldListPresenter,
-                            final MarkdownEditPresenter markdownEditPresenter) {
+                            final Provider<RuleSetSettingsPresenter> settingsPresenterProvider,
+                            final Provider<FieldListPresenter> fieldListPresenterProvider,
+                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.settingsPresenter = settingsPresenter;
-        this.fieldListPresenter = fieldListPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        addTab(RULES);
-        addTab(FIELDS);
-        addTab(DOCUMENTATION);
+        addTab(RULES, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(FIELDS, new DocumentEditTabProvider<>(fieldListPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ReceiveDataRules>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final ReceiveDataRules document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public ReceiveDataRules onWrite(final MarkdownEditPresenter presenter,
+                                            final ReceiveDataRules document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(RULES);
     }
 
     @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(fieldListPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (RULES.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (FIELDS.equals(tab)) {
-            callback.onReady(fieldListPresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
     public void onRead(final DocRef docRef, final ReceiveDataRules doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
         if (doc.getFields() == null) {
             doc.setFields(new ArrayList<>());
         }
         if (doc.getRules() == null) {
             doc.setRules(new ArrayList<>());
         }
-
-        settingsPresenter.read(docRef, doc, readOnly);
-        fieldListPresenter.read(docRef, doc, readOnly);
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected ReceiveDataRules onWrite(ReceiveDataRules dataReceiptPolicy) {
-        dataReceiptPolicy = settingsPresenter.write(dataReceiptPolicy);
-        dataReceiptPolicy = fieldListPresenter.write(dataReceiptPolicy);
-        dataReceiptPolicy.setDescription(markdownEditPresenter.getText());
-        return dataReceiptPolicy;
+        super.onRead(docRef, doc, readOnly);
     }
 
     @Override

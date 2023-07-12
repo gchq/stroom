@@ -6,8 +6,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -52,7 +51,7 @@ public class UsersPlugin extends NodeToolsPlugin {
     private void addManageUsers(final BeforeRevealMenubarEvent event,
                                 final ExtendedUiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
-        final Preset icon = SvgPresets.USER_GROUP;
+        final SvgImage icon = SvgImage.USERS;
         usersMenuItem = new IconMenuItem.Builder()
                 .priority(5)
                 .icon(icon)

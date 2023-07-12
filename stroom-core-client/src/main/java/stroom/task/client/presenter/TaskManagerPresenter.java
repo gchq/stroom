@@ -18,8 +18,8 @@ package stroom.task.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -49,8 +49,13 @@ public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.JOBS;
+    public SvgImage getIcon() {
+        return SvgImage.JOBS;
+    }
+
+    @Override
+    public IconColour getIconColour() {
+        return IconColour.GREY;
     }
 
     @Override

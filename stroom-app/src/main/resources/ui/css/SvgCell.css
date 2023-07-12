@@ -16,6 +16,13 @@
 
 .svgCell-icon {
 	cursor: default;
+	vertical-align: middle;
+}
+
+.svgCell-icon svg {
+  width: var(--icon-width);
+  height: var(--icon-height);
+  color: var(--icon-colour__blue);
 }
 
 .svgCell-button {

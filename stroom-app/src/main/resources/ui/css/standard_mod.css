@@ -400,7 +400,7 @@ td.datePickerYear {
 }
 
 .gwt-ValueSpinner .textBox {
-	height: 16px;
+	height: var(--icon-height);
 }
 
 .gwt-ValueSpinner td {
@@ -426,26 +426,16 @@ td.datePickerYear {
     border: none;
     inset: initial !important;
 }
-/*
-.gwt-SplitLayoutPanel-Dragger:hover {
-    opacity: 1;
-}
 
-.gwt-SplitLayoutPanel-Dragger--dragging {
-    opacity: 1;
-}
-*/
 .gwt-SplitLayoutPanel-HDragger {
 	width: var(--split__size) !important;
 	height: 100% !important;
-	left: var(--split__offset) !important;
 	cursor: col-resize;
 }
 
 .gwt-SplitLayoutPanel-VDragger {
 	width: 100% !important;
 	height: var(--split__size) !important;
-	top: var(--split__offset) !important;
     cursor: row-resize;
 }
 

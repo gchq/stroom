@@ -315,6 +315,10 @@ public abstract class AbstractMetaListPresenter
     }
 
     protected Preset getInfoCellState(final MetaRow metaRow) {
+        if (metaRow == null || metaRow.getMeta() == null || metaRow.getMeta().getStatus() == null) {
+            return null;
+        }
+
         // Should only show unlocked ones by default
         final Status status = metaRow.getMeta().getStatus();
         if (Status.UNLOCKED.equals(status)) {

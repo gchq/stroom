@@ -23,7 +23,7 @@
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */
     --code-color: var(--pink-700);
-    --border-color: transparent; /*#c5cde2;*/
+    --border-color: #ebebeb;
 
     --header__border-color: #dddddd;
     --row__background-color--even: #ebebeb;
@@ -128,7 +128,7 @@
     --page__text-color: rgba(0, 0, 0, 0.8);
 
     /* Splitter */
-    --splitter__background-color: #ebebeb;
+    --splitter__background-color: var(--border-color);
     --splitter__background-color--highlight: rgba(24, 94, 144, 0.9);
 
     /* Main curve tabs */

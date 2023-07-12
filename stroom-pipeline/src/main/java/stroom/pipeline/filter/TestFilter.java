@@ -19,8 +19,8 @@ package stroom.pipeline.filter;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.svg.shared.SvgImage;
 
 import org.xml.sax.SAXException;
 
@@ -35,9 +35,14 @@ import javax.inject.Inject;
  * <p>
  * This filter accumulates all the complete documents so they can be asserted against at the end of parsing.
  */
-@ConfigurableElement(type = "TestFilter", roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "TestFilter",
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = SvgImage.PIPELINE_STREAM)
 public class TestFilter extends AbstractSamplingFilter {
 
     private final List<String> outputs;

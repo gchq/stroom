@@ -16,16 +16,33 @@ import java.util.stream.Collectors;
 
 public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
+    static final int TOP_LEVEL_DEPTH = 0;
+
     final String title;
     private final boolean heading;
     private final int depth;
+    // Hold the path to this item so we can use it to uniquely identify an item as some function names
+    // exist in multiple categories
+    protected String path;
 
     private Map<QueryHelpItem, QueryHelpItem> children;
 
-    public QueryHelpItem(final String title, final boolean heading, final int depth) {
+    public QueryHelpItem(final QueryHelpItem parent,
+                         final String title,
+                         final boolean heading) {
         this.title = title;
         this.heading = heading;
-        this.depth = depth;
+
+        if (parent != null) {
+            this.depth = parent.depth + 1;
+            this.path = parent.path + "/" + title;
+            // Ensure this item (or one equal to it) is included as a child on the parent
+            parent.addOrGetChild(this);
+        } else {
+            this.depth = TOP_LEVEL_DEPTH;
+            this.path = "/" + title;
+        }
+//        GWT.log("Creating: (depth " + this.depth + ") " + this.path);
     }
 
     public boolean hasChildren() {
@@ -36,7 +53,10 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
         if (children == null) {
             return null;
         }
-        return children.keySet().stream().sorted().collect(Collectors.toList());
+        return children.keySet()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public <T extends QueryHelpItem> T addOrGetChild(T child) {
@@ -44,7 +64,9 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
             children = new HashMap<>();
         }
 
-        return (T) children.computeIfAbsent(child, k -> child);
+        final QueryHelpItem child2 = children.computeIfAbsent(child, k -> child);
+
+        return (T) child2;
     }
 
     public void clear() {
@@ -98,12 +120,12 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
             return false;
         }
         final QueryHelpItem that = (QueryHelpItem) o;
-        return heading == that.heading && Objects.equals(title, that.title);
+        return Objects.equals(path, that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, heading);
+        return Objects.hash(path);
     }
 
 
@@ -112,8 +134,9 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
     public abstract static class QueryHelpItemHeading extends QueryHelpItem {
 
-        public QueryHelpItemHeading(final String text, final int depth) {
-            super(text, true, depth);
+        public QueryHelpItemHeading(final QueryHelpItem parent,
+                                    final String text) {
+            super(parent, text, true);
         }
 
         @Override
@@ -135,8 +158,9 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         private final SafeHtml detail;
 
-        public TopLevelHeadingItem(final String text, final int depth, final SafeHtml detail) {
-            super(text, depth);
+        public TopLevelHeadingItem(final String text, final SafeHtml detail) {
+            // Top level so no parent
+            super(null, text);
             this.detail = detail;
         }
 
@@ -157,10 +181,10 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
     public abstract static class FunctionHeadingItem extends QueryHelpItemHeading {
 
-        public FunctionHeadingItem(final String text, final int depth) {
-            super(text, depth);
+        public FunctionHeadingItem(final QueryHelpItem parent,
+                                   final String text) {
+            super(parent, text);
         }
-
     }
 
 
@@ -169,8 +193,9 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
     public static class FunctionCategoryItem extends FunctionHeadingItem {
 
-        public FunctionCategoryItem(final String heading, final int depth) {
-            super(heading, depth);
+        public FunctionCategoryItem(final QueryHelpItem parent,
+                                    final String heading) {
+            super(parent, heading);
         }
 
         @Override
@@ -185,8 +210,9 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
     public static class OverloadedFunctionHeadingItem extends FunctionHeadingItem {
 
-        public OverloadedFunctionHeadingItem(final String heading, final int depth) {
-            super(heading, depth);
+        public OverloadedFunctionHeadingItem(final QueryHelpItem parent,
+                                             final String heading) {
+            super(parent, heading);
         }
 
         @Override
@@ -205,11 +231,11 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
         private final String helpUrl;
         private final String snippetText;
 
-        public FunctionItem(final String title,
+        public FunctionItem(final QueryHelpItem parent,
+                            final String title,
                             final FunctionSignature signature,
-                            final String helpUrl,
-                            final int depth) {
-            super(title, false, depth);
+                            final String helpUrl) {
+            super(parent, title, false);
             this.signature = signature;
             this.helpUrl = helpUrl;
             this.snippetText = FunctionSignatureUtil.buildSnippetText(signature);

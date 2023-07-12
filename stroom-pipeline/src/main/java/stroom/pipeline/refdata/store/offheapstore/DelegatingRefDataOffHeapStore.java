@@ -5,6 +5,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.feed.api.FeedStore;
+import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -26,6 +27,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PropertyPath;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
@@ -64,7 +66,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DelegatingRefDataOffHeapStore.class);
 
-    private static final String CACHE_NAME = "Reference Data - Meta ID to Ref Store Cache";
+    private static final String META_ID_TO_REF_STORE_CACHE_NAME = "Reference Data - Meta ID to Ref Store Cache";
     private static final String DELIMITER = "___";
     private static final Pattern DELIMITER_PATTERN = Pattern.compile(DELIMITER);
     private static final Pattern FEED_NAME_CLEAN_PATTERN = Pattern.compile("[^A-Z0-9_-]");
@@ -82,6 +84,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
     // feed => refDataOffHeapStore, shouldn't be that many ref feeds
     // Feeds are immutable things too so no TTL needed
+    // Ideally this would be a loading cache but that presents all sorts of issues around closure
+    // of the store when other threads are using it.
     private final Map<String, RefDataOffHeapStore> feedNameToStoreMap = new ConcurrentHashMap<>();
 
     // Following items all relate to migration of a legacy ref data store that may or may not
@@ -111,15 +115,84 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         this.pathCreator = pathCreator;
         this.feedStore = feedStore;
 
-        metaIdToFeedStoreCache = cacheManager.createLoadingCache(
-                CACHE_NAME,
-                () -> referenceDataConfigProvider.get().getMetaIdToRefStoreCache(),
-                this::getOrCreateFeedSpecificStore);
+        // Try and ensure up front that the dirs we use for ref data are there and can be written to
+        final Path localDir = ensureLmdbDirectories();
 
-        initLegacyStore(false);
+        // If an exception is thrown when initialising the stores in the code below then
+        // and guice may later attempt to re-construct this class in which case the cache will
+        // already exist
+        final LoadingStroomCache<Long, FeedSpecificStore> cache = cacheManager.getLoadingCache(
+                META_ID_TO_REF_STORE_CACHE_NAME);
+        if (cache == null) {
+            // This is a singleton so no need to worry about locking
+            metaIdToFeedStoreCache = cacheManager.createLoadingCache(
+                    META_ID_TO_REF_STORE_CACHE_NAME,
+                    () -> referenceDataConfigProvider.get().getMetaIdToRefStoreCache(),
+                    this::getOrCreateFeedSpecificStore);
+        } else {
+            metaIdToFeedStoreCache = cache;
+        }
+
+        initLegacyStore(false, localDir);
         // Set up all the stores we find on disk so NodeStatusServiceUtil can get all the size on disk
         // values
-        discoverFeedSpecificStores();
+        discoverFeedSpecificStores(localDir);
+    }
+
+    private Path ensureLmdbDirectories() {
+        final ReferenceDataConfig referenceDataConfig = referenceDataConfigProvider.get();
+
+        // This is used by all feed specific (and legacy) stores
+        final String localDirStr = referenceDataConfig.getLmdbConfig().getLocalDir();
+        final Path localDir = ensureDirectoryIsWritable(
+                localDirStr,
+                referenceDataConfig.getLmdbConfig().getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME));
+
+        // stagingDir is the parent for all transient staging stores created during a load, so worth ensuring
+        // it is ok now
+        final String stagingDirStr = referenceDataConfig.getStagingLmdbConfig().getLocalDir();
+        ensureDirectoryIsWritable(
+                stagingDirStr,
+                referenceDataConfig.getStagingLmdbConfig().getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME));
+
+        return localDir;
+    }
+
+    private Path ensureDirectoryIsWritable(final String pathStr, final PropertyPath propertyPath) {
+        final Path path = pathCreator.toAppPath(pathStr);
+        LOGGER.debug("Ensuring directory {}", path);
+        try {
+            Files.createDirectories(path);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error ensuring directory {} for property '{}': {}",
+                    path,
+                    propertyPath,
+                    LogUtil.exceptionMessage(e)), e);
+        }
+
+        LOGGER.debug("Testing directory {} is writable", path);
+        Path tempFile = null;
+        try {
+            tempFile = Files.createTempFile(path, "", null);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error writing test file in directory {} for property '{}': {}",
+                    path,
+                    propertyPath,
+                    LogUtil.exceptionMessage(e), e));
+        } finally {
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    // Swallow and log
+                    LOGGER.error("Error writing test file in directory {} for property {}: {}",
+                            path,
+                            propertyPath,
+                            e.getMessage());
+                }
+            }
+        }
+        return path;
     }
 
     /**
@@ -534,9 +607,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         migratedRefStreamIds.add(refStreamId);
     }
 
-    private void discoverFeedSpecificStores() {
-        final String localDirStr = referenceDataConfigProvider.get().getLmdbConfig().getLocalDir();
-        final Path localDir = pathCreator.toAppPath(localDirStr);
+    private void discoverFeedSpecificStores(final Path localDir) {
         LOGGER.debug(() -> "Attempting to discover feed specific ref data stores in " + localDir.toAbsolutePath());
         if (Files.isDirectory(localDir)) {
             try (final Stream<Path> pathStream = Files.list(localDir)) {
@@ -589,17 +660,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         }
     }
 
-    private void initLegacyStore(final boolean createIfNotExists) {
-        final String localDirStr = referenceDataConfigProvider.get().getLmdbConfig().getLocalDir();
-        final Path localDir = pathCreator.toAppPath(localDirStr);
-
-        // localDir is the parent for all the feed specific stores so may as well ensure its presence
-        try {
-            Files.createDirectories(localDir);
-        } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message("Error ensuring directory {}: {}", localDir, e.getMessage()), e);
-        }
-
+    private void initLegacyStore(final boolean createIfNotExists, final Path localDir) {
         // Legacy store may not exist, e.g. for a recent deployment, or it may be empty
         try (final Stream<Path> pathStream = Files.list(localDir).filter(Files::isRegularFile)) {
             final boolean foundDataFile = pathStream.anyMatch(LmdbEnv::isLmdbDataFile);
@@ -738,7 +799,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
      */
     RefDataOffHeapStore getLegacyRefDataStore(final boolean createIfNotExists) {
         if (legacyRefDataStore == null) {
-            initLegacyStore(createIfNotExists);
+            final Path localDir = ensureLmdbDirectories();
+            initLegacyStore(createIfNotExists, localDir);
         }
         return legacyRefDataStore;
     }

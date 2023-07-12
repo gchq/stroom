@@ -19,19 +19,18 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -65,16 +64,13 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         layout = new FlowPanel();
         widget = binder.createAndBindUi(this);
 
-        final Element logoImage = DOM.createDiv();
-        logoImage.setClassName("navigation-logo-image");
-        logoImage.setInnerHTML(SvgImages.MONO_LOGO.getSvg());
+        logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(
+                SvgImage.LOGO,
+                "navigation-logo-image"));
 
-        logo.getElement().appendChild(logoImage);
-
-        final Element mainMenuButtonImage = DOM.createDiv();
-        mainMenuButtonImage.setClassName("main-menu");
-        mainMenuButtonImage.setInnerHTML(SvgImages.MONO_MENU.getSvg());
-        mainMenuButton.getElement().appendChild(mainMenuButtonImage);
+        mainMenuButton.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(
+                SvgImage.MENU,
+                "main-menu"));
 
         uiConfigCache.get()
                 .onSuccess(uiConfig ->

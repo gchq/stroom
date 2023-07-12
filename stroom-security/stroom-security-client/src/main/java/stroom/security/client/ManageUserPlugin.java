@@ -25,7 +25,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.UsersAndGroupsPresenter;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -89,7 +89,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()
                             .priority(1)
-                            .icon(SvgPresets.USER)
+                            .icon(SvgImage.USER)
                             .text("User and Group Permissions")
                             .command(command)
                             .build());

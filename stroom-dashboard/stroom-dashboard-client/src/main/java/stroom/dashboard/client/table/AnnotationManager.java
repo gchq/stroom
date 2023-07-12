@@ -28,7 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Field;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.shared.UserNameResource;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserName;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -212,7 +212,7 @@ public class AnnotationManager {
     private Item createCreateMenu(final List<EventId> eventIdList) {
         return new IconMenuItem.Builder()
                 .priority(0)
-                .icon(SvgPresets.EDIT)
+                .icon(SvgImage.EDIT)
                 .text("Create Annotation")
                 .command(() -> createAnnotation(eventIdList))
                 .build();
@@ -221,7 +221,7 @@ public class AnnotationManager {
     private Item createStatusMenu(final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.EDIT)
+                .icon(SvgImage.EDIT)
                 .text("Change Status")
                 .command(() -> changeStatus(annotationIdList))
                 .build();
@@ -230,7 +230,7 @@ public class AnnotationManager {
     private Item createAssignMenu(final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
                 .priority(2)
-                .icon(SvgPresets.EDIT)
+                .icon(SvgImage.EDIT)
                 .text("Change Assigned To")
                 .command(() -> changeAssignedTo(annotationIdList))
                 .build();

@@ -17,8 +17,9 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserName;
+import stroom.widget.button.client.Button;
 import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.Scheduler;
@@ -29,7 +30,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -80,10 +80,11 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         widget = binder.createAndBindUi(this);
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
+        create.setIcon(SvgImage.ADD);
 
-        statusIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
-        assignedToIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
-        commentIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
+        statusIcon.setSvg(SvgImage.ARROW_DOWN);
+        assignedToIcon.setSvg(SvgImage.ARROW_DOWN);
+        commentIcon.setSvg(SvgImage.ARROW_DOWN);
 
         setTitle(null);
         setSubject(null);

@@ -24,7 +24,7 @@ import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -62,7 +62,7 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                 new IconMenuItem.Builder()
                         .priority(150)
-                        .icon(SvgPresets.DEPENDENCIES)
+                        .icon(SvgImage.DEPENDENCIES)
                         .text("Dependencies")
                         .command(this::open)
                         .build());

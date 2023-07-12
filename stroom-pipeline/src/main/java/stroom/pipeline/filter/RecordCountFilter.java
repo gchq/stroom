@@ -18,12 +18,12 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.Incrementor;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.RecordCountService;
+import stroom.svg.shared.SvgImage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +37,13 @@ import javax.inject.Inject;
  * instance. The first level elements are assumed to be records in the context
  * of event processing.
  */
-@ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_COUNT)
+@ConfigurableElement(
+        type = "RecordCountFilter",
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS},
+        icon = SvgImage.PIPELINE_RECORD_COUNT)
 public class RecordCountFilter extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);

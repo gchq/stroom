@@ -22,13 +22,13 @@ import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
 import stroom.docref.DocRef;
 import stroom.docref.HasType;
+import stroom.docstore.shared.DocumentTypeImages;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;
-import stroom.explorer.shared.DocumentType;
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.button.client.ButtonPanel;
@@ -53,6 +53,8 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     private PresenterWidget<?> currentContent;
     private DocRef docRef;
 
+    private final TabContentProvider<D> tabContentProvider;
+
     public DocumentEditTabPresenter(final EventBus eventBus,
                                     final V view) {
         super(eventBus, view);
@@ -68,7 +70,27 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(saveAsButton.addClickHandler(event -> saveAs()));
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+
+        tabContentProvider = new TabContentProvider<>(eventBus);
     }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        tabContentProvider.bind();
+        registerHandler(tabContentProvider.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        }));
+    }
+
+    @Override
+    protected void onUnbind() {
+        super.onUnbind();
+        tabContentProvider.unbind();
+    }
+
 
     @Override
     public void save() {
@@ -83,11 +105,14 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         }
     }
 
-    public void addTab(final TabData tab) {
+    public void addTab(final TabData tab, final TabProvider<D> provider) {
+        tabContentProvider.add(tab, provider);
         getView().getTabBar().addTab(tab);
     }
 
-    protected abstract void getContent(TabData tab, ContentCallback callback);
+    private void getContent(TabData tab, ContentCallback callback) {
+        callback.onReady(tabContentProvider.getPresenter(tab));
+    }
 
     public void selectTab(final TabData tab) {
         TaskStartEvent.fire(DocumentEditTabPresenter.this);
@@ -144,13 +169,25 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D entity, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         this.docRef = docRef;
         saveButton.setEnabled(isDirty());
         saveAsButton.setEnabled(true);
         if (readOnly) {
             saveButton.setTitle("Save is not available as this document is read only");
         }
+        tabContentProvider.read(docRef, document, readOnly);
+    }
+
+    @Override
+    protected D onWrite(final D document) {
+        return tabContentProvider.write(document);
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        tabContentProvider.onClose();
     }
 
     @Override
@@ -168,8 +205,8 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    public Icon getIcon() {
-        return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getType(), null, true);
+    public SvgImage getIcon() {
+        return DocumentTypeImages.get(getType());
     }
 
     @Override

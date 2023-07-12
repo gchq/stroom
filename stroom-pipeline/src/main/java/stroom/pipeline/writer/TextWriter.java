@@ -20,9 +20,9 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.svg.shared.SvgImage;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.xml.sax.SAXException;
@@ -45,7 +45,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_WRITER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.TEXT)
+        icon = SvgImage.PIPELINE_TEXT)
 public class TextWriter extends AbstractWriter {
 
     private byte[] header;

@@ -20,6 +20,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
@@ -51,6 +52,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class FeedDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Feed";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_FEED;
 
     @JsonProperty
     private String description;

@@ -28,8 +28,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
@@ -156,8 +155,8 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.HISTORY;
+    public SvgImage getIcon() {
+        return SvgImage.HISTORY;
     }
 
     @Override
