@@ -32,6 +32,7 @@ import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
@@ -56,6 +57,7 @@ import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.TextViewImpl;
+import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -94,6 +96,8 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
         bind(UrlParameters.class).in(Singleton.class);
+        bind(DelegatingAceCompleter.class).asEagerSingleton();
+        bind(DataDisplaySupport.class).asEagerSingleton();
 
         // Presenters
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
@@ -106,6 +110,7 @@ public class DashboardAppModule extends AbstractPresenterModule {
 
         bindSharedView(DropDownPresenter.DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
+
 
         bindPresenterWidget(
                 EntityTreePresenter.class,
