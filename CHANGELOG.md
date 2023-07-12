@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#3595** : Fix `data()` links when the dashboard is directly linked. Only works for `displayType` of `dialog`, not `tab` as there are no tabs in a direct linked dashboard.
+
+* Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
+
+* Issue **#3588** : Fix query parameters not being de-referenced in audit logs for dashboard search and download results. Fix double logging of download results.
+
 * Issue **#3504** : Fix XML schema cache deadlock.
 
 * Fix failing build.
