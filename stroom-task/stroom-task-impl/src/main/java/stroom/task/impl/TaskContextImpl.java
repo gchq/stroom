@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public class TaskContextImpl implements TaskContext {
@@ -41,7 +40,6 @@ public class TaskContextImpl implements TaskContext {
     private final String name;
     private final UserIdentity userIdentity;
     private final boolean useAsRead;
-    private final AtomicBoolean stop;
     private final Set<TaskContextImpl> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private volatile boolean terminate;
@@ -53,8 +51,7 @@ public class TaskContextImpl implements TaskContext {
     public TaskContextImpl(final TaskId taskId,
                            final String name,
                            final UserIdentity userIdentity,
-                           final boolean useAsRead,
-                           final AtomicBoolean stop) {
+                           final boolean useAsRead) {
         Objects.requireNonNull(taskId, "Task has null id");
         Objects.requireNonNull(name, "Task has null name");
         Objects.requireNonNull(userIdentity, "Task has null user identity: " + name);
@@ -63,7 +60,6 @@ public class TaskContextImpl implements TaskContext {
         this.userIdentity = userIdentity;
         this.useAsRead = useAsRead;
         this.name = name;
-        this.stop = stop;
 
         reset();
     }
@@ -123,7 +119,7 @@ public class TaskContextImpl implements TaskContext {
     @Override
     public void checkTermination() throws TaskTerminatedException {
         if (isTerminated()) {
-            throw new TaskTerminatedException(stop.get());
+            throw new TaskTerminatedException();
         }
     }
 

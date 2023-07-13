@@ -6,3 +6,8 @@
   width: var(--icon-width);
   height: var(--icon-height);
 }
+
+.svgIcon.small svg  {
+  width: calc(var(--icon-width) * 0.7);
+  height: calc(var(--icon-height) * 0.7);
+}
