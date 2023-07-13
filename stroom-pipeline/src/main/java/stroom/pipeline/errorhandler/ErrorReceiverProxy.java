@@ -55,7 +55,7 @@ public class ErrorReceiverProxy implements ErrorReceiver {
                         + (e != null && !Objects.equals(e.getMessage(), message)
                         ? " - " + e.getMessage()
                         : "")
-                + " (Enable TRACE for full stack traces)");
+                        + " (Enable TRACE for full stack traces)");
             }
         }
         errorReceiver.log(severity, location, elementId, message, e);
