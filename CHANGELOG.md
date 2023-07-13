@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3595** : Fix `data()` links when the dashboard is directly linked. Only works for `displayType` of `dialog`, not `tab` as there are no tabs in a direct linked dashboard.
+
+* Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
+
+
 ## [v7.2-beta.41] - 2023-07-10
 
 * Fix styling for log pane toggle button in the stepper screen.
