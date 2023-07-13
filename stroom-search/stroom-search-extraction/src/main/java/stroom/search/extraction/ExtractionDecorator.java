@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import javax.inject.Provider;
@@ -161,33 +162,38 @@ public class ExtractionDecorator {
                         while (!done) {
                             // Poll for the next set of values.
                             // When we get null we are done.
-                            final Val[] values = storedDataQueue.take();
-                            if (values != null) {
-                                if (!taskContext.isTerminated()) {
-                                    try {
-                                        info(taskContext, () ->
-                                                "Creating extraction tasks - stored data queue size: " +
-                                                        storedDataQueue.size() +
-                                                        " stream event map size: " +
-                                                        streamEventMap.size());
-
-                                        // If we have some values then map them.
-                                        SearchProgressLog.increment(queryKey,
-                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
-                                        final Event event = eventFactory.create(values);
-                                        SearchProgressLog.increment(
-                                                queryKey,
-                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
-                                        streamEventMap.put(event);
-
-                                    } catch (final RuntimeException e) {
-                                        LOGGER.debug(e::getMessage, e);
-                                        receivers.values().forEach(receiver ->
-                                                errorConsumer.add(e));
-                                    }
+                            Val[] values = storedDataQueue.take();
+                            if (taskContext.isTerminated()) {
+                                // We are terminating so take from the queue until we get null so the process adding to
+                                // the queue has a chance to complete.
+                                while (values != null) {
+                                    values = storedDataQueue.take();
                                 }
-                            } else {
                                 done = true;
+                            } else if (values == null) {
+                                done = true;
+                            } else {
+                                try {
+                                    info(taskContext, () ->
+                                            "Creating extraction tasks - stored data queue size: " +
+                                                    storedDataQueue.size() +
+                                                    " stream event map size: " +
+                                                    streamEventMap.size());
+
+                                    // If we have some values then map them.
+                                    SearchProgressLog.increment(queryKey,
+                                            SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
+                                    final Event event = eventFactory.create(values);
+                                    SearchProgressLog.increment(
+                                            queryKey,
+                                            SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
+                                    streamEventMap.put(event);
+
+                                } catch (final RuntimeException e) {
+                                    LOGGER.debug(e::getMessage, e);
+                                    receivers.values().forEach(receiver ->
+                                            errorConsumer.add(e));
+                                }
                             }
                         }
                     } catch (final RuntimeException e) {
@@ -250,38 +256,43 @@ public class ExtractionDecorator {
                              final LongAdder extractionCount,
                              final ErrorConsumer errorConsumer) {
         try {
-            while (!parentContext.isTerminated()) {
-                taskContextFactory.childContext(
-                        parentContext,
-                        "Extraction Task",
-                        taskContext -> {
-                            final EventSet eventSet = streamEventMap.take();
-                            if (eventSet != null) {
-                                SearchProgressLog.add(queryKey,
-                                        SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                                        eventSet.size());
+            final AtomicBoolean done = new AtomicBoolean(false);
+            while (!done.get()) {
+                if (parentContext.isTerminated()) {
+                    // If we are terminating then just take until we get a complete exception.
+                    streamEventMap.take();
+                } else {
+                    taskContextFactory.childContext(
+                            parentContext,
+                            "Extraction Task",
+                            taskContext -> {
+                                try {
+                                    final EventSet eventSet = streamEventMap.take();
+                                    if (eventSet != null) {
+                                        SearchProgressLog.add(queryKey,
+                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                                                eventSet.size());
 
-                                securityContext.useAsRead(() ->
-                                        extractEvents(taskContext,
-                                                eventSet.getStreamId(),
-                                                eventSet.getEvents(),
-                                                extractionCount,
-                                                errorConsumer));
-                            }
-                        }).run();
-                LOGGER.debug("Completed extraction thread");
+                                        securityContext.useAsRead(() ->
+                                                extractEvents(taskContext,
+                                                        eventSet.getStreamId(),
+                                                        eventSet.getEvents(),
+                                                        extractionCount,
+                                                        errorConsumer));
+                                    }
+                                } catch (final CompleteException e) {
+                                    done.set(true);
+                                    LOGGER.debug(() -> "Complete");
+                                    LOGGER.trace(e::getMessage, e);
+                                }
+                            }).run();
+                }
             }
-
-            if (parentContext.isTerminated()) {
-                streamEventMap.terminate();
-            } else {
-                streamEventMap.complete();
-            }
-
         } catch (final CompleteException e) {
             LOGGER.debug(() -> "Complete");
             LOGGER.trace(e::getMessage, e);
         }
+        LOGGER.debug("Completed extraction thread");
     }
 
     private void extractEvents(final TaskContext taskContext,

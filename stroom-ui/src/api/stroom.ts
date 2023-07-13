@@ -681,7 +681,6 @@ export interface DashboardConfig {
   modelVersion?: string;
   parameters?: string;
   preferredSize?: Size;
-  tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
   timeRange?: TimeRange;
 }
 
@@ -962,6 +961,7 @@ export interface DocumentType {
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "BACKWARD"
+    | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
     | "CLIPBOARD"
@@ -1017,6 +1017,7 @@ export interface DocumentType {
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
+    | "FATAL_DARK"
     | "FAVOURITES"
     | "FAVOURITES_OUTLINE"
     | "FEED"
@@ -1053,11 +1054,13 @@ export interface DocumentType {
     | "MONITORING"
     | "MOVE"
     | "NODES"
+    | "OK"
     | "OO"
     | "OPEN"
     | "OPERATOR"
     | "PASSWORD"
     | "PAUSE"
+    | "PEN"
     | "PIPELINE_ELASTIC_INDEX"
     | "PIPELINE_FILE"
     | "PIPELINE_FILES"
@@ -1124,7 +1127,7 @@ export interface DocumentType {
 }
 
 export interface DocumentTypes {
-  nonSystemTypes?: DocumentType[];
+  types?: DocumentType[];
   visibleTypes?: DocumentType[];
 }
 
@@ -1299,6 +1302,7 @@ export interface ExplorerDocContentMatch {
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "BACKWARD"
+    | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
     | "CLIPBOARD"
@@ -1354,6 +1358,7 @@ export interface ExplorerDocContentMatch {
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
+    | "FATAL_DARK"
     | "FAVOURITES"
     | "FAVOURITES_OUTLINE"
     | "FEED"
@@ -1390,11 +1395,13 @@ export interface ExplorerDocContentMatch {
     | "MONITORING"
     | "MOVE"
     | "NODES"
+    | "OK"
     | "OO"
     | "OPEN"
     | "OPERATOR"
     | "PASSWORD"
     | "PAUSE"
+    | "PEN"
     | "PIPELINE_ELASTIC_INDEX"
     | "PIPELINE_FILE"
     | "PIPELINE_FILES"
@@ -1475,6 +1482,7 @@ export interface ExplorerNode {
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "BACKWARD"
+    | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
     | "CLIPBOARD"
@@ -1530,6 +1538,7 @@ export interface ExplorerNode {
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
+    | "FATAL_DARK"
     | "FAVOURITES"
     | "FAVOURITES_OUTLINE"
     | "FEED"
@@ -1566,11 +1575,13 @@ export interface ExplorerNode {
     | "MONITORING"
     | "MOVE"
     | "NODES"
+    | "OK"
     | "OO"
     | "OPEN"
     | "OPERATOR"
     | "PASSWORD"
     | "PAUSE"
+    | "PEN"
     | "PIPELINE_ELASTIC_INDEX"
     | "PIPELINE_FILE"
     | "PIPELINE_FILES"
@@ -2800,6 +2811,7 @@ export interface PipelineElementType {
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "BACKWARD"
+    | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
     | "CLIPBOARD"
@@ -2855,6 +2867,7 @@ export interface PipelineElementType {
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
+    | "FATAL_DARK"
     | "FAVOURITES"
     | "FAVOURITES_OUTLINE"
     | "FEED"
@@ -2891,11 +2904,13 @@ export interface PipelineElementType {
     | "MONITORING"
     | "MOVE"
     | "NODES"
+    | "OK"
     | "OO"
     | "OPEN"
     | "OPERATOR"
     | "PASSWORD"
     | "PAUSE"
+    | "PEN"
     | "PIPELINE_ELASTIC_INDEX"
     | "PIPELINE_FILE"
     | "PIPELINE_FILES"

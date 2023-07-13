@@ -15,7 +15,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,7 +32,6 @@ class TaskContextFactoryImpl implements TaskContextFactory {
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final TaskRegistry taskRegistry;
-    private final AtomicBoolean stop = new AtomicBoolean();
 
     @Inject
     TaskContextFactoryImpl(final SecurityContext securityContext,
@@ -215,7 +213,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
                                  final Function<TaskContext, R> function) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final TaskId taskId = TaskIdFactory.create(parentTaskId);
-        final TaskContextImpl subTaskContext = new TaskContextImpl(taskId, taskName, userIdentity, useAsRead, stop);
+        final TaskContextImpl subTaskContext = new TaskContextImpl(taskId, taskName, userIdentity, useAsRead);
 
         return () -> {
             R result;
@@ -223,10 +221,6 @@ class TaskContextFactoryImpl implements TaskContextFactory {
             // Make sure this thread is not interrupted.
             if (Thread.interrupted()) {
                 LOGGER.warn("This thread was previously interrupted");
-            }
-            // Do not execute the task if we are no longer supposed to be running.
-            if (stop.get()) {
-                throw new TaskTerminatedException(true);
             }
             if (taskName == null) {
                 throw new IllegalStateException("All tasks must have a name");
@@ -337,10 +331,6 @@ class TaskContextFactoryImpl implements TaskContextFactory {
             return Optional.empty();
         }
         return Optional.ofNullable(taskRegistry.get(taskId));
-    }
-
-    void setStop(final boolean stop) {
-        this.stop.set(stop);
     }
 
     @Override
