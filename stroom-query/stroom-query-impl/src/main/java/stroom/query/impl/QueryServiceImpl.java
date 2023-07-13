@@ -357,6 +357,7 @@ class QueryServiceImpl implements QueryService {
         if (query != null) {
             try {
                 final SearchRequest mappedRequest = mapRequest(searchRequest);
+                LOGGER.debug("searchRequest:\n{}\nmappedRequest:\n{}", searchRequest, mappedRequest);
 
                 // Perform the search or update results.
                 final SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);

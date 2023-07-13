@@ -13,6 +13,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3566** : Fix issue of query help text not updating correctly for some functions.
+
+* Issue **#3592** : Improve handling of errors during initialisation of the ref data stores.
+
+* Issue **#3572** : Add missing functions to query help menu.
+
+* Issue **#3580** : Change default values for `archivedFileCount` to 10080 for minute rolled logs (one week) to ensure log messages are not lost if stroom is idle for long periods.
+
+* Issue **#3598** : Fix stuck search extraction on shutdown.
+
 * Issue **#3595** : Fix `data()` links when the dashboard is directly linked. Only works for `displayType` of `dialog`, not `tab` as there are no tabs in a direct linked dashboard.
 
 * Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
