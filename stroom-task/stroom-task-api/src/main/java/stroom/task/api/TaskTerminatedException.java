@@ -20,30 +20,12 @@ import stroom.util.shared.EntityServiceException;
 
 public class TaskTerminatedException extends EntityServiceException {
 
-    private final boolean stop;
-
     /**
      * Stop is true if the task manager is shutting down and no more tasks
      * should be submitted. This is useful in situations where tasks are queued
      * for execution and we want to know not to submit further tasks,
      */
-    public TaskTerminatedException(final boolean stop) {
-        super("Task terminated");
-        this.stop = stop;
-    }
-
     public TaskTerminatedException() {
-        this(false);
-    }
-
-    /**
-     * Stop is true if the task manager is shutting down and no more tasks
-     * should be submitted. This is useful in situations where tasks are queued
-     * for execution and we want to know not to submit further tasks,
-     *
-     * @return True if the task manager is shutting down.
-     */
-    public boolean isStop() {
-        return stop;
+        super("Task terminated");
     }
 }

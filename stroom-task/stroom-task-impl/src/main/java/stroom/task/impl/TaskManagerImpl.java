@@ -91,7 +91,6 @@ class TaskManagerImpl implements TaskManager {
     @Override
     public synchronized void startup() {
         LOGGER.info("startup()");
-        taskContextFactory.setStop(false);
         executorProvider.setStop(false);
     }
 
@@ -102,7 +101,6 @@ class TaskManagerImpl implements TaskManager {
     @Override
     public synchronized void shutdown() {
         LOGGER.info("shutdown()");
-        taskContextFactory.setStop(true);
         executorProvider.setStop(true);
 
         try {
@@ -138,7 +136,6 @@ class TaskManagerImpl implements TaskManager {
         }
 
         executorProvider.setStop(false);
-        taskContextFactory.setStop(false);
         LOGGER.info("shutdown() - Complete");
     }
 
