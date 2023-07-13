@@ -246,7 +246,7 @@ td {
 }
 
 .stepping-button-icon {
-    background-image: url("../images/stepping.svg");
+    background-image: url("../background-images/stepping.svg");
     width: 46px;
     height: 46px;
     margin-left: 2px;
@@ -675,7 +675,7 @@ select option:disabled {
     -webkit-appearance: none;
 
     background-color: var(--control__background-color);
-    background-image: url("../images/drop-down.svg");
+    background-image: url("../background-images/drop-down.svg");
     background-position: center right;
     background-repeat: no-repeat;
     background-size: 12px;
@@ -685,7 +685,7 @@ select option:disabled {
 
 .stroom-theme-dark .gwt-ListBox,
 .stroom-theme-dark2 .gwt-ListBox {
-	background-image: url("../images/drop-down-dark.svg");
+	background-image: url("../background-images/drop-down-dark.svg");
 }
 
 .gwt-TextArea {
