@@ -19,7 +19,9 @@ public class MockDocRefInfoModule extends AbstractModule {
 
             @Override
             public Optional<DocRefInfo> info(final DocRef docRef) {
-                return Optional.empty();
+                return Optional.of(DocRefInfo.builder()
+                        .docRef(docRef)
+                        .build());
             }
 
             @Override
@@ -46,12 +48,12 @@ public class MockDocRefInfoModule extends AbstractModule {
 
             @Override
             public DocRef decorate(final DocRef docRef, final boolean force) {
-                throw new UnsupportedOperationException();
+                return docRef;
             }
 
             @Override
             public List<DocRef> decorate(final List<DocRef> docRefs) {
-                throw new UnsupportedOperationException();
+                return docRefs;
             }
         };
     }

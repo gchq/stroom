@@ -20,6 +20,7 @@ import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.explorer.impl.DocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
@@ -65,6 +66,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.entity.cluster.EntityClusterModule());
 //        install(new EntityClusterTaskModule());
         install(new MockExplorerModule());
+        install(new DocRefInfoModule());
         install(new FeedModule());
         install(new PipelineScopeModule());
         install(new ImportExportModule());

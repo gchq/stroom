@@ -23,6 +23,8 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 @PipelineScoped
 public class ErrorReceiverProxy implements ErrorReceiver {
 
@@ -43,10 +45,19 @@ public class ErrorReceiverProxy implements ErrorReceiver {
                     final String elementId,
                     final String message,
                     final Throwable e) {
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(message, e);
-        }
 
+        // TRACE for full stack traces, DEBUG for message only
+        if (LOGGER.isDebugEnabled()) {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(message, e);
+            } else {
+                LOGGER.debug(message
+                        + (e != null && !Objects.equals(e.getMessage(), message)
+                        ? " - " + e.getMessage()
+                        : "")
+                + " (Enable TRACE for full stack traces)");
+            }
+        }
         errorReceiver.log(severity, location, elementId, message, e);
     }
 
