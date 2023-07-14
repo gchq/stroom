@@ -40,13 +40,17 @@ public final class Param {
     @Schema(description = "The property key",
             required = true)
     @JsonProperty
-    private final String key;
+    private String key;
 
     @XmlElement
     @Schema(description = "The property value",
             required = true)
     @JsonProperty
-    private final String value;
+    private String value;
+
+    // For XML de-ser, GWT doesn't support @XmlJavaTypeAdapter sadly
+    public Param() {
+    }
 
     @JsonCreator
     public Param(@JsonProperty("key") final String key,
@@ -59,8 +63,16 @@ public final class Param {
         return key;
     }
 
+    public void setKey(final String key) {
+        this.key = key;
+    }
+
     public String getValue() {
         return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 
     @Override
@@ -96,6 +108,10 @@ public final class Param {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link Param}

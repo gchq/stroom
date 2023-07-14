@@ -6,12 +6,14 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Param;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.UUID;
 import javax.xml.bind.JAXBException;
 
@@ -27,6 +29,7 @@ class TestProcessorFilterMarshaller {
                 .type("Index")
                 .name("Some idx")
                 .build());
+        queryData.setParams(List.of(new Param("key1", "val1")));
         queryData.setExpression(
                 ExpressionOperator.builder()
                         .addTerm(ExpressionTerm.builder()
@@ -37,7 +40,6 @@ class TestProcessorFilterMarshaller {
                         .build()
 
         );
-        queryData.setParams(null);
 
         final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker
@@ -55,5 +57,14 @@ class TestProcessorFilterMarshaller {
         Assertions.assertThat(marshalled.getData())
                 .isNotBlank();
         LOGGER.debug("marshalled:\n{}", marshalled.getData());
+
+        // Now un-marshall
+
+        final ProcessorFilter processorFilter2 = new ProcessorFilter();
+        processorFilter2.setData(marshalled.getData());
+        processorFilterMarshaller.unmarshal(processorFilter2);
+
+        Assertions.assertThat(processorFilter2)
+                .isEqualTo(processorFilter);
     }
 }

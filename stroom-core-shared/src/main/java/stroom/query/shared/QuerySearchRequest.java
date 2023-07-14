@@ -189,6 +189,9 @@ public class QuerySearchRequest {
         return new Builder(this);
     }
 
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private SearchRequestSource searchRequestSource;
