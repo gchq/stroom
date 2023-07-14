@@ -205,7 +205,7 @@ public class SearchRequestBuilder {
                 value.append(",");
             } else {
                 value.append(" ");
-                value.append(token.getText());
+                value.append(token.getUnescapedText());
             }
         }
 

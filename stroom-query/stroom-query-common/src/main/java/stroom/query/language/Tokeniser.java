@@ -15,6 +15,10 @@ public class Tokeniser {
 
     private static final Map<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<>();
 
+    private static final char DOUBLE_QUOTE_CHAR = '\"';
+    private static final char SINGLE_QUOTE_CHAR = '\'';
+    private static final char ESCAPE_CHAR = '\\';
+
     private List<Token> tokens;
 
     private Tokeniser(final String string) {
@@ -31,13 +35,10 @@ public class Tokeniser {
         split("/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/", 0, TokenType.BLOCK_COMMENT);
 
         // Tag quoted strings.
-        extractQuotedTokens(TokenType.DOUBLE_QUOTED_STRING, '\"', '\\');
-        extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
+        extractQuotedTokens();
 
         // Tag keywords.
-        TokenType.KEYWORDS.forEach(token -> {
-            tagKeyword(token.toString().toLowerCase(Locale.ROOT), token);
-        });
+        TokenType.KEYWORDS.forEach(token -> tagKeyword(token.toString().toLowerCase(Locale.ROOT), token));
         // Treat other conjunctions as keywords.
         tagKeyword("by", TokenType.BY);
         tagKeyword("as", TokenType.AS);
@@ -151,9 +152,7 @@ public class Tokeniser {
         this.tokens = out;
     }
 
-    private void extractQuotedTokens(final TokenType outputType,
-                                     final char quoteChar,
-                                     final char escapeChar) {
+    private void extractQuotedTokens() {
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {
@@ -161,15 +160,17 @@ public class Tokeniser {
                 int lastPos = token.getStart();
                 boolean inQuote = false;
                 boolean escape = false;
+                TokenType outputType = null;
                 for (int i = token.getStart(); i <= token.getEnd(); i++) {
                     final char c = token.getChars()[i];
                     if (inQuote) {
                         if (escape) {
                             escape = false;
                         } else {
-                            if (c == escapeChar) {
+                            if (c == ESCAPE_CHAR) {
                                 escape = true;
-                            } else if (c == quoteChar) {
+                            } else if ((c == DOUBLE_QUOTE_CHAR && outputType == TokenType.DOUBLE_QUOTED_STRING)
+                                    || (c == SINGLE_QUOTE_CHAR && outputType == TokenType.SINGLE_QUOTED_STRING)) {
                                 inQuote = false;
                                 if (lastPos < i) {
                                     final QuotedStringToken quotedStringToken = new Builder()
@@ -183,7 +184,10 @@ public class Tokeniser {
                                 lastPos = i + 1;
                             }
                         }
-                    } else if (c == quoteChar) {
+                    } else if (c == DOUBLE_QUOTE_CHAR || c == SINGLE_QUOTE_CHAR) {
+                        outputType = c == DOUBLE_QUOTE_CHAR
+                                ? TokenType.DOUBLE_QUOTED_STRING
+                                : TokenType.SINGLE_QUOTED_STRING;
                         inQuote = true;
                         if (lastPos < i) {
                             out.add(new Token(TokenType.UNKNOWN, token.getChars(), lastPos, i - 1));
