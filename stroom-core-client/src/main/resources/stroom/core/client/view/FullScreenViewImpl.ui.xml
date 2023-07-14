@@ -2,10 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <!-- Add a focus panel as the root so we can catch all keyboard events. -->
-    <g:FocusPanel styleName="dashboardMainViewImpl-root">
-        <g:FlowPanel styleName="dashboardMainViewImpl-root">
+    <g:FocusPanel styleName="fullScreenViewImpl-root">
+        <g:FlowPanel styleName="fullScreenViewImpl-root">
             <g:ResizeLayoutPanel ui:field="contentPanel"
-                                 styleName="dashboardMainViewImpl-contentPanel">
+                                 styleName="fullScreenViewImpl-contentPanel">
             </g:ResizeLayoutPanel>
         </g:FlowPanel>
     </g:FocusPanel>

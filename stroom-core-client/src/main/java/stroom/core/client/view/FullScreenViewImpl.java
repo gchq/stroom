@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.core.client.view;
 
-import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class DashboardMainViewImpl extends ViewImpl implements DashboardMainView {
+public class FullScreenViewImpl extends ViewImpl implements FullScreenView {
 
     private final Widget widget;
 
@@ -34,7 +34,7 @@ public class DashboardMainViewImpl extends ViewImpl implements DashboardMainView
     ResizeLayoutPanel contentPanel;
 
     @Inject
-    public DashboardMainViewImpl(final Binder binder) {
+    public FullScreenViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         widget.sinkEvents(Event.KEYEVENTS);
     }
@@ -49,7 +49,7 @@ public class DashboardMainViewImpl extends ViewImpl implements DashboardMainView
         contentPanel.setWidget(content);
     }
 
-    public interface Binder extends UiBinder<Widget, DashboardMainViewImpl> {
+    public interface Binder extends UiBinder<Widget, FullScreenViewImpl> {
 
     }
 }

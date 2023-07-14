@@ -28,17 +28,27 @@ public class OpenDocumentEvent extends GwtEvent<OpenDocumentEvent.Handler> {
     private static Type<Handler> TYPE;
     private final DocRef docRef;
     private final boolean forceOpen;
+    private final boolean fullScreen;
 
     private OpenDocumentEvent(final DocRef docRef,
-                              final boolean forceOpen) {
+                              final boolean forceOpen,
+                              final boolean fullScreen) {
         this.docRef = docRef;
         this.forceOpen = forceOpen;
+        this.fullScreen = fullScreen;
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false));
+    }
+
+    public static void fire(final HasHandlers handlers,
+                            final DocRef docRef,
+                            final boolean forceOpen,
+                            final boolean fullScreen) {
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen));
     }
 
     public static Type<Handler> getType() {
@@ -62,8 +72,12 @@ public class OpenDocumentEvent extends GwtEvent<OpenDocumentEvent.Handler> {
         return docRef;
     }
 
-    public boolean getForceOpen() {
+    public boolean isForceOpen() {
         return forceOpen;
+    }
+
+    public boolean isFullScreen() {
+        return fullScreen;
     }
 
     public interface Handler extends EventHandler {

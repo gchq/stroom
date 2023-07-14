@@ -76,7 +76,7 @@
 	background-color: var(--control__background-color);
 }
 
-.dashboardMainViewImpl-root {
+.fullScreenViewImpl-root {
     position: absolute;
     left: 0;
     top: 0;
@@ -85,12 +85,12 @@
     overflow: hidden;
 }
 
-.dashboardMainViewImpl-contentPanel {
+.fullScreenViewImpl-contentPanel {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
-    background-color: rgb(223, 234, 248);
+    /*background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
+    background-color: rgb(223, 234, 248);*/
 }
 
 .dashboard-outerPanel {

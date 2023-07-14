@@ -77,11 +77,11 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     }
 
     @Override
-    public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen) {
+    public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen);
+        return super.open(docRef, forceOpen, fullScreen);
     }
 
     private void openParameterisedDashboard(final String href) {
@@ -121,7 +121,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showTab(docRef, presenter, closeHandler, presenter);
+            showDocument(docRef, presenter, closeHandler, presenter, false);
         }
     }
 
@@ -175,7 +175,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showTab(docRef, presenter, closeHandler, presenter);
+            showDocument(docRef, presenter, closeHandler, presenter, false);
         }
     }
 
