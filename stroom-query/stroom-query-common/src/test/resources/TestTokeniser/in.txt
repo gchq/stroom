@@ -18,6 +18,20 @@ before 'test of inner \' strings '
 -----
 before 'test of inner \' strings '
 -----
+test end comment //
+-----
+test end comment /*
+-----
+test end comment /**/
+-----
+test ' comments // in strings \' strings '
+-----
+test ' comments /* in */ strings \' strings '
+-----
+test ' comments /* in strings \' strings '
+-----
+test ' comments in */ strings \' strings '
+-----
 where this = that
 and foo = 'test of inner \' strings '
 select

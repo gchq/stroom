@@ -38,6 +38,34 @@ before 'test of inner \' strings '
 =====
 <STRING>before</STRING><WHITESPACE> </WHITESPACE><SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
 -----
+test end comment //
+=====
+<STRING>test</STRING><WHITESPACE> </WHITESPACE><STRING>end</STRING><WHITESPACE> </WHITESPACE><STRING>comment</STRING><WHITESPACE> </WHITESPACE><COMMENT>//</COMMENT>
+-----
+test end comment /*
+=====
+<STRING>test</STRING><WHITESPACE> </WHITESPACE><STRING>end</STRING><WHITESPACE> </WHITESPACE><STRING>comment</STRING><WHITESPACE> </WHITESPACE><BLOCK_COMMENT>/*</BLOCK_COMMENT>
+-----
+test end comment /**/
+=====
+<STRING>test</STRING><WHITESPACE> </WHITESPACE><STRING>end</STRING><WHITESPACE> </WHITESPACE><STRING>comment</STRING><WHITESPACE> </WHITESPACE><BLOCK_COMMENT>/**/</BLOCK_COMMENT>
+-----
+test ' comments // in strings \' strings '
+=====
+<STRING>test</STRING><WHITESPACE> </WHITESPACE><SINGLE_QUOTED_STRING>' comments // in strings \' strings '</SINGLE_QUOTED_STRING>
+-----
+test ' comments /* in */ strings \' strings '
+=====
+<STRING>test</STRING><WHITESPACE> </WHITESPACE><SINGLE_QUOTED_STRING>' comments /* in */ strings \' strings '</SINGLE_QUOTED_STRING>
+-----
+test ' comments /* in strings \' strings '
+=====
+<STRING>test</STRING><WHITESPACE> </WHITESPACE><SINGLE_QUOTED_STRING>' comments /* in strings \' strings '</SINGLE_QUOTED_STRING>
+-----
+test ' comments in */ strings \' strings '
+=====
+<STRING>test</STRING><WHITESPACE> </WHITESPACE><SINGLE_QUOTED_STRING>' comments in */ strings \' strings '</SINGLE_QUOTED_STRING>
+-----
 where this = that
 and foo = 'test of inner \' strings '
 select

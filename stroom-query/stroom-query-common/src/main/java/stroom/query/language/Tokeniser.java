@@ -18,6 +18,9 @@ public class Tokeniser {
     private static final char DOUBLE_QUOTE_CHAR = '\"';
     private static final char SINGLE_QUOTE_CHAR = '\'';
     private static final char ESCAPE_CHAR = '\\';
+    private static final char[] COMMENT = new char[]{'/', '/'};
+    private static final char[] BLOCK_COMMENT_START = new char[]{'/', '*'};
+    private static final char[] BLOCK_COMMENT_END = new char[]{'*', '/'};
 
     private List<Token> tokens;
 
@@ -30,11 +33,7 @@ public class Tokeniser {
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);
         tokens = Collections.singletonList(unknown);
 
-        // Tag Comments
-        split("//.*", 0, TokenType.COMMENT);
-        split("/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/", 0, TokenType.BLOCK_COMMENT);
-
-        // Tag quoted strings.
+        // Tag quoted strings and comments.
         extractQuotedTokens();
 
         // Tag keywords.
@@ -160,6 +159,8 @@ public class Tokeniser {
                 int lastPos = token.getStart();
                 boolean inQuote = false;
                 boolean escape = false;
+                boolean inComment = false;
+                boolean inBlockComment = false;
                 TokenType outputType = null;
                 for (int i = token.getStart(); i <= token.getEnd(); i++) {
                     final char c = token.getChars()[i];
@@ -184,6 +185,24 @@ public class Tokeniser {
                                 lastPos = i + 1;
                             }
                         }
+                    } else if (inComment) {
+                        if (c == '\n') {
+                            inComment = false;
+                            out.add(new Token(TokenType.COMMENT, token.getChars(), lastPos, i - 1));
+                            lastPos = i;
+                        }
+                    } else if (inBlockComment) {
+                        if (escape) {
+                            escape = false;
+                        } else {
+                            if (c == ESCAPE_CHAR) {
+                                escape = true;
+                            } else if (testChars(token, BLOCK_COMMENT_END, i)) {
+                                inBlockComment = false;
+                                out.add(new Token(TokenType.BLOCK_COMMENT, token.getChars(), lastPos, i + 1));
+                                lastPos = i + 2;
+                            }
+                        }
                     } else if (c == DOUBLE_QUOTE_CHAR || c == SINGLE_QUOTE_CHAR) {
                         outputType = c == DOUBLE_QUOTE_CHAR
                                 ? TokenType.DOUBLE_QUOTED_STRING
@@ -193,16 +212,51 @@ public class Tokeniser {
                             out.add(new Token(TokenType.UNKNOWN, token.getChars(), lastPos, i - 1));
                         }
                         lastPos = i;
+
+                    } else if (testChars(token, COMMENT, i)) {
+                        // Comment.
+                        inComment = true;
+                        if (lastPos < i) {
+                            out.add(new Token(TokenType.UNKNOWN, token.getChars(), lastPos, i - 1));
+                        }
+                        lastPos = i;
+                    } else if (testChars(token, BLOCK_COMMENT_START, i)) {
+                        // Block comment.
+                        inBlockComment = true;
+                        if (lastPos < i) {
+                            out.add(new Token(TokenType.UNKNOWN, token.getChars(), lastPos, i - 1));
+                        }
+                        lastPos = i;
                     }
                 }
 
                 if (lastPos <= token.getEnd()) {
-                    out.add(new Token(TokenType.UNKNOWN, token.getChars(), lastPos, token.getEnd()));
+                    TokenType tokenType = TokenType.UNKNOWN;
+                    if (inComment) {
+                        tokenType = TokenType.COMMENT;
+                    } else if (inBlockComment) {
+                        tokenType = TokenType.BLOCK_COMMENT;
+                    }
+                    out.add(new Token(tokenType, token.getChars(), lastPos, token.getEnd()));
                 }
             } else {
                 out.add(token);
             }
         }
         this.tokens = out;
+    }
+
+    private boolean testChars(Token token, char[] test, int pos) {
+        if (pos + test.length - 1 > token.getEnd()) {
+            return false;
+        }
+        for (int i = 0; i < test.length; i++) {
+            final char c1 = token.getChars()[pos + i];
+            final char c2 = test[i];
+            if (c1 != c2) {
+                return false;
+            }
+        }
+        return true;
     }
 }
