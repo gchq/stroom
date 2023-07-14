@@ -57,5 +57,15 @@ public interface DocRefInfoService {
      * @param docRef A {@link DocRef} with at least the UUID and type set.
      * @return A fully populated {@link DocRef}.
      */
-    DocRef decorate(final DocRef docRef);
+    default DocRef decorate(final DocRef docRef) {
+        return decorate(docRef, false);
+    }
+
+    /**
+     * Decorate the passed {@link DocRef} with its name if the name is not present.
+     * @param docRef A {@link DocRef} with at least the UUID and type set.
+     * @param force Decorate the name even if a name is present. This is to allow for docrefs with an out of date name
+     * @return A fully populated {@link DocRef}.
+     */
+    DocRef decorate(final DocRef docRef, final boolean force);
 }
