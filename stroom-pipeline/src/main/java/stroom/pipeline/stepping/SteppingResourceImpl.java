@@ -26,7 +26,6 @@ import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
@@ -95,10 +94,6 @@ class SteppingResourceImpl implements SteppingResource {
                         e);
             }
             throw e;
-        }
-
-        if (false && NullSafe.test(result.getStepLocation(), StepLocation::getRecordIndex, idx -> idx == 3)) {
-            throw new RuntimeException(LogUtil.message("Bad Stuff"));
         }
 
         return result;
