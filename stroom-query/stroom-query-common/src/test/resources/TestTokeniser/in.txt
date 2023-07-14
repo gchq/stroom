@@ -18,6 +18,8 @@ before 'test of inner \' strings '
 -----
 before 'test of inner \' strings '
 -----
+test end slash /
+-----
 test end comment //
 -----
 test end comment /*
