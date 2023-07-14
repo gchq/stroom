@@ -19,7 +19,6 @@ package stroom.widget.valuespinner.client;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SvgImageUtil;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
@@ -128,7 +127,7 @@ public class Spinner implements HasHandlers {
     public Spinner() {
         this.initialSpeed = INITIAL_SPEED;
         final SafeHtml upSafeHtml = SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP);
-        GWT.log("up: " + upSafeHtml.asString());
+//        GWT.log("up: " + upSafeHtml.asString());
         incrementArrow.getElement().setInnerSafeHtml(upSafeHtml);
 //                "valueSpinner-arrow",
 //                "valueSpinner-arrowUp"));
@@ -141,7 +140,7 @@ public class Spinner implements HasHandlers {
 //        incrementArrow.getElement().addClassName("valueSpinner-arrowUp");
 
         final SafeHtml downSafeHtml = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
-        GWT.log("down: " + upSafeHtml.asString());
+//        GWT.log("down: " + upSafeHtml.asString());
         decrementArrow.getElement().setInnerSafeHtml(downSafeHtml);
 //                "valueSpinner-arrow",
 //                "valueSpinner-arrowDown"));
