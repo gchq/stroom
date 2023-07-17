@@ -8182,7 +8182,6 @@ components:
           - DOWN
           - DOWNLOAD
           - DROP_DOWN
-          - DROP_DOWN_DARK
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -8274,7 +8273,6 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
-          - SEARCH_DARK
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -8629,7 +8627,6 @@ components:
           - DOWN
           - DOWNLOAD
           - DROP_DOWN
-          - DROP_DOWN_DARK
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -8721,7 +8718,6 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
-          - SEARCH_DARK
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -8816,7 +8812,6 @@ components:
           - DOWN
           - DOWNLOAD
           - DROP_DOWN
-          - DROP_DOWN_DARK
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -8908,7 +8903,6 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
-          - SEARCH_DARK
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -10939,7 +10933,6 @@ components:
           - DOWN
           - DOWNLOAD
           - DROP_DOWN
-          - DROP_DOWN_DARK
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -11031,7 +11024,6 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
-          - SEARCH_DARK
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH

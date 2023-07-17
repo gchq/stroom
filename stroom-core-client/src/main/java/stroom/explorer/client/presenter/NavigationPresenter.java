@@ -33,10 +33,9 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
@@ -73,7 +72,7 @@ public class NavigationPresenter
         NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
-        CurrentUserChangedHandler {
+        ShowMainEvent.Handler {
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
@@ -283,7 +282,7 @@ public class NavigationPresenter
 
     @ProxyEvent
     @Override
-    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
+    public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();
         // Set the data for the type filter.
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes);

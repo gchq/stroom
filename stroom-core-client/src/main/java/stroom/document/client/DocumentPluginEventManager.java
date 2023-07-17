@@ -22,7 +22,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
-import stroom.core.client.UrlConstants;
+import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -212,7 +212,7 @@ public class DocumentPluginEventManager extends Plugin {
                         if (explorerNode != null) {
                             final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
                             if (plugin != null) {
-                                plugin.open(explorerNode.getDocRef(), event.getSelectionType().isDoubleSelect());
+                                plugin.open(explorerNode.getDocRef(), event.getSelectionType().isDoubleSelect(), false);
                             }
                         }
                     }
@@ -291,7 +291,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 8.1. Handle entity open events.
         registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
-                open(event.getDocRef(), event.getForceOpen())));
+                open(event.getDocRef(), event.isForceOpen(), event.isFullScreen())));
 
         // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
@@ -600,7 +600,7 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    public void open(final DocRef docRef, final boolean forceOpen) {
+    public void open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
@@ -615,7 +615,7 @@ public class DocumentPluginEventManager extends Plugin {
                     })
                     .call(EXPLORER_RESOURCE)
                     .info(docRef);
-            documentPlugin.open(docRef, forceOpen);
+            documentPlugin.open(docRef, forceOpen, fullScreen);
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
         }
@@ -842,7 +842,7 @@ public class DocumentPluginEventManager extends Plugin {
             // Open the document in the content pane.
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
             if (plugin != null) {
-                plugin.open(docRef, true);
+                plugin.open(docRef, true, false);
             }
         };
 
@@ -1029,9 +1029,9 @@ public class DocumentPluginEventManager extends Plugin {
         // Generate a URL that can be used to open a new Stroom window with the target document loaded
         final String docUrl = Window.Location.createUrlBuilder()
                 .setPath("/")
-                .setParameter(UrlConstants.ACTION, ExplorerConstants.OPEN_DOC_ACTION)
-                .setParameter(ExplorerConstants.DOC_TYPE_QUERY_PARAM, explorerNode.getType())
-                .setParameter(ExplorerConstants.DOC_UUID_QUERY_PARAM, explorerNode.getUuid())
+                .setParameter(UrlParameters.ACTION, UrlParameters.OPEN_DOC_ACTION)
+                .setParameter(UrlParameters.DOC_TYPE_QUERY_PARAM, explorerNode.getType())
+                .setParameter(UrlParameters.DOC_UUID_QUERY_PARAM, explorerNode.getUuid())
                 .buildString();
 
         return new IconMenuItem.Builder()

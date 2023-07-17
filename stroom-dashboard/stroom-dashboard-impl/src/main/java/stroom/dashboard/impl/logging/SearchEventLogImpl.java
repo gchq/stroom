@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -163,7 +164,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                                                 .withTotalResults(NullSafe.get(
                                                         resultCount,
                                                         cnt -> BigInteger.valueOf(cnt)))
-                                                .withData(buildDataFromParams(params))
+                                                .addData(buildDataFromParams(params))
                                                 .build())
                                         .build())
                                 .withDestination(
@@ -215,7 +216,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                                         .addDataSource(dataSourceName)
                                         .build())
                                 .withQuery(StroomEventLoggingUtil.convertExpression(deReferencedExpression))
-                                .withData(buildDataFromParams(params))
+                                .addData(buildDataFromParams(params))
                                 .withOutcome(EventLoggingUtil.createOutcome(e))
                                 .build());
             } catch (final RuntimeException e2) {
@@ -224,20 +225,28 @@ public class SearchEventLogImpl implements SearchEventLog {
         });
     }
 
-    private Data buildDataFromParams(final List<Param> params) {
+    private Iterable<Data> buildDataFromParams(final List<Param> params) {
         if (NullSafe.hasItems(params)) {
             final Builder<Void> dataBuilder = Data.builder()
                     .withName("params");
 
+            boolean addedData = false;
             for (final Param param : params) {
-                dataBuilder.addData(Data.builder()
-                        .withName(param.getKey())
-                        .withValue(param.getValue())
-                        .build());
+                if (NullSafe.isBlankString(param.getKey())) {
+                    LOGGER.warn("Param with no key: {}", param);
+                } else {
+                    dataBuilder.addData(Data.builder()
+                            .withName(param.getKey())
+                            .withValue(param.getValue())
+                            .build());
+                    addedData = true;
+                }
             }
-            return dataBuilder.build();
+            return addedData
+                    ? List.of(dataBuilder.build())
+                    : Collections.emptyList();
         } else {
-            return null;
+            return Collections.emptyList();
         }
     }
 

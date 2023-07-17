@@ -231,6 +231,13 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         return new Builder(this);
     }
 
+    /**
+     * @return A copy of this {@link DocRef} with a null name.
+     */
+    public DocRef withoutName() {
+        return new DocRef(type, uuid);
+    }
+
 
     // --------------------------------------------------------------------------------
 

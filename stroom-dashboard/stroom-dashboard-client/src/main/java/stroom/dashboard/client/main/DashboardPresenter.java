@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.core.client.UrlParameters;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.input.KeyValueInputPresenter;
@@ -140,7 +141,8 @@ public class DashboardPresenter
                               final QueryToolbarPresenter queryToolbarPresenter,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
-                              final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider) {
+                              final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
+                              final UrlParameters urlParameters) {
         super(eventBus, view);
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.layoutPresenter = flexLayout;
@@ -189,6 +191,18 @@ public class DashboardPresenter
         editToolbar.addButton(editModeButton);
         editToolbar.addButton(addComponentButton);
         editToolbar.addButton(setConstraintsButton);
+
+        final String title = urlParameters.getTitle();
+        if (title != null && title.trim().length() > 0) {
+            setCustomTitle(title.trim());
+        }
+//        final String linkParams = ;
+        setParamsFromLink(urlParameters.getParams());
+        setEmbedded(urlParameters.isEmbedded());
+        setQueryOnOpen(urlParameters.isQueryOnOpen());
+//        dashboardPresenter.setParamsFromLink(params);
+//        dashboardPresenter.setEmbedded(embedded);
+//        dashboardPresenter.setQueryOnOpen(queryOnOpen);
     }
 
     @Override

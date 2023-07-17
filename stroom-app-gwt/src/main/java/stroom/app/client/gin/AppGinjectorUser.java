@@ -29,6 +29,7 @@ import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.core.client.presenter.FullScreenPresenter;
 import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.query.gin.QueryGinjector;
@@ -192,4 +193,6 @@ public interface AppGinjectorUser extends
     AsyncProvider<ExplorerTreePresenter> getExplorerTreePresenter();
 
     AsyncProvider<FindPresenter> getFindPresenter();
+
+    Provider<FullScreenPresenter> getFullScreenPresenter();
 }

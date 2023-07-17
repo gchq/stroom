@@ -310,15 +310,15 @@ class QueryServiceImpl implements QueryService {
 //    }
 
     private SearchRequest mapRequest(final QuerySearchRequest searchRequest) {
-        QueryKey queryKey = searchRequest.getQueryKey();
+        final QueryKey queryKey = searchRequest.getQueryKey();
         final String query = searchRequest.getQuery();
-        QueryContext queryContext = searchRequest.getQueryContext();
-        Query sampleQuery = Query
+        final QueryContext queryContext = searchRequest.getQueryContext();
+        final Query sampleQuery = Query
                 .builder()
                 .params(queryContext.getParams())
                 .timeRange(queryContext.getTimeRange())
                 .build();
-        SearchRequest sampleRequest = new SearchRequest(
+        final SearchRequest sampleRequest = new SearchRequest(
                 searchRequest.getSearchRequestSource(),
                 queryKey,
                 sampleQuery,

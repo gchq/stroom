@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3570** : Fix problem of XSLT filter error using old name for an XSLT doc. Also fix handling of name pattern not matching when a default XSLT is provided.
+
+* Issue **#290** : Ensure errors encountered when initialising the pipeline during stepping are included.
+
+* Issue **#3605** : Fix StroomQL quoted string handling.
+
+* Fix invalid audit xml when running a StroomQL query with no params.
+
+* Fix `Cannot invoke "java.util.List.iterator()" because "fields" is null` in a StroomQL search.
+
+* Issue **#3606** : Fix opening docs via links plus allow full screen open.
+
+* Issue **#3607** : Fix NPE in task queue filling.
+
+* Issue **#3609** : Fix comments in quoted strings.
+
+
 ## [v7.2-beta.42-open-id-1] - 2023-07-13
 
 * Issue **#3566** : Fix issue of query help text not updating correctly for some functions.

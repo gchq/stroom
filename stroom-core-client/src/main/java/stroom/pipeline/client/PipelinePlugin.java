@@ -69,7 +69,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             final String pipelineUuid = processor.getPipelineUuid();
             final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid);
             // Open the item in the content pane.
-            final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
+            final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true, false);
             // Highlight the item in the explorer tree.
             //            highlight(docRef);
 
