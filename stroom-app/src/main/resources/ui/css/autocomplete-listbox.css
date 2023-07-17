@@ -29,7 +29,19 @@
     flex-direction: column;
 }
 
-.autocompletePopup-searchIcon {
+.svgIconBox {
+    position: relative;
+    height: 2rem;
+    width: 100%;
+}
+
+.svgIconBox input {
+    height: 100%;
+    width: 100%;
+    padding-right: 22px;
+}
+
+.svgIconBox-icon {
     position: absolute;
     top: 50%;
     right: 4px;
@@ -37,21 +49,9 @@
     width: 16px;
 }
 
-.autocompletePopup-searchIcon svg {
+.svgIconBox-icon svg {
     position: absolute;
     top: -50%;
-}
-
-.autocompletePopup-textBoxWrapper {
-    position: relative;
-    height: 2rem;
-    width: 100%;
-}
-
-.autocompletePopup-textBoxWrapper input {
-    height: 100%;
-    width: 100%;
-    padding-right: 22px;
 }
 
 .autocompletePopup .gwt-ListBox {
