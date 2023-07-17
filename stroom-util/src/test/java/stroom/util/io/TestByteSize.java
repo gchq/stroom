@@ -70,6 +70,8 @@ class TestByteSize {
     void zero() {
         ByteSize byteSize = ByteSize.ZERO;
         assertThat(byteSize.getBytes()).isEqualTo(0);
+        assertThat(byteSize.isZero()).isTrue();
+        assertThat(byteSize.isNonZero()).isFalse();
         assertThat(byteSize.getValueAsStr()).isEqualTo("0B");
     }
 
@@ -99,6 +101,8 @@ class TestByteSize {
             ByteSize byteSize = ByteSize.parse(value);
             assertThat(byteSize.getBytes()).isEqualTo(expectedBytes);
             assertThat(byteSize.getValueAsStr()).isEqualTo(value);
+            assertThat(byteSize.isZero()).isFalse();
+            assertThat(byteSize.isNonZero()).isTrue();
         }
     }
 }
