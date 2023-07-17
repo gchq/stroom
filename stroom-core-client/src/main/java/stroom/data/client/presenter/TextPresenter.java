@@ -174,7 +174,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
     }
 
     public void setControlsVisible(final boolean controlsVisible) {
-        getView().setPlayVisible(controlsVisible);
+        getView().setSteppingVisible(controlsVisible);
         editorPresenter.setControlsVisible(controlsVisible);
     }
 
@@ -190,6 +190,6 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
 
         void setTextView(View view);
 
-        void setPlayVisible(boolean visible);
+        void setSteppingVisible(boolean visible);
     }
 }
