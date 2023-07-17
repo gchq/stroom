@@ -1,6 +1,7 @@
 package stroom.util;
 
 import stroom.test.common.TestUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
@@ -140,7 +141,8 @@ class TestNullSafe {
     Stream<DynamicTest> testFirstNonNull() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String[].class)
-                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>() {
+                })
                 .withSingleArgTestFunction(NullSafe::firstNonNull)
                 .withSimpleEqualityAssertion()
                 .addCase(null, Optional.empty())
@@ -858,8 +860,8 @@ class TestNullSafe {
                 .withSimpleEqualityAssertion()
                 .addCase(null, Collections.emptyList())
                 .addCase(new String[0], Collections.emptyList())
-                .addCase(new String[]{ "foo"}, List.of("foo"))
-                .addCase(new String[]{ "foo", "bar" }, List.of("foo", "bar"))
+                .addCase(new String[]{"foo"}, List.of("foo"))
+                .addCase(new String[]{"foo", "bar"}, List.of("foo", "bar"))
                 .build();
     }
 
@@ -928,6 +930,19 @@ class TestNullSafe {
                 .addCase(SimpleDuration.ZERO, SimpleDuration.ZERO)
                 .addCase(SimpleDuration.builder().timeUnit(TimeUnit.SECONDS).time(5).build(),
                         SimpleDuration.builder().timeUnit(TimeUnit.SECONDS).time(5).build())
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testByteSize() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(ByteSize.class)
+                .withTestFunction(testCase ->
+                        NullSafe.byteSize(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, ByteSize.ZERO)
+                .addCase(ByteSize.ZERO, ByteSize.ZERO)
+                .addCase(ByteSize.ofMebibytes(5), ByteSize.ofMebibytes(5))
                 .build();
     }
 

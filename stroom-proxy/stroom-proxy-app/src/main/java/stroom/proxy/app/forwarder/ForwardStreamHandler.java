@@ -10,6 +10,7 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
 import stroom.util.cert.SSLUtil;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -68,7 +69,7 @@ public class ForwardStreamHandler implements StreamHandler {
         this.attributeMap = attributeMap;
 
         final StroomDuration forwardTimeout = config.getForwardTimeout();
-        final Integer forwardChunkSize = config.getForwardChunkSize();
+        final ByteSize forwardChunkSize = config.getForwardChunkSize();
 
         startTimeMs = System.currentTimeMillis();
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
@@ -134,9 +135,9 @@ public class ForwardStreamHandler implements StreamHandler {
                     });
         }
 
-        if (forwardChunkSize != null) {
+        if (forwardChunkSize.isNonZero() && forwardChunkSize.getBytes() <= Integer.MAX_VALUE) {
             LOGGER.debug("'{}' - setting ChunkedStreamingMode: {}", forwarderName, forwardChunkSize);
-            connection.setChunkedStreamingMode(forwardChunkSize);
+            connection.setChunkedStreamingMode((int) forwardChunkSize.getBytes());
         }
         connection.connect();
         zipOutputStream = new ZipOutputStream(connection.getOutputStream());

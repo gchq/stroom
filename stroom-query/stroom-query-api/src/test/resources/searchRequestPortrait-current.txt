@@ -491,8 +491,6 @@ class stroom.query.api.v2.Param - public java.lang.String stroom.query.api.v2.Pa
 class stroom.query.api.v2.Param - public java.lang.String stroom.query.api.v2.Param.toString()
 class stroom.query.api.v2.Param - public static stroom.query.api.v2.Param$Builder stroom.query.api.v2.Param.builder()
 class stroom.query.api.v2.Param - public stroom.query.api.v2.Param$Builder stroom.query.api.v2.Param.copy()
-class stroom.query.api.v2.Param - public void stroom.query.api.v2.Param.setKey(java.lang.String)
-class stroom.query.api.v2.Param - public void stroom.query.api.v2.Param.setValue(java.lang.String)
 class stroom.query.api.v2.Param$Builder - public boolean java.lang.Object.equals(java.lang.Object)
 class stroom.query.api.v2.Param$Builder - public final native java.lang.Class<?> java.lang.Object.getClass()
 class stroom.query.api.v2.Param$Builder - public final native void java.lang.Object.notify()

@@ -1,5 +1,6 @@
 package stroom.util;
 
+import stroom.util.io.ByteSize;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.time.SimpleDuration;
@@ -391,6 +392,15 @@ public class NullSafe {
         return durationTimer != null
                 ? durationTimer
                 : DurationTimer.ZERO;
+    }
+
+    /**
+     * Returns the passed byteSize if it is non-null else returns a ZERO {@link ByteSize}
+     */
+    public static ByteSize byteSize(final ByteSize byteSize) {
+        return byteSize != null
+                ? byteSize
+                : ByteSize.ZERO;
     }
 
     /**

@@ -116,4 +116,34 @@ class TestByteSizeUnit {
                 .addCase(Tuple.of(ByteSizeUnit.KIBIBYTE, 1L), 1024L)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testIntBytes() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(int.class, ByteSizeUnit.class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    final int value = testCase.getInput()._1;
+                    final ByteSizeUnit byteSizeUnit = testCase.getInput()._2;
+                    final int intResult = byteSizeUnit.intBytes(value);
+                    final long longResult = byteSizeUnit.longBytes(value);
+                    Assertions.assertThat(intResult)
+                            .isEqualTo(longResult);
+                    return intResult;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(1, ByteSizeUnit.BYTE), 1)
+                .addCase(Tuple.of(1, ByteSizeUnit.KIBIBYTE), 1024)
+                .addCase(Tuple.of(1, ByteSizeUnit.KILOBYTE), 1000)
+                .addCase(Tuple.of(1, ByteSizeUnit.MEBIBYTE), 1024 * 1024)
+                .addCase(Tuple.of(1, ByteSizeUnit.MEGABYTE), 1000 * 1000)
+                .addCase(Tuple.of(1, ByteSizeUnit.GIBIBYTE), 1024 * 1024 * 1024)
+                .addCase(Tuple.of(1, ByteSizeUnit.GIGABYTE), 1000 * 1000 * 1000)
+                .addCase(Tuple.of(5, ByteSizeUnit.BYTE), 5)
+                .addCase(Tuple.of(5, ByteSizeUnit.KIBIBYTE), 5 * 1024)
+                .addCase(Tuple.of(5, ByteSizeUnit.KILOBYTE), 5 * 1000)
+                .addCase(Tuple.of(5, ByteSizeUnit.MEBIBYTE), 5 * 1024 * 1024)
+                .addCase(Tuple.of(5, ByteSizeUnit.MEGABYTE), 5 * 1000 * 1000)
+                .build();
+    }
 }

@@ -101,6 +101,13 @@ public enum ByteSizeUnit {
     }
 
     /**
+     * Converts the value from the units of this into bytes
+     */
+    public int intBytes(int fromValue) {
+        return (int) (this.bytes * fromValue);
+    }
+
+    /**
      * Converts from a value in Bytes to a value in the unit of 'this'
      */
     public double unitValue(final long bytes) {
