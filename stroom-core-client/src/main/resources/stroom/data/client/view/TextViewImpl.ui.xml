@@ -4,9 +4,8 @@
              xmlns:button="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max stepping-button-container">
         <g:SimplePanel ui:field="textContainer" styleName="max"/>
-        <button:FabButton ui:field="playButton"
+        <button:FabButton ui:field="steppingButton"
                           addStyleNames="stepping-button"
-                          iconClassName="stepping-button-icon"
                           title="Enter Stepping Mode" visible="false"/>
     </g:FlowPanel>
 </ui:UiBinder>
