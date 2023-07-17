@@ -245,8 +245,7 @@ td {
 	z-index: 5;
 }
 
-.stepping-button-icon {
-    background-image: url("../background-images/stepping.svg");
+.stepping-button .svgIcon svg {
     width: 46px;
     height: 46px;
     margin-left: 2px;
