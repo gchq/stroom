@@ -1,9 +1,7 @@
 package stroom.item.client;
 
 import stroom.docref.HasDisplayValue;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.SvgButton;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -47,7 +45,8 @@ public class AutocompletePopup<T extends HasDisplayValue> extends Composite impl
 
         final SimplePanel searchIcon = new SimplePanel();
         searchIcon.getElement().setInnerHTML(SvgImage.SEARCH.getSvg());
-        searchIcon.getElement().setClassName("autocompletePopup-searchIcon icon-colour__grey svgIcon " + SvgImage.SEARCH.getClassName());
+        searchIcon.getElement().setClassName("autocompletePopup-searchIcon icon-colour__grey svgIcon "
+                + SvgImage.SEARCH.getClassName());
 
         final FlowPanel textBoxWrapper = new FlowPanel();
         textBoxWrapper.setStyleName("autocompletePopup-textBoxWrapper");
