@@ -1,6 +1,7 @@
 package stroom.item.client;
 
 import stroom.docref.HasDisplayValue;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -41,11 +42,22 @@ public class AutocompletePopup<T extends HasDisplayValue> extends Composite impl
         autoTextBox = new TextBox();
         autoListBox = new ListBox();
 
+
+        final SimplePanel searchIcon = new SimplePanel();
+        searchIcon.getElement().setInnerHTML(SvgImage.SEARCH.getSvg());
+        searchIcon.getElement().setClassName("autocompletePopup-searchIcon icon-colour__grey svgIcon "
+                + SvgImage.SEARCH.getClassName());
+
+        final FlowPanel textBoxWrapper = new FlowPanel();
+        textBoxWrapper.setStyleName("autocompletePopup-textBoxWrapper");
+        textBoxWrapper.add(autoTextBox);
+        textBoxWrapper.add(searchIcon);
+
         items = new HashMap<>();
 
         final FlowPanel layout = new FlowPanel();
         layout.setStyleName("max autocompletePopup-layout");
-        layout.add(autoTextBox);
+        layout.add(textBoxWrapper);
         layout.add(autoListBox);
 
         final SimplePanel outer = new SimplePanel(layout);

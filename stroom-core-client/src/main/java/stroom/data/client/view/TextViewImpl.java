@@ -18,6 +18,7 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.presenter.TextUiHandlers;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.FabButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -36,11 +37,12 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @UiField
     SimplePanel textContainer;
     @UiField
-    FabButton playButton;
+    FabButton steppingButton;
 
     @Inject
     public TextViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        steppingButton.setIcon(SvgImage.STEPPING);
     }
 
     @Override
@@ -54,12 +56,12 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     }
 
     @Override
-    public void setPlayVisible(final boolean visible) {
-        playButton.setVisible(visible);
+    public void setSteppingVisible(final boolean visible) {
+        steppingButton.setVisible(visible);
     }
 
-    @UiHandler("playButton")
-    public void onPlayClick(final ClickEvent e) {
+    @UiHandler("steppingButton")
+    public void onSteppingClick(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().beginStepping();
         }
