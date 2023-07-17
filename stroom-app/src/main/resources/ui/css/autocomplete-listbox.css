@@ -1,5 +1,5 @@
 .gwt-TextBox.autocompleteTextBox {
-    background-image: url('../images/drop-down.svg');
+    background-image: url('../background-images/drop-down.svg');
     cursor: pointer;
     background-size: 12px;
     background-origin: content-box;
@@ -13,7 +13,7 @@
 
 .stroom-theme-dark .gwt-TextBox.autocompleteTextBox,
 .stroom-theme-dark-2 .gwt-TextBox.autocompleteTextBox {
-    background-image: url('../images/drop-down-dark.svg');
+    background-image: url('../background-images/drop-down-dark.svg');
 }
 
 
@@ -30,7 +30,7 @@
 }
 
 .autocompletePopup input {
-    background-image: url('../images/search.svg');
+    background-image: url('../background-images/search.svg');
     background-size: 13px;
     background-origin: content-box;
     background-repeat: no-repeat;
@@ -42,7 +42,7 @@
 
 .stroom-theme-dark .autocompletePopup input,
 .stroom-theme-dark-2 .autocompletePopup input {
-    background-image: url('../images/search-dark.svg');
+    background-image: url('../background-images/search-dark.svg');
 }
 
 .autocompletePopup .gwt-ListBox {

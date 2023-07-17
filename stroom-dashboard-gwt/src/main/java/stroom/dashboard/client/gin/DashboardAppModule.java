@@ -21,11 +21,11 @@ import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
-import stroom.dashboard.client.main.DashboardMainPresenter;
-import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
-import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
-import stroom.dashboard.client.main.DashboardMainViewImpl;
+import stroom.core.client.view.FullScreenViewImpl;
 import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
@@ -108,10 +108,10 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
         bindPresenter(
-                DashboardMainPresenter.class,
-                DashboardMainView.class,
-                DashboardMainViewImpl.class,
-                DashboardMainProxy.class);
+                FullScreenPresenter.class,
+                FullScreenView.class,
+                FullScreenViewImpl.class,
+                FullScreenProxy.class);
 
         bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);

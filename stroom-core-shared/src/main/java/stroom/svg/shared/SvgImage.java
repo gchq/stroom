@@ -1004,37 +1004,6 @@ public enum SvgImage {
             "89 14.7439,-36.0103 z\" id=\"path983\" /></svg> \n" +
             ""),
 
-    DROP_DOWN_DARK("drop-down-dark.svg", "svg-image__drop-down-dark", "" +
-            "<svg xmlns:osb=\"http://www.openswatchbook.org/uri/2009/osb\" xmlns:dc=\"http://pur" +
-            "l.org/dc/elements/1.1/\" xmlns:cc=\"http://creativecommons.org/ns#\" xmlns:rdf=\"htt" +
-            "p://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w3.org/2000/svg\" xml" +
-            "ns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\" xmlns:inkscape=" +
-            "\"http://www.inkscape.org/namespaces/inkscape\" width=\"2200\" height=\"1792\" viewBox" +
-            "=\"0 0 2200 1792\" version=\"1.1\" id=\"svg985\" sodipodi:docname=\"drop-down.svg\" inks" +
-            "cape:version=\"1.0.2 (e86c870879, 2021-01-15, custom)\"><metadata id=\"metadata991\"" +
-            "><rdf:RDF><cc:Work rdf:about=\"\"><dc:format>image/svg+xml</dc:format><dc:type rdf" +
-            ":resource=\"http://purl.org/dc/dcmitype/StillImage\" /><dc:title></dc:title></cc:W" +
-            "ork></rdf:RDF></metadata><defs id=\"defs989\"><linearGradient id=\"linearGradient15" +
-            "56\" osb:paint=\"solid\"><stop style=\"stop-color:var(--icon-colour__black);stop-opa" +
-            "city:1;\" offset=\"0\" id=\"stop1554\" /></linearGradient></defs><sodipodi:namedview " +
-            "pagecolor=\"var(--icon-colour__white)\" bordercolor=\"#666666\" borderopacity=\"1\" ob" +
-            "jecttolerance=\"10\" gridtolerance=\"10\" guidetolerance=\"10\" inkscape:pageopacity=\"" +
-            "0\" inkscape:pageshadow=\"2\" inkscape:window-width=\"1628\" inkscape:window-height=\"" +
-            "1347\" id=\"namedview987\" showgrid=\"false\" inkscape:zoom=\"0.46819196\" inkscape:cx=" +
-            "\"896\" inkscape:cy=\"896\" inkscape:window-x=\"3481\" inkscape:window-y=\"63\" inkscape" +
-            ":window-maximized=\"0\" inkscape:current-layer=\"svg985\" /><path style=\"fill:none;s" +
-            "troke:var(--icon-colour__off-white);stroke-width:167.567;stroke-miterlimit:4;str" +
-            "oke-dasharray:none;stroke-opacity:1\" d=\"m 1343.9812,597.12769 c -0.4303,-39.9265" +
-            "4 -48.3887,-75.41463 -81.9121,-40.0468 C 1078.9915,749.62582 896.53618,942.82937" +
-            " 713.86658,1135.8059 531.19708,942.82937 348.74187,749.62582 165.6643,557.08089 " +
-            "121.87875,510.88618 53.467697,585.56901 98.496154,633.13799 284.31914,829.07357 " +
-            "469.32098,1026.0906 656.02368,1221.1249 c 4.8034,5.6117 10.2473,10.4633 16.1231," +
-            "14.4855 12.4844,9.643 27.0796,13.9638 41.7198,13.6909 14.6402,0.2729 29.2354,-4." +
-            "0479 41.7198,-13.6909 5.8758,-4.0222 11.3198,-8.8738 16.1231,-14.4855 186.7028,-" +
-            "195.0343 371.70472,-392.05133 557.52782,-587.98691 10.5534,-11.14898 14.8757,-23" +
-            ".78789 14.7439,-36.0103 z\" id=\"path983\" /></svg> \n" +
-            ""),
-
     EDIT("edit.svg", "svg-image__edit", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M491 1536l91-91-235-235-91 91v107h" +
@@ -3758,16 +3727,6 @@ public enum SvgImage {
             "31.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-90-38l-343-342q-179 124-399 124-143 " +
             "0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5-273.5 150-225 225-150 273.5-55.5 2" +
             "73.5 55.5 225 150 150 225 55.5 273.5q0 220-124 399l343 343q37 37 37 90z\"/></svg>\n" +
-            ""),
-
-    SEARCH_DARK("search-dark.svg", "svg-image__search-dark", "" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\"><path style=\"fill:var(--icon-colour__off-white)\" d=\"M1216 832q0-185-1" +
-            "31.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 131.5 316.5 316.5 131.5 316.5-13" +
-            "1.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-90-38l-343-342q-179 124-399 124" +
-            "-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5-273.5 150-225 225-150 273.5-5" +
-            "5.5 273.5 55.5 225 150 150 225 55.5 273.5q0 220-124 399l343 343q37 37 37 90z\"/><" +
-            "/svg>\n" +
             ""),
 
     SETTINGS("settings.svg", "svg-image__settings", "" +

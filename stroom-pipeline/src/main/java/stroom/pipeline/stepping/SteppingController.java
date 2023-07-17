@@ -261,7 +261,7 @@ public class SteppingController {
     }
 
     /**
-     * This method resets all filters so they are ready for the next record.
+     * This method resets all filters, so they are ready for the next record.
      */
     void clearAllFilters(final TextRange highlight) {
         // Store the current data for each filter.

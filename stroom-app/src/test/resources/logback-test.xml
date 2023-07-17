@@ -33,7 +33,7 @@
 <!--    <logger name="stroom.data.store.impl.fs.PhysicalDeleteExecutor" level="DEBUG" />-->
 <!--    <logger name="stroom.data.store.impl.fs.FsFileDeleter" level="DEBUG" />-->
 
-    <logger name="stroom.pipeline.errorhandler.ErrorReceiverProxy" level="TRACE" />
+    <logger name="stroom.pipeline.errorhandler.ErrorReceiverProxy" level="DEBUG" />
 
 
 

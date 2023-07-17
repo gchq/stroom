@@ -121,10 +121,11 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     }
 
     @Override
-    protected void showTab(final DocRef docRef,
-                           final MyPresenterWidget<?> documentEditPresenter,
-                           final Handler closeHandler,
-                           final DocumentTabData tabData) {
+    protected void showDocument(final DocRef docRef,
+                                final MyPresenterWidget<?> documentEditPresenter,
+                                final Handler closeHandler,
+                                final DocumentTabData tabData,
+                                final boolean fullScreen) {
         try {
             if (documentEditPresenter instanceof FolderRootPresenter) {
                 ((FolderRootPresenter) documentEditPresenter).read();
