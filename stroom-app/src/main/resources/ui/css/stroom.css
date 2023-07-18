@@ -588,7 +588,8 @@ input[type="file"] {
 	background-color: var(--control__background-color);
 	color: var(--control__text-color);
 	border-radius: .25rem;
-	height: calc(1.5em + .75rem + 2px);
+	padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
+	/*height: calc(1.5em + .75rem + 2px);*/
 }
 
 /* Fix auto fill colours */
@@ -662,29 +663,6 @@ select option:disabled {
 .gwt-SuggestBoxPopup .suggestPopupContent {
   background: var(--control__background-color) !important;
   color: var(--control__text-color);
-}
-
-.gwt-ListBox {
-	/* Hide drop down arrow on Firefox */
-    -moz-appearance: none;
-    text-indent: 0.01px;
-    text-overflow: '';
-
-    /* Make Chrome and Firefox look the same */
-    -webkit-appearance: none;
-
-    background-color: var(--control__background-color);
-    background-image: url("../background-images/drop-down.svg");
-    background-position: center right;
-    background-repeat: no-repeat;
-    background-size: 12px;
-	background-origin: content-box;
-	color: var(--control__text-color);
-}
-
-.stroom-theme-dark .gwt-ListBox,
-.stroom-theme-dark2 .gwt-ListBox {
-	background-image: url("../background-images/drop-down-dark.svg");
 }
 
 .gwt-TextArea {

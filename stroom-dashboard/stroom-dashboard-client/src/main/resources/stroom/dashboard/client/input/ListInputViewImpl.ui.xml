@@ -3,6 +3,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="ListInputView max dock-container-horizontal">
-        <l:StringListBox ui:field="value" addStyleNames="dock-max allow-focus"/>
+        <l:SelectionBox ui:field="value" addStyleNames="dock-max allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder>

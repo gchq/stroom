@@ -18,8 +18,7 @@ package stroom.index.client.view;
 
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume.VolumeUseState;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -36,11 +35,11 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
     private final Widget widget;
 
     @UiField
-    StringListBox nodeName;
+    SelectionBox<String> nodeName;
     @UiField
     TextBox path;
     @UiField
-    ItemListBox<VolumeUseState> state;
+    SelectionBox<VolumeUseState> state;
     @UiField
     TextBox bytesLimit;
 
@@ -56,7 +55,7 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
 
     @Override
     public void focus() {
-        nodeName.setFocus(true);
+        nodeName.focus();
     }
 
     @Override
@@ -70,12 +69,12 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
         return new HasText() {
             @Override
             public String getText() {
-                return nodeName.getSelected();
+                return nodeName.getValue();
             }
 
             @Override
             public void setText(final String text) {
-                nodeName.setSelected(text);
+                nodeName.setValue(text);
             }
         };
     }
@@ -86,7 +85,7 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
     }
 
     @Override
-    public ItemListBox<VolumeUseState> getState() {
+    public SelectionBox<VolumeUseState> getState() {
         return state;
     }
 

@@ -2,13 +2,13 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.docref.HasDisplayValue;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -31,14 +31,14 @@ public class CharacterRangeSelectionViewImpl
     Label lblTotalCharCount;
 
     @UiField
-    ItemListBox<From> fromType;
+    SelectionBox<From> fromType;
     @UiField
     LineColInput fromLineCol;
     @UiField
     ValueSpinner fromCharOffset;
 
     @UiField
-    ItemListBox<To> toType;
+    SelectionBox<To> toType;
     @UiField
     LineColInput toLineCol;
     @UiField
@@ -89,10 +89,10 @@ public class CharacterRangeSelectionViewImpl
     public DataRange getDataRange() {
         final DataRange.Builder dataRangeBuilder = DataRange.builder();
 
-        switch (fromType.getSelectedItem()) {
+        switch (fromType.getValue()) {
             case LINE_COL:
 
-                switch (toType.getSelectedItem()) {
+                switch (toType.getValue()) {
                     case LINE_COL:
                         fromLineCol.getLocation().ifPresent(dataRangeBuilder::fromLocation);
                         toLineCol.getLocation().ifPresent(dataRangeBuilder::toLocation);
@@ -107,7 +107,7 @@ public class CharacterRangeSelectionViewImpl
 
                 break;
             case OFFSET:
-                switch (toType.getSelectedItem()) {
+                switch (toType.getValue()) {
                     case OFFSET:
                         dataRangeBuilder
                                 .fromCharOffset(toZeroBased(fromCharOffset.getIntValue()))
@@ -153,36 +153,36 @@ public class CharacterRangeSelectionViewImpl
 
     private void setEnabledAndCheckedStates(final DataRange dataRange) {
         if (dataRange.getOptLocationFrom().isPresent()) {
-            fromType.setSelectedItem(From.LINE_COL);
+            fromType.setValue(From.LINE_COL);
         } else {
-            fromType.setSelectedItem(From.OFFSET);
+            fromType.setValue(From.OFFSET);
         }
     }
 
     private void updateFromSelection() {
-        final From from = fromType.getSelectedItem();
+        final From from = fromType.getValue();
         fromLineCol.setVisible(From.LINE_COL.equals(from));
         fromCharOffset.setVisible(From.OFFSET.equals(from));
 
-        final To to = toType.getSelectedItem();
+        final To to = toType.getValue();
         toType.clear();
         switch (from) {
             case LINE_COL:
                 toType.addItem(To.LINE_COL);
                 toType.addItem(To.COUNT);
                 if (to == To.COUNT) {
-                    toType.setSelectedItem(to);
+                    toType.setValue(to);
                 } else {
-                    toType.setSelectedItem(To.LINE_COL);
+                    toType.setValue(To.LINE_COL);
                 }
                 break;
             case OFFSET:
                 toType.addItem(To.OFFSET);
                 toType.addItem(To.COUNT);
                 if (to == To.COUNT) {
-                    toType.setSelectedItem(to);
+                    toType.setValue(to);
                 } else {
-                    toType.setSelectedItem(To.OFFSET);
+                    toType.setValue(To.OFFSET);
                 }
                 break;
         }
@@ -190,7 +190,7 @@ public class CharacterRangeSelectionViewImpl
     }
 
     private void updateToSelection() {
-        final To to = toType.getSelectedItem();
+        final To to = toType.getValue();
         toLineCol.setVisible(To.LINE_COL.equals(to));
         toCharOffset.setVisible(To.OFFSET.equals(to));
         toCharCount.setVisible(To.COUNT.equals(to));
@@ -232,12 +232,12 @@ public class CharacterRangeSelectionViewImpl
     }
 
     @UiHandler("fromType")
-    public void onFromTypeChange(final SelectionEvent<From> event) {
+    public void onFromTypeChange(final ValueChangeEvent<From> event) {
         updateFromSelection();
     }
 
     @UiHandler("toType")
-    public void onToTypeChange(final SelectionEvent<To> event) {
+    public void onToTypeChange(final ValueChangeEvent<To> event) {
         updateToSelection();
     }
 

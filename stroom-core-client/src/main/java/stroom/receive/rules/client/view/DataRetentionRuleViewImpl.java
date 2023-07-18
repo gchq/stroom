@@ -17,7 +17,7 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
@@ -51,7 +51,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     @UiField
     ValueSpinner age;
     @UiField
-    ItemListBox<TimeUnit> timeUnit;
+    SelectionBox<TimeUnit> timeUnit;
 
     @Inject
     public DataRetentionRuleViewImpl(final DataRetentionRuleViewImpl.Binder binder) {
@@ -121,12 +121,12 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
 
     @Override
     public TimeUnit getTimeUnit() {
-        return timeUnit.getSelectedItem();
+        return timeUnit.getValue();
     }
 
     @Override
     public void setTimeUnit(final TimeUnit timeUnit) {
-        this.timeUnit.setSelectedItem(timeUnit);
+        this.timeUnit.setValue(timeUnit);
     }
 
     @UiHandler("forever")

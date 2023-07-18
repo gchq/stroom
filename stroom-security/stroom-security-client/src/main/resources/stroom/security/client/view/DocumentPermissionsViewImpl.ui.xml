@@ -7,7 +7,7 @@
         <g:SimplePanel ui:field="tabs" styleName="dock-max"/>
         <g:FlowPanel ui:field="innerLayout" styleName="dock-min form">
             <form:FormGroup ui:field="cascadeGrid" identity="documentPermissionsCascade" label="Cascade">
-                <l:ItemListBox ui:field="cascade" addStyleNames="w-100"/>
+                <l:SelectionBox ui:field="cascade" addStyleNames="w-100"/>
             </form:FormGroup>
             <b:Button addStyleNames="dock-min allow-focus documentPermissionsViewImpl-copyPermissionsFromParentButton"
                       ui:field="copyPermissionsFromParentButton"

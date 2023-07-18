@@ -63,8 +63,6 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
-import stroom.item.client.presenter.ListPresenter.ListView;
-import stroom.item.client.view.ListViewImpl;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
@@ -157,6 +155,5 @@ public class AppModule extends AbstractPresenterModule {
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
-        bindSharedView(ListView.class, ListViewImpl.class);
     }
 }

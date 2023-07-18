@@ -106,26 +106,26 @@ public class ExpanderCell extends AbstractCell<Expander> {
             final int depth = value.getDepth();
             final int padding = (depth * ICON_WIDTH) + initialOffset;
             final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
-            String className = "";
+            String className = "expanderCell expanderIcon";
 
             final SvgImage expanderIcon;
             if (value.isLeaf()) {
                 expanderIcon = SvgImage.DOT;
             } else if (value.isExpanded()) {
                 expanderIcon = SvgImage.ARROW_DOWN;
-                className = " active";
+                className += " active";
             } else {
                 expanderIcon = SvgImage.ARROW_RIGHT;
-                className = " active";
+                className += " active";
             }
 
-            final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
-                    expanderIcon,
-                    "expanderIcon" + className);
+            final SafeHtml expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(
+                    expanderIcon.getSvg());
+            className += " " + expanderIcon.getClassName();
             sb.append(template.expander(
-                    "expanderCell",
+                    className,
                     style,
-                    iconSafeHtml));
+                    expanderIconSafeHtml));
 
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));

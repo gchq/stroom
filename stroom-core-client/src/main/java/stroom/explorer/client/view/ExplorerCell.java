@@ -55,17 +55,16 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             int expanderPadding = 4;
 
-            SafeHtml expanderIcon = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            SvgImage expanderIcon = null;
             if (item.getNodeState() != null) {
                 switch (item.getNodeState()) {
                     case LEAF:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
                         break;
                     case OPEN:
-                        expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
+                        expanderIcon = SvgImage.ARROW_DOWN;
                         break;
                     case CLOSED:
-                        expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT);
+                        expanderIcon = SvgImage.ARROW_RIGHT;
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
@@ -77,10 +76,19 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
             // Add expander.
+            SafeHtml expanderIconSafeHtml;
+            String className = getCellClassName() + "-expander";
+            if (expanderIcon != null) {
+                expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());
+                className += " " + expanderIcon.getClassName();
+            } else {
+                expanderIconSafeHtml = SvgImageUtil.emptySvg();
+            }
+
             content.append(template.expander(
-                    getCellClassName() + "-expander",
+                    className,
                     paddingLeft,
-                    expanderIcon));
+                    expanderIconSafeHtml));
 
             if (tickBoxCell != null) {
                 final SafeHtmlBuilder tb = new SafeHtmlBuilder();
@@ -95,8 +103,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 // Add icon
                 content.append(SvgImageUtil.toSafeHtml(
                         item.getType(),
-                                item.getIcon(),
-                                getCellClassName() + "-icon"));
+                        item.getIcon(),
+                        getCellClassName() + "-icon"));
             }
 
             if (item.getDisplayValue() != null) {
@@ -110,8 +118,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                     !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(item.getRootNodeUuid())) {
                 content.append(SvgImageUtil.toSafeHtml(
                         "Item is a favourite",
-                                SvgImage.FAVOURITES,
-                                "svgIcon", "small"));
+                        SvgImage.FAVOURITES,
+                        "svgIcon", "small"));
             }
 
             sb.append(template.outer(content.toSafeHtml()));

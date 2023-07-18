@@ -21,8 +21,7 @@ import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.client.presenter.IndexSettingsUiHandlers;
 import stroom.index.shared.IndexDoc.PartitionBy;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.widget.valuespinner.client.SpinnerEvent;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -43,7 +42,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @UiField
     ValueSpinner maxDocsPerShard;
     @UiField(provided = true)
-    ItemListBox<PartitionBy> partitionBy;
+    SelectionBox<PartitionBy> partitionBy;
     @UiField
     ValueSpinner partitionSize;
     @UiField
@@ -51,15 +50,16 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @UiField
     TextBox timeField;
     @UiField
-    ItemListBox<SupportedRetentionAge> retentionAge;
+    SelectionBox<SupportedRetentionAge> retentionAge;
     @UiField
-    StringListBox volumeGroups;
+    SelectionBox<String> volumeGroups;
     @UiField
     SimplePanel defaultExtractionPipeline;
 
     @Inject
     public IndexSettingsViewImpl(final Binder binder) {
-        partitionBy = new ItemListBox<>("No partition");
+        partitionBy = new SelectionBox<>();
+        partitionBy.setNonSelectString("No partition");
         partitionBy.addItem(PartitionBy.YEAR);
         partitionBy.addItem(PartitionBy.MONTH);
         partitionBy.addItem(PartitionBy.WEEK);
@@ -86,7 +86,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
         };
         maxDocsPerShard.getSpinner().addSpinnerHandler(spinnerHandler);
         shardsPerPartition.getSpinner().addSpinnerHandler(spinnerHandler);
-        partitionBy.addSelectionHandler(event -> {
+        partitionBy.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
             }
@@ -96,13 +96,13 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
                 getUiHandlers().onChange();
             }
         });
-        retentionAge.addSelectionHandler(event -> {
+        retentionAge.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
             }
         });
         partitionSize.getSpinner().addSpinnerHandler(spinnerHandler);
-        volumeGroups.addChangeHandler(event -> {
+        volumeGroups.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
             }
@@ -136,12 +136,12 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public PartitionBy getPartitionBy() {
-        return this.partitionBy.getSelectedItem();
+        return this.partitionBy.getValue();
     }
 
     @Override
     public void setPartitionBy(final PartitionBy partitionBy) {
-        this.partitionBy.setSelectedItem(partitionBy);
+        this.partitionBy.setValue(partitionBy);
     }
 
     @Override
@@ -165,12 +165,12 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     }
 
     @Override
-    public ItemListBox<SupportedRetentionAge> getRetentionAge() {
+    public SelectionBox<SupportedRetentionAge> getRetentionAge() {
         return retentionAge;
     }
 
     @Override
-    public StringListBox getVolumeGroups() {
+    public SelectionBox<String> getVolumeGroups() {
         return volumeGroups;
     }
 

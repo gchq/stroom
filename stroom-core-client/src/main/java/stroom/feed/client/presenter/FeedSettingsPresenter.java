@@ -26,8 +26,7 @@ import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
@@ -68,8 +67,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
                     final FeedDoc feed = getEntity();
                     if (feed != null) {
-                        view.getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
-                        view.getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
+                        view.getDataEncoding().setValue(ensureEncoding(feed.getEncoding()));
+                        view.getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
                     }
                 })
                 .call(FEED_RESOURCE)
@@ -82,7 +81,7 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                 view.getReceivedType().addItems(list);
                 final FeedDoc feed = getEntity();
                 if (feed != null) {
-                    view.getReceivedType().setSelected(feed.getStreamType());
+                    view.getReceivedType().setValue(feed.getStreamType());
                 }
             }
         });
@@ -92,28 +91,28 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
         final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
         registerHandler(view.getClassification().addDomHandler(inputHandler, InputEvent.getType()));
         registerHandler(view.getReference().addValueChangeHandler(checkHandler));
-        registerHandler(view.getDataEncoding().addChangeHandler(event -> {
-            final String dataEncoding = ensureEncoding(view.getDataEncoding().getSelected());
-            getView().getDataEncoding().setSelected(dataEncoding);
+        registerHandler(view.getDataEncoding().addValueChangeHandler(event -> {
+            final String dataEncoding = ensureEncoding(view.getDataEncoding().getValue());
+            getView().getDataEncoding().setValue(dataEncoding);
 
             if (!EqualsUtil.isEquals(dataEncoding, getEntity().getEncoding())) {
                 getEntity().setEncoding(dataEncoding);
                 setDirty(true);
             }
         }));
-        registerHandler(view.getContextEncoding().addChangeHandler(event -> {
-            final String contextEncoding = ensureEncoding(view.getContextEncoding().getSelected());
-            getView().getContextEncoding().setSelected(contextEncoding);
+        registerHandler(view.getContextEncoding().addValueChangeHandler(event -> {
+            final String contextEncoding = ensureEncoding(view.getContextEncoding().getValue());
+            getView().getContextEncoding().setValue(contextEncoding);
 
             if (!EqualsUtil.isEquals(contextEncoding, getEntity().getContextEncoding())) {
                 setDirty(true);
                 getEntity().setContextEncoding(contextEncoding);
             }
         }));
-        registerHandler(view.getFeedStatus().addSelectionHandler(event -> setDirty(true)));
-        registerHandler(view.getReceivedType().addChangeHandler(event -> {
-            final String streamType = view.getReceivedType().getSelected();
-            getView().getReceivedType().setSelected(streamType);
+        registerHandler(view.getFeedStatus().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(view.getReceivedType().addValueChangeHandler(event -> {
+            final String streamType = view.getReceivedType().getValue();
+            getView().getReceivedType().setValue(streamType);
 
             if (!EqualsUtil.isEquals(streamType, getEntity().getStreamType())) {
                 setDirty(true);
@@ -126,21 +125,21 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
     protected void onRead(final DocRef docRef, final FeedDoc feed, final boolean readOnly) {
         getView().getReference().setValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());
-        getView().getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
-        getView().getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
-        getView().getReceivedType().setSelected(feed.getStreamType());
-        getView().getFeedStatus().setSelectedItem(feed.getStatus());
+        getView().getDataEncoding().setValue(ensureEncoding(feed.getEncoding()));
+        getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
+        getView().getReceivedType().setValue(feed.getStreamType());
+        getView().getFeedStatus().setValue(feed.getStatus());
     }
 
     @Override
     protected FeedDoc onWrite(final FeedDoc feed) {
         feed.setReference(getView().getReference().getValue());
         feed.setClassification(getView().getClassification().getText());
-        feed.setEncoding(ensureEncoding(getView().getDataEncoding().getSelected()));
-        feed.setContextEncoding(ensureEncoding(getView().getContextEncoding().getSelected()));
-        feed.setStreamType(getView().getReceivedType().getSelected());
+        feed.setEncoding(ensureEncoding(getView().getDataEncoding().getValue()));
+        feed.setContextEncoding(ensureEncoding(getView().getContextEncoding().getValue()));
+        feed.setStreamType(getView().getReceivedType().getValue());
         // Set the process stage.
-        feed.setStatus(getView().getFeedStatus().getSelectedItem());
+        feed.setStatus(getView().getFeedStatus().getValue());
         return feed;
     }
 
@@ -157,12 +156,12 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
         CustomCheckBox getReference();
 
-        StringListBox getDataEncoding();
+        SelectionBox<String> getDataEncoding();
 
-        StringListBox getContextEncoding();
+        SelectionBox<String> getContextEncoding();
 
-        StringListBox getReceivedType();
+        SelectionBox<String> getReceivedType();
 
-        ItemListBox<FeedStatus> getFeedStatus();
+        SelectionBox<FeedStatus> getFeedStatus();
     }
 }
