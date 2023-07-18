@@ -109,7 +109,7 @@ public abstract class AbstractUserListPresenter
             }
         };
         final String nameColName = includeAdditionalUserInfo()
-                ? "User ID"
+                ? "User Unique Identity"
                 : "Group Name";
         dataGrid.addResizableColumn(uniqueIdentityCol, nameColName, 280);
         columns.add(uniqueIdentityCol);

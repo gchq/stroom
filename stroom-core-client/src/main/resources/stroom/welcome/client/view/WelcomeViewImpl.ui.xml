@@ -4,7 +4,7 @@
         <g:SimplePanel ui:field="html"/>
             <g:Grid styleName="welcomeViewImpl-buildInfo stroom-control-grid w-100">
                 <g:row>
-                    <g:cell>User ID:</g:cell>
+                    <g:cell>User Unique Identity:</g:cell>
                     <g:customCell>
                         <g:Label ui:field="userIdentity"/>
                     </g:customCell>
