@@ -1,6 +1,8 @@
 package stroom.proxy.app.forwarder;
 
+import stroom.util.NullSafe;
 import stroom.util.cert.SSLConfig;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -11,12 +13,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConfig, IsProxyConfig {
+
+    private static final ByteSize DEFAULT_CHUNK_SIZE_BYTES = ByteSize.ofMebibytes(1);
 
     private final boolean enabled;
     private final String name;
@@ -24,7 +27,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     private final String forwardUrl;
     private final StroomDuration forwardTimeout;
     private final StroomDuration forwardDelay;
-    private final Integer forwardChunkSize;
+    private final ByteSize forwardChunkSize;
     private final SSLConfig sslConfig;
 
     public ForwardHttpPostConfig() {
@@ -34,7 +37,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         forwardUrl = null;
         forwardTimeout = StroomDuration.ofSeconds(30);
         forwardDelay = StroomDuration.ZERO;
-        forwardChunkSize = null;
+        forwardChunkSize = DEFAULT_CHUNK_SIZE_BYTES;
         sslConfig = null;
     }
 
@@ -46,7 +49,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                                  @JsonProperty("forwardUrl") final String forwardUrl,
                                  @JsonProperty("forwardTimeout") final StroomDuration forwardTimeout,
                                  @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
-                                 @JsonProperty("forwardChunkSize") final Integer forwardChunkSize,
+                                 @JsonProperty("forwardChunkSize") final ByteSize forwardChunkSize,
                                  @JsonProperty("sslConfig") final SSLConfig sslConfig) {
         this.enabled = enabled;
         this.name = name;
@@ -54,7 +57,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         this.forwardUrl = forwardUrl;
         this.forwardTimeout = forwardTimeout;
         this.forwardDelay = forwardDelay;
-        this.forwardChunkSize = forwardChunkSize;
+        this.forwardChunkSize = NullSafe.byteSize(forwardChunkSize);
         this.sslConfig = sslConfig;
     }
 
@@ -110,11 +113,14 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     }
 
     /**
-     * Chunk size to use over http(s) if not set requires buffer to be fully loaded into memory
+     * Chunk size in bytes to use over http(s).
+     * If set to zero, no chunking is used, so requires buffer to be fully loaded into memory,
+     * risking out of memory errors for large POSTs.
+     * Default is {@link ForwardHttpPostConfig#DEFAULT_CHUNK_SIZE_BYTES}.
+     * It can be parsed from IEC byte units, e.g. 5Kib, 10MiB, etc.
      */
-    @Min(0)
     @JsonProperty
-    public Integer getForwardChunkSize() {
+    public ByteSize getForwardChunkSize() {
         return forwardChunkSize;
     }
 
@@ -137,7 +143,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 forwardUrl,
                 StroomDuration.ofSeconds(30),
                 null,
-                null,
+                DEFAULT_CHUNK_SIZE_BYTES,
                 null);
     }
 
@@ -188,6 +194,10 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 '}';
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private boolean enabled;
@@ -196,7 +206,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         private String forwardUrl;
         private StroomDuration forwardTimeout;
         private StroomDuration forwardDelay;
-        private Integer forwardChunkSize;
+        private ByteSize forwardChunkSize;
         private SSLConfig sslConfig;
 
         public Builder() {
@@ -242,7 +252,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
             return this;
         }
 
-        public Builder forwardChunkSize(final Integer forwardChunkSize) {
+        public Builder forwardChunkSize(final ByteSize forwardChunkSize) {
             this.forwardChunkSize = forwardChunkSize;
             return this;
         }
