@@ -19,7 +19,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class User implements HasAuditInfo, HasIntegerId, UserName {
 
-    public static final String ADMIN_USER_NAME = "admin";
+    public static final String ADMIN_SUBJECT_ID = "admin";
 
     @JsonProperty
     private Integer id;
@@ -34,7 +34,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
     @JsonProperty
     private String updateUser;
     @JsonProperty
-    private String name;
+    private String subjectId;
     @JsonProperty
     private String uuid;
     @JsonProperty
@@ -58,7 +58,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
                 @JsonProperty("createUser") final String createUser,
                 @JsonProperty("updateTimeMs") final Long updateTimeMs,
                 @JsonProperty("updateUser") final String updateUser,
-                @JsonProperty("name") final String name,
+                @JsonProperty("subjectId") final String subjectId,
                 @JsonProperty("uuid") final String uuid,
                 @JsonProperty("group") final boolean group,
                 @JsonProperty("displayName") final String displayName,
@@ -69,7 +69,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
-        this.name = name;
+        this.subjectId = subjectId;
         this.uuid = uuid;
         this.group = group;
         this.displayName = displayName;
@@ -134,28 +134,28 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
     }
 
     /**
-     * <p>If this is a user then {@code name} is also the unique identifier for the user on the
+     * <p>If this is a user then {@code subjectId} is also the unique identifier for the user on the
      * OpenIdConnect IDP, i.e. the subject. The value may be a UUID or a more human friendly form
      * depending on the IDP in use (internal/external).</p>
      *
-     * <p>If {@code isGroup} is {@code true} then this is the unique name of the group.
-     * A group name is defined by the user so is likely to be human friendly.
+     * <p>If {@code isGroup} is {@code true} then this is the unique identifier of the group.
+     * A group identifier is defined by the user so is likely to be human friendly.
      * A user and a group can share the same name.</p>
      * @return The unique identifier for this user or group.
      */
-    public String getName() {
-        return name;
+    public String getSubjectId() {
+        return subjectId;
     }
 
     /**
-     * See {@link User#getName()}
+     * See {@link User#getSubjectId()}
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setSubjectId(String subjectId) {
+        this.subjectId = subjectId;
     }
 
     /**
-     * @return An optional, non-unique, more human friendly username for the user.
+     * @return An optional, potentially non-unique, more human friendly username for the user.
      * Will be null if this is a group or the IDP does not provide one
      * or one has not been set for the user.
      * Intended for display purposes only or to aid in identifying the user where {@code name}
@@ -194,7 +194,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
 
     /**
      * @return A globally unique identifier for identifying this user in other areas of stroom code.
-     * Unrelated to any UUID that an IDP may use to identify the user.
+     * Unrelated to any subjectId that an IDP may use to identify the user.
      * Unique across both users and groups, unlike {@code name}.
      */
     public String getUuid() {
@@ -220,7 +220,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
     }
 
     public UserName asUserName() {
-        return new SimpleUserName(name, displayName, fullName);
+        return new SimpleUserName(subjectId, displayName, fullName);
     }
 
     @Override
@@ -232,7 +232,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
                 ", createUser='" + createUser + '\'' +
                 ", updateTimeMs=" + updateTimeMs +
                 ", updateUser='" + updateUser + '\'' +
-                ", name='" + name + '\'' +
+                ", name='" + subjectId + '\'' +
                 ", uuid='" + uuid + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", fullName='" + fullName + '\'' +
@@ -277,7 +277,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         private String createUser;
         private Long updateTimeMs;
         private String updateUser;
-        private String name;
+        private String subjectId;
         private String uuid;
         private boolean group;
         private String displayName;
@@ -293,7 +293,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
             this.createUser = user.createUser;
             this.updateTimeMs = user.updateTimeMs;
             this.updateUser = user.updateUser;
-            this.name = user.name;
+            this.subjectId = user.subjectId;
             this.uuid = user.uuid;
             this.group = user.group;
             this.displayName = user.displayName;
@@ -310,8 +310,8 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
          * we may be using an external IDP but still using the internal IDP for processing user.
          * If isGroup is true then this is the name of the group.
          */
-        public Builder name(final String value) {
-            name = value;
+        public Builder subjectId(final String subjectId) {
+            this.subjectId = subjectId;
             return this;
         }
 
@@ -338,7 +338,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
                     createUser,
                     updateTimeMs,
                     updateUser,
-                    name,
+                    subjectId,
                     uuid,
                     group,
                     displayName,

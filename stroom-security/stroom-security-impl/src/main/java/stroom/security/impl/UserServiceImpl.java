@@ -67,12 +67,12 @@ class UserServiceImpl implements UserService {
     private User getOrCreate(final UserName name,
                              final boolean isGroup,
                              final Consumer<User> onCreateAction) {
-        final Optional<User> optional = userDao.getByName(name.getName(), isGroup);
+        final Optional<User> optional = userDao.getBySubjectId(name.getSubjectId(), isGroup);
         return optional.orElseGet(() -> {
             User user = new User();
             AuditUtil.stamp(securityContext, user);
             user.setUuid(UUID.randomUUID().toString());
-            user.setName(name.getName());
+            user.setSubjectId(name.getSubjectId());
             user.setDisplayName(name.getDisplayName());
             user.setFullName(name.getFullName());
             user.setGroup(isGroup);
@@ -92,10 +92,10 @@ class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getUserByName(final String name) {
         if (!NullSafe.isBlankString(name)) {
-            return userDao.getByName(name)
+            return userDao.getBySubjectId(name)
                     .filter(user -> {
                         // TODO: 23/03/2023 Why is this here?
-                        if (!user.getName().equals(name)) {
+                        if (!user.getSubjectId().equals(name)) {
                             throw new RuntimeException(
                                     "Unexpected: returned user name does not match requested user name");
                         }
@@ -199,7 +199,7 @@ class UserServiceImpl implements UserService {
 
         } else {
             userSet = new HashSet<>();
-            getUserByName(securityContext.getUserId())
+            getUserByName(securityContext.getSubjectId())
                     .ifPresent(user -> {
                         userSet.add(user);
 
@@ -224,7 +224,7 @@ class UserServiceImpl implements UserService {
         EntityEvent.fire(
                 eventBus,
                 DocRef.builder()
-                        .name(user.getName())
+                        .name(user.getSubjectId())
                         .uuid(user.getUuid())
                         .type(UserDocRefUtil.USER)
                         .build(),

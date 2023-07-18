@@ -27,13 +27,13 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
     public BasicUserIdentity(final User user) {
         Objects.requireNonNull(user);
         this.userUuid = user.getUuid();
-        this.id = user.getName(); // User.name is the unique identifier. User.id is the DB PK.
+        this.id = user.getSubjectId(); // User.name is the unique identifier. User.id is the DB PK.
         this.displayName = user.getDisplayName();
         this.fullName = user.getFullName();
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return id;
     }
 

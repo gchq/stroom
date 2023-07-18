@@ -36,7 +36,7 @@ public class InternalIdpProcessingUserIdentity implements UserIdentity, HasJwt {
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return INTERNAL_PROCESSING_USER;
     }
 
@@ -54,16 +54,16 @@ public class InternalIdpProcessingUserIdentity implements UserIdentity, HasJwt {
             return false;
         }
         final InternalIdpProcessingUserIdentity that = (InternalIdpProcessingUserIdentity) o;
-        return Objects.equals(getId(), that.getId());
+        return Objects.equals(getSubjectId(), that.getSubjectId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId());
+        return Objects.hash(getSubjectId());
     }
 
     @Override
     public String toString() {
-        return getId();
+        return getSubjectId();
     }
 }

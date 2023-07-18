@@ -445,7 +445,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     protected void addTokenToRefreshQueue(final UpdatableToken updatableToken) {
         if (updatableToken != null) {
             LOGGER.debug(() -> LogUtil.message("Adding token for user: {} to the refresh queue, token: {}, delay: {}",
-                    NullSafe.get(updatableToken, UpdatableToken::getUserIdentity, UserIdentity::getId),
+                    NullSafe.get(updatableToken, UpdatableToken::getUserIdentity, UserIdentity::getSubjectId),
                     updatableToken,
                     Duration.ofMillis(updatableToken.getDelay(TimeUnit.MILLISECONDS))));
             updatableTokensDelayQueue.add(updatableToken);
@@ -545,7 +545,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             case NO_IDP:
                 return new UserIdentity() {
                     @Override
-                    public String getId() {
+                    public String getSubjectId() {
                         return "NO_IDP SERVICE USER";
                     }
                 };

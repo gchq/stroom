@@ -218,7 +218,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         info(LOGGER, msg);
 
         try {
-            userService.getUserByName(userName.getName())
+            userService.getUserByName(userName.getSubjectId())
                     .ifPresentOrElse(
                             user -> {
                                 final String outcomeMsg = LogUtil.message("User '{}' already exists", userName);
@@ -517,7 +517,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
         // For some reason IJ doesn't like event.logging.User.builder()
         createEventActionBuilder.addUser(User.builder()
-                .withId(username.getName())
+                .withId(username.getSubjectId())
                 .withName(username.getDisplayName())
                 .build());
 

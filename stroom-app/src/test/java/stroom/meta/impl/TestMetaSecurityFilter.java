@@ -93,7 +93,7 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
             documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
-            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+            securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                 final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
                         DocumentPermissionNames.USE,
                         FEED_FIELDS);

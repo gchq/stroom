@@ -227,10 +227,10 @@ public class AnnotationEditPresenter
     private boolean hasChanged(final UserName oldValue, final UserName newValue) {
         final String oldName =
                 oldValue != null
-                        ? oldValue.getName()
+                        ? oldValue.getSubjectId()
                         : null;
         final String newName = newValue != null
-                ? newValue.getName()
+                ? newValue.getSubjectId()
                 : null;
         GWT.log("oldName: " + oldName + " newName: " + newName);
         return !Objects.equals(oldName, newName);

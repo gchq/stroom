@@ -50,7 +50,7 @@ public class UserIdentityImpl
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return id;
     }
 

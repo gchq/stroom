@@ -54,12 +54,12 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public String getUserId() {
+    public String getSubjectId() {
         final UserIdentity userIdentity = getUserIdentity();
         if (userIdentity == null) {
             return null;
         }
-        return userIdentity.getId();
+        return userIdentity.getSubjectId();
     }
 
     @Override
@@ -77,12 +77,12 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String userId) {
-        Objects.requireNonNull(userId, "Null user id provided");
+    public UserIdentity createIdentity(final String subjectId) {
+        Objects.requireNonNull(subjectId, "Null user id provided");
         // Inject as provider to avoid circular dep issues
-        return userCacheProvider.get().getOrCreate(userId)
+        return userCacheProvider.get().getOrCreate(subjectId)
                 .map(BasicUserIdentity::new)
-                .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + userId));
+                .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + subjectId));
     }
 
     @Override
@@ -314,7 +314,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asAdminUserResult(final Supplier<T> supplier) {
-        return asUserResult(createIdentity(User.ADMIN_USER_NAME), supplier);
+        return asUserResult(createIdentity(User.ADMIN_SUBJECT_ID), supplier);
     }
 
     /**
@@ -322,7 +322,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asAdminUser(final Runnable runnable) {
-        asUser(createIdentity(User.ADMIN_USER_NAME), runnable);
+        asUser(createIdentity(User.ADMIN_SUBJECT_ID), runnable);
     }
 
     /**

@@ -63,7 +63,7 @@ public class SessionResourceImpl implements SessionResource {
         Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
         userIdentity = openIdManager.getOrSetSessionUser(request, userIdentity);
         if (userIdentity.isPresent()) {
-            return new ValidateSessionResponse(true, userIdentity.get().getId(), null);
+            return new ValidateSessionResponse(true, userIdentity.get().getSubjectId(), null);
         }
 
         if (!authenticationConfig.isAuthenticationRequired()) {
@@ -87,7 +87,7 @@ public class SessionResourceImpl implements SessionResource {
                 userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
                 return userIdentity
                         .map(identity ->
-                                new ValidateSessionResponse(true, identity.getId(), null))
+                                new ValidateSessionResponse(true, identity.getSubjectId(), null))
                         .orElseGet(() ->
                                 new ValidateSessionResponse(false, null, redirectUri));
 
@@ -123,7 +123,7 @@ public class SessionResourceImpl implements SessionResource {
             // Record the logoff event.
             userIdentity.ifPresent(ui -> {
                 // Create an event for logout
-                authenticationEventLogProvider.get().logoff(ui.getId());
+                authenticationEventLogProvider.get().logoff(ui.getSubjectId());
             });
 
             // Remove the user identity from the current session.

@@ -15,34 +15,34 @@ import java.util.Objects;
  */
 @JsonInclude(Include.NON_NULL)
 public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIdentity, UserName {
-    private static final Comparator<UserName> COMPARATOR = Comparator.comparing(UserName::getName);
+    private static final Comparator<UserName> COMPARATOR = Comparator.comparing(UserName::getSubjectId);
 
     @JsonProperty
-    private String name;
+    private final String subjectId;
     @JsonProperty
-    private String displayName;
+    private final String displayName;
     @JsonProperty
-    private String fullName;
+    private final String fullName;
 
     @JsonCreator
-    public SimpleUserName(@JsonProperty("name") final String name,
+    public SimpleUserName(@JsonProperty("subjectId") final String subjectId,
                           @JsonProperty("displayName") final String displayName,
                           @JsonProperty("fullName") final String fullName) {
-        if (name == null || name.trim().length() == 0) {
-            throw new RuntimeException("User unique identity must have a value");
+        if (subjectId == null || subjectId.trim().length() == 0) {
+            throw new RuntimeException("subjectId must have a value");
         }
-        this.name = Objects.requireNonNull(name);
+        this.subjectId = Objects.requireNonNull(subjectId);
         this.displayName = displayName;
         this.fullName = fullName;
     }
 
-    public SimpleUserName(final String name) {
-        this(name, null, null);
+    public SimpleUserName(final String subjectId) {
+        this(subjectId, null, null);
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getSubjectId() {
+        return subjectId;
     }
 
     @Override
@@ -58,7 +58,7 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
     @Override
     @JsonIgnore
     public String getUserIdentityForAudit() {
-        return HasAuditableUserIdentity.fromUserNames(name, displayName);
+        return HasAuditableUserIdentity.fromUserNames(subjectId, displayName);
     }
 
     @Override
@@ -79,12 +79,12 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
             return false;
         }
         final SimpleUserName userName = (SimpleUserName) o;
-        return name.equals(userName.name);
+        return subjectId.equals(userName.subjectId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(subjectId);
     }
 
     public Builder copy() {
@@ -114,7 +114,7 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
         }
 
         private Builder(final SimpleUserName username) {
-            this.name = username.name;
+            this.name = username.subjectId;
             this.displayName = username.getDisplayName();
             this.fullName = username.getFullName();
         }

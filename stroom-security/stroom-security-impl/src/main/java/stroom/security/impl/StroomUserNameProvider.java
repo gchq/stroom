@@ -40,8 +40,8 @@ class StroomUserNameProvider implements UserNameProvider {
     }
 
     @Override
-    public Optional<UserName> getByUserId(final String userId) {
-        return userCache.get(userId)
+    public Optional<UserName> getBySubjectId(final String subjectId) {
+        return userCache.get(subjectId)
                 .map(User::asUserName);
     }
 

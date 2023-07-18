@@ -332,7 +332,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         final AuthStateImpl authState = getAuthState(request);
         final boolean forceSignIn = shouldForceSignIn(authState);
 
-        final String loggedInUser = securityContext.getUserId();
+        final String loggedInUser = securityContext.getSubjectId();
         PasswordPolicyConfig conf = config.getPasswordPolicyConfig();
 
         PasswordValidator.validateLength(resetPasswordRequest.getNewPassword(), conf.getMinimumPasswordLength());

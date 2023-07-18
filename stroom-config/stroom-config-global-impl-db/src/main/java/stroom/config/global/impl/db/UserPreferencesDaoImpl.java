@@ -57,6 +57,7 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
             final String dat = mapper.writeValueAsString(userPreferences);
             final long now = System.currentTimeMillis();
 
+            // TODO: 18/07/2023 Change to userUuid
             return JooqUtil.contextResult(connProvider, context -> {
                 final Optional<Integer> optionalId = context
                         .select(PREFERENCES.ID)

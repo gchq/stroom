@@ -14,7 +14,7 @@ public class NodeCallException extends RuntimeException {
     }
 
     public NodeCallException(final String nodeName, final String url, final Throwable throwable) {
-        super(LogUtil.message("Unable to connect to node {} at url {}: {}",
+        super(LogUtil.message("Unable to connect to node '{}' at url '{}': {}",
                 nodeName, url, throwable.getMessage()), throwable);
         this.nodeName = nodeName;
         this.url = url;

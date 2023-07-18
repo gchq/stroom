@@ -52,7 +52,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
         rest
                 .onSuccess(sessionInfo -> {
                     final UserName userName = sessionInfo.getUserName();
-                    view.getUserIdentity().setText(userName.getName());
+                    view.getUserIdentity().setText(userName.getSubjectId());
                     view.getDisplayName().setText(userName.getDisplayName());
                     view.getFullName().setText(userName.getFullName());
 
@@ -84,6 +84,10 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
         return WELCOME;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface WelcomeView extends View {
 
         void setHTML(String html);
@@ -101,7 +105,5 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
         HasText getDisplayName();
 
         HasText getFullName();
-
-        HasText getRoleName();
     }
 }

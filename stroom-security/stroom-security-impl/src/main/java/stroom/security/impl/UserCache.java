@@ -44,11 +44,11 @@ class UserCache implements Clearable, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserCache.class);
 
-    private static final String CACHE_NAME_BY_NAME = "User Cache";
-    private static final String CACHE_NAME_BY_DISPLAY_NAME = "User Display Name Cache";
+    private static final String CACHE_NAME_BY_SUBJECT_ID = "User Cache (by Unique Identifier)";
+    private static final String CACHE_NAME_BY_DISPLAY_NAME = "User Cache (by Display Name)";
 
     private final AuthenticationService authenticationService;
-    private final LoadingStroomCache<String, Optional<User>> cacheByName;
+    private final LoadingStroomCache<String, Optional<User>> cacheBySubjectId;
     private final LoadingStroomCache<String, Optional<User>> cacheByDisplayName;
 
     @Inject
@@ -58,11 +58,11 @@ class UserCache implements Clearable, EntityEvent.Handler {
               final UserService userService) {
         this.authenticationService = authenticationService;
 
-        cacheByName = cacheManager.createLoadingCache(
-                CACHE_NAME_BY_NAME,
+        cacheBySubjectId = cacheManager.createLoadingCache(
+                CACHE_NAME_BY_SUBJECT_ID,
                 () -> authorisationConfigProvider.get().getUserCache(),
                 name -> {
-                    LOGGER.debug("Loading user '{}' into cache '{}'", name, CACHE_NAME_BY_NAME);
+                    LOGGER.debug("Loading user '{}' into cache '{}'", name, CACHE_NAME_BY_SUBJECT_ID);
                     return authenticationService.getUser(name);
                 });
 
@@ -76,8 +76,8 @@ class UserCache implements Clearable, EntityEvent.Handler {
                 });
     }
 
-    private Optional<User> getOrCreateUser(final String name) {
-        return Optional.ofNullable(authenticationService.getOrCreateUser(name));
+    private Optional<User> getOrCreateUser(final String subjectId) {
+        return Optional.ofNullable(authenticationService.getOrCreateUser(subjectId));
     }
 
     /**
@@ -89,11 +89,11 @@ class UserCache implements Clearable, EntityEvent.Handler {
         if (NullSafe.isBlankString(name)) {
             return Optional.empty();
         } else {
-            Optional<User> optUser = cacheByName.get(name);
+            Optional<User> optUser = cacheBySubjectId.get(name);
             if (optUser.isEmpty()) {
                 optUser = getOrCreateUser(name);
                 if (optUser.isPresent()) {
-                    cacheByName.put(name, optUser);
+                    cacheBySubjectId.put(name, optUser);
                 }
             }
             return optUser;
@@ -107,7 +107,7 @@ class UserCache implements Clearable, EntityEvent.Handler {
         if (NullSafe.isBlankString(name)) {
             return Optional.empty();
         } else {
-            return cacheByName.get(name);
+            return cacheBySubjectId.get(name);
         }
     }
 
@@ -120,22 +120,22 @@ class UserCache implements Clearable, EntityEvent.Handler {
             return Optional.empty();
         } else {
             return cacheByDisplayName.get(displayName)
-                    .or(() -> cacheByName.get(displayName));
+                    .or(() -> cacheBySubjectId.get(displayName));
         }
     }
 
     @Override
     public void clear() {
-        cacheByName.clear();
+        cacheBySubjectId.clear();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         final Consumer<DocRef> docRefConsumer = docRef -> {
             if (docRef.getName() != null) {
-                cacheByName.invalidate(docRef.getName());
+                cacheBySubjectId.invalidate(docRef.getName());
             } else {
-                cacheByName.invalidateEntries((userName, user) ->
+                cacheBySubjectId.invalidateEntries((userName, user) ->
                         user.isPresent() && Objects.equals(
                                 docRef.getUuid(),
                                 user.get().getUuid()));

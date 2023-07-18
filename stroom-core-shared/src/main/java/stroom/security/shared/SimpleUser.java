@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class SimpleUser {
 
     @JsonProperty
-    private String name;
+    private String subjectId;
     @JsonProperty
     private String uuid;
     @JsonProperty
@@ -23,34 +23,34 @@ public class SimpleUser {
 
     public SimpleUser(final User user) {
         this.uuid = user.getUuid();
-        this.name = user.getName();
+        this.subjectId = user.getSubjectId();
         this.displayName = user.getDisplayName();
         this.fullName = user.getFullName();
     }
 
     @JsonCreator
-    public SimpleUser(@JsonProperty("name") final String name,
+    public SimpleUser(@JsonProperty("subjectId") final String subjectId,
                       @JsonProperty("uuid") final String uuid,
                       @JsonProperty("displayName") final String displayName,
                       @JsonProperty("fullName") final String fullName) {
-        this.name = name;
+        this.subjectId = subjectId;
         this.uuid = uuid;
         this.displayName = displayName;
         this.fullName = fullName;
     }
 
     /**
-     * See {@link User#getName()}
+     * See {@link User#getSubjectId()}
      */
-    public String getName() {
-        return name;
+    public String getSubjectId() {
+        return subjectId;
     }
 
     /**
-     * See {@link User#getName()}
+     * See {@link User#getSubjectId()}
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setSubjectId(String subjectId) {
+        this.subjectId = subjectId;
     }
 
     /**
@@ -98,7 +98,7 @@ public class SimpleUser {
     @Override
     public String toString() {
         return "SimpleUser{" +
-                "name='" + name + '\'' +
+                "name='" + subjectId + '\'' +
                 ", uuid='" + uuid + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", fullName='" + fullName + '\'' +
@@ -119,7 +119,7 @@ public class SimpleUser {
 
     public static final class Builder {
 
-        private String name;
+        private String subjectId;
         private String uuid;
         private String displayName;
         private String fullName;
@@ -128,41 +128,41 @@ public class SimpleUser {
         }
 
         private Builder(final User user) {
-            this.name = user.getName();
+            this.subjectId = user.getSubjectId();
             this.uuid = user.getUuid();
             this.displayName = user.getDisplayName();
             this.fullName = user.getFullName();
         }
 
         private Builder(final SimpleUser user) {
-            this.name = user.name;
+            this.subjectId = user.subjectId;
             this.uuid = user.uuid;
             this.displayName = user.getDisplayName();
             this.fullName = user.getFullName();
         }
 
-        public Builder name(final String value) {
-            name = value;
+        public Builder subjectId(final String subjectId) {
+            this.subjectId = subjectId;
             return this;
         }
 
-        public Builder uuid(final String value) {
-            uuid = value;
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
             return this;
         }
 
-        public Builder displayName(final String value) {
-            displayName = value;
+        public Builder displayName(final String displayName) {
+            this.displayName = displayName;
             return this;
         }
 
-        public Builder fullName(final String value) {
-            fullName = value;
+        public Builder fullName(final String fullName) {
+            this.fullName = fullName;
             return this;
         }
 
         public SimpleUser build() {
-            return new SimpleUser(name, uuid, displayName, fullName);
+            return new SimpleUser(subjectId, uuid, displayName, fullName);
         }
     }
 }

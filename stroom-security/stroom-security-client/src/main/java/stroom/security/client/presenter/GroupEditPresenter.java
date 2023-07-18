@@ -63,7 +63,7 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
                         .resizable(true)
                         .build())
                 .build();
-        final String caption = "Group - " + userRef.getName();
+        final String caption = "Group - " + userRef.getSubjectId();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)

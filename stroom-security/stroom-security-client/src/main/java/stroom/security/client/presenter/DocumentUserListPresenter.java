@@ -77,7 +77,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     public void setDocumentPermissions(final List<User> userList, final boolean isGroup) {
 
         GWT.log("Setting userList: "
-                + userList.stream().map(User::getName).collect(Collectors.joining(", ")));
+                + userList.stream().map(User::getSubjectId).collect(Collectors.joining(", ")));
 
         this.isGroup = isGroup;
         this.uuidToUserMap = userList == null
@@ -111,7 +111,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         final User selected = getSelectionModel().getSelected();
         getSelectionModel().clear();
 
-        users.sort(Comparator.comparing(User::getName));
+        users.sort(Comparator.comparing(User::getSubjectId));
 
         getDataGrid().setRowData(0, users);
         getDataGrid().setRowCount(users.size());

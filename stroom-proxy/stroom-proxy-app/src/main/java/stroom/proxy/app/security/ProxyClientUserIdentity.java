@@ -29,7 +29,7 @@ public class ProxyClientUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return id;
     }
 

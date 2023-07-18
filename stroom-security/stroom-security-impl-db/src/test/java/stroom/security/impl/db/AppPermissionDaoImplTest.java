@@ -63,7 +63,7 @@ class AppPermissionDaoImplTest {
 
     private User createUser(final String name) {
         User user = User.builder()
-                .name(name)
+                .subjectId(name)
                 .uuid(UUID.randomUUID().toString())
                 .build();
         AuditUtil.stamp(() -> "test", user);

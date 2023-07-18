@@ -30,6 +30,7 @@ public class ResultStoreModel {
     private final FindResultStoreCriteria criteria = new FindResultStoreCriteria();
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
+    // nodeName => List<ResultStoreInfo>
     private final Map<String, List<ResultStoreInfo>> responseMap = new HashMap<>();
     private final DelayedUpdate delayedUpdate;
     private Range range;

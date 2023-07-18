@@ -17,6 +17,7 @@
 package stroom.security.client.presenter;
 
 import stroom.cell.info.client.SvgCell;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -97,14 +98,14 @@ public abstract class AbstractUserListPresenter
                 return SvgPresets.USER_GROUP;
             }
         };
-        dataGrid.addColumn(iconCol, "</br>", 20);
+        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
         columns.add(iconCol);
 
         // Name.
         final Column<User, String> uniqueIdentityCol = new Column<User, String>(new TextCell()) {
             @Override
             public String getValue(final User userRef) {
-                return userRef.getName();
+                return userRef.getSubjectId();
             }
         };
         final String nameColName = includeAdditionalUserInfo()

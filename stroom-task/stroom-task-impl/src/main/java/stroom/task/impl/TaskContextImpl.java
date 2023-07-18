@@ -77,7 +77,7 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
         if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
             logger.debug("Task stack: {}, user: {}, task: {}, info: {}",
                     getTaskHierarchy(),
-                    NullSafe.get(userIdentity, UserIdentity::getId),
+                    NullSafe.get(userIdentity, UserIdentity::getSubjectId),
                     name,
                     messageSupplier.get());
         }
@@ -142,7 +142,7 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
     }
 
     String getUserId() {
-        return userIdentity.getId();
+        return userIdentity.getSubjectId();
     }
 
     @Override

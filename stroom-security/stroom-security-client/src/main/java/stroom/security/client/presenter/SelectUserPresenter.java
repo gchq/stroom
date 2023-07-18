@@ -104,7 +104,7 @@ public class SelectUserPresenter
         dataGrid.addResizableColumn(new Column<UserName, String>(new TextCell()) {
             @Override
             public String getValue(final UserName userRef) {
-                return userRef.getName();
+                return userRef.getSubjectId();
             }
         }, "User ID", 350);
 

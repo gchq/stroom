@@ -13,7 +13,7 @@ public interface UserNameService {
     /**
      * <p>This will look up a user using their unique identifier.</p>
      */
-    Optional<UserName> getByUserId(final String userId);
+    Optional<UserName> getBySubjectId(final String subjectId);
 
     /**
      * <p>This will look up a user using the display name as seen in the UI. If a user cannot be found

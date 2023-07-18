@@ -29,7 +29,7 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
         protected static final String INTERNAL_PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
 
         @Override
-        public String getId() {
+        public String getSubjectId() {
             return INTERNAL_PROCESSING_USER_ID;
         }
 
@@ -42,17 +42,17 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
                 return false;
             }
             final MockProcessingUserIdentity that = (MockProcessingUserIdentity) o;
-            return Objects.equals(getId(), that.getId());
+            return Objects.equals(getSubjectId(), that.getSubjectId());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getId());
+            return Objects.hash(getSubjectId());
         }
 
         @Override
         public String toString() {
-            return getId();
+            return getSubjectId();
         }
     }
 }

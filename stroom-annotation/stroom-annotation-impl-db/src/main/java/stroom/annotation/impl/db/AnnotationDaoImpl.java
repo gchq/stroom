@@ -100,7 +100,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         expressionMapper.map(AnnotationFields.STATUS_FIELD, ANNOTATION.STATUS, value -> value);
         expressionMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, displayName ->
                 userNameService.getByDisplayName(displayName)
-                        .map(UserName::getName)
+                        .map(UserName::getSubjectId)
                         .orElse(null));
         expressionMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, value -> value);
         expressionMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, value -> value);
@@ -253,7 +253,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                     user,
                     now,
                     Annotation.ASSIGNED_TO,
-                    annotation.getAssignedTo().getName());
+                    annotation.getAssignedTo().getSubjectId());
             createEntry(annotation.getId(), user, now, Annotation.COMMENT, annotation.getComment());
 
             final long annotationId = annotation.getId();
@@ -466,7 +466,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                 user,
                 Annotation.ASSIGNED_TO,
                 ANNOTATION.ASSIGNED_TO,
-                request.getAssignedTo().getName());
+                request.getAssignedTo().getSubjectId());
     }
 
     private Integer changeFields(final List<Long> annotationIdList,
@@ -571,14 +571,14 @@ class AnnotationDaoImpl implements AnnotationDao {
         if (NullSafe.isBlankString(dbUser)) {
             return null;
         } else {
-            return userNameService.getByUserId(dbUser)
+            return userNameService.getBySubjectId(dbUser)
                     .orElseThrow(() -> new RuntimeException(LogUtil.message(
                             "Expecting userId '{}' to exist but it doesn't", dbUser)));
         }
     }
 
     private String mapUserNameToDbUser(final UserName userName) {
-        return NullSafe.get(userName, UserName::getName);
+        return NullSafe.get(userName, UserName::getSubjectId);
     }
 
     private Condition createCondition(final ExpressionOperator expression) {

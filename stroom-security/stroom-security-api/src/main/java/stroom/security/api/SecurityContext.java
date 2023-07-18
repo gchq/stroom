@@ -17,6 +17,8 @@
 package stroom.security.api;
 
 import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
 import java.util.function.Supplier;
 
@@ -29,7 +31,7 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      *
      * @return The id of the user associated with this security context.
      */
-    String getUserId();
+    String getSubjectId();
 
     /**
      * Retrieve the user's UUID if supported by the type of user.
@@ -40,7 +42,7 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     /**
      * @return The user identity in a form suitable for use in audit events, for display
      * in the UI, or in exception messages. Returns {@link UserIdentity#getDisplayName()} or
-     * if that is not set {@link UserIdentity#getId()}.
+     * if that is not set {@link UserIdentity#getSubjectId()}.
      */
     default String getUserIdentityForAudit() {
         final UserIdentity userIdentity = getUserIdentity();
@@ -61,7 +63,7 @@ public interface SecurityContext extends HasAuditableUserIdentity {
         return userIdentity.getCombinedName();
     }
 
-    UserIdentity createIdentity(String userId);
+    UserIdentity createIdentity(String subjectId);
 
     /**
      * Gets the identity of the current user.
@@ -69,6 +71,14 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * @return The identity of the current user.
      */
     UserIdentity getUserIdentity();
+
+    default UserName getUserName() {
+        return new SimpleUserName(
+                getSubjectId(),
+//                getUserUuid(),
+                getUserIdentity().getDisplayName(),
+                getUserIdentity().getFullName().orElse(null));
+    }
 
     /**
      * Check if the user associated with this security context is logged in.

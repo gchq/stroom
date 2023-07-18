@@ -156,7 +156,7 @@ class ContentServiceImpl implements ContentService {
         final ExportConfig exportConfig = exportConfigProvider.get();
         if (!exportConfig.isEnabled()) {
             LOGGER.warn("Attempt by user '{}' to export all data when {} is not enabled.",
-                    securityContext.getUserId(),
+                    securityContext.getSubjectId(),
                     exportConfig.getFullPathStr(ExportConfig.ENABLED_PROP_NAME));
             throw new PermissionException(securityContext.getUserIdentityForAudit(), "Export is not enabled");
         }

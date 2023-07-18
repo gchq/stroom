@@ -1138,7 +1138,7 @@ public class DataFetcher {
                 final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
                 final ErrorReceiverProxy errorReceiverProxy = errorReceiverProxyProvider.get();
                 currentUserHolderProvider.get()
-                        .setCurrentUser(securityContext.getUserIdentityForAudit());
+                        .setCurrentUser(securityContext.getUserIdentity().getDisplayName());
 
                 final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
                 errorReceiverProxy.setErrorReceiver(errorReceiver);

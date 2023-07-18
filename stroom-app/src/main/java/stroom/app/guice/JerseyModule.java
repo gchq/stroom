@@ -90,7 +90,7 @@ public class JerseyModule extends AbstractModule {
                         // We are running as a user who is not the service/proc user so need to put their
                         // identity in the headers. We can't use the human user identity as they may have
                         // an AWS token that we can't refresh.
-                        builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, userIdentity.getId());
+                        builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, userIdentity.getSubjectId());
                     }
                     // Always authenticate as the proc user
                     final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();

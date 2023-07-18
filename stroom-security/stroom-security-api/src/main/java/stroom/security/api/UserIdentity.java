@@ -1,10 +1,15 @@
 package stroom.security.api;
 
 import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents the identity of a user for authentication purposes.
+ */
 public interface UserIdentity extends HasAuditableUserIdentity {
 
     /**
@@ -13,14 +18,14 @@ public interface UserIdentity extends HasAuditableUserIdentity {
      * These values are often UUIDs and thus not pretty to look at for an admin.
      * For the internal IDP this would likely be a more human friendly username.
      */
-    String getId();
+    String getSubjectId();
 
     /**
      * @return The non-unique username for the user, e.g. 'jbloggs'. In the absence of a specific
-     * value this should just return the id.
+     * value this should just return the subjectId.
      */
     default String getDisplayName() {
-        return getId();
+        return getSubjectId();
     }
 
     /**
@@ -38,7 +43,7 @@ public interface UserIdentity extends HasAuditableUserIdentity {
      */
     default String getCombinedName() {
         // This logic is replicated in UserName
-        final String id = getId();
+        final String id = getSubjectId();
         final String displayName = getDisplayName();
         if (displayName == null) {
             return id;
@@ -51,7 +56,7 @@ public interface UserIdentity extends HasAuditableUserIdentity {
 
     @Override
     default String getUserIdentityForAudit() {
-        return HasAuditableUserIdentity.fromUserNames(getId(), getDisplayName());
+        return HasAuditableUserIdentity.fromUserNames(getSubjectId(), getDisplayName());
     }
 
     // TODO: 28/11/2022 Potentially worth introducing scopes, e.g. a datafeed scope so only tokens
@@ -65,4 +70,13 @@ public interface UserIdentity extends HasAuditableUserIdentity {
 //    default Set<String> getScopes() {
 //        return Collections.emptySet();
 //    };
+
+    default UserName asUserName() {
+        final String subjectId = getSubjectId();
+        String displayName = getDisplayName();
+        if (Objects.equals(displayName, subjectId)) {
+            displayName = null;
+        }
+        return new SimpleUserName(subjectId, displayName, getFullName().orElse(null));
+    }
 }

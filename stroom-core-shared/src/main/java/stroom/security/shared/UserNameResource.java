@@ -43,5 +43,5 @@ public interface UserNameResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Find the user name matching the supplied unique user ID",
             operationId = "getByUserId")
-    UserName getByUserId(final String userId);
+    UserName getBySubjectId(final String subjectId);
 }

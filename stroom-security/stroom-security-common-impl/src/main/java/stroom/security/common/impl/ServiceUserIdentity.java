@@ -25,7 +25,7 @@ public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasUpdat
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return id;
     }
 

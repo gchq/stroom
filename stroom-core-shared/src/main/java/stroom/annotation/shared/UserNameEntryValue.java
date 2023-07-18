@@ -38,7 +38,7 @@ public class UserNameEntryValue implements EntryValue {
     @Override
     public String asPersistedValue() {
         return userName != null
-                ? userName.getName()
+                ? userName.getSubjectId()
                 : null;
     }
 

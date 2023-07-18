@@ -93,7 +93,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         return NullSafe.get(
                 securityContext.getUserIdentity(),
                 userIdentity -> new SimpleUserName(
-                        userIdentity.getId(),
+                        userIdentity.getSubjectId(),
                         userIdentity.getDisplayName(),
                         userIdentity.getFullName().orElse(null)));
     }

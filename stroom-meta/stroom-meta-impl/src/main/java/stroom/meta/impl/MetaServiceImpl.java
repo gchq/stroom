@@ -668,7 +668,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                                                                       final FindDataRetentionImpactCriteria criteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () -> {
 
-            final String userId = securityContext.getUserId();
+            final String userId = securityContext.getSubjectId();
 
             List<DataRetentionDeleteSummary> summaries;
             try {
@@ -719,7 +719,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public boolean cancelRetentionDeleteSummary(final String queryId) {
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
-                userQueryRegistry.terminateQuery(securityContext.getUserId(), queryId, taskManager));
+                userQueryRegistry.terminateQuery(securityContext.getSubjectId(), queryId, taskManager));
     }
 
     @Override

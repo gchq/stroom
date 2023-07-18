@@ -120,8 +120,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                                          final HttpServletRequest request,
                                                          final TokenResponse tokenResponse) {
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-        final String uniqueId = getUniqueIdentity(jwtClaims);
-        final Optional<User> optUser = userCache.getOrCreate(uniqueId);
+        final String subjectId = getUniqueIdentity(jwtClaims);
+        final Optional<User> optUser = userCache.getOrCreate(subjectId);
 
         return optUser
                 .flatMap(user -> {
@@ -131,7 +131,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                     return Optional.of(userIdentity);
                 })
                 .or(() -> {
-                    throw new AuthenticationException("Unable to find user: " + uniqueId);
+                    throw new AuthenticationException("Unable to find user: " + subjectId);
                 });
     }
 
@@ -223,7 +223,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                       final String fullName) {
         final StringBuilder sb = new StringBuilder()
                 .append("Updating IDP user info for user with name/subject: ")
-                .append(persistedUser.getName());
+                .append(persistedUser.getSubjectId());
 
         if (!Objects.equals(currentDisplayName, displayName)) {
             sb.append(", displayName: '")
@@ -258,7 +258,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
         final UserIdentity userIdentity = new UserIdentityImpl(
                 user.getUuid(),
-                user.getName(),
+                user.getSubjectId(),
                 user.getDisplayName(),
                 user.getFullName(),
                 session,

@@ -39,8 +39,6 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     @UiField
     Label fullName;
     @UiField
-    Label roleName;
-    @UiField
     Label buildVersion;
     @UiField
     Label buildDate;
@@ -99,10 +97,9 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
         return fullName;
     }
 
-    @Override
-    public HasText getRoleName() {
-        return roleName;
-    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, WelcomeViewImpl> {
 

@@ -130,7 +130,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             // Use both ID and username as the ID will likely be a nasty UUID while the username will be more
             // useful for a human to read.
             optUserIdentity.ifPresent(userIdentity -> {
-                NullSafe.consume(userIdentity.getId(), id ->
+                NullSafe.consume(userIdentity.getSubjectId(), id ->
                         attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
                 NullSafe.consume(userIdentity.getDisplayName(), username ->
                         attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));

@@ -39,10 +39,10 @@ public class UserNameServiceImpl implements UserNameService {
     }
 
     @Override
-    public Optional<UserName> getByUserId(final String userId) {
+    public Optional<UserName> getBySubjectId(final String subjectId) {
         return userNameProviders.stream()
                 .map(provider ->
-                        provider.getByUserId(userId))
+                        provider.getBySubjectId(subjectId))
                 .filter(Optional::isPresent)
                 .findAny()
                 .flatMap(optOptUserName -> optOptUserName);

@@ -70,9 +70,9 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     }
 
     @Override
-    public Optional<UserName> getByUserId(final String userId) {
+    public Optional<UserName> getBySubjectId(final String subjectId) {
         if (shouldProvideNames()) {
-            return accountDao.get(userId)
+            return accountDao.get(subjectId)
                     .map(this::mapAccountToUserName);
         } else {
             return Optional.empty();
@@ -82,7 +82,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     @Override
     public Optional<UserName> getByDisplayName(final String displayName) {
         // Accounts have no concept of displayName so just get by userId
-        return getByUserId(displayName);
+        return getBySubjectId(displayName);
     }
 
     private UserName mapAccountToUserName(final Account account) {
@@ -114,7 +114,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
         validateCreateRequest(request);
 
         // Validate
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
 
         final long now = System.currentTimeMillis();
 
@@ -139,7 +139,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     @Override
     public Optional<Account> read(final int accountId) {
-        final String loggedInUser = securityContext.getUserId();
+        final String loggedInUser = securityContext.getSubjectId();
 
         Optional<Account> optionalUser = accountDao.get(accountId);
         if (optionalUser.isPresent()) {
@@ -178,7 +178,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 //        userToUpdate.setEnabled(isEnabled);
 //        securityUserService.update(userToUpdate);
 
-        final String loggedInUser = securityContext.getUserId();
+        final String loggedInUser = securityContext.getSubjectId();
         final Account account = request.getAccount();
         account.setUpdateUser(loggedInUser);
         account.setUpdateTimeMs(System.currentTimeMillis());

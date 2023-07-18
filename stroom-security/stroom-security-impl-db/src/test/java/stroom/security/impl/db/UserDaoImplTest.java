@@ -41,7 +41,7 @@ class UserDaoImplTest {
         final User userCreated = createUser(userName, false);
         assertThat(userCreated).isNotNull();
         final Optional<User> foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final Optional<User> foundByName = userDao.getByName(userName);
+        final Optional<User> foundByName = userDao.getBySubjectId(userName);
         final Optional<User> foundById = userDao.getById(userCreated.getId());
 
         // Then
@@ -52,7 +52,7 @@ class UserDaoImplTest {
                 .forEach(u -> {
                     assertThat(u).isPresent();
                     assertThat(u.map(User::getUuid).get()).isEqualTo(userCreated.getUuid());
-                    assertThat(u.map(User::getName).get()).isEqualTo(userName);
+                    assertThat(u.map(User::getSubjectId).get()).isEqualTo(userName);
                     assertThat(u.map(User::isGroup).get()).isFalse();
                 });
     }
@@ -66,7 +66,7 @@ class UserDaoImplTest {
         final User userCreated = createUser(userName, true);
         assertThat(userCreated).isNotNull();
         final Optional<User> foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final Optional<User> foundByName = userDao.getByName(userName);
+        final Optional<User> foundByName = userDao.getBySubjectId(userName);
         final Optional<User> foundById = userDao.getById(userCreated.getId());
 
         // Then
@@ -76,7 +76,7 @@ class UserDaoImplTest {
         Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
             assertThat(u).isPresent();
             assertThat(u.map(User::getUuid).get()).isEqualTo(userCreated.getUuid());
-            assertThat(u.map(User::getName).get()).isEqualTo(userName);
+            assertThat(u.map(User::getSubjectId).get()).isEqualTo(userName);
             assertThat(u.map(User::isGroup).get()).isTrue();
         });
     }
@@ -117,9 +117,9 @@ class UserDaoImplTest {
         // Then
         userNames.forEach(userName -> {
             assertThat(users.stream()
-                    .anyMatch(u -> userName.equals(u.getName()))).isTrue();
+                    .anyMatch(u -> userName.equals(u.getSubjectId()))).isTrue();
             assertThat(usersInGroup.stream()
-                    .anyMatch(u -> userName.equals(u.getName()))).isTrue();
+                    .anyMatch(u -> userName.equals(u.getSubjectId()))).isTrue();
         });
     }
 
@@ -139,7 +139,7 @@ class UserDaoImplTest {
                 .map(name -> createUser(name, false))
                 .collect(Collectors.toList());
         final User userToTest = users.stream()
-                .filter(u -> userNameToTest.equals(u.getName()))
+                .filter(u -> userNameToTest.equals(u.getSubjectId()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Could not find user to test amongst created users"));
         final List<User> groups = groupNames.stream()
@@ -151,13 +151,13 @@ class UserDaoImplTest {
 
         // Then
         groupNames.forEach(groupName -> assertThat(groupsForUserToTest.stream()
-                .anyMatch(g -> groupName.equals(g.getName())))
+                .anyMatch(g -> groupName.equals(g.getSubjectId())))
                 .isTrue());
     }
 
     private User createUser(final String name, boolean group) {
         User user = User.builder()
-                .name(name)
+                .subjectId(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)
                 .build();

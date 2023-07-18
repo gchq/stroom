@@ -22,12 +22,6 @@
                     </g:customCell>
                 </g:row>
                 <g:row>
-                    <g:cell>Role Name:</g:cell>
-                    <g:customCell>
-                        <g:Label ui:field="roleName"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
                     <g:cell>Build Version:</g:cell>
                     <g:customCell>
                         <g:Label ui:field="buildVersion"/>

@@ -13,7 +13,7 @@ public class CertificateUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return commonName;
     }
 

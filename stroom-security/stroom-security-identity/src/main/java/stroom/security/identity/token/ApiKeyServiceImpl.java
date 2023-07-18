@@ -53,7 +53,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     public ApiKey create(final CreateApiKeyRequest createApiKeyRequest) {
         checkPermission();
 
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
 
         final Optional<Integer> optionalAccountId = accountDao.getId(createApiKeyRequest.getUserId());
         final Integer accountId = optionalAccountId.orElseThrow(() ->
@@ -131,7 +131,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     @Override
     public int toggleEnabled(int id, boolean isEnabled) {
         checkPermission();
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
 
         Optional<Account> updatingUser = accountService.read(userId);
 

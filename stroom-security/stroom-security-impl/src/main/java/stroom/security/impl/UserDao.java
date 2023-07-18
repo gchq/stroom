@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 public interface UserDao {
 
     FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getName),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getSubjectId),
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, User::getDisplayName),
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, User::getFullName));
 
@@ -25,11 +25,14 @@ public interface UserDao {
 
     User tryCreate(User user, final Consumer<User> onUserCreateAction);
 
+    /**
+     * Get a user by the DB PK.
+     */
     Optional<User> getById(int id);
 
     Optional<User> getByUuid(String uuid);
 
-    Optional<User> getByName(String name);
+    Optional<User> getBySubjectId(String name);
 
     /**
      * Gets by displayName, falling back to
@@ -38,10 +41,13 @@ public interface UserDao {
      */
     Optional<User> getByDisplayName(String displayName);
 
-    Optional<User> getByName(String name, boolean isGroup);
+    Optional<User> getBySubjectId(String name, boolean isGroup);
 
     User update(User user);
 
+    /**
+     * Delete a user by their UUID
+     */
     void delete(String uuid);
 
     List<User> find(String quickFilter, boolean isGroup);

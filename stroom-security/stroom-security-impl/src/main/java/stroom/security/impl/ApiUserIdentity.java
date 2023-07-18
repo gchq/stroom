@@ -40,7 +40,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return id;
     }
 
@@ -90,7 +90,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
 
     @Override
     public String toString() {
-        return getId();
+        return getSubjectId();
     }
 
     @Override

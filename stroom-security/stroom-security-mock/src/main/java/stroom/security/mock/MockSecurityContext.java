@@ -26,8 +26,8 @@ public class MockSecurityContext implements SecurityContext {
     private static final MockAdminUserIdentity ADMIN_USER_IDENTITY = new MockAdminUserIdentity();
 
     @Override
-    public String getUserId() {
-        return getUserIdentity().getId();
+    public String getSubjectId() {
+        return getUserIdentity().getSubjectId();
     }
 
     @Override
@@ -41,7 +41,7 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String userId) {
+    public UserIdentity createIdentity(final String subjectId) {
         return ADMIN_USER_IDENTITY;
     }
 
@@ -147,7 +147,7 @@ public class MockSecurityContext implements SecurityContext {
     private static class MockAdminUserIdentity implements UserIdentity {
 
         @Override
-        public String getId() {
+        public String getSubjectId() {
             return "admin";
         }
     }

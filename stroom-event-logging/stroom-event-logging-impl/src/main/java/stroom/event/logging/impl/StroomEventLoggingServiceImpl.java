@@ -326,7 +326,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         try {
             final UserIdentity userIdentity = securityContext.getUserIdentity();
             return User.builder()
-                    .withId(userIdentity.getId())
+                    .withId(userIdentity.getSubjectId())
                     .withName(userIdentity.getDisplayName())
                     .build();
         } catch (final RuntimeException e) {

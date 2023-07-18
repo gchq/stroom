@@ -151,7 +151,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                 .map(httpSession -> {
                     final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(httpSession);
                     return new SessionDetails(
-                            userIdentity.map(UserIdentity::getId).orElse(null),
+                            userIdentity.map(UserIdentity::getSubjectId).orElse(null),
                             httpSession.getCreationTime(),
                             httpSession.getLastAccessedTime(),
                             UserAgentSessionUtil.get(httpSession),

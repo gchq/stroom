@@ -74,7 +74,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                 }
                 final UserAndPermissions userAndPermissions = new UserAndPermissions(
                         new SimpleUserName(
-                                userIdentity.getId(),
+                                userIdentity.getSubjectId(),
                                 userIdentity.getDisplayName(),
                                 userIdentity.getFullName().orElse(null)),
                         userAndPermissionsHelperProvider.get().get(hasStroomUserIdentity.getUuid()));
@@ -178,10 +178,10 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         try {
             userServiceProvider.get().addUserToGroup(user.getUuid(), userGroup.getUuid());
             authorisationEventLogProvider.get()
-                    .addUserToGroup(user.getName(), userGroup.getName(), true, null);
+                    .addUserToGroup(user.getSubjectId(), userGroup.getSubjectId(), true, null);
         } catch (final RuntimeException e) {
             authorisationEventLogProvider.get()
-                    .addUserToGroup(user.getName(), userGroup.getName(), false, e.getMessage());
+                    .addUserToGroup(user.getSubjectId(), userGroup.getSubjectId(), false, e.getMessage());
         }
     }
 
@@ -189,10 +189,10 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         try {
             userServiceProvider.get().removeUserFromGroup(user.getUuid(), userGroup.getUuid());
             authorisationEventLogProvider.get()
-                    .removeUserFromGroup(user.getName(), userGroup.getName(), true, null);
+                    .removeUserFromGroup(user.getSubjectId(), userGroup.getSubjectId(), true, null);
         } catch (final RuntimeException e) {
             authorisationEventLogProvider.get()
-                    .removeUserFromGroup(user.getName(), userGroup.getName(), false, e.getMessage());
+                    .removeUserFromGroup(user.getSubjectId(), userGroup.getSubjectId(), false, e.getMessage());
         }
     }
 
@@ -200,10 +200,10 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         try {
             userAppPermissionServiceProvider.get().addPermission(user.getUuid(), permission);
             authorisationEventLogProvider.get()
-                    .addUserToGroup(user.getName(), permission, true, null);
+                    .addUserToGroup(user.getSubjectId(), permission, true, null);
         } catch (final RuntimeException e) {
             authorisationEventLogProvider.get()
-                    .addUserToGroup(user.getName(), permission, false, e.getMessage());
+                    .addUserToGroup(user.getSubjectId(), permission, false, e.getMessage());
         }
     }
 
@@ -211,10 +211,10 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         try {
             userAppPermissionServiceProvider.get().removePermission(user.getUuid(), permission);
             authorisationEventLogProvider.get()
-                    .removeUserFromGroup(user.getName(), permission, true, null);
+                    .removeUserFromGroup(user.getSubjectId(), permission, true, null);
         } catch (final RuntimeException e) {
             authorisationEventLogProvider.get()
-                    .removeUserFromGroup(user.getName(), permission, false, e.getMessage());
+                    .removeUserFromGroup(user.getSubjectId(), permission, false, e.getMessage());
         }
     }
 }

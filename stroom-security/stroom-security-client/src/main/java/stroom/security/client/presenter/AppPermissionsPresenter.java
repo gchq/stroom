@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
@@ -154,7 +155,7 @@ public class AppPermissionsPresenter extends
             });
         }
 
-        dataGrid.addColumn(selectionColumn, "<br/>", 20);
+        dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Perm name
         dataGrid.addColumn(new Column<String, String>(new TextCell()) {

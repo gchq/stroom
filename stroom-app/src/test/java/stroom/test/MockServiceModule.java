@@ -102,7 +102,7 @@ public class MockServiceModule extends AbstractModule {
             final String name = invocation.getArgument(0);
             final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
-                    .name(name)
+                    .subjectId(name)
                     .build();
             return mockUserService.update(user);
         });
@@ -110,7 +110,7 @@ public class MockServiceModule extends AbstractModule {
             final String name = invocation.getArgument(0);
             final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
-                    .name(name)
+                    .subjectId(name)
                     .group(true)
                     .build();
             return mockUserService.update(user);

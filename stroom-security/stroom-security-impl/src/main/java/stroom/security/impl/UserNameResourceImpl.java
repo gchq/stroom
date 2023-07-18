@@ -52,9 +52,9 @@ class UserNameResourceImpl implements UserNameResource {
     }
 
     @Override
-    public UserName getByUserId(final String userId) {
+    public UserName getBySubjectId(final String subjectId) {
         return userNameServiceProvider.get()
-                .getByUserId(userId)
+                .getBySubjectId(subjectId)
                 .orElse(null);
     }
 }

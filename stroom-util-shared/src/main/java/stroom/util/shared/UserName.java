@@ -11,7 +11,7 @@ import java.util.Objects;
 public interface UserName extends HasAuditableUserIdentity {
 
     /**
-     * <p>If this is a user then {@code id} is the unique identifier for the user on the
+     * <p>If this is a user then this is the unique identifier for the user on the
      * OpenIdConnect IDP, e.g. the subject. The value may be a UUID or a more human friendly form
      * depending on the IDP in use (internal/external).</p>
      *
@@ -20,7 +20,7 @@ public interface UserName extends HasAuditableUserIdentity {
      * A user and a group can share the same name.</p>
      * @return The unique identifier for this user or group.
      */
-    String getName();
+    String getSubjectId();
 
     /**
      * @return An optional, non-unique, more human friendly username for the user.
@@ -42,21 +42,22 @@ public interface UserName extends HasAuditableUserIdentity {
      */
     String getFullName();
 
+//    String getUserUuid();
+
     /**
      * @return The user identity to be used in audit events, audit columns and for display in
      * the UI.
      */
     default String getUserIdentityForAudit() {
-        return HasAuditableUserIdentity.fromUserNames(getName(), getDisplayName());
+        return HasAuditableUserIdentity.fromUserNames(getSubjectId(), getDisplayName());
     }
-
 
     /**
      * Combine the name and displayName, only showing both if they are both present
      * and not equal. Useful for the User parts of the UI where showing both is helpful.
      */
     static String buildCombinedName(final UserName userName) {
-        final String name = userName.getName();
+        final String name = userName.getSubjectId();
         final String displayName = userName.getDisplayName();
         if (displayName == null) {
             return name;

@@ -98,7 +98,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
         final String expression = serialise(filter.getExpression());
         final String filterUuid = UUID.randomUUID().toString();
         final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .insertInto(ANALYTIC_PROCESSOR_FILTER,
                         ANALYTIC_PROCESSOR_FILTER.UUID,
@@ -136,7 +136,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
 
         final String expression = serialise(filter.getExpression());
         final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .update(ANALYTIC_PROCESSOR_FILTER)
                 .set(ANALYTIC_PROCESSOR_FILTER.VERSION, ANALYTIC_PROCESSOR_FILTER.VERSION.plus(1))

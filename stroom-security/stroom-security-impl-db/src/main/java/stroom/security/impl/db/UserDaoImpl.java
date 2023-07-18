@@ -30,16 +30,23 @@ public class UserDaoImpl implements UserDao {
 
     private static final Function<Record, User> RECORD_TO_USER_MAPPER = record -> {
         final User user = new User();
+        // This is just the PK of the table.
         user.setId(record.get(STROOM_USER.ID));
         user.setVersion(record.get(STROOM_USER.VERSION));
         user.setCreateTimeMs(record.get(STROOM_USER.CREATE_TIME_MS));
         user.setCreateUser(record.get(STROOM_USER.CREATE_USER));
         user.setUpdateTimeMs(record.get(STROOM_USER.UPDATE_TIME_MS));
         user.setUpdateUser(record.get(STROOM_USER.UPDATE_USER));
-        user.setName(record.get(STROOM_USER.NAME));
+        // This is the unique 'sub'/'oid' when using OIDC
+        // or it is the username if using internal IDP
+        // or it is the group name.
+        user.setSubjectId(record.get(STROOM_USER.NAME));
+        // Our own UUID for the user, independent of any identity provider
         user.setUuid(record.get(STROOM_USER.UUID));
         user.setGroup(record.get(STROOM_USER.IS_GROUP));
+        // Optional
         user.setDisplayName(record.get(STROOM_USER.DISPLAY_NAME));
+        // Optional
         user.setFullName(record.get(STROOM_USER.FULL_NAME));
         return user;
     };
@@ -53,11 +60,17 @@ public class UserDaoImpl implements UserDao {
                 record.set(STROOM_USER.CREATE_USER, user.getCreateUser());
                 record.set(STROOM_USER.UPDATE_TIME_MS, user.getUpdateTimeMs());
                 record.set(STROOM_USER.UPDATE_USER, user.getUpdateUser());
-                record.set(STROOM_USER.NAME, user.getName());
+                // This is the unique 'sub'/'oid' when using OIDC
+                // or it is the username if using internal IDP
+                // or it is the group name.
+                record.set(STROOM_USER.NAME, user.getSubjectId());
+                // Our own UUID for the user, independent of any identity provider
                 record.set(STROOM_USER.UUID, user.getUuid());
                 record.set(STROOM_USER.IS_GROUP, user.isGroup());
                 record.set(STROOM_USER.ENABLED, true);
+                // Optional
                 record.set(STROOM_USER.DISPLAY_NAME, user.getDisplayName());
+                // Optional
                 record.set(STROOM_USER.FULL_NAME, user.getFullName());
                 return record;
             };
@@ -93,6 +106,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public Optional<User> getById(final int id) {
+        // By DB PK
         return genericDao.fetch(id);
     }
 
@@ -107,11 +121,11 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public Optional<User> getByName(final String name) {
+    public Optional<User> getBySubjectId(final String subjectId) {
         return JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select()
                         .from(STROOM_USER)
-                        .where(STROOM_USER.NAME.eq(name))
+                        .where(STROOM_USER.NAME.eq(subjectId))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
     }
@@ -135,12 +149,12 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public Optional<User> getByName(final String name,
-                                    final boolean isGroup) {
+    public Optional<User> getBySubjectId(final String subjectId,
+                                         final boolean isGroup) {
         return JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select()
                         .from(STROOM_USER)
-                        .where(STROOM_USER.NAME.eq(name))
+                        .where(STROOM_USER.NAME.eq(subjectId))
                         .and(STROOM_USER.IS_GROUP.eq(isGroup))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
@@ -197,7 +211,6 @@ public class UserDaoImpl implements UserDao {
                         .map(RECORD_TO_USER_MAPPER)
         ).collect(Collectors.toList());
     }
-
 
     @Override
     public List<User> findGroupsForUser(final String userUuid, final String quickFilterInput) {
@@ -269,7 +282,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     private Condition getExcludedUsersCondition() {
-        final String procUserId = processingUserIdentityProvider.get().getId();
+        final String procUserId = processingUserIdentityProvider.get().getSubjectId();
         return STROOM_USER.NAME.notEqual(procUserId);
     }
 }

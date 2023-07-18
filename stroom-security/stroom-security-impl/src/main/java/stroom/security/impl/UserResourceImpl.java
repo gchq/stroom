@@ -104,7 +104,7 @@ public class UserResourceImpl implements UserResource {
 
                         builder.withObjects(
                                 event.logging.User.builder()
-                                        .withId(user.getName())
+                                        .withId(user.getSubjectId())
                                         .build());
 
                         stroomEventLoggingServiceProvider.get()
@@ -116,7 +116,7 @@ public class UserResourceImpl implements UserResource {
         } catch (Exception ex) {
             builder.withObjects(
                     event.logging.User.builder()
-                            .withId(name.getName())
+                            .withId(name.getSubjectId())
                             .build());
             builder.withOutcome(Outcome.builder()
                     .withSuccess(false)
@@ -142,7 +142,7 @@ public class UserResourceImpl implements UserResource {
                 .withDefaultEventAction(CreateEventAction.builder()
                         .withObjects(NullSafe.stream(names)
                                 .map(userName -> event.logging.User.builder()
-                                        .withId(userName.getName())
+                                        .withId(userName.getSubjectId())
                                         .withName(userName.getDisplayName())
                                         .build())
                                 .collect(Collectors.toList()))
@@ -273,7 +273,7 @@ public class UserResourceImpl implements UserResource {
                     .asProcessingUserResult(() -> userServiceProvider.get().loadByUuid(uuid));
             if (found.isPresent() && found.get().isGroup()) {
                 // Groups only have a name
-                return found.get().getName();
+                return found.get().getSubjectId();
             }
         } catch (Exception ex) {
             //Ignore at this time

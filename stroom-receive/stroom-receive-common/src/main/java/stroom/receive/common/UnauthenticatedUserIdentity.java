@@ -16,12 +16,12 @@ public class UnauthenticatedUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return ID;
     }
 
     @Override
     public String toString() {
-        return getId();
+        return getSubjectId();
     }
 }

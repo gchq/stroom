@@ -45,7 +45,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
                 dao.fetch(id)).orElse(null);
 
         if (storedQuery != null
-                && !storedQuery.getUpdateUser().equals(securityContext.getUserId())) {
+                && !storedQuery.getUpdateUser().equals(securityContext.getSubjectId())) {
             throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "This retrieved stored query belongs to another user");
         }
@@ -54,7 +54,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
     @Override
     public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
         criteria.setUserId(userId);
 
         return securityContext.secureResult(() -> dao.find(criteria));

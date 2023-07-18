@@ -17,7 +17,7 @@ public interface UserNameProvider {
 
     ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria);
 
-    Optional<UserName> getByUserId(final String userId);
+    Optional<UserName> getBySubjectId(final String subjectId);
 
     Optional<UserName> getByDisplayName(final String displayName);
 }

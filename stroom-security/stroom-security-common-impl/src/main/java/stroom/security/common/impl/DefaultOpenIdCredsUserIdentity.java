@@ -21,7 +21,7 @@ public class DefaultOpenIdCredsUserIdentity implements UserIdentity, HasJwt {
     }
 
     @Override
-    public String getId() {
+    public String getSubjectId() {
         return id;
     }
 

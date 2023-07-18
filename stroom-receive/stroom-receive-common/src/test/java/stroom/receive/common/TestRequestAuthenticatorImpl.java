@@ -106,7 +106,7 @@ class TestRequestAuthenticatorImpl {
                         Assertions.assertThat(attributeMap.keySet())
                                 .doesNotContain(HttpHeaders.AUTHORIZATION);
                         Assertions.assertThat(attributeMap.get(StandardHeaderArguments.UPLOAD_USER_ID))
-                                .isEqualTo(testOutcome.getActualOutput()._1.getId());
+                                .isEqualTo(testOutcome.getActualOutput()._1.getSubjectId());
                     } else {
                         // Ex thrown
                         Assertions.assertThat(attributeMap.size())
@@ -253,7 +253,7 @@ class TestRequestAuthenticatorImpl {
         }
 
         @Override
-        public String getId() {
+        public String getSubjectId() {
             return id;
         }
 

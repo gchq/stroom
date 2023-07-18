@@ -350,7 +350,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     processorFilter.setProcessor(processor);
                     processorFilter.setProcessorFilterTracker(processorFilterTracker);
 
-                    return marshaller.unmarshal(processorFilter);
+                    try {
+                        return marshaller.unmarshal(processorFilter);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 });
         return ResultPage.createCriterialBasedList(list, criteria);
     }

@@ -23,7 +23,7 @@ public class UserPreferencesService {
 
     public UserPreferences fetch() {
         return securityContext.secureResult(() -> {
-            Optional<UserPreferences> optionalUserPreferences = userPreferencesDao.fetch(securityContext.getUserId());
+            Optional<UserPreferences> optionalUserPreferences = userPreferencesDao.fetch(securityContext.getSubjectId());
             if (optionalUserPreferences.isEmpty()) {
                 optionalUserPreferences = userPreferencesDao.fetch(DEFAULT_PREFERENCES);
             }
@@ -33,12 +33,12 @@ public class UserPreferencesService {
 
     public int update(final UserPreferences userPreferences) {
         return securityContext.secureResult(() ->
-                userPreferencesDao.update(securityContext.getUserId(), userPreferences));
+                userPreferencesDao.update(securityContext.getSubjectId(), userPreferences));
     }
 
     public int delete() {
         return securityContext.secureResult(() ->
-                userPreferencesDao.delete(securityContext.getUserId()));
+                userPreferencesDao.delete(securityContext.getSubjectId()));
     }
 
     public UserPreferences setDefaultUserPreferences(final UserPreferences userPreferences) {

@@ -68,7 +68,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
 
     private static final FilterFieldMappers<SimpleUser> SIMPLE_USERS_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getName),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getSubjectId),
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, SimpleUser::getDisplayName),
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, SimpleUser::getFullName));
 
@@ -361,11 +361,11 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                             .build());
                 } else if (user.get().isGroup()) {
                     permissionBuilder.withGroup(Group.builder()
-                            .withId(user.get().getName())
+                            .withId(user.get().getSubjectId())
                             .build());
                 } else {
                     permissionBuilder.withUser(event.logging.User.builder()
-                            .withId(user.get().getName())
+                            .withId(user.get().getSubjectId())
                             .build());
                 }
 
@@ -373,7 +373,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 // for custom perms. Waiting for https://github.com/gchq/event-logging-schema/issues/76
                 user.ifPresent(userOrGroup -> {
                     final Data userData = Data.builder()
-                            .withName(userOrGroup.getName())
+                            .withName(userOrGroup.getSubjectId())
                             .withValue(userOrGroup.isGroup()
                                     ? "group"
                                     : "user")
