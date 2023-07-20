@@ -11,7 +11,7 @@
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicVisSettingsTable" label="Table">
-            <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicVisSettingsVisualisation" label="Visualisation">
             <g:SimplePanel ui:field="visualisation" addStyleNames="w-100"/>

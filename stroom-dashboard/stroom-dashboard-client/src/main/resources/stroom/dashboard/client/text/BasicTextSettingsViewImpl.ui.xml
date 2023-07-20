@@ -12,28 +12,28 @@
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsTable" label="Table">
-            <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsStreamIdField" label="Stream Id Field">
-            <i:ItemListBox ui:field="streamIdField" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="streamIdField" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsPartNoField" label="Part No Field">
-            <i:ItemListBox ui:field="partNoField" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="partNoField" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsRecordNoField" label="Record No Field">
-            <i:ItemListBox ui:field="recordNoField" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="recordNoField" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsLineFromField" label="Line From Field">
-            <i:ItemListBox ui:field="lineFromField" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="lineFromField" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsColFromField" label="Col From Field">
-            <i:ItemListBox ui:field="colFromField" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="colFromField" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsLineToField" label="Line To Field">
-            <i:ItemListBox ui:field="lineToField" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="lineToField" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsColToField" label="Col To Field">
-            <i:ItemListBox ui:field="colToField" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="colToField" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsPipeline" label="Pipeline">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>

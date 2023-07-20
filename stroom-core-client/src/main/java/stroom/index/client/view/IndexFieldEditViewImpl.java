@@ -19,7 +19,7 @@ package stroom.index.client.view;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,7 +33,7 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
 
     private final Widget widget;
     @UiField
-    ItemListBox<IndexFieldType> type;
+    SelectionBox<IndexFieldType> type;
     @UiField
     TextBox name;
     @UiField
@@ -43,7 +43,7 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     @UiField
     CustomCheckBox positions;
     @UiField
-    ItemListBox<AnalyzerType> analyser;
+    SelectionBox<AnalyzerType> analyser;
     @UiField
     CustomCheckBox caseSensitive;
 
@@ -67,12 +67,12 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
 
     @Override
     public IndexFieldType getFieldUse() {
-        return type.getSelectedItem();
+        return type.getValue();
     }
 
     @Override
     public void setFieldUse(final IndexFieldType fieldUse) {
-        type.setSelectedItem(fieldUse);
+        type.setValue(fieldUse);
     }
 
     @Override
@@ -117,12 +117,12 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
 
     @Override
     public AnalyzerType getAnalyzerType() {
-        return analyser.getSelectedItem();
+        return analyser.getValue();
     }
 
     @Override
     public void setAnalyzerType(final AnalyzerType analyzerType) {
-        this.analyser.setSelectedItem(analyzerType);
+        this.analyser.setValue(analyzerType);
     }
 
     @Override

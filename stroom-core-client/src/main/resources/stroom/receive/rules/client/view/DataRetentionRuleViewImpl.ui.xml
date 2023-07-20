@@ -14,7 +14,7 @@
         <form:FormGroup ui:field="retainLabel" identity="dataRetentionRuleRetainFor" label="Retain For">
             <g:FlowPanel>
                 <valuespinner:ValueSpinner ui:field="age"/>
-                <i:ItemListBox ui:field="timeUnit" addStyleNames="allow-focus"/>
+                <i:SelectionBox ui:field="timeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="dataRetentionRuleExpression" label="Expression" addStyleNames="dock-max">

@@ -16,7 +16,7 @@
 
 package stroom.security.client.view;
 
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.svg.shared.SvgImage;
@@ -43,7 +43,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
     @UiField
     FormGroup cascadeGrid;
     @UiField
-    ItemListBox<ChangeDocumentPermissionsRequest.Cascade> cascade;
+    SelectionBox<ChangeDocumentPermissionsRequest.Cascade> cascade;
 
     @Inject
     public DocumentPermissionsViewImpl(final EventBus eventBus, final Binder binder) {
@@ -63,7 +63,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
     }
 
     @Override
-    public ItemListBox<ChangeDocumentPermissionsRequest.Cascade> getCascade() {
+    public SelectionBox<ChangeDocumentPermissionsRequest.Cascade> getCascade() {
         return cascade;
     }
 

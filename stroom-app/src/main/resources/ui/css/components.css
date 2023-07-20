@@ -1929,3 +1929,7 @@ button.main-menu svg {
     padding: 5px;
 }
 
+.duration-picker {
+    display: flex;
+}
+

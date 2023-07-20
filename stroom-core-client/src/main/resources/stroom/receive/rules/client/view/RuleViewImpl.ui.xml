@@ -12,7 +12,7 @@
             <g:TextBox ui:field="name" addStyleNames="ruleViewImpl-name"/>
         </form:FormGroup>
         <form:FormGroup identity="ruleAction" label="Action">
-            <i:ItemListBox ui:field="action"/>
+            <i:SelectionBox ui:field="action"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

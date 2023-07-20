@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs.client.view;
 
 import stroom.data.store.impl.fs.client.presenter.FSVolumeEditPresenter.VolumeEditView;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,7 +35,7 @@ public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     @UiField
     TextBox path;
     @UiField
-    ItemListBox<VolumeUseStatus> status;
+    SelectionBox<VolumeUseStatus> status;
     @UiField
     TextBox byteLimit;
 
@@ -60,7 +60,7 @@ public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     }
 
     @Override
-    public ItemListBox<VolumeUseStatus> getStatus() {
+    public SelectionBox<VolumeUseStatus> getStatus() {
         return status;
     }
 
