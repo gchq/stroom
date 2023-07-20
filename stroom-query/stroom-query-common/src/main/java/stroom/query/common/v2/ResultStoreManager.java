@@ -182,7 +182,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             modifiedRequest = addQueryKey(modifiedRequest);
 
             // Add a param for `currentUser()`
-            modifiedRequest = addCurrentUserParam(userId, modifiedRequest);
+            modifiedRequest = addCurrentUserParam(modifiedRequest);
 
             // Add partition time constraints to the query.
             modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
@@ -269,7 +269,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             modifiedRequest = addQueryKey(modifiedRequest);
 
             // Add a param for `currentUser()`
-            modifiedRequest = addCurrentUserParam(userId, modifiedRequest);
+            modifiedRequest = addCurrentUserParam(modifiedRequest);
 
             // Add partition time constraints to the query.
             modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
@@ -313,8 +313,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         return searchRequest.copy().key(queryKey).build();
     }
 
-    private SearchRequest addCurrentUserParam(final String userId,
-                                              final SearchRequest searchRequest) {
+    private SearchRequest addCurrentUserParam(final SearchRequest searchRequest) {
         // Add a param for `currentUser()`
         List<Param> params = searchRequest.getQuery().getParams();
         if (params != null) {
@@ -322,7 +321,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         } else {
             params = new ArrayList<>();
         }
-        params.add(new Param("currentUser()", userId));
+        final String displayName = securityContext.getUserIdentityForAudit();
+        params.add(new Param("currentUser()", displayName));
         return searchRequest
                 .copy()
                 .query(searchRequest
