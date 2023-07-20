@@ -1,6 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -10,6 +11,7 @@ import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.Set;
 
@@ -36,16 +38,14 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
 
             int expanderPadding = 4;
 
-            SafeHtml expanderIcon;
+            SvgImage expanderIcon = null;
             if (item.hasChildren()) {
                 final boolean open = openItems.contains(item);
                 if (open) {
-                    expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
+                    expanderIcon = SvgImage.ARROW_DOWN;
                 } else {
-                    expanderIcon = SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT);
+                    expanderIcon = SvgImage.ARROW_RIGHT;
                 }
-            } else {
-                expanderIcon = SvgImageUtil.emptySvg();
             }
 
             int indent = item.getDepth();
@@ -53,7 +53,15 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
             // Add expander.
-            content.append(template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon));
+            SafeHtml expanderIconSafeHtml;
+            String className = getCellClassName() + "-expander";
+            if (expanderIcon != null) {
+                className += " " + expanderIcon.getClassName();
+                expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());
+            } else {
+                expanderIconSafeHtml = SvgImageUtil.emptySvg();
+            }
+            content.append(template.expander(className, paddingLeft, expanderIconSafeHtml));
 
             if (item.getLabel() != null) {
                 // Add text

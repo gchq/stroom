@@ -18,7 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -35,7 +35,7 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     private final Widget widget;
 
     @UiField
-    ItemListBox<DownloadSearchResultFileType> fileType;
+    SelectionBox<DownloadSearchResultFileType> fileType;
     @UiField
     CustomCheckBox sample;
     @UiField
@@ -54,7 +54,7 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
         fileType.addItem(DownloadSearchResultFileType.CSV);
         fileType.addItem(DownloadSearchResultFileType.TSV);
 
-        fileType.setSelectedItem(DownloadSearchResultFileType.EXCEL);
+        fileType.setValue(DownloadSearchResultFileType.EXCEL);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
 
     @Override
     public DownloadSearchResultFileType getFileType() {
-        return fileType.getSelectedItem();
+        return fileType.getValue();
     }
 
     @Override

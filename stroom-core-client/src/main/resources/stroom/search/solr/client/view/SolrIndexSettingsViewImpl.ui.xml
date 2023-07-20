@@ -10,7 +10,7 @@
             <g:TextBox ui:field="collection" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsInstanceType" label="Instance Type">
-            <l:ItemListBox ui:field="instanceType"/>
+            <l:SelectionBox ui:field="instanceType"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsSolrURLs" label="Solr URLs">
             <g:TextArea ui:field="solrUrls" width="400px"/>

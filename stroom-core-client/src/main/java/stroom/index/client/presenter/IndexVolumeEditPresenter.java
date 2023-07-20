@@ -26,7 +26,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.index.shared.ValidationResult;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.node.client.NodeManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -163,7 +163,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         getView().getNodeName().setText(volume.getNodeName());
         getView().getPath().setText(volume.getPath());
         getView().getState().addItems(VolumeUseState.values());
-        getView().getState().setSelectedItem(volume.getState());
+        getView().getState().setValue(volume.getState());
 
         if (volume.getBytesLimit() != null) {
             getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(
@@ -178,7 +178,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     private void write() {
         volume.setNodeName(getView().getNodeName().getText());
         volume.setPath(getView().getPath().getText());
-        volume.setState(getView().getState().getSelectedItem());
+        volume.setState(getView().getState().getValue());
 
         Long bytesLimit = null;
         final String limit = getView().getByteLimit().getText().trim();
@@ -196,7 +196,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
 
         HasText getPath();
 
-        ItemListBox<VolumeUseState> getState();
+        SelectionBox<VolumeUseState> getState();
 
         HasText getByteLimit();
     }

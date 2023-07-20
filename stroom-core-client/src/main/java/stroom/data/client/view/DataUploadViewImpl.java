@@ -19,7 +19,7 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.data.shared.StreamTypeNames;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
 
@@ -36,8 +36,8 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
 
     private final Widget widget;
 
-    @UiField(provided = true)
-    StringListBox type;
+    @UiField
+    SelectionBox<String> type;
     @UiField
     FileUpload fileUpload;
     @UiField
@@ -51,17 +51,15 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     public DataUploadViewImpl(final Binder binder,
                               final DataTypeUiManager dataTypeUiManager,
                               final UserPreferencesManager userPreferencesManager) {
-        type = new StringListBox();
-
+        widget = binder.createAndBindUi(this);
         dataTypeUiManager.getTypes(list -> {
             type.clear();
             if (list != null && !list.isEmpty()) {
                 type.addItems(list);
                 // Default to raw events
-                type.setSelected(StreamTypeNames.RAW_EVENTS);
+                type.setValue(StreamTypeNames.RAW_EVENTS);
             }
         });
-        widget = binder.createAndBindUi(this);
         effective.setUtc(userPreferencesManager.isUtc());
     }
 
@@ -91,7 +89,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     }
 
     @Override
-    public StringListBox getType() {
+    public SelectionBox<String> getType() {
         return type;
     }
 

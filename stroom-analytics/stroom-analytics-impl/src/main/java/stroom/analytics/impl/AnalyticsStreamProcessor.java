@@ -100,7 +100,7 @@ public class AnalyticsStreamProcessor {
                 meta = source.getMeta();
 
                 // Set the current user.
-                currentUserHolder.setCurrentUser(securityContext.getUserIdentity().getDisplayName());
+                currentUserHolder.setCurrentUser(securityContext.getUserIdentityForAudit());
 
                 // Create the parser.
                 final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);

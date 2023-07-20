@@ -313,7 +313,6 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     private SearchRequest addCurrentUserParam(final SearchRequest searchRequest) {
-        final String userDisplayName = securityContext.getUserIdentity().getDisplayName();
         // Add a param for `currentUser()`
         List<Param> params = searchRequest.getQuery().getParams();
         if (params != null) {
@@ -321,7 +320,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         } else {
             params = new ArrayList<>();
         }
-        params.add(new Param("currentUser()", userDisplayName));
+        final String displayName = securityContext.getUserIdentityForAudit();
+        params.add(new Param("currentUser()", displayName));
         return searchRequest
                 .copy()
                 .query(searchRequest

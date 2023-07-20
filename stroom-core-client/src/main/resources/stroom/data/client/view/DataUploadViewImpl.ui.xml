@@ -10,7 +10,7 @@
                 <g:TextArea ui:field="metaData" addStyleNames="max"/>
             </form:FormGroup>
             <form:FormGroup identity="dataUploadType" label="Type" addStyleNames="dock-min">
-                <l:StringListBox ui:field="type" addStyleNames="w-100"/>
+                <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
             </form:FormGroup>
             <form:FormGroup identity="dataUploadEffectiveDate" label="Effective Date" addStyleNames="dock-min">
                 <c:MyDateBox ui:field="effective" addStyleNames="w-100"/>

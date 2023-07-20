@@ -9,7 +9,7 @@
             <g:TextBox ui:field="xPath" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="xPathFilterCondition" label="Condition">
-            <l:ItemListBox ui:field="matchType"/>
+            <l:SelectionBox ui:field="matchType"/>
         </form:FormGroup>
         <form:FormGroup ui:field="valueContainer" identity="xPathFilterValue" label="Value">
             <g:TextBox ui:field="value" addStyleNames="w-100"/>
