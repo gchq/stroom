@@ -69,8 +69,8 @@
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
     --navigation-icon-button__border-color--hover: rgb(45, 47, 53);
 
-    --expression-item-box__background-color--selected: #454545;
-    --expression-item-box__background-color--hover: #555;
+    --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
+    --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #333;
     --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
 

@@ -6,7 +6,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup addStyleNames="dock-min" identity="selectionHandlerComponent" label="Component">
-            <i:ItemListBox ui:field="component" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="component" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup addStyleNames="dock-min">
             <tickbox:CustomCheckBox ui:field="enabled" identity="selectionHandlerEnabled" label="Enabled"/>

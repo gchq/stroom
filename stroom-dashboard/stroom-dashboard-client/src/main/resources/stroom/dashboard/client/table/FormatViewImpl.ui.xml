@@ -6,7 +6,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="formatType" label="Type">
-            <i:ItemListBox ui:field="type" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <!-- Number format settings -->
@@ -23,7 +23,7 @@
             <v:CustomCheckBox ui:field="usePreferences" identity="formatUsePreferences" label="Use Preferences"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format">
-            <i:StringListBox ui:field="format" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="format" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatCustom">
             <v:CustomCheckBox ui:field="custom" identity="formatCustom" label="Custom"/>
@@ -32,10 +32,10 @@
             <g:TextBox ui:field="text" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatTimeZone" identity="formatTimeZone" label="Time Zone">
-            <i:ItemListBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatTimeZoneId" identity="formatTimeZoneId" label="Time Zone Id">
-            <i:StringListBox ui:field="timeZoneId" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatTimeZoneOffset" identity="formatTimeZoneOffset" label="Time Zone Offset">
             <g:FlowPanel>

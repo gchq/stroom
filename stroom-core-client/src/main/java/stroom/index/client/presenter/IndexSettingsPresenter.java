@@ -30,8 +30,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
@@ -109,9 +108,9 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         index.setPartitionBy(getView().getPartitionBy());
         index.setPartitionSize(getView().getPartitionSize());
         index.setTimeField(getView().getTimeField());
-        index.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
+        index.setRetentionDayAge(getView().getRetentionAge().getValue().getDays());
 
-        String volumeGroupName = getView().getVolumeGroups().getSelected();
+        String volumeGroupName = getView().getVolumeGroups().getValue();
         if (volumeGroupName != null && volumeGroupName.length() == 0) {
             volumeGroupName = null;
         }
@@ -123,7 +122,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
     private void updateRetentionAge(final SupportedRetentionAge selected) {
         getView().getRetentionAge().clear();
         getView().getRetentionAge().addItems(SupportedRetentionAge.values());
-        getView().getRetentionAge().setSelectedItem(selected);
+        getView().getRetentionAge().setValue(selected);
     }
 
     private void updateGroupList(final String selected) {
@@ -136,12 +135,12 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
                             .map(IndexVolumeGroup::getName)
                             .collect(Collectors.toList());
 
-                    StringListBox listBox = getView().getVolumeGroups();
+                    SelectionBox<String> listBox = getView().getVolumeGroups();
                     listBox.clear();
                     listBox.addItem("");
                     listBox.addItems(volumeGroupNames);
                     if (selected != null && !selected.isEmpty()) {
-                        listBox.setSelected(selected);
+                        listBox.setValue(selected);
                     }
                 })
                 .call(INDEX_VOLUME_GROUP_RESOURCE)
@@ -170,9 +169,9 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
         void setTimeField(String partitionTimeField);
 
-        ItemListBox<SupportedRetentionAge> getRetentionAge();
+        SelectionBox<SupportedRetentionAge> getRetentionAge();
 
-        StringListBox getVolumeGroups();
+        SelectionBox<String> getVolumeGroups();
 
         void setDefaultExtractionPipelineView(View view);
     }

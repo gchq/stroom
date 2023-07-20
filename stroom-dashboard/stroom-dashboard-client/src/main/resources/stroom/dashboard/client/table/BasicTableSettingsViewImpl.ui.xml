@@ -11,7 +11,7 @@
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsQuery" label="Query">
-            <i:ItemListBox ui:field="query" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="query" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
             <v:CustomCheckBox ui:field="extractValues" identity="basicTableSettingsExtractValues" label="Extract Values"/>

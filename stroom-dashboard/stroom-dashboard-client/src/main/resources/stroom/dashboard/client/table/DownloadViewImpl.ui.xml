@@ -6,7 +6,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="searchDownloadFileType" label="File Type">
-            <list:ItemListBox ui:field="fileType"/>
+            <list:SelectionBox ui:field="fileType"/>
         </form:FormGroup>
         <form:FormGroup>
             <view:CustomCheckBox ui:field="sample" identity="searchDownloadSampleOnly" label="Sample Only"/>

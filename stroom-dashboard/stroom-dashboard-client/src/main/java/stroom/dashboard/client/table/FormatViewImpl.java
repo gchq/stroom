@@ -17,8 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
@@ -26,7 +25,6 @@ import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -82,7 +80,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     FormGroup formatTimeZoneOffset;
 
     @UiField
-    ItemListBox<Type> type;
+    SelectionBox<Type> type;
     @UiField
     ValueSpinner decimalPlaces;
     @UiField
@@ -90,15 +88,15 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @UiField
     CustomCheckBox usePreferences;
     @UiField
-    StringListBox format;
+    SelectionBox<String> format;
     @UiField
     CustomCheckBox custom;
     @UiField
     TextBox text;
     @UiField
-    ItemListBox<Use> timeZoneUse;
+    SelectionBox<Use> timeZoneUse;
     @UiField
-    StringListBox timeZoneId;
+    SelectionBox<String> timeZoneId;
     @UiField
     ValueSpinner timeZoneOffsetHours;
     @UiField
@@ -151,7 +149,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     @Override
     public void setType(final Type type) {
-        this.type.setSelectedItem(type);
+        this.type.setValue(type);
 
         formatDecimalPlaces.setVisible(Type.NUMBER.equals(type));
         formatUseSeparator.setVisible(Type.NUMBER.equals(type));
@@ -162,9 +160,9 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
         formatCustomFormat.setVisible(Type.DATE_TIME.equals(type));
         formatTimeZone.setVisible(Type.DATE_TIME.equals(type));
         formatTimeZoneId.setVisible(Type.DATE_TIME.equals(type) &&
-                TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
+                TimeZone.Use.ID.equals(this.timeZoneUse.getValue()));
         formatTimeZoneOffset.setVisible(Type.DATE_TIME.equals(type) &&
-                TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
+                TimeZone.Use.OFFSET.equals(this.timeZoneUse.getValue()));
     }
 
     @Override
@@ -203,7 +201,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
             return text.getText();
         }
 
-        return format.getSelected();
+        return format.getValue();
     }
 
     @Override
@@ -213,11 +211,11 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
             text = STANDARD_FORMATS.get(0);
         }
 
-        if (!text.equals(this.format.getSelected())) {
-            this.format.setSelected(text);
+        if (!text.equals(this.format.getValue())) {
+            this.format.setValue(text);
         }
 
-        final boolean custom = this.format.getSelectedIndex() == -1;
+        final boolean custom = this.format.getValue() == null;
         this.custom.setValue(custom);
         this.text.setEnabled(custom);
         this.text.setText(text);
@@ -230,22 +228,22 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     @Override
     public Use getTimeZoneUse() {
-        return this.timeZoneUse.getSelectedItem();
+        return this.timeZoneUse.getValue();
     }
 
     @Override
     public void setTimeZoneUse(final Use use) {
-        this.timeZoneUse.setSelectedItem(use);
+        this.timeZoneUse.setValue(use);
     }
 
     @Override
     public String getTimeZoneId() {
-        return this.timeZoneId.getSelected();
+        return this.timeZoneId.getValue();
     }
 
     @Override
     public void setTimeZoneId(final String timeZoneId) {
-        this.timeZoneId.setSelected(timeZoneId);
+        this.timeZoneId.setValue(timeZoneId);
     }
 
     @Override
@@ -300,18 +298,18 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     }
 
     @UiHandler("type")
-    public void onTypeChange(final SelectionEvent<Type> event) {
-        getUiHandlers().onTypeChange(type.getSelectedItem());
+    public void onTypeValueChange(final ValueChangeEvent<Type> event) {
+        getUiHandlers().onTypeChange(type.getValue());
     }
 
     @UiHandler("format")
-    public void onFormatChange(final ChangeEvent event) {
-        setPattern(this.format.getSelected());
+    public void onFormatValueChange(final ValueChangeEvent<String> event) {
+        setPattern(this.format.getValue());
     }
 
     @UiHandler("timeZoneUse")
-    public void onTimeZoneUseChange(final SelectionEvent<TimeZone.Use> event) {
-        setType(this.type.getSelectedItem());
+    public void onTimeZoneUseValueChange(final ValueChangeEvent<TimeZone.Use> event) {
+        setType(this.type.getValue());
     }
 
     public interface Binder extends UiBinder<Widget, FormatViewImpl> {

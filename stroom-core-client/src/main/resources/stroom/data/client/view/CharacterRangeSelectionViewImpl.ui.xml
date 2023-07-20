@@ -12,14 +12,14 @@
         </g:FlowPanel>
         <form:FormGroup identity="characterRangeSelectionFrom" label="From">
             <g:FlowPanel styleName="characterRangeSelectionViewImpl-options">
-                <l:ItemListBox ui:field="fromType" addStyleNames="allow-focus"/>
+                <l:SelectionBox ui:field="fromType" addStyleNames="allow-focus"/>
                 <lci:LineColInput ui:field="fromLineCol" addStyleNames="allow-focus"/>
                 <v:ValueSpinner ui:field="fromCharOffset" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="characterRangeSelectionTo" label="To">
             <g:FlowPanel styleName="characterRangeSelectionViewImpl-options">
-                <l:ItemListBox ui:field="toType" addStyleNames="allow-focus"/>
+                <l:SelectionBox ui:field="toType" addStyleNames="allow-focus"/>
                 <lci:LineColInput ui:field="toLineCol" addStyleNames="allow-focus"/>
                 <v:ValueSpinner ui:field="toCharOffset" addStyleNames="allow-focus"/>
                 <v:ValueSpinner ui:field="toCharCount" addStyleNames="allow-focus"/>

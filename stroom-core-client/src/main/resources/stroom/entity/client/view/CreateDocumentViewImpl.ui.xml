@@ -12,7 +12,7 @@
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="createDocumentPermissions" label="Permissions" addStyleNames="dock-min">
-            <l:ItemListBox ui:field="permissionInheritance" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

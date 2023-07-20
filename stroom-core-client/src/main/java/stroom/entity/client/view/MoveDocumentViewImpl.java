@@ -19,7 +19,7 @@ package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -36,7 +36,7 @@ public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
     @UiField
     SimplePanel foldersInner;
     @UiField
-    ItemListBox<PermissionInheritance> permissionInheritance;
+    SelectionBox<PermissionInheritance> permissionInheritance;
 
     @Inject
     public MoveDocumentViewImpl(final Binder binder) {
@@ -46,7 +46,7 @@ public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
         permissionInheritance.addItem(PermissionInheritance.SOURCE);
         permissionInheritance.addItem(PermissionInheritance.DESTINATION);
         permissionInheritance.addItem(PermissionInheritance.COMBINED);
-        permissionInheritance.setSelectedItem(PermissionInheritance.DESTINATION);
+        permissionInheritance.setValue(PermissionInheritance.DESTINATION);
     }
 
     @Override
@@ -63,12 +63,12 @@ public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
 
     @Override
     public PermissionInheritance getPermissionInheritance() {
-        return permissionInheritance.getSelectedItem();
+        return permissionInheritance.getValue();
     }
 
     @Override
     public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
-        this.permissionInheritance.setSelectedItem(permissionInheritance);
+        this.permissionInheritance.setValue(permissionInheritance);
     }
 
     public interface Binder extends UiBinder<Widget, MoveDocumentViewImpl> {

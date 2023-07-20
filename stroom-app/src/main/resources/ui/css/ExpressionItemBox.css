@@ -20,14 +20,16 @@
 	top: -100000;
 	border: 1px solid rgba(0,0,0,0);
 	border-radius: 5px;
-	box-shadow: rgba(0, 0, 0, 0) 0 2px 4px, rgba(0, 0, 0, 0) 0 0 3px;
+	/*box-shadow: rgba(0, 0, 0, 0) 0 2px 4px, rgba(0, 0, 0, 0) 0 0 3px;*/
 	z-index: 3;
 	min-width: 50px;
 }
 
 .expressionItemBox-background select, .expressionItemBox-background input {
+/*
     height: 24px;
     padding: 1px 0px 0px 4px;
+    */
 }
 
 .expressionItemBox-selectable {
@@ -41,37 +43,41 @@
 .expressionItemBox-background.expressionItemBox-selectable:hover {
 	border: 1px solid rgba(0,0,0,.2);
 	background-color: var(--expression-item-box__background-color--hover);
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected {
-	border: 1px solid rgba(0,0,0,.2);
+	border: solid 1px rgb(33 150 243);
 	background-color: var(--expression-item-box__background-color--selected);
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
+}
+
+.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected * {
+	color: var(--row__text-color--selected);
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled {
 	border: 1px solid rgba(0,0,0,.2);
 	background-color: var(--expression-item-box__background-color--disabled);
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected:hover {
-	border: 1px solid rgba(0,0,0,.2);
+	border: solid 1px rgb(33 150 243);
 	background-color: var(--expression-item-box__background-color--selected);
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled:hover {
 	border: 1px solid rgba(0,0,0,.2);
 	background-color: var(--expression-item-box__background-color--disabled);
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-hotspot {
-	border: 1px solid rgba(0,0,0,.2);
+	border: solid 1px rgb(33 150 243);
 	background-color: var(--expression-item-box__background-color--hotspot);
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
 }
 
 .expressionItemBox-image {

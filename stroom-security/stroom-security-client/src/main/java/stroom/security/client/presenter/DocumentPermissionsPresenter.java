@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter.DocumentPermissionsView;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.Changes;
@@ -214,7 +214,7 @@ public class DocumentPermissionsPresenter
                     .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
                             docRef,
                             changes,
-                            getView().getCascade().getSelectedItem()));
+                            getView().getCascade().getValue()));
         } else {
             e.hide();
         }
@@ -232,7 +232,7 @@ public class DocumentPermissionsPresenter
 
         void setTabsView(View view);
 
-        ItemListBox<ChangeDocumentPermissionsRequest.Cascade> getCascade();
+        SelectionBox<ChangeDocumentPermissionsRequest.Cascade> getCascade();
 
         void setCascadeVisible(boolean visible);
 

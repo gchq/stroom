@@ -20,7 +20,7 @@
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
-            <l:StringListBox ui:field="node"/>
+            <l:SelectionBox ui:field="node"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingInfo" label="Processing Info">
             <g:FlowPanel styleName="form">

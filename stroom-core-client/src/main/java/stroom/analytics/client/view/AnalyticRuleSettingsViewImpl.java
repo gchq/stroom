@@ -21,7 +21,7 @@ import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.DurationPicker;
 
@@ -40,9 +40,9 @@ public class AnalyticRuleSettingsViewImpl
     private final Widget widget;
 
     @UiField
-    ItemListBox<QueryLanguageVersion> languageVersion;
+    SelectionBox<QueryLanguageVersion> languageVersion;
     @UiField
-    ItemListBox<AnalyticRuleType> analyticRuleType;
+    SelectionBox<AnalyticRuleType> analyticRuleType;
     @UiField
     DurationPicker dataRetention;
 
@@ -53,8 +53,8 @@ public class AnalyticRuleSettingsViewImpl
         languageVersion.addItem(QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         languageVersion.addItem(QueryLanguageVersion.SIGMA);
 
-        languageVersion.addSelectionHandler(e -> getUiHandlers().onDirty());
-        analyticRuleType.addSelectionHandler(e -> {
+        languageVersion.addValueChangeHandler(e -> getUiHandlers().onDirty());
+        analyticRuleType.addValueChangeHandler(e -> {
             getUiHandlers().onDirty();
         });
 
@@ -69,25 +69,25 @@ public class AnalyticRuleSettingsViewImpl
 
     @Override
     public QueryLanguageVersion getLanguageVersion() {
-        return languageVersion.getSelectedItem();
+        return languageVersion.getValue();
     }
 
     public void setLanguageVersion(final QueryLanguageVersion languageVersion) {
         if (languageVersion == null) {
-            this.languageVersion.setSelectedItem(QueryLanguageVersion.STROOM_QL_VERSION_0_1);
+            this.languageVersion.setValue(QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         } else {
-            this.languageVersion.setSelectedItem(languageVersion);
+            this.languageVersion.setValue(languageVersion);
         }
     }
 
     @Override
     public AnalyticRuleType getAnalyticRuleType() {
-        return this.analyticRuleType.getSelectedItem();
+        return this.analyticRuleType.getValue();
     }
 
     @Override
     public void setAnalyticRuleType(final AnalyticRuleType analyticRuleType) {
-        this.analyticRuleType.setSelectedItem(analyticRuleType);
+        this.analyticRuleType.setValue(analyticRuleType);
     }
 
     @Override

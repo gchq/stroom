@@ -7,10 +7,10 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="analyticRuleSettingsLanguageVersion" label="Language Version">
-            <item:ItemListBox ui:field="languageVersion" width="400px"/>
+            <item:SelectionBox ui:field="languageVersion" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsAlertRuleType" label="Alert Rule Type">
-            <l:ItemListBox ui:field="analyticRuleType"/>
+            <l:SelectionBox ui:field="analyticRuleType"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsDataRetention" label="Time To Keep Data In The Store">
             <d:DurationPicker ui:field="dataRetention"/>

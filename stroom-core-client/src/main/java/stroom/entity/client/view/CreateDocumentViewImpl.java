@@ -19,7 +19,7 @@ package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
@@ -42,7 +42,7 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHand
     @UiField
     TextBox name;
     @UiField
-    ItemListBox<PermissionInheritance> permissionInheritance;
+    SelectionBox<PermissionInheritance> permissionInheritance;
 
     @Inject
     public CreateDocumentViewImpl(final Binder binder) {
@@ -51,7 +51,7 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
         permissionInheritance.addItem(PermissionInheritance.NONE);
         permissionInheritance.addItem(PermissionInheritance.DESTINATION);
-        permissionInheritance.setSelectedItem(PermissionInheritance.DESTINATION);
+        permissionInheritance.setValue(PermissionInheritance.DESTINATION);
     }
 
     @Override
@@ -81,12 +81,12 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
     @Override
     public PermissionInheritance getPermissionInheritance() {
-        return permissionInheritance.getSelectedItem();
+        return permissionInheritance.getValue();
     }
 
     @Override
     public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
-        this.permissionInheritance.setSelectedItem(permissionInheritance);
+        this.permissionInheritance.setValue(permissionInheritance);
     }
 
     @UiHandler("name")
