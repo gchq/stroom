@@ -50,4 +50,10 @@ class StroomUserNameProvider implements UserNameProvider {
         return userCache.getByDisplayName(displayName)
                 .map(User::asUserName);
     }
+
+    @Override
+    public Optional<UserName> getByUuid(final String userUuid) {
+        return userCache.getByUuid(userUuid)
+                .map(User::asUserName);
+    }
 }

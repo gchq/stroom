@@ -4,13 +4,13 @@
 package stroom.storedquery.impl.db.jooq;
 
 
-import stroom.storedquery.impl.db.jooq.tables.Query;
-import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
-
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+
+import stroom.storedquery.impl.db.jooq.tables.Query;
+import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 
 
 /**

@@ -85,6 +85,12 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
         return getBySubjectId(displayName);
     }
 
+    @Override
+    public Optional<UserName> getByUuid(final String userUuid) {
+        // Accounts don't have stroom UUIDs
+        return Optional.empty();
+    }
+
     private UserName mapAccountToUserName(final Account account) {
         return new SimpleUserName(
                 account.getUserId(),

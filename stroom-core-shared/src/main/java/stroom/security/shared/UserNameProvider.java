@@ -20,4 +20,6 @@ public interface UserNameProvider {
     Optional<UserName> getBySubjectId(final String subjectId);
 
     Optional<UserName> getByDisplayName(final String displayName);
+
+    Optional<UserName> getByUuid(final String userUuid);
 }

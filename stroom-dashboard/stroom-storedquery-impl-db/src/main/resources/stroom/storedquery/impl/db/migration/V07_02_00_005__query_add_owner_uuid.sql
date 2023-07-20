@@ -29,10 +29,13 @@ BEGIN
     INTO object_count
     FROM information_schema.columns
     WHERE table_schema = database()
-    AND table_name = 'preferences'
-    AND column_name = 'user_uuid';
+    AND table_name = 'query'
+    AND column_name = 'owner_uuid';
 
     IF object_count = 0 THEN
+
+        ALTER TABLE query
+        ADD COLUMN owner_uuid varchar(255) NOT NULL;
 
         SELECT COUNT(1)
         INTO object_count
@@ -41,36 +44,24 @@ BEGIN
         AND table_name = 'stroom_user';
 
         IF object_count = 1 THEN
-            UPDATE preferences p, stroom_user s
-            SET p.user_id = s.uuid
-            WHERE p.user_id = s.name;
+            UPDATE query q, stroom_user s
+            SET q.owner_uuid = s.uuid
+            WHERE q.create_user = s.name;
         END IF;
 
-        ALTER TABLE preferences
-        RENAME COLUMN user_id TO user_uuid;
     END IF;
 
     SELECT COUNT(1)
     INTO object_count
     FROM information_schema.table_constraints
     WHERE table_schema = database()
-    AND table_name = 'preferences'
-    AND constraint_name = 'user_id';
-
-    IF object_count = 1 THEN
-        ALTER TABLE preferences DROP INDEX user_id;
-    END IF;
-
-    SELECT COUNT(1)
-    INTO object_count
-    FROM information_schema.table_constraints
-    WHERE table_schema = database()
-    AND table_name = 'preferences'
-    AND constraint_name = 'user_uuid';
+    AND table_name = 'query'
+    AND constraint_name = 'owner_uuid';
 
     IF object_count = 0 THEN
-        CREATE UNIQUE INDEX user_uuid ON preferences (user_uuid);
+        CREATE INDEX owner_uuid ON query (owner_uuid);
     END IF;
+
 END $$
 
 DELIMITER ;
@@ -80,3 +71,5 @@ CALL V07_02_00_005;
 DROP PROCEDURE IF EXISTS V07_02_00_005;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

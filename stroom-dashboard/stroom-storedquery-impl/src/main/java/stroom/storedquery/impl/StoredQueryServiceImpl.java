@@ -25,12 +25,16 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext, storedQuery);
+        storedQuery.setOwnerUuid(securityContext.getUserUuid());
         return securityContext.secureResult(() -> dao.create(storedQuery));
     }
 
     @Override
     public StoredQuery update(@NotNull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext, storedQuery);
+        if (storedQuery.getOwnerUuid() == null) {
+            storedQuery.setOwnerUuid(securityContext.getUserUuid());
+        }
         return securityContext.secureResult(() -> dao.update(storedQuery));
     }
 
@@ -54,8 +58,8 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
     @Override
     public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
-        final String userId = securityContext.getSubjectId();
-        criteria.setUserId(userId);
+        final String userUuid = securityContext.getUserUuid();
+        criteria.setOwnerUuid(userUuid);
 
         return securityContext.secureResult(() -> dao.find(criteria));
     }

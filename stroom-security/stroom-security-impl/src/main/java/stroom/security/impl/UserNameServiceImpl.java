@@ -57,4 +57,14 @@ public class UserNameServiceImpl implements UserNameService {
                 .findAny()
                 .flatMap(optOptUserName -> optOptUserName);
     }
+
+    @Override
+    public Optional<UserName> getByUuid(final String userUuid) {
+        return userNameProviders.stream()
+                .map(provider ->
+                        provider.getByUuid(userUuid))
+                .filter(Optional::isPresent)
+                .findAny()
+                .flatMap(optOptUserName -> optOptUserName);
+    }
 }

@@ -26,6 +26,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
+import stroom.security.user.api.UserNameService;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
 import stroom.storedquery.impl.StoredQueryDao;
@@ -34,6 +35,7 @@ import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.SimpleUserName;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +46,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +57,8 @@ class TestStoredQueryDao {
     private static final String QUERY_COMPONENT = "Test Component";
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStoredQueryDao.class);
 
+    @Mock
+    UserNameService userNameService;
     @Mock
     private SecurityContext securityContext;
     private StoredQueryDao storedQueryDao;
@@ -75,11 +82,14 @@ class TestStoredQueryDao {
         // Clear the current DB.
         DbTestUtil.clear();
 
+        final String ownerUuid = UUID.randomUUID().toString();
+
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
 
-        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(storedQueryDao,
+        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(
+                storedQueryDao,
                 new StoredQueryConfig(),
-                new SimpleTaskContextFactory());
+                new SimpleTaskContextFactory(), userNameService);
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");
@@ -92,6 +102,7 @@ class TestStoredQueryDao {
                 .dataSource(indexRef)
                 .expression(ExpressionOperator.builder().build())
                 .build());
+        refQuery.setOwnerUuid(ownerUuid);
         AuditUtil.stamp(securityContext, refQuery);
         storedQueryDao.create(refQuery);
 
@@ -108,6 +119,7 @@ class TestStoredQueryDao {
                 .dataSource(indexRef)
                 .expression(root.build())
                 .build());
+        testQuery.setOwnerUuid(ownerUuid);
         AuditUtil.stamp(securityContext, testQuery);
         testQuery = storedQueryDao.create(testQuery);
 
@@ -136,29 +148,35 @@ class TestStoredQueryDao {
         assertThat(root.getChildren().size()).isEqualTo(1);
 
         final String actual = query.getData();
-        final String expected = "" +
-                "{\n" +
-                "  \"dataSource\" : {\n" +
-                "    \"type\" : \"Index\",\n" +
-                "    \"uuid\" : \"4a085071-1d1b-4c96-8567-82f6954584a4\",\n" +
-                "    \"name\" : \"Test Index\"\n" +
-                "  },\n" +
-                "  \"expression\" : {\n" +
-                "    \"type\" : \"operator\",\n" +
-                "    \"op\" : \"OR\",\n" +
-                "    \"children\" : [ {\n" +
-                "      \"type\" : \"term\",\n" +
-                "      \"field\" : \"Some field\",\n" +
-                "      \"condition\" : \"EQUALS\",\n" +
-                "      \"value\" : \"Some value\"\n" +
-                "    } ]\n" +
-                "  }\n" +
-                "}";
+        final String expected = """
+                {
+                  "dataSource" : {
+                    "type" : "Index",
+                    "uuid" : "4a085071-1d1b-4c96-8567-82f6954584a4",
+                    "name" : "Test Index"
+                  },
+                  "expression" : {
+                    "type" : "operator",
+                    "op" : "OR",
+                    "children" : [ {
+                      "type" : "term",
+                      "field" : "Some field",
+                      "condition" : "EQUALS",
+                      "value" : "Some value"
+                    } ]
+                  }
+                }""";
         assertThat(actual).isEqualTo(expected);
     }
 
     @Test
     void testOldHistoryDeletion() {
+        Mockito.when(userNameService.getByUuid(Mockito.anyString()))
+                .thenReturn(Optional.of(new SimpleUserName(
+                        "dummy",
+                        "dummy",
+                        null)));
+
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
         criteria.setComponentId(QUERY_COMPONENT);
@@ -178,6 +196,7 @@ class TestStoredQueryDao {
             newQuery.setFavourite(false);
             newQuery.setQuery(query.getQuery());
             newQuery.setData(query.getData());
+            newQuery.setOwnerUuid(query.getOwnerUuid());
             AuditUtil.stamp(securityContext, newQuery);
             storedQueryDao.create(newQuery);
         }

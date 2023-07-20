@@ -20,4 +20,9 @@ public interface UserNameService {
      * it will look up the user using their unique identifier.</p>
      */
     Optional<UserName> getByDisplayName(final String displayName);
+
+    /**
+     * Look up a user by their Stroom user uuid.
+     */
+    Optional<UserName> getByUuid(final String userUuid);
 }
