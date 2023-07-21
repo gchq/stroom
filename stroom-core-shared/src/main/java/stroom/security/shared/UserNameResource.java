@@ -39,9 +39,16 @@ public interface UserNameResource extends RestResource, DirectRestService {
     UserName getByDisplayName(@PathParam("displayName") final String displayName);
 
     @GET
-    @Path("/{userId}")
+    @Path("/{subjectId}")
     @Operation(
-            summary = "Find the user name matching the supplied unique user ID",
+            summary = "Find the user name matching the supplied unique user subject ID",
             operationId = "getByUserId")
     UserName getBySubjectId(final String subjectId);
+
+    @GET
+    @Path("/getByUuid/{userUuid}")
+    @Operation(
+            summary = "Find the user name matching the supplied unique Stroom user UUID",
+            operationId = "getByUuid")
+    UserName getByUuid(final String userUuid);
 }

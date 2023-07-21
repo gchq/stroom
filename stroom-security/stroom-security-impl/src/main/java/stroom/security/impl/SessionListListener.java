@@ -31,12 +31,12 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.UserName;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -149,9 +149,11 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private SessionListResponse listSessionsOnThisNode() {
         return sessionMap.values().stream()
                 .map(httpSession -> {
-                    final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(httpSession);
+                    final UserName userName = UserIdentitySessionUtil.get(httpSession)
+                            .map(UserIdentity::asUserName)
+                            .orElse(null);
                     return new SessionDetails(
-                            userIdentity.map(UserIdentity::getSubjectId).orElse(null),
+                            userName,
                             httpSession.getCreationTime(),
                             httpSession.getLastAccessedTime(),
                             UserAgentSessionUtil.get(httpSession),

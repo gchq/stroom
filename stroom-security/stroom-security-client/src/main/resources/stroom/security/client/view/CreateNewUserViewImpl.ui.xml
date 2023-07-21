@@ -4,9 +4,9 @@
   <g:Grid styleName="stroom-control-grid w-100">
 
     <g:row>
-      <g:cell>User Identity:</g:cell>
+      <g:cell>Unique User Identity:</g:cell>
       <g:customCell>
-        <g:TextBox ui:field="userIdentity" addStyleNames="w-100" />
+        <g:TextBox ui:field="subjectId" addStyleNames="w-100" />
       </g:customCell>
     </g:row>
 

@@ -1,11 +1,16 @@
 package stroom.docstore.shared;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.test.common.TestUtil;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 class TestDocRefUtil {
 
@@ -73,6 +78,46 @@ class TestDocRefUtil {
                 .isEqualTo(doc.getUuid());
         Assertions.assertThat(docRef.getType())
                 .isEqualTo(doc.getType());
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCreateSimpleDocRefString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(DocRef.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        DocRefUtil.createSimpleDocRefString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(PipelineDoc.buildDocRef()
+                                .uuid("3b573762-3f9b-4eaf-bb19-26344598abaf")
+                                .build(),
+                        "3b573762-3f9b-4eaf-bb19-26344598abaf")
+                .addCase(PipelineDoc.buildDocRef()
+                                .uuid("55ea911e-d1a2-4278-9bd7-8222b54c9f4b")
+                                .name("foo")
+                                .build(),
+                        "foo {55ea911e-d1a2-4278-9bd7-8222b54c9f4b}")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCreateTypedDocRefString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(DocRef.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        DocRefUtil.createTypedDocRefString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(PipelineDoc.buildDocRef()
+                                .uuid("3b573762-3f9b-4eaf-bb19-26344598abaf")
+                                .build(),
+                        "Pipeline 3b573762-3f9b-4eaf-bb19-26344598abaf")
+                .addCase(PipelineDoc.buildDocRef()
+                                .uuid("55ea911e-d1a2-4278-9bd7-8222b54c9f4b")
+                                .name("foo")
+                                .build(),
+                        "Pipeline 'foo' {55ea911e-d1a2-4278-9bd7-8222b54c9f4b}")
+                .build();
     }
 
     private Doc buildDoc(final String uuid, final String type) {

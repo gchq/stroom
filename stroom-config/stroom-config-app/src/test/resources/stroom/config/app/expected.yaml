@@ -685,6 +685,10 @@ appConfig:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
+      userByUuidCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
       userCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null

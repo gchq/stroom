@@ -59,12 +59,25 @@ class UserCache implements Clearable, EntityEvent.Handler {
               final UserService userService) {
         this.authenticationService = authenticationService;
 
+        // TODO: 20/07/2023 We could consider trying to re-use User objects between
+        //  all three caches but it presents concurrency issues and the risk of deadlocks,
+        //  maybe.
+        cacheByUuid = cacheManager.createLoadingCache(
+                CACHE_NAME_BY_UUID,
+                () -> authorisationConfigProvider.get().getUserByUuidCache(),
+                userUuid -> {
+                    LOGGER.debug("Loading user uuid '{}' into cache '{}'",
+                            userUuid, CACHE_NAME_BY_DISPLAY_NAME);
+                    return userService.loadByUuid(userUuid);
+                });
+
         cacheBySubjectId = cacheManager.createLoadingCache(
                 CACHE_NAME_BY_SUBJECT_ID,
                 () -> authorisationConfigProvider.get().getUserCache(),
                 subjectId -> {
                     LOGGER.debug("Loading user with subjectId '{}' into cache '{}'",
                             subjectId, CACHE_NAME_BY_SUBJECT_ID);
+                    //
                     return authenticationService.getUser(subjectId);
                 });
 
@@ -75,15 +88,6 @@ class UserCache implements Clearable, EntityEvent.Handler {
                     LOGGER.debug("Loading user display name '{}' into cache '{}'",
                             displayName, CACHE_NAME_BY_DISPLAY_NAME);
                     return userService.getUserByDisplayName(displayName);
-                });
-
-        cacheByUuid = cacheManager.createLoadingCache(
-                CACHE_NAME_BY_UUID,
-                () -> authorisationConfigProvider.get().getUserByUuidCache(),
-                userUuid -> {
-                    LOGGER.debug("Loading user uuid '{}' into cache '{}'",
-                            userUuid, CACHE_NAME_BY_DISPLAY_NAME);
-                    return userService.loadByUuid(userUuid);
                 });
     }
 

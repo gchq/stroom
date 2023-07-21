@@ -44,6 +44,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.security.user.api.UserNameService;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -51,6 +52,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.UserName;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,6 +78,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     private final MetaService metaService;
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
+    private final UserNameService userNameService;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
@@ -83,13 +86,15 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                final ProcessorTaskDao processorTaskDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
-                               final DocRefInfoService docRefInfoService) {
+                               final DocRefInfoService docRefInfoService,
+                               final UserNameService userNameService) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
+        this.userNameService = userNameService;
     }
 
     @Override
@@ -149,6 +154,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         // now create the filter and tracker
         final ProcessorFilter processorFilter = new ProcessorFilter();
         AuditUtil.stamp(securityContext, processorFilter);
+        // The creator of the filter becomes the owner and the processor tasks are run as the owner
+        // of the filter (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
+        processorFilter.setOwnerUuid(securityContext.getUserUuid());
         // Blank tracker
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
@@ -251,9 +259,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
                 // Filtering by getUserIdentityForAudit is not ideal as
                 final ExpressionOperator.Builder builder = ExpressionOperator.builder()
-                        .addTerm(ProcessorFields.CREATE_USER,
+                        .addTerm(ProcessorFields.OWNER_UUID,
                                 Condition.EQUALS,
-                                securityContext.getUserIdentityForAudit())
+                                securityContext.getUserUuid())
                         .addOperator(criteria.getExpression());
 
                 criteria.setExpression(builder.build());
@@ -325,7 +333,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                 processorFilter.setPipelineName(processor.getPipelineName());
                             }
 
-                            final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(processorFilter);
+
+                            final String userDisplayName = Optional.ofNullable(processorFilter.getOwnerUuid())
+                                    .flatMap(userNameService::getByUuid)
+                                    .map(UserName::getUserIdentityForAudit)
+                                    .orElse(null);
+
+                            final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(
+                                    processorFilter, userDisplayName);
                             values.add(processorFilterRow);
                         }
                     }
@@ -523,6 +538,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         AuditUtil.stamp(securityContext, processorFilter);
+        if (processorFilter.getOwnerUuid() == null) {
+            processorFilter.setOwnerUuid(securityContext.getUserUuid());
+        }
 
         return processorFilter;
     }

@@ -57,7 +57,7 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
 
     public UserName getUserName() {
         return new SimpleUserName(
-                getView().getUserIdentity(),
+                getView().getSubjectId(),
                 getView().getDisplayName(),
                 getView().getFullName());
     }
@@ -68,7 +68,7 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
 
     public interface CreateNewUserView extends View, HasUiHandlers<HideRequestUiHandlers> {
 
-        String getUserIdentity();
+        String getSubjectId();
 
         String getDisplayName();
 

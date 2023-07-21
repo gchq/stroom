@@ -100,14 +100,6 @@ public class SelectUserPresenter
             }
         }, "</br>", 20);
 
-        // Name (aka the unique ID for the user)
-        dataGrid.addResizableColumn(new Column<UserName, String>(new TextCell()) {
-            @Override
-            public String getValue(final UserName userRef) {
-                return userRef.getSubjectId();
-            }
-        }, "User ID", 350);
-
         // Display Name
         final Column<UserName, String> displayNameCol = new Column<UserName, String>(new TextCell()) {
             @Override
@@ -115,7 +107,7 @@ public class SelectUserPresenter
                 return userRef.getDisplayName();
             }
         };
-        dataGrid.addResizableColumn(displayNameCol, "Display Name", 250);
+        dataGrid.addResizableColumn(displayNameCol, "Display Name", 200);
 
         // Full name
         final Column<UserName, String> fullNameCol = new Column<UserName, String>(new TextCell()) {
@@ -125,6 +117,15 @@ public class SelectUserPresenter
             }
         };
         dataGrid.addResizableColumn(fullNameCol, "Full Name", 350);
+
+        // Subject ID (aka the unique ID for the user)
+        dataGrid.addResizableColumn(new Column<UserName, String>(new TextCell()) {
+            @Override
+            public String getValue(final UserName userRef) {
+                return userRef.getSubjectId();
+            }
+        }, "Unique User Identity", 300);
+
 
         dataGrid.addEndColumn(new EndColumn<>());
         // Only want to let user create a stroom user if they are using an external IDP.

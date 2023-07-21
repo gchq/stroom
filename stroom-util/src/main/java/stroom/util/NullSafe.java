@@ -32,6 +32,7 @@ public class NullSafe {
 
     /**
      * Allows you to safely compare a child property of val1 to other.
+     *
      * @return False if val1 is null else whether the child property of val1 is equal to other
      */
     public static <T1, T2> boolean equals(final T1 val1,
@@ -83,6 +84,7 @@ public class NullSafe {
 
     /**
      * Allows you to safely compare a grandchild property of val1 to other.
+     *
      * @return False if val1 is null or if val1's child property is null,
      * else whether the grandchild property of val1 is equal to other
      */
@@ -460,10 +462,9 @@ public class NullSafe {
     }
 
     /**
-     * Apply getter to value if value is non-null.
+     * Require that both {@code value} is non-null and the result of applying {@code getter} to
+     * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
      *
-     * @return The result of applying getter to value if value is non-null, else throw
-     * a {@link NullPointerException}
      * @throws NullPointerException
      */
     public static <T1, R> R requireNonNull(final T1 value,
@@ -617,10 +618,10 @@ public class NullSafe {
     }
 
     /**
-     * Apply getter2 to result of applying getter1 to value. If any
+     * Require that {@code value} is non-null, the result of applying {@code getter1} to
+     * {@code value} is non-null and the result applying {@code getter2} to the result
+     * of {@code getter1} is non-null. Throws an {@link NullPointerException} otherwise.
      *
-     * @return The result of applying getter to value if value is non-null, else throw
-     * a {@link NullPointerException}
      * @throws NullPointerException
      */
     public static <T1, T2, R> R requireNonNull(final T1 value,

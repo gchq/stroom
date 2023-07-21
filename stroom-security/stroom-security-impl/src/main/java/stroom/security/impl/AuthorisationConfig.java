@@ -35,6 +35,9 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
                 .build();
+        // User is pretty much immutable apart from the displayName/fullName but any change to
+        // this, triggers an entity event to evict the item from the cache, so expireAfterAccess
+        // is ok.
         userCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))

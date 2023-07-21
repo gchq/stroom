@@ -57,5 +57,12 @@ class UserNameResourceImpl implements UserNameResource {
                 .getBySubjectId(subjectId)
                 .orElse(null);
     }
+
+    @Override
+    public UserName getByUuid(final String userUuid) {
+        return userNameServiceProvider.get()
+                .getByUuid(userUuid)
+                .orElse(null);
+    }
 }
 

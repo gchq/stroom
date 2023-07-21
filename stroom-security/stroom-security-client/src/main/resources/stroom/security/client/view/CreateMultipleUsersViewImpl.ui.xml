@@ -5,7 +5,7 @@
   <g:FlowPanel styleName="dock-container-vertical h-100">
     <g:Label text="Users to add (in the form):" styleName="dock-min"/>
     <g:Label
-            text="Unique ID,[Optional Display Name],[Optional Full Name]"
+            text="Unique User ID,[Optional Display Name],[Optional Full Name]"
             styleName="dock-min user-batch-example"/>
     <g:Label text="E.g." styleName="dock-min"/>
     <g:Label

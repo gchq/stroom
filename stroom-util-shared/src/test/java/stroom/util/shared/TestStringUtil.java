@@ -174,4 +174,18 @@ class TestStringUtil {
                 .addCase(" my name is \"Bob\". ", null)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testSingleQuote() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase -> StringUtil.singleQuote(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, "''")
+                .addCase("", "''")
+                .addCase("x", "'x'")
+                .addCase("o'neil", "'o'neil'")
+                .build();
+    }
+
 }

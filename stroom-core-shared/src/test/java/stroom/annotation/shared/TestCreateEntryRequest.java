@@ -13,16 +13,16 @@ import java.util.List;
 class TestCreateEntryRequest {
 
     protected static final UserName USER_1 = SimpleUserName.builder()
-            .name("myId1")
-            .name("myDisplayName1")
+            .subjectId("myId1")
+            .subjectId("myDisplayName1")
             .build();
     protected static final UserName USER_2 = SimpleUserName.builder()
-            .name("myId2")
-            .name("myDisplayName2")
+            .subjectId("myId2")
+            .subjectId("myDisplayName2")
             .build();
     protected static final UserName USER_3 = SimpleUserName.builder()
-            .name("myId3")
-            .name("myDisplayName3")
+            .subjectId("myId3")
+            .subjectId("myDisplayName3")
             .build();
     protected static final Annotation ANNOTATION = new Annotation(
             1L,
@@ -38,8 +38,8 @@ class TestCreateEntryRequest {
             "comment",
             "history");
     protected static final UserName USER_4 = SimpleUserName.builder()
-            .name("myId4")
-            .name("myDisplayName4")
+            .subjectId("myId4")
+            .subjectId("myDisplayName4")
             .build();
 
     @Test

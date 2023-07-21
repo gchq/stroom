@@ -36,6 +36,10 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
         this.fullName = fullName;
     }
 
+    public static SimpleUserName fromSubjectId(final String subjectId) {
+        return new SimpleUserName(subjectId, null, null);
+    }
+
     public SimpleUserName(final String subjectId) {
         this(subjectId, null, null);
     }
@@ -119,7 +123,7 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
             this.fullName = username.getFullName();
         }
 
-        public Builder name(final String value) {
+        public Builder subjectId(final String value) {
             name = value;
             return this;
         }

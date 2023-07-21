@@ -130,4 +130,15 @@ public class StringUtil {
         }
     }
 
+    /**
+     * Surrounds str with single quotes. Does not do any escaping. Intended for display purposes.
+     * if str is null returns {@code ''}.
+     */
+    public static String singleQuote(final String str) {
+        if (str == null) {
+            return "''";
+        } else {
+            return "'" + str + "'";
+        }
+    }
 }

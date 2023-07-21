@@ -44,6 +44,8 @@ import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.user.api.UserNameService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -54,14 +56,13 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserName;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -95,6 +96,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private final EventSearch eventSearch;
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
+    private final UserNameService userNameService;
 
     /**
      * Our filter cache
@@ -112,6 +114,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                              final EventSearch eventSearch,
                              final SecurityContext securityContext,
                              final ClusterLockService clusterLockService,
+                             final UserNameService userNameService,
                              final PrioritisedFilters prioritisedFilters) {
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -123,6 +126,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         this.eventSearch = eventSearch;
         this.securityContext = securityContext;
         this.clusterLockService = clusterLockService;
+        this.userNameService = userNameService;
         this.prioritisedFilters = prioritisedFilters;
     }
 
@@ -187,23 +191,16 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             try {
                                 // Set the current user to be the one who created the filter so that only streams that
                                 // the user has access to are processed.
-                                securityContext.asUser(securityContext.createIdentity(filter.getCreateUser()), () ->
-                                        taskContextFactory.childContext(parentTaskContext,
-                                                "Create Tasks",
-                                                taskContext -> {
-                                                    final int count = filterCount.incrementAndGet();
-                                                    parentTaskContext.info(() -> "Creating tasks for " +
-                                                            count +
-                                                            " of " +
-                                                            filters.size() +
-                                                            " filters");
-                                                    createTasksForFilter(
-                                                            taskContext,
-                                                            filter,
-                                                            progressMonitor,
-                                                            remaining,
-                                                            totalTasksCreated);
-                                                }).run());
+                                final UserIdentity ownerIdentity = getFilterOwnerIdentity(filter);
+
+                                createTasksForFilter(parentTaskContext,
+                                        totalTasksCreated,
+                                        filters,
+                                        progressMonitor,
+                                        filterCount,
+                                        remaining,
+                                        filter,
+                                        ownerIdentity);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }
@@ -224,6 +221,45 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         progressMonitor.report("CREATE NEW TASKS", null);
 
         LOGGER.trace("createNewTasks() - Finished");
+    }
+
+    private void createTasksForFilter(final TaskContext parentTaskContext,
+                           final LongAdder totalTasksCreated,
+                           final List<ProcessorFilter> filters,
+                           final ProgressMonitor progressMonitor,
+                           final AtomicInteger filterCount,
+                           final int remaining,
+                           final ProcessorFilter filter,
+                           final UserIdentity ownerIdentity) {
+        securityContext.asUser(ownerIdentity, () ->
+                taskContextFactory.childContext(parentTaskContext,
+                        "Create Tasks",
+                        taskContext -> {
+                            final int count = filterCount.incrementAndGet();
+                            parentTaskContext.info(() -> "Creating tasks for " +
+                                    count +
+                                    " of " +
+                                    filters.size() +
+                                    " filters (owner: "
+                                    + ownerIdentity.getUserIdentityForAudit()
+                                    + ")");
+                            createTasksForFilter(
+                                    taskContext,
+                                    filter,
+                                    progressMonitor,
+                                    remaining,
+                                    totalTasksCreated);
+                        }).run());
+    }
+
+    private UserIdentity getFilterOwnerIdentity(final ProcessorFilter filter) {
+        final UserName userName = userNameService.getByUuid(filter.getOwnerUuid())
+                        .orElseThrow(() -> new RuntimeException(
+                                LogUtil.message(
+                                        "No user name found for filter uuid: user uuid ",
+                                        filter.getUuid(), filter.getOwnerUuid())));
+        final UserIdentity ownerIdentity = securityContext.createIdentity(userName.getSubjectId());
+        return ownerIdentity;
     }
 
     private void createTasksForFilter(final TaskContext taskContext,

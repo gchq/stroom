@@ -32,7 +32,10 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
+import stroom.security.shared.UserNameResource;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -44,10 +47,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<Object> {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+    private static final UserNameResource USER_NAME_RESOURCE = GWT.create(UserNameResource.class);
 
     private final ProcessorListPresenter processorListPresenter;
     private final Provider<ProcessorEditPresenter> processorEditPresenterProvider;
@@ -209,7 +215,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void addProcessor() {
         if (pipelineDoc != null) {
-            edit(null);
+            edit(null, null);
         }
     }
 
@@ -232,7 +238,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     .enabled(false)
                     .build();
             final Rest<ProcessorFilter> rest = restFactory.create();
-            rest.onSuccess(result -> processorListPresenter.refresh()).call(PROCESSOR_FILTER_RESOURCE).create(request);
+            rest
+                    .onSuccess(result ->
+                            processorListPresenter.refresh())
+                    .call(PROCESSOR_FILTER_RESOURCE)
+                    .create(request);
         }
     }
 
@@ -251,7 +261,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                         "Unable to load filter",
                                         null);
                             } else {
-                                edit(loadedFilter);
+                                edit(loadedFilter, processorFilterRow.getOwnerDisplayName());
                             }
                         })
                         .call(PROCESSOR_FILTER_RESOURCE)
@@ -260,12 +270,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private void edit(final ProcessorFilter filter) {
-        processorEditPresenterProvider.get().show(docRef, filter, result -> {
-            if (result != null) {
-                refresh(result);
-            }
-        });
+    private void edit(final ProcessorFilter filter, final String ownerDisplayName) {
+        processorEditPresenterProvider.get()
+                .show(docRef, filter, result -> {
+                    if (result != null) {
+                        // The owner can't be changed in the editor
+                        refresh(result, ownerDisplayName);
+                    }
+                });
     }
 
     private void removeProcessor() {
@@ -300,7 +312,20 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     public void refresh(final ProcessorFilter processorFilter) {
-        final ProcessorListRow processorListRow = new ProcessorFilterRow(processorFilter);
+        Objects.requireNonNull(processorFilter);
+        final Rest<UserName> rest = restFactory.create();
+        rest
+                .onSuccess(userName -> {
+                    final String ownerDisplayName = GwtNullSafe.get(userName, UserName::getUserIdentityForAudit);
+                    refresh(processorFilter, ownerDisplayName);
+                })
+                .call(USER_NAME_RESOURCE)
+                .getByUuid(processorFilter.getOwnerUuid());
+    }
+
+    public void refresh(final ProcessorFilter processorFilter, final String ownerDisplayName) {
+
+        final ProcessorListRow processorListRow = new ProcessorFilterRow(processorFilter, ownerDisplayName);
         processorListPresenter.setNextSelection(processorListRow);
         processorListPresenter.refresh();
 
@@ -308,6 +333,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         processorListPresenter.getSelectionModel().setSelected(processorListRow, true);
         updateData();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ProcessorView extends View {
 

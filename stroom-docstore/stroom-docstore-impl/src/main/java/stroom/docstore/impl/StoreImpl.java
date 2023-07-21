@@ -20,12 +20,14 @@ package stroom.docstore.impl;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.api.ImportConverter;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -34,6 +36,7 @@ import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -63,6 +66,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class StoreImpl<D extends Doc> implements Store<D> {
 
@@ -72,6 +76,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     private final EntityEventBus entityEventBus;
     private final ImportConverter importConverter;
     private final SecurityContext securityContext;
+    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
 
     private final DocumentSerialiser2<D> serialiser;
     private final String type;
@@ -84,6 +89,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
               final EntityEventBus entityEventBus,
               final ImportConverter importConverter,
               final SecurityContext securityContext,
+              final Provider<DocRefInfoService> docRefInfoServiceProvider,
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Class<D> clazz) {
@@ -91,6 +97,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         this.entityEventBus = entityEventBus;
         this.importConverter = importConverter;
         this.securityContext = securityContext;
+        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.serialiser = serialiser;
         this.type = type;
         this.clazz = clazz;
@@ -356,7 +363,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
                             throw new PermissionException(
                                     securityContext.getUserIdentityForAudit(),
-                                    "You are not authorised to update this document " + docRef);
+                                    "You are not authorised to update " + toDocRefDisplayString(docRef));
                         }
 
                         final List<String> updatedFields = importState.getUpdatedFieldList();
@@ -376,7 +383,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
                             throw new PermissionException(
                                     securityContext.getUserIdentityForAudit(),
-                                    "You are not authorised to update this document " + docRef);
+                                    "You are not authorised to update " + toDocRefDisplayString(docRef));
                         }
                     }
 
@@ -437,7 +444,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         } catch (final PermissionException e) {
             throw new PermissionException(
                     securityContext.getUserIdentityForAudit(),
-                    "The document being imported exists but you are not authorised to read this document " + docRef);
+                    "The document being imported exists but you are not authorised to read "
+                            + toDocRefDisplayString(docRef));
         } catch (final RuntimeException e) {
             // Ignore.
             LOGGER.debug(e.getMessage(), e);
@@ -451,18 +459,16 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                                               final Function<D, D> filter) {
         Map<String, byte[]> data = Collections.emptyMap();
 
-        final String uuid = docRef.getUuid();
-
         try {
             // Check that the user has permission to read this item.
             if (!canRead(docRef)) {
                 throw new PermissionException(
                         securityContext.getUserIdentityForAudit(),
-                        "You are not authorised to read this document " + docRef);
+                        "You are not authorised to read " + toDocRefDisplayString(docRef));
             } else {
-                D document = read(uuid);
+                D document = read(docRef);
                 if (document == null) {
-                    throw new IOException("Unable to read " + docRef);
+                    throw new IOException("Unable to read " + toDocRefDisplayString(docRef));
                 }
                 document = filter.apply(document);
                 data = serialiser.write(document);
@@ -556,21 +562,30 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     private D read(final String uuid) {
+        return read(new DocRef(type, uuid));
+    }
+
+    private D read(final DocRef docRef) {
+        final String uuid = NullSafe.requireNonNull(docRef, DocRef::getUuid, () -> "UUID required");
+        checkType(docRef);
         // Check that the user has permission to read this item.
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(
                     securityContext.getUserIdentityForAudit(),
-                    LogUtil.message("You are not authorised to read document with UUID {}", uuid));
+                    LogUtil.message("You are not authorised to read {}",
+                            toDocRefDisplayString(docRef)));
         }
 
         final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
             try {
-                return persistence.read(new DocRef(type, uuid));
+                return persistence.read(docRef);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(
-                        LogUtil.message("Error reading doc {} from store {}, {}",
-                                uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+                        LogUtil.message("Error reading {} from store {}, {}",
+                                toDocRefDisplayString(docRef),
+                                persistence.getClass().getSimpleName(),
+                                e.getMessage()), e);
             }
         });
 
@@ -580,11 +595,22 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(
-                        LogUtil.message("Error deserialising doc {} from store {}, {}",
-                                uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+                        LogUtil.message("Error deserialising {} from store {}, {}",
+                                toDocRefDisplayString(uuid),
+                                persistence.getClass().getSimpleName(),
+                                e.getMessage()), e);
             }
         } else {
             throw new DocumentNotFoundException(new DocRef(type, uuid));
+        }
+    }
+
+    private void checkType(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
+        if (!Objects.equals(type, docRef.getType())) {
+            throw new RuntimeException(LogUtil.message(
+                    "Invalid docRef type, found: '{}', expecting: '{}'",
+                    docRef.getType(), type));
         }
     }
 
@@ -599,11 +625,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         if (!securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.UPDATE)) {
             throw new PermissionException(
                     securityContext.getUserIdentityForAudit(),
-                    "You are not authorised to update " + document.getType() +
-                    (((document.getName() != null) && document.getName().length() > 0)
-                            ? " " + document.getName()
-                            : "")
-                    + " (" + document.getUuid() + ")");
+                    "You are not authorised to update " + toDocRefDisplayString(docRef));
         }
 
         try {
@@ -633,7 +655,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     // Perform version check to ensure the item hasn't been updated by somebody
                     // else before we try to update it.
                     if (!existingDocument.getVersion().equals(currentVersion)) {
-                        throw new RuntimeException("Document has already been updated " + docRef);
+                        throw new RuntimeException(toDocRefDisplayString(docRef)
+                                + " has already been updated.");
                     }
 
                     persistence.write(docRef, true, newData);
@@ -694,8 +717,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);
                         throw new UncheckedIOException(
-                                LogUtil.message("Error reading doc {} from store {}, {}",
-                                        uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+                                LogUtil.message("Error reading {} from store {}, {}",
+                                        toDocRefDisplayString(uuid),
+                                        persistence.getClass().getSimpleName(),
+                                        e.getMessage()), e);
                     }
                 });
 
@@ -739,6 +764,37 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         }
 
         return matches;
+    }
+
+    private String toDocRefDisplayString(final String uuid) {
+        if (uuid == null) {
+            return "";
+        } else {
+            return toDocRefDisplayString(new DocRef(type, uuid));
+        }
+    }
+
+    private String toDocRefDisplayString(final DocRef docRef) {
+        if (docRef == null || !NullSafe.isBlankString(docRef.getName())) {
+            return "";
+        } else {
+            try {
+                return DocRefUtil.createTypedDocRefString(docRefInfoServiceProvider.get()
+                        .decorate(docRef));
+            } catch (Exception e) {
+                // This method is for use in decorating the docref for exception messages
+                // so swallow any errors.
+                LOGGER.debug("Error decorating docRef {}: {}",
+                        docRef, LogUtil.exceptionMessage(e), e);
+                try {
+                    return DocRefUtil.createTypedDocRefString(docRef);
+                } catch (Exception ex) {
+                    LOGGER.debug("Error displaying docRef {}: {}",
+                            docRef, LogUtil.exceptionMessage(e), e);
+                    return docRef.toString();
+                }
+            }
+        }
     }
 
     private void stampAuditData(final D document) {

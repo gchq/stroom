@@ -12,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
@@ -949,6 +950,16 @@ public final class JooqUtil {
         if (count(context, table) > 0) {
             throw new RuntimeException("Unexpected data");
         }
+    }
+
+    public static void mapAuditFields(final Record record, final HasAuditInfo hasAuditInfo) {
+        Objects.requireNonNull(record);
+        Objects.requireNonNull(hasAuditInfo);
+
+        hasAuditInfo.setCreateTimeMs(record.get("create_time_ms", Long.class));
+        hasAuditInfo.setUpdateTimeMs(record.get("update_time_ms", Long.class));
+        hasAuditInfo.setCreateUser(record.get("create_user", String.class));
+        hasAuditInfo.setCreateUser(record.get("update_user", String.class));
     }
 
 

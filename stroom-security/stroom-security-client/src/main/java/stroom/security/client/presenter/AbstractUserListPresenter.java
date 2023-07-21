@@ -101,19 +101,6 @@ public abstract class AbstractUserListPresenter
         dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
         columns.add(iconCol);
 
-        // Name.
-        final Column<User, String> uniqueIdentityCol = new Column<User, String>(new TextCell()) {
-            @Override
-            public String getValue(final User userRef) {
-                return userRef.getSubjectId();
-            }
-        };
-        final String nameColName = includeAdditionalUserInfo()
-                ? "User Unique Identity"
-                : "Group Name";
-        dataGrid.addResizableColumn(uniqueIdentityCol, nameColName, 280);
-        columns.add(uniqueIdentityCol);
-
         if (includeAdditionalUserInfo()) {
             // Preferred User Name
             final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
@@ -122,7 +109,7 @@ public abstract class AbstractUserListPresenter
                     return userRef.getDisplayName();
                 }
             };
-            dataGrid.addResizableColumn(displayNameCol, "Display Name", 250);
+            dataGrid.addResizableColumn(displayNameCol, "Display Name", 200);
             columns.add(displayNameCol);
 
             // Full name
@@ -135,6 +122,19 @@ public abstract class AbstractUserListPresenter
             dataGrid.addResizableColumn(fullNameCol, "Full Name", 350);
             columns.add(fullNameCol);
         }
+
+        // Subject ID
+        final Column<User, String> uniqueIdentityCol = new Column<User, String>(new TextCell()) {
+            @Override
+            public String getValue(final User userRef) {
+                return userRef.getSubjectId();
+            }
+        };
+        final String nameColName = includeAdditionalUserInfo()
+                ? "Unique User Identity"
+                : "Group Name";
+        dataGrid.addResizableColumn(uniqueIdentityCol, nameColName, 300);
+        columns.add(uniqueIdentityCol);
 
         final EndColumn<User> endCol = new EndColumn<>();
         dataGrid.addEndColumn(new EndColumn<User>());

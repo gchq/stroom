@@ -16,15 +16,15 @@ public final class AuditUtil {
     public static void stamp(final HasAuditableUserIdentity hasAuditableUserIdentity,
                              final HasAuditInfo hasAuditInfo) {
         final long now = System.currentTimeMillis();
-        final String userId = hasAuditableUserIdentity.getUserIdentityForAudit();
+        final String userIdentityForAudit = hasAuditableUserIdentity.getUserIdentityForAudit();
 
         if (hasAuditInfo.getCreateTimeMs() == null) {
             hasAuditInfo.setCreateTimeMs(now);
         }
         if (hasAuditInfo.getCreateUser() == null) {
-            hasAuditInfo.setCreateUser(userId);
+            hasAuditInfo.setCreateUser(userIdentityForAudit);
         }
         hasAuditInfo.setUpdateTimeMs(now);
-        hasAuditInfo.setUpdateUser(userId);
+        hasAuditInfo.setUpdateUser(userIdentityForAudit);
     }
 }

@@ -9,7 +9,8 @@ import stroom.pipeline.shared.PipelineDoc;
 public class ProcessorFields {
 
     public static final IdField ID = new IdField("Processor Id");
-    public static final TextField CREATE_USER = new TextField("Processor Create User");
+//    public static final TextField CREATE_USER = new TextField("Processor Create User");
+    public static final TextField OWNER_UUID = new TextField("Processor Owner User UUID");
     public static final DocRefField PIPELINE = DocRefField.byUuid(
             PipelineDoc.DOCUMENT_TYPE, "Processor Pipeline");
     public static final BooleanField ENABLED = new BooleanField("Processor Enabled");

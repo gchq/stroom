@@ -38,7 +38,7 @@ public class CreateNewUserViewImpl
     private final Widget widget;
 
     @UiField
-    TextBox userIdentity;
+    TextBox subjectId;
     @UiField
     TextBox displayName;
     @UiField
@@ -52,7 +52,7 @@ public class CreateNewUserViewImpl
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> userIdentity.setFocus(true));
+        Scheduler.get().scheduleDeferred(() -> subjectId.setFocus(true));
     }
 
     @Override
@@ -61,8 +61,8 @@ public class CreateNewUserViewImpl
     }
 
     @Override
-    public String getUserIdentity() {
-        return userIdentity.getText();
+    public String getSubjectId() {
+        return subjectId.getText();
     }
 
     @Override
@@ -77,12 +77,12 @@ public class CreateNewUserViewImpl
 
     @Override
     public void clear() {
-        this.userIdentity.setText("");
+        this.subjectId.setText("");
         this.displayName.setText("");
         this.fullName.setText("");
     }
 
-    @UiHandler("userIdentity")
+    @UiHandler("subjectId")
     void onUserIdentityKeyDown(final KeyDownEvent event) {
         handleKeyDown(event);
     }
