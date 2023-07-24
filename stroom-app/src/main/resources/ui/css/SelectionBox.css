@@ -73,6 +73,7 @@
 .SelectionPopup .gwt-ListBox option {
     background-color: transparent;
     padding:  .3rem;
+    min-height: 22px;
 }
 
 .SelectionPopup .gwt-ListBox option:checked {
