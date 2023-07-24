@@ -229,8 +229,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             valueSpinner.setMin(0);
             valueSpinner.setMax(10000000);
 
-            registerHandler(valueSpinner.getTextBox().addKeyDownHandler(event -> setDirty(true)));
-            registerHandler(valueSpinner.getSpinner().addSpinnerHandler(event -> setDirty(true)));
+            registerHandler(valueSpinner.addValueChangeHandler(event -> setDirty(true)));
 
             valueSpinner.getElement().getStyle().setWidth(100, Unit.PCT);
             valueSpinner.getElement().getStyle().setMarginBottom(0, Unit.PX);

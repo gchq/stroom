@@ -210,7 +210,7 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
-    --navigation__splitter__background-color: #002a59;
+    --navigation__splitter__background-color: #2862a3;
     --navigation__background-color: #004c98;
     --navigation__background-color--hovered: rgba(10,36,65,.4);
     --navigation__background-color--selected: rgba(10,36,65,.6);

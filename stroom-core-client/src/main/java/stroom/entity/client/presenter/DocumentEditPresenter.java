@@ -103,14 +103,6 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
 
     protected abstract D onWrite(D document);
 
-    protected HandlerRegistration addDirtyHandler(final TickBox tickBox) {
-        return tickBox.addValueChangeHandler(event -> setDirty(true));
-    }
-
-    protected HandlerRegistration addDirtyHandler(final ValueSpinner spinner) {
-        return spinner.getSpinner().addSpinnerHandler(event -> setDirty(true));
-    }
-
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);

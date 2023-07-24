@@ -24,6 +24,8 @@ import stroom.widget.button.client.Button;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -61,16 +63,11 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
         widget = binder.createAndBindUi(this);
         testConnection.setIcon(SvgImage.OK);
 
-        indexName.addKeyDownHandler(e -> fireChange());
-        timeField.addKeyDownHandler(e -> fireChange());
-
         searchSlices.setMin(1L);
         searchSlices.setMax(1000L);
-        searchSlices.getSpinner().addSpinnerHandler(e -> fireChange());
 
         searchScrollSize.setMin(1L);
         searchScrollSize.setMax(1000000L);
-        searchScrollSize.getSpinner().addSpinnerHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -144,6 +141,26 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
         indexName.setEnabled(!readOnly);
         searchSlices.setEnabled(!readOnly);
         searchScrollSize.setEnabled(!readOnly);
+    }
+
+    @UiHandler("indexName")
+    public void onIndexNameKeyDown(final KeyDownEvent e) {
+        fireChange();
+    }
+
+    @UiHandler("searchSlices")
+    public void onSearchSlicesValueChange(final ValueChangeEvent<Long> e) {
+        fireChange();
+    }
+
+    @UiHandler("searchScrollSize")
+    public void onSearchScrollSizeValueChange(final ValueChangeEvent<Long> e) {
+        fireChange();
+    }
+
+    @UiHandler("timeField")
+    public void onTimeFieldKeyDown(final KeyDownEvent e) {
+        fireChange();
     }
 
     @UiHandler("testConnection")
