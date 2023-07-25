@@ -1,6 +1,7 @@
 package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ParamKeys;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
@@ -591,7 +592,7 @@ class TestSearchResultCreation {
         final Query query = Query.builder()
                 .dataSource(dataSource)
                 .expression(expression)
-                .addParam("currentUser()", "admin")
+                .addParam(ParamKeys.CURRENT_USER, "admin")
                 .build();
 
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId("Europe/London").build();
@@ -619,7 +620,7 @@ class TestSearchResultCreation {
         final Query query = Query.builder()
                 .dataSource(dataSource)
                 .expression(expression)
-                .addParam("currentUser()", "admin")
+                .addParam(ParamKeys.CURRENT_USER, "admin")
                 .build();
 
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId("Europe/London").build();

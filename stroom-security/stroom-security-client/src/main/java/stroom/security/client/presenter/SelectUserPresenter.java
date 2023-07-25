@@ -28,6 +28,7 @@ import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -104,7 +105,7 @@ public class SelectUserPresenter
         final Column<UserName, String> displayNameCol = new Column<UserName, String>(new TextCell()) {
             @Override
             public String getValue(final UserName userRef) {
-                return userRef.getDisplayName();
+                return GwtNullSafe.requireNonNullElse(userRef.getDisplayName(), userRef.getSubjectId());
             }
         };
         dataGrid.addResizableColumn(displayNameCol, "Display Name", 200);

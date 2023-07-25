@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ParamKeys;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
@@ -22,8 +23,11 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TimeRange;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.user.api.UserNameService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,6 +35,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Preconditions;
@@ -62,15 +67,18 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     private final ExecutorProvider executorProvider;
     private final Map<QueryKey, ResultStore> resultStoreMap;
     private final StoreFactoryRegistry storeFactoryRegistry;
+    private final UserNameService userNameService;
 
     @Inject
     ResultStoreManager(final TaskContextFactory taskContextFactory,
                        final SecurityContext securityContext,
                        final ExecutorProvider executorProvider,
-                       final StoreFactoryRegistry storeFactoryRegistry) {
+                       final StoreFactoryRegistry storeFactoryRegistry,
+                       final UserNameService userNameService) {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
+        this.userNameService = userNameService;
         this.resultStoreMap = new ConcurrentHashMap<>();
         this.storeFactoryRegistry = storeFactoryRegistry;
     }
@@ -98,8 +106,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 lifespanInfo.isDestroyOnWindowClose());
     }
 
+    private boolean hasPermission(final ResultStore resultStore) {
+        return securityContext.isAdmin()
+                || Objects.equals(securityContext.getUserUuid(), resultStore.getUserUuid());
+    }
+
     private void checkPermissions(final ResultStore resultStore) {
-        if (!securityContext.isAdmin() && !Objects.equals(securityContext.getUserUuid(), resultStore.getUserUuid())) {
+        if (!hasPermission(resultStore)) {
             throw new PermissionException(securityContext.getSubjectId(),
                     "You do not have permission to modify this store");
         }
@@ -314,14 +327,19 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     private SearchRequest addCurrentUserParam(final SearchRequest searchRequest) {
         // Add a param for `currentUser()`
-        List<Param> params = searchRequest.getQuery().getParams();
-        if (params != null) {
-            params = new ArrayList<>(params);
-        } else {
-            params = new ArrayList<>();
-        }
-        final String displayName = securityContext.getUserIdentityForAudit();
-        params.add(new Param("currentUser()", displayName));
+        final List<Param> params = NullSafe.getOrElseGet(
+                searchRequest.getQuery().getParams(),
+                params2 -> new ArrayList<>(params2),
+                ArrayList::new);
+
+        params.add(new Param(ParamKeys.CURRENT_USER, securityContext.getUserIdentityForAudit()));
+        params.add(new Param(ParamKeys.CURRENT_USER_SUBJECT_ID, securityContext.getSubjectId()));
+        NullSafe.consume(
+                securityContext.getUserIdentity(),
+                UserIdentity::getFullName,
+                optFullName -> optFullName.ifPresent(fullName ->
+                        params.add(new Param(ParamKeys.CURRENT_USER_FULL_NAME, fullName))));
+
         return searchRequest
                 .copy()
                 .query(searchRequest
@@ -598,11 +616,14 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     public ResultPage<ResultStoreInfo> find(final FindResultStoreCriteria criteria) {
         final List<ResultStoreInfo> list = new ArrayList<>();
         resultStoreMap.forEach((queryKey, resultStore) -> {
-            if (securityContext.isAdmin() || Objects.equals(securityContext.getUserUuid(), resultStore.getUserUuid())) {
+            if (hasPermission(resultStore)) {
+                final UserName ownerUserName = userNameService.getByUuid(resultStore.getUserUuid())
+                                .orElseThrow(() -> new RuntimeException("No user name found for userUuid: "
+                                        + resultStore.getUserUuid()));
                 list.add(new ResultStoreInfo(
                         resultStore.getSearchRequestSource(),
                         queryKey,
-                        resultStore.getUserUuid(),
+                        ownerUserName.getUserIdentityForAudit(),
                         resultStore.getCreationTime().toEpochMilli(),
                         resultStore.getNodeName(),
                         resultStore.getCoprocessors().getByteSize(),
@@ -610,7 +631,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                         resultStore.getSearchTaskProgress(),
                         getLifespanInfo(resultStore.getResultStoreSettings().getSearchProcessLifespan()),
                         getLifespanInfo(resultStore.getResultStoreSettings().getStoreLifespan())));
+            } else {
+                LOGGER.debug(() -> LogUtil.message("User {} has no perms on resultStore {} with owner uuid: {}",
+                        securityContext.getUserIdentity(),
+                        resultStore,
+                        resultStore.getUserUuid()));
             }
+
         });
         return new ResultPage<>(list);
     }
