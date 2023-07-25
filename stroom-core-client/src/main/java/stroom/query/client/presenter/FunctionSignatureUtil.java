@@ -103,7 +103,7 @@ public class FunctionSignatureUtil {
         final List<Arg> args = signature.getArgs();
         final String snippetStr;
         if (signature.getArgs().isEmpty()) {
-            snippetStr = name;
+            snippetStr = name + "()";
         } else if (isNonBracketedForm(signature)) {
             if (args.size() == 2) {
                 snippetStr = argToSnippetArg(args.get(0), 1)
@@ -147,7 +147,7 @@ public class FunctionSignatureUtil {
                         return snippetArgStrs.stream();
                     })
                     .collect(Collectors.joining(", "));
-            return signature.getName() + "(" + argsStr + ")$0";
+            snippetStr = signature.getName() + "(" + argsStr + ")$0";
         }
         return snippetStr;
     }
