@@ -286,6 +286,11 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Test
+    void noValuesTest() {
+        super.noValuesTest();
+    }
+
+    @Test
     void sortedTextTest() {
         super.sortedTextTest();
     }

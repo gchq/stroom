@@ -94,6 +94,48 @@ abstract class AbstractDataStoreTest {
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }
 
+    void noValuesTest() {
+        final FormatterFactory formatterFactory = new FormatterFactory(null);
+        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
+                        .id("currentUser")
+                        .name("currentUser")
+                        .expression("currentUser()")
+                        .format(Format.TEXT)
+                        .build())
+                .build();
+
+        final DataStore dataStore = create(tableSettings);
+
+        for (int i = 0; i < 1; i++) {
+            dataStore.add(Val.of(ValString.create("jbloggs")));
+        }
+
+        // Wait for all items to be added.
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        // Make sure we only get 50 results.
+        final ResultRequest tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 1))
+                .build();
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                fieldFormatter,
+                defaultMaxResultsSizes);
+        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore,
+                tableResultRequest);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(1);
+    }
+
     void testBigBigResult() {
         for (int i = 0; i < 20; i++) {
             System.out.println("\n------ RUN " + (i + 1) + " -------");
