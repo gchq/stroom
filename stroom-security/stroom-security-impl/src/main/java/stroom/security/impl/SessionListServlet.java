@@ -106,12 +106,19 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                     .forEach(sessionDetails -> {
                         try {
                             writer.write("<tr>");
+                            final String subjectId = NullSafe.get(
+                                    sessionDetails.getUserName(),
+                                    UserName::getSubjectId);
+                            final String displayName = NullSafe.getOrElse(
+                                    sessionDetails.getUserName(),
+                                    UserName::getDisplayName,
+                                    subjectId);
 
                             writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
                             writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
-                            writeCell(writer, NullSafe.get(sessionDetails.getUserName(), UserName::getDisplayName));
+                            writeCell(writer, displayName);
                             writeCell(writer, NullSafe.get(sessionDetails.getUserName(), UserName::getFullName));
-                            writeCell(writer, NullSafe.get(sessionDetails.getUserName(), UserName::getSubjectId));
+                            writeCell(writer, subjectId);
                             writeCell(writer, sessionDetails.getNodeName());
                             writeCell(writer, "<span class=\"agent\">"
                                     + sessionDetails.getLastAccessedAgent() + "</span>");
