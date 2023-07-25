@@ -5,9 +5,9 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.util.NullSafe;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
-import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import javax.inject.Inject;
@@ -31,11 +31,9 @@ public class SessionInfoResourceImpl implements SessionInfoResource {
 
     @Override
     public SessionInfo get() {
-        final UserIdentity userIdentity = securityContextProvider.get().getUserIdentity();
-        final UserName userName = new SimpleUserName(
-                userIdentity.getSubjectId(),
-                userIdentity.getDisplayName(),
-                userIdentity.getFullName().orElse(null));
+        final UserName userName = NullSafe.get(
+                securityContextProvider.get().getUserIdentity(),
+                UserIdentity::asUserName);
         return new SessionInfo(
                 userName,
                 nodeInfoProvider.get().getThisNodeName(),

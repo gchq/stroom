@@ -95,7 +95,8 @@ public class AnnotationService implements Searchable, AnnotationCreator {
                 userIdentity -> new SimpleUserName(
                         userIdentity.getSubjectId(),
                         userIdentity.getDisplayName(),
-                        userIdentity.getFullName().orElse(null)));
+                        userIdentity.getFullName().orElse(null),
+                        securityContext.getUserUuid()));
     }
 
     AnnotationDetail getDetail(Long annotationId) {

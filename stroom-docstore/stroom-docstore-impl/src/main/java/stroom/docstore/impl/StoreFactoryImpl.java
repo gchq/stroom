@@ -1,6 +1,6 @@
 package stroom.docstore.impl;
 
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -18,14 +18,14 @@ public class StoreFactoryImpl implements StoreFactory {
     private final EntityEventBus entityEventBus;
     private final ImportConverter importConverter;
     private final SecurityContext securityContext;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocRefDecorator> docRefInfoServiceProvider;
 
     @Inject
     public StoreFactoryImpl(final Persistence persistence,
                             final EntityEventBus entityEventBus,
                             final ImportConverter importConverter,
                             final SecurityContext securityContext,
-                            final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                            final Provider<DocRefDecorator> docRefInfoServiceProvider) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
         this.importConverter = importConverter;

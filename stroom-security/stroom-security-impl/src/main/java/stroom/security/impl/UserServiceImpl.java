@@ -90,12 +90,12 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> getUserByName(final String name) {
-        if (!NullSafe.isBlankString(name)) {
-            return userDao.getBySubjectId(name)
+    public Optional<User> getUserBySubjectId(final String subjectId) {
+        if (!NullSafe.isBlankString(subjectId)) {
+            return userDao.getBySubjectId(subjectId)
                     .filter(user -> {
                         // TODO: 23/03/2023 Why is this here?
-                        if (!user.getSubjectId().equals(name)) {
+                        if (!user.getSubjectId().equals(subjectId)) {
                             throw new RuntimeException(
                                     "Unexpected: returned user name does not match requested user name");
                         }
@@ -199,7 +199,7 @@ class UserServiceImpl implements UserService {
 
         } else {
             userSet = new HashSet<>();
-            getUserByName(securityContext.getSubjectId())
+            getUserBySubjectId(securityContext.getSubjectId())
                     .ifPresent(user -> {
                         userSet.add(user);
 

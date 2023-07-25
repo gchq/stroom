@@ -5,6 +5,8 @@ import stroom.util.shared.SimpleUserName;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestUserNameEntryValue {
@@ -15,7 +17,8 @@ class TestUserNameEntryValue {
                 UserNameEntryValue.of(new SimpleUserName(
                         "myId",
                         "myDisplayName",
-                        "myFullName")),
+                        "myFullName",
+                        UUID.randomUUID().toString())),
                 UserNameEntryValue.class);
     }
 
@@ -24,7 +27,8 @@ class TestUserNameEntryValue {
         final UserNameEntryValue entryValue = UserNameEntryValue.of(new SimpleUserName(
                 "myId",
                 "myDisplayName",
-                "myFullName"));
+                "myFullName",
+                UUID.randomUUID().toString()));
 
         assertThat(entryValue.asUiValue())
                 .isEqualTo("myDisplayName");
@@ -35,7 +39,8 @@ class TestUserNameEntryValue {
         final UserNameEntryValue entryValue = UserNameEntryValue.of(new SimpleUserName(
                 "myId",
                 "myDisplayName",
-                "myFullName"));
+                "myFullName",
+                UUID.randomUUID().toString()));
 
         assertThat(entryValue.asPersistedValue())
                 .isEqualTo("myId");

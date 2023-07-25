@@ -552,14 +552,14 @@ class AnnotationDaoImpl implements AnnotationDao {
         });
     }
 
-    private Val mapdbUserToValString(final String dbUser) {
-        if (dbUser == null) {
+    private Val mapdbUserToValString(final String subjectId) {
+        if (subjectId == null) {
             return ValNull.INSTANCE;
-        } else if (NullSafe.isBlankString(dbUser)) {
-            return ValString.create(dbUser);
+        } else if (NullSafe.isBlankString(subjectId)) {
+            return ValString.create(subjectId);
         } else {
             return NullSafe.getAsOptional(
-                    dbUser,
+                    subjectId,
                     this::mapdbUserToUserName,
                     UserName::getUserIdentityForAudit,
                             value -> (Val) ValString.create(value))
@@ -567,13 +567,13 @@ class AnnotationDaoImpl implements AnnotationDao {
         }
     }
 
-    private UserName mapdbUserToUserName(final String dbUser) {
-        if (NullSafe.isBlankString(dbUser)) {
+    private UserName mapdbUserToUserName(final String subjectId) {
+        if (NullSafe.isBlankString(subjectId)) {
             return null;
         } else {
-            return userNameService.getBySubjectId(dbUser)
+            return userNameService.getBySubjectId(subjectId)
                     .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                            "Expecting userId '{}' to exist but it doesn't", dbUser)));
+                            "Expecting subjectId '{}' to exist but it doesn't", subjectId)));
         }
     }
 

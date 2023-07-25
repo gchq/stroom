@@ -4,6 +4,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-impl')
+    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-util-shared')
 
     implementation libs.guice5

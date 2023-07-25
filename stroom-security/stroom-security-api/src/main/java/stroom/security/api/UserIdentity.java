@@ -77,6 +77,9 @@ public interface UserIdentity extends HasAuditableUserIdentity {
         if (Objects.equals(displayName, subjectId)) {
             displayName = null;
         }
-        return new SimpleUserName(subjectId, displayName, getFullName().orElse(null));
+        return new SimpleUserName(
+                subjectId,
+                displayName,
+                getFullName().orElse(null));
     }
 }

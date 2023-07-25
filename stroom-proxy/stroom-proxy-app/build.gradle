@@ -24,6 +24,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-collection-api')
     implementation project(':stroom-explorer:stroom-collection-mock')
     implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-legacy:stroom-legacy-impex_6_1')
@@ -66,7 +67,7 @@ dependencies {
     implementation libs.kafka_clients
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
-    
+
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
@@ -106,7 +107,7 @@ jar {
 }
 
 shadowJar {
-    // We want to run the tests before we build the fat jar. 
+    // We want to run the tests before we build the fat jar.
     dependsOn test
 
     // Allows us to build fat jars with lots of files

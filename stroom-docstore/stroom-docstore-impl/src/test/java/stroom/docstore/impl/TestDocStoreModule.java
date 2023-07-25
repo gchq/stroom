@@ -1,5 +1,8 @@
 package stroom.docstore.impl;
 
+import stroom.docrefinfo.api.DocRefDecorator;
+import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -46,6 +49,8 @@ class TestDocStoreModule {
                 bind(DocumentEventLog.class).toProvider(Providers.of(null));
                 bind(ImportConverter.class).toProvider(
                         Providers.of((docRef, dataMap, importState, importMode, userId) -> dataMap));
+                bind(DocRefInfoService.class).to(MockDocRefInfoService.class);
+                bind(DocRefDecorator.class).to(MockDocRefInfoService.class);
                 install(new DocStoreModule());
             }
         });

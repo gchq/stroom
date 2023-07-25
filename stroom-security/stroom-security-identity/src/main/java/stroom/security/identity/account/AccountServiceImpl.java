@@ -47,6 +47,11 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     }
 
     @Override
+    public int getPriority() {
+        return 2;
+    }
+
+    @Override
     public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
 
         // Only the internal IDP uses Accounts, so no point hitting it for other IDPs
@@ -71,23 +76,31 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     @Override
     public Optional<UserName> getBySubjectId(final String subjectId) {
-        if (shouldProvideNames()) {
-            return accountDao.get(subjectId)
-                    .map(this::mapAccountToUserName);
-        } else {
-            return Optional.empty();
-        }
+//        if (shouldProvideNames()) {
+//            return accountDao.get(subjectId)
+//                    .map(this::mapAccountToUserName);
+//        } else {
+//            return Optional.empty();
+//        }
+        // This UserNameProvider is only used for getting lists of names to be
+        // unioned with other providers
+        return Optional.empty();
     }
 
     @Override
     public Optional<UserName> getByDisplayName(final String displayName) {
         // Accounts have no concept of displayName so just get by userId
-        return getBySubjectId(displayName);
+//        return getBySubjectId(displayName);
+
+        // This UserNameProvider is only used for getting lists of names to be
+        // unioned with other providers
+        return Optional.empty();
     }
 
     @Override
     public Optional<UserName> getByUuid(final String userUuid) {
-        // Accounts don't have stroom UUIDs
+        // This UserNameProvider is only used for getting lists of names to be
+        // unioned with other providers + accounts don't have stroom UUIDs
         return Optional.empty();
     }
 

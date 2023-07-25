@@ -15,6 +15,12 @@ public interface UserNameProvider {
         return true;
     }
 
+    /**
+     * @return Non-zero positive value to indicate priority of the provider. Lower number means
+     * higher priority.
+     */
+    int getPriority();
+
     ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria);
 
     Optional<UserName> getBySubjectId(final String subjectId);

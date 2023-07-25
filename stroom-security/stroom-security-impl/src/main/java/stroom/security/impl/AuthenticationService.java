@@ -25,6 +25,7 @@ import stroom.util.AuditUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.inject.Inject;
@@ -32,7 +33,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-class AuthenticationService {
+public class AuthenticationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 
@@ -94,11 +95,19 @@ class AuthenticationService {
     }
 
     private User create(final String subjectId, final boolean isGroup) {
+        return create(subjectId, UUID.randomUUID().toString(), isGroup);
+    }
+
+    private User create(final String subjectId,
+                        final String userUuid,
+                        final boolean isGroup) {
+        Objects.requireNonNull(subjectId);
+        Objects.requireNonNull(userUuid);
         final User user = new User();
         AuditUtil.stamp(() -> "AuthenticationServiceImpl", user);
 
         // This is the identifier for the stroom user, for authorisation, not authentication
-        user.setUuid(UUID.randomUUID().toString());
+        user.setUuid(userUuid);
 
         // This is the unique identifier that links the stroom User to the stroom account or an IDP account.
         // The id field/column is the surrogate primary key in the DB, unrelated to the IDP user ID, stroom account
@@ -108,7 +117,7 @@ class AuthenticationService {
         user.setGroup(isGroup);
 
         return userDao.tryCreate(user, createdUser -> {
-            LOGGER.info("Created new stroom_user record, type: {}, name: {}, uuid: {}",
+            LOGGER.info("Created new stroom_user record, type: '{}', subjectId: '{}', userUuid: '{}'",
                     (isGroup ? "group" : "user"),
                     createdUser.getSubjectId(),
                     createdUser.getUuid());
@@ -121,8 +130,8 @@ class AuthenticationService {
         try {
             optUser = userDao.getBySubjectId(subjectId, false);
             if (optUser.isEmpty()
-                    && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())
-                    && User.ADMIN_SUBJECT_ID.equals(subjectId)) {
+                    && User.ADMIN_SUBJECT_ID.equals(subjectId)
+                    && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
                 //   running of stroom in UseInternal mode which then leaves admin/admin open
@@ -149,7 +158,7 @@ class AuthenticationService {
     private User createOrRefreshUserOrGroup(final String subjectId, final boolean isGroup) {
         return userDao.getBySubjectId(subjectId, isGroup)
                 .orElseGet(() -> {
-                    LOGGER.info("Creating {} {}",
+                    LOGGER.info("Creating {} '{}'",
                             (isGroup
                                     ? "group"
                                     : "user"),

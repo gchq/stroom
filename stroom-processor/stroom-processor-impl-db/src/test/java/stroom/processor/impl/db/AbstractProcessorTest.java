@@ -25,6 +25,7 @@ import stroom.processor.shared.TaskStatus;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.AuditUtil;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -165,6 +166,7 @@ class AbstractProcessorTest {
         processorFilter.setQueryData(QueryData.builder()
                 .build());
         processorFilter.setUuid(UUID.randomUUID().toString());
+        stampProcessorFilter(processorFilter, "jbloggs", UUID.randomUUID().toString());
 
         return processorFilterDao.create(processorFilter);
     }
@@ -278,5 +280,12 @@ class AbstractProcessorTest {
                     .orderBy(PROCESSOR_TASK.ID)
                     .fetch(), false));
         });
+    }
+
+    private void stampProcessorFilter(final ProcessorFilter processorFilter,
+                                      final String auditUser,
+                                      final String userUuid) {
+        AuditUtil.stamp(() -> auditUser, processorFilter);
+        processorFilter.setOwnerUuid(userUuid);
     }
 }

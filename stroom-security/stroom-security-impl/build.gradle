@@ -43,6 +43,7 @@ dependencies {
     implementation libs.ws_rs_api
 
     testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation libs.assertj_core
     testImplementation libs.dropwizard_testing
     testImplementation libs.junit_jupiter_api

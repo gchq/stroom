@@ -9,6 +9,8 @@ import stroom.security.shared.HasStroomUserIdentity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
 import org.jose4j.jwt.JwtClaims;
 
@@ -22,26 +24,26 @@ public class UserIdentityImpl
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityImpl.class);
 
     private final UpdatableToken updatableToken;
-    private final String id;
+    private final String subjectId;
     private final String userUuid;
     private final String displayName;
     private final String fullName;
     private final HttpSession httpSession;
 
     public UserIdentityImpl(final String userUuid,
-                            final String id,
+                            final String subjectId,
                             final HttpSession httpSession,
                             final UpdatableToken updatableToken) {
-        this(userUuid, id, null, null, httpSession, updatableToken);
+        this(userUuid, subjectId, null, null, httpSession, updatableToken);
     }
 
     public UserIdentityImpl(final String userUuid,
-                            final String id,
+                            final String subjectId,
                             final String displayName,
                             final String fullName,
                             final HttpSession httpSession,
                             final UpdatableToken updatableToken) {
-        this.id = Objects.requireNonNull(id);
+        this.subjectId = Objects.requireNonNull(subjectId);
         this.updatableToken = Objects.requireNonNull(updatableToken);
         this.userUuid = Objects.requireNonNull(userUuid);
         this.displayName = displayName;
@@ -51,12 +53,12 @@ public class UserIdentityImpl
 
     @Override
     public String getSubjectId() {
-        return id;
+        return subjectId;
     }
 
     @Override
     public String getDisplayName() {
-        return Objects.requireNonNullElse(displayName, id);
+        return Objects.requireNonNullElse(displayName, subjectId);
     }
 
     @Override
@@ -144,6 +146,21 @@ public class UserIdentityImpl
     }
 
     @Override
+    public UserName asUserName() {
+        String displayName = getDisplayName();
+        if (Objects.equals(displayName, subjectId)) {
+            displayName = null;
+        }
+        return new SimpleUserName(
+                subjectId,
+                Objects.equals(displayName, subjectId)
+                        ? null
+                        : displayName,
+                getFullName().orElse(null),
+                userUuid);
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -167,7 +184,7 @@ public class UserIdentityImpl
     public String toString() {
         return "UserIdentityImpl{" +
                 "updatableToken=" + updatableToken +
-                ", id='" + id + '\'' +
+                ", id='" + subjectId + '\'' +
                 ", userUuid='" + userUuid + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", fullName='" + fullName + '\'' +

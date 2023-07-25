@@ -49,7 +49,7 @@ public interface UserService {
 
     User getOrCreateUserGroup(String name, final Consumer<User> onCreateAction);
 
-    Optional<User> getUserByName(String name);
+    Optional<User> getUserBySubjectId(String name);
 
     Optional<User> getUserByDisplayName(String displayName);
 

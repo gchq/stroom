@@ -297,7 +297,9 @@ class AccountDaoImpl implements AccountDao {
         return create(account, password, true);
     }
 
-    private Account create(final Account account, final String password, final boolean ignoreDuplicate) {
+    private Account create(final Account account,
+                           final String password,
+                           final boolean ignoreDuplicate) {
         final String passwordHash = hashPassword(password);
         final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(
                 account, ACCOUNT.newRecord());

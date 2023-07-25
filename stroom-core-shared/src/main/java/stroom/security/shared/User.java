@@ -143,6 +143,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * A user and a group can share the same name.</p>
      * @return The unique identifier for this user or group.
      */
+    @Override
     public String getSubjectId() {
         return subjectId;
     }
@@ -161,6 +162,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
+    @Override
     public String getDisplayName() {
         return displayName;
     }
@@ -181,9 +183,11 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
+    @Override
     public String getFullName() {
         return fullName;
     }
+
 
     /**
      * See {@link User#getFullName()}
@@ -197,6 +201,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Unrelated to any subjectId that an IDP may use to identify the user.
      * Unique across both users and groups, unlike {@code name}.
      */
+    @Override
     public String getUuid() {
         return uuid;
     }
@@ -220,7 +225,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
     }
 
     public UserName asUserName() {
-        return new SimpleUserName(subjectId, displayName, fullName);
+        return new SimpleUserName(subjectId, displayName, fullName, uuid);
     }
 
     @Override

@@ -19,6 +19,8 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.slf4j_api
 
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
+
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core

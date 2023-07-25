@@ -4,6 +4,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -141,6 +142,7 @@ public class ProxyModule extends AbstractModule {
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
+        bind(DocRefDecorator.class).to(NoDecorationDocRefDecorator.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
         bind(FailureDestinations.class).to(FailureDestinationsImpl.class);
         bind(Sender.class).to(SenderImpl.class);

@@ -5,6 +5,8 @@ import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserNameProvider;
 import stroom.security.user.api.UserNameService;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class UserNameServiceImpl implements UserNameService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserNameServiceImpl.class);
 
     private final Set<UserNameProvider> userNameProviders;
     private final SecurityContext securityContext;
@@ -32,6 +36,7 @@ public class UserNameServiceImpl implements UserNameService {
         this.userNameProviders = userNameProviders.stream()
                 .filter(UserNameProvider::isEnabled)
                 .collect(Collectors.toSet());
+        LOGGER.debug("Initialising with userNameProviders: {}", this.userNameProviders);
         this.securityContext = securityContext;
     }
 
@@ -39,10 +44,31 @@ public class UserNameServiceImpl implements UserNameService {
     public ResultPage<UserName> find(final FindUserNameCriteria criteria) {
         // Can't allow any user to list all users on the system
         checkPermission();
+        // usernames with a uuid take priority
         final List<UserName> userNames = userNameProviders.stream()
                 .flatMap(provider ->
-                        provider.findUserNames(criteria).stream())
-                .toList();
+                        provider.findUserNames(criteria).stream()
+                                .map(userName -> new PrioritisedUserName(
+                                        provider.getPriority(),
+                                        userName)))
+                .collect(Collectors.groupingBy(
+                        userName -> userName.userName.getSubjectId(),
+                        Collectors.reducing((userName1, userName2) -> {
+                            // Lower == higher priority
+                            if (userName1.priority < userName2.priority
+                                    || userName1.priority == userName2.priority) {
+                                return userName1;
+                            } else {
+                                return userName2;
+                            }
+                        })))
+                .values()
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(PrioritisedUserName::userName)
+                .collect(Collectors.toList());
+
         return new ResultPage<>(userNames);
     }
 
@@ -81,5 +107,15 @@ public class UserNameServiceImpl implements UserNameService {
             throw new PermissionException(
                     securityContext.getUserIdentityForAudit(), "You do not have permission to manage users");
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record PrioritisedUserName(
+            int priority,
+            UserName userName) {
+
     }
 }

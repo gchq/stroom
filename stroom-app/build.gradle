@@ -279,6 +279,7 @@ dependencies {
     testImplementation project(':stroom-security:stroom-security-api')
     testImplementation project(':stroom-security:stroom-security-impl')
     testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-security:stroom-security-user-api')
     testImplementation project(':stroom-statistics:stroom-statistics-api')
     testImplementation project(':stroom-statistics:stroom-statistics-impl')
     testImplementation project(':stroom-statistics:stroom-statistics-impl-hbase')

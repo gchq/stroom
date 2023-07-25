@@ -2,6 +2,8 @@ package stroom.security.impl;
 
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -57,6 +59,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 userDisplayNameClaim);
     }
 
+    @RequiresRestart(RestartScope.SYSTEM)
     @JsonIgnore
     public IdpType getDefaultIdpType() {
         return IdpType.INTERNAL_IDP;

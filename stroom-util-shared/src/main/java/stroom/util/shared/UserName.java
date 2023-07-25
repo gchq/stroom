@@ -42,7 +42,11 @@ public interface UserName extends HasAuditableUserIdentity {
      */
     String getFullName();
 
-//    String getUserUuid();
+    /**
+     * @return The stroom user UUID. May be null.
+     */
+    // TODO: 25/07/2023 Do we want the stroom UUID on UserName?
+    String getUuid();
 
     /**
      * @return The user identity to be used in audit events, audit columns and for display in

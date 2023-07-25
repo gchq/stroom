@@ -24,6 +24,12 @@ class StroomUserNameProvider implements UserNameProvider {
     }
 
     @Override
+    public int getPriority() {
+        // Stroom users trump account users.
+        return 1;
+    }
+
+    @Override
     public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
         final FindUserCriteria findUserCriteria = new FindUserCriteria(
                 criteria.getPageRequest(),

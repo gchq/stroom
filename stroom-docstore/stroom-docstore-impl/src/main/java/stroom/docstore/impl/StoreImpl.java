@@ -20,7 +20,7 @@ package stroom.docstore.impl;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentNotFoundException;
@@ -76,7 +76,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     private final EntityEventBus entityEventBus;
     private final ImportConverter importConverter;
     private final SecurityContext securityContext;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocRefDecorator> docRefInfoServiceProvider;
 
     private final DocumentSerialiser2<D> serialiser;
     private final String type;
@@ -89,7 +89,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
               final EntityEventBus entityEventBus,
               final ImportConverter importConverter,
               final SecurityContext securityContext,
-              final Provider<DocRefInfoService> docRefInfoServiceProvider,
+              final Provider<DocRefDecorator> docRefInfoServiceProvider,
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Class<D> clazz) {

@@ -18,12 +18,25 @@ package stroom.security.mock;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.impl.AuthenticationService;
+import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 
+import com.google.inject.Inject;
+
+import java.util.Optional;
 import java.util.function.Supplier;
+import javax.inject.Provider;
 
 public class MockSecurityContext implements SecurityContext {
 
     private static final MockAdminUserIdentity ADMIN_USER_IDENTITY = new MockAdminUserIdentity();
+
+    // Non integration tests likely don't care about the admin user uuid and won't have
+    // AuthenticationService bound, so make it optional. Most users of SecurityContext
+    // are just after the secureXXX methods.
+    @Inject(optional = true)
+    private Provider<AuthenticationService> authenticationServiceProvider;
 
     @Override
     public String getSubjectId() {
@@ -32,7 +45,20 @@ public class MockSecurityContext implements SecurityContext {
 
     @Override
     public String getUserUuid() {
-        return null;
+        // This gets set when the admin user is first created.
+        if (authenticationServiceProvider != null) {
+            final String subjectId = User.ADMIN_SUBJECT_ID;
+            // This method ensures the internal admin user exists
+            return authenticationServiceProvider.get().getUser(subjectId)
+                    .map(UserName::getUuid)
+                    .orElseThrow(() ->
+                            new RuntimeException("Internal admin user '"
+                                    + subjectId + "' not found"));
+        } else {
+            throw new RuntimeException(AuthenticationService.class.getSimpleName()
+                    + "not injected so user UUID not available. " +
+                    "Bind it if you want this error to go away.");
+        }
     }
 
     @Override
@@ -144,11 +170,25 @@ public class MockSecurityContext implements SecurityContext {
         return supplier.get();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MockAdminUserIdentity implements UserIdentity {
 
         @Override
         public String getSubjectId() {
-            return "admin";
+            return User.ADMIN_SUBJECT_ID;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return User.ADMIN_SUBJECT_ID;
+        }
+
+        @Override
+        public Optional<String> getFullName() {
+            return Optional.of("Ad Min");
         }
     }
 }

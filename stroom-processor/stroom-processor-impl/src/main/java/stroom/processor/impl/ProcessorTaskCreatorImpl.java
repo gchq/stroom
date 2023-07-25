@@ -256,10 +256,9 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final UserName userName = userNameService.getByUuid(filter.getOwnerUuid())
                         .orElseThrow(() -> new RuntimeException(
                                 LogUtil.message(
-                                        "No user name found for filter uuid: user uuid ",
+                                        "No user name found for filter uuid: {}, owner uuid: {}",
                                         filter.getUuid(), filter.getOwnerUuid())));
-        final UserIdentity ownerIdentity = securityContext.createIdentity(userName.getSubjectId());
-        return ownerIdentity;
+        return securityContext.createIdentity(userName.getSubjectId());
     }
 
     private void createTasksForFilter(final TaskContext taskContext,
