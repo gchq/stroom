@@ -23,20 +23,17 @@ import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticProcessorFilterResource;
 import stroom.analytics.shared.AnalyticProcessorFilterTracker;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.FindAnalyticProcessorFilterCriteria;
-import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.meta.shared.MetaFields;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -50,7 +47,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Optional;
 
 public class AnalyticProcessingPresenter
         extends DocumentEditPresenter<AnalyticProcessingView, AnalyticRuleDoc>
@@ -59,7 +55,6 @@ public class AnalyticProcessingPresenter
     private static final AnalyticProcessorFilterResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
             GWT.create(AnalyticProcessorFilterResource.class);
 
-    private final EditExpressionPresenter editExpressionPresenter;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private AnalyticProcessorFilter loadedFilter;
@@ -69,15 +64,12 @@ public class AnalyticProcessingPresenter
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
-                                       final EditExpressionPresenter editExpressionPresenter,
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter,
                                        final NodeManager nodeManager) {
         super(eventBus, view);
-        this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
-        view.setExpressionView(editExpressionPresenter.getView());
         view.setUiHandlers(this);
 
         nodeManager.listAllNodes(
@@ -93,28 +85,15 @@ public class AnalyticProcessingPresenter
                                 null));
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(editExpressionPresenter.addDirtyHandler(e -> setDirty(true)));
-    }
-
     private void read(final AnalyticProcessorFilter filter) {
         if (filter == null) {
             AnalyticProcessorFilter newFilter = AnalyticProcessorFilter
                     .builder()
                     .analyticUuid(analyticRuleUuid)
                     .minMetaCreateTimeMs(System.currentTimeMillis())
-                    .expression(ExpressionOperator
-                            .builder()
-                            .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS)
-                            .build())
                     .build();
             read(
                     newFilter.isEnabled(),
-                    newFilter.getExpression(),
-                    MetaFields.STREAM_STORE_DOC_REF,
-                    MetaFields.getAllFields(),
                     newFilter.getMinMetaCreateTimeMs(),
                     newFilter.getMaxMetaCreateTimeMs(),
                     newFilter.getNode());
@@ -123,9 +102,6 @@ public class AnalyticProcessingPresenter
             loadedFilter = filter;
             read(
                     filter.isEnabled(),
-                    filter.getExpression(),
-                    MetaFields.STREAM_STORE_DOC_REF,
-                    MetaFields.getAllFields(),
                     filter.getMinMetaCreateTimeMs(),
                     filter.getMaxMetaCreateTimeMs(),
                     filter.getNode());
@@ -177,15 +153,9 @@ public class AnalyticProcessingPresenter
     }
 
     private void read(final boolean enabled,
-                      final ExpressionOperator expression,
-                      final DocRef dataSource,
-                      final List<AbstractField> fields,
                       final Long minMetaCreateTimeMs,
                       final Long maxMetaCreateTimeMs,
                       final String node) {
-        editExpressionPresenter.init(restFactory, dataSource, fields);
-        editExpressionPresenter.read(Optional.ofNullable(expression).orElse(ExpressionOperator.builder().build()));
-
         getView().setEnabled(enabled);
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
@@ -195,7 +165,6 @@ public class AnalyticProcessingPresenter
     private AnalyticProcessorFilter write(final AnalyticProcessorFilter filter) {
         return filter.copy()
                 .enabled(getView().isEnabled())
-                .expression(editExpressionPresenter.write())
                 .minMetaCreateTimeMs(getView().getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(getView().getMaxMetaCreateTimeMs())
                 .node(getView().getNode())
@@ -206,6 +175,11 @@ public class AnalyticProcessingPresenter
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
         analyticRuleUuid = analyticRuleDoc.getUuid();
         refresh(analyticRuleUuid);
+
+        getView().setStoreData(
+                analyticRuleDoc.getAnalyticRuleType() == null ||
+                        analyticRuleDoc.getAnalyticRuleType() == AnalyticRuleType.AGGREGATE);
+        getView().setDataRetention(analyticRuleDoc.getDataRetention());
     }
 
     private void refresh(final String analyticDocUuid) {
@@ -238,7 +212,14 @@ public class AnalyticProcessingPresenter
                     .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
                     .create(newFilter);
         }
-        return analyticRuleDoc;
+
+        return analyticRuleDoc.copy()
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .analyticRuleType(getView().isStoreData()
+                        ? AnalyticRuleType.AGGREGATE
+                        : AnalyticRuleType.EVENT)
+                .dataRetention(getView().getDataRetention())
+                .build();
     }
 
     @Override
@@ -251,8 +232,6 @@ public class AnalyticProcessingPresenter
         boolean isEnabled();
 
         void setEnabled(final boolean enabled);
-
-        void setExpressionView(View view);
 
         Long getMinMetaCreateTimeMs();
 
@@ -267,6 +246,14 @@ public class AnalyticProcessingPresenter
         String getNode();
 
         void setNode(final String node);
+
+        boolean isStoreData();
+
+        void setStoreData(boolean storeData);
+
+        SimpleDuration getDataRetention();
+
+        void setDataRetention(SimpleDuration dataRetention);
 
         void setInfo(SafeHtml info);
     }

@@ -95,7 +95,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
             throw new RuntimeException("Filter already has UUID");
         }
 
-        final String expression = serialise(filter.getExpression());
+//        final String expression = serialise(filter.getExpression());
         final String filterUuid = UUID.randomUUID().toString();
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
@@ -108,7 +108,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
                         ANALYTIC_PROCESSOR_FILTER.UPDATE_TIME_MS,
                         ANALYTIC_PROCESSOR_FILTER.UPDATE_USER,
                         ANALYTIC_PROCESSOR_FILTER.ANALYTIC_UUID,
-                        ANALYTIC_PROCESSOR_FILTER.EXPRESSION,
+//                        ANALYTIC_PROCESSOR_FILTER.EXPRESSION,
                         ANALYTIC_PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS,
                         ANALYTIC_PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
                         ANALYTIC_PROCESSOR_FILTER.NODE,
@@ -120,7 +120,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
                         now,
                         userId,
                         filter.getAnalyticUuid(),
-                        expression,
+//                        expression,
                         filter.getMinMetaCreateTimeMs(),
                         filter.getMaxMetaCreateTimeMs(),
                         filter.getNode(),
@@ -134,7 +134,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
         Objects.requireNonNull(filter, "Filter is null");
         Objects.requireNonNull(filter.getUuid(), "Filter UUID is null");
 
-        final String expression = serialise(filter.getExpression());
+//        final String expression = serialise(filter.getExpression());
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
         JooqUtil.context(analyticsDbConnProvider, context -> context
@@ -143,7 +143,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
                 .set(ANALYTIC_PROCESSOR_FILTER.UPDATE_TIME_MS, now)
                 .set(ANALYTIC_PROCESSOR_FILTER.UPDATE_USER, userId)
                 .set(ANALYTIC_PROCESSOR_FILTER.ANALYTIC_UUID, filter.getAnalyticUuid())
-                .set(ANALYTIC_PROCESSOR_FILTER.EXPRESSION, expression)
+//                .set(ANALYTIC_PROCESSOR_FILTER.EXPRESSION, expression)
                 .set(ANALYTIC_PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS, filter.getMinMetaCreateTimeMs())
                 .set(ANALYTIC_PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
                 .set(ANALYTIC_PROCESSOR_FILTER.NODE, filter.getNode())
@@ -174,7 +174,7 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
                 .updateTimeMs(record.get(ANALYTIC_PROCESSOR_FILTER.UPDATE_TIME_MS))
                 .updateUser(record.get(ANALYTIC_PROCESSOR_FILTER.UPDATE_USER))
                 .analyticUuid(record.get(ANALYTIC_PROCESSOR_FILTER.ANALYTIC_UUID))
-                .expression(deserialise(record.get(ANALYTIC_PROCESSOR_FILTER.EXPRESSION)))
+//                .expression(deserialise(record.get(ANALYTIC_PROCESSOR_FILTER.EXPRESSION)))
                 .minMetaCreateTimeMs(record.get(ANALYTIC_PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS))
                 .maxMetaCreateTimeMs(record.get(ANALYTIC_PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS))
                 .node(record.get(ANALYTIC_PROCESSOR_FILTER.NODE))
@@ -182,27 +182,27 @@ class AnalyticProcessorFilterDaoImpl implements AnalyticProcessorFilterDao {
                 .build();
     }
 
-    private ExpressionOperator deserialise(final String string) {
-        if (string == null) {
-            return null;
-        }
-        try {
-            return mapper.readValue(string, ExpressionOperator.class);
-        } catch (final JsonProcessingException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-        return null;
-    }
-
-    private String serialise(final ExpressionOperator config) {
-        if (config == null) {
-            return null;
-        }
-        try {
-            return mapper.writeValueAsString(config);
-        } catch (final JsonProcessingException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-        return null;
-    }
+//    private ExpressionOperator deserialise(final String string) {
+//        if (string == null) {
+//            return null;
+//        }
+//        try {
+//            return mapper.readValue(string, ExpressionOperator.class);
+//        } catch (final JsonProcessingException e) {
+//            LOGGER.error(e::getMessage, e);
+//        }
+//        return null;
+//    }
+//
+//    private String serialise(final ExpressionOperator config) {
+//        if (config == null) {
+//            return null;
+//        }
+//        try {
+//            return mapper.writeValueAsString(config);
+//        } catch (final JsonProcessingException e) {
+//            LOGGER.error(e::getMessage, e);
+//        }
+//        return null;
+//    }
 }

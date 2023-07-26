@@ -17,12 +17,15 @@
 
 package stroom.view.client.presenter;
 
+import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.StandardTagNames;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.view.client.presenter.ViewSettingsPresenter.ViewSettingsView;
 import stroom.view.shared.ViewDoc;
@@ -38,23 +41,24 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     private final RestFactory restFactory;
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
     private final EntityDropDownPresenter pipelineSelectionPresenter;
-//    private final EditExpressionPresenter expressionPresenter;
+    private final EditExpressionPresenter expressionPresenter;
 
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
                                  final ViewSettingsView view,
                                  final RestFactory restFactory,
                                  final EntityDropDownPresenter dataSourceSelectionPresenter,
-                                 final EntityDropDownPresenter pipelineSelectionPresenter) {
+                                 final EntityDropDownPresenter pipelineSelectionPresenter,
+                                 final EditExpressionPresenter expressionPresenter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;
-//        this.expressionPresenter = expressionPresenter;
+        this.expressionPresenter = expressionPresenter;
 
         view.setDataSourceSelectionView(dataSourceSelectionPresenter.getView());
         view.setPipelineSelectionView(pipelineSelectionPresenter.getView());
-//        view.setExpressionView(expressionPresenter.getView());
+        view.setExpressionView(expressionPresenter.getView());
 
         dataSourceSelectionPresenter.setTags(StandardTagNames.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
@@ -77,7 +81,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
                 setDirty(true);
             }
         }));
-//        registerHandler(expressionPresenter.addDirtyHandler(event -> setDirty(true)));
+        registerHandler(expressionPresenter.addDirtyHandler(event -> setDirty(true)));
     }
 
     @Override
@@ -85,21 +89,21 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
 
-//        expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, MetaFields.getAllFields());
-//
-//        // Read expression.
-//        ExpressionOperator root = entity.getFilter();
-//        if (root == null) {
-//            root = ExpressionOperator.builder().build();
-//        }
-//        expressionPresenter.read(root);
+        expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, MetaFields.getAllFields());
+
+        // Read expression.
+        ExpressionOperator root = entity.getFilter();
+        if (root == null) {
+            root = ExpressionOperator.builder().build();
+        }
+        expressionPresenter.read(root);
     }
 
     @Override
     protected ViewDoc onWrite(final ViewDoc entity) {
         entity.setDataSource(dataSourceSelectionPresenter.getSelectedEntityReference());
         entity.setPipeline(pipelineSelectionPresenter.getSelectedEntityReference());
-//        entity.setFilter(expressionPresenter.write());
+        entity.setFilter(expressionPresenter.write());
         return entity;
     }
 
@@ -107,7 +111,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
         void setDataSourceSelectionView(View view);
 
-//        void setExpressionView(View view);
+        void setExpressionView(View view);
 
         void setPipelineSelectionView(View view);
     }

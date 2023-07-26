@@ -317,9 +317,9 @@ class TestAnalytics extends StroomIntegrationTest {
                 .updateUser("test")
                 .analyticUuid(analyticRuleDoc.getUuid())
                 .enabled(true)
-                .expression(ExpressionOperator.builder().addTerm(MetaFields.FIELD_TYPE,
-                        Condition.EQUALS,
-                        StreamTypeNames.EVENTS).build())
+//                .expression(ExpressionOperator.builder().addTerm(MetaFields.FIELD_TYPE,
+//                        Condition.EQUALS,
+//                        StreamTypeNames.EVENTS).build())
                 .node(nodeInfo.getThisNodeName())
                 .build();
         analyticProcessorFilterDao.create(filter);

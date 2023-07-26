@@ -379,6 +379,7 @@ public class AnalyticsExecutor {
 
             final List<Meta> metaList = getMetaList(
                     ruleIdentity,
+                    viewDoc.getFilter(),
                     filter,
                     minMetaId);
 
@@ -509,6 +510,7 @@ public class AnalyticsExecutor {
 
         final List<Meta> metaList = getMetaList(
                 ruleIdentity,
+                viewDoc.getFilter(),
                 filter,
                 minMetaId);
 
@@ -916,16 +918,16 @@ public class AnalyticsExecutor {
     }
 
     private List<Meta> getMetaList(final String ruleIdentity,
+                                   final ExpressionOperator findMetaExpression,
                                    final AnalyticProcessorFilter filter,
                                    final Long minMetaId) {
-        final ExpressionOperator expressionOperator = filter.getExpression();
-        if (ExpressionUtil.termCount(expressionOperator) == 0) {
+        if (ExpressionUtil.termCount(findMetaExpression) == 0) {
             throw new RuntimeException("Unable to process analytic: " +
                     ruleIdentity +
                     " because filter has no meta expression");
         }
 
-        return findMeta(expressionOperator,
+        return findMeta(findMetaExpression,
                 minMetaId,
                 filter.getMinMetaCreateTimeMs(),
                 filter.getMaxMetaCreateTimeMs(),

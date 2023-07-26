@@ -113,9 +113,9 @@ public class AnalyticsDataSetup {
         ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
         viewDoc.setDataSource(indexDocRef);
         viewDoc.setPipeline(searchResultPipeline);
-//        viewDoc.setFilter(ExpressionOperator.builder()
-//                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
-//                .build());
+        viewDoc.setFilter(ExpressionOperator.builder()
+                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                .build());
         viewStore.writeDocument(viewDoc);
 
         // Create somewhere to put the alerts.
