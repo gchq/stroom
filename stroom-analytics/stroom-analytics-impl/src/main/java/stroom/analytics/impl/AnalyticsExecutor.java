@@ -188,6 +188,7 @@ public class AnalyticsExecutor {
             deleteOldStores();
 
             // Get views for each analytic rule.
+            info(() -> "Processing rules");
             final List<DocRef> docRefList = analyticRuleStore.list();
             for (final DocRef docRef : docRefList) {
                 final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
@@ -208,8 +209,8 @@ public class AnalyticsExecutor {
     private void processAnalytic(final AnalyticRuleDoc analyticRuleDoc) {
         final String ruleIdentity = getAnalyticRuleIdentity(analyticRuleDoc);
         taskContextFactory
-                .context("Analytic: " + ruleIdentity,
-                        parentTaskContext -> processAnalytic(analyticRuleDoc, ruleIdentity, parentTaskContext))
+                .childContext(taskContextFactory.current(), "Analytic: " + ruleIdentity,
+                        taskContext -> processAnalytic(analyticRuleDoc, ruleIdentity, taskContext))
                 .run();
     }
 
