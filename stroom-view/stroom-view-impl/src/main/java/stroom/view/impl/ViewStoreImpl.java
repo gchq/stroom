@@ -21,6 +21,7 @@ import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -35,6 +36,7 @@ import stroom.view.shared.ViewDoc;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -116,18 +118,29 @@ class ViewStoreImpl implements ViewStore {
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
+        return store.getDependencies(createMapper());
     }
 
     @Override
     public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
+        return store.getDependencies(docRef, createMapper());
     }
 
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<ViewDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            if (doc.getDataSource() != null) {
+                doc.setDataSource(dependencyRemapper.remap(doc.getDataSource()));
+            }
+            if (doc.getPipeline() != null) {
+                doc.setPipeline(dependencyRemapper.remap(doc.getPipeline()));
+            }
+        };
     }
 
     ////////////////////////////////////////////////////////////////////////
