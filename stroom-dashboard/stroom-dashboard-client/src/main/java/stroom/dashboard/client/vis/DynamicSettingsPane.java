@@ -17,7 +17,7 @@
 package stroom.dashboard.client.vis;
 
 import stroom.entity.client.presenter.HasReadAndWrite;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.util.client.JSONUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.form.client.FormGroup;
@@ -42,7 +42,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
     private final boolean utc;
     private final FlowPanel outer;
-    private final List<StringListBox> fieldControls = new ArrayList<>();
+    private final List<SelectionBox<String>> fieldControls = new ArrayList<>();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
 //    private double opacity;
 
@@ -83,13 +83,13 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         Widget widget = null;
 
         if ("field".equals(type)) {
-            final StringListBox ctrl = createStringListBox(id);
+            final SelectionBox<String> ctrl = createSelectionBox(id);
             widget = ctrl;
 
             fieldControls.add(ctrl);
 
         } else if ("selection".equals(type)) {
-            final StringListBox ctrl = createStringListBox(id);
+            final SelectionBox<String> ctrl = createSelectionBox(id);
             widget = ctrl;
 
             final String[] values = JSONUtil.getStrings(control.get("values"));
@@ -101,7 +101,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             }
 
             if (defaultValue != null) {
-                ctrl.setSelected(defaultValue);
+                ctrl.setValue(defaultValue);
             }
         } else if ("text".equals(type)) {
             final TextBox ctrl = createTextBox(id);
@@ -160,27 +160,27 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         return widget;
     }
 
-    private StringListBox createStringListBox(final String id) {
-        final StringListBox ctrl = new StringListBox();
+    private SelectionBox<String> createSelectionBox(final String id) {
+        final SelectionBox<String> ctrl = new SelectionBox<>();
         ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
             public void focus() {
-                ctrl.setFocus(true);
+                ctrl.focus();
             }
 
             @Override
             public void read(final JSONObject settings) {
                 final String val = JSONUtil.getString(settings.get(id));
                 if (val != null) {
-                    ctrl.setSelected(val);
+                    ctrl.setValue(val);
                 }
             }
 
             @Override
             public void write(final JSONObject settings) {
-                final String selected = ctrl.getSelected();
+                final String selected = ctrl.getValue();
                 if (selected != null) {
                     settings.put(id, new JSONString(selected));
                 }
@@ -311,8 +311,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     private Long getLong(final String val) {
         if (val != null) {
             try {
-                final long l = Long.parseLong(val);
-                return l;
+                return Long.parseLong(val);
             } catch (final RuntimeException e) {
                 // Ignore
             }
@@ -323,8 +322,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     private Boolean getBoolean(final String val) {
         if (val != null) {
             try {
-                final boolean b = Boolean.parseBoolean(val);
-                return b;
+                return Boolean.parseBoolean(val);
             } catch (final RuntimeException e) {
                 // Ignore
             }
@@ -333,11 +331,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     }
 
     public void setFieldNames(final List<String> fieldNames) {
-        for (final StringListBox ctrl : fieldControls) {
-            final String selected = ctrl.getSelected();
+        for (final SelectionBox<String> ctrl : fieldControls) {
+            final String selected = ctrl.getValue();
             ctrl.clear();
             ctrl.addItems(fieldNames);
-            ctrl.setSelected(selected);
+            ctrl.setValue(selected);
         }
     }
 

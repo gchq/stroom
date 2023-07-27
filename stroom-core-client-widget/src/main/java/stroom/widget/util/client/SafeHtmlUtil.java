@@ -1,16 +1,49 @@
 package stroom.widget.util.client;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class SafeHtmlUtil {
 
+    public static final SafeHtml NBSP = SafeHtmlUtils.fromSafeConstant("&nbsp;");
+
     private SafeHtmlUtil() {
     }
 
+    /**
+     * Null safe way to escape string and return {@link SafeHtml}
+     */
     public static SafeHtml getSafeHtml(final String string) {
-        return SafeHtmlUtils.fromString(nullSafe(string));
+        if (GwtNullSafe.isBlankString(string)) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else {
+            return SafeHtmlUtils.fromString(string);
+        }
+    }
+
+    /**
+     * Null safe way to escape string and return {@link SafeHtml}
+     */
+    public static SafeHtml getSafeHtmlFromSafeConstant(final String string) {
+        if (GwtNullSafe.isBlankString(string)) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else {
+            return SafeHtmlUtils.fromSafeConstant(string);
+        }
+    }
+
+    /**
+     * Null safe way to escape string and return {@link SafeHtml}
+     */
+    public static SafeHtml getSafeHtmlFromTrustedString(final String string) {
+        if (GwtNullSafe.isBlankString(string)) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else {
+            return SafeHtmlUtils.fromTrustedString(string);
+        }
     }
 
     private static String nullSafe(final String string) {
@@ -29,10 +62,10 @@ public class SafeHtmlUtil {
             return SafeHtmlUtils.fromString("");
         } else {
             String str = string;
-            if (str.startsWith("\n")) {
+            while (str.startsWith("\n")) {
                 str = str.substring(1);
             }
-            if (str.endsWith("\n")) {
+            while (str.endsWith("\n")) {
                 str = str.substring(0, str.length() - 1);
             }
             // One ...<br> tag at the end of each line
@@ -55,10 +88,10 @@ public class SafeHtmlUtil {
                     }
                 }
 
+                if (lineNo++ != 1) {
+                    builder.appendHtmlConstant("<br>");
+                }
                 if (!line.isEmpty()) {
-                    if (lineNo++ != 1) {
-                        builder.appendHtmlConstant("<br>");
-                    }
                     builder.appendEscaped(line);
                 }
             }

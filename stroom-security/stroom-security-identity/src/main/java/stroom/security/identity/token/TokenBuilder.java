@@ -112,7 +112,7 @@ public class TokenBuilder {
 
         // TODO need to pass this in as it may not be the default one
         if (publicJsonWebKey.getKeyId() != null && !publicJsonWebKey.getKeyId().isEmpty()) {
-            LOGGER.info("Setting KeyIdHeaderValue to " + publicJsonWebKey.getKeyId());
+            LOGGER.debug("Setting KeyIdHeaderValue to " + publicJsonWebKey.getKeyId());
             jws.setKeyIdHeaderValue(publicJsonWebKey.getKeyId());
         }
 

@@ -18,7 +18,7 @@ package stroom.view.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,19 +39,20 @@ import java.util.Objects;
         "updateUser",
         "description",
         "dataSource",
-        "filter",
+//        "filter",
         "pipeline"})
 @JsonInclude(Include.NON_NULL)
 public class ViewDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "View";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_VIEW;
 
     @JsonProperty
     private String description;
     @JsonProperty
     private DocRef dataSource;
-    @JsonProperty
-    private ExpressionOperator filter;
+    //    @JsonProperty
+//    private ExpressionOperator filter;
     @JsonProperty
     private DocRef pipeline;
 
@@ -69,12 +70,12 @@ public class ViewDoc extends Doc {
                    @JsonProperty("updateUser") final String updateUser,
                    @JsonProperty("description") final String description,
                    @JsonProperty("dataSource") DocRef dataSource,
-                   @JsonProperty("filter") ExpressionOperator filter,
+//                   @JsonProperty("filter") ExpressionOperator filter,
                    @JsonProperty("pipeline") final DocRef pipeline) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dataSource = dataSource;
-        this.filter = filter;
+//        this.filter = filter;
         this.pipeline = pipeline;
     }
 
@@ -110,13 +111,13 @@ public class ViewDoc extends Doc {
         this.dataSource = dataSource;
     }
 
-    public ExpressionOperator getFilter() {
-        return filter;
-    }
-
-    public void setFilter(final ExpressionOperator filter) {
-        this.filter = filter;
-    }
+//    public ExpressionOperator getFilter() {
+//        return filter;
+//    }
+//
+//    public void setFilter(final ExpressionOperator filter) {
+//        this.filter = filter;
+//    }
 
     public DocRef getPipeline() {
         return pipeline;
@@ -138,13 +139,14 @@ public class ViewDoc extends Doc {
             return false;
         }
         final ViewDoc viewDoc = (ViewDoc) o;
-        return Objects.equals(description, viewDoc.description) && Objects.equals(dataSource,
-                viewDoc.dataSource) && Objects.equals(filter,
-                viewDoc.filter) && Objects.equals(pipeline, viewDoc.pipeline);
+        return Objects.equals(description, viewDoc.description) &&
+                Objects.equals(dataSource, viewDoc.dataSource) &&
+//                Objects.equals(filter,                viewDoc.filter) &&
+                Objects.equals(pipeline, viewDoc.pipeline);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, dataSource, filter, pipeline);
+        return Objects.hash(super.hashCode(), description, dataSource, pipeline);
     }
 }

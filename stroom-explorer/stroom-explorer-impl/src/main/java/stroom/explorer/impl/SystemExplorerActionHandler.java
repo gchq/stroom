@@ -5,11 +5,13 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
 import java.util.Collections;
@@ -23,6 +25,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     private static final String SYSTEM = ExplorerConstants.SYSTEM;
     private static final String FOLDER = ExplorerConstants.FOLDER;
+    private static final SvgImage ICON = SvgImage.DOCUMENT_SYSTEM;
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
 
@@ -76,8 +79,11 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.SYSTEM, SystemExplorerActionHandler.SYSTEM,
-                SystemExplorerActionHandler.SYSTEM);
+        return new DocumentType(
+                DocumentTypeGroup.SYSTEM,
+                SystemExplorerActionHandler.SYSTEM,
+                SystemExplorerActionHandler.SYSTEM,
+                SystemExplorerActionHandler.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

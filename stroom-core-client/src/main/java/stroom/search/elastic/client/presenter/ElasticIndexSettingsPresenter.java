@@ -22,7 +22,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
@@ -45,7 +45,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
-public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
+public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
         implements ElasticIndexSettingsUiHandlers {
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
@@ -127,13 +127,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     }
 
     @Override
-    public String getType() {
-        return ElasticIndexDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    protected void onRead(final DocRef docRef, final ElasticIndexDoc index) {
-        getView().setDescription(index.getDescription());
+    protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
         clusterPresenter.setSelectedEntityReference(index.getClusterRef());
         getView().setIndexName(index.getIndexName());
         getView().setSearchSlices(index.getSearchSlices());
@@ -153,7 +147,6 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
     @Override
     protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
-        index.setDescription(getView().getDescription().trim());
         index.setClusterRef(clusterPresenter.getSelectedEntityReference());
 
         final String indexName = getView().getIndexName().trim();
@@ -174,10 +167,6 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
     public interface ElasticIndexSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticIndexSettingsUiHandlers> {
-
-        String getDescription();
-
-        void setDescription(String description);
 
         void setClusterView(final View view);
 

@@ -62,19 +62,7 @@ public class TabLayoutConfig extends LayoutConfig {
     private Integer selected;
 
     public TabLayoutConfig() {
-        id = "TabLayoutConfig_" + RandomId.createId(10);
-        preferredSize = new Size();
-    }
-
-    public TabLayoutConfig(final TabConfig... tabs) {
-        id = "TabLayoutConfig_" + RandomId.createId(10);
-        preferredSize = new Size();
-
-        if (tabs != null) {
-            for (final TabConfig tab : tabs) {
-                add(tab);
-            }
-        }
+        this(new Size(), null, null);
     }
 
     @JsonCreator
@@ -85,15 +73,15 @@ public class TabLayoutConfig extends LayoutConfig {
         this.preferredSize = preferredSize;
         this.tabs = tabs;
         this.selected = selected;
-
-        if (this.preferredSize == null) {
-            this.preferredSize = new Size();
-        }
     }
 
     @Override
     public Size getPreferredSize() {
         return preferredSize;
+    }
+
+    public void setPreferredSize(final Size preferredSize) {
+        this.preferredSize = preferredSize;
     }
 
     private List<TabConfig> getVisibleTabs() {
@@ -180,31 +168,46 @@ public class TabLayoutConfig extends LayoutConfig {
         this.selected = selected;
     }
 
+    @Override
+    public String toString() {
+        return id;
+    }
+
+    @Override
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractBuilder<TabLayoutConfig, Builder> {
 
-        private Size preferredSize;
         private List<TabConfig> tabs;
         private Integer selected;
 
         private Builder() {
         }
 
-        public Builder preferredSize(final Size preferredSize) {
-            this.preferredSize = preferredSize;
-            return this;
+        private Builder(final TabLayoutConfig tabLayoutConfig) {
+            this.preferredSize = tabLayoutConfig.preferredSize;
+            this.tabs = new ArrayList<>(tabLayoutConfig.tabs);
+            this.selected = tabLayoutConfig.selected;
         }
 
         public Builder tabs(final List<TabConfig> tabs) {
             this.tabs = tabs;
-            return this;
+            return self();
         }
 
         public Builder selected(final Integer selected) {
             this.selected = selected;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

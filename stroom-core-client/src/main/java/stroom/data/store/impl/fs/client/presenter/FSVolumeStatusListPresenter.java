@@ -66,9 +66,6 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         view.setDataWidget(dataGrid);
 
         this.dateTimeFormatter = dateTimeFormatter;
-
-        // Add a border to the list.
-//        getWidget().getElement().addClassName("stroom-border");
         getWidget().getElement().addClassName("default-min-sizes");
 
         initTableColumns();

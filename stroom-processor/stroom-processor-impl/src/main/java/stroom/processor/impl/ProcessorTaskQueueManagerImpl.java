@@ -185,7 +185,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                             this::queueNewTasks), executor)
                                     .whenComplete((result, error) -> {
                                         try {
-                                            if (allowAsyncTaskCreation && result == 0) {
+                                            if (error != null) {
+                                                LOGGER.error("Error filling task queue:" + error.getMessage(), error);
+                                            }
+
+                                            if (allowAsyncTaskCreation && (error != null || result == 0)) {
                                                 ThreadUtil.sleep(processorConfigProvider.get()
                                                         .getWaitToQueueTasksDuration().toMillis());
                                             }

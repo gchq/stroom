@@ -13,6 +13,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.Suggestions;
 import stroom.security.api.SecurityContext;
 import stroom.suggestions.api.SuggestionsService;
 import stroom.task.api.TaskContext;
@@ -88,7 +89,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
     }
 
     @Override
-    public List<String> getSuggestions(final FetchSuggestionsRequest request) {
+    public Suggestions getSuggestions(final FetchSuggestionsRequest request) {
         return securityContext.secureResult(() -> {
             List<String> result = Collections.emptyList();
 
@@ -97,7 +98,12 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
             if (suggestionFunc != null) {
                 result = suggestionFunc.apply(request.getText());
             }
-            return result;
+
+            // Determine if we are going to allow the client to cache the suggestions.
+            final boolean cache = ((request.getText() == null || request.getText().isBlank()) &&
+                    (request.getField().equals(MetaFields.TYPE) || request.getField().equals(MetaFields.STATUS)));
+
+            return new Suggestions(result, cache);
         });
     }
 
@@ -125,6 +131,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         final Stream<String> stream = pipelineStore.list().stream()
                 .map(DocRef::getName);
         result = QuickFilterPredicateFactory.filterStream(userInput, stream)
+                .sorted()
                 .limit(LIMIT)
                 .collect(Collectors.toList());
 
@@ -137,6 +144,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         Stream<String> stream = Arrays.stream(Status.values())
                 .map(Status::getDisplayValue);
         result = QuickFilterPredicateFactory.filterStream(userInput, stream)
+                .sorted()
                 .limit(LIMIT)
                 .collect(Collectors.toList());
         return result;
@@ -177,6 +185,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                                             Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
                                                     .parallel())
                                     .distinct()
+                                    .sorted()
                                     .limit(LIMIT)
                                     .collect(Collectors.toList()))
                     .get();
@@ -191,7 +200,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     private List<String> createStreamTypeList(final String userInput) {
         return QuickFilterPredicateFactory.filterStream(
-                        userInput, metaService.getTypes().stream())
+                        userInput, metaService.getTypes().stream().sorted())
                 .limit(LIMIT)
                 .collect(Collectors.toList());
     }

@@ -22,17 +22,11 @@ import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.presenter.PipelinePresenter;
-import stroom.pipeline.client.presenter.PipelineSettingsPresenter;
-import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
-import stroom.pipeline.client.presenter.XsltSettingsPresenter;
-import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
-import stroom.pipeline.client.view.PipelineSettingsViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
-import stroom.pipeline.client.view.XsltSettingsViewImpl;
 import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
@@ -87,15 +81,12 @@ public class PipelineModule extends PluginModule {
 
         bindPlugin(XsltPlugin.class);
         bind(XsltPresenter.class);
-        bindPresenterWidget(XsltSettingsPresenter.class, XsltSettingsView.class, XsltSettingsViewImpl.class);
 
         bindPlugin(PipelinePlugin.class);
         bindPlugin(PipelineSteppingPlugin.class);
         bind(PipelinePresenter.class);
         bindPresenterWidget(StepLocationPresenter.class, StepLocationView.class, StepLocationViewImpl.class);
         bindPresenterWidget(StepControlPresenter.class, StepControlView.class, StepControlViewImpl.class);
-        bindPresenterWidget(PipelineSettingsPresenter.class, PipelineSettingsView.class,
-                PipelineSettingsViewImpl.class);
 
         bindPresenterWidget(PipelineTreePresenter.class, PipelineTreeView.class, PipelineTreeViewImpl.class);
         bindPresenterWidget(PipelineStructurePresenter.class, PipelineStructureView.class,

@@ -18,67 +18,54 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+
+import javax.inject.Provider;
 
 public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, SolrIndexDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
-
-    private final TabContentProvider<SolrIndexDoc> tabContentProvider = new TabContentProvider<>();
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     @Inject
     public SolrIndexPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
-                              final Provider<SolrIndexSettingsPresenter> indexSettingsPresenter,
-                              final Provider<SolrIndexFieldListPresenter> indexFieldListPresenter,
-                              final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                              final Provider<SolrIndexSettingsPresenter> indexSettingsPresenterProvider,
+                              final Provider<SolrIndexFieldListPresenter> indexFieldListPresenterProvider,
+                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        addTab(FIELDS, new DocumentEditTabProvider<>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocumentEditTabProvider<>(indexSettingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final SolrIndexDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public SolrIndexDoc onWrite(final MarkdownEditPresenter presenter,
+                                        final SolrIndexDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
             }
         });
-
-        tabContentProvider.add(FIELDS, indexFieldListPresenter);
-        tabContentProvider.add(SETTINGS, indexSettingsPresenter);
-        addTab(FIELDS);
-        addTab(SETTINGS);
         selectTab(FIELDS);
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final SolrIndexDoc index) {
-        super.onRead(docRef, index);
-        tabContentProvider.read(docRef, index);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
-    }
-
-    @Override
-    protected SolrIndexDoc onWrite(final SolrIndexDoc index) {
-        return tabContentProvider.write(index);
     }
 
     @Override

@@ -131,6 +131,10 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         void onShow(ShowPopupEvent event);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private final PresenterWidget<?> presenterWidget;

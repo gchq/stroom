@@ -5,7 +5,8 @@
              xmlns:q="urn:import:stroom.query.client.view">
     <g:FlowPanel styleName="QueryViewImpl dock-max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal">
-            <b:ButtonPanel ui:field="buttonPanelLeft"/>
+            <b:ButtonPanel ui:field="buttonPanelLeft" addStyleNames="dock-max"/>
+            <b:ButtonPanel ui:field="buttonPanelRight" addStyleNames="dock-min"/>
             <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="expressionTree"

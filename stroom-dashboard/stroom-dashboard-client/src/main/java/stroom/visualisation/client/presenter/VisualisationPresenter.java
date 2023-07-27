@@ -17,12 +17,12 @@
 
 package stroom.visualisation.client.presenter;
 
-import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.security.client.api.ClientSecurityContext;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -30,63 +30,39 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Provider;
+
 public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, VisualisationDoc> {
 
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
-
-    private final VisualisationSettingsPresenter settingsPresenter;
-
-    private int loadCount;
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
-                                  final VisualisationSettingsPresenter settingsPresenter,
-                                  final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
-        this.settingsPresenter = settingsPresenter;
+                                  final Provider<VisualisationSettingsPresenter> settingsPresenterProvider,
+                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
-        settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<VisualisationDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final VisualisationDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public VisualisationDoc onWrite(final MarkdownEditPresenter presenter,
+                                            final VisualisationDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
             }
         });
-
-        addTab(SETTINGS_TAB);
-        selectTab(SETTINGS_TAB);
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS_TAB.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final VisualisationDoc visualisation) {
-        super.onRead(docRef, visualisation);
-        loadCount++;
-        settingsPresenter.read(docRef, visualisation);
-
-        if (loadCount > 1) {
-            // Remove the visualisation function from the cache so dashboards
-            // reload it.
-            ClearFunctionCacheEvent.fire(this, docRef);
-        }
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        settingsPresenter.onReadOnly(readOnly);
-    }
-
-    @Override
-    protected VisualisationDoc onWrite(final VisualisationDoc visualisation) {
-        return settingsPresenter.write(visualisation);
+        selectTab(SETTINGS);
     }
 
     @Override

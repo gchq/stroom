@@ -24,7 +24,6 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.statistics.impl.sql.SQLStatisticsEventValidator;
@@ -35,6 +34,7 @@ import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.svg.shared.SvgImage;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
@@ -65,7 +65,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
-        icon = ElementIcons.STATISTICS)
+        icon = SvgImage.PIPELINE_STATISTICS)
 public class StatisticsFilter extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsFilter.class);

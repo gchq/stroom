@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:item="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
@@ -9,31 +10,31 @@
     <g:FlowPanel styleName="max form">
         <!-- Theme -->
         <form:FormGroup identity="userPreferencesTheme" label="Theme">
-            <item:StringListBox ui:field="theme" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="theme" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Ace editor theme -->
         <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme">
-            <item:StringListBox ui:field="editorTheme" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="editorTheme" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Ace editor theme -->
         <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings:">
-            <item:StringListBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Layout Density -->
         <form:FormGroup identity="userPreferencesLayoutDensity" label="Layout Density">
-            <item:StringListBox ui:field="density" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="density" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Font -->
         <form:FormGroup identity="userPreferencesFont" label="Font">
-            <item:StringListBox ui:field="font" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="font" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Font Size -->
         <form:FormGroup identity="userPreferencesFontSize" label="Font Size">
-            <item:StringListBox ui:field="fontSize" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="fontSize" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Date time settings -->
         <form:FormGroup identity="userPreferencesDateFormat" label="Date and Time Format">
-            <item:StringListBox ui:field="format" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="format" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="custom" identity="userPreferencesCustom" label="Custom"/>
@@ -42,11 +43,11 @@
             <g:TextBox ui:field="text" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone">
-            <item:ItemListBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="userPreferencesTimeZoneId" identity="userPreferencesTimeZoneId"
                         label="Time Zone Id">
-            <item:StringListBox ui:field="timeZoneId" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="userPreferencesTimeZoneOffset" identity="userPreferencesTimeZoneOffset"
                         label="Time Zone Offset">
@@ -57,8 +58,8 @@
         </form:FormGroup>
 
         <g:FlowPanel styleName="preferencesViewImpl-buttons button-group">
-            <g:Button ui:field="setAsDefault" addStyleNames="allow-focus" text="Set As Default"/>
-            <g:Button ui:field="revertToDefault" addStyleNames="allow-focus" text="Revert To Default"/>
+            <b:Button ui:field="setAsDefault" addStyleNames="allow-focus" text="Set As Default"/>
+            <b:Button ui:field="revertToDefault" addStyleNames="allow-focus" text="Revert To Default"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

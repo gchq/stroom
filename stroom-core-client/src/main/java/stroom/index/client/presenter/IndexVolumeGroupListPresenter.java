@@ -58,9 +58,6 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
-
-        // Add a border to the list.
-//        getWidget().getElement().addClassName("stroom-border");
         getWidget().getElement().addClassName("default-min-sizes");
 
         initTableColumns();

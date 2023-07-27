@@ -52,7 +52,7 @@ import java.util.function.Supplier;
                                         name = "params",
                                         argType = ValString.class,
                                         description = "A String of space separated parameters to pass into the " +
-                                                "dashboard, e.g. 'usedId=user1 building=hq'")})})
+                                                "dashboard, e.g. 'userId=user1 building=hq'")})})
 class Dashboard extends AbstractLink {
 
     static final String NAME = "dashboard";

@@ -12,7 +12,7 @@
             <g:Label ui:field="name" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertySource" label="Source">
-            <i:ItemListBox ui:field="source" addStyleNames="w-100"/>
+            <i:SelectionBox ui:field="source" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertyValue" label="Value">
             <g:SimplePanel ui:field="value" addStyleNames="w-100"/>

@@ -16,6 +16,7 @@
 
 package stroom.view.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -25,6 +26,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -53,4 +55,11 @@ public interface ViewResource extends RestResource, DirectRestService, FetchWith
             operationId = "updateView")
     ViewDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) ViewDoc doc);
+
+    @GET
+    @Path("/list")
+    @Operation(
+            summary = "Fetch view names",
+            operationId = "listViews")
+    List<DocRef> list();
 }

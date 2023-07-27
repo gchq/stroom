@@ -23,11 +23,10 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Icon;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskEndEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -46,15 +45,15 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     private final Provider<FolderRootPresenter> editorProvider;
     private final ClientSecurityContext securityContext;
 
-    private FolderRootPresenter presenter;
+//    private FolderRootPresenter presenter;
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus,
                             final Provider<FolderRootPresenter> editorProvider,
-                            final ClientSecurityContext securityContext,
                             final ContentManager contentManager,
-                            final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                            final DocumentPluginEventManager entityPluginEventManager,
+                            final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.contentManager = contentManager;
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;
@@ -122,10 +121,11 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     }
 
     @Override
-    protected void showTab(final DocRef docRef,
-                           final MyPresenterWidget<?> documentEditPresenter,
-                           final Handler closeHandler,
-                           final DocumentTabData tabData) {
+    protected void showDocument(final DocRef docRef,
+                                final MyPresenterWidget<?> documentEditPresenter,
+                                final Handler closeHandler,
+                                final DocumentTabData tabData,
+                                final boolean fullScreen) {
         try {
             if (documentEditPresenter instanceof FolderRootPresenter) {
                 ((FolderRootPresenter) documentEditPresenter).read();
@@ -150,8 +150,8 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     }
 
     @Override
-    public Icon getIcon() {
-        return Icon.create(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.SYSTEM);
+    public SvgImage getIcon() {
+        return SvgImage.DOCUMENT_SYSTEM;
     }
 
     @Override

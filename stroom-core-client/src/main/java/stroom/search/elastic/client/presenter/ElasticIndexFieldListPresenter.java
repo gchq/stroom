@@ -21,7 +21,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -31,7 +31,6 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -40,8 +39,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListView>
-        implements HasDocumentRead<ElasticIndexDoc> {
+public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<ElasticIndexFieldListView, ElasticIndexDoc> {
 
     private final MyDataGrid<ElasticIndexField> dataGrid;
     private final DateTimeFormatter dateTimeFormatter;
@@ -122,10 +120,9 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     @Override
-    public void read(final DocRef docRef, final ElasticIndexDoc index) {
-
-        if (index != null) {
-            fields = index.getFields().stream()
+    protected void onRead(final DocRef docRef, final ElasticIndexDoc document, final boolean readOnly) {
+        if (document != null) {
+            fields = document.getFields().stream()
                     .sorted(Comparator.comparing(ElasticIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
 
@@ -138,6 +135,11 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         }
 
         refresh();
+    }
+
+    @Override
+    protected ElasticIndexDoc onWrite(final ElasticIndexDoc document) {
+        return document;
     }
 
     public interface ElasticIndexFieldListView extends View {

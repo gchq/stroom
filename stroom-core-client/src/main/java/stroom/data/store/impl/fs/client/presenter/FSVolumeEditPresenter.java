@@ -25,7 +25,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.ValidationResult;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -156,7 +156,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
 
         getView().getPath().setText(volume.getPath());
         getView().getStatus().addItems(VolumeUseStatus.values());
-        getView().getStatus().setSelectedItem(volume.getStatus());
+        getView().getStatus().setValue(volume.getStatus());
 
         if (volume.getByteLimit() != null) {
             getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(
@@ -170,7 +170,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
 
     private void write() {
         volume.setPath(getView().getPath().getText());
-        volume.setStatus(getView().getStatus().getSelectedItem());
+        volume.setStatus(getView().getStatus().getValue());
 
         Long bytesLimit = null;
         final String limit = getView().getByteLimit().getText().trim();
@@ -184,7 +184,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
 
         HasText getPath();
 
-        ItemListBox<VolumeUseStatus> getStatus();
+        SelectionBox<VolumeUseStatus> getStatus();
 
         HasText getByteLimit();
     }

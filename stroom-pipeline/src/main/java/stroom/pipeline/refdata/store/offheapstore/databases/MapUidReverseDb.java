@@ -21,9 +21,9 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
@@ -51,11 +51,12 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
     public static final String DB_NAME = "MapUidBackward";
 
     @Inject
-    public MapUidReverseDb(@Assisted final LmdbEnv lmdbEnvironment,
+    public MapUidReverseDb(@Assisted final RefDataLmdbEnv lmdbEnvironment,
                            final ByteBufferPool byteBufferPool,
                            final UIDSerde keySerde,
                            final MapDefinitionSerde valueSerde) {
-        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME);
+        lmdbEnvironment.registerDatabases(this);
     }
 
     /**
@@ -103,8 +104,12 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
-        MapUidReverseDb create(final LmdbEnv lmdbEnvironment);
+        MapUidReverseDb create(final RefDataLmdbEnv lmdbEnvironment);
     }
 }

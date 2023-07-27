@@ -13,6 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+ .menuCellTable .cellTableCell > div {
+    padding: 0;
+ }
+
 .menuItem-separator {
 	border-top: 1px solid var(--menu-separator__color);
 	cursor: default;
@@ -34,14 +38,11 @@
     cursor: pointer;
     gap: var(--row__gap--horizontal);
     border: 1px solid transparent;
-    border-radius: .25rem;
     min-width: 180px;
 
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     vertical-align: middle;
     overflow: hidden;
-    height: var(--row__height);
-    white-space: nowrap;
 }
 
 .menuItem-highlight {
@@ -54,6 +55,12 @@
 
 .menuItem-icon {
 	display: flex;
+	color: var(--icon-colour__grey);
+}
+
+.menuItem-icon svg {
+	width: var(--icon-width);
+	height: var(--icon-height);
 }
 
 .menuItem-disabled {
@@ -67,11 +74,14 @@
 }
 
 .menuItem-simpleText {
+/*
 	display: inline-block;
 	vertical-align: top;
 	padding-top: 1px;
 	margin-left: 5px;
-	margin-right: 5px;
+	margin-right: 5px;*/
+    white-space: nowrap;
+	flex-grow: 1;
 }
 
 .menuItem-shortcut {
@@ -83,4 +93,9 @@
 
 .menuItem-expandArrow {
 	display: flex;
+}
+
+.menuItem-expandArrow svg {
+	width: 10px;
+	height: 10px;
 }

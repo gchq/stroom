@@ -25,6 +25,7 @@ import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
@@ -33,6 +34,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
+import stroom.pipeline.refdata.store.offheapstore.serdes.StagingValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 
@@ -68,7 +70,7 @@ class TestValueStore extends AbstractStoreDbTest {
     @BeforeEach
     void setup() {
         valueStoreDb = new ValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 byteBufferPool,
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
@@ -77,33 +79,36 @@ class TestValueStore extends AbstractStoreDbTest {
 
 
         valueStoreMetaDb = new ValueStoreMetaDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 byteBufferPool,
                 new ValueStoreKeySerde(),
                 new ValueStoreMetaSerde());
 
-        valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
+        valueStore = new ValueStore(refDataLmdbEnv, valueStoreDb, valueStoreMetaDb);
     }
 
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         valueStoreDb = new ValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory);
 
-        valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
+        valueStore = new ValueStore(refDataLmdbEnv, valueStoreDb, valueStoreMetaDb);
     }
 
     private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {
         try (PooledByteBuffer valueStoreKeyPooledBuffer = valueStore.getPooledKeyBuffer()) {
+            final StagingValue stagingValue = StagingValueSerde.convert(
+                    ByteBuffer::allocateDirect,
+                    basicHashAlgorithm,
+                    refDataValue);
             ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                     writeTxn,
                     valueStoreKeyPooledBuffer,
-                    refDataValue,
-                    false);
+                    stagingValue);
 
             return valueStoreDb.deserializeKey(valueStoreKeyBuffer);
         }

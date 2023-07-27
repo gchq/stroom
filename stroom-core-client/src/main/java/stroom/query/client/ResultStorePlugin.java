@@ -18,13 +18,13 @@ package stroom.query.client;
 
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
+import stroom.main.client.event.ShowMainEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.ResultStorePresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.gwt.event.shared.HasHandlers;
@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ResultStorePlugin extends Plugin implements CurrentUserChangedHandler, HasHandlers {
+public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, HasHandlers {
 
     private final ClientSecurityContext securityContext;
 
@@ -51,7 +51,7 @@ public class ResultStorePlugin extends Plugin implements CurrentUserChangedHandl
         this.resultStorePresenter = resultStorePresenter;
         this.resultStoreModel = resultStoreModel;
 
-        registerHandler(getEventBus().addHandler(CurrentUserChangedEvent.getType(), this));
+        registerHandler(getEventBus().addHandler(ShowMainEvent.getType(), this));
     }
 
     @Override
@@ -61,7 +61,8 @@ public class ResultStorePlugin extends Plugin implements CurrentUserChangedHandl
         event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                 new IconMenuItem.Builder()
                         .priority(201)
-                        .icon(SvgPresets.DATABASE)
+                        .icon(SvgImage.DATABASE)
+                        .iconColour(IconColour.GREY)
                         .text("Search Results")
                         .command(resultStorePresenter::show)
                         .build());
@@ -69,7 +70,7 @@ public class ResultStorePlugin extends Plugin implements CurrentUserChangedHandl
     }
 
     @Override
-    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
+    public void onShowMain(final ShowMainEvent event) {
         // TODO : Decide if we want to know about search result stores that we own being presented at login.
         // This is related to general session restoration rather than search results specifically.
 

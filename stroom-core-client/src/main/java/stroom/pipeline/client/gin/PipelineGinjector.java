@@ -20,7 +20,6 @@ import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.presenter.PipelinePresenter;
-import stroom.pipeline.client.presenter.PipelineSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
@@ -43,8 +42,6 @@ public interface PipelineGinjector {
     AsyncProvider<PipelinePlugin> getPipelinePlugin();
 
     AsyncProvider<PipelinePresenter> getPipelinePresenter();
-
-    AsyncProvider<PipelineSettingsPresenter> getPipelineSettingsPresenter();
 
     AsyncProvider<PipelineStructurePresenter> getPipelineStructurePresenter();
 

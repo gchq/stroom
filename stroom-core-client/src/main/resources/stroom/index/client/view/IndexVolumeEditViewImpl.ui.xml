@@ -5,13 +5,13 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="indexVolumeEditNode" label="Node">
-            <l:StringListBox ui:field="nodeName" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="nodeName" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="indexVolumeEditPath" label="Path">
             <g:TextBox ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="indexVolumeEditState" label="State">
-            <l:ItemListBox ui:field="state" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="state" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="indexVolumeEditLimit" label="Limit">
             <g:TextBox ui:field="bytesLimit" addStyleNames="w-100"/>

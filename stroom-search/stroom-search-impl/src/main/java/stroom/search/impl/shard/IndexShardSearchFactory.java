@@ -11,7 +11,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.extraction.StoredDataQueue;
-import stroom.search.impl.ClusterSearchTask;
+import stroom.search.impl.NodeSearchTask;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
@@ -71,7 +71,7 @@ public class IndexShardSearchFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public CompletableFuture<Void> search(final ClusterSearchTask task,
+    public CompletableFuture<Void> search(final NodeSearchTask task,
                                           final ExpressionOperator expression,
                                           final FieldIndex fieldIndex,
                                           final TaskContext parentContext,
@@ -165,7 +165,7 @@ public class IndexShardSearchFactory {
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(
-            final ClusterSearchTask task,
+            final NodeSearchTask task,
             final ExpressionOperator expression,
             final IndexFieldsMap indexFieldsMap,
             final Map<Version, Optional<SearchExpressionQuery>> queryMap,

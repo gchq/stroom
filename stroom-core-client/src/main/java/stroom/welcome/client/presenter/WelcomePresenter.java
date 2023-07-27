@@ -22,7 +22,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.Icon;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
@@ -67,8 +67,8 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
     }
 
     @Override
-    public Icon getIcon() {
-        return Icon.create("svgIcon-document svgIcon-oo");
+    public SvgImage getIcon() {
+        return SvgImage.OO;
     }
 
     @Override

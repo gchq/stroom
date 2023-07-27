@@ -7,10 +7,10 @@ import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.svg.shared.SvgImage;
 import stroom.util.cert.SSLConfig;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.ByteCountOutputStream;
@@ -40,6 +40,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
 // TODO: 03/05/2023 Consider changing this to use Jersey clients for consistency with the rest of the app.
+
 /**
  * Handler class that forwards the request to a URL.
  */
@@ -53,7 +54,7 @@ import javax.net.ssl.SSLSocketFactory;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STREAM)
+        icon = SvgImage.PIPELINE_STREAM)
 public class HTTPAppender extends AbstractAppender {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HTTPAppender.class);

@@ -40,10 +40,12 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.shared.SvgImage;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -222,16 +224,21 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private void buildFavouritesNode(final TreeModel masterTreeModel) {
         final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
-                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
+                .icon(SvgImage.FAVOURITES);
         final ExplorerNode favNode = favNodeBuilder.build();
+
+        final Map<String, SvgImage> iconMap = getTypes()
+                .stream()
+                .collect(Collectors.toMap(DocumentType::getType, DocumentType::getIcon));
 
         for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
             final ExplorerNode childNode = favNode.copy()
                     .docRef(favDocRef)
                     .depth(1)
-                    .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + favDocRef.getType())
+                    .icon(iconMap.get(favDocRef.getType()))
                     .isFavourite(true)
                     .rootNodeUuid(favNode)
+                    .tags(ExplorerTags.getTags(favDocRef.getType()))
                     .build();
             masterTreeModel.add(favNode, childNode);
         }
@@ -243,7 +250,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                             final List<ExplorerNode> rootNodes,
                                             final Predicate<DocRef> fuzzyMatchPredicate) {
         if (rootNodes.size() > 0) {
-            final ExplorerNode rootNode = rootNodes.get(0);
+            final ExplorerNode rootNode = rootNodes.get(rootNodes.size() - 1);
             return rootNodes
                     .stream()
                     .map(node -> {
@@ -269,8 +276,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .map(node -> {
                         final ExplorerNode.Builder root = node.copy();
                         Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
-                                .map(DocumentType::getIconClassName)
-                                .ifPresent(root::iconClassName);
+                                .map(DocumentType::getIcon)
+                                .ifPresent(root::icon);
                         return root;
                     })
                     .orElseGet(ExplorerNode::builder);
@@ -324,7 +331,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .tags(StandardTagNames.DATA_SOURCE)
                 .nodeState(NodeState.LEAF)
                 .depth(1)
-                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + "searchable")
+                .icon(SvgImage.DOCUMENT_SEARCHABLE)
                 .build();
     }
 
@@ -970,8 +977,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     @Override
-    public List<DocumentType> getNonSystemTypes() {
-        return explorerActionHandlers.getNonSystemTypes();
+    public List<DocumentType> getTypes() {
+        return explorerActionHandlers.getTypes();
     }
 
     @Override
@@ -1015,7 +1022,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
-        return getNonSystemTypes().stream()
+        return getTypes().stream()
                 .filter(type -> visibleTypes.contains(type.getType()))
                 .collect(Collectors.toList());
     }
@@ -1045,14 +1052,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     @Override
     public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
         final List<ExplorerDocContentMatch> list = new ArrayList<>();
-        for (final DocumentType documentType : explorerActionHandlers.getNonSystemTypes()) {
+        for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
             final ExplorerActionHandler explorerActionHandler =
                     explorerActionHandlers.getHandler(documentType.getType());
             final List<DocContentMatch> matches = explorerActionHandler
                     .findByContent(request.getPattern(), request.isRegex(), request.isMatchCase());
 
             for (final DocContentMatch docContentMatch : matches) {
-
                 final List<String> parents = new ArrayList<>();
                 parents.add(docContentMatch.getDocRef().getName());
                 final TreeModel masterTreeModel = explorerTreeModel.getModel();
@@ -1078,11 +1084,16 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 final ExplorerDocContentMatch explorerDocContentMatch = ExplorerDocContentMatch.builder()
                         .docContentMatch(docContentMatch)
                         .path(parentPath.toString())
-                        .iconClassName(explorerActionHandler.getDocumentType().getIconClassName())
+                        .icon(explorerActionHandler.getDocumentType().getIcon())
                         .build();
                 list.add(explorerDocContentMatch);
             }
         }
-        return ResultPage.createPageLimitedList(list, request.getPageRequest());
+
+        PageRequest pageRequest = request.getPageRequest();
+        if (list.size() < pageRequest.getOffset()) {
+            return ResultPage.createUnboundedList(Collections.emptyList());
+        }
+        return ResultPage.createPageLimitedList(list, pageRequest);
     }
 }

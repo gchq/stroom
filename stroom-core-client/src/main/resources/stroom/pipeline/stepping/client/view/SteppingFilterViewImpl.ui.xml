@@ -1,20 +1,22 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="steppingFilterViewImpl  max">
-        <g:west size="220">
-            <g:MaxScrollPanel styleName="max navigation">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client">
+    <g:MySplitLayoutPanel styleName="steppingFilterViewImpl max">
+        <g:west size="245">
+            <g:MaxScrollPanel styleName="max stroom-control">
                 <g:SimplePanel ui:field="elementChooser"/>
             </g:MaxScrollPanel>
         </g:west>
         <g:center>
             <g:FlowPanel styleName="max form">
-                <form:FormGroup identity="steppingSeverity" label="Jump to where message severity >=">
-                    <g:ListBox ui:field="skipToErrors"/>
+                <g:Label ui:field="nameLabel" addStyleNames="form-heading"/>
+                <form:FormGroup identity="steppingSeverity" label="Jump to where message severity is at least:">
+                    <l:SelectionBox ui:field="skipToErrors"/>
                 </form:FormGroup>
-                <form:FormGroup identity="steppingErrors" label="Jump to where output is">
-                    <g:ListBox ui:field="skipToOutput"/>
+                <form:FormGroup identity="steppingErrors" label="Jump to where output is:">
+                    <l:SelectionBox ui:field="skipToOutput"/>
                 </form:FormGroup>
                 <form:FormGroup identity="steppingConditions"
                                 label="Stepping Conditions"
@@ -24,4 +26,4 @@
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

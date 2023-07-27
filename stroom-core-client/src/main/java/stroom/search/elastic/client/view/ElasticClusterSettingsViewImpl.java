@@ -19,6 +19,8 @@ package stroom.search.elastic.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -26,7 +28,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
@@ -45,8 +46,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     private final Widget widget;
 
     @UiField
-    TextArea description;
-    @UiField
     TextArea connectionUrls;
     @UiField
     TextArea caCertificate;
@@ -64,8 +63,8 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @Inject
     public ElasticClusterSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        testConnection.setIcon(SvgImage.OK);
 
-        description.addKeyDownHandler(e -> fireChange());
         connectionUrls.addKeyDownHandler(e -> fireChange());
         caCertificate.addKeyDownHandler(e -> fireChange());
         apiKeyId.addKeyDownHandler(e -> fireChange());
@@ -84,16 +83,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public String getDescription() {
-        return description.getText().trim();
-    }
-
-    @Override
-    public void setDescription(final String description) {
-        this.description.setText(description);
     }
 
     @Override
@@ -161,7 +150,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         connectionUrls.setEnabled(!readOnly);
         caCertificate.setEnabled(!readOnly);
         useAuthentication.setEnabled(!readOnly);

@@ -144,9 +144,10 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     @Override
     public DocumentTypes fetchDocumentTypes() {
-        final List<DocumentType> nonSystemTypes = explorerServiceProvider.get().getNonSystemTypes();
-        final List<DocumentType> visibleTypes = explorerServiceProvider.get().getVisibleTypes();
-        return new DocumentTypes(nonSystemTypes, visibleTypes);
+        final ExplorerService explorerService = explorerServiceProvider.get();
+        final List<DocumentType> types = explorerService.getTypes();
+        final List<DocumentType> visibleTypes = explorerService.getVisibleTypes();
+        return new DocumentTypes(types, visibleTypes);
     }
 
     @Override

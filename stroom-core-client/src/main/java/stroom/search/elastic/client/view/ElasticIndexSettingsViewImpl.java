@@ -19,15 +19,17 @@ package stroom.search.elastic.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -36,10 +38,9 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticIndexSettingsUiHandlers>
         implements ElasticIndexSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField
     TextBox indexName;
     @UiField
@@ -60,18 +61,13 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Inject
     public ElasticIndexSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        description.addKeyDownHandler(e -> fireChange());
-        indexName.addKeyDownHandler(e -> fireChange());
-        timeField.addKeyDownHandler(e -> fireChange());
+        testConnection.setIcon(SvgImage.OK);
 
         searchSlices.setMin(1L);
         searchSlices.setMax(1000L);
-        searchSlices.getSpinner().addSpinnerHandler(e -> fireChange());
 
         searchScrollSize.setMin(1L);
         searchScrollSize.setMax(1000000L);
-        searchScrollSize.getSpinner().addSpinnerHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -83,16 +79,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public String getDescription() {
-        return description.getText().trim();
-    }
-
-    @Override
-    public void setDescription(final String description) {
-        this.description.setText(description);
     }
 
     @Override
@@ -152,10 +138,29 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         indexName.setEnabled(!readOnly);
         searchSlices.setEnabled(!readOnly);
         searchScrollSize.setEnabled(!readOnly);
+    }
+
+    @UiHandler("indexName")
+    public void onIndexNameKeyDown(final KeyDownEvent e) {
+        fireChange();
+    }
+
+    @UiHandler("searchSlices")
+    public void onSearchSlicesValueChange(final ValueChangeEvent<Long> e) {
+        fireChange();
+    }
+
+    @UiHandler("searchScrollSize")
+    public void onSearchScrollSizeValueChange(final ValueChangeEvent<Long> e) {
+        fireChange();
+    }
+
+    @UiHandler("timeField")
+    public void onTimeFieldKeyDown(final KeyDownEvent e) {
+        fireChange();
     }
 
     @UiHandler("testConnection")
@@ -166,5 +171,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     public interface Binder extends UiBinder<Widget, ElasticIndexSettingsViewImpl> {
+
     }
 }

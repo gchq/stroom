@@ -1,18 +1,16 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:t="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="solrIndexSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsCollection" label="Collection">
             <g:TextBox ui:field="collection" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsInstanceType" label="Instance Type">
-            <l:ItemListBox ui:field="instanceType"/>
+            <l:SelectionBox ui:field="instanceType"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsSolrURLs" label="Solr URLs">
             <g:TextArea ui:field="solrUrls" width="400px"/>
@@ -32,7 +30,7 @@
         <form:FormGroup identity="solrIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
-        <g:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
+        <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
         <form:FormGroup identity="solrIndexSettingsDataRetention"
                         label="Data Retention Expression (matching data will be deleted)"
                         addStyleNames="default-min-sizes flex-grow-1">

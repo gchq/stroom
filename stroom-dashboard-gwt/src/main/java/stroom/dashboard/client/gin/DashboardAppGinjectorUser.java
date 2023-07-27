@@ -23,7 +23,7 @@ import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.AnnotationModule;
 import stroom.core.client.presenter.CorePresenter;
-import stroom.dashboard.client.main.DashboardMainPresenter;
+import stroom.core.client.presenter.FullScreenPresenter;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
@@ -76,5 +76,5 @@ public interface DashboardAppGinjectorUser extends
     // Presenters
     Provider<CorePresenter> getCorePresenter();
 
-    Provider<DashboardMainPresenter> getDashboardMainPresenter();
+    Provider<FullScreenPresenter> getFullScreenPresenter();
 }

@@ -96,7 +96,7 @@ class TestAsciiTable {
                         LocalDate.of(1972, 4, 1), 170)
         );
 
-        final String table = AsciiTable.from(sourceData);
+        final String table = AsciiTable.fromCollection(sourceData);
 
         LOGGER.info("table:\n{}", table);
 
@@ -122,7 +122,7 @@ class TestAsciiTable {
                 "Two",
                 "Three");
 
-        final String table = AsciiTable.from(sourceData);
+        final String table = AsciiTable.fromCollection(sourceData);
 
         LOGGER.info("table:\n{}", table);
 
@@ -148,7 +148,7 @@ class TestAsciiTable {
                 2,
                 3);
 
-        final String table = AsciiTable.from(sourceData);
+        final String table = AsciiTable.fromCollection(sourceData);
 
         LOGGER.info("table:\n{}", table);
 
@@ -178,7 +178,7 @@ class TestAsciiTable {
                         LocalDate.of(1972, 4, 1), 170)
         );
 
-        final String table = AsciiTable.from(sourceData, true);
+        final String table = AsciiTable.fromCollection(sourceData, true);
 
         LOGGER.info("table:\n{}", table);
 

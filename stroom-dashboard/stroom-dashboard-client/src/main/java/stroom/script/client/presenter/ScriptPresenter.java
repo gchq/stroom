@@ -21,11 +21,13 @@ import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -37,107 +39,80 @@ import javax.inject.Provider;
 
 public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ScriptDoc> {
 
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
-    private static final TabData SCRIPT_TAB = new TabDataImpl("Script");
-
-    private final ScriptSettingsPresenter settingsPresenter;
-    private final Provider<EditorPresenter> editorPresenterProvider;
-
-    private EditorPresenter codePresenter;
-    private boolean readOnly = true;
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData SCRIPT = new TabDataImpl("Script");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     private int loadCount;
 
     @Inject
     public ScriptPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
-                           final ScriptSettingsPresenter settingsPresenter,
-                           final ClientSecurityContext securityContext,
-                           final Provider<EditorPresenter> editorPresenterProvider) {
-        super(eventBus, view, securityContext);
-        this.settingsPresenter = settingsPresenter;
-        this.editorPresenterProvider = editorPresenterProvider;
+                           final Provider<ScriptSettingsPresenter> settingsPresenterProvider,
+                           final Provider<EditorPresenter> editorPresenterProvider,
+                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
-        settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        addTab(SCRIPT, new AbstractTabProvider<ScriptDoc, EditorPresenter>(eventBus) {
+            @Override
+            protected EditorPresenter createPresenter() {
+                final EditorPresenter editorPresenter = editorPresenterProvider.get();
+                editorPresenter.setMode(AceEditorMode.JAVASCRIPT);
+                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                return editorPresenter;
+            }
+
+            @Override
+            public void onRead(final EditorPresenter presenter,
+                               final DocRef docRef,
+                               final ScriptDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getData());
+                presenter.setReadOnly(readOnly);
+                presenter.getFormatAction().setAvailable(!readOnly);
+
+                loadCount++;
+                if (loadCount > 1) {
+                    // Remove the script function from the cache so dashboards reload
+                    // it.
+                    ClearScriptCacheEvent.fire(this, docRef);
+
+                    // This script might be used by any visualisation so clear the vis
+                    // function cache so that scripts are requested again if needed.
+                    ClearFunctionCacheEvent.fire(this);
+                }
+            }
+
+            @Override
+            public ScriptDoc onWrite(final EditorPresenter presenter, final ScriptDoc document) {
+                document.setData(presenter.getText());
+                return document;
             }
         });
+        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final ScriptDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
 
-        addTab(SCRIPT_TAB);
-        addTab(SETTINGS_TAB);
-        selectTab(SCRIPT_TAB);
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS_TAB.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (SCRIPT_TAB.equals(tab)) {
-            callback.onReady(getOrCreateCodePresenter());
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final ScriptDoc script) {
-        super.onRead(docRef, script);
-        loadCount++;
-        settingsPresenter.read(docRef, script);
-
-        if (codePresenter != null && script.getData() != null) {
-            codePresenter.setText(script.getData());
-        }
-
-        if (loadCount > 1) {
-            // Remove the script function from the cache so dashboards reload
-            // it.
-            ClearScriptCacheEvent.fire(this, docRef);
-
-            // This script might be used by any visualisation so clear the vis
-            // function cache so that scripts are requested again if needed.
-            ClearFunctionCacheEvent.fire(this);
-        }
-    }
-
-    @Override
-    protected ScriptDoc onWrite(ScriptDoc script) {
-        script = settingsPresenter.write(script);
-        if (codePresenter != null) {
-            script.setData(codePresenter.getText());
-        }
-        return script;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (codePresenter != null) {
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-        }
+            @Override
+            public ScriptDoc onWrite(final MarkdownEditPresenter presenter,
+                                     final ScriptDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
+        selectTab(SCRIPT);
     }
 
     @Override
     public String getType() {
         return ScriptDoc.DOCUMENT_TYPE;
-    }
-
-    private EditorPresenter getOrCreateCodePresenter() {
-        if (codePresenter == null) {
-            codePresenter = editorPresenterProvider.get();
-            codePresenter.setMode(AceEditorMode.JAVASCRIPT);
-            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-            if (getEntity() != null && getEntity().getData() != null) {
-                codePresenter.setText(getEntity().getData());
-            }
-        }
-        return codePresenter;
     }
 }

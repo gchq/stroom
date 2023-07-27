@@ -21,12 +21,13 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -124,7 +125,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .createSettings(modifiedSearchRequest);
 
         // Create a handler for search results.
-        final Coprocessors coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                modifiedSearchRequest.getSearchRequestSource(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
@@ -153,6 +155,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
             return DataSource.builder()
+                    .docRef(DocRefUtil.create(index))
                     .fields(getDataSourceFields(index))
                     .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
                     .build();
@@ -308,7 +311,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
                 result = elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
 
-                    // Flatten the mappings, which are keyed by index, into a deduplicated list
+                    // Flatten the mappings, which are keyed by index, into a de-duplicated list
                     final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>((o1, o2) -> {
                         if (Objects.equals(o1, o2)) {
                             return 0;

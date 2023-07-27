@@ -8,6 +8,7 @@ import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 
 import java.util.ArrayList;
@@ -58,20 +59,22 @@ public class CoprocessorsFactory {
         return coprocessorSettings;
     }
 
-    public Coprocessors create(final SearchRequest searchRequest,
-                               final DataStoreSettings dataStoreSettings) {
+    public CoprocessorsImpl create(final SearchRequest searchRequest,
+                                   final DataStoreSettings dataStoreSettings) {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
         return create(
+                searchRequest.getSearchRequestSource(),
                 searchRequest.getKey(),
                 coprocessorSettingsList,
                 searchRequest.getQuery().getParams(),
                 dataStoreSettings);
     }
 
-    public Coprocessors create(final QueryKey queryKey,
-                               final List<CoprocessorSettings> coprocessorSettingsList,
-                               final List<Param> params,
-                               final DataStoreSettings dataStoreSettings) {
+    public CoprocessorsImpl create(final SearchRequestSource searchRequestSource,
+                                   final QueryKey queryKey,
+                                   final List<CoprocessorSettings> coprocessorSettingsList,
+                                   final List<Param> params,
+                                   final DataStoreSettings dataStoreSettings) {
         // Create a field index map.
         final FieldIndex fieldIndex = new FieldIndex();
 
@@ -86,6 +89,7 @@ public class CoprocessorsFactory {
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
                 final Coprocessor coprocessor = create(
+                        searchRequestSource,
                         queryKey,
                         coprocessorSettings,
                         fieldIndex,
@@ -96,8 +100,7 @@ public class CoprocessorsFactory {
                 if (coprocessor != null) {
                     coprocessorMap.put(coprocessorSettings.getCoprocessorId(), coprocessor);
 
-                    if (coprocessor instanceof TableCoprocessor) {
-                        final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
+                    if (coprocessor instanceof final TableCoprocessor tableCoprocessor) {
                         final TableCoprocessorSettings tableCoprocessorSettings =
                                 (TableCoprocessorSettings) coprocessorSettings;
                         for (final String componentId : tableCoprocessorSettings.getComponentIds()) {
@@ -113,8 +116,7 @@ public class CoprocessorsFactory {
         coprocessorMap.values().forEach(coprocessor -> {
             DocRef extractionPipeline = null;
 
-            if (coprocessor instanceof TableCoprocessor) {
-                final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
+            if (coprocessor instanceof final TableCoprocessor tableCoprocessor) {
                 if (tableCoprocessor.getTableSettings().extractValues()) {
                     extractionPipeline = tableCoprocessor.getTableSettings().getExtractionPipeline();
                 }
@@ -124,7 +126,7 @@ public class CoprocessorsFactory {
                     new HashSet<>()).add(coprocessor);
         });
 
-        return new Coprocessors(
+        return new CoprocessorsImpl(
                 Collections.unmodifiableMap(coprocessorMap),
                 Collections.unmodifiableMap(componentIdCoprocessorMap),
                 Collections.unmodifiableMap(extractionPipelineCoprocessorMap),
@@ -132,16 +134,17 @@ public class CoprocessorsFactory {
                 errorConsumer);
     }
 
-    private Coprocessor create(final QueryKey queryKey,
+    private Coprocessor create(final SearchRequestSource searchRequestSource,
+                               final QueryKey queryKey,
                                final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
                                final ErrorConsumer errorConsumer,
                                final DataStoreSettings dataStoreSettings) {
-        if (settings instanceof TableCoprocessorSettings) {
-            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+        if (settings instanceof final TableCoprocessorSettings tableCoprocessorSettings) {
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
             final DataStore dataStore = create(
+                    searchRequestSource,
                     queryKey,
                     String.valueOf(tableCoprocessorSettings.getCoprocessorId()),
                     tableSettings,
@@ -150,15 +153,15 @@ public class CoprocessorsFactory {
                     dataStoreSettings,
                     errorConsumer);
             return new TableCoprocessor(tableSettings, dataStore, errorConsumer);
-        } else if (settings instanceof EventCoprocessorSettings) {
-            final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
+        } else if (settings instanceof final EventCoprocessorSettings eventCoprocessorSettings) {
             return new EventCoprocessor(eventCoprocessorSettings, fieldIndex, errorConsumer);
         }
 
         return null;
     }
 
-    private DataStore create(final QueryKey queryKey,
+    private DataStore create(final SearchRequestSource searchRequestSource,
+                             final QueryKey queryKey,
                              final String componentId,
                              final TableSettings tableSettings,
                              final FieldIndex fieldIndex,
@@ -177,6 +180,7 @@ public class CoprocessorsFactory {
                         .storeSize(storeSizes).build();
 
         return dataStoreFactory.create(
+                searchRequestSource,
                 queryKey,
                 componentId,
                 tableSettings,

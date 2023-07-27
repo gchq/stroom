@@ -24,6 +24,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -91,11 +92,14 @@ public class MenuPresenter
                         currentMenu = presenter;
                         currentItem = menuItem;
 
+                        final Rect dialog = new Rect(getWidget().getElement());
+                        final Rect selection = new Rect(element);
+                        final Rect min = Rect.min(dialog, selection);
                         final PopupPosition popupPosition = new PopupPosition(
-                                element.getAbsoluteRight() + HORIZONTAL_PADDING,
-                                element.getAbsoluteLeft() - HORIZONTAL_PADDING,
-                                element.getAbsoluteTop() + VERTICAL_PADDING + 30,
-                                element.getAbsoluteTop() - VERTICAL_PADDING,
+                                (int) min.getRight() + HORIZONTAL_PADDING,
+                                (int) min.getLeft() - HORIZONTAL_PADDING,
+                                (int) min.getTop() + VERTICAL_PADDING + 30,
+                                (int) min.getTop() - VERTICAL_PADDING,
                                 HorizontalLocation.RIGHT,
                                 null);
 

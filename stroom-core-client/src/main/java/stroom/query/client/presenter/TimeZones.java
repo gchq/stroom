@@ -16,9 +16,9 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.query.shared.QueryResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -29,7 +29,7 @@ import java.util.List;
 @Singleton
 public class TimeZones {
 
-    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private String localTimeZoneId;
     private List<String> ids;
@@ -45,7 +45,7 @@ public class TimeZones {
         final Rest<List<String>> rest = restFactory.create();
         rest
                 .onSuccess(result -> ids = result)
-                .call(DASHBOARD_RESOURCE)
+                .call(QUERY_RESOURCE)
                 .fetchTimeZones();
     }
 

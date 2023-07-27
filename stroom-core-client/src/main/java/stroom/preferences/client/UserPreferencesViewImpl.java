@@ -16,24 +16,23 @@
 
 package stroom.preferences.client;
 
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
+import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -70,27 +69,27 @@ public final class UserPreferencesViewImpl
     @UiField
     FormGroup userPreferencesTimeZoneOffset;
     @UiField
-    StringListBox theme;
+    SelectionBox<String> theme;
     @UiField
-    StringListBox editorTheme;
+    SelectionBox<String> editorTheme;
     @UiField
-    StringListBox editorKeyBindings;
+    SelectionBox<String> editorKeyBindings;
     @UiField
-    StringListBox density;
+    SelectionBox<String> density;
     @UiField
-    StringListBox font;
+    SelectionBox<String> font;
     @UiField
-    StringListBox fontSize;
+    SelectionBox<String> fontSize;
     @UiField
-    StringListBox format;
+    SelectionBox<String> format;
     @UiField
     CustomCheckBox custom;
     @UiField
     TextBox text;
     @UiField
-    ItemListBox<Use> timeZoneUse;
+    SelectionBox<Use> timeZoneUse;
     @UiField
-    StringListBox timeZoneId;
+    SelectionBox<String> timeZoneId;
     @UiField
     ValueSpinner timeZoneOffsetHours;
     @UiField
@@ -103,38 +102,10 @@ public final class UserPreferencesViewImpl
     @Inject
     public UserPreferencesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setAsDefault.setIcon(SvgImage.OK);
+        revertToDefault.setIcon(SvgImage.UNDO);
 
-        theme.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-        editorTheme.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
         setEditorKeyBindingsValues();
-        editorKeyBindings.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-        density.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-        font.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-        fontSize.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
 
         density.addItem("Default");
         density.addItem("Comfortable");
@@ -175,17 +146,17 @@ public final class UserPreferencesViewImpl
 
     @Override
     public void focus() {
-        theme.setFocus(true);
+        theme.focus();
     }
 
     @Override
     public String getTheme() {
-        return theme.getSelected();
+        return theme.getValue();
     }
 
     @Override
     public void setTheme(final String theme) {
-        this.theme.setSelected(theme);
+        this.theme.setValue(theme);
     }
 
     @Override
@@ -196,12 +167,12 @@ public final class UserPreferencesViewImpl
 
     @Override
     public String getEditorTheme() {
-        return editorTheme.getSelected();
+        return editorTheme.getValue();
     }
 
     @Override
     public void setEditorTheme(final String editorTheme) {
-        this.editorTheme.setSelected(editorTheme);
+        this.editorTheme.setValue(editorTheme);
     }
 
     @Override
@@ -213,13 +184,13 @@ public final class UserPreferencesViewImpl
 
     @Override
     public EditorKeyBindings getEditorKeyBindings() {
-        return EditorKeyBindings.fromDisplayValue(editorKeyBindings.getSelectedValue());
+        return EditorKeyBindings.fromDisplayValue(editorKeyBindings.getValue());
 
     }
 
     @Override
     public void setEditorKeyBindings(EditorKeyBindings editorKeyBindings) {
-        this.editorKeyBindings.setSelected(editorKeyBindings.getDisplayValue());
+        this.editorKeyBindings.setValue(editorKeyBindings.getDisplayValue());
     }
 
     public void setEditorKeyBindingsValues() {
@@ -232,26 +203,26 @@ public final class UserPreferencesViewImpl
 
     @Override
     public String getDensity() {
-        return density.getSelected();
+        return density.getValue();
     }
 
     @Override
     public void setDensity(final String density) {
         if (density == null) {
-            this.density.setSelected("Default");
+            this.density.setValue("Default");
         } else {
-            this.density.setSelected(density);
+            this.density.setValue(density);
         }
     }
 
     @Override
     public String getFont() {
-        return font.getSelected();
+        return font.getValue();
     }
 
     @Override
     public void setFont(final String font) {
-        this.font.setSelected(font);
+        this.font.setValue(font);
     }
 
     @Override
@@ -262,12 +233,12 @@ public final class UserPreferencesViewImpl
 
     @Override
     public String getFontSize() {
-        return this.fontSize.getSelected();
+        return this.fontSize.getValue();
     }
 
     @Override
     public void setFontSize(final String fontSize) {
-        this.fontSize.setSelected(fontSize);
+        this.fontSize.setValue(fontSize);
     }
 
     @Override
@@ -276,7 +247,7 @@ public final class UserPreferencesViewImpl
             return text.getText();
         }
 
-        return format.getSelected();
+        return format.getValue();
     }
 
     @Override
@@ -286,11 +257,11 @@ public final class UserPreferencesViewImpl
             text = STANDARD_FORMATS.get(0);
         }
 
-        if (!text.equals(this.format.getSelected())) {
-            this.format.setSelected(text);
+        if (!text.equals(this.format.getValue())) {
+            this.format.setValue(text);
         }
 
-        final boolean custom = this.format.getSelectedIndex() == -1;
+        final boolean custom = this.format.getValue() == null;
         this.custom.setValue(custom);
         this.text.setEnabled(custom);
         this.text.setText(text);
@@ -298,23 +269,23 @@ public final class UserPreferencesViewImpl
 
     @Override
     public Use getTimeZoneUse() {
-        return this.timeZoneUse.getSelectedItem();
+        return this.timeZoneUse.getValue();
     }
 
     @Override
     public void setTimeZoneUse(final Use use) {
-        this.timeZoneUse.setSelectedItem(use);
+        this.timeZoneUse.setValue(use);
         changeVisible();
     }
 
     @Override
     public String getTimeZoneId() {
-        return this.timeZoneId.getSelected();
+        return this.timeZoneId.getValue();
     }
 
     @Override
     public void setTimeZoneId(final String timeZoneId) {
-        this.timeZoneId.setSelected(timeZoneId);
+        this.timeZoneId.setValue(timeZoneId);
     }
 
     @Override
@@ -360,8 +331,50 @@ public final class UserPreferencesViewImpl
 
 
     public void changeVisible() {
-        userPreferencesTimeZoneId.setVisible(TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
-        userPreferencesTimeZoneOffset.setVisible(TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
+        userPreferencesTimeZoneId.setVisible(TimeZone.Use.ID.equals(this.timeZoneUse.getValue()));
+        userPreferencesTimeZoneOffset.setVisible(TimeZone.Use.OFFSET.equals(this.timeZoneUse.getValue()));
+    }
+
+    @UiHandler("theme")
+    public void onThemeValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("editorTheme")
+    public void onEditorThemeValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("editorKeyBindings")
+    public void onEditorKeyBindingsValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("density")
+    public void onDensityValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("font")
+    public void onFontValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("fontSize")
+    public void onFontSizeValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
     }
 
     @UiHandler("custom")
@@ -370,12 +383,12 @@ public final class UserPreferencesViewImpl
     }
 
     @UiHandler("format")
-    public void onFormatChange(final ChangeEvent event) {
-        setPattern(this.format.getSelected());
+    public void onFormatChange(final ValueChangeEvent<String> event) {
+        setPattern(this.format.getValue());
     }
 
     @UiHandler("timeZoneUse")
-    public void onTimeZoneUseChange(final SelectionEvent<TimeZone.Use> event) {
+    public void onTimeZoneUseValueChange(final ValueChangeEvent<TimeZone.Use> event) {
         changeVisible();
     }
 

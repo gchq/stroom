@@ -42,6 +42,8 @@ public class SchemaLoaderImpl implements SchemaLoader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SchemaLoaderImpl.class);
 
+    private static final String ELEMENT_ID = SchemaLoader.class.getSimpleName();
+
     private final XmlSchemaCache xmlSchemaCache;
 
     @Inject
@@ -56,7 +58,9 @@ public class SchemaLoaderImpl implements SchemaLoader {
         LOGGER.debug(() -> "Creating schema: " + data);
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
         final LocationFactory locationFactory = new DefaultLocationFactory();
-        final ErrorHandler errorHandler = new ErrorHandlerAdaptor(getClass().getSimpleName(), locationFactory,
+        final ErrorHandler errorHandler = new ErrorHandlerAdaptor(
+                ELEMENT_ID,
+                locationFactory,
                 errorReceiver);
         Schema schema = null;
 
@@ -76,13 +80,21 @@ public class SchemaLoaderImpl implements SchemaLoader {
 
         } catch (final SAXException e) {
             LOGGER.debug(e::getMessage, e);
-            errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
+            errorReceiver.log(Severity.FATAL_ERROR,
+                    null,
+                    ELEMENT_ID,
+                    e.getMessage(),
+                    e);
         } finally {
             try {
                 inputStream.close();
             } catch (final IOException e) {
                 LOGGER.debug(e::getMessage, e);
-                errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
+                errorReceiver.log(Severity.FATAL_ERROR,
+                        null,
+                        ELEMENT_ID,
+                        e.getMessage(),
+                        e);
             }
         }
 

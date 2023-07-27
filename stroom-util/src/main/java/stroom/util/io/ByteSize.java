@@ -84,6 +84,14 @@ public class ByteSize {
         return bytes;
     }
 
+    public boolean isZero() {
+        return bytes == 0L;
+    }
+
+    public boolean isNonZero() {
+        return bytes != 0L;
+    }
+
     @Override
     public String toString() {
         return getValueAsStr();

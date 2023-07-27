@@ -16,8 +16,8 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -29,14 +29,15 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
     private final Future<List<Item>> children;
 
     protected IconParentMenuItem(final int priority,
-                       final Icon enabledIcon,
-                       final Icon disabledIcon,
-                       final String text,
-                       final Action action,
-                       final boolean enabled,
-                       final boolean highlight,
-                       final Future<List<Item>> children) {
-        super(priority, enabledIcon, disabledIcon, text, action, enabled, null, highlight);
+                                 final SvgImage enabledIcon,
+                                 final SvgImage disabledIcon,
+                                 final IconColour iconColour,
+                                 final String text,
+                                 final Action action,
+                                 final boolean enabled,
+                                 final boolean highlight,
+                                 final Future<List<Item>> children) {
+        super(priority, enabledIcon, disabledIcon, iconColour, text, action, enabled, null, highlight);
         this.children = children;
     }
 
@@ -67,13 +68,14 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
         }
 
         public IconParentMenuItem build() {
-            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
-                text = ((Preset) enabledIcon).getTitle();
-            }
+//            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
+//                text = ((Preset) enabledIcon).getTitle();
+//            }
             return new IconParentMenuItem(
                     priority,
                     enabledIcon,
                     disabledIcon,
+                    iconColour,
                     text,
                     action,
                     enabled,

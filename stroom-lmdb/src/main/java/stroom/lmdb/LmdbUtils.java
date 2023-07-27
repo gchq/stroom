@@ -33,7 +33,6 @@ import org.lmdbjava.Txn;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -262,9 +261,7 @@ public class LmdbUtils {
 
         // loop over all DB entries
         try (CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, KeyRange.all())) {
-            Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-            while (iterator.hasNext()) {
-                final CursorIterable.KeyVal<ByteBuffer> keyVal = iterator.next();
+            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));

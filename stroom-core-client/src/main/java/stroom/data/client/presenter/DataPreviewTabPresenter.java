@@ -4,8 +4,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.DataPreviewKey;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -31,8 +30,8 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.FILE_FORMATTED;
+    public SvgImage getIcon() {
+        return SvgImage.FILE_FORMATTED;
     }
 
     @Override

@@ -116,7 +116,7 @@ public class WindowSupport {
     public Val[] addWindow(final FieldIndex fieldIndex,
                            final Val[] values,
                            final SimpleDuration offset) {
-        final int windowTimeFieldPos = fieldIndex.getWindowTimeFieldPos();
+        final int windowTimeFieldPos = fieldIndex.getWindowTimeFieldIndex();
         final Val val = values[windowTimeFieldPos];
         final Val adjusted = adjustWithOffset(val, offset);
         final Val[] arr = new Val[values.length];

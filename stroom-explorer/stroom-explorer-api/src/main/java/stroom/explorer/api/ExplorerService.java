@@ -55,7 +55,7 @@ public interface ExplorerService extends Clearable {
 
     void rebuildTree();
 
-    List<DocumentType> getNonSystemTypes();
+    List<DocumentType> getTypes();
 
     List<DocumentType> getVisibleTypes();
 

@@ -5,6 +5,8 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentTheme;
 import stroom.query.api.v2.TimeZone.Use;
+import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 
 import com.google.gwt.core.client.GWT;
@@ -95,6 +97,22 @@ public class UserPreferencesManager {
         currentTheme.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
 
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
+        String className = getCurrentPreferenceClasses();
+        element.setClassName(className);
+    }
+
+    public UserPreferences getCurrentPreferences() {
+        return currentPreferences;
+    }
+
+    public ThemeType geCurrentThemeType() {
+        return Themes.getThemeType(currentPreferences.getTheme());
+    }
+
+    /**
+     * @return A space delimited list of css classes for theme, density, font and font size.
+     */
+    public String getCurrentPreferenceClasses() {
         String className = "stroom";
         if (currentTheme.getTheme() != null) {
             className += " " + Themes.getClassName(currentTheme.getTheme());
@@ -108,11 +126,7 @@ public class UserPreferencesManager {
         if (currentPreferences != null && currentPreferences.getFontSize() != null) {
             className += " " + fontSizeMap.get(currentPreferences.getFontSize());
         }
-        element.setClassName(className);
-    }
-
-    public UserPreferences getCurrentPreferences() {
-        return currentPreferences;
+        return className;
     }
 
     public List<String> getThemes() {
@@ -120,11 +134,16 @@ public class UserPreferencesManager {
     }
 
     public List<String> getFonts() {
-        return fontMap.keySet().stream().sorted().collect(Collectors.toList());
+        return fontMap.keySet()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public List<String> getEditorThemes() {
-        return Arrays.stream(AceEditorTheme.values()).map(AceEditorTheme::getName).collect(Collectors.toList());
+        return Arrays.stream(AceEditorTheme.values())
+                .map(AceEditorTheme::getName)
+                .collect(Collectors.toList());
     }
 
     public boolean isUtc() {

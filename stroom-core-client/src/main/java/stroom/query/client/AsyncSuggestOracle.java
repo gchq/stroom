@@ -21,6 +21,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.Suggestions;
 import stroom.query.shared.SuggestionsResource;
 
 import com.google.gwt.core.client.GWT;
@@ -29,12 +30,16 @@ import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AsyncSuggestOracle extends SuggestOracle {
 
     private static final SuggestionsResource SUGGESTIONS_RESOURCE = GWT.create(SuggestionsResource.class);
-    private static final int DEBOUNCE_PERIOD_MILLIS = 500;
+    private static final int DEBOUNCE_PERIOD_MILLIS = 400;
+
+    private static final Map<FetchSuggestionsRequest, List<String>> CACHE = new HashMap<>();
 
     private RestFactory restFactory;
     private DocRef dataSource;
@@ -55,11 +60,17 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
     @Override
     public void requestDefaultSuggestions(final Request request, final Callback callback) {
-        requestSuggestions(request, callback);
+        requestSuggestions(request, callback, 0);
     }
 
     @Override
     public void requestSuggestions(final Request request, final Callback callback) {
+        requestSuggestions(request, callback, DEBOUNCE_PERIOD_MILLIS);
+    }
+
+    private void requestSuggestions(final Request request,
+                                    final Callback callback,
+                                    final int debouncePeriod) {
         if (restFactory != null && dataSource != null) {
             // Debounce requests so we don't spam the backend
             if (requestTimer != null) {
@@ -69,21 +80,39 @@ public class AsyncSuggestOracle extends SuggestOracle {
             requestTimer = new Timer() {
                 @Override
                 public void run() {
-                    final Rest<List<String>> rest = restFactory.create();
-                    rest
-                            .onSuccess(result -> {
-                                final List<Suggestion> suggestions = new ArrayList<>();
-                                for (final String string : result) {
-                                    suggestions.add(new MultiWordSuggestion(string, string));
-                                }
-                                callback.onSuggestionsReady(request, new Response(suggestions));
-                            })
-                            .call(SUGGESTIONS_RESOURCE)
-                            .fetch(new FetchSuggestionsRequest(dataSource, field, request.getQuery()));
+                    final FetchSuggestionsRequest fetchSuggestionsRequest =
+                            new FetchSuggestionsRequest(dataSource, field, request.getQuery());
+                    final List<String> cachedSuggestions = CACHE.get(fetchSuggestionsRequest);
+                    if (cachedSuggestions != null) {
+                        returnSuggestions(request, callback, cachedSuggestions);
+
+                    } else {
+                        final Rest<Suggestions> rest = restFactory.create();
+                        rest
+                                .onSuccess(result -> {
+                                    if (result.isCacheable()) {
+                                        CACHE.put(fetchSuggestionsRequest, result.getList());
+                                    }
+
+                                    returnSuggestions(request, callback, result.getList());
+                                })
+                                .call(SUGGESTIONS_RESOURCE)
+                                .fetch(fetchSuggestionsRequest);
+                    }
                 }
             };
 
-            requestTimer.schedule(DEBOUNCE_PERIOD_MILLIS);
+            requestTimer.schedule(debouncePeriod);
         }
+    }
+
+    private void returnSuggestions(final Request request,
+                                   final Callback callback,
+                                   final List<String> list) {
+        final List<Suggestion> suggestions = new ArrayList<>();
+        for (final String string : list) {
+            suggestions.add(new MultiWordSuggestion(string, string));
+        }
+        callback.onSuggestionsReady(request, new Response(suggestions));
     }
 }

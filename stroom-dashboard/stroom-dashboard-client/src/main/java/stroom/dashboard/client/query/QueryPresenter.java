@@ -63,6 +63,8 @@ import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.ResultStoreModel;
+import stroom.query.client.presenter.SearchErrorListener;
+import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -70,6 +72,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
@@ -86,6 +89,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -97,12 +101,16 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements HasDirtyHandlers, Queryable {
+public class QueryPresenter
+        extends AbstractComponentPresenter<QueryPresenter.QueryView>
+        implements
+        HasDirtyHandlers,
+        Queryable,
+        SearchStateListener,
+        SearchErrorListener {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
@@ -128,7 +136,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
     private final ButtonView warningsButton;
-    private List<String> currentWarnings;
+    private List<String> currentErrors;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit;
     private long defaultProcessorRecordLimit;
@@ -168,7 +176,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
             @Override
             public void start() {
-                if (searchModel.getMode()) {
+                if (searchModel.isSearching()) {
                     QueryPresenter.this.stop();
                 } else {
                     queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
@@ -193,29 +201,29 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         });
 
-        addTermButton = view.addButton(SvgPresets.ADD);
+        addTermButton = view.addButtonLeft(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
-        disableItemButton = view.addButton(SvgPresets.DISABLE);
-        deleteItemButton = view.addButton(SvgPresets.DELETE);
-        historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
-        favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
-        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
+        addOperatorButton = view.addButtonLeft(SvgPresets.OPERATOR);
+        disableItemButton = view.addButtonLeft(SvgPresets.DISABLE);
+        deleteItemButton = view.addButtonLeft(SvgPresets.DELETE);
+        historyButton = view.addButtonLeft(SvgPresets.HISTORY.enabled(true));
+        favouriteButton = view.addButtonLeft(SvgPresets.FAVOURITES.enabled(true));
+        downloadQueryButton = view.addButtonLeft(SvgPresets.DOWNLOAD);
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
+            processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
-        warningsButton.setVisible(false);
+        warningsButton = view.addButtonRight(SvgPresets.ALERT.title("Show Warnings"));
+        setWarningsVisible(false);
 
         searchModel = new SearchModel(
                 restFactory,
                 indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel);
-        searchModel.addErrorListener(this::setErrors);
-        searchModel.addModeListener(this::setMode);
+        searchModel.addSearchErrorListener(this);
+        searchModel.addSearchStateListener(this);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
@@ -223,11 +231,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
-    }
-
-    @Override
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-        searchModel.setResultStoreInfo(resultStoreInfo);
     }
 
     @Override
@@ -303,6 +306,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Override
     public void setComponents(final Components components) {
         super.setComponents(components);
+
         registerHandler(components.addComponentChangeHandler(event -> {
             if (initialised) {
                 final Component component = event.getComponent();
@@ -388,18 +392,38 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void addModeListener(final Consumer<Boolean> consumer) {
-        searchModel.addModeListener(consumer);
+    public void addSearchStateListener(final SearchStateListener listener) {
+        searchModel.addSearchStateListener(listener);
     }
 
     @Override
-    public void removeModeListener(final Consumer<Boolean> consumer) {
-        searchModel.removeModeListener(consumer);
+    public void removeSearchStateListener(final SearchStateListener listener) {
+        searchModel.removeSearchStateListener(listener);
     }
 
-    public void setErrors(final List<String> errors) {
-        currentWarnings = errors;
-        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
+    @Override
+    public void addSearchErrorListener(final SearchErrorListener listener) {
+        searchModel.addSearchErrorListener(listener);
+    }
+
+    public void removeSearchErrorListener(final SearchErrorListener listener) {
+        searchModel.removeSearchErrorListener(listener);
+    }
+
+    @Override
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        searchModel.setResultStoreInfo(resultStoreInfo);
+    }
+
+    @Override
+    public void onError(final List<String> errors) {
+        currentErrors = errors;
+        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
+    }
+
+    @Override
+    public List<String> getCurrentErrors() {
+        return currentErrors;
     }
 
     private void setButtonsEnabled() {
@@ -467,8 +491,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Only allow searching if we have a data source and have loaded fields from it successfully.
         getView().setEnabled(dataSourceRef != null && fields.size() > 0);
 
-        init();
         setButtonsEnabled();
+
+        // Defer init until all data source load handlers have had a chance to update the loaded data source.
+        Scheduler.get().scheduleDeferred(this::init);
     }
 
     private void addOperator() {
@@ -570,12 +596,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void showWarnings() {
-        if (currentWarnings != null && !currentWarnings.isEmpty()) {
-            final String msg = currentWarnings.size() == 1
+        if (currentErrors != null && !currentErrors.isEmpty()) {
+            final String msg = currentErrors.size() == 1
                     ? ("The following warning was created while running this search:")
-                    : ("The following " + currentWarnings.size()
+                    : ("The following " + currentErrors.size()
                             + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentWarnings);
+            final String errors = String.join("\n", currentErrors);
             AlertEvent.fireWarn(this, msg, errors, null);
         }
     }
@@ -605,8 +631,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public boolean getMode() {
-        return searchModel.getMode();
+    public boolean getSearchState() {
+        return searchModel.isSearching();
     }
 
     private void run(final boolean incremental,
@@ -622,10 +648,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         if (dataSourceRef == null) {
             warnNoDataSource();
         } else {
-            currentWarnings = null;
+            currentErrors = null;
             expressionPresenter.clearSelection();
 
-            warningsButton.setVisible(false);
+            setWarningsVisible(false);
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
@@ -652,10 +678,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         if (dataSourceRef == null) {
             warnNoDataSource();
         } else {
-            currentWarnings = null;
+            currentErrors = null;
             expressionPresenter.clearSelection();
 
-            warningsButton.setVisible(false);
+            setWarningsVisible(false);
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
@@ -790,11 +816,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         expressionPresenter.read(root);
     }
 
-    public void setMode(final boolean mode) {
-        getView().setMode(mode);
+    @Override
+    public void onSearching(final boolean searching) {
+        getView().onSearching(searching);
 
         // If this is the end of a query then schedule a refresh.
-        if (!mode) {
+        if (!searching) {
             scheduleRefresh();
         }
     }
@@ -822,7 +849,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                             stop();
                         } else {
                             // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (!searchModel.getMode()) {
+                            if (!searchModel.isSearching()) {
                                 QueryPresenter.this.run(false, false);
                             }
                         }
@@ -842,26 +869,26 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final List<Item> menuItems = new ArrayList<>();
         menuItems.add(new IconMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.ADD)
+                .icon(SvgImage.ADD)
                 .text("Add Term")
                 .command(this::addTerm)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(2)
-                .icon(SvgPresets.OPERATOR)
+                .icon(SvgImage.OPERATOR)
                 .text("Add Operator")
                 .command(this::addOperator)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(3)
-                .icon(SvgPresets.DISABLE)
+                .icon(SvgImage.DISABLE)
                 .text(getEnableDisableText())
                 .enabled(hasSelection)
                 .command(this::disable)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(4)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Delete")
                 .enabled(hasSelection)
                 .command(this::delete)
@@ -912,13 +939,19 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }
     }
 
-    public interface QueryView extends View {
+    private void setWarningsVisible(final boolean show) {
+        warningsButton.asWidget().getElement().getStyle().setOpacity(show
+                ? 1
+                : 0);
+    }
 
-        ButtonView addButton(Preset preset);
+    public interface QueryView extends View, SearchStateListener {
+
+        ButtonView addButtonLeft(Preset preset);
+
+        ButtonView addButtonRight(Preset preset);
 
         void setExpressionView(View view);
-
-        void setMode(boolean mode);
 
         void setEnabled(boolean enabled);
 

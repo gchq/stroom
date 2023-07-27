@@ -20,11 +20,11 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
+import stroom.svg.shared.SvgImage;
 
 import org.xml.sax.XMLReader;
 
@@ -42,7 +42,7 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_SIMPLE,
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR},
-        icon = ElementIcons.JSON)
+        icon = SvgImage.PIPELINE_JSON)
 public class JSONParser extends AbstractParser {
 
     private JSONFactoryConfig config = new JSONFactoryConfig();

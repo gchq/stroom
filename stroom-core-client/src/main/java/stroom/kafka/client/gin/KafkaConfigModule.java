@@ -20,9 +20,6 @@ package stroom.kafka.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.kafka.client.KafkaConfigPlugin;
 import stroom.kafka.client.presenter.KafkaConfigPresenter;
-import stroom.kafka.client.presenter.KafkaConfigSettingsPresenter;
-import stroom.kafka.client.presenter.KafkaConfigSettingsPresenter.KafkaConfigSettingsView;
-import stroom.kafka.client.view.KafkaConfigSettingsViewImpl;
 
 public class KafkaConfigModule extends PluginModule {
 
@@ -30,8 +27,5 @@ public class KafkaConfigModule extends PluginModule {
     protected void configure() {
         bindPlugin(KafkaConfigPlugin.class);
         bind(KafkaConfigPresenter.class);
-        bindPresenterWidget(KafkaConfigSettingsPresenter.class,
-                KafkaConfigSettingsView.class,
-                KafkaConfigSettingsViewImpl.class);
     }
 }

@@ -94,7 +94,11 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.CONFIGURATION, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.CONFIGURATION,
+                ScriptDoc.DOCUMENT_TYPE,
+                ScriptDoc.DOCUMENT_TYPE,
+                ScriptDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

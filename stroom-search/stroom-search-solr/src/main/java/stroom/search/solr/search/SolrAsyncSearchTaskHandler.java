@@ -71,7 +71,7 @@ public class SolrAsyncSearchTaskHandler {
                     parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
-                    if (coprocessors != null && coprocessors.size() > 0) {
+                    if (coprocessors != null && coprocessors.isPresent()) {
                         // Start searching.
                         clusterSearchTaskHandler.search(
                                 parentContext,

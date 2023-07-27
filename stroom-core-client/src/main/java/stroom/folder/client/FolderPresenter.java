@@ -20,17 +20,16 @@ import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -44,34 +43,73 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData PROCESSORS = new TabDataImpl("Processors");
 
-    private final ClientSecurityContext securityContext;
-    private final TabContentProvider<Object> tabContentProvider = new TabContentProvider<>();
-    private ProcessorPresenter processorPresenter;
+    private final TabContentProvider<Object> tabContentProvider;
     private DocRef docRef;
 
     @Inject
     public FolderPresenter(final EventBus eventBus,
                            final ClientSecurityContext securityContext,
                            final LinkTabPanelView view,
-                           final Provider<MetaPresenter> streamPresenterProvider,
+                           final Provider<MetaPresenter> metaPresenterProvider,
                            final Provider<ProcessorPresenter> processorPresenterProvider,
-                           final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider) {
+                           final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider) {
         super(eventBus, view);
-        this.securityContext = securityContext;
+        this.tabContentProvider = new TabContentProvider<>(eventBus);
 
         TabData selectedTab = null;
 
         if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
-            tabContentProvider.add(DATA, streamPresenterProvider);
+            tabContentProvider.add(DATA, new AbstractTabProvider<Object, MetaPresenter>(eventBus) {
+                @Override
+                protected MetaPresenter createPresenter() {
+                    return metaPresenterProvider.get();
+                }
+
+                @Override
+                public void onRead(final MetaPresenter presenter,
+                                   final DocRef docRef,
+                                   final Object document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                }
+            });
             selectedTab = DATA;
         }
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(PROCESSORS);
-            tabContentProvider.add(PROCESSORS, processorPresenterProvider);
+            tabContentProvider.add(PROCESSORS, new AbstractTabProvider<Object, ProcessorPresenter>(eventBus) {
+                @Override
+                protected ProcessorPresenter createPresenter() {
+                    final ProcessorPresenter processorPresenter = processorPresenterProvider.get();
+                    processorPresenter.setAllowUpdate(securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR));
+                    return processorPresenter;
+                }
+
+                @Override
+                public void onRead(final ProcessorPresenter presenter,
+                                   final DocRef docRef,
+                                   final Object document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                }
+            });
             addTab(TASKS);
-            tabContentProvider.add(TASKS, streamTaskPresenterProvider);
+            tabContentProvider.add(TASKS, new AbstractTabProvider<Object, ProcessorTaskPresenter>(eventBus) {
+                @Override
+                protected ProcessorTaskPresenter createPresenter() {
+                    return processorTaskPresenterProvider.get();
+                }
+
+                @Override
+                public void onRead(final ProcessorTaskPresenter presenter,
+                                   final DocRef docRef,
+                                   final Object document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                }
+            });
 
             if (selectedTab == null) {
                 selectedTab = PROCESSORS;
@@ -83,17 +121,12 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
 
     @Override
     public void getContent(final TabData tab, final ContentCallback callback) {
-        if (PROCESSORS.equals(tab) && this.processorPresenter == null) {
-            this.processorPresenter = (ProcessorPresenter) tabContentProvider.getPresenter(tab);
-            this.processorPresenter.setAllowUpdate(securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR));
-        }
-
         callback.onReady(tabContentProvider.getPresenter(tab));
     }
 
     public void read(final DocRef docRef) {
         this.docRef = docRef;
-        tabContentProvider.read(docRef, null);
+        tabContentProvider.read(docRef, null, true);
     }
 
     @Override
@@ -112,7 +145,7 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
     }
 
     @Override
-    public Icon getIcon() {
-        return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getType(), null, true);
+    public SvgImage getIcon() {
+        return SvgImage.FOLDER;
     }
 }

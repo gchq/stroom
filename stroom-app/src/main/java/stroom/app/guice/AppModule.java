@@ -2,7 +2,6 @@ package stroom.app.guice;
 
 import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
-import stroom.dropwizard.common.DropwizardModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.index.impl.IndexShardWriterExecutorProvider;

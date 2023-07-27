@@ -20,12 +20,11 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.svg.shared.SvgImage;
 import stroom.util.xml.SAXParserFactoryFactory;
 
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
@@ -34,9 +33,16 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-@ConfigurableElement(type = "XMLParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.XML)
+@ConfigurableElement(
+        type = "XMLParser",
+        category = Category.PARSER,
+        roles = {
+                PipelineElementType.ROLE_PARSER,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE,
+                PipelineElementType.VISABILITY_STEPPING,
+                PipelineElementType.ROLE_MUTATOR},
+        icon = SvgImage.PIPELINE_XML)
 public class XMLParser extends AbstractParser {
 
     private static final SAXParserFactory PARSER_FACTORY;

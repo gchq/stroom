@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -38,7 +39,7 @@ class TestRefStreamDefinitionSerde extends AbstractSerdeTest<RefStreamDefinition
     }
 
     @Override
-    Class<RefStreamDefinitionSerde> getSerdeType() {
-        return RefStreamDefinitionSerde.class;
+    TypeLiteral<RefStreamDefinitionSerde> getSerdeType() {
+        return new TypeLiteral<RefStreamDefinitionSerde>(){};
     }
 }

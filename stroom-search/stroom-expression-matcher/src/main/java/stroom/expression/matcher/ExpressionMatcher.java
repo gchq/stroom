@@ -31,9 +31,11 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class ExpressionMatcher {
@@ -43,8 +45,8 @@ public class ExpressionMatcher {
     private final Map<String, AbstractField> fieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
-    private final Map<DocRef, String[]> wordMap = new HashMap<>();
-    private final Map<String, Pattern> patternMap = new HashMap<>();
+    private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
+    private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;
     private final long nowEpochMilli;
 
@@ -71,7 +73,7 @@ public class ExpressionMatcher {
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
         // If the initial item is null or not enabled then don't match.
         if (item == null || !item.enabled()) {
-            return false;
+            return true;
         }
         return matchItem(attributeMap, item);
     }
@@ -91,30 +93,33 @@ public class ExpressionMatcher {
         }
     }
 
-    private boolean matchOperator(final Map<String, Object> attributeMap, final ExpressionOperator operator) {
-        if (operator.getChildren() == null || operator.getChildren().size() == 0) {
+    private boolean matchOperator(final Map<String, Object> attributeMap,
+                                  final ExpressionOperator operator) {
+        if (!operator.hasEnabledChildren()) {
             return true;
-        }
-
-        switch (operator.op()) {
-            case AND:
-                for (final ExpressionItem child : operator.getChildren()) {
-                    if (!matchItem(attributeMap, child)) {
-                        return false;
+        } else {
+            final List<ExpressionItem> enabledChildren = operator.getEnabledChildren();
+            switch (operator.op()) {
+                case AND:
+                    for (final ExpressionItem child : enabledChildren) {
+                        if (!matchItem(attributeMap, child)) {
+                            return false;
+                        }
                     }
-                }
-                return true;
-            case OR:
-                for (final ExpressionItem child : operator.getChildren()) {
-                    if (matchItem(attributeMap, child)) {
-                        return true;
+                    return true;
+                case OR:
+                    for (final ExpressionItem child : enabledChildren) {
+                        if (matchItem(attributeMap, child)) {
+                            return true;
+                        }
                     }
-                }
-                return false;
-            case NOT:
-                return operator.getChildren().size() == 1 && !matchItem(attributeMap, operator.getChildren().get(0));
-            default:
-                throw new MatchException("Unexpected operator type");
+                    return false;
+                case NOT:
+                    return enabledChildren.size() == 1
+                            && !matchItem(attributeMap, enabledChildren.get(0));
+                default:
+                    throw new MatchException("Unexpected operator type");
+            }
         }
     }
 
@@ -472,6 +477,10 @@ public class ExpressionMatcher {
 
         return numbers;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MatchException extends RuntimeException {
 

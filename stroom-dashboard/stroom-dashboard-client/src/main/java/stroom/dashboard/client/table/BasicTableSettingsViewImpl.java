@@ -18,7 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -43,7 +43,7 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     @UiField
     TextBox name;
     @UiField
-    ItemListBox<Component> query;
+    SelectionBox<Component> query;
     @UiField
     CustomCheckBox extractValues;
     @UiField
@@ -96,12 +96,12 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
 
     @Override
     public Component getQuery() {
-        return this.query.getSelectedItem();
+        return this.query.getValue();
     }
 
     @Override
     public void setQuery(final Component query) {
-        this.query.setSelectedItem(query);
+        this.query.setValue(query);
     }
 
     @Override

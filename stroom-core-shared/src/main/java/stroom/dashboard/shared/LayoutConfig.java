@@ -52,4 +52,20 @@ public abstract class LayoutConfig {
     public void setParent(final SplitLayoutConfig parent) {
         this.parent = parent;
     }
+
+    public abstract AbstractBuilder<?, ?> copy();
+
+    public abstract static class AbstractBuilder<T extends LayoutConfig, B extends AbstractBuilder<T, ?>> {
+
+        protected Size preferredSize;
+
+        public B preferredSize(final Size preferredSize) {
+            this.preferredSize = preferredSize;
+            return self();
+        }
+
+        protected abstract B self();
+
+        public abstract T build();
+    }
 }

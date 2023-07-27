@@ -28,6 +28,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -171,26 +172,26 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         final List<Item> menuItems = new ArrayList<>();
         menuItems.add(new IconMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.ADD)
+                .icon(SvgImage.ADD)
                 .text("Add Term")
                 .command(this::addTerm)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(2)
-                .icon(SvgPresets.OPERATOR)
+                .icon(SvgImage.OPERATOR)
                 .text("Add Operator")
                 .command(this::addOperator)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(3)
-                .icon(SvgPresets.DISABLE)
+                .icon(SvgImage.DISABLE)
                 .text(getEnableDisableText())
                 .enabled(hasSelection)
                 .command(this::disable)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(4)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Delete")
                 .enabled(hasSelection)
                 .command(this::delete)

@@ -16,6 +16,7 @@
 
 package stroom.cache.impl;
 
+import stroom.cache.api.CacheExistsException;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.cache.api.StroomCache;
@@ -89,14 +90,38 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         return cache;
     }
 
+
+    @Override
+    public boolean exists(final String name) {
+        return caches.containsKey(name);
+    }
+
     public void registerCache(final String name, final StroomCache<?, ?> cache) {
-        if (caches.containsKey(name)) {
-            throw new RuntimeException("A cache called '" + name + "' already exists");
+        if (exists(name)) {
+            throw new CacheExistsException(name);
         }
 
         final StroomCache<?, ?> existing = caches.put(name, cache);
         if (existing != null) {
             cache.clear();
+        }
+    }
+
+    @Override
+    public <K, V> StroomCache<K, V> getCache(final String name) {
+        try {
+            return (StroomCache<K, V>) caches.get(name);
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Cache {} is not of the expected type: {}", e.getMessage(), e));
+        }
+    }
+
+    @Override
+    public <K, V> LoadingStroomCache<K, V> getLoadingCache(final String name) {
+        try {
+            return (LoadingStroomCache<K, V>) caches.get(name);
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Cache {} is not of the expected type: {}", e.getMessage(), e));
         }
     }
 
