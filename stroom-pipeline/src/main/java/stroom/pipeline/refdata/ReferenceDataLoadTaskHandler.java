@@ -77,7 +77,7 @@ class ReferenceDataLoadTaskHandler {
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
     private final RefDataLoaderHolder refDataLoaderHolder;
-    private final RefDataStore refDataStore;
+    private final RefDataStoreFactory refDataStoreFactory;
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineDataCache pipelineDataCache;
@@ -107,7 +107,7 @@ class ReferenceDataLoadTaskHandler {
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.feedProperties = feedProperties;
-        this.refDataStore = refDataStoreFactory.getOffHeapStore();
+        this.refDataStoreFactory = refDataStoreFactory;
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
         this.metaHolder = metaHolder;
@@ -190,6 +190,9 @@ class ReferenceDataLoadTaskHandler {
         // Set the source meta.
         metaHolder.setMeta(meta);
 
+        // Get the store specific to this load
+        final RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
+
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
             // we are now blocking any other thread loading the same refStreamDefinition
             // and know that this stream has not already been loaded.
@@ -210,7 +213,7 @@ class ReferenceDataLoadTaskHandler {
                 locationFactory.setLocationFactory(streamLocationFactory);
 
                 // Loop over the stream boundaries and process each sequentially.
-                // Typically ref data will only have a single partIndex so if there are
+                // Typically, ref data will only have a single partIndex so if there are
                 // multiple then overrideExisting may be needed.
                 final long count = source.count();
                 for (long index = 0; index < count && !taskContext.isTerminated(); index++) {
@@ -226,7 +229,13 @@ class ReferenceDataLoadTaskHandler {
 
                         // Process the boundary.
                         //process the pipeline, ref data will be loaded via the ReferenceDataFilter
-                        pipeline.process(inputStream, encoding);
+                        try {
+                            pipeline.process(inputStream, encoding);
+                        } finally {
+                            // This calls endProcessing on the ReferenceDataFilter, which will initiate
+                            // the transfer from staging to ref store
+                            pipeline.endProcessing();
+                        }
                     }
                 }
 
@@ -264,13 +273,6 @@ class ReferenceDataLoadTaskHandler {
                 // Something unexpected happened
                 log(Severity.ERROR, e.getMessage(), e);
                 refDataLoader.completeProcessing(ProcessingState.FAILED);
-            } finally {
-                try {
-                    pipeline.endProcessing();
-                } catch (final RuntimeException e) {
-                    log(Severity.FATAL_ERROR, e.getMessage(), e);
-                    refDataLoader.completeProcessing(ProcessingState.FAILED);
-                }
             }
         });
 

@@ -20,6 +20,7 @@ import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -308,15 +310,15 @@ class QueryServiceImpl implements QueryService {
 //    }
 
     private SearchRequest mapRequest(final QuerySearchRequest searchRequest) {
-        QueryKey queryKey = searchRequest.getQueryKey();
+        final QueryKey queryKey = searchRequest.getQueryKey();
         final String query = searchRequest.getQuery();
-        QueryContext queryContext = searchRequest.getQueryContext();
-        Query sampleQuery = Query
+        final QueryContext queryContext = searchRequest.getQueryContext();
+        final Query sampleQuery = Query
                 .builder()
                 .params(queryContext.getParams())
                 .timeRange(queryContext.getTimeRange())
                 .build();
-        SearchRequest sampleRequest = new SearchRequest(
+        final SearchRequest sampleRequest = new SearchRequest(
                 searchRequest.getSearchRequestSource(),
                 queryKey,
                 sampleQuery,
@@ -355,6 +357,7 @@ class QueryServiceImpl implements QueryService {
         if (query != null) {
             try {
                 final SearchRequest mappedRequest = mapRequest(searchRequest);
+                LOGGER.debug("searchRequest:\n{}\nmappedRequest:\n{}", searchRequest, mappedRequest);
 
                 // Perform the search or update results.
                 final SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
@@ -372,7 +375,8 @@ class QueryServiceImpl implements QueryService {
                     searchEventLog.search(
                             mappedRequest.getQuery().getDataSource(),
                             mappedRequest.getQuery().getExpression(),
-                            searchRequest.getQueryContext().getQueryInfo());
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams());
                 }
 
             } catch (final RuntimeException e) {
@@ -428,5 +432,24 @@ class QueryServiceImpl implements QueryService {
         final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
         ids.sort(Comparator.naturalOrder());
         return ids;
+    }
+
+    @Override
+    public DataSource getDataSource(final DocRef dataSourceRef) {
+        return dataSourceResolver.resolveDataSource(dataSourceRef);
+    }
+
+    @Override
+    public DataSource getDataSource(final String query) {
+        final AtomicReference<DataSource> ref = new AtomicReference<>();
+        try {
+            SearchRequestBuilder.extractDataSourceNameOnly(query, dataSourceName -> {
+                final DataSource dataSource = dataSourceResolver.resolveDataSource(dataSourceName);
+                ref.set(dataSource);
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return ref.get();
     }
 }

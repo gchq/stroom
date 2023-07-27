@@ -22,8 +22,8 @@
 
 .spinner-small {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: var(--icon-width);
+    height: var(--icon-height);
     vertical-align: text-bottom;
     border: .16em solid #2196f3;
     border-right-color: transparent;

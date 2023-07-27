@@ -16,17 +16,24 @@
 
 package stroom.svg.client;
 
-public class Preset extends Icon {
+import stroom.svg.shared.SvgImage;
 
+public class Preset {
+
+    private final SvgImage svgImage;
     private final String title;
     private final boolean enabled;
 
-    public Preset(final String className,
+    public Preset(final SvgImage svgImage,
                   final String title,
                   final boolean enabled) {
-        super(className);
+        this.svgImage = svgImage;
         this.title = title;
         this.enabled = enabled;
+    }
+
+    public SvgImage getSvgImage() {
+        return svgImage;
     }
 
     public String getTitle() {
@@ -41,19 +48,15 @@ public class Preset extends Icon {
         return title != null && !title.isEmpty();
     }
 
-    public Preset withoutTitle() {
-        return new Preset(className, null, isEnabled());
-    }
-
     public Preset title(final String title) {
-        return new Preset(className, title, isEnabled());
+        return new Preset(svgImage, title, isEnabled());
     }
 
     public Preset enabled(final boolean enabled) {
-        return new Preset(className, getTitle(), enabled);
+        return new Preset(svgImage, getTitle(), enabled);
     }
 
     public Preset with(final String title, final boolean enabled) {
-        return new Preset(className, title, enabled);
+        return new Preset(svgImage, title, enabled);
     }
 }

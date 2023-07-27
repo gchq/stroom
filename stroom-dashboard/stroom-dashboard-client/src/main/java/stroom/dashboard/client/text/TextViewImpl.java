@@ -18,6 +18,7 @@ package stroom.dashboard.client.text;
 
 import stroom.dashboard.client.text.TextPresenter.TextView;
 import stroom.data.client.view.ClassificationLabel;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.FabButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -38,12 +39,13 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @UiField(provided = true)
     ClassificationLabel classification;
     @UiField
-    FabButton playButton;
+    FabButton steppingButton;
 
     @Inject
     public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;
         widget = binder.createAndBindUi(this);
+        steppingButton.setIcon(SvgImage.STEPPING);
     }
 
     @Override
@@ -62,12 +64,12 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     }
 
     @Override
-    public void setPlayVisible(final boolean visible) {
-        playButton.setVisible(visible);
+    public void setSteppingVisible(final boolean visible) {
+        steppingButton.setVisible(visible);
     }
 
-    @UiHandler("playButton")
-    public void onPlayClick(final ClickEvent e) {
+    @UiHandler("steppingButton")
+    public void onSteppingClick(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().beginStepping();
         }

@@ -16,30 +16,17 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.item.client.presenter.AutocompletePopupView;
-import stroom.item.client.view.AutocompletePopupViewImpl;
-import stroom.query.api.v2.Field;
+import stroom.item.client.presenter.SelectionPopupView;
+import stroom.item.client.view.SelectionPopupViewImpl;
 
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-public class FieldAddPresenter extends MyPresenterWidget<AutocompletePopupView<Field>> implements
-        HasSelectionHandlers<Field> {
+public class FieldAddPresenter extends MyPresenterWidget<SelectionPopupView> {
 
     @Inject
     public FieldAddPresenter(final EventBus eventBus) {
-        super(eventBus, new AutocompletePopupViewImpl<>());
-
-        // Set the height of the autocomplete list
-        getView().setVisibleItemCount(15);
-    }
-
-    @Override
-    public HandlerRegistration addSelectionHandler(final SelectionHandler<Field> handler) {
-        return getView().addSelectionHandler(handler);
+        super(eventBus, new SelectionPopupViewImpl());
     }
 }

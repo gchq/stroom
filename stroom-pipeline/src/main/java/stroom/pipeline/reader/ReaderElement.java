@@ -17,11 +17,18 @@
 package stroom.pipeline.reader;
 
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.svg.shared.SvgImage;
 
-@ConfigurableElement(type = "Reader", category = Category.READER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "Reader",
+        category = Category.READER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_READER},
+        icon = SvgImage.PIPELINE_STREAM)
 public class ReaderElement extends AbstractReaderElement {
+
 }

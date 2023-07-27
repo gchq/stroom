@@ -92,7 +92,11 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.TRANSFORMATION, XmlSchemaDoc.DOCUMENT_TYPE, "XML Schema");
+        return new DocumentType(
+                DocumentTypeGroup.TRANSFORMATION,
+                XmlSchemaDoc.DOCUMENT_TYPE,
+                "XML Schema",
+                XmlSchemaDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

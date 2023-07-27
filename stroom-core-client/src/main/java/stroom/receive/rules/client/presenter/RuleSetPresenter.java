@@ -19,79 +19,67 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import javax.inject.Provider;
 
 public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ReceiveDataRules>
         implements HasDirtyHandlers {
 
     private static final TabData RULES = new TabDataImpl("Rules");
     private static final TabData FIELDS = new TabDataImpl("Fields");
-
-    private final TabContentProvider<ReceiveDataRules> tabContentProvider = new TabContentProvider<>();
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     @Inject
     public RuleSetPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final ClientSecurityContext securityContext,
                             final Provider<RuleSetSettingsPresenter> settingsPresenterProvider,
-                            final Provider<FieldListPresenter> fieldListPresenterProvider) {
-        super(eventBus, view, securityContext);
+                            final Provider<FieldListPresenter> fieldListPresenterProvider,
+                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        addTab(RULES, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(FIELDS, new DocumentEditTabProvider<>(fieldListPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ReceiveDataRules>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final ReceiveDataRules document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public ReceiveDataRules onWrite(final MarkdownEditPresenter presenter,
+                                            final ReceiveDataRules document) {
+                document.setDescription(presenter.getText());
+                return document;
             }
         });
-
-        addTab(RULES);
-        tabContentProvider.add(RULES, settingsPresenterProvider);
-
-        addTab(FIELDS);
-        tabContentProvider.add(FIELDS, fieldListPresenterProvider);
-
         selectTab(RULES);
     }
 
     @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final ReceiveDataRules dataReceiptPolicy) {
-        super.onRead(docRef, dataReceiptPolicy);
-        if (dataReceiptPolicy.getFields() == null) {
-            dataReceiptPolicy.setFields(new ArrayList<>());
+    public void onRead(final DocRef docRef, final ReceiveDataRules doc, final boolean readOnly) {
+        if (doc.getFields() == null) {
+            doc.setFields(new ArrayList<>());
         }
-        if (dataReceiptPolicy.getRules() == null) {
-            dataReceiptPolicy.setRules(new ArrayList<>());
+        if (doc.getRules() == null) {
+            doc.setRules(new ArrayList<>());
         }
-
-        tabContentProvider.read(docRef, dataReceiptPolicy);
-    }
-
-    @Override
-    protected ReceiveDataRules onWrite(ReceiveDataRules dataReceiptPolicy) {
-        return tabContentProvider.write(dataReceiptPolicy);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+        super.onRead(docRef, doc, readOnly);
     }
 
     @Override

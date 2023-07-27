@@ -31,7 +31,6 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
@@ -76,10 +75,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -88,7 +85,6 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 
 @AutoLogged
@@ -109,7 +105,6 @@ class DashboardServiceImpl implements DashboardService {
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final Provider<FunctionService> functionServiceProvider;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
 
@@ -124,7 +119,6 @@ class DashboardServiceImpl implements DashboardService {
                          final HttpServletRequestHolder httpServletRequestHolder,
                          final ExecutorProvider executorProvider,
                          final TaskContextFactory taskContextFactory,
-                         final Provider<FunctionService> functionServiceProvider,
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo) {
         this.dashboardStore = dashboardStore;
@@ -137,7 +131,6 @@ class DashboardServiceImpl implements DashboardService {
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.functionServiceProvider = functionServiceProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
     }
@@ -238,6 +231,7 @@ class DashboardServiceImpl implements DashboardService {
             final QueryKey queryKey = searchRequest.getQueryKey();
             final Search search = searchRequest.getSearch();
             ResourceKey resourceKey;
+            Integer rowCount = 0;
 
             try {
                 if (queryKey == null) {
@@ -257,6 +251,7 @@ class DashboardServiceImpl implements DashboardService {
                         .filter(result -> result instanceof TableResult)
                         .filter(result -> request.isDownloadAllTables() || result.getComponentId().equals(componentId))
                         .map(result -> (TableResult) result)
+                        .forEach(result -> rowCount += result.getTotalResults())
                         .toList();
 
                 if (tableResults.size() == 0) {
@@ -267,17 +262,13 @@ class DashboardServiceImpl implements DashboardService {
                 final String fileName = getResultsFilename(request);
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
+                rowCount = tableResult.getTotalResults();
 
                 download(request, searchRequest, tableResults, file);
 
-                searchEventLog.downloadResults(search.getDataSourceRef(),
-                        search.getExpression(),
-                        search.getQueryInfo());
+                searchEventLog.downloadResults(request, rowCount);
             } catch (final RuntimeException e) {
-                searchEventLog.downloadResults(search.getDataSourceRef(),
-                        search.getExpression(),
-                        search.getQueryInfo(),
-                        e);
+                searchEventLog.downloadResults(request, rowCount, e);
                 throw EntityServiceExceptionUtil.create(e);
             }
 
@@ -410,7 +401,10 @@ class DashboardServiceImpl implements DashboardService {
                     storeSearchHistory(searchRequest);
 
                     // Log this search request for the current user.
-                    searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
+                    searchEventLog.search(search.getDataSourceRef(),
+                            search.getExpression(),
+                            search.getQueryInfo(),
+                            search.getParams());
                 }
 
             } catch (final RuntimeException e) {
@@ -418,7 +412,11 @@ class DashboardServiceImpl implements DashboardService {
                 LOGGER.debug(() -> "Error processing search " + finalSearch, e);
 
                 if (queryKey == null) {
-                    searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                    searchEventLog.search(search.getDataSourceRef(),
+                            search.getExpression(),
+                            search.getQueryInfo(),
+                            search.getParams(),
+                            e);
                 }
 
                 result = new DashboardSearchResponse(
@@ -458,18 +456,5 @@ class DashboardServiceImpl implements DashboardService {
                 LOGGER.error(e::getMessage, e);
             }
         }
-    }
-
-    @Override
-    public List<String> fetchTimeZones() {
-        final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
-        ids.sort(Comparator.naturalOrder());
-        return ids;
-    }
-
-    @Override
-    public List<FunctionSignature> fetchFunctions() {
-        return functionServiceProvider.get()
-                .getSignatures();
     }
 }

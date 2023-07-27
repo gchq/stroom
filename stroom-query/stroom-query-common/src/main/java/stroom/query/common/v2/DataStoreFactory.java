@@ -3,19 +3,22 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 
 import java.util.Map;
 
 public interface DataStoreFactory {
 
-    DataStore create(QueryKey queryKey,
-                     String componentId,
-                     TableSettings tableSettings,
-                     FieldIndex fieldIndex,
-                     Map<String, String> paramMap,
-                     DataStoreSettings dataStoreSettings,
-                     ErrorConsumer errorConsumer);
+    DataStore create(
+            SearchRequestSource searchRequestSource,
+            QueryKey queryKey,
+            String componentId,
+            TableSettings tableSettings,
+            FieldIndex fieldIndex,
+            Map<String, String> paramMap,
+            DataStoreSettings dataStoreSettings,
+            ErrorConsumer errorConsumer);
 
     StoreSizeSummary getTotalSizeOnDisk();
 

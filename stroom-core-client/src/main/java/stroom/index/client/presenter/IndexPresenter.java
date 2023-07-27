@@ -18,71 +18,57 @@
 package stroom.index.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.index.shared.IndexDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+
+import javax.inject.Provider;
 
 public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, IndexDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData SHARDS = new TabDataImpl("Shards");
-
-    private final TabContentProvider<IndexDoc> tabContentProvider = new TabContentProvider<>();
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     @Inject
     public IndexPresenter(final EventBus eventBus,
                           final LinkTabPanelView view,
-                          final Provider<IndexSettingsPresenter> indexSettingsPresenter,
-                          final Provider<IndexFieldListPresenter> indexFieldListPresenter,
-                          final Provider<IndexShardPresenter> indexShardPresenter,
-                          final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                          final Provider<IndexSettingsPresenter> indexSettingsPresenterProvider,
+                          final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
+                          final Provider<IndexShardPresenter> indexShardPresenterProvider,
+                          final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        addTab(SHARDS, new DocumentEditTabProvider<IndexDoc>(indexShardPresenterProvider::get));
+        addTab(FIELDS, new DocumentEditTabProvider<IndexDoc>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocumentEditTabProvider<IndexDoc>(indexSettingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<IndexDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final IndexDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public IndexDoc onWrite(final MarkdownEditPresenter presenter,
+                                    final IndexDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
             }
         });
-
-        tabContentProvider.add(SHARDS, indexShardPresenter);
-        tabContentProvider.add(FIELDS, indexFieldListPresenter);
-        tabContentProvider.add(SETTINGS, indexSettingsPresenter);
-        addTab(SHARDS);
-        addTab(FIELDS);
-        addTab(SETTINGS);
         selectTab(SHARDS);
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final IndexDoc index) {
-        super.onRead(docRef, index);
-        tabContentProvider.read(docRef, index);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
-    }
-
-    @Override
-    protected IndexDoc onWrite(final IndexDoc index) {
-        return tabContentProvider.write(index);
     }
 
     @Override

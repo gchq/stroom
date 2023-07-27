@@ -48,7 +48,7 @@ class DocumentTypePermissions {
         if (folderPermissions == null) {
             final List<String> permissionList = new ArrayList<>();
             try {
-                final List<DocumentType> documentTypes = explorerService.getNonSystemTypes();
+                final List<DocumentType> documentTypes = explorerService.getTypes();
                 permissionList.addAll(documentTypes.stream()
                         .map(documentType -> DocumentPermissionNames.getDocumentCreatePermission(
                                 documentType.getType()))

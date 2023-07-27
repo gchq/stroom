@@ -17,7 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,7 +34,7 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
     private final Widget widget;
 
     @UiField
-    StringListBox value;
+    SelectionBox<String> value;
 
     @Inject
     public ListInputViewImpl(final Binder binder) {
@@ -48,23 +48,23 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 
     @Override
     public void setValues(final List<String> values) {
-        final String selected = value.getSelectedValue();
+        final String selected = value.getValue();
         value.clear();
         if (values != null) {
             value.addItem("");
             value.addItems(values);
         }
-        value.setSelected(selected);
+        value.setValue(selected);
     }
 
     @Override
     public void setSelectedValue(final String selected) {
-        this.value.setSelected(selected);
+        this.value.setValue(selected);
     }
 
     @Override
     public String getSelectedValue() {
-        return value.getSelectedValue();
+        return value.getValue();
     }
 
 //    @UiHandler("params")

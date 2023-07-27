@@ -18,10 +18,12 @@ package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -42,18 +44,13 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
     @UiField
     TextBox name;
     @UiField
-    ItemListBox<Component> table;
+    SelectionBox<Component> table;
     @UiField
     SimplePanel visualisation;
 
     @Inject
     public BasicVisSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        table.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onTableChange();
-            }
-        });
     }
 
     @Override
@@ -94,12 +91,12 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
 
     @Override
     public Component getTable() {
-        return this.table.getSelectedItem();
+        return this.table.getValue();
     }
 
     @Override
     public void setTable(final Component table) {
-        this.table.setSelectedItem(table);
+        this.table.setValue(table);
     }
 
     @Override
@@ -111,6 +108,13 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
 
     public void onResize() {
         ((RequiresResize) widget).onResize();
+    }
+
+    @UiHandler("table")
+    public void onTableValueChange(final ValueChangeEvent<Component> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onTableChange();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, BasicVisSettingsViewImpl> {

@@ -121,7 +121,11 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.DATA_PROCESSING, FeedDoc.DOCUMENT_TYPE, FeedDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.DATA_PROCESSING,
+                FeedDoc.DOCUMENT_TYPE,
+                FeedDoc.DOCUMENT_TYPE,
+                FeedDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

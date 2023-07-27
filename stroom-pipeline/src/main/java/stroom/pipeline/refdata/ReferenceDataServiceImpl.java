@@ -38,6 +38,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -64,7 +65,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -78,11 +81,17 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
 
-    private static final DataSource DATA_SOURCE = DataSource.builder().fields(ReferenceDataFields.FIELDS).build();
+    private static final DataSource DATA_SOURCE = DataSource
+            .builder()
+            .docRef(ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF)
+            .fields(ReferenceDataFields.FIELDS)
+            .build();
     private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
+            Map.entry(ReferenceDataFields.FEED_NAME_FIELD.getName(),
+                    RefStoreEntry::getFeedName),
             Map.entry(ReferenceDataFields.KEY_FIELD.getName(),
                     RefStoreEntry::getKey),
             Map.entry(ReferenceDataFields.VALUE_FIELD.getName(),
@@ -109,6 +118,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 
     private final RefDataStore refDataStore;
+    private final RefDataStoreFactory refDataStoreFactory;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
     private final Provider<ReferenceData> referenceDataProvider;
@@ -135,6 +145,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final WordListProvider wordListProvider,
                                     final DocRefInfoService docRefInfoService) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
+        this.refDataStoreFactory = refDataStoreFactory;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
         this.referenceDataProvider = referenceDataProvider;
@@ -308,12 +319,92 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         });
     }
 
+    @Override
+    public void purge(final String feedName,
+                      final StroomDuration purgeAge,
+                      final String nodeName) {
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+
+            final List<String> nodeNames = getNodeList(nodeName);
+            final Set<String> failedNodes = new ConcurrentSkipListSet<>();
+            final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+            final String nodeNameStr = nodeNames.size() == 1
+                    ? "node " + nodeName
+                    : "all nodes";
+            final String taskName = "Reference Data Purge on "
+                    + nodeNameStr
+                    + " (feed: " + feedName + ", purge age: " + purgeAge.toString() + ")";
+
+            taskContextFactory.context(
+                    taskName,
+                    parentTaskContext -> {
+                        @SuppressWarnings("unchecked") final CompletableFuture<Void>[] futures = nodeNames.stream()
+                                .map(nodeName2 -> {
+
+                                    final Runnable runnable = taskContextFactory.childContext(
+                                            parentTaskContext,
+                                            "Reference Data Purge on node " + nodeName2,
+                                            taskContext -> nodeService.remoteRestCall(
+                                                    nodeName2,
+                                                    () -> ResourcePaths.buildAuthenticatedApiPath(
+                                                            ReferenceDataResource.BASE_PATH,
+                                                            ReferenceDataResource.PURGE_BY_AGE_SUB_PATH,
+                                                            purgeAge.getValueAsStr()),
+                                                    () ->
+                                                            purgeLocally(feedName, purgeAge),
+                                                    SyncInvoker::delete,
+                                                    Collections.singletonMap(
+                                                            ReferenceDataResource.QUERY_PARAM_NODE_NAME,
+                                                            nodeName2)));
+
+                                    return CompletableFuture
+                                            .runAsync(runnable)
+                                            .exceptionally(throwable -> {
+                                                failedNodes.add(nodeName2);
+                                                exception.set(throwable);
+                                                LOGGER.error(
+                                                        "Error purging reference data store on node [{}]: {}. " +
+                                                                "Enable DEBUG for stacktrace",
+                                                        nodeName2,
+                                                        throwable.getMessage());
+                                                LOGGER.debug("Error purging ref data store on node [{}]",
+                                                        nodeName2, throwable);
+                                                return null;
+                                            });
+                                })
+                                .toArray(CompletableFuture[]::new);
+
+                        CompletableFuture.allOf(futures).join();
+
+                        if (!failedNodes.isEmpty()) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Error puring ref data store ({}) on node(s) [{}]. See logs for details",
+                                    purgeAge,
+                                    String.join(",", failedNodes)),
+                                    exception.get());
+                        }
+                    }).run();
+        });
+    }
+
     private void purgeLocally(final StroomDuration purgeAge) {
         LOGGER.logDurationIfDebugEnabled(
                 () ->
                         refDataStore.purgeOldData(purgeAge),
                 LogUtil.message("Performing Purge for entries older than {}", purgeAge));
 
+    }
+
+    private void purgeLocally(final String feedName,
+                              final StroomDuration purgeAge) {
+        LOGGER.logDurationIfDebugEnabled(
+                () -> {
+                    final RefDataStore offHeapStore = refDataStoreFactory.getOffHeapStore(feedName);
+                    Objects.requireNonNull(offHeapStore, () -> "Null ref store for feed " + feedName);
+                    offHeapStore.purgeOldData(purgeAge);
+                },
+                LogUtil.message("Performing Purge for entries older than {} in feed {}", purgeAge, feedName));
     }
 
     @Override
@@ -563,7 +654,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         }
     }
 
-
     private <T> T withPermissionCheck(final Supplier<T> supplier) {
         // TODO @AT Need some kind of fine grained doc permission check on the pipe associated with each entry
         //   but this will do for a first stab
@@ -633,7 +723,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // TODO @AT need to get rid of the up front limit. Instead we need a method on the refstore to
         //  allow us consume a stream of entries within a read txn. The limit can then be set after the
         //  filtering has happened.
-        final Predicate<RefStoreEntry> predicate = buildEntryPredicate(criteria);
+        final Predicate<RefStoreEntry> filter = buildEntryPredicate(criteria);
 
         final long skipCount = Optional.ofNullable(criteria)
                 .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
@@ -648,37 +738,36 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         LOGGER.debug("Searching ref entries with criteria {}, skipCount {}, limit {}",
                 criteria, skipCount, limit);
 
-        refDataStore.consumeEntryStream(stream -> {
-            stream
-                    .filter(predicate)
-                    .skip(skipCount)
-                    .limit(limit)
-                    .forEach(refStoreEntry -> {
-                        if (taskContext.isTerminated()) {
-                            throw new RuntimeException("Aborting search due to task termination");
-                        }
+        final AtomicLong allItemsCounter = new AtomicLong(0);
+        final AtomicLong consumedCounter = new AtomicLong(0);
+        final Predicate<RefStoreEntry> takeWhilePredicate = refStoreEntry ->
+                        consumedCounter.incrementAndGet() <= limit;
+        final BooleanSupplier skipTest = skipCount == 0
+                ? () -> true
+                : () -> allItemsCounter.incrementAndGet() > skipCount;
 
-                        final Val[] valArr = new Val[fields.length];
+        refDataStore.consumeEntries(filter, takeWhilePredicate, refStoreEntry -> {
+            if (taskContext.isTerminated() || Thread.currentThread().isInterrupted()) {
+                throw new TaskTerminatedException();
+            }
+            if (skipTest.getAsBoolean()) {
 
-                        // Useful for slowing down the search in dev to test termination
-//                        try {
-//                            Thread.sleep(50);
-//                        } catch (InterruptedException e) {
-//                            Thread.currentThread().interrupt();
-//                        }
+                final Val[] valArr = new Val[fields.length];
 
-                        for (int i = 0; i < fields.length; i++) {
-                            AbstractField field = fields[i];
-                            // May be a custom field that we obvs can't extract
-                            if (field != null) {
-                                final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
-                                        .apply(refStoreEntry);
-                                valArr[i] = convertToVal(value, fields[i]);
-                            }
-                        }
-                        consumer.add(Val.of(valArr));
-                    });
-            return null;
+                // Useful for slowing down the search in dev to test termination
+                //ThreadUtil.sleepIgnoringInterrupts(50);
+
+                for (int i = 0; i < fields.length; i++) {
+                    AbstractField field = fields[i];
+                    // May be a custom field that we obvs can't extract
+                    if (field != null) {
+                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
+                                .apply(refStoreEntry);
+                        valArr[i] = convertToVal(value, fields[i]);
+                    }
+                }
+                consumer.add(Val.of(valArr));
+            }
         });
     }
 
@@ -1007,5 +1096,4 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     + "\" but was given string \"" + value + "\"");
         }
     }
-
 }

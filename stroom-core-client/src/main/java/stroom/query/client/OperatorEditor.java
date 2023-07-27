@@ -16,7 +16,8 @@
 
 package stroom.query.client;
 
-import stroom.item.client.ItemListBox;
+import stroom.item.client.EventBinder;
+import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.ExpressionOperator.Op;
 
 import com.google.gwt.core.client.Scheduler;
@@ -28,24 +29,29 @@ import com.google.gwt.user.client.ui.Widget;
 public class OperatorEditor extends Composite {
 
     private final FlowPanel layout;
-    private final ItemListBox<Op> listBox;
+    private final SelectionBox<Op> listBox;
     private Operator operator;
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
+    private final EventBinder eventBinder = new EventBinder() {
+        @Override
+        protected void onBind() {
+            super.onBind();
+            registerHandler(listBox.addValueChangeHandler(event -> {
+                if (!reading && operator != null) {
+                    operator.setOp(event.getValue());
+                    fireDirty();
+                }
+            }));
+        }
+    };
 
     public OperatorEditor() {
-        listBox = new ItemListBox<>();
+        listBox = new SelectionBox<>();
         listBox.addItems(Op.values());
 
         fixStyle(listBox, 50);
-
-        listBox.addSelectionHandler(event -> {
-            if (!reading && operator != null) {
-                operator.setOp(event.getSelectedItem());
-                fireDirty();
-            }
-        });
 
         layout = new FlowPanel();
         layout.add(listBox);
@@ -55,6 +61,18 @@ public class OperatorEditor extends Composite {
         initWidget(layout);
     }
 
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        eventBinder.bind();
+    }
+
+    @Override
+    protected void onUnload() {
+        super.onUnload();
+        eventBinder.unbind();
+    }
+
     public void startEdit(final Operator operator) {
         if (!editing) {
             reading = true;
@@ -62,7 +80,7 @@ public class OperatorEditor extends Composite {
             this.operator = operator;
 
             // Select the current value.
-            listBox.setSelectedItem(operator.getOp());
+            listBox.setValue(operator.getOp());
 
             Scheduler.get().scheduleDeferred(() -> layout.setVisible(true));
 

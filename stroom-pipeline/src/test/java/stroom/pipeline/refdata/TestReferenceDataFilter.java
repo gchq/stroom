@@ -37,7 +37,10 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValue;
+import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
@@ -55,6 +58,7 @@ import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.serialize.XMLEmitter;
 import net.sf.saxon.trans.XPathException;
 import org.assertj.core.api.Assertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.jvnet.fastinfoset.FastInfosetException;
@@ -118,7 +122,9 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_STRING_VALUE_1, null);
 
-        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(StringValue.class);
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(StringValue.TYPE_ID);
         assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
 
         assertThat(loadedRefDataValues.keyValueKeys)
@@ -126,8 +132,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         assertThat(
                 loadedRefDataValues.keyValueValues.stream()
-                        .map(refDataValue -> (StringValue) refDataValue)
-                        .map(stringValue -> stringValue.getValue()))
+                        .map(StringValue::new)
+                        .map(StringValue::getValue))
                 .containsExactly("value11", "value12", "value13", "value21", "value22", "value23");
     }
 
@@ -137,7 +143,6 @@ class TestReferenceDataFilter extends StroomUnitTest {
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_STRING_VALUE_2, null);
 
         assertThat(loadedRefDataValues.keyValueValues).isEmpty();
-        assertThat(loadedRefDataValues.rangeValueValues).hasOnlyElementsOfType(StringValue.class);
 
         assertThat(
                 loadedRefDataValues.rangeValueKeys)
@@ -150,8 +155,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
                         new Range<>(21L, 31L));
         assertThat(
                 loadedRefDataValues.rangeValueValues.stream()
-                        .map(refDataValue -> (StringValue) refDataValue)
-                        .map(stringValue -> stringValue.getValue()))
+                        .map(StringValue::new)
+                        .map(StringValue::getValue))
                 .containsExactly("value11", "value12", "value13", "value21", "value22", "value23");
     }
 
@@ -160,12 +165,14 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_1, null);
 
-        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
         assertThat(loadedRefDataValues.keyValueValues).hasSize(6);
         assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
 
         loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .peek(fastInfosetValue -> {
                     LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
                 })
@@ -179,7 +186,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         Pattern pattern = Pattern.compile("room[0-9]+");
 
         List<String> roomList = loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
@@ -198,12 +205,14 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_2, null);
 
-        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
         assertThat(loadedRefDataValues.keyValueValues).hasSize(6);
         assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
 
         loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .peek(fastInfosetValue -> {
                     LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
                 })
@@ -217,7 +226,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         Pattern pattern = Pattern.compile("room[0-9]+");
 
         final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
@@ -237,11 +246,13 @@ class TestReferenceDataFilter extends StroomUnitTest {
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_3, null);
 
         assertThat(loadedRefDataValues.keyValueValues).isEmpty();
-        assertThat(loadedRefDataValues.rangeValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.rangeValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
         assertThat(loadedRefDataValues.rangeValueValues).hasSize(6);
 
         loadedRefDataValues.rangeValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .map(this::deserialise)
                 .forEach(str -> {
                     LOGGER.info("Dumping deserialised output");
@@ -261,7 +272,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         Pattern pattern = Pattern.compile("room[0-9]+");
 
         List<String> roomList = loadedRefDataValues.rangeValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
@@ -279,12 +290,14 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_4, null);
 
-        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
         assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
         assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
 
         loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .peek(fastInfosetValue -> {
                     LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
                 })
@@ -298,7 +311,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         Pattern pattern = Pattern.compile("room[0-9]+");
 
         final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
@@ -316,12 +329,14 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_5, null);
 
-        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
         assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
         assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
 
         loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .peek(fastInfosetValue -> {
                     LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
                 })
@@ -335,7 +350,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         Pattern pattern = Pattern.compile("room[0-9]+");
 
         final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
@@ -354,12 +369,14 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_6, null);
 
-        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
         assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
         assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
 
         loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .peek(fastInfosetValue -> {
                     LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
                 })
@@ -375,7 +392,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         Pattern pattern = Pattern.compile("room[0-9]+");
 
         final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
-                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(FastInfosetValue::new)
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
@@ -407,7 +424,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         }).when(refDataLoader).put(
                 Mockito.any(),
                 Mockito.any(String.class),
-                Mockito.any(RefDataValue.class));
+                Mockito.any(StagingValue.class));
 
         Mockito.doAnswer(invocation -> {
             loadedRefDataValues.addRangeValue(
@@ -417,7 +434,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
         }).when(refDataLoader).put(
                 Mockito.any(),
                 Mockito.<Range<Long>>any(),
-                Mockito.any(RefDataValue.class));
+                Mockito.any(StagingValue.class));
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
@@ -428,8 +445,9 @@ class TestReferenceDataFilter extends StroomUnitTest {
         final ReferenceDataFilter referenceDataFilter = new ReferenceDataFilter(
                 errorReceiverProxy,
                 refDataLoaderHolder,
-                capacity ->
-                        new PooledByteBufferOutputStream(getByteBufferPool(), capacity));
+                new StagingValueOutputStream(new XxHashValueStoreHashAlgorithm(),
+                        capacity ->
+                                new PooledByteBufferOutputStream(getByteBufferPool(), capacity)));
 
         final TestFilter testFilter = new TestFilter(null, null);
         final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
@@ -684,9 +702,9 @@ class TestReferenceDataFilter extends StroomUnitTest {
     private static class LoadedRefDataValues {
 
         List<String> keyValueKeys;
-        List<RefDataValue> keyValueValues;
+        List<StagingValue> keyValueValues;
         List<Range<Long>> rangeValueKeys;
-        List<RefDataValue> rangeValueValues;
+        List<StagingValue> rangeValueValues;
 
         LoadedRefDataValues() {
             this.keyValueKeys = new ArrayList<>();
@@ -695,34 +713,29 @@ class TestReferenceDataFilter extends StroomUnitTest {
             this.rangeValueKeys = new ArrayList<>();
         }
 
-        void addKeyValue(final String key, final RefDataValue value) {
+        void addKeyValue(final String key, final StagingValue value) {
             LOGGER.info("Adding keyValue {} {}", key, value);
             keyValueKeys.add(key);
-            if (value instanceof FastInfosetValue) {
-                FastInfosetValue fastInfosetValue = (FastInfosetValue) value;
-                assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
-                RefDataValue valueCopy = fastInfosetValue.copy(
-                        () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
-                assertThat(((FastInfosetValue) valueCopy).getByteBuffer().position()).isEqualTo(0);
-                keyValueValues.add(valueCopy);
-            } else {
-                keyValueValues.add(value);
-            }
+            StagingValue valueCopy = copyValue(value);
+            keyValueValues.add(valueCopy);
         }
 
-        void addRangeValue(final Range<Long> range, final RefDataValue value) {
+        void addRangeValue(final Range<Long> range, final StagingValue value) {
             LOGGER.info("Adding rangeValue {} {}", range, value);
             rangeValueKeys.add(range);
-            if (value instanceof FastInfosetValue) {
-                FastInfosetValue fastInfosetValue = (FastInfosetValue) value;
-                assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
-                RefDataValue valueCopy = fastInfosetValue.copy(
-                        () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
-                assertThat(((FastInfosetValue) valueCopy).getByteBuffer().position()).isEqualTo(0);
-                rangeValueValues.add(valueCopy);
-            } else {
-                rangeValueValues.add(value);
-            }
+            StagingValue valueCopy = copyValue(value);
+            rangeValueValues.add(valueCopy);
+        }
+
+        @NotNull
+        private static StagingValue copyValue(final StagingValue value) {
+            assertThat(value.getFullByteBuffer().position()).isEqualTo(0);
+            assertThat(value.getValueBuffer().position()).isEqualTo(0);
+            StagingValue valueCopy = value.copy(
+                    () -> ByteBuffer.allocateDirect(value.size()));
+            assertThat(valueCopy.getFullByteBuffer().position()).isEqualTo(0);
+            assertThat(valueCopy.getValueBuffer().position()).isEqualTo(0);
+            return valueCopy;
         }
     }
 

@@ -55,7 +55,8 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.item.client.presenter.AutocompletePopupView;
+import stroom.item.client.SelectionBoxModel;
+import stroom.item.client.presenter.SelectionPopupView;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
@@ -95,6 +96,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -102,8 +104,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
@@ -167,7 +167,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
-                          final Provider<ExpressionPresenter> expressionPresenterProvider,
+                          final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
@@ -275,7 +275,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
-                if (currentSearchModel.isSearching()) {
+                if (currentSearchModel.isPolling()) {
                     ConfirmEvent.fire(TablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
                                     "Note that these may be incomplete.",
@@ -388,37 +388,55 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     .build();
             otherFields.add(custom);
 
-            final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
-            popupView.clearItems();
-            addFieldGroup(popupView, otherFields, "Counts");
-            addFieldGroup(popupView, dataFields, "Data Source");
-            addFieldGroup(popupView, annotationFields, "Annotations");
+            final SelectionBoxModel<Field> model = new SelectionBoxModel<>();
+            addFieldGroup(model, otherFields, "Counts");
+            addFieldGroup(model, dataFields, "Data Source");
+            addFieldGroup(model, annotationFields, "Annotations");
+
+            final SelectionPopupView popupView = fieldAddPresenter.getView();
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
+            popupView.setModel(model);
+            popupView.addAutoHidePartner(target);
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
+            popupView.show(popupPosition);
 
-            popupView.showPopup(popupPosition);
-
-            final AddSelectionHandler selectionHandler = new AddSelectionHandler(fieldAddPresenter);
-            final HandlerRegistration selectionHandlerRegistration = fieldAddPresenter
-                    .addSelectionHandler(selectionHandler);
-
-            popupView.addCloseHandler(closeEvent -> {
-                selectionHandlerRegistration.removeHandler();
+            final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
+            handlerRegistrations.add(model.addValueChangeHandler(e -> {
+                final Field field = model.getValue();
+                if (field != null) {
+                    HidePopupEvent.builder(fieldAddPresenter).fire();
+                    fieldsManager.addField(field);
+                }
+                popupView.hide();
+            }));
+            handlerRegistrations.add(popupView.addCloseHandler(closeEvent -> {
+                for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
+                    handlerRegistration.removeHandler();
+                }
+                handlerRegistrations.clear();
                 fieldAddPresenter = null;
+                target.focus();
+            }));
+
+            registerHandler(() -> {
+                for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
+                    handlerRegistration.removeHandler();
+                }
+                handlerRegistrations.clear();
             });
         }
     }
 
-    private void addFieldGroup(final AutocompletePopupView<Field> popupView,
+    private void addFieldGroup(final SelectionBoxModel<Field> model,
                                final List<Field> fields,
                                final String groupName) {
         if (fields.size() > 0) {
             fields.sort(Comparator.comparing(Field::getName, String.CASE_INSENSITIVE_ORDER));
 //            items.add(new GroupHeading(items.size(), groupName));
-            popupView.addItems(fields);
+            model.addItems(fields);
         }
     }
 
@@ -719,7 +737,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             @Override
             public SafeHtml getValue(final TableRow row) {
                 if (row == null) {
-                    return null;
+                    return SafeHtmlUtil.NBSP;
                 }
 
                 return row.getValue(field.getId());
@@ -794,7 +812,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         updateFields();
-        getComponents().fireComponentChangeEvent(this);
+
+        // Not sure what this was needed for....
+//        getComponents().fireComponentChangeEvent(this);
     }
 
     private void cleanupSearchModelAssociation() {
@@ -838,6 +858,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
+        // Remove all special fields as we will re-add them with the right names if there are any.
+        getTableSettings().getFields().removeIf(Field::isSpecial);
+
         // Get special fields from the current data source.
         final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
         final List<Field> requiredSpecialFields = new ArrayList<>();
@@ -856,9 +879,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             // If the fields we want to make special do exist in the current data source then
             // add them.
             if (requiredSpecialFields.size() > 0) {
-                // Remove all special fields as we will re-add them with the right names if there are any.
-                getTableSettings().getFields().removeIf(Field::isSpecial);
-
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
@@ -1080,7 +1100,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
             currentRequestCount--;
             getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.getMode());
+            getView().setRefreshing(currentSearchModel.isSearching());
         });
     }
 
@@ -1112,6 +1132,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
+    @Override
+    public void setDesignMode(final boolean designMode) {
+        super.setDesignMode(designMode);
+        dataGrid.setAllowMove(designMode);
+        dataGrid.setAllowHeaderSelection(designMode);
+        addFieldButton.setVisible(designMode);
+    }
+
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
 
         void setTableView(View view);
@@ -1119,25 +1147,5 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         void setRefreshing(boolean refreshing);
 
         void setPaused(boolean paused);
-    }
-
-    private class AddSelectionHandler implements SelectionHandler<Field> {
-
-        private final FieldAddPresenter presenter;
-
-        AddSelectionHandler(final FieldAddPresenter presenter) {
-            this.presenter = presenter;
-        }
-
-        @Override
-        public void onSelection(final SelectionEvent<Field> event) {
-            Field field = event.getSelectedItem();
-            if (field != null) {
-                HidePopupEvent
-                        .builder(presenter)
-                        .fire();
-                fieldsManager.addField(field);
-            }
-        }
     }
 }

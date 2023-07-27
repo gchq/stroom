@@ -20,10 +20,12 @@ package stroom.feed.client.presenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -31,18 +33,18 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
+
+import javax.inject.Provider;
 
 public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, FeedDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DATA = new TabDataImpl("Data");
-    // private static final Tab MONITORING = new Tab("Monitoring");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final TabContentProvider<FeedDoc> tabContentProvider = new TabContentProvider<>();
+    private MetaPresenter metaPresenter;
 
     @Inject
     public FeedPresenter(final EventBus eventBus,
@@ -50,62 +52,80 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                          final ClientSecurityContext securityContext,
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
                          final Provider<MetaPresenter> metaPresenterProvider,
-                         final Provider<ProcessorTaskPresenter> taskPresenterProvider) {
-        super(eventBus, view, securityContext);
-
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        });
+                         final Provider<ProcessorTaskPresenter> taskPresenterProvider,
+                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
         TabData selectedTab = SETTINGS;
 
         if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
-            addTab(DATA);
-            tabContentProvider.add(DATA, metaPresenterProvider);
+            addTab(DATA, new AbstractTabProvider<FeedDoc, MetaPresenter>(eventBus) {
+                @Override
+                protected MetaPresenter createPresenter() {
+                    metaPresenter = metaPresenterProvider.get();
+                    return metaPresenter;
+                }
 
+                @Override
+                public void onRead(final MetaPresenter presenter,
+                                   final DocRef docRef,
+                                   final FeedDoc document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                }
+            });
             selectedTab = DATA;
         }
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
-            addTab(TASKS);
-            tabContentProvider.add(TASKS, taskPresenterProvider);
+            addTab(TASKS, new AbstractTabProvider<FeedDoc, ProcessorTaskPresenter>(eventBus) {
+                @Override
+                protected ProcessorTaskPresenter createPresenter() {
+                    return taskPresenterProvider.get();
+                }
+
+                @Override
+                public void onRead(final ProcessorTaskPresenter presenter,
+                                   final DocRef docRef,
+                                   final FeedDoc document,
+                                   final boolean readOnly) {
+                    presenter.read(docRef, document, readOnly);
+                }
+            });
         }
 
-        addTab(SETTINGS);
-        tabContentProvider.add(SETTINGS, settingsPresenterProvider);
+        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final FeedDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public FeedDoc onWrite(final MarkdownEditPresenter presenter,
+                                   final FeedDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
 
         selectTab(selectedTab);
     }
 
     @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
-    }
+    protected FeedDoc onWrite(FeedDoc doc) {
+        final FeedDoc modified = super.onWrite(doc);
 
-    @Override
-    public void onRead(final DocRef docRef, final FeedDoc feed) {
-        super.onRead(docRef, feed);
-        tabContentProvider.read(docRef, feed);
-    }
-
-    @Override
-    protected FeedDoc onWrite(FeedDoc feed) {
-        feed = tabContentProvider.write(feed);
         // Something has changed, e.g. the encoding so refresh the meta presenter to reflect it
-        final PresenterWidget<?> presenter = tabContentProvider.getPresenter(DATA);
-        if (presenter instanceof MetaPresenter) {
-            final MetaPresenter metaPresenter = (MetaPresenter) presenter;
+        if (metaPresenter != null) {
             metaPresenter.refreshData();
         }
-        return feed;
-    }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+        return modified;
     }
 
     @Override

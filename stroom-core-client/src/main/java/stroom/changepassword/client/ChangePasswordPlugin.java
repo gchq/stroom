@@ -4,8 +4,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -31,10 +31,11 @@ public class ChangePasswordPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
-                    final Preset icon = SvgPresets.PASSWORD;
+                    final SvgImage icon = SvgImage.PASSWORD;
                     changePasswordMenuItem = new IconMenuItem.Builder()
                             .priority(5)
                             .icon(icon)
+                            .iconColour(IconColour.GREY)
                             .text("Change password")
                             .command(() -> {
 //                            final Hyperlink hyperlink = new Builder()

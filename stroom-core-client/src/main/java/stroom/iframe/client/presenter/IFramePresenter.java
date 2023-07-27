@@ -36,8 +36,20 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
         view.setUiHandlers(this);
     }
 
+    public void setId(final String id) {
+        getView().setId(id);
+    }
+
     public void setUrl(final String url) {
         getView().setUrl(url);
+    }
+
+    public void setSrcDoc(final String html) {
+        getView().setSrcDoc(html);
+    }
+
+    public void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions) {
+        getView().setSandboxEnabled(isEnabled, sandboxOptions);
     }
 
     public void setCustomTitle(final String customTitle) {
@@ -62,14 +74,86 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface IFrameView extends View, HasUiHandlers<IFrameLoadUiHandlers> {
 
+        void setId(String id);
+
         void setUrl(String url);
+
+        void setSrcDoc(final String html);
+
+        void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions);
 
         void setCustomTitle(String customTitle);
 
         String getTitle();
 
         void cleanup();
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /**
+     * The possible values for the sandbox iframe attribute. Multiple options may be used.
+     */
+    public enum SandboxOption {
+        /**
+         * Allows form submission
+         */
+        ALLOW_FORMS("allow-forms"),
+        /**
+         * Allows to open modal windows
+         */
+        ALLOW_MODALS("allow-modals"),
+        /**
+         * Allows to lock the screen orientation
+         */
+        ALLOW_ORIENTATION_LOCK("allow-orientation-lock"),
+        /**
+         * Allows to use the Pointer Lock API
+         */
+        ALLOW_POINTER_LOCK("allow-pointer-lock"),
+        /**
+         * Allows popups
+         */
+        ALLOW_POPUPS("allow-popups"),
+        /**
+         * Allows popups to open new windows without inheriting the sandboxing
+         */
+        ALLOW_POPUPS_TO_ESCAPE_SANDBOX("allow-popups-to-escape-sandbox"),
+        /**
+         * Allows to start a presentation session
+         */
+        ALLOW_PRESENTATION("allow-presentation"),
+        /**
+         * Allows the iframe content to be treated as being from the same origin
+         */
+        ALLOW_SAME_ORIGIN("allow-same-origin"),
+        /**
+         * Allows to run scripts
+         */
+        ALLOW_SCRIPTS("allow-scripts"),
+        /**
+         * Allows the iframe content to navigate its top-level browsing context
+         */
+        ALLOW_TOP_NAVIGATION("allow-top-navigation"),
+        /**
+         * Allows the iframe content to navigate its top-level browsing context, but only if initiated by user
+         */
+        ALLOW_TOP_NAVIGATION_BY_USER_ACTIVATION("allow-top-navigation-by-user-activation");
+
+        private final String option;
+
+        SandboxOption(final String option) {
+            this.option = option;
+        }
+
+        public String getOption() {
+            return option;
+        }
     }
 }

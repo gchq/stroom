@@ -18,6 +18,7 @@ package stroom.data.retention.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -52,6 +53,8 @@ import javax.xml.bind.annotation.XmlType;
 public class DataRetentionRules extends Doc {
 
     public static final String DOCUMENT_TYPE = "DataRetentionRules";
+    // Seems to use same icon as receive rules
+    public static final SvgImage ICON = SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
 
     @JsonProperty
     private List<DataRetentionRule> rules;

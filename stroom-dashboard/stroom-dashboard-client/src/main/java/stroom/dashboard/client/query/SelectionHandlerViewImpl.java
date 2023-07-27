@@ -20,11 +20,13 @@ package stroom.dashboard.client.query;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.docref.HasDisplayValue;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -44,18 +46,13 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
     @UiField
     SimplePanel layout;
     @UiField
-    ItemListBox<HasDisplayValue> component;
+    SelectionBox<HasDisplayValue> component;
     @UiField
     CustomCheckBox enabled;
 
     @Inject
     public SelectionHandlerViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        component.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onComponentChange();
-            }
-        });
     }
 
     @Override
@@ -70,7 +67,7 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
 
     @Override
     public void setComponentList(final List<Component> componentList) {
-        final HasDisplayValue component = this.component.getSelectedItem();
+        final HasDisplayValue component = this.component.getValue();
 
         this.component.clear();
         this.component.addItem(ANY);
@@ -82,23 +79,23 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
         this.component.addItems(newList);
 
         // Reselect component id.
-        this.component.setSelectedItem(component);
+        this.component.setValue(component);
     }
 
     @Override
     public Component getComponent() {
-        if (ANY.equals(this.component.getSelectedItem())) {
+        if (ANY.equals(this.component.getValue())) {
             return null;
         }
-        return (Component) this.component.getSelectedItem();
+        return (Component) this.component.getValue();
     }
 
     @Override
     public void setComponent(final Component component) {
         if (component == null) {
-            this.component.setSelectedItem(ANY);
+            this.component.setValue(ANY);
         } else {
-            this.component.setSelectedItem(component);
+            this.component.setValue(component);
         }
     }
 
@@ -115,6 +112,13 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
     @Override
     public void setEnabled(final boolean enabled) {
         this.enabled.setValue(enabled);
+    }
+
+    @UiHandler("component")
+    public void onComponentValueChange(final ValueChangeEvent<HasDisplayValue> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onComponentChange();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, SelectionHandlerViewImpl> {

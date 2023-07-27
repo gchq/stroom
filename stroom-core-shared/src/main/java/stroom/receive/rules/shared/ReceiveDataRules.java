@@ -20,6 +20,7 @@ package stroom.receive.rules.shared;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({
         "type",
@@ -38,13 +40,17 @@ import java.util.List;
         "updateTimeMs",
         "createUser",
         "updateUser",
+        "description",
         "fields",
         "rules"})
 @JsonInclude(Include.NON_NULL)
 public class ReceiveDataRules extends Doc {
 
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
 
+    @JsonProperty
+    private String description;
     @JsonProperty
     private List<AbstractField> fields;
     @JsonProperty
@@ -62,9 +68,11 @@ public class ReceiveDataRules extends Doc {
                             @JsonProperty("updateTimeMs") final Long updateTimeMs,
                             @JsonProperty("createUser") final String createUser,
                             @JsonProperty("updateUser") final String updateUser,
+                            @JsonProperty("description") final String description,
                             @JsonProperty("fields") final List<AbstractField> fields,
                             @JsonProperty("rules") final List<ReceiveDataRule> rules) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        this.description = description;
         this.fields = fields;
         this.rules = rules;
     }
@@ -83,6 +91,14 @@ public class ReceiveDataRules extends Doc {
      */
     public static DocRef.TypedBuilder buildDocRef() {
         return DocRef.builder(DOCUMENT_TYPE);
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
     }
 
     public List<AbstractField> getFields() {
@@ -112,28 +128,14 @@ public class ReceiveDataRules extends Doc {
         if (!super.equals(o)) {
             return false;
         }
-
-        final ReceiveDataRules ruleSet = (ReceiveDataRules) o;
-
-        if (fields != null
-                ? !fields.equals(ruleSet.fields)
-                : ruleSet.fields != null) {
-            return false;
-        }
-        return rules != null
-                ? rules.equals(ruleSet.rules)
-                : ruleSet.rules == null;
+        final ReceiveDataRules that = (ReceiveDataRules) o;
+        return Objects.equals(description, that.description) &&
+                Objects.equals(fields, that.fields) &&
+                Objects.equals(rules, that.rules);
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (fields != null
-                ? fields.hashCode()
-                : 0);
-        result = 31 * result + (rules != null
-                ? rules.hashCode()
-                : 0);
-        return result;
+        return Objects.hash(super.hashCode(), description, fields, rules);
     }
 }

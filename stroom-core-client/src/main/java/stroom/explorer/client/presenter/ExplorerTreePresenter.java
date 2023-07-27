@@ -21,8 +21,7 @@ import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
-import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -31,13 +30,9 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.main.client.event.UrlQueryParameterChangeEvent;
-import stroom.main.client.event.UrlQueryParameterChangeEvent.UrlQueryParameterChangeHandler;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
+import stroom.main.client.event.ShowMainEvent;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -59,19 +54,16 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
-import java.util.Map;
-
 public class ExplorerTreePresenter
         extends MyPresenter<ExplorerTreePresenter.ExplorerTreeView, ExplorerTreePresenter.ExplorerTreeProxy>
         implements ExplorerTreeUiHandlers, RefreshExplorerTreeEvent.Handler, HighlightExplorerNodeEvent.Handler,
-        CurrentUserChangedHandler, UrlQueryParameterChangeHandler, TabData {
+        ShowMainEvent.Handler, TabData {
 
     private static final String EXPLORER = "Explorer";
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
     private final CurrentActivity currentActivity;
-    private final DocumentPluginEventManager entityPluginEventManager;
     private final ExplorerTree explorerTree;
     private final Button activityContainer = new Button();
 
@@ -83,13 +75,11 @@ public class ExplorerTreePresenter
                                  final DocumentTypeCache documentTypeCache,
                                  final TypeFilterPresenter typeFilterPresenter,
                                  final CurrentActivity currentActivity,
-                                 final UiConfigCache uiConfigCache,
-                                 final DocumentPluginEventManager entityPluginEventManager) {
+                                 final UiConfigCache uiConfigCache) {
         super(eventBus, view, proxy);
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
-        this.entityPluginEventManager = entityPluginEventManager;
 
         view.setUiHandlers(this);
 
@@ -211,7 +201,7 @@ public class ExplorerTreePresenter
 
     @ProxyEvent
     @Override
-    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
+    public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();
         // Set the data for the type filter.
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes);
@@ -222,6 +212,10 @@ public class ExplorerTreePresenter
 
         // Show the tree.
         forceReveal();
+
+        if (event.getInitialDocRef() != null) {
+            OpenDocumentEvent.fire(this, event.getInitialDocRef(), true);
+        }
     }
 
     @Override
@@ -252,30 +246,13 @@ public class ExplorerTreePresenter
     }
 
     @Override
-    public Icon getIcon() {
-        return SvgPresets.FOLDER_TREE;
+    public SvgImage getIcon() {
+        return SvgImage.FOLDER_TREE;
     }
 
     @Override
     public boolean isCloseable() {
         return false;
-    }
-
-    @ProxyEvent
-    @Override
-    public void onChange(final UrlQueryParameterChangeEvent event) {
-        final Map<String, String> queryParams = event.getQueryParams();
-        final DocRef docRef = DocRef.builder()
-                .type(queryParams.get(ExplorerConstants.DOC_TYPE_QUERY_PARAM))
-                .uuid(queryParams.get(ExplorerConstants.DOC_UUID_QUERY_PARAM))
-                .build();
-
-        if (ExplorerConstants.OPEN_DOC_ACTION.equals(event.getAction()) &&
-                docRef.getType() != null &&
-                docRef.getUuid() != null) {
-            entityPluginEventManager.open(docRef, true);
-            entityPluginEventManager.highlight(docRef);
-        }
     }
 
     public interface ExplorerTreeView extends View, HasUiHandlers<ExplorerTreeUiHandlers> {

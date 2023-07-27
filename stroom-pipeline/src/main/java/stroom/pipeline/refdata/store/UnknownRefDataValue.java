@@ -50,11 +50,16 @@ public class UnknownRefDataValue implements RefDataValue {
      */
     @Override
     public int getTypeId() {
-        return 0;
+        return TYPE_ID;
     }
 
     @Override
     public String toString() {
         return ByteBufferUtils.byteBufferToHex(value);
+    }
+
+    @Override
+    public boolean isNullValue() {
+        return value == null || value.remaining() == 0;
     }
 }

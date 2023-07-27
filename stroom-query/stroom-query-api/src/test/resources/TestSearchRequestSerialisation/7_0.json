@@ -1,0 +1,57 @@
+{
+  "query" : {
+    "dataSource" : {
+      "type" : "Searchable",
+      "uuid" : "Meta Store",
+      "name" : "Meta Store"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "term",
+        "field" : "Create Time",
+        "condition" : "GREATER_THAN",
+        "value" : "day()"
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table-IIO1T",
+    "mappings" : [ {
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "id" : "table-IIO1T|YVTEN",
+        "name" : "Feed",
+        "expression" : "${Feed}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|76UNL",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ],
+      "modelVersion" : "6.1.26"
+    } ],
+    "requestedRange" : {
+      "offset" : 0,
+      "length" : 2147483647
+    },
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "dateTimeLocale" : "Europe/London",
+  "incremental" : false,
+  "timeout" : 1000
+}

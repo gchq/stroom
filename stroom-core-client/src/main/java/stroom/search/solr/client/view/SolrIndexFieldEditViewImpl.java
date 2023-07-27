@@ -16,8 +16,7 @@
 
 package stroom.search.solr.client.view;
 
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -36,11 +35,11 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
     private final Widget widget;
 
     @UiField
-    ItemListBox<SolrIndexFieldType> fieldUse;
+    SelectionBox<SolrIndexFieldType> fieldUse;
     @UiField
     TextBox fieldName;
     @UiField
-    StringListBox fieldType;
+    SelectionBox<String> fieldType;
     @UiField
     TextBox defaultValue;
     @UiField
@@ -93,12 +92,12 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
 
     @Override
     public SolrIndexFieldType getFieldUse() {
-        return fieldUse.getSelectedItem();
+        return fieldUse.getValue();
     }
 
     @Override
     public void setFieldUse(final SolrIndexFieldType fieldUse) {
-        this.fieldUse.setSelectedItem(fieldUse);
+        this.fieldUse.setValue(fieldUse);
     }
 
     @Override
@@ -113,12 +112,12 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
 
     @Override
     public String getFieldType() {
-        return fieldType.getSelected();
+        return fieldType.getValue();
     }
 
     @Override
     public void setFieldType(final String fieldType) {
-        this.fieldType.setSelected(fieldType);
+        this.fieldType.setValue(fieldType);
     }
 
     @Override

@@ -18,66 +18,51 @@
 package stroom.view.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.TabContentProvider;
-import stroom.security.client.api.ClientSecurityContext;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+
+import javax.inject.Provider;
 
 public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ViewDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
-
-    private final TabContentProvider<ViewDoc> tabContentProvider = new TabContentProvider<>();
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     @Inject
     public ViewPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
-                         final ClientSecurityContext securityContext,
-                         final Provider<ViewSettingsPresenter> settingsPresenterProvider) {
-        super(eventBus, view, securityContext);
+                         final Provider<ViewSettingsPresenter> settingsPresenterProvider,
+                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
-        tabContentProvider.setDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ViewDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final ViewDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public ViewDoc onWrite(final MarkdownEditPresenter presenter,
+                                   final ViewDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
             }
         });
-
-        TabData selectedTab = SETTINGS;
-
-        addTab(SETTINGS);
-        tabContentProvider.add(SETTINGS, settingsPresenterProvider);
-
-        selectTab(selectedTab);
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final ViewDoc view) {
-        super.onRead(docRef, view);
-        tabContentProvider.read(docRef, view);
-    }
-
-    @Override
-    protected ViewDoc onWrite(final ViewDoc view) {
-        return tabContentProvider.write(view);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+        selectTab(SETTINGS);
     }
 
     @Override

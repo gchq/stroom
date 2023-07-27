@@ -18,6 +18,7 @@
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.ParserFactoryPool;
@@ -32,7 +33,6 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.DocFinder;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -40,6 +40,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
+import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
@@ -63,7 +64,7 @@ import javax.inject.Provider;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.TEXT)
+        icon = SvgImage.PIPELINE_TEXT)
 public class DSParser extends AbstractParser implements SupportsCodeInjection {
 
     private final ParserFactoryPool parserFactoryPool;
@@ -88,14 +89,19 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
                     final TextConverterStore textConverterStore,
                     final PathCreator pathCreator,
                     final Provider<FeedHolder> feedHolder,
-                    final Provider<PipelineHolder> pipelineHolder) {
+                    final Provider<PipelineHolder> pipelineHolder,
+                    final DocRefInfoService docRefInfoService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(
+                TextConverterDoc.DOCUMENT_TYPE,
+                pathCreator,
+                textConverterStore,
+                docRefInfoService);
     }
 
     @Override

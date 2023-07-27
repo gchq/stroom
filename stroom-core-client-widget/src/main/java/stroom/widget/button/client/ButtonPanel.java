@@ -20,6 +20,10 @@ import stroom.svg.client.Preset;
 
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
+import java.util.stream.StreamSupport;
 
 public class ButtonPanel extends FlowPanel {
 
@@ -29,10 +33,24 @@ public class ButtonPanel extends FlowPanel {
         setStyleName("button-container");
     }
 
+    public void addButton(final ButtonView view) {
+        add(view.asWidget());
+    }
+
+    public void addButtons(final List<ButtonView> buttons) {
+        for (final ButtonView buttonView : buttons) {
+            addButton(buttonView);
+        }
+    }
+
     public ButtonView addButton(final Preset preset) {
-        final SvgButton button = createButton(preset);
-        add(button);
+        final ButtonView button = createButton(preset);
+        add((Widget) button);
         return button;
+    }
+
+    public void removeButton(final ButtonView buttonView) {
+        remove(buttonView.asWidget());
     }
 
     public ToggleButtonView addToggleButton(final Preset primaryPreset,
@@ -42,7 +60,17 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    private SvgButton createButton(final Preset preset) {
+    public boolean containsButton(final ButtonView buttonView) {
+        if (buttonView == null) {
+            return false;
+        } else {
+            return StreamSupport.stream(spliterator(), false)
+                    .anyMatch(widget ->
+                            widget.equals(buttonView));
+        }
+    }
+
+    public ButtonView createButton(final Preset preset) {
         final SvgButton button = SvgButton.create(preset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);

@@ -20,12 +20,7 @@ package stroom.receive.rules.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
@@ -44,16 +39,12 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
 public class RuleSetSettingsPresenter
-        extends MyPresenterWidget<RuleSetSettingsView>
-        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+        extends DocumentEditPresenter<RuleSetSettingsView, ReceiveDataRules> {
 
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
@@ -69,9 +60,6 @@ public class RuleSetSettingsPresenter
     private final ButtonView deleteButton;
     private final ButtonView moveUpButton;
     private final ButtonView moveDownButton;
-
-    private boolean dirty;
-    private boolean readOnly = true;
 
     @Inject
     public RuleSetSettingsPresenter(final EventBus eventBus,
@@ -119,13 +107,13 @@ public class RuleSetSettingsPresenter
     }
 
     private void addRuleButtonClickHandler(final ClickEvent event) {
-        if (!readOnly && rules != null) {
+        if (!isReadOnly() && rules != null) {
             add();
         }
     }
 
     private void editButtonClickHandler(final ClickEvent event) {
-        if (!readOnly && rules != null) {
+        if (!isReadOnly() && rules != null) {
             final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
                 edit(selected);
@@ -134,7 +122,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void copyRuleButtonClickHandler(final ClickEvent event) {
-        if (!readOnly && rules != null) {
+        if (!isReadOnly() && rules != null) {
             final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
                 final ReceiveDataRule newRule = new ReceiveDataRule(
@@ -160,7 +148,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void disableButtonClickHandler(final ClickEvent event) {
-        if (!readOnly && rules != null) {
+        if (!isReadOnly() && rules != null) {
             final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
                 final ReceiveDataRule newRule = new ReceiveDataRule(
@@ -181,7 +169,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void deleteButtonClickHandler(final ClickEvent event) {
-        if (!readOnly && rules != null) {
+        if (!isReadOnly() && rules != null) {
             ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
                 if (ok) {
                     final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
@@ -195,7 +183,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void moveUpButtonClickHandler(final ClickEvent event) {
-        if (!readOnly && rules != null) {
+        if (!isReadOnly() && rules != null) {
             final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 int index = rules.indexOf(rule);
@@ -208,7 +196,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void moveDownButtonClickHandler(final ClickEvent event) {
-        if (!readOnly && rules != null) {
+        if (!isReadOnly() && rules != null) {
             final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 int index = rules.indexOf(rule);
@@ -231,7 +219,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void listSelectionHandler(final MultiSelectEvent selectEvent) {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 expressionPresenter.read(rule.getExpression());
@@ -305,10 +293,12 @@ public class RuleSetSettingsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final ReceiveDataRules policy) {
-        if (policy != null) {
-            this.fields = policy.getFields();
-            this.rules = policy.getRules();
+    protected void onRead(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
+        updateButtons();
+
+        if (document != null) {
+            this.fields = document.getFields();
+            this.rules = document.getRules();
             listPresenter.getSelectionModel().clear();
             setDirty(false);
             update();
@@ -316,14 +306,8 @@ public class RuleSetSettingsPresenter
     }
 
     @Override
-    public ReceiveDataRules write(final ReceiveDataRules entity) {
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        updateButtons();
+    protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
+        return document;
     }
 
     private void update() {
@@ -360,25 +344,13 @@ public class RuleSetSettingsPresenter
             disableButton.setTitle("Enable");
         }
 
-        addButton.setEnabled(!readOnly && loadedPolicy);
-        editButton.setEnabled(!readOnly && selected);
-        copyButton.setEnabled(!readOnly && selected);
-        disableButton.setEnabled(!readOnly && selected);
-        deleteButton.setEnabled(!readOnly && selected);
-        moveUpButton.setEnabled(!readOnly && selected && index > 0);
-        moveDownButton.setEnabled(!readOnly && selected && index >= 0 && index < rules.size() - 1);
-    }
-
-    private void setDirty(final boolean dirty) {
-        if (this.dirty != dirty) {
-            this.dirty = dirty;
-            DirtyEvent.fire(this, dirty);
-        }
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+        addButton.setEnabled(!isReadOnly() && loadedPolicy);
+        editButton.setEnabled(!isReadOnly() && selected);
+        copyButton.setEnabled(!isReadOnly() && selected);
+        disableButton.setEnabled(!isReadOnly() && selected);
+        deleteButton.setEnabled(!isReadOnly() && selected);
+        moveUpButton.setEnabled(!isReadOnly() && selected && index > 0);
+        moveDownButton.setEnabled(!isReadOnly() && selected && index >= 0 && index < rules.size() - 1);
     }
 
     public interface RuleSetSettingsView extends View {

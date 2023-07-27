@@ -3,7 +3,6 @@ package stroom.search.impl;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.query.api.v2.Query;
 import stroom.query.common.v2.ResultStore;
 import stroom.task.api.TaskContext;
 import stroom.util.jersey.UriBuilderUtil;
@@ -14,7 +13,6 @@ import stroom.util.shared.ResourcePaths;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
@@ -41,30 +39,21 @@ public class RemoteNodeSearch implements NodeSearch {
         this.webTargetFactory = webTargetFactory;
     }
 
+    @Override
     public void searchNode(final String sourceNode,
                            final String targetNode,
-                           final List<Long> shards,
-                           final AsyncSearchTask task,
-                           final Query query,
-                           final TaskContext taskContext) {
+                           final FederatedSearchTask task,
+                           final NodeSearchTask nodeSearchTask,
+                           final TaskContext parentContext) {
         LOGGER.debug(() -> task.getSearchName() + " - start searching node: " + targetNode);
-        taskContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
+        parentContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
         final String queryKey = task.getKey().getUuid();
         final ResultStore resultCollector = task.getResultStore();
 
         // Start remote cluster search execution.
-        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
-                taskContext.getTaskId(),
-                "Cluster Search",
-                task.getKey(),
-                query,
-                shards,
-                task.getSettings(),
-                task.getDateTimeSettings(),
-                task.getNow());
-        LOGGER.debug(() -> "Dispatching clusterSearchTask to node: " + targetNode);
+        LOGGER.debug(() -> "Dispatching node search task to node: " + targetNode);
         try {
-            final boolean success = startRemoteSearch(targetNode, clusterSearchTask);
+            final boolean success = startRemoteSearch(targetNode, nodeSearchTask);
             if (!success) {
                 LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode);
                 final SearchException searchException = new SearchException(
@@ -81,7 +70,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
         try {
             LOGGER.debug(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
-            taskContext.info(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
+            parentContext.info(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
 
             // Poll for results until completion.
             boolean complete = false;
@@ -95,7 +84,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
         } finally {
             LOGGER.debug(() -> task.getSearchName() + " - finished searching node: " + targetNode);
-            taskContext.info(() -> task.getSearchName() + " - finished searching node: " + targetNode);
+            parentContext.info(() -> task.getSearchName() + " - finished searching node: " + targetNode);
 
             // Destroy search results.
             try {
@@ -110,7 +99,7 @@ public class RemoteNodeSearch implements NodeSearch {
         }
     }
 
-    private Boolean startRemoteSearch(final String nodeName, final ClusterSearchTask clusterSearchTask) {
+    private Boolean startRemoteSearch(final String nodeName, final NodeSearchTask nodeSearchTask) {
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
@@ -120,7 +109,7 @@ public class RemoteNodeSearch implements NodeSearch {
             try (Response response = webTargetFactory
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(clusterSearchTask))) {
+                    .post(Entity.json(nodeSearchTask))) {
                 if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
                     throw new NotFoundException(response);
                 } else if (response.getStatus() != Status.OK.getStatusCode()) {

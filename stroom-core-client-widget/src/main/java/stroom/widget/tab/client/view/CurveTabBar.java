@@ -50,7 +50,7 @@ public class CurveTabBar extends AbstractTabBar implements HasShowTabMenuHandler
 
     @Override
     protected AbstractTab createTab(final TabData tabData) {
-        return new CurveTab(tabData.getIcon(), tabData.getLabel(), tabData.isCloseable());
+        return new CurveTab(tabData.getIcon(), tabData.getIconColour(), tabData.getLabel(), tabData.isCloseable());
     }
 
     @Override
@@ -60,7 +60,7 @@ public class CurveTabBar extends AbstractTabBar implements HasShowTabMenuHandler
 
     @Override
     protected int getTabGap() {
-        return 5;
+        return 0;
     }
 
     @Override

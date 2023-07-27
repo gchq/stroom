@@ -41,7 +41,7 @@
                 <g:FlowPanel styleName="annotationCommentContainer">
                     <g:TextArea ui:field="comment" styleName="annotationComment stroom-control allow-focus"/>
                     <g:SimplePanel ui:field="buttons" styleName="annotationButtons">
-                        <g:Button ui:field="create" addStyleNames="allow-focus" text="Create" width="200px"/>
+                        <b:Button ui:field="create" addStyleNames="allow-focus" text="Create" width="200px"/>
                     </g:SimplePanel>
                 </g:FlowPanel>
             </g:FlowPanel>

@@ -22,23 +22,26 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Null;
 import stroom.dashboard.expression.v1.ParamFactory;
-import stroom.dashboard.expression.v1.StaticValueGen;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.Field;
 
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class CompiledFields {
 
+    private final List<Field> fields;
     private final CompiledField[] compiledFields;
     private final FieldIndex fieldIndex;
     private final ValueReferenceIndex valueReferenceIndex;
 
-    private CompiledFields(final CompiledField[] compiledFields,
+    private CompiledFields(final List<Field> fields,
+                           final CompiledField[] compiledFields,
                            final FieldIndex fieldIndex,
                            final ValueReferenceIndex valueReferenceIndex) {
+        this.fields = fields;
         this.compiledFields = compiledFields;
         this.fieldIndex = fieldIndex;
         this.valueReferenceIndex = valueReferenceIndex;
@@ -54,7 +57,7 @@ public class CompiledFields {
                                         final Map<String, String> paramMap) {
         final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
         if (fields == null) {
-            return new CompiledFields(new CompiledField[0], fieldIndex, valueReferenceIndex);
+            return new CompiledFields(Collections.emptyList(), new CompiledField[0], fieldIndex, valueReferenceIndex);
         }
 
         final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
@@ -96,7 +99,11 @@ public class CompiledFields {
             compiledFields[i++] = compiledField;
         }
 
-        return new CompiledFields(compiledFields, fieldIndex, valueReferenceIndex);
+        return new CompiledFields(fields, compiledFields, fieldIndex, valueReferenceIndex);
+    }
+
+    public List<Field> getFields() {
+        return fields;
     }
 
     public CompiledField[] getCompiledFields() {

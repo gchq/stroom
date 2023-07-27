@@ -88,7 +88,11 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.INDEXING, StatisticStoreDoc.DOCUMENT_TYPE, "Statistic Store");
+        return new DocumentType(
+                DocumentTypeGroup.INDEXING,
+                StatisticStoreDoc.DOCUMENT_TYPE,
+                "Statistic Store",
+                StatisticStoreDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

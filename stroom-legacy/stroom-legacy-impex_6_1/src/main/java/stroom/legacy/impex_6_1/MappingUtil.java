@@ -133,7 +133,6 @@ public final class MappingUtil {
                 mapList(value.getComponents(), MappingUtil::map),
                 map(value.getLayout()),
                 null,
-                map(value.getTabVisibility()),
                 null,
                 false,
                 null);
@@ -447,14 +446,6 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.TabConfig(value.getId(), value.isVisible());
     }
 
-    public static stroom.dashboard.shared.DashboardConfig.TabVisibility map(stroom.legacy.model_6_1.DashboardConfig.TabVisibility value) {
-        if (value == null) {
-            return null;
-        }
-
-        return stroom.dashboard.shared.DashboardConfig.TabVisibility.valueOf(value.name());
-    }
-
     public static stroom.query.api.v2.Query map(stroom.legacy.model_6_1.Query value) {
         if (value == null) {
             return null;
@@ -525,7 +516,7 @@ public final class MappingUtil {
                 value.getType(),
                 map(value.getCategory()),
                 value.getRoles().toArray(new String[0]),
-                value.getIcon());
+                null);
     }
 
     public static stroom.pipeline.shared.data.PipelineElementType.Category map(stroom.legacy.model_6_1.PipelineElementType.Category value) {

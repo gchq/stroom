@@ -143,6 +143,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public DataSource getDataSource() {
         return DataSource
                 .builder()
+                .docRef(IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF)
                 .fields(IndexShardFields.getFields())
                 .build();
     }

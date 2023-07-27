@@ -25,6 +25,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
@@ -50,8 +51,9 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                                final Provider<VisualisationPresenter> editorProvider,
                                final RestFactory restFactory,
                                final ContentManager contentManager,
-                               final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                               final DocumentPluginEventManager entityPluginEventManager,
+                               final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }

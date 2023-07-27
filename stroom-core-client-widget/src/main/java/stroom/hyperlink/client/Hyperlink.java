@@ -1,6 +1,6 @@
 package stroom.hyperlink.client;
 
-import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.http.client.URL;
 
@@ -16,12 +16,12 @@ public class Hyperlink {
     private final String text;
     private final String href;
     private final String type;
-    private final Preset icon;
+    private final SvgImage icon;
 
     public Hyperlink(final String text,
                      final String href,
                      final String type,
-                     final Preset icon) {
+                     final SvgImage icon) {
         this.text = text;
         this.href = href;
         this.type = type;
@@ -82,7 +82,7 @@ public class Hyperlink {
         return decode(type);
     }
 
-    public Preset getIcon() {
+    public SvgImage getIcon() {
         return icon;
     }
 
@@ -147,7 +147,7 @@ public class Hyperlink {
         private String text;
         private String href;
         private String type;
-        private Preset icon;
+        private SvgImage icon;
 
         private Builder() {
         }
@@ -174,7 +174,7 @@ public class Hyperlink {
             return this;
         }
 
-        public Builder icon(final Preset icon) {
+        public Builder icon(final SvgImage icon) {
             this.icon = icon;
             return this;
         }

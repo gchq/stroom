@@ -22,11 +22,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
@@ -39,15 +35,11 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerView, StatisticStoreDoc> {
 
     private final MyDataGrid<StatisticField> dataGrid;
     private final MultiSelectionModelImpl<StatisticField> selectionModel;
@@ -59,8 +51,6 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     private StatisticsDataSourceData statisticsDataSourceData;
 
     private StatisticsCustomMaskListPresenter customMaskListPresenter;
-
-    private boolean readOnly = true;
 
     @Inject
     public StatisticsFieldListPresenter(final EventBus eventBus,
@@ -113,10 +103,10 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void enableButtons() {
-        newButton.setEnabled(!readOnly);
+        newButton.setEnabled(!isReadOnly());
         if (statisticsDataSourceData != null && statisticsDataSourceData.getFields() != null) {
             StatisticField selected = selectionModel.getSelected();
-            final boolean enabled = !readOnly && selected != null;
+            final boolean enabled = !isReadOnly() && selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
         } else {
@@ -124,7 +114,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
+        if (isReadOnly()) {
             newButton.setTitle("New field disabled as fields are read only");
             editButton.setTitle("Edit field disabled as fields are read only");
             removeButton.setTitle("Remove field disabled as fields are read only");
@@ -150,7 +140,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void onAdd() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final StatisticField statisticField = new StatisticField();
             final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
             final List<StatisticField> otherFields = statisticsDataSourceData.getFields();
@@ -173,7 +163,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void onEdit() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final StatisticField statisticField = selectionModel.getSelected();
             if (statisticField != null) {
                 final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
@@ -204,7 +194,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void onRemove() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final List<StatisticField> list = selectionModel.getSelectedItems();
             if (list != null && list.size() > 0) {
                 final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
@@ -235,32 +225,23 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
-        if (statisticsDataSource != null) {
-            statisticsDataSourceData = statisticsDataSource.getConfig();
+    protected void onRead(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
+        enableButtons();
+
+        if (document != null) {
+            statisticsDataSourceData = document.getConfig();
 
             if (customMaskListPresenter != null) {
-                customMaskListPresenter.read(docRef, statisticsDataSource);
+                customMaskListPresenter.read(docRef, document, readOnly);
             }
             refresh();
         }
     }
 
     @Override
-    public StatisticStoreDoc write(final StatisticStoreDoc entity) {
-        entity.setConfig(statisticsDataSourceData);
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    protected StatisticStoreDoc onWrite(final StatisticStoreDoc document) {
+        document.setConfig(statisticsDataSourceData);
+        return document;
     }
 
     public void setCustomMaskListPresenter(final StatisticsCustomMaskListPresenter customMaskListPresenter) {

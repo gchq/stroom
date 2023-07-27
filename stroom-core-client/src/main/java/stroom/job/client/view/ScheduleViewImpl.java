@@ -17,11 +17,12 @@
 package stroom.job.client.view;
 
 import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -45,6 +46,7 @@ public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
     @Inject
     public ScheduleViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        calculate.setIcon(SvgImage.HISTORY);
     }
 
 //

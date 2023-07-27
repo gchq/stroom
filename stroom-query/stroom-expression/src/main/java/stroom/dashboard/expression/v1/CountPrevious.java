@@ -51,7 +51,7 @@ public class CountPrevious extends AbstractFunction implements AggregateFunction
 
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
-        valueReference = valueReferenceIndex.addCountIteration(iteration, name + " - " + iteration);
+        valueReference = valueReferenceIndex.addCountIteration(name + " - " + iteration, iteration);
         super.addValueReferences(valueReferenceIndex);
     }
 

@@ -11,8 +11,10 @@ import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.analytics.impl.db.jooq.tables.AnalyticRule;
-import stroom.analytics.impl.db.jooq.tables.AnalyticRuleState;
+import stroom.analytics.impl.db.jooq.tables.AnalyticNotification;
+import stroom.analytics.impl.db.jooq.tables.AnalyticNotificationState;
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilter;
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilterTracker;
 
 
 /**
@@ -29,14 +31,24 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
-     * The table <code>stroom.analytic_rule</code>.
+     * The table <code>stroom.analytic_notification</code>.
      */
-    public final AnalyticRule ANALYTIC_RULE = AnalyticRule.ANALYTIC_RULE;
+    public final AnalyticNotification ANALYTIC_NOTIFICATION = AnalyticNotification.ANALYTIC_NOTIFICATION;
 
     /**
-     * The table <code>stroom.analytic_rule_state</code>.
+     * The table <code>stroom.analytic_notification_state</code>.
      */
-    public final AnalyticRuleState ANALYTIC_RULE_STATE = AnalyticRuleState.ANALYTIC_RULE_STATE;
+    public final AnalyticNotificationState ANALYTIC_NOTIFICATION_STATE = AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE;
+
+    /**
+     * The table <code>stroom.analytic_processor_filter</code>.
+     */
+    public final AnalyticProcessorFilter ANALYTIC_PROCESSOR_FILTER = AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER;
+
+    /**
+     * The table <code>stroom.analytic_processor_filter_tracker</code>.
+     */
+    public final AnalyticProcessorFilterTracker ANALYTIC_PROCESSOR_FILTER_TRACKER = AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER;
 
     /**
      * No further instances allowed
@@ -54,8 +66,10 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            AnalyticRule.ANALYTIC_RULE,
-            AnalyticRuleState.ANALYTIC_RULE_STATE
+            AnalyticNotification.ANALYTIC_NOTIFICATION,
+            AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE,
+            AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER,
+            AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER
         );
     }
 }

@@ -2,6 +2,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.explorer.shared.DocumentType;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -51,7 +52,8 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
     @Override
     public void render(final Context context, final DocumentType item, final SafeHtmlBuilder sb) {
         if (item != null) {
-            final SafeHtml iconHtml = template.icon("explorerCell-icon " + item.getIconClassName());
+            final SafeHtml iconHtml = SvgImageUtil.toSafeHtml(item.getIcon(), "explorerCell-icon");
+
             final SafeHtml textHtml = template.text("explorerCell-text",
                     SafeHtmlUtils.fromString(item.getType()));
 
@@ -65,9 +67,6 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
     }
 
     interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml icon(String iconClass);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml text(String textClass, SafeHtml text);

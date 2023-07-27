@@ -24,11 +24,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.svg.client.SvgPresets;
@@ -40,16 +36,13 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class IndexFieldListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, IndexDoc> {
 
     private final MyDataGrid<IndexField> dataGrid;
     private final MultiSelectionModelImpl<IndexField> selectionModel;
@@ -381,27 +374,19 @@ public class IndexFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final IndexDoc index) {
-        if (index != null) {
-            indexFields = index.getFields();
+    protected void onRead(final DocRef docRef, final IndexDoc document, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+
+        if (document != null) {
+            indexFields = document.getFields();
         }
         refresh();
     }
 
     @Override
-    public IndexDoc write(final IndexDoc entity) {
-        entity.setFields(indexFields);
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    protected IndexDoc onWrite(final IndexDoc document) {
+        document.setFields(indexFields);
+        return document;
     }
 }

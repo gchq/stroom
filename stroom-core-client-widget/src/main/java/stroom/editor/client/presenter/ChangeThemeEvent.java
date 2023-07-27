@@ -71,6 +71,10 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
         return editorKeyBindings;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onChange(ChangeThemeEvent event);

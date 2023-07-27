@@ -30,6 +30,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -123,12 +125,38 @@ public final class ExpressionOperator extends ExpressionItem {
         return op;
     }
 
+    /**
+     * @return All children enabled or not
+     */
     public List<ExpressionItem> getChildren() {
         return children;
     }
 
     public boolean hasChildren() {
         return children != null && children.size() > 0;
+    }
+
+    /**
+     * @return All enabled children
+     */
+    @JsonIgnore
+    public List<ExpressionItem> getEnabledChildren() {
+        return children != null
+                ? children.stream()
+                .filter(Objects::nonNull)
+                .filter(ExpressionItem::enabled)
+                .collect(Collectors.toList())
+                : Collections.emptyList();
+    }
+
+    /**
+     * @return True if it has at least one child that is enabled
+     */
+    public boolean hasEnabledChildren() {
+        return children != null
+                && children.stream()
+                .anyMatch(expressionItem ->
+                        expressionItem != null && expressionItem.enabled());
     }
 
     @Override

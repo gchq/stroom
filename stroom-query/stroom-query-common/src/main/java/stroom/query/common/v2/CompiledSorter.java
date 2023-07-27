@@ -94,8 +94,8 @@ public class CompiledSorter<E extends Item> implements Comparator<E>, Function<S
         for (final CompiledSort compiledSort : compiledSorts) {
             final int fieldPos = compiledSort.getFieldIndex();
 
-            final Val v1 = o1.getValue(fieldPos, true);
-            final Val v2 = o2.getValue(fieldPos, true);
+            final Val v1 = o1.getValue(fieldPos);
+            final Val v2 = o2.getValue(fieldPos);
 
             int res = 0;
             if (v1 != null && v2 != null) {

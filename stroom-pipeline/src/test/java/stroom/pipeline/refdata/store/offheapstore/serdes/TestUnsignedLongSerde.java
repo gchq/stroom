@@ -22,6 +22,7 @@ import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.lmdb.serde.UnsignedLong;
 import stroom.lmdb.serde.UnsignedLongSerde;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -56,8 +57,8 @@ class TestUnsignedLongSerde extends AbstractSerdeTest<UnsignedLong, UnsignedLong
     }
 
     @Override
-    Class<UnsignedLongSerde> getSerdeType() {
-        return UnsignedLongSerde.class;
+    TypeLiteral<UnsignedLongSerde> getSerdeType() {
+        return new TypeLiteral<UnsignedLongSerde>(){};
     }
 
     @Override

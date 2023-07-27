@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg622"
+   width="16"
+   height="16"
+   viewBox="0 0 16 16"
+   sodipodi:docname="fields-sortaz.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs626" />
+  <sodipodi:namedview
+     id="namedview624"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="5.025983"
+     inkscape:cx="22.085232"
+     inkscape:cy="26.164036"
+     inkscape:window-width="1444"
+     inkscape:window-height="1236"
+     inkscape:window-x="5678"
+     inkscape:window-y="83"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g628" />
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Image"
+     id="g628">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:9.33333px;line-height:1.25;font-family:'Droid Sans Mono';fill:#010101;fill-opacity:1;stroke:none;-inkscape-font-specification:'Droid Sans Mono';font-stretch:normal;font-variant:normal"
+       x="1.6919255"
+       y="6.984611"
+       id="text634"><tspan
+         sodipodi:role="line"
+         id="tspan632"
+         x="1.6919255"
+         y="6.984611"
+         style="font-size:9.33333px;-inkscape-font-specification:'Droid Sans Mono';font-family:'Droid Sans Mono';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal">a</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:8.30671px;line-height:1.25;font-family:sans-serif;fill:#010101;fill-opacity:1;stroke:none;stroke-width:0.890005"
+       x="1.3740022"
+       y="16.11894"
+       id="text638"
+       transform="scale(1.1235889,0.89000524)"><tspan
+         sodipodi:role="line"
+         id="tspan636"
+         x="1.3740022"
+         y="16.11894"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.30671px;font-family:'Droid Sans Mono';-inkscape-font-specification:'Droid Sans Mono';stroke-width:0.890005">Z</tspan></text>
+    <path
+       style="fill:#010101;stroke:#010101;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;fill-opacity:1"
+       d="m 8.8845943,11.021639 h 2.6812047 l 0.07387,2.828908 z"
+       id="path1487" />
+    <path
+       style="fill:#010101;stroke:#010101;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;fill-opacity:1"
+       d="m 14.394742,11.021639 h -2.681205 l -0.07387,2.828908 z"
+       id="path1487-8" />
+    <path
+       style="fill:none;stroke:#010101;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="M 11.713537,11.021639 11.639669,2.8122217"
+       id="path1570"
+       sodipodi:nodetypes="cc" />
+  </g>
+</svg>

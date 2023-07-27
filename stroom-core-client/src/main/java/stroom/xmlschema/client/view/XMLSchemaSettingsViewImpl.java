@@ -22,7 +22,6 @@ import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSet
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -32,8 +31,6 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
 
     private final Widget widget;
 
-    @UiField
-    TextArea description;
     @UiField
     TextBox namespaceURI;
     @UiField
@@ -51,11 +48,6 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public TextArea getDescription() {
-        return description;
     }
 
     @Override
@@ -80,7 +72,6 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         namespaceURI.setEnabled(!readOnly);
         systemId.setEnabled(!readOnly);
         schemaGroup.setEnabled(!readOnly);

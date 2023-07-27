@@ -16,44 +16,55 @@
 
 package stroom.pipeline.stepping.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.function.Consumer;
+
 public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterView {
 
     private final Widget widget;
     @UiField
+    Label nameLabel;
+    @UiField
     SimplePanel elementChooser;
     @UiField
-    ListBox skipToErrors;
+    SelectionBox<Severity> skipToErrors;
     @UiField
-    ListBox skipToOutput;
+    SelectionBox<OutputState> skipToOutput;
     @UiField
     SimplePanel xPathList;
+
+    private Consumer<Severity> skipToErrorsValueConsumer;
+
+    private Consumer<OutputState> skipToOutputValueConsumer;
 
     @Inject
     public SteppingFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        skipToErrors.addItem("");
-        skipToErrors.addItem(Severity.INFO.getDisplayValue());
-        skipToErrors.addItem(Severity.WARNING.getDisplayValue());
-        skipToErrors.addItem(Severity.ERROR.getDisplayValue());
-        skipToErrors.addItem(Severity.FATAL_ERROR.getDisplayValue());
+        skipToErrors.setNonSelectString("");
+        skipToErrors.addItem(Severity.INFO);
+        skipToErrors.addItem(Severity.WARNING);
+        skipToErrors.addItem(Severity.ERROR);
+        skipToErrors.addItem(Severity.FATAL_ERROR);
 
-        skipToOutput.addItem("");
-        skipToOutput.addItem(OutputState.NOT_EMPTY.getDisplayValue());
-        skipToOutput.addItem(OutputState.EMPTY.getDisplayValue());
+        skipToOutput.setNonSelectString("");
+        skipToOutput.addItem(OutputState.NOT_EMPTY);
+        skipToOutput.addItem(OutputState.EMPTY);
     }
 
     @Override
@@ -67,56 +78,57 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     }
 
     @Override
-    public Severity getSkipToErrors() {
-        final int index = skipToErrors.getSelectedIndex();
-        if (index <= 0) {
-            return null;
-        }
+    public void setName(final String name) {
+        nameLabel.setText(name);
+    }
 
-        return Severity.getSeverity(skipToErrors.getItemText(index));
+    @Override
+    public Severity getSkipToErrors() {
+        return skipToErrors.getValue();
     }
 
     @Override
     public void setSkipToErrors(Severity value) {
-        if (value == null) {
-            skipToErrors.setSelectedIndex(0);
-        } else if (Severity.INFO.equals(value)) {
-            skipToErrors.setSelectedIndex(1);
-        } else if (Severity.WARNING.equals(value)) {
-            skipToErrors.setSelectedIndex(2);
-        } else if (Severity.ERROR.equals(value)) {
-            skipToErrors.setSelectedIndex(3);
-        } else if (Severity.FATAL_ERROR.equals(value)) {
-            skipToErrors.setSelectedIndex(4);
-        }
+        skipToErrors.setValue(value);
+    }
+
+    @Override
+    public void setSkipToErrorsChangeHandler(final Consumer<Severity> skipToErrorsValueConsumer) {
+        this.skipToErrorsValueConsumer = skipToErrorsValueConsumer;
     }
 
     @Override
     public OutputState getSkipToOutput() {
-        final int index = skipToOutput.getSelectedIndex();
-        if (index <= 0) {
-            return null;
-        }
-        if (index == 1) {
-            return OutputState.NOT_EMPTY;
-        }
-        return OutputState.EMPTY;
+        return skipToOutput.getValue();
     }
 
     @Override
     public void setSkipToOutput(OutputState value) {
-        if (value == null) {
-            skipToOutput.setSelectedIndex(0);
-        } else if (OutputState.NOT_EMPTY.equals(value)) {
-            skipToOutput.setSelectedIndex(1);
-        } else if (OutputState.EMPTY.equals(value)) {
-            skipToOutput.setSelectedIndex(2);
-        }
+        skipToOutput.setValue(value);
+    }
+
+    @Override
+    public void setSkipToOutputChangeHandler(final Consumer<OutputState> skipToOutputValueConsumer) {
+        this.skipToOutputValueConsumer = skipToOutputValueConsumer;
     }
 
     @Override
     public void setXPathList(final View view) {
         xPathList.setWidget(view.asWidget());
+    }
+
+    @UiHandler("skipToErrors")
+    public void onSkipToErrorsValueChange(final ValueChangeEvent<Severity> e) {
+        if (skipToErrorsValueConsumer != null) {
+            skipToErrorsValueConsumer.accept(getSkipToErrors());
+        }
+    }
+
+    @UiHandler("skipToOutput")
+    public void onSkipToOutputValueChange(final ValueChangeEvent<OutputState> e) {
+        if (skipToOutputValueConsumer != null) {
+            skipToOutputValueConsumer.accept(getSkipToOutput());
+        }
     }
 
     public interface Binder extends UiBinder<Widget, SteppingFilterViewImpl> {

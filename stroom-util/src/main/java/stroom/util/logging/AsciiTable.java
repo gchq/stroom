@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
+import java.time.Duration;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,30 +85,37 @@ public class AsciiTable {
      *
      * @return A {@link String} containing the markdown style table.
      */
-    public static <T> String from(final Collection<T> data) {
-        return from(data, false);
+    public static <T> String fromCollection(final Collection<T> data) {
+        return fromCollection(data, false);
     }
 
     /**
      * Builds a two column table from a map
-     * Attempts to determine the structure of the table from the public getters
-     * of the collection items. The column names are derived from the method name,
-     * e.g. getFirstNameLength() becomes "First Name Length".
-     * Columns MAY be in declared order, but order cannot be guaranteed.
      * Sub-classes of {@link Number} are right aligned.
      *
      * @return A {@link String} containing the markdown style table.
      */
-    public static <K, V> String from(final Map<K, V> map) {
+    public static <K, V> String fromMap(final Map<K, V> map) {
         Objects.requireNonNull(map);
         final Set<Entry<K, V>> data = map.entrySet();
+        return fromEntries(map.entrySet());
+    }
 
-        return builder(data)
+    /**
+     * Builds a two column table from a collection of {@link Entry}
+     * Sub-classes of {@link Number} are right aligned.
+     *
+     * @return A {@link String} containing the markdown style table.
+     */
+    public static <K, V> String fromEntries(final Collection<Entry<K, V>> entries) {
+        Objects.requireNonNull(entries);
+
+        return builder(entries)
                 .withColumn(Column.builder("Key", (Entry<K, V> e) -> e.getKey())
-                        .autoAligned(data)
+                        .autoAligned(entries)
                         .build())
                 .withColumn(Column.builder("Value", (Entry<K, V> e) -> e.getValue())
-                        .autoAligned(data)
+                        .autoAligned(entries)
                         .build())
                 .build();
     }
@@ -122,7 +130,7 @@ public class AsciiTable {
      *                    be in no particular order.
      * @return A {@link String} containing the markdown style table.
      */
-    public static <T> String from(final Collection<T> data, boolean sortColumns) {
+    public static <T> String fromCollection(final Collection<T> data, boolean sortColumns) {
         if (data == null || data.isEmpty()) {
             return "NO DATA";
         }
@@ -440,13 +448,61 @@ public class AsciiTable {
         }
 
         /**
+         * A right-aligned column for {@link java.time.Duration} values represented as milliseconds
+         * with thousand separators.
+         */
+        public static <T_ROW, T_COL extends Duration> Column<T_ROW, Long> durationMillis(
+                final String name,
+                final Function<T_ROW, T_COL> columnExtractor) {
+
+            final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setGroupingUsed(true);
+            numberFormat.setMinimumFractionDigits(0);
+            numberFormat.setMaximumFractionDigits(0);
+            Objects.requireNonNull(columnExtractor);
+            Function<T_ROW, Long> newExtractor = row -> columnExtractor.apply(row)
+                    .toMillis();
+
+            return new ColumnBuilder<>(
+                    Objects.requireNonNull(name),
+                    newExtractor)
+                    .rightAligned()
+                    .withFormat(numberFormat::format)
+                    .build();
+        }
+
+        /**
+         * A right-aligned column for {@link java.time.Duration} values represented as nanos
+         * with thousand separators.
+         */
+        public static <T_ROW, T_COL extends Duration> Column<T_ROW, Long> durationNanos(
+                final String name,
+                final Function<T_ROW, T_COL> columnExtractor) {
+
+            final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setGroupingUsed(true);
+            numberFormat.setMinimumFractionDigits(0);
+            numberFormat.setMaximumFractionDigits(0);
+            Objects.requireNonNull(columnExtractor);
+            Function<T_ROW, Long> newExtractor = row -> columnExtractor.apply(row)
+                    .toNanos();
+
+            return new ColumnBuilder<>(
+                    Objects.requireNonNull(name),
+                    newExtractor)
+                    .rightAligned()
+                    .withFormat(numberFormat::format)
+                    .build();
+        }
+
+        /**
          * A right-aligned column for integer numeric values, formatted with thousands separator
          */
         public static <T_ROW, T_COL extends Number> Column<T_ROW, T_COL> integer(
                 final String name,
                 final Function<T_ROW, T_COL> columnExtractor) {
 
-            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            final NumberFormat numberFormat = NumberFormat.getNumberInstance();
             numberFormat.setGroupingUsed(true);
             numberFormat.setMinimumFractionDigits(0);
             numberFormat.setMaximumFractionDigits(0);

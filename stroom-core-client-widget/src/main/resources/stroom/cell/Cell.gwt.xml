@@ -7,7 +7,6 @@
   <inherits name='stroom.cell.tickbox.TickBox' />
   <inherits name='stroom.cell.info.Info' />
   <inherits name='stroom.cell.valuespinner.ValueSpinner' />
-  <inherits name='stroom.cell.dropdowntree.DropDownTree' />
   <inherits name='stroom.cell.list.CellList' />
 
   <source path="client" />

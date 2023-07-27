@@ -21,15 +21,15 @@ import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.client.presenter.IndexSettingsUiHandlers;
 import stroom.index.shared.IndexDoc.PartitionBy;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
-import stroom.widget.valuespinner.client.SpinnerEvent;
+import stroom.item.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -42,11 +42,9 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     private final Widget widget;
 
     @UiField
-    TextArea description;
-    @UiField
     ValueSpinner maxDocsPerShard;
-    @UiField(provided = true)
-    ItemListBox<PartitionBy> partitionBy;
+    @UiField
+    SelectionBox<PartitionBy> partitionBy;
     @UiField
     ValueSpinner partitionSize;
     @UiField
@@ -54,21 +52,21 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @UiField
     TextBox timeField;
     @UiField
-    ItemListBox<SupportedRetentionAge> retentionAge;
+    SelectionBox<SupportedRetentionAge> retentionAge;
     @UiField
-    StringListBox volumeGroups;
+    SelectionBox<String> volumeGroups;
     @UiField
     SimplePanel defaultExtractionPipeline;
 
     @Inject
     public IndexSettingsViewImpl(final Binder binder) {
-        partitionBy = new ItemListBox<>("No partition");
+        widget = binder.createAndBindUi(this);
+
+        partitionBy.setNonSelectString("No partition");
         partitionBy.addItem(PartitionBy.YEAR);
         partitionBy.addItem(PartitionBy.MONTH);
         partitionBy.addItem(PartitionBy.WEEK);
         partitionBy.addItem(PartitionBy.DAY);
-
-        widget = binder.createAndBindUi(this);
 
         maxDocsPerShard.setValue(1000000000L);
         maxDocsPerShard.setMin(1000L);
@@ -81,45 +79,11 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
         partitionSize.setValue(1L);
         partitionSize.setMin(1L);
         partitionSize.setMax(100L);
-
-        final SpinnerEvent.Handler spinnerHandler = event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        };
-        maxDocsPerShard.getSpinner().addSpinnerHandler(spinnerHandler);
-        shardsPerPartition.getSpinner().addSpinnerHandler(spinnerHandler);
-        partitionBy.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-        timeField.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-        retentionAge.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-        partitionSize.getSpinner().addSpinnerHandler(spinnerHandler);
-        volumeGroups.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public TextArea getDescription() {
-        return description;
     }
 
     @Override
@@ -144,12 +108,12 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public PartitionBy getPartitionBy() {
-        return this.partitionBy.getSelectedItem();
+        return this.partitionBy.getValue();
     }
 
     @Override
     public void setPartitionBy(final PartitionBy partitionBy) {
-        this.partitionBy.setSelectedItem(partitionBy);
+        this.partitionBy.setValue(partitionBy);
     }
 
     @Override
@@ -173,12 +137,12 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     }
 
     @Override
-    public ItemListBox<SupportedRetentionAge> getRetentionAge() {
+    public SelectionBox<SupportedRetentionAge> getRetentionAge() {
         return retentionAge;
     }
 
     @Override
-    public StringListBox getVolumeGroups() {
+    public SelectionBox<String> getVolumeGroups() {
         return volumeGroups;
     }
 
@@ -189,13 +153,53 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         maxDocsPerShard.setEnabled(!readOnly);
         partitionBy.setEnabled(!readOnly);
         partitionSize.setEnabled(!readOnly);
         shardsPerPartition.setEnabled(!readOnly);
         retentionAge.setEnabled(!readOnly);
         volumeGroups.setEnabled(!readOnly);
+    }
+
+    @UiHandler("maxDocsPerShard")
+    public void onMaxDocsPerShardValueChange(final ValueChangeEvent<Long> e) {
+        fireChange();
+    }
+
+    @UiHandler("partitionBy")
+    public void onPartitionByValueChange(final ValueChangeEvent<PartitionBy> e) {
+        fireChange();
+    }
+
+    @UiHandler("partitionSize")
+    public void onPartitionSizeValueChange(final ValueChangeEvent<Long> e) {
+        fireChange();
+    }
+
+    @UiHandler("shardsPerPartition")
+    public void onShardsPerPartitionValueChange(final ValueChangeEvent<Long> e) {
+        fireChange();
+    }
+
+    @UiHandler("timeField")
+    public void onTimeFieldKeyDown(final KeyDownEvent e) {
+        fireChange();
+    }
+
+    @UiHandler("retentionAge")
+    public void onRetentionAgeValueChange(final ValueChangeEvent<SupportedRetentionAge> e) {
+        fireChange();
+    }
+
+    @UiHandler("volumeGroups")
+    public void onVolumeGroupsValueChange(final ValueChangeEvent<String> e) {
+        fireChange();
+    }
+
+    private void fireChange() {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, IndexSettingsViewImpl> {

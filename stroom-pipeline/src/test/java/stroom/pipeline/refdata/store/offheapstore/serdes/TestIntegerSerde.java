@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.lmdb.serde.IntegerSerde;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -59,7 +60,7 @@ class TestIntegerSerde extends AbstractSerdeTest<Integer, IntegerSerde> {
     }
 
     @Override
-    Class<IntegerSerde> getSerdeType() {
-        return IntegerSerde.class;
+    TypeLiteral<IntegerSerde> getSerdeType() {
+        return new TypeLiteral<IntegerSerde>(){};
     }
 }

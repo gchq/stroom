@@ -23,15 +23,17 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -45,52 +47,81 @@ import javax.inject.Provider;
 public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView, KafkaConfigDoc> {
 
     private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
-    private static final TabData CONFIG_TAB = new TabDataImpl("Config");
-
-    private final KafkaConfigSettingsPresenter settingsPresenter;
-    private final Provider<EditorPresenter> editorPresenterProvider;
+    private static final TabData CONFIG = new TabDataImpl("Config");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     private final ButtonView downloadButton;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
-
-    private EditorPresenter editorPresenter;
-    private boolean readOnly = true;
 
     private DocRef docRef;
 
     @Inject
     public KafkaConfigPresenter(final EventBus eventBus,
                                 final LinkTabPanelView view,
-                                final KafkaConfigSettingsPresenter settingsPresenter,
-                                final ClientSecurityContext securityContext,
                                 final Provider<EditorPresenter> editorPresenterProvider,
+                                final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                 final RestFactory restFactory,
                                 final LocationManager locationManager) {
-        super(eventBus, view, securityContext);
-        this.settingsPresenter = settingsPresenter;
-        this.editorPresenterProvider = editorPresenterProvider;
+        super(eventBus, view);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
-        settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        downloadButton = SvgButton.create(SvgPresets.DOWNLOAD);
+        toolbar.addButton(downloadButton);
+
+        addTab(CONFIG, new AbstractTabProvider<KafkaConfigDoc, EditorPresenter>(eventBus) {
+            @Override
+            protected EditorPresenter createPresenter() {
+                final EditorPresenter editorPresenter = editorPresenterProvider.get();
+                editorPresenter.setMode(AceEditorMode.PROPERTIES);
+                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                return editorPresenter;
+            }
+
+            @Override
+            public void onRead(final EditorPresenter presenter,
+                               final DocRef docRef,
+                               final KafkaConfigDoc document,
+                               final boolean readOnly) {
+                presenter.setReadOnly(readOnly);
+                presenter.getFormatAction().setAvailable(!readOnly);
+
+                if (document.getData() != null) {
+                    presenter.setText(document.getData());
+                }
+            }
+
+            @Override
+            public KafkaConfigDoc onWrite(final EditorPresenter presenter, final KafkaConfigDoc document) {
+                document.setData(presenter.getText());
+                return document;
             }
         });
+        addTab(DOCUMENTATION, new MarkdownTabProvider<KafkaConfigDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final KafkaConfigDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
 
-        downloadButton = addButtonLeft(SvgPresets.DOWNLOAD);
-
-        addTab(CONFIG_TAB);
-        addTab(SETTINGS_TAB);
-        selectTab(CONFIG_TAB);
+            @Override
+            public KafkaConfigDoc onWrite(final MarkdownEditPresenter presenter,
+                                          final KafkaConfigDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
+        selectTab(CONFIG);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
@@ -100,68 +131,15 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         }));
     }
 
-
     @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS_TAB.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (CONFIG_TAB.equals(tab)) {
-            callback.onReady(getOrCreateCodePresenter());
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final KafkaConfigDoc doc) {
-        super.onRead(docRef, doc);
+    public void onRead(final DocRef docRef, final KafkaConfigDoc doc, final boolean readOnly) {
+        super.onRead(docRef, doc, readOnly);
         this.docRef = docRef;
         downloadButton.setEnabled(true);
-
-        settingsPresenter.read(docRef, doc);
-
-        if (editorPresenter != null && doc.getData() != null) {
-            editorPresenter.setText(doc.getData());
-        }
-    }
-
-    @Override
-    protected KafkaConfigDoc onWrite(KafkaConfigDoc doc) {
-        doc = settingsPresenter.write(doc);
-        if (editorPresenter != null) {
-            doc.setData(editorPresenter.getText());
-        }
-        return doc;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (editorPresenter != null) {
-            editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getFormatAction().setAvailable(!readOnly);
-        }
     }
 
     @Override
     public String getType() {
         return KafkaConfigDoc.DOCUMENT_TYPE;
-    }
-
-    private EditorPresenter getOrCreateCodePresenter() {
-        if (editorPresenter == null) {
-            editorPresenter = editorPresenterProvider.get();
-            editorPresenter.setMode(AceEditorMode.PROPERTIES);
-            registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-            registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
-            editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getFormatAction().setAvailable(!readOnly);
-            if (getEntity() != null && getEntity().getData() != null) {
-                editorPresenter.setText(getEntity().getData());
-            }
-        }
-        return editorPresenter;
     }
 }

@@ -29,7 +29,6 @@
 	height: 100%;
 	border: thin solid var(--dialog__border-color);
 	border-radius: 6px;
-	background-image: var(--dialog-background-image);
 	background-color: var(--dialog__background-color);
 	box-shadow: var(--dialog__shadow);
 	overflow: hidden;
@@ -46,7 +45,6 @@
     padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) 0 var(--dialog__padding--horizontal);
     color: var(--text-color);
     cursor: default;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: 0;
@@ -62,7 +60,7 @@
 .dialog-content {
     flex-grow: 1;
     overflow: auto;
-    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
 }
 
 .dialog-buttons {

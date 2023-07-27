@@ -17,8 +17,7 @@
 package stroom.iframe.client.presenter;
 
 import stroom.content.client.event.RefreshContentTabEvent;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -30,7 +29,7 @@ import com.gwtplatform.mvp.client.View;
 public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPresenter.IFrameContentView>
         implements TabData, IFrameLoadUiHandlers {
 
-    private Icon icon = SvgPresets.LINK;
+    private SvgImage icon = SvgImage.DEPENDENCIES;
 
     @Inject
     public IFrameContentPresenter(final EventBus eventBus, final IFrameContentView view) {
@@ -50,14 +49,14 @@ public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPrese
         getView().setCustomTitle(customTitle);
     }
 
-    public void setIcon(final Icon icon) {
+    public void setIcon(final SvgImage icon) {
         if (icon != null) {
             this.icon = icon;
         }
     }
 
     @Override
-    public Icon getIcon() {
+    public SvgImage getIcon() {
         return icon;
     }
 

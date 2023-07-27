@@ -33,6 +33,8 @@
 <!--    <logger name="stroom.data.store.impl.fs.PhysicalDeleteExecutor" level="DEBUG" />-->
 <!--    <logger name="stroom.data.store.impl.fs.FsFileDeleter" level="DEBUG" />-->
 
+    <logger name="stroom.pipeline.errorhandler.ErrorReceiverProxy" level="DEBUG" />
+
 
 
 <!--    <logger name="stroom.statistics.impl.sql.SQLStatisticValueBatchSaveService" level="DEBUG" />-->
@@ -44,7 +46,7 @@
 
     <logger name="stroom.pipeline.writer.FileAppender" level="trace" />
 
-    <logger name="org.flywaydb" level="info" />
+    <logger name="org.flywaydb" level="error" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />

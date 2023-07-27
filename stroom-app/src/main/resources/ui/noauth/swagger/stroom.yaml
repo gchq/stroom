@@ -244,7 +244,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ActivityValidationResult'
           description: default response
-      summary: Create an Activity
+      summary: Validate an Activity
       tags:
       - Activities
   /activity/v1/{id}:
@@ -310,6 +310,258 @@ paths:
       summary: Update an Activity
       tags:
       - Activities
+  /analyticDataShard/v1/find:
+    post:
+      operationId: findAnalyticDataShards
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindAnalyticDataShardCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageAnalyticDataShard'
+          description: default response
+      summary: Find the analytic data shards for the specified analytic
+      tags:
+      - AnalyticNotifications
+  /analyticDataShard/v1/getData:
+    post:
+      operationId: getShardData
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAnalyticShardDataRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+          description: default response
+      summary: Get the data for the shard
+      tags:
+      - AnalyticNotifications
+  /analyticNotification/v1:
+    post:
+      operationId: createAnalyticNotification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticNotification'
+        description: notification
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticNotification'
+          description: default response
+      summary: Create an analytic notification
+      tags:
+      - AnalyticNotifications
+  /analyticNotification/v1/find:
+    post:
+      operationId: findAnalyticNotifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindAnalyticNotificationCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageAnalyticNotificationRow'
+          description: default response
+      summary: Find the analytic notifications for the specified analytic
+      tags:
+      - AnalyticNotifications
+  /analyticNotification/v1/{uuid}:
+    delete:
+      operationId: updateAnalyticNotification
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticNotification'
+        description: notification
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete an analytic notification
+      tags:
+      - AnalyticNotifications
+    put:
+      operationId: updateAnalyticNotification_1
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticNotification'
+        description: notification
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticNotification'
+          description: default response
+      summary: Update an analytic notification
+      tags:
+      - AnalyticNotifications
+  /analyticProcessorFilter/v1:
+    post:
+      operationId: createAnalyticProcessorFilter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticProcessorFilter'
+        description: processor filter
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticProcessorFilter'
+          description: default response
+      summary: Create an analytic processor filter
+      tags:
+      - AnalyticProcessorFilters
+  /analyticProcessorFilter/v1/find:
+    post:
+      operationId: findAnalyticProcessorFilters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindAnalyticProcessorFilterCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageAnalyticProcessorFilter'
+          description: default response
+      summary: Find the analytic processor filters for the specified analytic
+      tags:
+      - AnalyticProcessorFilters
+  /analyticProcessorFilter/v1/tracker:
+    post:
+      operationId: findAnalyticProcessorFilterTracker
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: filterUuid
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticProcessorFilterTracker'
+          description: default response
+      summary: Find the analytic processor filter tracker for the specified filter
+      tags:
+      - AnalyticProcessorFilters
+  /analyticProcessorFilter/v1/{uuid}:
+    delete:
+      operationId: updateAnalyticProcessorFilter
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticProcessorFilter'
+        description: processor filter
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete an analytic processor filter
+      tags:
+      - AnalyticProcessorFilters
+    put:
+      operationId: updateAnalyticProcessorFilter_1
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticProcessorFilter'
+        description: processor filter
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticProcessorFilter'
+          description: default response
+      summary: Update an analytic processor filter
+      tags:
+      - AnalyticProcessorFilters
   /analyticRule/v1/{uuid}:
     get:
       operationId: fetchAnalyticRule
@@ -1268,36 +1520,6 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/fetchTimeZones:
-    get:
-      operationId: fetchTimeZones
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Fetch time zone data from the server
-      tags:
-      - Dashboards
-  /dashboard/v1/functions:
-    get:
-      operationId: fetchDashboardFunctions
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FunctionSignature'
-          description: default response
-      summary: Fetch all expression functions
-      tags:
-      - Dashboards
   /dashboard/v1/search/{nodeName}:
     post:
       operationId: dashboardSearch
@@ -1595,6 +1817,26 @@ paths:
             schema:
               $ref: '#/components/schemas/DocRef'
         description: dataSourceRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+          description: default response
+      summary: Fetch data source fields
+      tags:
+      - Data Sources
+  /dataSource/v1/fetchFieldsFromQuery:
+    post:
+      operationId: fetchDataSourceFieldsFromQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: query
         required: true
       responses:
         default:
@@ -4132,7 +4374,7 @@ paths:
       - Queries
   /query/v1/fetchTimeZones:
     get:
-      operationId: fetchTimeZones_1
+      operationId: fetchTimeZones
       responses:
         default:
           content:
@@ -4143,6 +4385,21 @@ paths:
                   type: string
           description: default response
       summary: Fetch time zone data from the server
+      tags:
+      - Queries
+  /query/v1/functions:
+    get:
+      operationId: fetchFunctions
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FunctionSignature'
+          description: default response
+      summary: Fetch all expression functions
       tags:
       - Queries
   /query/v1/search/{nodeName}:
@@ -4169,6 +4426,21 @@ paths:
                 $ref: '#/components/schemas/DashboardSearchResponse'
           description: default response
       summary: Perform a new search or get new results
+      tags:
+      - Queries
+  /query/v1/structure:
+    get:
+      operationId: fetchStructureElements
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StructureElement'
+          description: default response
+      summary: Fetch all structure element descriptions
       tags:
       - Queries
   /query/v1/validateQuery:
@@ -4330,6 +4602,35 @@ paths:
         on the named node, or all nodes if null.
       tags:
       - Reference Data
+  /refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}:
+    delete:
+      operationId: purgeReferenceDataByAge_1
+      parameters:
+      - in: path
+        name: feedName
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: purgeAge
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Explicitly delete all entries belonging to a feed that are older than
+        purgeAge.Performed on the named node, or all nodes if null.
+      tags:
+      - Reference Data
   /refData/v1/purgeByStream/{refStreamId}:
     delete:
       operationId: purgeReferenceDataByStream
@@ -4430,7 +4731,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClusterSearchTask'
+              $ref: '#/components/schemas/NodeSearchTask'
       responses:
         default:
           content:
@@ -5626,9 +5927,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                $ref: '#/components/schemas/Suggestions'
           description: default response
       summary: Fetch some suggestions
       tags:
@@ -6032,6 +6331,21 @@ paths:
       summary: Deletes the user with the supplied UUID
       tags:
       - Authorisation
+  /view/v1/list:
+    get:
+      operationId: listViews
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocRef'
+          description: default response
+      summary: Fetch view names
+      tags:
+      - Views
   /view/v1/{uuid}:
     get:
       operationId: fetchView
@@ -6463,6 +6777,151 @@ components:
             type: string
           userUuid:
             type: string
+    AnalyticDataShard:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        node:
+          type: string
+        path:
+          type: string
+        size:
+          type: integer
+          format: int64
+    AnalyticNotification:
+      type: object
+      properties:
+        analyticUuid:
+          type: string
+        config:
+          $ref: '#/components/schemas/AnalyticNotificationConfig'
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        enabled:
+          type: boolean
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: integer
+          format: int32
+    AnalyticNotificationConfig:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    AnalyticNotificationEmailConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - type: object
+        properties:
+          emailAddress:
+            type: string
+          timeToWaitForData:
+            $ref: '#/components/schemas/SimpleDuration'
+    AnalyticNotificationRow:
+      type: object
+      properties:
+        analyticNotification:
+          $ref: '#/components/schemas/AnalyticNotification'
+        analyticNotificationState:
+          $ref: '#/components/schemas/AnalyticNotificationState'
+    AnalyticNotificationState:
+      type: object
+      properties:
+        lastExecutionTime:
+          type: integer
+          format: int64
+        message:
+          type: string
+        notificationUuid:
+          type: string
+    AnalyticNotificationStreamConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - type: object
+        properties:
+          destinationFeed:
+            $ref: '#/components/schemas/DocRef'
+          timeToWaitForData:
+            $ref: '#/components/schemas/SimpleDuration'
+          useSourceFeedIfPossible:
+            type: boolean
+    AnalyticProcessorFilter:
+      type: object
+      properties:
+        analyticUuid:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        enabled:
+          type: boolean
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
+        node:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: integer
+          format: int32
+    AnalyticProcessorFilterTracker:
+      type: object
+      properties:
+        eventCount:
+          type: integer
+          format: int64
+        filterUuid:
+          type: string
+        lastEventId:
+          type: integer
+          format: int64
+        lastEventTime:
+          type: integer
+          format: int64
+        lastMetaId:
+          type: integer
+          format: int64
+        lastPollMs:
+          type: integer
+          format: int64
+        lastPollTaskCount:
+          type: integer
+          format: int32
+        message:
+          type: string
+        metaCount:
+          type: integer
+          format: int64
     AnalyticRuleDoc:
       type: object
       properties:
@@ -6476,10 +6935,10 @@ components:
           format: int64
         createUser:
           type: string
+        dataRetention:
+          $ref: '#/components/schemas/SimpleDuration'
         description:
           type: string
-        destinationFeed:
-          $ref: '#/components/schemas/DocRef'
         languageVersion:
           type: string
           enum:
@@ -6487,8 +6946,6 @@ components:
           - SIGMA
         name:
           type: string
-        processSettings:
-          $ref: '#/components/schemas/AnalyticRuleProcessSettings'
         query:
           type: string
         type:
@@ -6502,19 +6959,6 @@ components:
           type: string
         version:
           type: string
-    AnalyticRuleProcessSettings:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-        maxMetaCreateTimeMs:
-          type: integer
-          format: int64
-        minMetaCreateTimeMs:
-          type: integer
-          format: int64
-        timeToWaitForData:
-          $ref: '#/components/schemas/SimpleDuration'
     Annotation:
       type: object
       properties:
@@ -6890,31 +7334,6 @@ components:
           type: boolean
         nodeName:
           type: string
-    ClusterSearchTask:
-      type: object
-      properties:
-        dateTimeSettings:
-          $ref: '#/components/schemas/DateTimeSettings'
-        key:
-          $ref: '#/components/schemas/QueryKey'
-        now:
-          type: integer
-          format: int64
-        query:
-          $ref: '#/components/schemas/Query'
-        settings:
-          type: array
-          items:
-            $ref: '#/components/schemas/CoprocessorSettings'
-        shards:
-          type: array
-          items:
-            type: integer
-            format: int64
-        sourceTaskId:
-          $ref: '#/components/schemas/TaskId'
-        taskName:
-          type: string
     ComponentConfig:
       type: object
       properties:
@@ -7185,12 +7604,6 @@ components:
           type: string
         preferredSize:
           $ref: '#/components/schemas/Size'
-        tabVisibility:
-          type: string
-          enum:
-          - SHOW_ALL
-          - HIDE_SINGLE
-          - HIDE_ALL
         timeRange:
           $ref: '#/components/schemas/TimeRange'
       xml:
@@ -7404,6 +7817,8 @@ components:
       type: object
       properties:
         defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
+        docRef:
           $ref: '#/components/schemas/DocRef'
         fields:
           type: array
@@ -7622,14 +8037,183 @@ components:
           - INDEXING
           - CONFIGURATION
           - SYSTEM
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         type:
           type: string
     DocumentTypes:
       type: object
       properties:
-        nonSystemTypes:
+        types:
           type: array
           items:
             $ref: '#/components/schemas/DocumentType'
@@ -7889,8 +8473,177 @@ components:
       properties:
         docContentMatch:
           $ref: '#/components/schemas/DocContentMatch'
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         isFavourite:
           type: boolean
         path:
@@ -7905,8 +8658,177 @@ components:
         depth:
           type: integer
           format: int32
-        iconClassName:
+        icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         isFavourite:
           type: boolean
         name:
@@ -8364,6 +9286,54 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SimpleUser'
+    FindAnalyticDataShardCriteria:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilterInput:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    FindAnalyticNotificationCriteria:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilterInput:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    FindAnalyticProcessorFilterCriteria:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilterInput:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     FindDBTableCriteria:
       type: object
       properties:
@@ -8767,8 +9737,16 @@ components:
             type: string
         description:
           type: string
+        helpAnchor:
+          type: string
         name:
           type: string
+        overloadType:
+          type: string
+          enum:
+          - NOT_OVERLOADED
+          - OVERLOADED_IN_CATEGORY
+          - OVERLOADED_GLOBALLY
         returnDescription:
           type: string
         returnType:
@@ -8783,6 +9761,19 @@ components:
           - "NULL"
           - NUMBER
           - STRING
+    GetAnalyticShardDataRequest:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
+        path:
+          type: string
+        requestedRange:
+          $ref: '#/components/schemas/OffsetRange'
+        timeRange:
+          $ref: '#/components/schemas/TimeRange'
     GetFeedStatusRequest:
       type: object
       properties:
@@ -9511,6 +10502,38 @@ components:
         version:
           type: integer
           format: int32
+    NodeSearchTask:
+      type: object
+      properties:
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
+        key:
+          $ref: '#/components/schemas/QueryKey'
+        now:
+          type: integer
+          format: int64
+        query:
+          $ref: '#/components/schemas/Query'
+        searchRequestSource:
+          $ref: '#/components/schemas/SearchRequestSource'
+        settings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoprocessorSettings'
+        shards:
+          type: array
+          items:
+            type: integer
+            format: int64
+        sourceTaskId:
+          $ref: '#/components/schemas/TaskId'
+        taskName:
+          type: string
+        type:
+          type: string
+          enum:
+          - LUCENE
+          - ANALYTICS
     NodeSetJobsEnabledRequest:
       type: object
       properties:
@@ -9749,6 +10772,175 @@ components:
           - DESTINATION
         icon:
           type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ALERT
+          - ARROW_DOWN
+          - ARROW_RIGHT
+          - ARROW_UP
+          - BACKWARD
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - RULESET
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
         roles:
           type: array
           items:
@@ -9962,6 +11154,8 @@ components:
           - FAILED
           - TERMINATED
           - PURGE_FAILED
+          - STAGED
+          - READY_FOR_PURGE
         refStreamDefinition:
           $ref: '#/components/schemas/RefStreamDefinition'
     Processor:
@@ -10423,6 +11617,8 @@ components:
           format: int64
         createUser:
           type: string
+        description:
+          type: string
         fields:
           type: array
           items:
@@ -10482,9 +11678,13 @@ components:
           - FAILED
           - TERMINATED
           - PURGE_FAILED
+          - STAGED
+          - READY_FOR_PURGE
     RefStoreEntry:
       type: object
       properties:
+        feedName:
+          type: string
         key:
           type: string
         mapDefinition:
@@ -10603,6 +11803,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Activity'
+    ResultPageAnalyticDataShard:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticDataShard'
+    ResultPageAnalyticNotificationRow:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticNotificationRow'
+    ResultPageAnalyticProcessorFilter:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticProcessorFilter'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -10982,6 +12212,8 @@ components:
       description: A request for new search or a follow up request for more data for
         an existing iterative search
       properties:
+        dateTimeLocale:
+          type: string
         dateTimeSettings:
           $ref: '#/components/schemas/DateTimeSettings'
         incremental:
@@ -11034,6 +12266,7 @@ components:
           type: string
           enum:
           - ANALYTIC_RULE
+          - ANALYTIC_RULE_UI
           - DASHBOARD_UI
           - QUERY_UI
           - API
@@ -11782,6 +13015,26 @@ components:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
         oldEntityData:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
+    StructureElement:
+      type: object
+      properties:
+        description:
+          type: string
+        snippets:
+          type: array
+          items:
+            type: string
+        title:
+          type: string
+    Suggestions:
+      type: object
+      properties:
+        cacheable:
+          type: boolean
+        list:
+          type: array
+          items:
+            type: string
     Summary:
       type: object
       allOf:
@@ -12199,6 +13452,8 @@ components:
           $ref: '#/components/schemas/ActivityConfig'
         defaultMaxResults:
           type: string
+        helpSubPathDocumentation:
+          type: string
         helpSubPathExpressions:
           type: string
         helpSubPathJobs:
@@ -12206,6 +13461,8 @@ components:
         helpSubPathProperties:
           type: string
         helpSubPathQuickFilter:
+          type: string
+        helpSubPathStroomQueryLanguage:
           type: string
         helpUrl:
           type: string
@@ -12387,8 +13644,6 @@ components:
           $ref: '#/components/schemas/DocRef'
         description:
           type: string
-        filter:
-          $ref: '#/components/schemas/ExpressionOperator'
         name:
           type: string
         pipeline:

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.structure.client.view;
 
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 
@@ -37,7 +37,7 @@ public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
     @UiField
     Label name;
     @UiField
-    ItemListBox<Source> source;
+    SelectionBox<Source> source;
     @UiField
     SimplePanel value;
 
@@ -68,7 +68,7 @@ public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
     }
 
     @Override
-    public ItemListBox<Source> getSource() {
+    public SelectionBox<Source> getSource() {
         return source;
     }
 

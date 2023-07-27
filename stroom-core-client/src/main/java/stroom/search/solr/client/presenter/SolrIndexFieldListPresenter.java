@@ -26,12 +26,9 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexResource;
@@ -46,8 +43,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -58,8 +53,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFieldListPresenter.SolrIndexFieldListView>
-        implements HasDocumentRead<SolrIndexDoc>, HasWrite<SolrIndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndexFieldListView, SolrIndexDoc> {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
@@ -74,8 +68,6 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     private SolrIndexDoc index;
     private List<SolrIndexField> fields;
     private SolrIndexFieldDataProvider<SolrIndexField> dataProvider;
-
-    private boolean readOnly = true;
 
     @Inject
     public SolrIndexFieldListPresenter(final EventBus eventBus,
@@ -107,28 +99,28 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
         super.onBind();
 
         registerHandler(newButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     onAdd();
                 }
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     onEdit();
                 }
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 if (MouseUtil.isPrimary(event)) {
                     onRemove();
                 }
             }
         }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (!readOnly) {
+            if (!isReadOnly()) {
                 enableButtons();
                 if (event.getSelectionType().isDoubleSelect()) {
                     onEdit();
@@ -138,8 +130,8 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     private void enableButtons() {
-        newButton.setEnabled(!readOnly);
-        if (!readOnly && fields != null) {
+        newButton.setEnabled(!isReadOnly());
+        if (!isReadOnly() && fields != null) {
             final SolrIndexField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
@@ -149,7 +141,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
+        if (isReadOnly()) {
             newButton.setTitle("New field disabled as index is read only");
             editButton.setTitle("Edit field disabled as index is read only");
             removeButton.setTitle("Remove field disabled as index is read only");
@@ -323,20 +315,19 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     @Override
-    public void read(final DocRef docRef,
-                     final SolrIndexDoc index) {
-        this.index = index;
-        if (index != null) {
-            fields = index.getFields().stream()
+    protected void onRead(final DocRef docRef, final SolrIndexDoc document, final boolean readOnly) {
+        this.index = document;
+        if (document != null) {
+            fields = document.getFields().stream()
                     .sorted(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
 
-            final SolrSynchState state = index.getSolrSynchState();
+            final SolrSynchState state = document.getSolrSynchState();
             final StringBuilder sb = new StringBuilder();
             if (state != null) {
                 if (state.getLastSynchronized() != null) {
                     sb.append("<b>Last synchronised:</b> ");
-                    sb.append(dateTimeFormatter.format(index.getSolrSynchState().getLastSynchronized()));
+                    sb.append(dateTimeFormatter.format(document.getSolrSynchState().getLastSynchronized()));
                     sb.append("</br>");
                 }
                 for (final String message : state.getMessages()) {
@@ -347,23 +338,13 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
             getView().setSynchState(sb.toString());
         }
         refresh();
-    }
-
-    @Override
-    public SolrIndexDoc write(final SolrIndexDoc entity) {
-        entity.setFields(fields);
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
         enableButtons();
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    protected SolrIndexDoc onWrite(final SolrIndexDoc document) {
+        document.setFields(fields);
+        return document;
     }
 
     public interface SolrIndexFieldListView extends View {

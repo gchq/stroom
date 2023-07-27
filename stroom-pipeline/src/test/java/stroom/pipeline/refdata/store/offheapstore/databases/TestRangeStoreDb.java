@@ -66,7 +66,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
     @BeforeEach
     void setup() {
         rangeStoreDb = new RangeStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new RangeStoreKeySerde(),
                 new ValueStoreKeySerde());

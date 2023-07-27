@@ -125,6 +125,22 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
         }
     }
 
+    /**
+     * Writes byteBuffer into the outputStream. Respects the position/limit of byteBuffer.
+     * After reading, byteBuffer is rewound to return it to its passed state.
+     */
+    public void write(ByteBuffer byteBuffer) throws IOException {
+        Objects.requireNonNull(byteBuffer);
+        final int remaining = byteBuffer.remaining();
+        if (remaining > 0) {
+            checkWriteableState();
+            checkSizeAndGrow(remaining);
+
+            getCurrentPooledBuffer().getByteBuffer().put(byteBuffer);
+            byteBuffer.rewind();
+        }
+    }
+
     private void checkWriteableState() {
         if (!isAvailableForWriting) {
             throw new IllegalStateException(
@@ -217,6 +233,10 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
                 "pooledByteBuffer=" + ByteBufferUtils.byteBufferInfo(pooledByteBuffer.getByteBuffer()) +
                 '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Factory {
 
