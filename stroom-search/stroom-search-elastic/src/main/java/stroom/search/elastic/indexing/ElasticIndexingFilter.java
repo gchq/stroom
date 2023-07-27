@@ -42,7 +42,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -76,18 +75,16 @@ import org.xml.sax.SAXException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
@@ -110,6 +107,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
     private static final int ES_MAX_EXCEPTION_CHARS = 1024;
     private static final String ES_TOO_MANY_REQUESTS_STATUS = "TOO_MANY_REQUESTS";
+    private static final Pattern INDEX_NAME_VALUE_PATTERN = Pattern.compile("(\\{[^}]+?})");
+    private static final Pattern INDEX_BASE_NAME_PATTERN = Pattern.compile("^([^{]+)");
 
     // Dependencies
     private final LocationFactoryProxy locationFactory;
@@ -127,12 +126,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private String ingestPipelineName = null;
     private boolean refreshAfterEachBatch = false;
     private DocRef clusterRef;
-    private String indexBaseName;
-    private String indexNameDateFormat;
-    private String indexNameDateFieldName = "@timestamp";
-    private Date indexNameDateMin;
-    private SimpleDateFormat indexNameDateMinFormat;
-    private StroomDuration indexNameDateMaxFutureOffset;
+    private String indexName;
 
     // Cached entities
     ElasticClusterDoc elasticCluster;
@@ -142,11 +136,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private final List<IndexRequest> indexRequests;
     private final ByteArrayOutputStream currentDocument;
     private final StringBuilder valueBuffer = new StringBuilder();
+    private Set<String> indexNameVariables = new HashSet<>();
+    private final Map<String, String> currentDocIndexNameVariables = new HashMap<>();
     private String currentDocFieldName = null;
     private int currentDocPropertyCount = 0;
     private boolean inOuterArray = false;
     private int currentDepth = 0;
-    private String currentDocTimestamp = null;
     private JsonGenerator jsonGenerator;
     private int currentRetry;
 
@@ -174,10 +169,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         indexRequests = new ArrayList<>();
         currentDocument = new ByteArrayOutputStream(INITIAL_JSON_STREAM_SIZE_BYTES);
         currentRetry = 0;
-
-        indexNameDateMinFormat = new SimpleDateFormat("yyyy");
-        indexNameDateMinFormat.setTimeZone(TimeZone.getTimeZone("UTC)"));
-        indexNameDateMaxFutureOffset = StroomDuration.parse("P1D");
     }
 
     /**
@@ -190,7 +181,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 fatalError("Elasticsearch cluster ref has not been set", new NotFoundException());
             }
 
-            if (indexBaseName == null || indexBaseName.isEmpty()) {
+            if (indexName == null || indexName.isEmpty()) {
                 fatalError("Index name has not been set", new InvalidParameterException());
             }
 
@@ -219,11 +210,22 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             jsonGenerator = JSON_FACTORY.createGenerator(currentDocument);
 
+            populateIndexNameVariableNames();
+
         } catch (IOException e) {
             fatalError("Failed to initialise JsonGenerator", e);
         } finally {
             super.startProcessing();
         }
+    }
+
+    private void populateIndexNameVariableNames() {
+        indexNameVariables = INDEX_NAME_VALUE_PATTERN.matcher(indexName).results()
+                .map(matchResult -> {
+                    final String fieldNameMatch = matchResult.group();
+                    return fieldNameMatch.substring(1, fieldNameMatch.length() - 1);
+                })
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -272,6 +274,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         incrementDepth();
                         writeFieldName();
                         jsonGenerator.writeStartObject();
+                        if (currentDepth == 1) {
+                            enterDocumentRoot();
+                        }
                     } catch (IOException e) {
                         fatalError("Invalid start of object", e);
                     }
@@ -292,6 +297,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         valueBuffer.setLength(0);
 
         super.startElement(uri, localName, qName, attributes);
+    }
+
+    private void enterDocumentRoot() {
+        currentDocIndexNameVariables.clear();
     }
 
     private void incrementDepth() {
@@ -343,13 +352,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     value = valueBuffer.toString();
                     try {
                         if (value.length() > 0) {
-                            writeFieldName();
-                            jsonGenerator.writeString(value);
-                            currentDocPropertyCount++;
-                        }
-                        if (currentDocFieldName != null && currentDocFieldName.equals(indexNameDateFieldName)) {
-                            // This is the timestamp field, so store its value for formatting the full index name
-                            currentDocTimestamp = value;
+                            if (includeField(currentDocFieldName)) {
+                                writeFieldName();
+                                jsonGenerator.writeString(value);
+                                currentDocPropertyCount++;
+                            }
+                            storeIndexNameVariableValue(value);
                         }
                     } catch (IOException e) {
                         fatalError("Invalid string value '" + value + "' for property '" +
@@ -360,9 +368,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     value = valueBuffer.toString();
                     try {
                         if (value.length() > 0) {
-                            writeFieldName();
-                            jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
-                            currentDocPropertyCount++;
+                            if (includeField(currentDocFieldName)) {
+                                writeFieldName();
+                                jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
+                                currentDocPropertyCount++;
+                            }
+                            storeIndexNameVariableValue(value);
                         }
                     } catch (IOException e) {
                         fatalError("Invalid boolean value '" + value + "' for property '" +
@@ -371,9 +382,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     break;
                 case JSONParser.XML_ELEMENT_NULL:
                     try {
-                        writeFieldName();
-                        jsonGenerator.writeNull();
-                        currentDocPropertyCount++;
+                        if (includeField(currentDocFieldName)) {
+                            writeFieldName();
+                            jsonGenerator.writeNull();
+                            currentDocPropertyCount++;
+                        }
+                        storeIndexNameVariableValue("");
                     } catch (IOException e) {
                         fatalError("Invalid null value for property '" + currentDocFieldName + "'", e);
                     }
@@ -382,9 +396,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     value = valueBuffer.toString();
                     try {
                         if (value.length() > 0) {
-                            writeFieldName();
-                            jsonGenerator.writeNumber(value);
-                            currentDocPropertyCount++;
+                            if (includeField(currentDocFieldName)) {
+                                writeFieldName();
+                                jsonGenerator.writeNumber(value);
+                                currentDocPropertyCount++;
+                            }
+                            storeIndexNameVariableValue(value);
                         }
                     } catch (IOException e) {
                         fatalError("Invalid number value '" + value + "' for property '" +
@@ -398,6 +415,25 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         currentDocFieldName = null;
 
         super.endElement(uri, localName, qName);
+    }
+
+    /**
+     * Whether to include the field in the destination document
+     */
+    private boolean includeField(final String fieldName) {
+        return fieldName != null && !fieldName.startsWith("_");
+    }
+
+    private void storeIndexNameVariableValue(final String value) {
+        try {
+            if (value.length() > 0 && indexNameVariables.contains(currentDocFieldName)) {
+                currentDocIndexNameVariables.put(currentDocFieldName, value);
+            }
+        } catch (IllegalArgumentException e) {
+            fatalError("Index variable '" + currentDocFieldName + "' specified more than once in document", e);
+        } catch (Exception e) {
+            fatalError("Unexpected error parsing index name variable value", e);
+        }
     }
 
     /**
@@ -460,7 +496,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void clearDocument() {
         // Discard the document
         currentDocument.reset();
-        currentDocTimestamp = null;
 
         // Reset the count of how many fields we have indexed for the current event
         currentDocPropertyCount = 0;
@@ -526,6 +561,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         .size(100) // Number of index names to retrieve at a time, until we have all of them
                         .query(new TermQueryBuilder(ElasticIndexConstants.STREAM_ID, streamId))
                         .aggregation(compositeAgg);
+                final String indexBaseName = getIndexBaseName();
                 final SearchRequest searchRequest = new SearchRequest(indexBaseName + "*")
                         .source(searchSourceBuilder);
                 final SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -546,8 +582,21 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             return indexNames;
         } catch (IOException e) {
             fatalError("Failed to list indices for reindex purge. StreamId: " + streamId + ". " +
-                    "Base name: '" + indexBaseName + "'", e);
+                    "Base name: '" + indexName + "'", e);
             return null;
+        }
+    }
+
+    /**
+     * Get the index name stem, which is the text up to the first index name variable, as denoted by curly braces
+     */
+    private String getIndexBaseName() {
+        final Matcher indexNameMatcher = INDEX_BASE_NAME_PATTERN.matcher(indexName);
+        if (indexNameMatcher.find()) {
+            return indexNameMatcher.group(1);
+        } else {
+            throw new RuntimeException("Expected one or more characters in the index name before the first curly " +
+                    "brace.");
         }
     }
 
@@ -623,8 +672,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * Elasticsearch rejected the indexing request, because it is overloaded and
      * cannot queue the batched payload. Retry after a delay, if we haven't exceeded the retry
      * limit. Otherwise, terminate this thread and create an `Error` stream.
-     *
-     * @param e
      */
     private void handleElasticsearchException(final RuntimeException e) {
         String statusName = "";
@@ -661,50 +708,28 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * Where an index name date pattern is specified, formats the value of the document timestamp field
-     * using the date pattern. Otherwise, the index base name is returned.
-     *
-     * @return Index base name appended with the formatted document timestamp
+     * Build the index name, substituting values from the source document where specified.
+     * For instance, consider an index name of `stroom-index-{_year}`. A field `<string key='_year'>2023</string>` in
+     * the doc root will result in a destination index of `stroom-index-2023` for that document. In this case, because
+     * the field `_year` starts with an underscore, it is not rendered to the doc and instead is solely used in the
+     * index name.
      */
     private String formatIndexName() {
-        // If a date format has specified, append the formatted timestamp field
-        // value to the index base name
-        if (currentDocTimestamp == null || indexNameDateFormat == null || indexNameDateFormat.isEmpty()) {
-            return indexBaseName;
-        } else {
-            try {
-                final ZonedDateTime eventTime = ZonedDateTime.parse(currentDocTimestamp);
-                final DateTimeFormatter pattern = DateTimeFormatter.ofPattern(indexNameDateFormat);
-
-                // If the event occurred after now + max offset, don't append a time suffix to the index name
-                if (!indexNameDateMaxFutureOffset.isZero()) {
-                    final ZonedDateTime timeNow = ZonedDateTime.now(eventTime.getZone());
-                    final ZonedDateTime nowPlusOffset = timeNow.plusSeconds(
-                            indexNameDateMaxFutureOffset.get(ChronoUnit.SECONDS));
-                    if (eventTime.isAfter(nowPlusOffset)) {
-                        return indexBaseName;
-                    }
-                }
-
-                // If the event occurred before the minimum date, don't append a time suffix to the index name
-                if (indexNameDateMin != null) {
-                    if (eventTime.isBefore(indexNameDateMin.toInstant().atZone(ZoneId.of("UTC")))) {
-                        return indexBaseName;
-                    }
-                }
-
-                return indexBaseName + pattern.format(eventTime);
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(String.format("Invalid index name date format: %s", indexNameDateFormat));
-            } catch (Exception e) {
-                throw new NotFoundException(String.format("Field %s not found in document, which is " +
-                        "required as property `indexNameDateFormat` has been set", indexNameDateFieldName));
+        final Matcher indexNameVariableMatcher = INDEX_NAME_VALUE_PATTERN.matcher(indexName);
+        return indexNameVariableMatcher.replaceAll(matchResult -> {
+            final String fieldNameMatch = matchResult.group();
+            final String fieldName = fieldNameMatch.substring(1, fieldNameMatch.length() - 1);
+            final String fieldValue = currentDocIndexNameVariables.get(fieldName);
+            if (fieldValue == null) {
+                throw new IllegalArgumentException("Field '" + fieldName + "' not found in document when " +
+                        "building index name with pattern: '" + indexName + "'");
             }
-        }
+            return fieldValue;
+        });
     }
 
     @PipelineProperty(
-            description = "Target Elasticsearch cluster",
+            description = "Target Elasticsearch cluster.",
             displayPriority = 1
     )
     @PipelinePropertyDocRef(types = ElasticClusterDoc.DOCUMENT_TYPE)
@@ -713,7 +738,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Maximum number of documents to index in each bulk request",
+            description = "Maximum number of documents to index in each bulk request.",
             defaultValue = "10000",
             displayPriority = 2
     )
@@ -723,7 +748,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @PipelineProperty(
             description = "Refresh the index after each batch is processed, making the indexed documents visible to " +
-                    "searches",
+                    "searches.",
             defaultValue = "false",
             displayPriority = 3
     )
@@ -732,7 +757,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Name of the Elasticsearch ingest pipeline to execute when indexing",
+            description = "Name of the Elasticsearch ingest pipeline to execute when indexing.",
             displayPriority = 4
     )
     public void setIngestPipeline(final String ingestPipelineName) {
@@ -740,81 +765,18 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Name of the Elasticsearch index",
+            description = "Name of the Elasticsearch index. Variables specified such as `{year}` are replaced with " +
+                    "the corresponding field values contained in the document root. Field names beginning with an " +
+                    "underscore are not written to the document and are only used in the index name pattern.",
             displayPriority = 5
     )
-    public void setIndexBaseName(final String indexBaseName) {
-        this.indexBaseName = indexBaseName;
-    }
-
-    @PipelineProperty(
-            description = "Format of the date to append to the index name (example: `-yyyy`). If unspecified, no " +
-                    "date is appended.",
-            displayPriority = 6
-    )
-    public void setIndexNameDateFormat(final String indexNameDateFormat) {
-        this.indexNameDateFormat = indexNameDateFormat;
-    }
-
-    @PipelineProperty(
-            description = "Name of the field containing the `DateTime` value to use when determining the index date " +
-                    "suffix",
-            defaultValue = "@timestamp",
-            displayPriority = 7
-    )
-    public void setIndexNameDateFieldName(final String indexNameDateFieldName) {
-        this.indexNameDateFieldName = indexNameDateFieldName;
-    }
-
-    @PipelineProperty(
-            description = "Do not append a time suffix to the index name for events occurring before this date. " +
-                    "Date is assumed to be in UTC and of the format specified in `indexNameDateMinFormat`",
-            displayPriority = 8
-    )
-    public void setIndexNameDateMin(final String indexNameDateMin) {
-        try {
-            if (indexNameDateMin != null && !indexNameDateMin.isEmpty() && indexNameDateMinFormat != null) {
-                this.indexNameDateMin = indexNameDateMinFormat.parse(indexNameDateMin);
-            } else {
-                this.indexNameDateMin = null;
-            }
-        } catch (DateTimeParseException e) {
-            this.indexNameDateMin = null;
-            fatalError("Invalid value " + indexNameDateMin + " provided for indexNameDateMin", e);
-        } catch (Exception e) {
-            fatalError("Error occurred when parsing date value: " + indexNameDateMin, e);
-        }
-    }
-
-    @PipelineProperty(
-            description = "Date format of the supplied `indexNameDateMin` property",
-            defaultValue = "yyyy",
-            displayPriority = 9
-    )
-    public void setIndexNameDateMinFormat(final String indexNameDateMinFormat) {
-        try {
-            this.indexNameDateMinFormat = new SimpleDateFormat(indexNameDateMinFormat);
-            this.indexNameDateMinFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        } catch (IllegalArgumentException e) {
-            this.indexNameDateMinFormat = null;
-            fatalError("Invalid date format " + indexNameDateMinFormat + " provided for " +
-                    "indexNameDateMinFormat", e);
-        }
-    }
-
-    @PipelineProperty(
-            description = "Do not append a time suffix to the index name for events occurring after the current " +
-                    "time plus the specified offset",
-            defaultValue = "P1D",
-            displayPriority = 10
-    )
-    public void setIndexNameDateMaxFutureOffset(final String indexNameDateMaxFutureOffset) {
-        this.indexNameDateMaxFutureOffset = StroomDuration.parse(indexNameDateMaxFutureOffset);
+    public void setIndexName(final String indexName) {
+        this.indexName = indexName;
     }
 
     @PipelineProperty(
             description = "When reprocessing a stream, first delete any documents from the index matching the " +
-                    "stream ID",
+                    "source stream ID.",
             defaultValue = "true",
             displayPriority = 11
     )
