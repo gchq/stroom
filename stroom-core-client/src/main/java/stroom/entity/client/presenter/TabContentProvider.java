@@ -18,11 +18,16 @@
 package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.widget.tab.client.presenter.TabData;
 
-import com.google.inject.Provider;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HandlerContainer;
+import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.HashMap;
@@ -30,138 +35,131 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, ReadOnlyChangeHandler {
+public class TabContentProvider<E>
+        extends HandlerContainerImpl
+        implements
+        HasDocumentRead<E>,
+        HasDocumentWrite<E>,
+        HasDirtyHandlers,
+        HasClose {
 
-    private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
-    private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
+    private final Map<TabData, TabProvider<E>> tabProviders = new HashMap<>();
+    private final Map<TabData, TabProvider<E>> presenterCache = new HashMap<>();
 
-    private Set<PresenterWidget<?>> usedPresenters;
-    private Set<TabData> dirtyTabs;
+    private final Set<TabProvider<E>> usedProviders = new HashSet<>();
 
-    private DirtyHandler dirtyHandler;
-    private PresenterWidget<?> currentPresenter;
+    private final EventBus eventBus;
+    private TabProvider<E> currentTabProvider;
     private DocRef docRef;
     private E entity;
     private boolean readOnly = true;
+    private int readCount;
 
-    public <T extends PresenterWidget<?>> void add(final TabData tab, final Provider<T> provider) {
+    public TabContentProvider(final EventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        for (final TabProvider<E> tabProvider : usedProviders) {
+            tabProvider.bind();
+        }
+    }
+
+    @Override
+    protected void onUnbind() {
+        super.onUnbind();
+        for (final TabProvider<E> tabProvider : usedProviders) {
+            tabProvider.unbind();
+        }
+    }
+
+    public interface TabProvider<E> extends
+            HasDocumentRead<E>,
+            HasDocumentWrite<E>,
+            HasDirtyHandlers,
+            HandlerContainer,
+            HasClose {
+
+        PresenterWidget<?> getPresenter();
+    }
+
+    public void add(final TabData tab, final TabProvider<E> provider) {
         tabProviders.put(tab, provider);
     }
 
-    @SuppressWarnings("unchecked")
     public PresenterWidget<?> getPresenter(final TabData tab) {
-        currentPresenter = presenterCache.get(tab);
-        if (currentPresenter == null) {
-            final Provider<PresenterWidget<?>> provider = (Provider<PresenterWidget<?>>) tabProviders.get(tab);
+        currentTabProvider = presenterCache.get(tab);
+        if (currentTabProvider == null) {
+            final TabProvider<E> provider = tabProviders.get(tab);
             if (provider != null) {
-                currentPresenter = provider.get();
-                presenterCache.put(tab, currentPresenter);
+                provider.bind();
+                currentTabProvider = provider;
+                presenterCache.put(tab, currentTabProvider);
 
                 // Handle dirty events.
-                if (currentPresenter instanceof HasDirtyHandlers && dirtyHandler != null) {
-                    final HasDirtyHandlers hasDirtyHandlers = (HasDirtyHandlers) currentPresenter;
-                    hasDirtyHandlers.addDirtyHandler(event -> {
-                        if (event.isDirty()) {
-                            if (dirtyTabs == null) {
-                                dirtyTabs = new HashSet<>();
-                            }
-
-                            dirtyTabs.add(tab);
-                        }
-                        dirtyHandler.onDirty(event);
-                    });
-                }
+                registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
             }
         }
 
         // Read entity if not read since entity set.
-        if (usedPresenters == null || !usedPresenters.contains(currentPresenter)) {
-            read(currentPresenter, docRef, entity);
-            setReadOnly(currentPresenter, readOnly);
+        if (readCount > 0 && !usedProviders.contains(currentTabProvider)) {
+            read(currentTabProvider, docRef, entity, readOnly);
         }
 
-        return currentPresenter;
+        return currentTabProvider.getPresenter();
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final E document, final boolean readOnly) {
         this.docRef = docRef;
-        this.entity = entity;
+        this.entity = document;
+        this.readOnly = readOnly;
 
-        if (usedPresenters != null) {
-            for (final PresenterWidget<?> presenterWidget : usedPresenters) {
-                read(presenterWidget, docRef, entity);
-            }
-            if (currentPresenter != null && !usedPresenters.contains(currentPresenter)) {
-                read(currentPresenter, docRef, entity);
-            }
-        } else if (currentPresenter != null) {
-            read(currentPresenter, docRef, entity);
+        for (final TabProvider<E> tabProvider : usedProviders) {
+            read(tabProvider, docRef, document, readOnly);
+        }
+        if (currentTabProvider != null && !usedProviders.contains(currentTabProvider)) {
+            read(currentTabProvider, docRef, document, readOnly);
         }
 
-        // Clear the dirty tab state as we are reading a new entity.
-        if (dirtyTabs != null) {
-            dirtyTabs.clear();
-        }
+        readCount++;
     }
 
-    public E write(E entity) {
-        if (usedPresenters != null) {
-            for (final PresenterWidget<?> presenter : usedPresenters) {
-                entity = write(presenter, entity);
-            }
+    public E write(E document) {
+        for (final TabProvider<E> tabProvider : usedProviders) {
+            document = write(tabProvider, document);
         }
-        return entity;
+        return document;
+    }
+
+    private void read(final TabProvider<E> tabProvider,
+                      final DocRef docRef,
+                      final E entity,
+                      final boolean readOnly) {
+        tabProvider.read(docRef, entity, readOnly);
+        usedProviders.add(tabProvider);
+    }
+
+    private E write(final TabProvider<E> tabProvider, E entity) {
+        return tabProvider.write(entity);
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        if (usedPresenters != null) {
-            for (final PresenterWidget<?> presenter : usedPresenters) {
-                setReadOnly(presenter, readOnly);
-            }
+    public void onClose() {
+        for (final TabProvider<E> tabProvider : usedProviders) {
+            tabProvider.onClose();
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void read(final PresenterWidget<?> presenter,
-                      final DocRef docRef,
-                      final E entity) {
-        if (presenter instanceof HasDocumentRead<?>) {
-            final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
-            if (docRef != null) {
-                hasDocumentRead.read(docRef, entity);
-            }
-
-            if (usedPresenters == null) {
-                usedPresenters = new HashSet<>();
-            }
-            usedPresenters.add(presenter);
-        }
+    @Override
+    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
+        return eventBus.addHandlerToSource(DirtyEvent.getType(), this, handler);
     }
 
-    @SuppressWarnings("unchecked")
-    private E write(final PresenterWidget<?> presenter, E entity) {
-        if (entity != null && presenter instanceof HasWrite<?>) {
-            final HasWrite<E> hasWrite = (HasWrite<E>) presenter;
-            entity = hasWrite.write(entity);
-        }
-        return entity;
-    }
-
-    private void setReadOnly(final PresenterWidget<?> presenter, final boolean readOnly) {
-        if (presenter instanceof ReadOnlyChangeHandler) {
-            final ReadOnlyChangeHandler changeHandler = (ReadOnlyChangeHandler) presenter;
-            changeHandler.onReadOnly(readOnly);
-        }
-    }
-
-    public void setDirtyHandler(final DirtyHandler handler) {
-        this.dirtyHandler = handler;
-    }
-
-    public boolean isTabDirty(final TabData tab) {
-        return dirtyTabs != null && dirtyTabs.contains(tab);
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEventFromSource(event, this);
     }
 }

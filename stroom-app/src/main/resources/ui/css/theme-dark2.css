@@ -19,11 +19,11 @@
 
     --text-color: #e6e1dc;
     --text-color--disabled: #666;
-    --border-color: transparent; /*#c5cde2;*/
+    --border-color: #353944;
 
     --header__border-color: #333;
-    --row__background-color--even: #282c31;
-    --row__background-color--odd: #1a1d21;
+    --row__background-color--even: #1e1f22;
+    --row__background-color--odd: #2b2d30;
     --row__background-color--hovered: rgb(45, 47, 53);
     --row__background-color--selected: rgb(0, 101, 167);
     --row__background-color--selected--hovered: rgb(0,120,199);
@@ -33,12 +33,13 @@
 
     --menu-separator__color: rgb(255 255 255 / 20%);
 
-    --tooltip__background-color: #3c3f41;
-    --tooltip__text-color: #fff;
+    --tooltip__background-color: #adadad;
+    --tooltip__text-color: #000;
 
     --button__background-image: none;
     --button__background-color: #454545;
     --button__border-color: #555;
+    --button__image-color: #555;
     --button__text-color: #fff;
     --button__background-image--active: none;
     --button__background-color--active: #555555;
@@ -49,10 +50,12 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
 
-    --icon-button__background-color--on: #262a32;
-    --icon-button__border-color--on: #444;
+    --icon-button__background-color--on: var(--blue-500);
+    --icon-button__border-color--on: var(--black);
+    --icon-button__color--on: var(--white);
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
+    --icon-button__color: var(--blue-300);
     --navigation-icon-button__background-color--on: #262a32;
     --navigation-icon-button__border-color--on: #444;
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
@@ -78,14 +81,14 @@
 
     --code-editor-right-bar__background-color: #19171d;
     --code-editor__border-color: #000;
-    --code-editor__border-color--info: #3676c6;
+    --code-editor__border-color--info: #378cff;
     --code-editor__background-color--info: #378cff;
-    --code-editor__border-color--warning: #dd9942;
+    --code-editor__border-color--warning: #ffde81;
     --code-editor__background-color--warning: #ffde81;
-    --code-editor__border-color--error: #660000;
-    --code-editor__background-color--error: #ff3a37;
-    --code-editor__border-color--fatal: #c5cde2;
-    --code-editor__background-color--fatal: #000000;
+    --code-editor__border-color--error: #ff6c00;
+    --code-editor__background-color--error: #ff6c00;
+    --code-editor__border-color--fatal: #ff0000;
+    --code-editor__background-color--fatal: #ff0000;
     --code-editor__background-color--highlight: #1164a3;
 
     --xsdbrowser-box__background-color: #19171d;
@@ -106,13 +109,13 @@
      */
 
     /* Page */
-    --app__background-color: #212121;/*#19171d;*/
-    --page__background-color: #212121;
+    --app__background-color: #22252c;/*#19171d;*/
+    --page__background-color: var(--app__background-color);
     --page__text-color: #cacbcb;
 
     /* Splitter */
-    --splitter__background-color: #1d9bd1;
-    --splitter__border-color: #22252c;
+    --splitter__background-color: var(--border-color);
+    --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */
     --curve-tab__svg-color: #fff;
@@ -120,12 +123,12 @@
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid transparent;
     --curve-tab__background-color--selected: #484d52;
-    --curve-tab__background-color--hover: #484d52;
+    --curve-tab__background-color--hover: rgba(var(--blue-300-rgb), .2);
     --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(0 0 0 / 100%);
     --curve-tab__border-radius: .2rem;
 
     /* Controls */
-    --control__background-color: #131417;
+    --control__background-color: #1e1f22;
     --control__background-color--disabled: transparent;
     --control__border-color: #4d5250;
     --control__border-color--disabled: transparent;
@@ -136,8 +139,7 @@
     --form-group__label-color: #eee;
 
     /* Dashboard */
-    --dashboard-panel__background-color: #131417;
-    --dashboard-panel__border-color: #4d5250;
+    --dashboard-panel__background-color: var(--page__background-color);
     --dashboard-panel__grid-color: rgba(255, 255, 255, 0.04);
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
@@ -184,7 +186,8 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
-    --navigation__background-color: #19171d;
+    --navigation__splitter__background-color: #353944;
+    --navigation__background-color: #2b2d30;
     --navigation__background-color--hovered: rgb(45, 47, 53);
     --navigation__background-color--selected: rgb(0, 101, 167);
     --navigation__background-color--selected-hovered: rgb(0,120,199);
@@ -192,7 +195,6 @@
     --navigation__background-color--selected--focussed: rgb(0,120,199);
     --navigation__text-color: #e6e1dc;
     --navigation__text-color--selected: #fff;
-    --navigation__border-color: #27252c;
 
     /* Specific */
     --header__icon-color: #2185d0;
@@ -201,10 +203,10 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), 0.2);
 
     /* Dialog */
-    --dialog__background-color: #1a1d21;
+    --dialog__background-color: var(--app__background-color);
     --dialog__border-color: rgb(132 132 132 / 60%);
-    --dialog__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
-    --popup__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
+    --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .7);
+    --popup__shadow: 0 0 10px 1px rgb(0, 0, 0, .8);
 
     /* Status */
     --ok: var(--blue-500);

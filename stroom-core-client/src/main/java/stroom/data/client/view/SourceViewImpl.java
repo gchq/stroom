@@ -1,6 +1,8 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.FabButton;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -32,10 +34,14 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     SimplePanel navigatorContainer;
     @UiField
     SimplePanel progressBarPanel;
+    @UiField
+    FabButton steppingButton;
+
 
     @Inject
     public SourceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        steppingButton.setIcon(SvgImage.STEPPING);
     }
 
     @Override

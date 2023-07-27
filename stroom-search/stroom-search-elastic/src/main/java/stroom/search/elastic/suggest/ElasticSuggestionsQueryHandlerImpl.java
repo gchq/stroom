@@ -3,6 +3,7 @@ package stroom.search.elastic.suggest;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldType;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.Suggestions;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
 import stroom.search.elastic.ElasticClientCache;
@@ -61,12 +62,12 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     }
 
     @Override
-    public List<String> getSuggestions(final FetchSuggestionsRequest request) {
+    public Suggestions getSuggestions(final FetchSuggestionsRequest request) {
         final ElasticIndexDoc elasticIndex = elasticIndexStoreProvider.get().readDocument(request.getDataSource());
         final ElasticClusterDoc elasticCluster = elasticClusterStoreProvider.get()
                 .readDocument(elasticIndex.getClusterRef());
 
-        CompletableFuture<List<String>> future = CompletableFuture.supplyAsync(taskContextFactoryProvider.get()
+        CompletableFuture<Suggestions> future = CompletableFuture.supplyAsync(taskContextFactoryProvider.get()
                 .contextResult("Query suggestions for Elasticsearch index '" + elasticIndex.getName() + "'",
                         taskContext -> elasticClientCacheProvider.get().contextResult(elasticCluster.getConnection(),
                                 elasticClient -> querySuggestions(request, elasticIndex, elasticClient)
@@ -79,13 +80,13 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error(() -> "Thread interrupted");
-            return Collections.emptyList();
+            return Suggestions.EMPTY;
         } catch (ExecutionException e) {
             throw new RuntimeException("Error getting Elasticsearch term suggestions: " + e.getMessage(), e);
         }
     }
 
-    private List<String> querySuggestions(final FetchSuggestionsRequest request,
+    private Suggestions querySuggestions(final FetchSuggestionsRequest request,
                                           final ElasticIndexDoc elasticIndex,
                                           final RestHighLevelClient elasticClient) {
         final AbstractField field = request.getField();
@@ -93,11 +94,11 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
 
         try {
             if (!elasticSuggestConfigProvider.get().getEnabled() || query == null || query.length() == 0) {
-                return Collections.emptyList();
+                return Suggestions.EMPTY;
             }
             if (!(FieldType.TEXT.equals(field.getFieldType()) || FieldType.KEYWORD.equals(field.getFieldType()))) {
                 // Only generate suggestions for text and keyword fields
-                return Collections.emptyList();
+                return Suggestions.EMPTY;
             }
 
             final SuggestionBuilder<TermSuggestionBuilder> termSuggestionBuilder = SuggestBuilders
@@ -118,14 +119,14 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             Suggest suggestResponse = searchResponse.getSuggest();
             TermSuggestion termSuggestion = suggestResponse.getSuggestion("suggest");
 
-            return termSuggestion.getEntries().stream()
+            return new Suggestions(termSuggestion.getEntries().stream()
                     .flatMap(entry -> entry.getOptions().stream())
                     .map(option -> option.getText().string())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()));
         } catch (IOException | RuntimeException e) {
             LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getName() +
                     ". " + e.getMessage(), e);
-            return new ArrayList<>();
+            return Suggestions.EMPTY;
         }
     }
 }

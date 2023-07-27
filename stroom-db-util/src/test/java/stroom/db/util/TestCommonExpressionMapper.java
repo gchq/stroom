@@ -25,6 +25,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * This ought to behave in a consistent way with ExpressionMatcher
+ */
 class TestCommonExpressionMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestCommonExpressionMapper.class);
@@ -58,6 +61,36 @@ class TestCommonExpressionMapper {
                     assertThat(condition).isEqualTo(DSL.noCondition());
                 }))
                 .collect(Collectors.toList());
+    }
+
+    @TestFactory
+    List<DynamicTest> makeDisabledEmptyOpTests() {
+        return Arrays.stream(ExpressionOperator.Op.values())
+                .map(opType -> DynamicTest.dynamicTest(opType.getDisplayValue(), () -> {
+                    final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                            .op(opType)
+                            .enabled(false)
+                            .build();
+
+                    final CommonExpressionMapper mapper = new CommonExpressionMapper();
+                    final Condition condition = mapper.apply(expressionOperator);
+
+                    LOGGER.info("expressionItem: {}", expressionOperator);
+                    LOGGER.info("condition: {}", condition);
+
+                    assertThat(condition).isEqualTo(DSL.noCondition());
+                }))
+                .collect(Collectors.toList());
+    }
+
+    @Test
+    void testNullOperator() {
+        final ExpressionOperator expressionOperator = null;
+
+        final Condition condition = doTest(expressionOperator);
+
+        assertThat(condition)
+                .isEqualTo(DSL.noCondition());
     }
 
     @Test

@@ -32,6 +32,8 @@ import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
@@ -465,6 +467,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         final CountDownLatch complete = new CountDownLatch(1);
 
         final EventSearchTask eventSearchTask = new EventSearchTask(
+                SearchRequestSource.builder().sourceType(SourceType.BATCH_SEARCH).build(),
                 key,
                 query,
                 new EventRef(1, 1),

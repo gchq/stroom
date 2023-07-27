@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,8 @@ import java.util.Collections;
 class TestMapDataStore extends AbstractDataStoreTest {
 
     @Override
-    DataStore create(final QueryKey queryKey,
+    DataStore create(final SearchRequestSource searchRequestSource,
+                     final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
                      final AbstractResultStoreConfig resultStoreConfig,
@@ -45,6 +47,11 @@ class TestMapDataStore extends AbstractDataStoreTest {
     @Test
     void basicTest() {
         super.basicTest();
+    }
+
+    @Test
+    void noValuesTest() {
+        super.noValuesTest();
     }
 
     @Test

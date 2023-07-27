@@ -16,43 +16,37 @@
 
 package stroom.widget.button.client;
 
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-
-public interface ToggleButtonView {
-
-    boolean isEnabled();
-
-    void setEnabled(boolean enabled);
-
-    boolean isVisible();
-
-    void setVisible(boolean visible);
-
-    void setTitle(String title);
+public interface ToggleButtonView extends ButtonView {
 
     void setState(final boolean isOn);
 
-    boolean isOn();
-
-    boolean isOff();
+    /**
+     * Alias for {@link ToggleButtonView#setState(boolean)} with true as the value.
+     */
+    default void setOn() {
+        setState(true);
+    }
 
     /**
-     * @param onClickedHandler  The handler that will be invoked when the button is clicked while
-     *                          the ON face is showing.
-     * @param offClickedHandler The handler that will be invoked when the button is clicked while
-     *                          the OFF face is showing.
+     * Alias for {@link ToggleButtonView#setState(boolean)} with false as the value.
      */
-    HandlerRegistration addClickHandler(final ClickHandler onClickedHandler,
-                                        final ClickHandler offClickedHandler);
+    default void setOff() {
+        setState(false);
+    }
+
+    boolean getState();
 
     /**
-     * @param onMouseDownedHandler  The handler that will be invoked when the button is mouse-downed while
-     *                              the ON face is showing.
-     * @param offMouseDownedHandler The handler that will be invoked when the button is mouse-downed while
-     *                              the OFF face is showing.
+     * @return Alias for {@link ToggleButtonView#getState()}
      */
-    HandlerRegistration addMouseDownHandler(final MouseDownHandler onMouseDownedHandler,
-                                            final MouseDownHandler offMouseDownedHandler);
+    default boolean isOn() {
+        return getState();
+    }
+
+    /**
+     * @return Alias for NOT {@link ToggleButtonView#getState()}
+     */
+    default boolean isOff() {
+        return !getState();
+    }
 }

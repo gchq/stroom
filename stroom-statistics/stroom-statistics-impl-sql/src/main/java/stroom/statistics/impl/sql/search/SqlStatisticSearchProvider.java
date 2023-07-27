@@ -10,8 +10,8 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchTaskProgress;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -88,6 +88,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
 
         return DataSource
                 .builder()
+                .docRef(docRef)
                 .fields(fields)
                 .build();
     }
@@ -177,7 +178,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                 modifiedSearchRequest.getDateTimeSettings());
 
         // Create coprocessors.
-        final Coprocessors coprocessors =
+        final CoprocessorsImpl coprocessors =
                 coprocessorsFactory.create(modifiedSearchRequest,
                         DataStoreSettings.createBasicSearchResultStoreSettings());
         final ResultStore resultStore = resultStoreFactory.create(

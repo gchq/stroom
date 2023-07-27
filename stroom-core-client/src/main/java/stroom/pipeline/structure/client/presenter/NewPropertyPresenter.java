@@ -21,8 +21,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
@@ -35,7 +34,6 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -60,7 +58,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     private Boolean currentBoolean;
     private boolean booleanListInitialised;
-    private ListBox listBox;
+    private SelectionBox<String> listBox;
 
     private Long currentNumber;
     private boolean spinnerInitialised;
@@ -72,7 +70,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     private String currentDataType;
     private boolean dataTypePresenterInitialised;
-    private StringListBox dataTypeWidget;
+    private SelectionBox<String> dataTypeWidget;
     private boolean entityPresenterInitialised;
     private DocRef currentEntity;
 
@@ -88,8 +86,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSource().addSelectionHandler(event -> {
-            final Source selected = event.getSelectedItem();
+        registerHandler(getView().getSource().addValueChangeHandler(event -> {
+            final Source selected = event.getValue();
             if (!source.equals(selected)) {
                 NewPropertyPresenter.this.source = selected;
                 setDirty(true, false);
@@ -108,7 +106,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
         getView().setElement(defaultProperty.getElement());
         getView().setName(defaultProperty.getName());
-        getView().getSource().setSelectedItem(source);
+        getView().getSource().setValue(source);
 
         startEdit(source);
     }
@@ -148,16 +146,16 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     }
 
     public Source getSource() {
-        return getView().getSource().getSelectedItem();
+        return getView().getSource().getValue();
     }
 
     public void write(final PipelineProperty property) {
         final PipelinePropertyType propertyType = property.getPropertyType();
 
         if ("streamType".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getSelected()));
+            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
         } else if ("boolean".equals(propertyType.getType())) {
-            final String value = listBox.getItemText(listBox.getSelectedIndex());
+            final String value = listBox.getValue();
             property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
         } else if ("int".equals(propertyType.getType())) {
             final Integer value = valueSpinner.getIntValue();
@@ -181,12 +179,12 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     private void enterBooleanMode(final PipelineProperty property) {
         if (!booleanListInitialised) {
-            listBox = new ListBox();
+            listBox = new SelectionBox<>();
             listBox.addItem("true");
             listBox.addItem("false");
 
-            listBox.addChangeHandler(event -> {
-                final Boolean selected = getBoolean(listBox.getSelectedIndex());
+            listBox.addValueChangeHandler(event -> {
+                final Boolean selected = Boolean.valueOf(listBox.getValue());
                 if (!EqualsUtil.isEquals(selected, currentBoolean)) {
                     setDirty(true);
                 }
@@ -204,23 +202,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentBoolean = property.getValue().getBoolean();
         }
 
-        setBoolean(currentBoolean);
-    }
-
-    private Boolean getBoolean(final int pos) {
-        if (pos == 0) {
-            return Boolean.TRUE;
-        }
-
-        return Boolean.FALSE;
-    }
-
-    private void setBoolean(final Boolean bool) {
-        if (bool) {
-            listBox.setSelectedIndex(0);
-        } else {
-            listBox.setSelectedIndex(1);
-        }
+        listBox.setValue(currentBoolean.toString().toLowerCase());
     }
 
     private void enterIntegerMode(final PipelineProperty property) {
@@ -247,8 +229,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             valueSpinner.setMin(0);
             valueSpinner.setMax(10000000);
 
-            registerHandler(valueSpinner.getTextBox().addKeyDownHandler(event -> setDirty(true)));
-            registerHandler(valueSpinner.getSpinner().addSpinnerHandler(event -> setDirty(true)));
+            registerHandler(valueSpinner.addValueChangeHandler(event -> setDirty(true)));
 
             valueSpinner.getElement().getStyle().setWidth(100, Unit.PCT);
             valueSpinner.getElement().getStyle().setMarginBottom(0, Unit.PX);
@@ -288,7 +269,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     private void enterDataTypeMode(final PipelineProperty property) {
         if (!dataTypePresenterInitialised) {
-            dataTypeWidget = new StringListBox();
+            dataTypeWidget = new SelectionBox<>();
 
             // Load data types.
             final Rest<List<String>> rest = restFactory.create();
@@ -299,7 +280,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
                         }
 
                         if (currentDataType != null) {
-                            dataTypeWidget.setSelected(currentDataType);
+                            dataTypeWidget.setValue(currentDataType);
                         }
 
                         dataTypePresenterInitialised = true;
@@ -307,8 +288,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
                     .call(META_RESOURCE)
                     .getTypes();
 
-            dataTypeWidget.addChangeHandler(event -> {
-                final String streamType = dataTypeWidget.getSelected();
+            dataTypeWidget.addValueChangeHandler(event -> {
+                final String streamType = dataTypeWidget.getValue();
                 if (!EqualsUtil.isEquals(currentDataType, streamType)) {
                     setDirty(true);
                 }
@@ -327,7 +308,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentDataType = property.getValue().toString();
         }
 
-        dataTypeWidget.setSelected(currentDataType);
+        dataTypeWidget.setValue(currentDataType);
     }
 
     private void enterEntityMode(final PipelineProperty property) {
@@ -365,7 +346,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     private void setDirty(final boolean dirty, final boolean changeSource) {
         this.dirty = dirty;
         if (changeSource) {
-            getView().getSource().setSelectedItem(Source.LOCAL);
+            getView().getSource().setValue(Source.LOCAL);
         }
     }
 
@@ -383,7 +364,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
         void setName(String name);
 
-        ItemListBox<Source> getSource();
+        SelectionBox<Source> getSource();
 
         void setValueWidget(Widget widget);
     }

@@ -18,10 +18,12 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.common.v2.EventRef;
 
 public class EventSearchTask {
 
+    private final SearchRequestSource searchRequestSource;
     private final QueryKey key;
     private final Query query;
     private final EventRef minEvent;
@@ -30,13 +32,15 @@ public class EventSearchTask {
     private final long maxEvents;
     private final long maxEventsPerStream;
 
-    public EventSearchTask(final QueryKey key,
+    public EventSearchTask(final SearchRequestSource searchRequestSource,
+                           final QueryKey key,
                            final Query query,
                            final EventRef minEvent,
                            final EventRef maxEvent,
                            final long maxStreams,
                            final long maxEvents,
                            final long maxEventsPerStream) {
+        this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.query = query;
         this.minEvent = minEvent;
@@ -44,6 +48,10 @@ public class EventSearchTask {
         this.maxStreams = maxStreams;
         this.maxEvents = maxEvents;
         this.maxEventsPerStream = maxEventsPerStream;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public QueryKey getKey() {

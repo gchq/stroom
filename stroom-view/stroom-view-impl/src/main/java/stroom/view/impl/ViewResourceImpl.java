@@ -19,10 +19,12 @@ package stroom.view.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -31,12 +33,15 @@ class ViewResourceImpl implements ViewResource {
 
     private final Provider<ViewStore> viewStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     ViewResourceImpl(final Provider<ViewStore> viewStoreProvider,
-                      final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+                     final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                     final Provider<SecurityContext> securityContextProvider) {
         this.viewStoreProvider = viewStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
@@ -50,6 +55,15 @@ class ViewResourceImpl implements ViewResource {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
         return documentResourceHelperProvider.get().update(viewStoreProvider.get(), doc);
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return securityContextProvider.get().useAsReadResult(() ->
+                viewStoreProvider.get()
+                        .list()
+                        .stream()
+                        .toList());
     }
 
     private DocRef getDocRef(final String uuid) {

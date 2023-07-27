@@ -26,7 +26,11 @@ import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
+import stroom.core.client.view.FullScreenViewImpl;
 import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -59,9 +63,6 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
-import stroom.importexport.client.ImportConfigPlugin;
-import stroom.item.client.presenter.ListPresenter.ListView;
-import stroom.item.client.view.ListViewImpl;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
@@ -112,6 +113,12 @@ public class AppModule extends AbstractPresenterModule {
         // Presenters
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
+        bindPresenter(
+                FullScreenPresenter.class,
+                FullScreenView.class,
+                FullScreenViewImpl.class,
+                FullScreenProxy.class);
+
         bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class, MainProxy.class);
         bindPresenter(
                 NavigationPresenter.class,
@@ -148,6 +155,5 @@ public class AppModule extends AbstractPresenterModule {
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
-        bindSharedView(ListView.class, ListViewImpl.class);
     }
 }

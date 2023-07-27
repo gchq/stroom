@@ -85,7 +85,11 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.INDEXING, StroomStatsStoreDoc.DOCUMENT_TYPE, "Stroom-Stats Store");
+        return new DocumentType(
+                DocumentTypeGroup.INDEXING,
+                StroomStatsStoreDoc.DOCUMENT_TYPE,
+                "Stroom-Stats Store",
+                StroomStatsStoreDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

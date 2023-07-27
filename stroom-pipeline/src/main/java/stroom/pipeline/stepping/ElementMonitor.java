@@ -135,4 +135,9 @@ public class ElementMonitor {
                                 e.getMessage()),
                         e));
     }
+
+    @Override
+    public String toString() {
+        return elementId;
+    }
 }

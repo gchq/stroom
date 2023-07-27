@@ -106,8 +106,11 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.CONFIGURATION, KafkaConfigDoc.DOCUMENT_TYPE,
-                "Kafka Configuration");
+        return new DocumentType(
+                DocumentTypeGroup.CONFIGURATION,
+                KafkaConfigDoc.DOCUMENT_TYPE,
+                "Kafka Configuration",
+                KafkaConfigDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

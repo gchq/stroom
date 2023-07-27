@@ -96,9 +96,9 @@ public class Option {
 
     public String getText() {
         if (on) {
-            return text + " (<span style=\"color: green\">ON</span>)";
+            return text + " (<span class=\"editor-menu-option-on\">ON</span>)";
         } else {
-            return text + " (<span style=\"color: red\">OFF</span>)";
+            return text + " (<span class=\"editor-menu-option-off\">OFF</span>)";
         }
     }
 

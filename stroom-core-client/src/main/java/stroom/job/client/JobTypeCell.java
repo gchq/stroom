@@ -17,6 +17,8 @@
 package stroom.job.client;
 
 import stroom.job.shared.JobNode.JobType;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.SelectionCell;
@@ -27,16 +29,14 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
 
-    private String button = null;
+    private String button;
 
     /**
      * Construct a new {@link SelectionCell} with the specified options.
      */
     public JobTypeCell() {
         super("change", "click");
-        if (button == null) {
-            button = "<img style=\"width:16px;height:16px;cursor:pointer\" src=\"images/history.svg\"/>";
-        }
+        button = SvgImageUtil.toSafeHtml(SvgImage.HISTORY, "svgIcon icon-colour__blue").asString();
     }
 
     @Override

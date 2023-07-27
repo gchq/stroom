@@ -1,9 +1,11 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.explorer.api.ExplorerDecorator;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.FilterFieldMapper;
@@ -18,13 +20,14 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -34,7 +37,9 @@ public class DependencyServiceImpl implements DependencyService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
 
     private final ImportExportActionHandlers importExportActionHandlers;
+    private final DocRefInfoService docRefInfoService;
     private final TaskContextFactory taskContextFactory;
+    private final ExplorerDecorator explorerDecorator;
 
     private static final Comparator<Dependency> FROM_TYPE_COMPARATOR =
             CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getFrom, DocRef::getType);
@@ -59,13 +64,6 @@ public class DependencyServiceImpl implements DependencyService {
             DependencyCriteria.FIELD_STATUS, Comparator.comparing(Dependency::isOk)
     );
 
-    private static final Comparator<Dependency> DEFAULT_COMPARATOR = FROM_TYPE_COMPARATOR
-            .thenComparing(FROM_NAME_COMPARATOR)
-            .thenComparing(TO_TYPE_COMPARATOR)
-            .thenComparing(TO_NAME_COMPARATOR);
-
-    private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = ExpressionOperator.builder().build();
-
     private static final FilterFieldMappers<Dependency> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_TYPE, Dependency::getFrom, DocRef::getType),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_NAME, Dependency::getFrom, DocRef::getName),
@@ -80,35 +78,29 @@ public class DependencyServiceImpl implements DependencyService {
                             : "Missing")
     );
 
-    //todo maybe better to introduce dependencies between packages in order to avoid this duplication
-    private static final DocRef[] ALL_PSEUDO_DOCREFS = {
-            new DocRef("Searchable", "Annotations", "Annotations"),
-            new DocRef("Searchable", "Dual", "Dual"),
-            new DocRef("Searchable", "Meta Store", "Meta Store"),
-            new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
-            new DocRef("Searchable", "Reference Data Store", "Reference Data Store (This Node Only)"),
-            new DocRef("Searchable", "Task Manager", "Task Manager"),
-    };
-
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
-                                 final TaskContextFactory taskContextFactory) {
+                                 final DocRefInfoService docRefInfoService,
+                                 final TaskContextFactory taskContextFactory,
+                                 final ExplorerDecorator explorerDecorator) {
         this.importExportActionHandlers = importExportActionHandlers;
+        this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
+        this.explorerDecorator = explorerDecorator;
     }
 
     @Override
     public QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
         return taskContextFactory.contextResult(
-                "Get Dependencies",
-                taskContext -> {
-                    try {
-                        return getDependencies(criteria, taskContext);
-                    } catch (Exception e) {
-                        LOGGER.error("Error getting dependencies for criteria " + criteria, e);
-                        throw e;
-                    }
-                })
+                        "Get Dependencies",
+                        taskContext -> {
+                            try {
+                                return getDependencies(criteria, taskContext);
+                            } catch (Exception e) {
+                                LOGGER.error("Error getting dependencies for criteria " + criteria, e);
+                                throw e;
+                            }
+                        })
                 .get();
     }
 
@@ -121,11 +113,14 @@ public class DependencyServiceImpl implements DependencyService {
 
 //        final Predicate<Dependency> filterPredicate = buildFilterPredicate(criteria);
 
+        // Get the additional types that we use to decorate the explorer tree.
+        final Set<DocRef> additionalRefs = new HashSet<>(explorerDecorator.list());
+
         // Flatten the dependency map
         final List<Dependency> flatDependencies = buildFlatDependencies(
                 criteria,
                 allDependencies,
-                Arrays.stream(ALL_PSEUDO_DOCREFS).collect(Collectors.toSet()),
+                additionalRefs,
                 optSortListComparator);
 
         final ResultPage<Dependency> resultPage = ResultPage.createPageLimitedList(
@@ -144,6 +139,7 @@ public class DependencyServiceImpl implements DependencyService {
                                                    final Map<DocRef, Set<DocRef>> allDependencies,
                                                    final Set<DocRef> pseudoDocRefs,
                                                    final Optional<Comparator<Dependency>> optSortListComparator) {
+        final Map<DocRef, Optional<DocRefInfo>> docRefInfoCache = new ConcurrentHashMap<>();
         Stream<Dependency> filteredStream = QuickFilterPredicateFactory.filterStream(
                 criteria.getPartialName(),
                 FIELD_MAPPERS,
@@ -153,11 +149,19 @@ public class DependencyServiceImpl implements DependencyService {
                             final DocRef parentDocRef = entry.getKey();
                             final Set<DocRef> childDocRefs = entry.getValue();
                             return childDocRefs.stream()
-                                    .map(childDocRef -> new Dependency(
-                                            parentDocRef,
-                                            childDocRef,
-                                            pseudoDocRefs.contains(childDocRef) ||
-                                                    allDependencies.containsKey(childDocRef)));
+                                    .map(childDocRef -> {
+                                        // Resolve doc info.
+                                        final Optional<DocRefInfo> parentInfo = docRefInfoCache
+                                                .computeIfAbsent(parentDocRef, docRefInfoService::info);
+                                        final Optional<DocRefInfo> childInfo = docRefInfoCache
+                                                .computeIfAbsent(childDocRef, docRefInfoService::info);
+
+                                        return new Dependency(
+                                                parentInfo.map(DocRefInfo::getDocRef).orElse(parentDocRef),
+                                                childInfo.map(DocRefInfo::getDocRef).orElse(childDocRef),
+                                                pseudoDocRefs.contains(childDocRef) ||
+                                                        allDependencies.containsKey(childDocRef));
+                                    });
                         }),
                 optSortListComparator.orElse(null));
 

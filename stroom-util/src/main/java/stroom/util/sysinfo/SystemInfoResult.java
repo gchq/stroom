@@ -1,5 +1,7 @@
 package stroom.util.sysinfo;
 
+import stroom.util.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -122,6 +124,19 @@ public class SystemInfoResult {
         public Builder addDetail(final String key, final Object value) {
             Objects.requireNonNull(key);
             details.put(key, value);
+            return this;
+        }
+
+        public Builder addDetail(final SystemInfoResult systemInfoResult) {
+            Objects.requireNonNull(systemInfoResult);
+            details.putAll(NullSafe.map(systemInfoResult.getDetails()));
+            return this;
+        }
+
+        public Builder addDetail(final String key, final SystemInfoResult systemInfoResult) {
+            Objects.requireNonNull(key);
+            Objects.requireNonNull(systemInfoResult);
+            details.put(key, NullSafe.map(systemInfoResult.getDetails()));
             return this;
         }
 

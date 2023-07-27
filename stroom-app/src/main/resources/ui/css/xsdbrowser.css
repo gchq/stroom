@@ -214,56 +214,56 @@
 
 .xsdBrowser .xsdBrowser-xsdTitleAttributes {
   background-image: url("../images/xsdbrowser/xsdTitleAttributes.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleComplexType {
   background-image: url("../images/xsdbrowser/xsdTitleComplexType.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleDirectives {
   background-image: url("../images/xsdbrowser/xsdTitleDirectives.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleElement {
   background-image: url("../images/xsdbrowser/xsdTitleElement.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleElements {
   background-image: url("../images/xsdbrowser/xsdTitleElements.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleGroups {
   background-image: url("../images/xsdbrowser/xsdTitleGroups.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleSchema {
   background-image: url("../images/xsdbrowser/xsdTitleSchema.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleSimpleType {
   background-image: url("../images/xsdbrowser/xsdTitleSimpleType.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTitleTypes {
   background-image: url("../images/xsdbrowser/xsdTitleTypes.png");
-  width: 16px;
-  height: 16px;
+  width: var(--icon-width);
+  height: var(--icon-height);
 }
 
 .xsdBrowser .xsdBrowser-xsdTree01 {

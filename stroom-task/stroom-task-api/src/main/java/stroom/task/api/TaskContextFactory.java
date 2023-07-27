@@ -50,7 +50,7 @@ public interface TaskContextFactory {
      * necessary to just call `get()` directly in the returned `Supplier`.
      *
      * @param taskName The name of the task to be displayed in the server tasks pane.
-     * @param consumer The inner code to run within the task context that will return a value.
+     * @param function The inner code to run within the task context that will return a value.
      * @return A `Supplier` object to be passed to an executor or to call `get()` directly.
      */
     <R> Supplier<R> contextResult(String taskName,
@@ -69,7 +69,7 @@ public interface TaskContextFactory {
      * complete. If the parent task does not wait then the server tasks pane will show a dead parent for the child task.
      *
      * @param taskName The name of the task to be displayed in the server tasks pane.
-     * @param consumer The inner code to run within the task context that will return a value.
+     * @param function The inner code to run within the task context that will return a value.
      * @return A `Supplier` object to be passed to an executor or to call `get()` directly.
      */
     <R> Supplier<R> childContextResult(TaskContext parentContext,

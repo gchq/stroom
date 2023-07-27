@@ -18,8 +18,8 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
@@ -43,17 +43,20 @@ public class EventSearchTaskHandler {
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
-    private final LuceneSearchExecutor luceneSearchExecutor;
+    private final FederatedSearchExecutor federatedSearchExecutor;
+    private final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator;
 
     @Inject
     EventSearchTaskHandler(final SecurityContext securityContext,
                            final CoprocessorsFactory coprocessorsFactory,
                            final ResultStoreFactory resultStoreFactory,
-                           final LuceneSearchExecutor luceneSearchExecutor) {
+                           final FederatedSearchExecutor federatedSearchExecutor,
+                           final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator) {
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
-        this.luceneSearchExecutor = luceneSearchExecutor;
+        this.federatedSearchExecutor = federatedSearchExecutor;
+        this.luceneNodeSearchTaskCreator = luceneNodeSearchTaskCreator;
     }
 
     public void exec(final EventSearchTask task,
@@ -83,7 +86,8 @@ public class EventSearchTaskHandler {
 
                 // Create an asynchronous search task.
                 final String searchName = "Event Search";
-                final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                final FederatedSearchTask federatedSearchTask = new FederatedSearchTask(
+                        task.getSearchRequestSource(),
                         task.getKey(),
                         searchName,
                         modifiedQuery,
@@ -91,7 +95,8 @@ public class EventSearchTaskHandler {
                         null,
                         nowEpochMilli);
 
-                final Coprocessors coprocessors = coprocessorsFactory.create(
+                final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                        task.getSearchRequestSource(),
                         task.getKey(),
                         Collections.singletonList(settings),
                         modifiedQuery.getParams(),
@@ -103,7 +108,7 @@ public class EventSearchTaskHandler {
                         null,
                         coprocessors);
                 try {
-                    luceneSearchExecutor.start(asyncSearchTask, resultStore);
+                    federatedSearchExecutor.start(federatedSearchTask, resultStore, luceneNodeSearchTaskCreator);
 
                     LOGGER.debug(() -> "Started searchResultCollector " + resultStore);
 

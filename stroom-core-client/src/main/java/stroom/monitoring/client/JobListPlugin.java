@@ -23,7 +23,8 @@ import stroom.job.client.presenter.JobPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -47,7 +48,8 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(9)
-                            .icon(SvgPresets.JOBS)
+                            .icon(SvgImage.JOBS)
+                            .iconColour(IconColour.GREY)
                             .text("Jobs")
                             .command(this::open)
                             .build());

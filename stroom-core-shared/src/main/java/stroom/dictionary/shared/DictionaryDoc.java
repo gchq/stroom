@@ -18,6 +18,7 @@ package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -44,6 +45,7 @@ import java.util.Objects;
 public class DictionaryDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Dictionary";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_DICTIONARY;
 
     @JsonProperty
     private String description;

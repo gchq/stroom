@@ -18,7 +18,7 @@
 package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
-import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.Handler;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -46,10 +46,10 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     @Inject
     public FolderPlugin(final EventBus eventBus,
                         final Provider<FolderPresenter> editorProvider,
-                        final ClientSecurityContext securityContext,
                         final ContentManager contentManager,
-                        final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, contentManager, entityPluginEventManager);
+                        final DocumentPluginEventManager entityPluginEventManager,
+                        final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;
         this.contentManager = contentManager;
@@ -81,10 +81,11 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     }
 
     @Override
-    protected void showTab(final DocRef docRef,
-                           final MyPresenterWidget<?> documentEditPresenter,
-                           final CloseContentEvent.Handler closeHandler,
-                           final DocumentTabData tabData) {
+    protected void showDocument(final DocRef docRef,
+                                final MyPresenterWidget<?> documentEditPresenter,
+                                final Handler closeHandler,
+                                final DocumentTabData tabData,
+                                final boolean fullScreen) {
         try {
             if (documentEditPresenter instanceof FolderPresenter) {
                 ((FolderPresenter) documentEditPresenter).read(docRef);

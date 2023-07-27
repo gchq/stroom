@@ -17,10 +17,11 @@
 package stroom.cell.tickbox.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.Cell;
@@ -115,10 +116,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             final String type = event.getType();
 
 //            GWT.log(type);
-            if (clickable &&
+            if (clickable && isTickBox(event) &&
                     ((BrowserEvents.MOUSEDOWN.equals(type) && MouseUtil.isPrimary(event)) ||
-                            (BrowserEvents.KEYDOWN.equals(type) &&
-                                    KeyBinding.getAction(event) == Action.SELECT))) {
+                            (BrowserEvents.KEYDOWN.equals(type) && KeyBinding.getAction(event) == Action.SELECT))) {
                 event.preventDefault();
 
                 TickBoxState state = value;
@@ -160,10 +160,29 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
     }
 
+    private boolean isTickBox(final NativeEvent event) {
+        boolean isTickBox = false;
+        Element element = event.getEventTarget().cast();
+        for (int i = 0; i < 4 && !isTickBox && element != null; i++) {
+            final String className = element.getClassName();
+            try {
+                isTickBox = className != null && className.contains("tickBox");
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
+            element = element.getParentElement();
+        }
+        return isTickBox;
+    }
+
     @Override
     public void render(final Context context, final TickBoxState value, final SafeHtmlBuilder sb) {
         appearance.render(this, context, value, sb);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * The appearance used to render this Cell.
@@ -182,6 +201,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         SafeHtml getHTML(TickBoxState value);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class DefaultAppearance implements Appearance {
 
@@ -222,36 +245,44 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         @Override
         public SafeHtml getHTML(final TickBoxState value) {
-            String className = null;
-            SafeHtml svg = SafeHtmlUtils.EMPTY_SAFE_HTML;
-
-            switch (value) {
-                case TICK:
-                    className = TICK;
-                    svg = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_TICK);
-                    break;
-                case HALF_TICK:
-                    className = HALF_TICK;
-                    svg = template.div(HALF_TICK_INNER, SafeHtmlUtils.EMPTY_SAFE_HTML);
-                    break;
-                case UNTICK:
-                    className = UNTICK;
-                    break;
-            }
-
             if (template == null) {
                 template = GWT.create(Template.class);
             }
 
-            return template.div(TICKBOX_CLASSNAME + additionalClassNames + className, svg);
-        }
+            final SafeHtml safeHtml;
+            switch (value) {
+                case TICK:
+                    safeHtml = SvgImageUtil.toSafeHtml(SvgImage.TICK, TICKBOX_CLASSNAME, additionalClassNames, TICK);
+                    break;
+                case HALF_TICK:
+                    safeHtml = template.halfTick(
+                            TICKBOX_CLASSNAME + additionalClassNames + HALF_TICK,
+                            HALF_TICK_INNER);
+                    break;
+                case UNTICK:
+                    safeHtml = template.untick(TICKBOX_CLASSNAME + additionalClassNames + UNTICK);
+                    break;
+                default:
+                    safeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    break;
+            }
 
-        public interface Template extends SafeHtmlTemplates {
-
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml div(String className, SafeHtml content);
+            return safeHtml;
         }
     }
+
+    public interface Template extends SafeHtmlTemplates {
+
+        @Template("<div class=\"{0}\"><div class=\"{1}\"></div></div>")
+        SafeHtml halfTick(String outerClassName, String innerClassName);
+
+        @Template("<div class=\"{0}\"></div>")
+        SafeHtml untick(String outerClassName);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class NoBorderAppearance extends DefaultAppearance {
 

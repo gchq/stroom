@@ -5,14 +5,11 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="indexSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="indexSettingsMaxDocsPerShard" label="Max Docs Per Shard">
             <v:ValueSpinner ui:field="maxDocsPerShard" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsPartitionBy" label="Partition By">
-            <l:ItemListBox ui:field="partitionBy"/>
+            <l:SelectionBox ui:field="partitionBy"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsPartitionSize" label="Partition Size">
             <v:ValueSpinner ui:field="partitionSize" width="200px"/>
@@ -24,10 +21,10 @@
             <g:TextBox ui:field="timeField" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsRetentionPeriod" label="Retention Period">
-            <l:ItemListBox ui:field="retentionAge"/>
+            <l:SelectionBox ui:field="retentionAge"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsVolumeGroup" label="Volume Group">
-            <l:StringListBox ui:field="volumeGroups"/>
+            <l:SelectionBox ui:field="volumeGroups"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>

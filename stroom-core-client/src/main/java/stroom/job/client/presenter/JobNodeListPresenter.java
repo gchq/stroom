@@ -44,6 +44,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.util.client.ElementUtil;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -252,8 +253,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
                 final String eventType = event.getType();
                 if (row != null && "click".equals(eventType)) {
-                    final String tagName = target.getTagName();
-                    if ("img".equalsIgnoreCase(tagName)) {
+                    if (ElementUtil.hasClassName(target, "svgIcon", 0, 10)) {
                         final Rest<JobNodeInfo> rest = restFactory.create();
                         rest
                                 .onSuccess(result -> setSchedule(row, result))
@@ -264,7 +264,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 }
             }
         };
-        dataGrid.addColumn(typeEditColumn, "", 20);
+        dataGrid.addColumn(typeEditColumn, "", ColumnSizeConstants.ICON_COL);
 
         // Max.
         final Column<JobNode, Number> maxColumn = new Column<JobNode, Number>(new ValueSpinnerCell(1, 1000)) {
@@ -282,7 +282,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             final Rest<JobNode> rest = restFactory.create();
             rest.call(JOB_NODE_RESOURCE).setTaskLimit(row.getId(), value.intValue());
         });
-        dataGrid.addColumn(maxColumn, "Max", 59);
+        dataGrid.addColumn(maxColumn, "Max", 62);
 
         // Cur.
         final Column<JobNode, String> curColumn = new Column<JobNode, String>(new TextCell()) {
@@ -304,13 +304,13 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             public String getValue(final JobNode row) {
                 final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
                 if (jobNodeInfo != null) {
-                    return dateTimeFormatter.format(jobNodeInfo.getLastExecutedTime());
+                    return dateTimeFormatter.formatWithDuration(jobNodeInfo.getLastExecutedTime());
                 } else {
                     return "?";
                 }
             }
         };
-        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_COL);
+        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

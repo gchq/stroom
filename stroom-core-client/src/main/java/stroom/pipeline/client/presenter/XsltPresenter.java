@@ -19,11 +19,12 @@ package stroom.pipeline.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -35,93 +36,64 @@ import javax.inject.Provider;
 
 public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XsltDoc> {
 
-    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
-    private static final TabData XSLT_TAB = new TabDataImpl("XSLT");
-
-    private final XsltSettingsPresenter settingsPresenter;
-    private final Provider<EditorPresenter> editorPresenterProvider;
-
-    private EditorPresenter codePresenter;
-    private boolean readOnly = true;
+    private static final TabData XSLT = new TabDataImpl("XSLT");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     @Inject
     public XsltPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
-                         final XsltSettingsPresenter settingsPresenter,
                          final Provider<EditorPresenter> editorPresenterProvider,
-                         final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
-        this.settingsPresenter = settingsPresenter;
-        this.editorPresenterProvider = editorPresenterProvider;
+                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+        super(eventBus, view);
 
-        settingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
+        addTab(XSLT, new AbstractTabProvider<XsltDoc, EditorPresenter>(eventBus) {
+            @Override
+            protected EditorPresenter createPresenter() {
+                final EditorPresenter editorPresenter = editorPresenterProvider.get();
+                editorPresenter.setMode(AceEditorMode.XML);
+                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                return editorPresenter;
+            }
+
+            @Override
+            public void onRead(final EditorPresenter presenter,
+                               final DocRef docRef,
+                               final XsltDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getData());
+                presenter.setReadOnly(readOnly);
+                presenter.getFormatAction().setAvailable(!readOnly);
+            }
+
+            @Override
+            public XsltDoc onWrite(final EditorPresenter presenter, final XsltDoc document) {
+                document.setData(presenter.getText());
+                return document;
             }
         });
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final XsltDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
 
-        addTab(XSLT_TAB);
-        addTab(SETTINGS_TAB);
-        selectTab(XSLT_TAB);
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS_TAB.equals(tab)) {
-            callback.onReady(settingsPresenter);
-        } else if (XSLT_TAB.equals(tab)) {
-            callback.onReady(getOrCreateCodePresenter());
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final XsltDoc xslt) {
-        super.onRead(docRef, xslt);
-        settingsPresenter.read(docRef, xslt);
-        if (codePresenter != null) {
-            codePresenter.setText(xslt.getData());
-        }
-    }
-
-    @Override
-    protected XsltDoc onWrite(XsltDoc xslt) {
-        xslt = settingsPresenter.write(xslt);
-        if (codePresenter != null) {
-            xslt.setData(codePresenter.getText());
-        }
-        return xslt;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        this.readOnly = readOnly;
-        settingsPresenter.onReadOnly(readOnly);
-        if (codePresenter != null) {
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-        }
+            @Override
+            public XsltDoc onWrite(final MarkdownEditPresenter presenter,
+                                   final XsltDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
+        selectTab(XSLT);
     }
 
     @Override
     public String getType() {
         return XsltDoc.DOCUMENT_TYPE;
-    }
-
-    private EditorPresenter getOrCreateCodePresenter() {
-        if (codePresenter == null) {
-            codePresenter = editorPresenterProvider.get();
-            codePresenter.setMode(AceEditorMode.XML);
-            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-            codePresenter.setReadOnly(readOnly);
-            codePresenter.getFormatAction().setAvailable(!readOnly);
-            if (getEntity() != null && getEntity().getData() != null) {
-                codePresenter.setText(getEntity().getData());
-            }
-        }
-        return codePresenter;
     }
 }

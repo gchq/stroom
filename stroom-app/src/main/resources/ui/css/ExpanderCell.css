@@ -34,7 +34,7 @@
     background-color: var(--expander-cell-icon__background-color--hover);
 }
 
-.expanderCell > .expanderIcon svg {
+.expanderCell svg {
     width: .7rem;
     height: .7rem;
 }

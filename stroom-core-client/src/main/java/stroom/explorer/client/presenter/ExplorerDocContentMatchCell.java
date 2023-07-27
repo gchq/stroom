@@ -18,6 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -47,8 +48,11 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
 
             // Add icon
-            main.append(template.icon(getCellClassName() + "-icon " + value.getIconClassName(),
-                    value.getDocContentMatch().getDocRef().getType()));
+            main.append(SvgImageUtil.toSafeHtml(
+                    value.getDocContentMatch().getDocRef().getType(),
+                    value.getIcon(),
+                    getCellClassName() + "-icon",
+                    "svgIcon"));
 
             // Add sample
             main.append(template.div(getCellClassName() + "-sample",
@@ -78,10 +82,11 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
         return "findCell";
     }
 
-    public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
-        SafeHtml icon(String iconClass, String typeName);
+    // --------------------------------------------------------------------------------
+
+
+    public interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);

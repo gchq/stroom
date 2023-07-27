@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class TestTaskContextImpl {
 
@@ -55,6 +54,6 @@ class TestTaskContextImpl {
     }
 
     private TaskContextImpl create() {
-        return new TaskContextImpl(TaskIdFactory.create(), "test", () -> null, false, new AtomicBoolean(false));
+        return new TaskContextImpl(TaskIdFactory.create(), "test", () -> null, false);
     }
 }

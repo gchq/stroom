@@ -22,5 +22,5 @@ public interface Item {
 
     Key getKey();
 
-    Val getValue(int index, boolean evaluateChildren);
+    Val getValue(int index);
 }

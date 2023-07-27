@@ -5,17 +5,14 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="statisticsSettingsDescription" label="Description">
-            <g:TextArea ui:field="description" width="400px"/>
-        </form:FormGroup>
         <form:FormGroup identity="statisticsSettingsStatisticType" label="Statistic Type">
-            <l:ItemListBox ui:field="statisticType"/>
+            <l:SelectionBox ui:field="statisticType"/>
         </form:FormGroup>
         <form:FormGroup identity="statisticsSettingsPrecision" label="Precision">
-            <l:ItemListBox ui:field="precision"/>
+            <l:SelectionBox ui:field="precision"/>
         </form:FormGroup>
         <form:FormGroup identity="statisticsSettingsRollUpType" label="Roll Up Type">
-            <l:ItemListBox ui:field="rollUpType"/>
+            <l:SelectionBox ui:field="rollUpType"/>
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="enabled" identity="statisticsSettingsEnabled" label="Enabled"/>

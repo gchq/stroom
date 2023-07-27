@@ -157,7 +157,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void insertTextAtCursor(final String text) {
         if (started) {
-            textDirty = true;
             editor.insertAtCursor(text);
             this.text = editor.getText();
         }
@@ -165,7 +164,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void replaceSelectedText(String text) {
         if (started) {
-            textDirty = true;
             editor.replaceSelectedText(text);
             this.text = editor.getText();
         }
@@ -173,7 +171,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void insertSnippet(String snippet) {
         if (started) {
-            textDirty = true;
             editor.insertSnippet(snippet);
             this.text = editor.getText();
         }
@@ -183,6 +180,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (started && textDirty) {
             editor.setText(this.text);
             textDirty = false;
+            markClean();
         }
     }
 
@@ -514,8 +512,20 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public void focus() {
         if (editor.isAttached()) {
-            editor.focus();
+            Scheduler.get().scheduleDeferred(editor::focus);
         }
+    }
+
+    public boolean isClean() {
+        if (editor.isAttached()) {
+            return editor.isClean();
+        } else {
+            return true;
+        }
+    }
+
+    public void markClean() {
+        editor.markClean();
     }
 
     @Override

@@ -6,7 +6,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="indexFieldType" label="Type">
-            <l:ItemListBox ui:field="type" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="indexFieldName" label="Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
@@ -21,7 +21,7 @@
             <tickbox:CustomCheckBox ui:field="positions" identity="indexFieldPositions" label="Positions"/>
         </form:FormGroup>
         <form:FormGroup identity="indexFieldAnalyser" label="Analyser">
-            <l:ItemListBox ui:field="analyser" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="analyser" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="caseSensitive" identity="indexFieldCaseSensitive" label="Case Sensitive"/>

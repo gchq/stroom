@@ -3,13 +3,16 @@
     --row__padding--vertical: .4rem;
     --row__gap--horizontal: .4rem;
     --row__gap--vertical: .25rem;
-    --row__height: 2rem;
+    --input__padding--horizontal: .4rem;
+    --input__padding--vertical: .4rem;
     --control__padding--horizontal: .4rem;
     --control__padding--vertical: .4rem;
     --control__gap--vertical: 1rem;
     --control__gap--horizontal: 1rem;
     --dialog__padding--horizontal: 1rem;
     --dialog__padding--vertical: 1rem;
+    --split__size: 7px;
+    --split__offset: -3px;
 }
 
 .stroom-density-compact {
@@ -17,11 +20,14 @@
     --row__padding--vertical: .2rem;
     --row__gap--horizontal: .4rem;
     --row__gap--vertical: .1rem;
-    --row__height: 22px;
+    --input__padding--horizontal: .4rem;
+    --input__padding--vertical: .4rem;
     --control__padding--horizontal: .4rem;
     --control__padding--vertical: .4rem;
     --control__gap--vertical: .4rem;
     --control__gap--horizontal: .4rem;
-    --dialog__padding--horizontal: .4rem;
-    --dialog__padding--vertical: .4rem;
+    --dialog__padding--horizontal: 1rem;
+    --dialog__padding--vertical: 1rem;
+    --split__size: 7px;
+    --split__offset: -3px;
 }

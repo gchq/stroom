@@ -9,7 +9,7 @@
             <g:SimplePanel ui:field="foldersInner" styleName="dock-max"/>
         </form:FormGroup>
         <form:FormGroup identity="copyDocumentPermissions" label="Permissions" addStyleNames="dock-min">
-            <l:ItemListBox ui:field="permissionInheritance" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

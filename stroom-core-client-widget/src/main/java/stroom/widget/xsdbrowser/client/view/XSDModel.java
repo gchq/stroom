@@ -87,6 +87,8 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
     private void showRoot() {
         history.clear();
 
+        XSDNode selectedItem = null;
+
         if (doc != null && doc.hasChildNodes()) {
             for (int i = 0; i < doc.getChildNodes().getLength(); i++) {
                 final XSDNode node = new XSDNode(this, doc.getChildNodes().item(i));
@@ -94,15 +96,16 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
                 if (node.getType() == XSDType.SCHEMA) {
                     // Populate maps used for element and type lookups.
                     createGlobalMaps(node);
-                    setSelectedItem(node, true);
+                    selectedItem = node;
                 }
             }
         } else {
             globalTypeMap = new HashMap<>();
             globalElementMap = new HashMap<>();
             globalGroupMap = new HashMap<>();
-            setSelectedItem(null, true, false);
         }
+
+        setSelectedItem(selectedItem, true, selectedItem != null);
     }
 
     private void createGlobalMaps(final XSDNode node) {
@@ -151,8 +154,7 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
         if (doubleSelect) {
             if (selectedItem != null
                     && (selectedItem.getType() == XSDType.SCHEMA || selectedItem.getType() == XSDType.ELEMENT
-                    || selectedItem.getType() == XSDType.COMPLEX_TYPE)
-                    && (this.currentItem == null || !this.currentItem.equals(selectedItem))) {
+                    || selectedItem.getType() == XSDType.COMPLEX_TYPE)) {
                 if (addToHistory) {
                     // Add this node to the history.
                     historyPos++;
@@ -167,14 +169,11 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
                 this.selectedItem = selectedItem;
                 DataSelectionEvent.fire(this, selectedItem, true);
 
-            } else if ((this.selectedItem == null && selectedItem != null)
-                    || (this.selectedItem != null && !this.selectedItem.equals(selectedItem))) {
+            } else {
                 this.selectedItem = selectedItem;
                 DataSelectionEvent.fire(this, selectedItem, false);
             }
-
-        } else if ((this.selectedItem == null && selectedItem != null)
-                || (this.selectedItem != null && !this.selectedItem.equals(selectedItem))) {
+        } else {
             this.selectedItem = selectedItem;
             DataSelectionEvent.fire(this, selectedItem, false);
         }

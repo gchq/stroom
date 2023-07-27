@@ -84,7 +84,7 @@ class DashboardResourceImpl implements DashboardResource {
         return dashboardServiceProvider.get().downloadQuery(request);
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceGeneration downloadSearchResults(final String nodeName,
                                                     final DownloadSearchResultsRequest request) {
@@ -110,7 +110,7 @@ class DashboardResourceImpl implements DashboardResource {
         }
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public DashboardSearchResponse search(final String nodeName, final DashboardSearchRequest request) {
         try {
@@ -133,17 +133,5 @@ class DashboardResourceImpl implements DashboardResource {
             LOGGER.debug(e.getMessage(), e);
             throw e;
         }
-    }
-
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public List<String> fetchTimeZones() {
-        return dashboardServiceProvider.get().fetchTimeZones();
-    }
-
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public List<FunctionSignature> fetchFunctions() {
-        return dashboardServiceProvider.get().fetchFunctions();
     }
 }

@@ -7,7 +7,6 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -16,9 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,18 +26,6 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerNodeServiceImpl.class);
 
     private static final String LOCK_NAME = "ExplorerNodeService";
-
-    // TODO : This is a temporary means to set tags on nodes for the purpose of finding data source nodes.
-    // TODO : The explorer will eventually allow a user to set custom tags and to find nodes searching by tag.
-    private static final Map<String, String> DEFAULT_TAG_MAP = new HashMap<>();
-
-    static {
-        DEFAULT_TAG_MAP.put("StatisticStore", StandardTagNames.DATA_SOURCE);
-        DEFAULT_TAG_MAP.put("StroomStatsStore", StandardTagNames.DATA_SOURCE);
-        DEFAULT_TAG_MAP.put("Index", StandardTagNames.DATA_SOURCE);
-        DEFAULT_TAG_MAP.put("ElasticIndex", StandardTagNames.DATA_SOURCE);
-        DEFAULT_TAG_MAP.put("SolrIndex", StandardTagNames.DATA_SOURCE);
-    }
 
     private final ExplorerTreeDao explorerTreeDao;
     private final DocumentPermissionService documentPermissionService;
@@ -373,7 +358,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private void setTags(final ExplorerTreeNode explorerTreeNode) {
         if (explorerTreeNode != null) {
-            explorerTreeNode.setTags(DEFAULT_TAG_MAP.get(explorerTreeNode.getType()));
+            explorerTreeNode.setTags(ExplorerTags.getTags(explorerTreeNode.getType()));
         }
     }
 

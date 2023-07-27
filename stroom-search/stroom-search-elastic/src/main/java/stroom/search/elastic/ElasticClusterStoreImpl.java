@@ -87,7 +87,11 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.CONFIGURATION, ElasticClusterDoc.DOCUMENT_TYPE, "Elastic Cluster");
+        return new DocumentType(
+                DocumentTypeGroup.CONFIGURATION,
+                ElasticClusterDoc.DOCUMENT_TYPE,
+                "Elastic Cluster",
+                ElasticClusterDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -87,8 +87,11 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.CONFIGURATION, VisualisationDoc.DOCUMENT_TYPE,
-                VisualisationDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.CONFIGURATION,
+                VisualisationDoc.DOCUMENT_TYPE,
+                VisualisationDoc.DOCUMENT_TYPE,
+                VisualisationDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

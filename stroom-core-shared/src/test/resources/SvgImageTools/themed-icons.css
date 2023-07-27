@@ -1,0 +1,48 @@
+body {
+  overflow-y: scroll !important;
+}
+
+.themed-icons-toolbar {
+  width: 100%;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+.themed-icons-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.themed-icons-row {
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+  margin-left: 10px;
+}
+
+.svg-name {
+  width: 300px;
+  font-size: var(--font-size-18);
+  font-weight: 600;
+  padding-top: 3px;
+}
+
+.themed-icons-panel {
+  width: 200px;
+  background: var(--app__background-color);
+}
+
+.svgIcon.themed-icons-svg {
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.svgIcon.themed-icons-svg svg {
+  width: 30px !important;
+  height: 30px !important;
+  color: var(--icon-colour__blue);
+}

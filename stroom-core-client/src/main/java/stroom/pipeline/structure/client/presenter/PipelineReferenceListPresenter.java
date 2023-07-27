@@ -29,7 +29,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -70,7 +69,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDirtyHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
@@ -103,6 +102,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
+        dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
@@ -235,6 +235,11 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         return builder.toSafeHtml();
     }
 
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+    }
+
     public void setPipeline(final PipelineDoc pipeline) {
         this.pipeline = pipeline;
     }
@@ -245,6 +250,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
     public void setCurrentElement(final PipelineElement currentElement) {
         this.currentElement = currentElement;
+        enableButtons();
 
         // Discover the reference property type.
         this.propertyType = null;
@@ -474,12 +480,6 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         if (dirty) {
             DirtyEvent.fire(this, dirty);
         }
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
     }
 
     @Override

@@ -18,8 +18,7 @@ package stroom.welcome.client;
 
 import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
+import stroom.main.client.event.ShowMainEvent;
 import stroom.welcome.client.presenter.WelcomePresenter;
 
 import com.google.inject.Inject;
@@ -29,18 +28,21 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements CurrentUserChangedHandler {
+public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements ShowMainEvent.Handler {
 
     @Inject
     public WelcomePlugin(final EventBus eventBus, final ContentManager eventManager,
                          final Provider<WelcomePresenter> presenterProvider) {
         super(eventBus, eventManager, presenterProvider);
 
-        registerHandler(getEventBus().addHandler(CurrentUserChangedEvent.getType(), this));
+        registerHandler(getEventBus().addHandler(ShowMainEvent.getType(), this));
     }
 
     @Override
-    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
-        open();
+    public void onShowMain(final ShowMainEvent event) {
+        // Don't show welcome if we have been asked to show another doc immediately.
+        if (event.getInitialDocRef() == null) {
+            open();
+        }
     }
 }

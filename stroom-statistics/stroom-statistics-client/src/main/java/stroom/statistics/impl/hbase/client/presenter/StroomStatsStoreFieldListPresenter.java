@@ -22,11 +22,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
@@ -39,15 +35,11 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
-        ReadOnlyChangeHandler {
+public class StroomStatsStoreFieldListPresenter extends DocumentEditPresenter<PagerView, StroomStatsStoreDoc> {
 
     private final MyDataGrid<StatisticField> dataGrid;
     private final MultiSelectionModelImpl<StatisticField> selectionModel;
@@ -59,8 +51,6 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     private StroomStatsStoreEntityData stroomStatsStoreEntityData;
 
     private StroomStatsStoreCustomMaskListPresenter customMaskListPresenter;
-
-    private boolean readOnly = true;
 
     @Inject
     public StroomStatsStoreFieldListPresenter(
@@ -116,10 +106,10 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     }
 
     private void enableButtons() {
-        newButton.setEnabled(!readOnly);
+        newButton.setEnabled(!isReadOnly());
         if (stroomStatsStoreEntityData != null && stroomStatsStoreEntityData.getFields() != null) {
             StatisticField selected = selectionModel.getSelected();
-            final boolean enabled = !readOnly && selected != null;
+            final boolean enabled = !isReadOnly() && selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
         } else {
@@ -127,7 +117,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
+        if (isReadOnly()) {
             newButton.setTitle("New field disabled as fields are read only");
             editButton.setTitle("Edit field disabled as fields are read only");
             removeButton.setTitle("Remove field disabled as fields are read only");
@@ -153,7 +143,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     }
 
     private void onAdd() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final StatisticField statisticField = new StatisticField();
             final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
             final List<StatisticField> otherFields = stroomStatsStoreEntityData.getFields();
@@ -176,7 +166,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     }
 
     private void onEdit() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final StatisticField statisticField = selectionModel.getSelected();
             if (statisticField != null) {
                 final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
@@ -208,7 +198,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     }
 
     private void onRemove() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final List<StatisticField> list = selectionModel.getSelectedItems();
             if (list != null && list.size() > 0) {
                 final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
@@ -240,32 +230,23 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     }
 
     @Override
-    public void read(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        if (stroomStatsStoreEntity != null) {
-            stroomStatsStoreEntityData = stroomStatsStoreEntity.getConfig();
+    protected void onRead(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
+        enableButtons();
+
+        if (document != null) {
+            stroomStatsStoreEntityData = document.getConfig();
 
             if (customMaskListPresenter != null) {
-                customMaskListPresenter.read(docRef, stroomStatsStoreEntity);
+                customMaskListPresenter.read(docRef, document, readOnly);
             }
             refresh();
         }
     }
 
     @Override
-    public StroomStatsStoreDoc write(final StroomStatsStoreDoc entity) {
-        entity.setConfig(stroomStatsStoreEntityData);
-        return entity;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    protected StroomStatsStoreDoc onWrite(final StroomStatsStoreDoc document) {
+        document.setConfig(stroomStatsStoreEntityData);
+        return document;
     }
 
     public void setCustomMaskListPresenter(final StroomStatsStoreCustomMaskListPresenter customMaskListPresenter) {

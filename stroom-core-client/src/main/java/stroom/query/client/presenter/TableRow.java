@@ -2,6 +2,7 @@ package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
 import stroom.util.shared.Expander;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -40,7 +41,7 @@ public class TableRow {
         if (cell != null) {
             return decorateValue(cell);
         } else {
-            return null;
+            return SafeHtmlUtil.NBSP;
         }
     }
 
@@ -51,8 +52,10 @@ public class TableRow {
                 ? (" style=" + cell.getStyles())
                 : "";
 
-        final String titleAttrStr = cell.getRawValue() != null ?
-                " title=\"" + SafeHtmlUtils.htmlEscape(cell.getRawValue()) + "\"" : "";
+        final String titleAttrStr = cell.getRawValue() != null
+                ?
+                " title=\"" + SafeHtmlUtils.htmlEscape(cell.getRawValue()) + "\""
+                : "";
 
         safeHtmlBuilder.appendHtmlConstant("<div class=\"cell\"" + styleAttrStr + titleAttrStr + ">");
 
@@ -87,29 +90,31 @@ public class TableRow {
 
     private void appendValue(final String value, final SafeHtmlBuilder sb) {
         final List<Object> parts = getParts(value);
-        parts.forEach(p -> {
-            if (p instanceof Hyperlink) {
-                final Hyperlink hyperlink = (Hyperlink) p;
-                if (!hyperlink.getText().trim().isEmpty()) {
-                    sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
+        if (parts.size() == 0) {
+            appendText(value, sb);
 
-//                    if (field != null && field.getFormat() != null && field.getFormat().getType() == Type.DATE_TIME) {
-//                        try {
-//                            long l = Long.parseLong(hyperlink.getText());
-//                            sb.appendEscaped(ClientDateUtil.toISOString(l));
-//                        } catch (final RuntimeException e) {
-//                            sb.appendEscaped(hyperlink.getText());
-//                        }
-//                    } else {
-                    sb.appendEscaped(hyperlink.getText());
-//                    }
-
-                    sb.appendHtmlConstant("</u>");
+        } else {
+            parts.forEach(p -> {
+                if (p instanceof Hyperlink) {
+                    final Hyperlink hyperlink = (Hyperlink) p;
+                    if (!hyperlink.getText().trim().isEmpty()) {
+                        sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
+                        appendText(hyperlink.getText(), sb);
+                        sb.appendHtmlConstant("</u>");
+                    }
+                } else {
+                    appendText(p.toString(), sb);
                 }
-            } else {
-                sb.appendEscaped(p.toString());
-            }
-        });
+            });
+        }
+    }
+
+    private void appendText(final String text, final SafeHtmlBuilder sb) {
+        if (text == null || text.trim().length() == 0) {
+            sb.append(SafeHtmlUtil.NBSP);
+        } else {
+            sb.appendEscaped(text);
+        }
     }
 
     private List<Object> getParts(final String value) {

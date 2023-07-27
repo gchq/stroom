@@ -72,9 +72,12 @@ class TestSafeHtmlUtil {
                     }
                 })
                 .addCase("hello\nworld", "hello<br>world")
+                .addCase("hello\n\nworld", "hello<br><br>world")
+                .addCase("hello\n\n\nworld", "hello<br><br><br>world")
                 .addCase("\nhello\nworld\n", "hello<br>world")
                 .addCase("hello\n", "hello")
-                .addCase("\nhello", "hello")
+                .addCase("hello\n\n", "hello")
+                .addCase("\n\nhello", "hello")
                 .addCase("", "")
                 .addCase(null, "")
                 .addCase("hello\nworld\ngoodbye", "hello<br>world<br>goodbye")

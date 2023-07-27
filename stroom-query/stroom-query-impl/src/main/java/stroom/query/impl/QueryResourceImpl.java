@@ -16,7 +16,11 @@
 
 package stroom.query.impl;
 
+import stroom.dashboard.impl.FunctionService;
+import stroom.dashboard.impl.StructureElementService;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.FunctionSignature;
+import stroom.dashboard.shared.StructureElement;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -44,12 +48,18 @@ class QueryResourceImpl implements QueryResource {
 
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<QueryService> queryServiceProvider;
+    private final Provider<FunctionService> functionServiceProvider;
+    private final Provider<StructureElementService> structureElementServiceProvider;
 
     @Inject
     QueryResourceImpl(final Provider<NodeService> nodeServiceProvider,
-                      final Provider<QueryService> dashboardServiceProvider) {
+                      final Provider<QueryService> dashboardServiceProvider,
+                      final Provider<FunctionService> functionServiceProvider,
+                      final Provider<StructureElementService> structureElementServiceProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.queryServiceProvider = dashboardServiceProvider;
+        this.functionServiceProvider = functionServiceProvider;
+        this.structureElementServiceProvider = structureElementServiceProvider;
     }
 
     @Override
@@ -132,5 +142,17 @@ class QueryResourceImpl implements QueryResource {
     @AutoLogged(OperationType.UNLOGGED)
     public List<String> fetchTimeZones() {
         return queryServiceProvider.get().fetchTimeZones();
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public List<FunctionSignature> fetchFunctions() {
+        return functionServiceProvider.get().getSignatures();
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public List<StructureElement> fetchStructureElements() {
+        return structureElementServiceProvider.get().getStructureElements();
     }
 }

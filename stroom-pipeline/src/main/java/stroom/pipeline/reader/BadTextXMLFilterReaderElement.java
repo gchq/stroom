@@ -20,22 +20,23 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
 import java.io.Reader;
 import javax.inject.Inject;
 
-@ConfigurableElement(type = "BadTextXMLFilterReader",
+@ConfigurableElement(
+        type = "BadTextXMLFilterReader",
         category = Category.READER,
         roles = {
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.ROLE_READER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STREAM)
+        icon = SvgImage.PIPELINE_STREAM)
 public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
 
     private final ErrorReceiver errorReceiver;

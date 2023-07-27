@@ -166,6 +166,10 @@ public class DelegatingAceCompleter {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MapKey {
 
         private final String editorId;

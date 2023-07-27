@@ -33,12 +33,11 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.InlineSvgButton;
@@ -73,7 +72,7 @@ public class NavigationPresenter
         NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
-        CurrentUserChangedHandler {
+        ShowMainEvent.Handler {
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
@@ -107,25 +106,25 @@ public class NavigationPresenter
         this.currentActivity = currentActivity;
 
         add = new InlineSvgButton();
-        add.setSvg(SvgImages.MONO_ADD);
+        add.setSvg(SvgImage.ADD);
         add.getElement().addClassName("navigation-header-button add");
         add.setTitle("New");
         add.setEnabled(false);
 
         delete = new InlineSvgButton();
-        delete.setSvg(SvgImages.MONO_DELETE);
+        delete.setSvg(SvgImage.DELETE);
         delete.getElement().addClassName("navigation-header-button delete");
         delete.setTitle("Delete");
         delete.setEnabled(false);
 
         filter = new InlineSvgButton();
-        filter.setSvg(SvgImages.MONO_FILTER);
+        filter.setSvg(SvgImage.FILTER);
         filter.getElement().addClassName("navigation-header-button filter");
         filter.setTitle("Filter");
         filter.setEnabled(true);
 
         find = new InlineSvgButton();
-        find.setSvg(SvgImages.MONO_SEARCH);
+        find.setSvg(SvgImage.FIND);
         find.getElement().addClassName("navigation-header-button find");
         find.setTitle("Find Content");
         find.setEnabled(true);
@@ -283,7 +282,7 @@ public class NavigationPresenter
 
     @ProxyEvent
     @Override
-    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
+    public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();
         // Set the data for the type filter.
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes);

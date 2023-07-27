@@ -13,6 +13,8 @@ public class OutputFactoryImpl implements OutputFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OutputFactoryImpl.class);
 
+    private static final int SAMPLE_SIZE = 100;
+
     private final int maxStringFieldLength;
 
     public OutputFactoryImpl(final AbstractResultStoreConfig resultStoreConfig) {
@@ -23,10 +25,17 @@ public class OutputFactoryImpl implements OutputFactory {
         if (value.length() > maxStringFieldLength) {
             LOGGER.trace(() -> "Truncating string: " + value);
             final String truncated = value.substring(0, maxStringFieldLength);
-            errorConsumer.add(() -> "Truncating string as it is longer than '" +
-                    maxStringFieldLength +
-                    "' : " +
-                    truncated);
+            errorConsumer.add(() -> {
+                String sample = truncated;
+                if (sample.length() > SAMPLE_SIZE) {
+                    sample = sample.substring(0, SAMPLE_SIZE);
+                }
+
+                return "Truncating string to " +
+                        maxStringFieldLength +
+                        " characters: " +
+                        sample;
+            });
             return truncated;
         }
         return value;

@@ -17,7 +17,13 @@ public interface LoadingStroomCache<K, V> extends StroomCache<K, V> {
     @Override
     V get(K key);
 
-
+    /**
+     * Gets the value associated with key from the cache. If key is not found in the cache
+     * then the loadFunction will be called to load the entry into the cache.
+     *
+     * @return The value associated with key or an empty {@link Optional} if the loadFunction
+     * returns null.
+     */
     Optional<V> getOptional(K key);
 
     /**

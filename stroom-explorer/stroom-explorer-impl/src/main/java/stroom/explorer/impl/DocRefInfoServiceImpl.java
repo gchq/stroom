@@ -67,7 +67,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
             return securityContext.asProcessingUserResult(() -> {
                 if (type == null) {
                     final List<DocRef> result = new ArrayList<>();
-                    for (final DocumentType documentType : explorerActionHandlers.getNonSystemTypes()) {
+                    for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
                         final ExplorerActionHandler handler =
                                 explorerActionHandlers.getHandler(documentType.toString());
                         if (handler != null) {
@@ -107,18 +107,20 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         } else {
             return docRefs.stream()
                     .filter(Objects::nonNull)
-                    .map(this::decorate)
+                    .map(docRef -> decorate(docRef, false))
                     .collect(Collectors.toList());
         }
     }
 
     @Override
-    public DocRef decorate(final DocRef docRef) {
+    public DocRef decorate(final DocRef docRef, final boolean force) {
         Objects.requireNonNull(docRef);
         Objects.requireNonNull(docRef.getType(), "DocRef type is not set.");
         Objects.requireNonNull(docRef.getUuid(), "DocRef UUID is not set.");
 
-        if (NullSafe.isEmptyString(docRef.getName())) {
+        // The passed docRef may have a name, but it may be from before a rename, so if force
+        // is set, use the cached copy which should be up to date.
+        if (NullSafe.isEmptyString(docRef.getName()) || force) {
             return docRefInfoCache.get(docRef)
                     .map(DocRefInfo::getDocRef)
                     .orElseThrow(() -> new RuntimeException("No docRefInfo for docRef: " + docRef));

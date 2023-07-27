@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.client.view;
 
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsUiHandlers;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
@@ -24,9 +24,10 @@ import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -36,78 +37,44 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
 
     private final Widget widget;
     @UiField
-    TextArea description;
-    @UiField(provided = true)
-    ItemListBox<StatisticType> statisticType;
-    @UiField(provided = true)
-    ItemListBox<EventStoreTimeIntervalEnum> precision;
-    @UiField(provided = true)
-    ItemListBox<StatisticRollUpType> rollUpType;
-    @UiField(provided = true)
+    SelectionBox<StatisticType> statisticType;
+    @UiField
+    SelectionBox<EventStoreTimeIntervalEnum> precision;
+    @UiField
+    SelectionBox<StatisticRollUpType> rollUpType;
+    @UiField
     CustomCheckBox enabled;
 
     @Inject
     public StatisticsDataSourceSettingsViewImpl(final Binder binder) {
-        statisticType = new ItemListBox<>();
+        widget = binder.createAndBindUi(this);
+
         statisticType.addItem(StatisticType.COUNT);
         statisticType.addItem(StatisticType.VALUE);
 
-        rollUpType = new ItemListBox<>();
         rollUpType.addItem(StatisticRollUpType.NONE);
         rollUpType.addItem(StatisticRollUpType.ALL);
         rollUpType.addItem(StatisticRollUpType.CUSTOM);
 
-        precision = new ItemListBox<>();
         precision.addItem(EventStoreTimeIntervalEnum.SECOND);
         precision.addItem(EventStoreTimeIntervalEnum.MINUTE);
         precision.addItem(EventStoreTimeIntervalEnum.HOUR);
         precision.addItem(EventStoreTimeIntervalEnum.DAY);
 
-        enabled = new CustomCheckBox();
         // default to not ticked so Stroom doesn't start recording stats while the
         // enity is being built up, i.e. fields
         // added.
         // enabled.setBooleanValue(Boolean.FALSE);
 
-        widget = binder.createAndBindUi(this);
 
         // TODO need to implement validation on the precision field to ensure
         // the ms equivelent is one of the values
         // from EventStoreTimeItervalEnum
-
-        statisticType.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-
-        rollUpType.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-
-        precision.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-
-        enabled.addValueChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public TextArea getDescription() {
-        return description;
     }
 
     @Override
@@ -117,41 +84,68 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
 
     @Override
     public StatisticType getStatisticType() {
-        return statisticType.getSelectedItem();
+        return statisticType.getValue();
     }
 
     @Override
     public void setStatisticType(final StatisticType statisticType) {
-        this.statisticType.setSelectedItem(statisticType);
+        this.statisticType.setValue(statisticType);
     }
 
     @Override
     public EventStoreTimeIntervalEnum getPrecision() {
-        return precision.getSelectedItem();
+        return precision.getValue();
     }
 
     @Override
     public void setPrecision(final EventStoreTimeIntervalEnum precision) {
-        this.precision.setSelectedItem(precision);
+        this.precision.setValue(precision);
     }
 
     @Override
     public StatisticRollUpType getRollUpType() {
-        return rollUpType.getSelectedItem();
+        return rollUpType.getValue();
     }
 
     @Override
     public void setRollUpType(final StatisticRollUpType statisticRollUpType) {
-        rollUpType.setSelectedItem(statisticRollUpType);
+        rollUpType.setValue(statisticRollUpType);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        description.setEnabled(!readOnly);
         statisticType.setEnabled(!readOnly);
         precision.setEnabled(!readOnly);
         rollUpType.setEnabled(!readOnly);
         enabled.setEnabled(!readOnly);
+    }
+
+    @UiHandler("statisticType")
+    public void onStatisticTypeValueChange(final ValueChangeEvent<StatisticType> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("rollUpType")
+    public void onRollUpTypeValueChange(final ValueChangeEvent<StatisticRollUpType> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("precision")
+    public void onPrecisionValueChange(final ValueChangeEvent<EventStoreTimeIntervalEnum> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("enabled")
+    public void onEnabledValueChange(final ValueChangeEvent<Boolean> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, StatisticsDataSourceSettingsViewImpl> {

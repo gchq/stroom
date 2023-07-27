@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.core.client.widget'
 dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-core-shared')
 
     implementation libs.gin
     implementation libs.guice3

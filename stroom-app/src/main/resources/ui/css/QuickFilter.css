@@ -33,7 +33,7 @@
 .quickFilter-textBox {
     width: 100%; /* To allow for info and clear btns */
 	margin: 0;
-	padding: 0 22px 0 8px;
+	padding: var(--input__padding--vertical) 22px var(--input__padding--vertical) var(--input__padding--horizontal);
 	cursor: text;
 }
 

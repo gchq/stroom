@@ -25,6 +25,10 @@ public interface ReferenceDataService extends Searchable {
 
     void purge(final StroomDuration stroomDuration, final String nodeName);
 
+    void purge(final String feedName,
+               final StroomDuration stroomDuration,
+               final String nodeName);
+
     /**
      * Purge the specified ref stream on all nodes. Will not error if the stream is not found.
      */

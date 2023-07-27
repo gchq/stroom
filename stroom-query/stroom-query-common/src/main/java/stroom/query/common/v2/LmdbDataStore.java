@@ -28,15 +28,18 @@ import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
-import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -52,10 +55,7 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,7 +71,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 import javax.inject.Provider;
 
 public class LmdbDataStore implements DataStore {
@@ -86,6 +85,7 @@ public class LmdbDataStore implements DataStore {
     private final FieldExpressionMatcher fieldExpressionMatcher;
     private final ExpressionOperator valueFilter;
     private final ValueReferenceIndex valueReferenceIndex;
+    private final CompiledFields compiledFields;
     private final CompiledField[] compiledFieldArray;
     private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
@@ -119,24 +119,23 @@ public class LmdbDataStore implements DataStore {
 
 
     private final int maxPutsBeforeCommit;
-    private boolean storeLatestEventReference;
-    private int streamIdFieldIndex = -1;
-    private int eventIdFieldIndex = -1;
+    private final CurrentDbStateFactory currentDbStateFactory;
 
     private final StoredValueKeyFactory storedValueKeyFactory;
 
 
-    LmdbDataStore(final Serialisers serialisers,
-                  final LmdbEnvFactory lmdbEnvFactory,
-                  final AbstractResultStoreConfig resultStoreConfig,
-                  final QueryKey queryKey,
-                  final String componentId,
-                  final TableSettings tableSettings,
-                  final FieldIndex fieldIndex,
-                  final Map<String, String> paramMap,
-                  final DataStoreSettings dataStoreSettings,
-                  final Provider<Executor> executorProvider,
-                  final ErrorConsumer errorConsumer) {
+    public LmdbDataStore(final SearchRequestSource searchRequestSource,
+                         final Serialisers serialisers,
+                         final SimpleEnvBuilder lmdbEnvBuilder,
+                         final AbstractResultStoreConfig resultStoreConfig,
+                         final QueryKey queryKey,
+                         final String componentId,
+                         final TableSettings tableSettings,
+                         final FieldIndex fieldIndex,
+                         final Map<String, String> paramMap,
+                         final DataStoreSettings dataStoreSettings,
+                         final Provider<Executor> executorProvider,
+                         final ErrorConsumer errorConsumer) {
         this.serialisers = serialisers;
         this.maxResults = dataStoreSettings.getMaxResults();
         this.queryKey = queryKey;
@@ -145,12 +144,11 @@ public class LmdbDataStore implements DataStore {
         this.producePayloads = dataStoreSettings.isProducePayloads();
         this.errorConsumer = errorConsumer;
 
-        // Add stream id and event id fields if we need them.
-        if (dataStoreSettings.isRequireStreamIdValue() && dataStoreSettings.isRequireEventIdValue()) {
-            streamIdFieldIndex = fieldIndex.getStreamIdFieldIndex();
-            eventIdFieldIndex = fieldIndex.getEventIdFieldIndex();
-            storeLatestEventReference = true;
-        }
+        // Ensure we have a source type.
+        final SourceType sourceType =
+                Optional.ofNullable(searchRequestSource)
+                        .map(SearchRequestSource::getSourceType)
+                        .orElse(SourceType.DASHBOARD_UI);
 
         this.windowSupport = new WindowSupport(tableSettings);
         final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
@@ -158,12 +156,12 @@ public class LmdbDataStore implements DataStore {
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
         valueFilter = modifiedTableSettings.getValueFilter();
         fieldExpressionMatcher = new FieldExpressionMatcher(fields);
-        final CompiledFields compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
+        this.compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
         this.compiledFieldArray = compiledFields.getCompiledFields();
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledFieldArray, modifiedTableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFieldArray);
-        keyFactoryConfig = new KeyFactoryConfigImpl(this.compiledFieldArray, compiledDepths, dataStoreSettings);
+        keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledFieldArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         valHasher = new ValHasher(serialisers.getOutputFactory(), errorConsumer);
         lmdbRowKeyFactory = LmdbRowKeyFactoryFactory.create(keyFactory, keyFactoryConfig, compiledDepths, valHasher);
@@ -178,8 +176,7 @@ public class LmdbDataStore implements DataStore {
                 lmdbRowKeyFactory);
         maxPutsBeforeCommit = resultStoreConfig.getMaxPutsBeforeCommit();
 
-        this.lmdbEnv = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig())
-                .withSubDirectory(dataStoreSettings.getSubDirectory())
+        this.lmdbEnv = lmdbEnvBuilder
                 .withMaxDbCount(1)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
@@ -201,6 +198,9 @@ public class LmdbDataStore implements DataStore {
         executorProvider.get().execute(this::transfer);
 
         storedValueKeyFactory = new StoredValueKeyFactory(compiledDepths, compiledFieldArray, keyFactoryConfig);
+
+        // Create a factory that makes DB state objects.
+        currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
     }
 
     /**
@@ -264,7 +264,7 @@ public class LmdbDataStore implements DataStore {
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
         // Get a reference to the current event so we can keep track of what we have stored data for.
-        final CurrentDbState currentDbState = createCurrentDbState(values);
+        final CurrentDbState currentDbState = currentDbStateFactory.createCurrentDbState(values);
 
         Key parentKey = Key.ROOT_KEY;
         long parentGroupHash = 0;
@@ -543,8 +543,15 @@ public class LmdbDataStore implements DataStore {
 
                     } else {
                         // We do not expect a key collision here.
-                        LOGGER.debug(() -> "Unexpected collision");
-                        throw new RuntimeException("Unexpected collision");
+                        final String message = "Unexpected collision (" +
+                                "key factory=" +
+                                keyFactory.getClass().getSimpleName() +
+                                ", " +
+                                "lmdbRowKeyFactory=" +
+                                lmdbRowKeyFactory.getClass().getSimpleName() +
+                                ")";
+                        LOGGER.debug(message);
+                        throw new RuntimeException(message);
                     }
                 }
 
@@ -581,6 +588,11 @@ public class LmdbDataStore implements DataStore {
             errorConsumer.add(e);
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public List<Field> getFields() {
+        return compiledFields.getFields();
     }
 
     /**
@@ -718,24 +730,7 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public long getByteSize() {
-        final AtomicLong total = new AtomicLong();
-        try {
-            final Path dir = lmdbEnv.getLocalDir();
-            try (final Stream<Path> stream = Files.walk(dir)) {
-                stream.forEach(path -> {
-                    try {
-                        if (Files.isRegularFile(path)) {
-                            total.addAndGet(Files.size(path));
-                        }
-                    } catch (final IOException e) {
-                        LOGGER.debug(e::getMessage, e);
-                    }
-                });
-            }
-        } catch (final IOException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
-        return total.get();
+        return FileUtil.getByteSize(lmdbEnv.getLocalDir());
     }
 
     @Override
@@ -750,21 +745,6 @@ public class LmdbDataStore implements DataStore {
 
     public FieldIndex getFieldIndex() {
         return fieldIndex;
-    }
-
-    private CurrentDbState createCurrentDbState(final Val[] values) {
-        if (storeLatestEventReference) {
-            if (streamIdFieldIndex >= 0 && eventIdFieldIndex >= 0) {
-                final Val streamId = values[streamIdFieldIndex];
-                final Val eventId = values[eventIdFieldIndex];
-                final Val eventTime = values[fieldIndex.getWindowTimeFieldPos()];
-
-                if (streamId != null && eventId != null) {
-                    return new CurrentDbState(streamId.toLong(), eventId.toLong(), eventTime.toLong());
-                }
-            }
-        }
-        return null;
     }
 
     private void putCurrentDbState(final BatchingWriteTxn writeTxn, final CurrentDbState currentDbState) {
@@ -788,7 +768,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private synchronized CurrentDbState getCurrentDbState() {
-        if (!storeLatestEventReference) {
+        if (!currentDbStateFactory.isStoreLatestEventReference()) {
             return null;
         }
 
@@ -836,6 +816,10 @@ public class LmdbDataStore implements DataStore {
 
     public void delete(final DeleteCommand deleteCommand) {
         put(deleteCommand);
+    }
+
+    public QueryKey getQueryKey() {
+        return queryKey;
     }
 
     private static class LmdbData implements Data {
@@ -934,9 +918,12 @@ public class LmdbDataStore implements DataStore {
                         // All valid keys are more than a single byte long. Single byte keys are used to store db info.
                         if (LmdbRowKeyFactoryFactory.isNotStateKey(keyVal.key())) {
                             final ByteBuffer valueBuffer = keyVal.val();
-                            while (valueBuffer.remaining() > 0 && addMore) {
+                            boolean isFirstValue = true;
+                            // It is possible to have no actual values, e.g. if you have just one col of 'currentUser()'
+                            // so we still need to create and add an empty storedValues
+                            while ((valueBuffer.hasRemaining() || isFirstValue) && addMore) {
+                                isFirstValue = false;
 
-//                            if (key.getParent().equals(parentKey)) {
                                 final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
                                 final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
 
@@ -952,7 +939,6 @@ public class LmdbDataStore implements DataStore {
                                         trimmed = true;
                                     }
                                 }
-//                            }
                             }
                         }
                     }
@@ -1106,7 +1092,16 @@ public class LmdbDataStore implements DataStore {
         }
 
         @Override
-        public Val getValue(final int index, final boolean evaluateChildren) {
+        public Val getValue(final int index) {
+            if (index >= cachedValues.length) {
+                try {
+                    throw new ArrayIndexOutOfBoundsException("Attempt to get value for unknown field index: " + index);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage() + "\n" + Arrays.toString(data.compiledFields), e);
+                }
+                return ValNull.INSTANCE;
+            }
+
             Val val = cachedValues[index];
             if (val == null) {
                 val = createValue(index);

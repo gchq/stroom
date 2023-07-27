@@ -16,15 +16,16 @@
 
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="content" styleName="dialog-content"/>
         <g:FlowPanel styleName="dialog-buttons">
-            <g:Button ui:field="accept"
-                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-accept"
+            <b:Button ui:field="accept"
+                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-accept Button--contained-primary"
                       text="Accept"/>
-            <g:Button ui:field="reject"
-                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-reject"
+            <b:Button ui:field="reject"
+                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-reject Button--contained-secondary"
                       text="Reject"/>
         </g:FlowPanel>
     </g:FlowPanel>

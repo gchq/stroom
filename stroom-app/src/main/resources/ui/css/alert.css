@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-.alert-table {
-	padding: 0;
+.alert-layout {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+}
+
+.alert-message-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 5px;
+    overflow: hidden;
 }
 
 .alert-message {
-    /* To match .detail (accounting for the margin-left and border) */
-	width: 512px;
-	padding-left: 10px;
-	word-wrap: break-word;
 }
 
 .alert-showHide {
-	padding-left: 10px;
-	padding-top: 5px;
 }
 
 .alert-showHide a {
@@ -35,19 +42,20 @@
 }
 
 .alert-detail {
-    width: 500px;
-    height: 400px;
-    margin-left: 10px;
-    margin-right: 0;
-    margin-top: 5px;
-    margin-bottom: 0;
-    padding: 2px;
+    display: flex;
+    padding: 5px;
     overflow: auto;
+    flex-grow: 1;
 
 	border: solid 1px var(--control__border-color);
 	background-color: var(--control__background-color);
 	color: var(--control__text-color);
 	border-radius: .25rem;
+}
+
+.alert-detail-text {
+    font-family: monospace, Courier New;
+    white-space: pre;
 
     -webkit-user-select: text;  /* Chrome 49+ */
     -moz-user-select: text;     /* Firefox 43+ */
@@ -55,36 +63,11 @@
     user-select: text;          /* Likely future */
 }
 
-.alert-detail-text {
-    font-family: monospace, Courier New;
-    /*font-size: 10px;*/
-    white-space: pre;
+.alert-icon {
+    flex-shrink: 0;
 }
 
-.alert-icon-question {
-    display: inline-block;
-    background-image: url("../images/question.svg");
-    width: 32px;
-    height: 32px;
-}
-
-.alert-icon-info {
-    display: inline-block;
-    background-image: url("../images/info.svg");
-    width: 32px;
-    height: 32px;
-}
-
-.alert-icon-warning {
-    display: inline-block;
-    background-image: url("../images/warning.svg");
-    width: 32px;
-    height: 32px;
-}
-
-.alert-icon-error {
-    display: inline-block;
-    background-image: url("../images/error.svg");
+.alert-icon svg {
     width: 32px;
     height: 32px;
 }

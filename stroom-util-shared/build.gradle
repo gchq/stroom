@@ -11,6 +11,7 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
+    testImplementation libs.commons_lang
     testImplementation libs.guice5
     testImplementation libs.jackson_core
     testImplementation libs.jackson_databind

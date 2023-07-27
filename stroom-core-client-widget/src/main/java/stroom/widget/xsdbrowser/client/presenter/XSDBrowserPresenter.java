@@ -25,7 +25,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class XSDBrowserPresenter extends MyPresenterWidget<XSDBrowserPresenter.XSDBrowserView>
+public class XSDBrowserPresenter
+        extends MyPresenterWidget<XSDBrowserPresenter.XSDBrowserView>
         implements XSDBrowserUiHandlers {
 
     private XSDModel model;

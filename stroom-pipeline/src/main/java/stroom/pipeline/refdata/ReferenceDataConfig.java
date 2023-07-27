@@ -23,7 +23,9 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     private final StroomDuration purgeAge;
     private final int loadingLockStripes;
     private final ReferenceDataLmdbConfig lmdbConfig;
+    private final ReferenceDataStagingLmdbConfig stagingLmdbConfig;
     private final CacheConfig effectiveStreamCache;
+    private final CacheConfig metaIdToRefStoreCache;
 
     public ReferenceDataConfig() {
         maxPutsBeforeCommit = 200_000;
@@ -31,10 +33,17 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         purgeAge = StroomDuration.ofDays(30);
         loadingLockStripes = 2048;
         lmdbConfig = new ReferenceDataLmdbConfig();
+        stagingLmdbConfig = new ReferenceDataStagingLmdbConfig();
 
         effectiveStreamCache = CacheConfig.builder()
-                .maximumSize(1000L)
+                .maximumSize(1_000L)
                 .expireAfterWrite(StroomDuration.ofMinutes(10))
+                .build();
+
+        // Mappings are immutable so can hang on to them for a long time
+        metaIdToRefStoreCache = CacheConfig.builder()
+                .maximumSize(1_000L)
+                .expireAfterAccess(StroomDuration.ofHours(1))
                 .build();
     }
 
@@ -44,13 +53,17 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                                @JsonProperty("purgeAge") final StroomDuration purgeAge,
                                @JsonProperty("loadingLockStripes") final int loadingLockStripes,
                                @JsonProperty("lmdb") final ReferenceDataLmdbConfig lmdbConfig,
-                               @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache) {
+                               @JsonProperty("stagingLmdb") final ReferenceDataStagingLmdbConfig stagingLmdbConfig,
+                               @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache,
+                               @JsonProperty("metaIdToRefStoreCache") final CacheConfig metaIdToRefStoreCache) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
         this.purgeAge = purgeAge;
         this.loadingLockStripes = loadingLockStripes;
         this.lmdbConfig = lmdbConfig;
+        this.stagingLmdbConfig = stagingLmdbConfig;
         this.effectiveStreamCache = effectiveStreamCache;
+        this.metaIdToRefStoreCache = metaIdToRefStoreCache;
     }
 
     @Min(0)
@@ -93,8 +106,17 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         return lmdbConfig;
     }
 
+    @JsonProperty("stagingLmdb")
+    public ReferenceDataStagingLmdbConfig getStagingLmdbConfig() {
+        return stagingLmdbConfig;
+    }
+
     public CacheConfig getEffectiveStreamCache() {
         return effectiveStreamCache;
+    }
+
+    public CacheConfig getMetaIdToRefStoreCache() {
+        return metaIdToRefStoreCache;
     }
 
     public ReferenceDataConfig withLmdbConfig(final ReferenceDataLmdbConfig lmdbConfig) {
@@ -104,7 +126,8 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
-                effectiveStreamCache);
+                stagingLmdbConfig,
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withPurgeAge(final StroomDuration purgeAge) {
@@ -114,7 +137,8 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
-                effectiveStreamCache);
+                stagingLmdbConfig,
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
@@ -124,7 +148,8 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
-                effectiveStreamCache);
+                stagingLmdbConfig,
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withMaxPurgeDeletesBeforeCommit(final int maxPurgeDeletesBeforeCommit) {
@@ -134,7 +159,8 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
-                effectiveStreamCache);
+                stagingLmdbConfig,
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     public ReferenceDataConfig withEffectiveStreamCache(final CacheConfig effectiveStreamCache) {
@@ -144,7 +170,8 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
-                effectiveStreamCache);
+                stagingLmdbConfig,
+                effectiveStreamCache, metaIdToRefStoreCache);
     }
 
     @Override
@@ -155,6 +182,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 ", purgeAge=" + purgeAge +
                 ", loadingLockStripes=" + loadingLockStripes +
                 ", lmdbConfig=" + lmdbConfig +
+                ", stagingLmdbConfig=" + stagingLmdbConfig +
                 ", effectiveStreamCache=" + effectiveStreamCache +
                 '}';
     }

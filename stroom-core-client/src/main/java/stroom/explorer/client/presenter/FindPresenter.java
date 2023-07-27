@@ -92,7 +92,13 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
 
                 final Rest<ResultPage<ExplorerDocContentMatch>> rest = restFactory.create();
                 rest
-                        .onSuccess(dataConsumer)
+                        .onSuccess(resultPage -> {
+                            if (resultPage.getPageStart() != cellList.getPageStart()) {
+                                cellList.setPageStart(resultPage.getPageStart());
+                            }
+                            dataConsumer.accept(resultPage);
+
+                        })
                         .onFailure(throwableConsumer)
                         .call(EXPLORER_RESOURCE)
                         .findContent(currentQuery);

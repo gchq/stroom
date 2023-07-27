@@ -4,6 +4,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,8 @@ class TestStringValueSerde extends AbstractSerdeTest<RefDataValue, RefDataValueS
     }
 
     @Override
-    Class<RefDataValueSerde> getSerdeType() {
-        return RefDataValueSerde.class;
+    TypeLiteral<RefDataValueSerde> getSerdeType() {
+        return new TypeLiteral<RefDataValueSerde>(){};
     }
 
     @Override
