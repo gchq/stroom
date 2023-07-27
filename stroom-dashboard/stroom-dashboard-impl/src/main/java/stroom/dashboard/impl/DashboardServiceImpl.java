@@ -229,9 +229,8 @@ class DashboardServiceImpl implements DashboardService {
         return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
-            final Search search = searchRequest.getSearch();
             ResourceKey resourceKey;
-            Integer rowCount = 0;
+            Integer rowCount = null;
 
             try {
                 if (queryKey == null) {
@@ -251,10 +250,13 @@ class DashboardServiceImpl implements DashboardService {
                         .filter(result -> result instanceof TableResult)
                         .filter(result -> request.isDownloadAllTables() || result.getComponentId().equals(componentId))
                         .map(result -> (TableResult) result)
-                        .forEach(result -> rowCount += result.getTotalResults())
                         .toList();
+                rowCount = tableResults
+                        .stream()
+                        .map(TableResult::getTotalResults)
+                        .reduce(0, Integer::sum);
 
-                if (tableResults.size() == 0) {
+                if (tableResults.isEmpty()) {
                     throw new EntityServiceException("No result for component can be found");
                 }
 
@@ -262,7 +264,6 @@ class DashboardServiceImpl implements DashboardService {
                 final String fileName = getResultsFilename(request);
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
-                rowCount = tableResult.getTotalResults();
 
                 download(request, searchRequest, tableResults, file);
 
