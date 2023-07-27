@@ -38,6 +38,29 @@
     line-height: 1.3em;
 }
 
+.stroom .ace_editor.ace_autocomplete {
+    background-color: var(--tooltip__background-color);
+    border: 1px solid var(--dialog__border-color);
+    color: var(--tooltip__text-color);
+    /* Ace's default of 300px is too small */
+    width: 400px;
+}
+
+.stroom .ace_tooltip.ace_doc-tooltip {
+    background-color: var(--tooltip__background-color) !important;
+    background-image: none;
+    border: 1px solid var(--dialog__border-color);
+    color: var(--tooltip__text-color);
+}
+
+.stroom .ace_tooltip.ace_doc-tooltip .queryHelpDetail {
+    background-color: var(--tooltip__background-color) !important;
+}
+
+.stroom .ace_tooltip.ace_doc-tooltip .markdown {
+    background-color: var(--tooltip__background-color);
+}
+
 .editor .ace_gutter-cell.stroom_info {
     background-image: url(../images/info.svg);
     background-size: 14px 14px;

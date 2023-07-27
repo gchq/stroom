@@ -26,7 +26,6 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
@@ -39,6 +38,7 @@ import stroom.search.elastic.ElasticConfig;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexConstants;
+import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -92,12 +92,16 @@ import javax.ws.rs.NotFoundException;
 /**
  * Accepts `json` schema XML and sends documents to Elasticsearch as batches for indexing
  */
-@ConfigurableElement(type = "ElasticIndexingFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS,
-        PipelineElementType.VISABILITY_SIMPLE
-}, icon = ElementIcons.ELASTIC_INDEX)
+@ConfigurableElement(
+        type = "ElasticIndexingFilter",
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE},
+        icon = SvgImage.PIPELINE_ELASTIC_INDEX)
 class ElasticIndexingFilter extends AbstractXMLFilter {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
     private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
@@ -638,7 +642,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             throw new IOException("Bulk indexing request failed: " + response.buildFailureMessage());
                         } else {
                             succeeded.set(true);
-                            final String retryMessage = currentRetry > 0 ? " (retries: " + currentRetry + ")" : "";
+                            final String retryMessage = currentRetry > 0
+                                    ? " (retries: " + currentRetry + ")"
+                                    : "";
                             LOGGER.info("Pipeline '{}' indexed {} documents to Elasticsearch cluster '{}' in " +
                                             "{} seconds" + retryMessage,
                                     pipelineName, indexRequests.size(), elasticCluster.getName(),
@@ -647,8 +653,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     } catch (ElasticsearchStatusException | ElasticsearchOverloadedException e) {
                         handleElasticsearchException(e);
                     } catch (RuntimeException | IOException e) {
-                        fatalError(e.getMessage() != null ? e.getMessage().substring(0,
-                                        Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length())) : "", e);
+                        fatalError(e.getMessage() != null
+                                ? e.getMessage().substring(0,
+                                Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length()))
+                                : "", e);
                     } finally {
                         currentRetry++;
                     }
@@ -670,8 +678,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         if (e instanceof ElasticsearchStatusException) {
             statusName = ((ElasticsearchStatusException) e).status().name();
         }
-        final String errorDetailMsg = e.getMessage() != null ? e.getMessage().substring(0,
-                Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length())) : "";
+        final String errorDetailMsg = e.getMessage() != null
+                ? e.getMessage().substring(0,
+                Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length()))
+                : "";
         if (e instanceof ElasticsearchOverloadedException || ES_TOO_MANY_REQUESTS_STATUS.equals(statusName)) {
             final ElasticIndexingConfig indexingConfig = elasticConfigProvider.get().getIndexingConfig();
             if (currentRetry < indexingConfig.getRetryCount()) {
@@ -780,7 +790,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     /**
      * @param message - Message to send to the error receiver and log target
-     * @param e - Original exception (optional - omit if output is likely to be excessive)
+     * @param e       - Original exception (optional - omit if output is likely to be excessive)
      * @throws LoggedException
      */
     private void fatalError(final String message, final Exception e) throws LoggedException {
@@ -795,6 +805,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     private static class ElasticsearchOverloadedException extends RuntimeException {
+
         public ElasticsearchOverloadedException(final String message) {
             super(message);
         }

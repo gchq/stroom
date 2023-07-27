@@ -340,9 +340,4 @@ public class AnalyticNotificationsPresenter
     public void onDirty() {
 //        setDirty(true);
     }
-
-    @Override
-    public String getType() {
-        return AnalyticRuleDoc.DOCUMENT_TYPE;
-    }
 }

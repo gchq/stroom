@@ -16,14 +16,16 @@
 
 package stroom.pipeline.stepping.client.view;
 
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -39,7 +41,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @UiField
     TextBox xPath;
     @UiField
-    ItemListBox<MatchType> matchType;
+    SelectionBox<MatchType> matchType;
     @UiField
     TextBox value;
     @UiField
@@ -49,9 +51,9 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     public XPathFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         matchType.addItems(MatchType.values());
-        matchType.setSelectedItem(MatchType.EQUALS);
+        matchType.setValue(MatchType.EQUALS);
 
-        matchType.addSelectionHandler(event -> changeVisibility(event.getSelectedItem()));
+//        matchType.addValueChangeHandler(event -> changeVisibility(event.getValue()));
     }
 
     @Override
@@ -76,12 +78,12 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     @Override
     public MatchType getMatchType() {
-        return matchType.getSelectedItem();
+        return matchType.getValue();
     }
 
     @Override
     public void setMatchType(final MatchType matchType) {
-        this.matchType.setSelectedItem(matchType);
+        this.matchType.setValue(matchType);
         changeVisibility(matchType);
     }
 
@@ -109,6 +111,11 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         final boolean visible = matchType == MatchType.CONTAINS || matchType == MatchType.EQUALS;
         valueContainer.setVisible(visible);
         ignoreCaseContainer.setVisible(visible);
+    }
+
+    @UiHandler("matchType")
+    public void onMatchTypeChange(final ValueChangeEvent<MatchType> e) {
+        changeVisibility(e.getValue());
     }
 
     public interface Binder extends UiBinder<Widget, XPathFilterViewImpl> {

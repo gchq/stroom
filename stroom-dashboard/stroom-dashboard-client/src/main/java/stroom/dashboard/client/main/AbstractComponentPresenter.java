@@ -24,7 +24,7 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.svg.client.Icon;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -199,7 +199,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     //# Start TabData
     //###############
     @Override
-    public Icon getIcon() {
+    public SvgImage getIcon() {
         return null;
     }
 

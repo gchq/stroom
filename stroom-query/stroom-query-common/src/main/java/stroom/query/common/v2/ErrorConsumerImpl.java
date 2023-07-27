@@ -5,14 +5,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class ErrorConsumerImpl implements ErrorConsumer {
 
@@ -20,7 +19,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     private static final int MAX_ERROR_COUNT = 100;
 
-    private final Set<Throwable> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final AtomicInteger errorCount = new AtomicInteger();
 
     public ErrorConsumerImpl() {
@@ -29,33 +28,35 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     @Override
     public void add(final Supplier<String> message) {
-        int count = errorCount.incrementAndGet();
-        if (count <= MAX_ERROR_COUNT) {
-            final String string = message.get();
-            final RuntimeException exception = new RuntimeException(string);
+        if (LOGGER.isTraceEnabled()) {
+            final RuntimeException exception = new RuntimeException(message.get());
             LOGGER.trace(exception::getMessage, exception);
-            errors.add(exception);
+        }
+
+        final int count = errorCount.incrementAndGet();
+        if (count <= MAX_ERROR_COUNT) {
+            errors.add(message.get());
         }
     }
 
     @Override
     public void add(final Throwable exception) {
-        LOGGER.trace(exception::getMessage, exception);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(exception::getMessage, exception);
+        }
+
         if (!ErrorConsumerUtil.isInterruption(exception)) {
-            int count = errorCount.incrementAndGet();
+            final int count = errorCount.incrementAndGet();
             if (count <= MAX_ERROR_COUNT) {
-                errors.add(exception);
+                errors.add(ExceptionStringUtil.getMessage(exception));
             }
         }
     }
 
     @Override
     public List<String> getErrors() {
-        if (hasErrors()) {
-            return errors
-                    .stream()
-                    .map(ExceptionStringUtil::getMessage)
-                    .collect(Collectors.toList());
+        if (errors.size() > 0) {
+            return new ArrayList<>(errors);
         } else {
             return Collections.emptyList();
         }
@@ -63,16 +64,9 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     @Override
     public List<String> drain() {
-        if (hasErrors()) {
-            final Set<Throwable> copy = new HashSet<>(errors);
-            copy.forEach(errors::remove);
-            return copy
-                    .stream()
-                    .map(ExceptionStringUtil::getMessage)
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
+        final List<String> copy = getErrors();
+        copy.forEach(errors::remove);
+        return copy;
     }
 
     @Override

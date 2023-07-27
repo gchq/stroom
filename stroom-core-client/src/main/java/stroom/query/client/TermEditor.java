@@ -22,8 +22,7 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.item.client.AutocompleteListBox;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.StringUtil;
@@ -53,8 +52,8 @@ public class TermEditor extends Composite {
     private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
-    private final AutocompleteListBox<AbstractField> fieldListBox;
-    private final ItemListBox<Condition> conditionListBox;
+    private final SelectionBox<AbstractField> fieldListBox;
+    private final SelectionBox<Condition> conditionListBox;
     private final Label andLabel;
     private final SuggestBox value;
     private final SuggestBox valueFrom;
@@ -183,19 +182,19 @@ public class TermEditor extends Composite {
             }
         }
 
-        fieldListBox.setSelectedItem(termField);
-        conditionListBox.setSelectedItem(null);
+        fieldListBox.setValue(termField);
+        conditionListBox.setValue(null);
         changeField(termField, false);
 
         reading = false;
     }
 
     private void write(final Term term) {
-        if (fieldListBox.getSelectedItem() != null && conditionListBox.getSelectedItem() != null) {
+        if (fieldListBox.getValue() != null && conditionListBox.getValue() != null) {
             DocRef docRef = null;
 
-            term.setField(fieldListBox.getSelectedItem().getName());
-            term.setCondition(conditionListBox.getSelectedItem());
+            term.setField(fieldListBox.getValue().getName());
+            term.setCondition(conditionListBox.getValue());
 
             final StringBuilder sb = new StringBuilder();
             for (final Widget widget : activeWidgets) {
@@ -229,7 +228,7 @@ public class TermEditor extends Composite {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
-        Condition selected = conditionListBox.getSelectedItem();
+        Condition selected = conditionListBox.getValue();
         conditionListBox.clear();
         conditionListBox.addItems(conditions);
 
@@ -245,7 +244,7 @@ public class TermEditor extends Composite {
             }
         }
 
-        conditionListBox.setSelectedItem(selected);
+        conditionListBox.setValue(selected);
         changeCondition(field, selected);
 
         if (field != null && field.getFieldType() != null) {
@@ -318,8 +317,8 @@ public class TermEditor extends Composite {
     private void changeCondition(final AbstractField field,
                                  final Condition condition) {
         FieldType indexFieldType = null;
-        if (fieldListBox.getSelectedItem() != null) {
-            indexFieldType = fieldListBox.getSelectedItem().getFieldType();
+        if (fieldListBox.getValue() != null) {
+            indexFieldType = fieldListBox.getValue().getFieldType();
         }
 
         if (indexFieldType == null) {
@@ -546,17 +545,17 @@ public class TermEditor extends Composite {
 
         }
 
-        registerHandler(fieldListBox.addSelectionHandler(event -> {
+        registerHandler(fieldListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeField(event.getSelectedItem(), true);
+                changeField(event.getValue(), true);
                 fireDirty();
             }
         }));
-        registerHandler(conditionListBox.addSelectionHandler(event -> {
+        registerHandler(conditionListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeCondition(fieldListBox.getSelectedItem(), event.getSelectedItem());
+                changeCondition(fieldListBox.getValue(), event.getValue());
                 fireDirty();
             }
         }));
@@ -573,8 +572,8 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private AutocompleteListBox<AbstractField> createFieldBox() {
-        final AutocompleteListBox<AbstractField> fieldListBox = new AutocompleteListBox<>();
+    private SelectionBox<AbstractField> createFieldBox() {
+        final SelectionBox<AbstractField> fieldListBox = new SelectionBox<>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
@@ -582,8 +581,8 @@ public class TermEditor extends Composite {
         return fieldListBox;
     }
 
-    private ItemListBox<Condition> createConditionBox() {
-        final ItemListBox<Condition> conditionListBox = new ItemListBox<>();
+    private SelectionBox<Condition> createConditionBox() {
+        final SelectionBox<Condition> conditionListBox = new SelectionBox<>();
         conditionListBox.addStyleName(ITEM_CLASS_NAME);
         conditionListBox.addStyleName(DROPDOWN_CLASS_NAME);
         conditionListBox.addStyleName("condition");

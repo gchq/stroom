@@ -1,5 +1,6 @@
 package stroom.util;
 
+import stroom.util.io.ByteSize;
 import stroom.util.logging.DurationTimer;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
@@ -318,6 +319,18 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed array of items or varargs items as a non-null list.
+     * Doesn't support null items in the list.
+     */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    public static <T> List<T> asList(final T... items) {
+        return items != null
+                ? List.of(items)
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed set if it is non-null else returns an empty set.
      */
     public static <S extends Set<T>, T> Set<T> set(final S set) {
@@ -381,6 +394,15 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed byteSize if it is non-null else returns a ZERO {@link ByteSize}
+     */
+    public static ByteSize byteSize(final ByteSize byteSize) {
+        return byteSize != null
+                ? byteSize
+                : ByteSize.ZERO;
+    }
+
+    /**
      * Apply getter to value if value is non-null.
      *
      * @return The result of applying getter to value if value is non-null, else null.
@@ -433,6 +455,15 @@ public class NullSafe {
             return Optional.empty();
         } else {
             return Optional.ofNullable(Objects.requireNonNull(getter).apply(value));
+        }
+    }
+
+    /**
+     * If runnable is non-null run it.
+     */
+    public static void run(final Runnable runnable) {
+        if (runnable != null) {
+            runnable.run();
         }
     }
 

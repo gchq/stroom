@@ -68,9 +68,14 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         registerHandler(eventBus.addHandler(HyperlinkEvent.getType(), this));
     }
 
+    private static native void nativeConsoleLog(String s) /*-{
+        $wnd.console.log(s);
+    }-*/;
+
     @Override
     public void onLink(final HyperlinkEvent event) {
         final Hyperlink hyperlink = event.getHyperlink();
+        nativeConsoleLog("HyperlinkEvent: " + hyperlink.getHref());
 
         String href = hyperlink.getHref();
 //        if (namedUrls != null) {

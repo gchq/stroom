@@ -1,6 +1,5 @@
 package stroom.query.language;
 
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -20,11 +19,14 @@ import stroom.query.api.v2.TableSettings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class SearchRequestBuilder {
 
@@ -53,10 +55,14 @@ public class SearchRequestBuilder {
         final List<AbstractToken> childTokens = tokenGroup.getChildren();
 
         // Add data source.
-        addDataSourceName(childTokens, consumer);
+        addDataSourceName(childTokens, new HashSet<>(), consumer, true);
     }
 
     private SearchRequest doCreate(final String string, final SearchRequest in) {
+        if (in == null) {
+            throw new NullPointerException("Null sample request");
+        }
+
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
         if (tokens.size() == 0) {
@@ -70,16 +76,19 @@ public class SearchRequestBuilder {
         final List<AbstractToken> childTokens = tokenGroup.getChildren();
 
         final Query.Builder queryBuilder = Query.builder();
-        if (in != null && in.getQuery() != null) {
+        if (in.getQuery() != null) {
             queryBuilder.params(in.getQuery().getParams());
             queryBuilder.timeRange(in.getQuery().getTimeRange());
         }
 
+        // Keep track of consumed tokens to check token order.
+        final Set<TokenType> consumedTokens = new HashSet<>();
+
         // Add data source.
-        List<AbstractToken> remaining = addDataSourceName(childTokens, queryBuilder::dataSourceName);
+        List<AbstractToken> remaining = addDataSourceName(childTokens, consumedTokens, queryBuilder::dataSourceName);
 
         // Add where expression.
-        remaining = addExpression(remaining, TokenType.WHERE, queryBuilder::expression);
+        remaining = addExpression(remaining, consumedTokens, TokenType.WHERE, queryBuilder::expression);
 
         // Try to make a query.
         Query query = queryBuilder.build();
@@ -92,7 +101,7 @@ public class SearchRequestBuilder {
 
         // Create result requests.
         final List<ResultRequest> resultRequests = new ArrayList<>();
-        remaining = addTableSettings(remaining, true, resultRequests);
+        remaining = addTableSettings(remaining, consumedTokens, true, resultRequests);
 
         return new SearchRequest(
                 in.getSearchRequestSource(),
@@ -104,7 +113,23 @@ public class SearchRequestBuilder {
                 in.getTimeout());
     }
 
-    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens, final Consumer<String> consumer) {
+    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
+                                                  final Set<TokenType> consumedTokens,
+                                                  final Consumer<String> consumer) {
+        return addDataSourceName(tokens, consumedTokens, consumer, false);
+    }
+
+    /**
+     * @param isLenient Ignores any additional child tokens found. This is to support getting just
+     *                  the data source from a partially written query, which is likely to not be
+     *                  a valid query. For example, you may type
+     *                  <pre>{@code from View sel}</pre> and at this point do code completion on 'sel'
+     *                  so if this method is called it will treat 'sel as an extra child.
+     */
+    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
+                                                  final Set<TokenType> consumedTokens,
+                                                  final Consumer<String> consumer,
+                                                  final boolean isLenient) {
         AbstractToken token = tokens.get(0);
 
         // The first token must be `FROM`.
@@ -114,43 +139,56 @@ public class SearchRequestBuilder {
 
         final KeywordGroup keywordGroup = (KeywordGroup) token;
         if (keywordGroup.getChildren().size() == 0) {
-            throw new TokenException(token, "Expected data source");
-        } else if (keywordGroup.getChildren().size() > 1) {
-            throw new TokenException(keywordGroup.getChildren().get(1), "Unexpected token");
+            throw new TokenException(token, "Expected data source value");
+        } else if (keywordGroup.getChildren().size() > 1 && !isLenient) {
+            throw new TokenException(keywordGroup.getChildren().get(1),
+                    "Unexpected data source child tokens: " + keywordGroup.getChildren()
+                            .stream()
+                            .map(token2 -> token2.getTokenType() + ":[" + token2.getText() + "]")
+                            .collect(Collectors.joining(", ")));
         }
 
-        AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
-        if (!TokenType.STRING.equals(dataSourceToken.getTokenType()) &&
-                !TokenType.SINGLE_QUOTED_STRING.equals(dataSourceToken.getTokenType()) &&
-                !TokenType.DOUBLE_QUOTED_STRING.equals(dataSourceToken.getTokenType())) {
-            throw new TokenException(dataSourceToken, "Expected string");
+        final AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
+        if (!TokenType.isString(dataSourceToken)) {
+            throw new TokenException(dataSourceToken, "Expected a token of type string");
         }
         final String dataSourceName = dataSourceToken.getUnescapedText();
         consumer.accept(dataSourceName);
 
+        consumedTokens.add(token.getTokenType());
         return tokens.subList(1, tokens.size());
     }
 
     private List<AbstractToken> addExpression(final List<AbstractToken> tokens,
-                                              final TokenType pipeOperation,
+                                              final Set<TokenType> consumedTokens,
+                                              final TokenType keyword,
                                               final Consumer<ExpressionOperator> expressionConsumer) {
-        List<AbstractToken> whereGroup = null;
+        List<AbstractToken> whereGroup = new ArrayList<>();
+        final Set<TokenType> localConsumedTokens = new HashSet<>();
         int i = 0;
         for (; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
+
+            // Check we have had a FROM
+            if (i == 0) {
+                checkConsumed(token, consumedTokens, new TokenType[]{TokenType.FROM}, new TokenType[]{});
+            }
+
             if (token instanceof final KeywordGroup keywordGroup) {
                 final TokenType tokenType = keywordGroup.getTokenType();
-                if (pipeOperation.equals(tokenType)) {
-                    if (whereGroup == null) {
-                        whereGroup = new ArrayList<>();
-                    }
+                if (keyword.equals(tokenType)) {
+                    // Make sure we haven't already consumed the keyword token.
+                    checkConsumed(token, localConsumedTokens, new TokenType[]{}, new TokenType[]{keyword});
+                    localConsumedTokens.add(token.getTokenType());
+                    consumedTokens.add(token.getTokenType());
                     whereGroup.add(keywordGroup);
                 } else if (TokenType.AND.equals(tokenType) ||
                         TokenType.OR.equals(tokenType) ||
                         TokenType.NOT.equals(tokenType)) {
-                    if (whereGroup == null) {
-                        throw new TokenException(token, "Unexpected token");
-                    }
+                    // Check we have already consumed the expected keyword token.
+                    checkConsumed(token, localConsumedTokens, new TokenType[]{keyword}, new TokenType[]{});
+                    localConsumedTokens.add(token.getTokenType());
+                    consumedTokens.add(token.getTokenType());
                     whereGroup.add(keywordGroup);
                 } else {
                     break;
@@ -158,7 +196,7 @@ public class SearchRequestBuilder {
             }
         }
 
-        if (whereGroup != null && whereGroup.size() > 0) {
+        if (whereGroup.size() > 0) {
             final ExpressionOperator expressionOperator = processLogic(whereGroup);
             expressionConsumer.accept(expressionOperator);
         } else {
@@ -188,7 +226,7 @@ public class SearchRequestBuilder {
                 value.append(",");
             } else {
                 value.append(" ");
-                value.append(token.getText());
+                value.append(token.getUnescapedText());
             }
         }
 
@@ -335,6 +373,7 @@ public class SearchRequestBuilder {
     }
 
     private List<AbstractToken> addTableSettings(final List<AbstractToken> tokens,
+                                                 final Set<TokenType> consumedTokens,
                                                  final boolean extractValues,
                                                  final List<ResultRequest> resultRequests) {
 //        final Map<String, String> columnNames = new HashMap<>();
@@ -346,48 +385,54 @@ public class SearchRequestBuilder {
 
         final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
 
-        int lastTokenCount = -1;
         List<AbstractToken> remaining = new LinkedList<>(tokens);
-        while (remaining.size() > 0 && lastTokenCount != remaining.size()) {
+        while (remaining.size() > 0) {
             final AbstractToken token = remaining.get(0);
+
+            // Check we have seen FROM and haven't already seen the SELECT.
+            checkConsumed(token, consumedTokens, new TokenType[]{TokenType.FROM}, new TokenType[]{TokenType.SELECT});
+            consumedTokens.add(token.getTokenType());
+
             if (token instanceof final KeywordGroup keywordGroup) {
                 switch (keywordGroup.getTokenType()) {
-                    case FILTER -> {
-                        remaining =
-                                addExpression(remaining, TokenType.FILTER, tableSettingsBuilder::valueFilter);
-                    }
+                    case FILTER -> remaining =
+                            addExpression(remaining,
+                                    consumedTokens,
+                                    TokenType.FILTER,
+                                    tableSettingsBuilder::valueFilter);
                     case EVAL -> {
-                        processEvalPipeOperation(
+                        processEval(
                                 keywordGroup,
                                 functions);
                         remaining.remove(0);
                     }
                     case WINDOW -> {
-                        processWindowPipeOperation(
+                        processWindow(
                                 keywordGroup,
                                 tableSettingsBuilder);
                         remaining.remove(0);
                     }
                     case SORT -> {
-                        processSortPipeOperation(
+                        processSortBy(
                                 keywordGroup,
                                 sortMap);
                         remaining.remove(0);
                     }
                     case GROUP -> {
-                        processGroupPipeOperation(
+                        processGroupBy(
                                 keywordGroup,
                                 groupMap,
                                 groupDepth);
                         groupDepth++;
                         remaining.remove(0);
                     }
-                    case HAVING -> {
-                        remaining =
-                                addExpression(remaining, TokenType.HAVING, tableSettingsBuilder::aggregateFilter);
-                    }
+                    case HAVING -> remaining =
+                            addExpression(remaining,
+                                    consumedTokens,
+                                    TokenType.HAVING,
+                                    tableSettingsBuilder::aggregateFilter);
                     case SELECT -> {
-                        processSelectOperation(
+                        processSelect(
                                 keywordGroup,
                                 functions,
                                 sortMap,
@@ -397,25 +442,12 @@ public class SearchRequestBuilder {
                         remaining.remove(0);
                     }
                     case LIMIT -> {
-                        processLimitPipeOperation(
+                        processLimit(
                                 keywordGroup,
                                 tableSettingsBuilder);
                         remaining.remove(0);
                     }
                 }
-
-//                if (PipeOperation.RENAME.equals(pipeGroup.getPipeOperation())) {
-//                    processRenamePipeOperation(pipeGroup, columnNames);
-//
-//                } else if (PipeOperation.EVAL.equals(pipeGroup.getPipeOperation())) {
-//                    processEvalPipeOperation(pipeGroup, functions);
-//
-//                } else if (PipeOperation.TABLE.equals(pipeGroup.getPipeOperation())) {
-//                    processTablePipeOperation(pipeGroup, columnNames, functions, extractValues, resultRequests);
-//
-//                } else {
-//                    break;
-//                }
             } else {
                 break;
             }
@@ -440,41 +472,12 @@ public class SearchRequestBuilder {
         return remaining;
     }
 
-//    private void processRenamePipeOperation(final PipeGroup pipeGroup,
-//                                            final Map<String, String> columnNames) {
-//        final List<AbstractToken> children = pipeGroup.getChildren();
-//        String field = null;
-//        boolean afterAs = false;
-//        for (final AbstractToken t : children) {
-//            if (TokenType.isString(t)) {
-//                if (afterAs) {
-//                    if (field == null) {
-//                        throw new TokenException(t, "Syntax exception");
-//                    }
-//                    columnNames.put(t.getText(), field);
-//                    field = null;
-//                    afterAs = false;
-//                } else if (field != null) {
-//                    throw new TokenException(t, "Syntax exception");
-//                } else {
-//                    field = t.getText();
-//                }
-//            } else if (TokenType.AS.equals(t.getTokenType())) {
-//                afterAs = true;
-//            } else if (TokenType.COMMA.equals(t.getTokenType())) {
-//                field = null;
-//            } else {
-//                throw new TokenException(t, "Unexpected token");
-//            }
-//        }
-//    }
-
-    private void processWindowPipeOperation(final KeywordGroup keywordGroup,
-                                            final TableSettings.Builder builder) {
+    private void processWindow(final KeywordGroup keywordGroup,
+                               final TableSettings.Builder builder) {
         final List<AbstractToken> children = keywordGroup.getChildren();
 
-        String field = null;
-        String durationString = null;
+        String field;
+        String durationString;
         String advanceString = null;
         if (children.size() > 0) {
             AbstractToken token = children.get(0);
@@ -534,8 +537,8 @@ public class SearchRequestBuilder {
                 .build());
     }
 
-    private void processEvalPipeOperation(final KeywordGroup keywordGroup,
-                                          final Map<String, String> functions) {
+    private void processEval(final KeywordGroup keywordGroup,
+                             final Map<String, String> functions) {
         final List<AbstractToken> children = keywordGroup.getChildren();
 
         String field = null;
@@ -601,12 +604,12 @@ public class SearchRequestBuilder {
         sb.append(")");
     }
 
-    private void processSelectOperation(final KeywordGroup keywordGroup,
-                                        final Map<String, String> functions,
-                                        final Map<String, Sort> sortMap,
-                                        final Map<String, Integer> groupMap,
-                                        final Map<String, Filter> filterMap,
-                                        final TableSettings.Builder tableSettingsBuilder) {
+    private void processSelect(final KeywordGroup keywordGroup,
+                               final Map<String, String> functions,
+                               final Map<String, Sort> sortMap,
+                               final Map<String, Integer> groupMap,
+                               final Map<String, Filter> filterMap,
+                               final TableSettings.Builder tableSettingsBuilder) {
         final List<AbstractToken> children = keywordGroup.getChildren();
         String fieldName = null;
         String columnName = null;
@@ -615,9 +618,7 @@ public class SearchRequestBuilder {
         for (final AbstractToken t : children) {
             if (TokenType.isString(t)) {
                 if (afterAs) {
-                    if (fieldName == null) {
-                        throw new TokenException(t, "Syntax exception, expected field name");
-                    } else if (columnName != null) {
+                    if (columnName != null) {
                         throw new TokenException(t, "Syntax exception, duplicate column name");
                     } else {
                         columnName = t.getUnescapedText();
@@ -627,7 +628,11 @@ public class SearchRequestBuilder {
                 } else {
                     throw new TokenException(t, "Syntax exception, expected AS");
                 }
-            } else if (fieldName != null && TokenType.AS.equals(t.getTokenType())) {
+            } else if (TokenType.AS.equals(t.getTokenType())) {
+                if (fieldName == null) {
+                    throw new TokenException(t, "Syntax exception, expected field name");
+                }
+
                 afterAs = true;
 
             } else if (TokenType.COMMA.equals(t.getTokenType())) {
@@ -674,8 +679,8 @@ public class SearchRequestBuilder {
         tableSettingsBuilder.addFields(field);
     }
 
-    private void processLimitPipeOperation(final KeywordGroup keywordGroup,
-                                           final TableSettings.Builder tableSettingsBuilder) {
+    private void processLimit(final KeywordGroup keywordGroup,
+                              final TableSettings.Builder tableSettingsBuilder) {
         final List<AbstractToken> children = keywordGroup.getChildren();
         for (final AbstractToken t : children) {
             if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
@@ -692,8 +697,8 @@ public class SearchRequestBuilder {
         }
     }
 
-    private void processSortPipeOperation(final KeywordGroup keywordGroup,
-                                          final Map<String, Sort> sortMap) {
+    private void processSortBy(final KeywordGroup keywordGroup,
+                               final Map<String, Sort> sortMap) {
         String fieldName = null;
         SortDirection direction = null;
         final List<AbstractToken> children = keywordGroup.getChildren();
@@ -746,9 +751,9 @@ public class SearchRequestBuilder {
         }
     }
 
-    private void processGroupPipeOperation(final KeywordGroup keywordGroup,
-                                           final Map<String, Integer> groupMap,
-                                           final int groupDepth) {
+    private void processGroupBy(final KeywordGroup keywordGroup,
+                                final Map<String, Integer> groupMap,
+                                final int groupDepth) {
         String fieldName = null;
         final List<AbstractToken> children = keywordGroup.getChildren();
         boolean first = true;
@@ -777,6 +782,24 @@ public class SearchRequestBuilder {
         }
         if (fieldName != null) {
             groupMap.put(fieldName, groupDepth);
+        }
+    }
+
+    private void checkConsumed(final AbstractToken token,
+                               final Set<TokenType> consumedTokens,
+                               final TokenType[] expectedConsumed,
+                               final TokenType[] expectedNotConsumed) {
+        for (final TokenType tokenType : expectedConsumed) {
+            if (!consumedTokens.contains(tokenType)) {
+                throw new TokenException(token,
+                        "Expected token " + tokenType + " before " + token.getTokenType());
+            }
+        }
+        for (final TokenType tokenType : expectedNotConsumed) {
+            if (consumedTokens.contains(tokenType)) {
+                throw new TokenException(token,
+                        "Unexpected token " + token.getTokenType() + " after " + tokenType);
+            }
         }
     }
 }

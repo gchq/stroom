@@ -17,6 +17,7 @@
 package stroom.dashboard.client.flexlayout;
 
 public class PositionAndSize {
+
     private final double[] pos;
     private final double[] size;
 
@@ -63,5 +64,14 @@ public class PositionAndSize {
 
     public void setSize(final int dimension, final double size) {
         this.size[dimension] = size;
+    }
+
+    public PositionAndSize copy() {
+        final PositionAndSize positionAndSize = new PositionAndSize();
+        positionAndSize.pos[0] = pos[0];
+        positionAndSize.pos[1] = pos[1];
+        positionAndSize.size[0] = size[0];
+        positionAndSize.size[1] = size[1];
+        return positionAndSize;
     }
 }

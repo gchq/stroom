@@ -13,6 +13,112 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.43] - 2023-07-14
+
+* Issue **#3570** : Fix problem of XSLT filter error using old name for an XSLT doc. Also fix handling of name pattern not matching when a default XSLT is provided.
+
+* Issue **#290** : Ensure errors encountered when initialising the pipeline during stepping are included.
+
+* Issue **#3605** : Fix StroomQL quoted string handling.
+
+* Fix invalid audit xml when running a StroomQL query with no params.
+
+* Fix `Cannot invoke "java.util.List.iterator()" because "fields" is null` in a StroomQL search.
+
+* Issue **#3606** : Fix opening docs via links plus allow full screen open.
+
+* Issue **#3607** : Fix NPE in task queue filling.
+
+* Issue **#3609** : Fix comments in quoted strings.
+
+
+## [v7.2-beta.42] - 2023-07-13
+
+* Issue **#3566** : Fix issue of query help text not updating correctly for some functions.
+
+* Issue **#3592** : Improve handling of errors during initialisation of the ref data stores.
+
+* Issue **#3572** : Add missing functions to query help menu.
+
+* Issue **#3580** : Change default values for `archivedFileCount` to 10080 for minute rolled logs (one week) to ensure log messages are not lost if stroom is idle for long periods.
+
+* Issue **#3598** : Fix stuck search extraction on shutdown.
+
+* Issue **#3595** : Fix `data()` links when the dashboard is directly linked. Only works for `displayType` of `dialog`, not `tab` as there are no tabs in a direct linked dashboard.
+
+* Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
+
+
+## [v7.2-beta.41] - 2023-07-10
+
+* Fix styling for log pane toggle button in the stepper screen.
+
+* Issue **#3573** : Fix new dashboard panel size.
+
+* Fix various icon styling issues.
+
+* Issue **#3588** : Fix query parameters not being de-referenced in audit logs for dashboard search and download results. Fix double logging of download results.
+
+
+## [v7.2-beta.40] - 2023-07-05
+
+* Issue **#3575** : Duplicate tab now allows user to choose destination.
+
+* Issue **#3574** : Add remove all to dashboards.
+
+* Issue **#3556** : Fix dashboard icon sizes.
+
+* Issue **#3548** : Fix dependency screen icons.
+
+* Issue **#3507** : Reinstate TabContentProvider to lazy load UI tabs.
+
+* Issue **#3581** : Make button appearance more consistent.
+
+* Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
+
+* Issue **#3569** : Fix stuck extraction tasks.
+
+
+## [v7.2-beta.39] - 2023-06-29
+
+* Issue **#3559** : Allow user to choose the location of new dashboard components.
+
+
+## [v7.2-beta.38] - 2023-06-29
+
+* Issue **#3567** : Improve analytics execution logging.
+
+
+## [v7.2-beta.36] - 2023-06-28
+
+* Issue **#3536** : Analytic notifications are now written using the detection schema.
+
+* Issue **#3534** : Improve query help picker: add more detail text, improve styling, fix keyboard navigation, fix missing overloaded functions. Change the help picker to show markdown detail text. Remove single quotes from function snippet arguments as the Ace editor has a nice way to handle quotes. Fix broken help links for functions. Change the dashboard column expression editor to use the new query help menu.
+
+* Fix font size/family for rendered markdown in documentation.
+
+* Issue **#3561** : Limit search errors delivered to the UI.
+
+* Issue **#3560** : Table fields now include StreamId on data source load prior to automated search.
+
+* Issue **#3557** : Fix scroll for dashboard query expressions.
+
+* Issue **#3439** : Improve analytics execution logging.
+
+* Issue **#3504** : Fix XML schema cache deadlock.
+
+* Fix failing build.
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+
+* Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
+
+
+## [v7.2-beta.35-restyle] - 2023-06-27
+
+* Issue **#3553** : Improve UI styling.
+
+
 ## [v7.2-beta.35] - 2023-06-22
 
 * Issue **#3510** : Fix explorer scroll jumping issue.
@@ -5522,7 +5628,15 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.35...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43...HEAD
+[v7.2-beta.43]: https://github.com/gchq/stroom/compare/v7.2-beta.42...v7.2-beta.43
+[v7.2-beta.42]: https://github.com/gchq/stroom/compare/v7.2-beta.41...v7.2-beta.42
+[v7.2-beta.41]: https://github.com/gchq/stroom/compare/v7.2-beta.40...v7.2-beta.41
+[v7.2-beta.40]: https://github.com/gchq/stroom/compare/v7.2-beta.39...v7.2-beta.40
+[v7.2-beta.39]: https://github.com/gchq/stroom/compare/v7.2-beta.38...v7.2-beta.39
+[v7.2-beta.38]: https://github.com/gchq/stroom/compare/v7.2-beta.36...v7.2-beta.38
+[v7.2-beta.36]: https://github.com/gchq/stroom/compare/v7.2-beta.35-restyle...v7.2-beta.36
+[v7.2-beta.35-restyle]: https://github.com/gchq/stroom/compare/v7.2-beta.35...v7.2-beta.35-restyle
 [v7.2-beta.35]: https://github.com/gchq/stroom/compare/v7.2-beta.34...v7.2-beta.35
 [v7.2-beta.34]: https://github.com/gchq/stroom/compare/v7.2-beta.33...v7.2-beta.34
 [v7.2-beta.33]: https://github.com/gchq/stroom/compare/v7.2-beta.32...v7.2-beta.33

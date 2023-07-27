@@ -16,28 +16,52 @@
 
 package stroom.dashboard.impl.logging;
 
+import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Param;
+
+import java.util.List;
 
 public interface SearchEventLog {
 
-    void search(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo);
+    void search(DocRef dataSourceRef,
+                ExpressionOperator expression,
+                String queryInfo,
+                final List<Param> params);
 
-    void search(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
+    void search(DocRef dataSourceRef,
+                ExpressionOperator expression,
+                String queryInfo,
+                List<Param> params,
+                Exception ex);
 
-    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo);
+    void batchSearch(DocRef dataSourceRef,
+                     ExpressionOperator expression,
+                     String queryInfo,
+                     List<Param> params);
 
-    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
+    void batchSearch(DocRef dataSourceRef,
+                     ExpressionOperator expression,
+                     String queryInfo,
+                     List<Param> params,
+                     Exception ex);
 
-    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo);
+    default void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
+                                 Integer resultCount) {
+        downloadResults(downloadSearchResultsRequest,
+                resultCount,
+                null);
+    }
 
-    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
-
-    void downloadResults(String type,
-                         DocRef dataSourceRef,
-                         ExpressionOperator expression,
-                         String queryInfo,
+    void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
+                         Integer resultCount,
                          Exception ex);
 
-    void search(String type, DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
+    void search(String type,
+                DocRef dataSourceRef,
+                ExpressionOperator expression,
+                String queryInfo,
+                List<Param> params,
+                Exception ex);
 }

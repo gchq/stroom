@@ -18,16 +18,19 @@
 package stroom.index.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.index.shared.IndexDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+
+import javax.inject.Provider;
 
 public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, IndexDoc> {
 
@@ -36,82 +39,36 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     private static final TabData SHARDS = new TabDataImpl("Shards");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
-    private final IndexSettingsPresenter indexSettingsPresenter;
-    private final IndexFieldListPresenter indexFieldListPresenter;
-    private final IndexShardPresenter indexShardPresenter;
-    private final MarkdownEditPresenter markdownEditPresenter;
-
     @Inject
     public IndexPresenter(final EventBus eventBus,
                           final LinkTabPanelView view,
-                          final IndexSettingsPresenter indexSettingsPresenter,
-                          final IndexFieldListPresenter indexFieldListPresenter,
-                          final IndexShardPresenter indexShardPresenter,
-                          final MarkdownEditPresenter markdownEditPresenter) {
+                          final Provider<IndexSettingsPresenter> indexSettingsPresenterProvider,
+                          final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
+                          final Provider<IndexShardPresenter> indexShardPresenterProvider,
+                          final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-        this.indexSettingsPresenter = indexSettingsPresenter;
-        this.indexFieldListPresenter = indexFieldListPresenter;
-        this.indexShardPresenter = indexShardPresenter;
-        this.markdownEditPresenter = markdownEditPresenter;
 
-        addTab(SHARDS);
-        addTab(FIELDS);
-        addTab(SETTINGS);
-        addTab(DOCUMENTATION);
+        addTab(SHARDS, new DocumentEditTabProvider<IndexDoc>(indexShardPresenterProvider::get));
+        addTab(FIELDS, new DocumentEditTabProvider<IndexDoc>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocumentEditTabProvider<IndexDoc>(indexSettingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<IndexDoc>(eventBus, markdownEditPresenterProvider) {
+            @Override
+            public void onRead(final MarkdownEditPresenter presenter,
+                               final DocRef docRef,
+                               final IndexDoc document,
+                               final boolean readOnly) {
+                presenter.setText(document.getDescription());
+                presenter.setReadOnly(readOnly);
+            }
+
+            @Override
+            public IndexDoc onWrite(final MarkdownEditPresenter presenter,
+                                    final IndexDoc document) {
+                document.setDescription(presenter.getText());
+                return document;
+            }
+        });
         selectTab(SHARDS);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(indexSettingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(indexFieldListPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (SETTINGS.equals(tab)) {
-            callback.onReady(indexSettingsPresenter);
-        } else if (FIELDS.equals(tab)) {
-            callback.onReady(indexFieldListPresenter);
-        } else if (SHARDS.equals(tab)) {
-            callback.onReady(indexShardPresenter);
-        } else if (DOCUMENTATION.equals(tab)) {
-            callback.onReady(markdownEditPresenter);
-        } else {
-            callback.onReady(null);
-        }
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final IndexDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
-        indexSettingsPresenter.read(docRef, doc, readOnly);
-        indexFieldListPresenter.read(docRef, doc, readOnly);
-        indexShardPresenter.read(docRef, doc, readOnly);
-        markdownEditPresenter.setText(doc.getDescription());
-        markdownEditPresenter.setReadOnly(readOnly);
-    }
-
-    @Override
-    protected IndexDoc onWrite(IndexDoc doc) {
-        doc = indexSettingsPresenter.write(doc);
-        doc = indexFieldListPresenter.write(doc);
-        doc.setDescription(markdownEditPresenter.getText());
-        return doc;
     }
 
     @Override

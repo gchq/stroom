@@ -918,9 +918,12 @@ public class LmdbDataStore implements DataStore {
                         // All valid keys are more than a single byte long. Single byte keys are used to store db info.
                         if (LmdbRowKeyFactoryFactory.isNotStateKey(keyVal.key())) {
                             final ByteBuffer valueBuffer = keyVal.val();
-                            while (valueBuffer.remaining() > 0 && addMore) {
+                            boolean isFirstValue = true;
+                            // It is possible to have no actual values, e.g. if you have just one col of 'currentUser()'
+                            // so we still need to create and add an empty storedValues
+                            while ((valueBuffer.hasRemaining() || isFirstValue) && addMore) {
+                                isFirstValue = false;
 
-//                            if (key.getParent().equals(parentKey)) {
                                 final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
                                 final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
 
@@ -936,7 +939,6 @@ public class LmdbDataStore implements DataStore {
                                         trimmed = true;
                                     }
                                 }
-//                            }
                             }
                         }
                     }

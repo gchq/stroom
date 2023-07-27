@@ -1,6 +1,8 @@
 package stroom.query.client.presenter;
 
-import stroom.svg.client.SvgImages;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -36,16 +38,14 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
 
             int expanderPadding = 4;
 
-            SafeHtml expanderIcon;
+            SvgImage expanderIcon = null;
             if (item.hasChildren()) {
                 final boolean open = openItems.contains(item);
                 if (open) {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN.getSvg());
+                    expanderIcon = SvgImage.ARROW_DOWN;
                 } else {
-                    expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT.getSvg());
+                    expanderIcon = SvgImage.ARROW_RIGHT;
                 }
-            } else {
-                expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
             }
 
             int indent = item.getDepth();
@@ -53,7 +53,15 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
             // Add expander.
-            content.append(template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon));
+            SafeHtml expanderIconSafeHtml;
+            String className = getCellClassName() + "-expander";
+            if (expanderIcon != null) {
+                className += " " + expanderIcon.getClassName();
+                expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());
+            } else {
+                expanderIconSafeHtml = SvgImageUtil.emptySvg();
+            }
+            content.append(template.expander(className, paddingLeft, expanderIconSafeHtml));
 
             if (item.getLabel() != null) {
                 // Add text

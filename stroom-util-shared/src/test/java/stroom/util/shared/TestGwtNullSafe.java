@@ -9,8 +9,8 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableLong;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -30,6 +30,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 class TestGwtNullSafe {
 
@@ -44,19 +46,19 @@ class TestGwtNullSafe {
     @Test
     void testEquals1() {
         // Null parent
-        Assertions.assertThat(GwtNullSafe.equals(nullLevel1,
+        assertThat(GwtNullSafe.equals(nullLevel1,
                         Level1::getNonNullLevel2,
                         nonNullLevel1.getNonNullLevel2()))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+        assertThat(GwtNullSafe.equals(nonNullLevel1,
                         Level1::getNullLevel2,
                         nonNullLevel1.getNonNullLevel2()))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, "foobar"))
+        assertThat(GwtNullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, "foobar"))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, null))
+        assertThat(GwtNullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, null))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+        assertThat(GwtNullSafe.equals(nonNullLevel1,
                         Level1::getNonNullLevel2,
                         nonNullLevel1.getNonNullLevel2()))
                 .isTrue();
@@ -65,33 +67,33 @@ class TestGwtNullSafe {
     @Test
     void testEquals2() {
         // Null parent
-        Assertions.assertThat(GwtNullSafe.equals(
+        assertThat(GwtNullSafe.equals(
                         nullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+        assertThat(GwtNullSafe.equals(nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getNonNullLevel3,
                         nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+        assertThat(GwtNullSafe.equals(nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNullLevel3,
                         nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+        assertThat(GwtNullSafe.equals(nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         "foobar"))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+        assertThat(GwtNullSafe.equals(nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         null))
                 .isFalse();
-        Assertions.assertThat(GwtNullSafe.equals(nonNullLevel1,
+        assertThat(GwtNullSafe.equals(nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
@@ -159,37 +161,37 @@ class TestGwtNullSafe {
 
     @Test
     void testGet1Null() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nullLevel1,
                         Level1::getLevel))
                 .isNull();
 
-        Assertions.assertThat(GwtNullSafe.getOrElse(
+        assertThat(GwtNullSafe.getOrElse(
                         nullLevel1,
                         Level1::getLevel,
                         other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(GwtNullSafe.getOrElseGet(
+        assertThat(GwtNullSafe.getOrElseGet(
                         nullLevel1,
                         Level1::getLevel,
                         this::getOther))
                 .isEqualTo(other);
 
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getLevel))
                 .isNull();
 
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getLevel))
                 .isNull();
 
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
@@ -200,7 +202,7 @@ class TestGwtNullSafe {
 
     @Test
     void testGet1NonNull() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getLevel))
                 .isEqualTo(1L);
@@ -208,34 +210,34 @@ class TestGwtNullSafe {
 
     @Test
     void testGet2Null() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getLevel))
                 .isNull();
 
-        Assertions.assertThat(GwtNullSafe.getOrElse(
+        assertThat(GwtNullSafe.getOrElse(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getLevel,
                         other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(GwtNullSafe.getOrElseGet(
+        assertThat(GwtNullSafe.getOrElseGet(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getLevel,
                         this::getOther))
                 .isEqualTo(other);
 
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getLevel))
                 .isNull();
 
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getNonNullLevel3,
@@ -246,7 +248,7 @@ class TestGwtNullSafe {
 
     @Test
     void testGet2NonNull() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getLevel))
@@ -255,14 +257,14 @@ class TestGwtNullSafe {
 
     @Test
     void testGet3Null() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNullLevel3,
                         Level3::getLevel))
                 .isNull();
 
-        Assertions.assertThat(GwtNullSafe.getOrElse(
+        assertThat(GwtNullSafe.getOrElse(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getNullLevel3,
@@ -270,14 +272,14 @@ class TestGwtNullSafe {
                         other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(GwtNullSafe.getOrElseGet(
+        assertThat(GwtNullSafe.getOrElseGet(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getLevel,
                         this::getOther))
                 .isEqualTo(other);
 
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNullLevel3,
@@ -288,7 +290,7 @@ class TestGwtNullSafe {
 
     @Test
     void testGet3NonNull() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
@@ -298,7 +300,7 @@ class TestGwtNullSafe {
 
     @Test
     void testGet4Null() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
@@ -306,7 +308,7 @@ class TestGwtNullSafe {
                         Level4::getLevel))
                 .isNull();
 
-        Assertions.assertThat(GwtNullSafe.getOrElse(
+        assertThat(GwtNullSafe.getOrElse(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
@@ -315,7 +317,7 @@ class TestGwtNullSafe {
                         other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(GwtNullSafe.getOrElseGet(
+        assertThat(GwtNullSafe.getOrElseGet(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
@@ -327,7 +329,7 @@ class TestGwtNullSafe {
 
     @Test
     void testGet4NonNull() {
-        Assertions.assertThat(GwtNullSafe.get(
+        assertThat(GwtNullSafe.get(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
@@ -338,7 +340,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest0NonNullTrue() {
-        Assertions.assertThat(
+        assertThat(
                         GwtNullSafe.test(
                                 "foo",
                                 str -> str.equals("foo")))
@@ -347,7 +349,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest0NonNullFalse() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         "foo",
                         str -> str.equals("bar")))
                 .isFalse();
@@ -355,7 +357,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest0Null() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         null,
                         str -> str.equals("foo")))
                 .isFalse();
@@ -363,7 +365,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest1NonNullTrue() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         nonNullLevel1,
                         Level1::getLevel,
                         level -> level == 1L))
@@ -372,7 +374,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest1NonNullFalse() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         nonNullLevel1,
                         Level1::getLevel,
                         level -> level != 1L))
@@ -381,7 +383,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest1Null() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         nullLevel1,
                         Level1::getLevel,
                         level -> level == 1L))
@@ -390,7 +392,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest2NonNullTrue() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getLevel,
@@ -400,7 +402,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest2NonNullFalse() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getLevel,
@@ -410,7 +412,7 @@ class TestGwtNullSafe {
 
     @Test
     void testTest2Null() {
-        Assertions.assertThat(GwtNullSafe.test(
+        assertThat(GwtNullSafe.test(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getLevel,
@@ -655,6 +657,22 @@ class TestGwtNullSafe {
                 .addCase("\n", true)
                 .addCase("\t", true)
                 .addCase("foo", false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testJoin() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(CharSequence[].class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(input ->
+                        GwtNullSafe.join(", ", input))
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase(new String[]{}, "")
+                .addCase(new String[]{""}, "")
+                .addCase(new String[]{"a", "b"}, "a, b")
+                .addCase(new String[]{"one", "two", "three"}, "one, two, three")
                 .build();
     }
 
@@ -970,13 +988,32 @@ class TestGwtNullSafe {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testRun() {
+        final MutableBoolean didRun = new MutableBoolean(false);
+        final Runnable nonNullRunnable = didRun::setTrue;
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Runnable.class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(runnable -> {
+                    didRun.setFalse();
+                    GwtNullSafe.run(runnable);
+                    return didRun.getValue();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(nonNullRunnable, true)
+                .addCase(null, false)
+                .build();
+    }
+
     private void doConsumeTest(final Consumer<Consumer<Long>> action, final long expectedValue) {
         final AtomicLong val = new AtomicLong(-1);
         final Consumer<Long> consumer = val::set;
 
         action.accept(consumer);
 
-        Assertions.assertThat(val)
+        assertThat(val)
                 .hasValue(expectedValue);
     }
 

@@ -72,6 +72,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
@@ -88,6 +89,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -199,20 +201,20 @@ public class QueryPresenter
             }
         });
 
-        addTermButton = view.addButton(SvgPresets.ADD);
+        addTermButton = view.addButtonLeft(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
-        disableItemButton = view.addButton(SvgPresets.DISABLE);
-        deleteItemButton = view.addButton(SvgPresets.DELETE);
-        historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
-        favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
-        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
+        addOperatorButton = view.addButtonLeft(SvgPresets.OPERATOR);
+        disableItemButton = view.addButtonLeft(SvgPresets.DISABLE);
+        deleteItemButton = view.addButtonLeft(SvgPresets.DELETE);
+        historyButton = view.addButtonLeft(SvgPresets.HISTORY.enabled(true));
+        favouriteButton = view.addButtonLeft(SvgPresets.FAVOURITES.enabled(true));
+        downloadQueryButton = view.addButtonLeft(SvgPresets.DOWNLOAD);
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
+            processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton = view.addButtonRight(SvgPresets.ALERT.title("Show Warnings"));
         setWarningsVisible(false);
 
         searchModel = new SearchModel(
@@ -304,6 +306,7 @@ public class QueryPresenter
     @Override
     public void setComponents(final Components components) {
         super.setComponents(components);
+
         registerHandler(components.addComponentChangeHandler(event -> {
             if (initialised) {
                 final Component component = event.getComponent();
@@ -488,8 +491,10 @@ public class QueryPresenter
         // Only allow searching if we have a data source and have loaded fields from it successfully.
         getView().setEnabled(dataSourceRef != null && fields.size() > 0);
 
-        init();
         setButtonsEnabled();
+
+        // Defer init until all data source load handlers have had a chance to update the loaded data source.
+        Scheduler.get().scheduleDeferred(this::init);
     }
 
     private void addOperator() {
@@ -864,26 +869,26 @@ public class QueryPresenter
         final List<Item> menuItems = new ArrayList<>();
         menuItems.add(new IconMenuItem.Builder()
                 .priority(1)
-                .icon(SvgPresets.ADD)
+                .icon(SvgImage.ADD)
                 .text("Add Term")
                 .command(this::addTerm)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(2)
-                .icon(SvgPresets.OPERATOR)
+                .icon(SvgImage.OPERATOR)
                 .text("Add Operator")
                 .command(this::addOperator)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(3)
-                .icon(SvgPresets.DISABLE)
+                .icon(SvgImage.DISABLE)
                 .text(getEnableDisableText())
                 .enabled(hasSelection)
                 .command(this::disable)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(4)
-                .icon(SvgPresets.DELETE)
+                .icon(SvgImage.DELETE)
                 .text("Delete")
                 .enabled(hasSelection)
                 .command(this::delete)
@@ -942,7 +947,9 @@ public class QueryPresenter
 
     public interface QueryView extends View, SearchStateListener {
 
-        ButtonView addButton(Preset preset);
+        ButtonView addButtonLeft(Preset preset);
+
+        ButtonView addButtonRight(Preset preset);
 
         void setExpressionView(View view);
 

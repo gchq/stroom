@@ -19,6 +19,7 @@ package stroom.index.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -59,6 +60,7 @@ public class IndexDoc extends Doc {
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     public static final String DOCUMENT_TYPE = "Index";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_INDEX;
 
     @JsonProperty
     private String description;

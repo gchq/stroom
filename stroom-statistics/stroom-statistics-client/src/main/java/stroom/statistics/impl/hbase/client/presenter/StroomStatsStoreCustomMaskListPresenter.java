@@ -27,10 +27,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasDocumentWrite;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.statistics.impl.hbase.shared.StatsStoreRollupResource;
@@ -48,8 +45,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,8 +54,7 @@ import java.util.List;
 import java.util.Set;
 
 public class StroomStatsStoreCustomMaskListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements HasDocumentRead<StroomStatsStoreDoc>, HasDocumentWrite<StroomStatsStoreDoc>, HasDirtyHandlers {
+        extends DocumentEditPresenter<PagerView, StroomStatsStoreDoc> {
 
     private static final StatsStoreRollupResource STATS_STORE_ROLLUP_RESOURCE =
             GWT.create(StatsStoreRollupResource.class);
@@ -76,8 +70,6 @@ public class StroomStatsStoreCustomMaskListPresenter
     private MaskHolder selectedElement;
     private StroomStatsStoreDoc stroomStatsStoreEntity;
     private final MaskHolderList maskList;
-
-    private boolean readOnly = true;
 
     @Inject
     public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus,
@@ -127,18 +119,18 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     private void enableButtons() {
-        newButton.setEnabled(!readOnly);
-        autoGenerateButton.setEnabled(!readOnly);
+        newButton.setEnabled(!isReadOnly());
+        autoGenerateButton.setEnabled(!isReadOnly());
 
         if (maskList != null && maskList.size() > 0) {
             selectedElement = selectionModel.getSelected();
-            removeButton.setEnabled(!readOnly && selectedElement != null);
+            removeButton.setEnabled(!isReadOnly() && selectedElement != null);
 
         } else {
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
+        if (isReadOnly()) {
             newButton.setTitle("New roll-up permutation disabled as read only");
             autoGenerateButton.setTitle("Auto-generate roll-up permutations disabled as read only");
             removeButton.setTitle("Remove roll-up permutation disabled as read only");
@@ -251,8 +243,7 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
-        this.readOnly = readOnly;
+    protected void onRead(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
         enableButtons();
 
         // initialise the columns and hold the statDataSource on first time
@@ -268,15 +259,10 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     @Override
-    public StroomStatsStoreDoc write(final StroomStatsStoreDoc document) {
+    protected StroomStatsStoreDoc onWrite(final StroomStatsStoreDoc document) {
         document.getConfig().setCustomRollUpMasks(
                 new HashSet<>(maskList.getMasks()));
         return document;
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     /**

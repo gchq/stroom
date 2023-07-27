@@ -18,6 +18,22 @@ before 'test of inner \' strings '
 -----
 before 'test of inner \' strings '
 -----
+test end slash /
+-----
+test end comment //
+-----
+test end comment /*
+-----
+test end comment /**/
+-----
+test ' comments // in strings \' strings '
+-----
+test ' comments /* in */ strings \' strings '
+-----
+test ' comments /* in strings \' strings '
+-----
+test ' comments in */ strings \' strings '
+-----
 where this = that
 and foo = 'test of inner \' strings '
 select
@@ -145,4 +161,16 @@ limit 10
 -----
 from "index_view"
 where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+select StreamId
+-----
+from "index_view"
+where "My Field" = "Field Name"
+select StreamId
+-----
+from "index_view"
+where 'My Field' = 'Field Name'
+select StreamId
+-----
+from "index_view"
+where 'My Field' = '"Field Name"'
 select StreamId

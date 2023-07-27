@@ -18,7 +18,6 @@
 package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.docref.HasType;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -31,7 +30,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
-        implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasType {
+        implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose {
 
     private D entity;
     private boolean dirty;
@@ -92,6 +91,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     /**
      * Called when an attempt is made to close this presenter
      */
+    @Override
     public void onClose() {
     }
 
@@ -99,17 +99,9 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
         return entity;
     }
 
-    protected abstract void onRead(DocRef docRef, D entity, boolean readOnly);
+    protected abstract void onRead(DocRef docRef, D document, boolean readOnly);
 
-    protected abstract D onWrite(D entity);
-
-    protected HandlerRegistration addDirtyHandler(final TickBox tickBox) {
-        return tickBox.addValueChangeHandler(event -> setDirty(true));
-    }
-
-    protected HandlerRegistration addDirtyHandler(final ValueSpinner spinner) {
-        return spinner.getSpinner().addSpinnerHandler(event -> setDirty(true));
-    }
+    protected abstract D onWrite(D document);
 
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {

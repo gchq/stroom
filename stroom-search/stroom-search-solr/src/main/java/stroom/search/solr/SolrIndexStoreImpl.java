@@ -119,7 +119,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.INDEXING, SolrIndexDoc.DOCUMENT_TYPE, "Solr Index");
+        return new DocumentType(
+                DocumentTypeGroup.INDEXING,
+                SolrIndexDoc.DOCUMENT_TYPE,
+                "Solr Index",
+                SolrIndexDoc.ICON);
     }
 
     ////////////////////////////////////////////////////////////////////////

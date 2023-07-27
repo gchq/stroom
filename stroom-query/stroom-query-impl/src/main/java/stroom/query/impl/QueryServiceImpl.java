@@ -24,7 +24,6 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -311,15 +310,15 @@ class QueryServiceImpl implements QueryService {
 //    }
 
     private SearchRequest mapRequest(final QuerySearchRequest searchRequest) {
-        QueryKey queryKey = searchRequest.getQueryKey();
+        final QueryKey queryKey = searchRequest.getQueryKey();
         final String query = searchRequest.getQuery();
-        QueryContext queryContext = searchRequest.getQueryContext();
-        Query sampleQuery = Query
+        final QueryContext queryContext = searchRequest.getQueryContext();
+        final Query sampleQuery = Query
                 .builder()
                 .params(queryContext.getParams())
                 .timeRange(queryContext.getTimeRange())
                 .build();
-        SearchRequest sampleRequest = new SearchRequest(
+        final SearchRequest sampleRequest = new SearchRequest(
                 searchRequest.getSearchRequestSource(),
                 queryKey,
                 sampleQuery,
@@ -358,6 +357,7 @@ class QueryServiceImpl implements QueryService {
         if (query != null) {
             try {
                 final SearchRequest mappedRequest = mapRequest(searchRequest);
+                LOGGER.debug("searchRequest:\n{}\nmappedRequest:\n{}", searchRequest, mappedRequest);
 
                 // Perform the search or update results.
                 final SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
@@ -375,7 +375,8 @@ class QueryServiceImpl implements QueryService {
                     searchEventLog.search(
                             mappedRequest.getQuery().getDataSource(),
                             mappedRequest.getQuery().getExpression(),
-                            searchRequest.getQueryContext().getQueryInfo());
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams());
                 }
 
             } catch (final RuntimeException e) {

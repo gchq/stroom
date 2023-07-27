@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="button-container">
+    <g:FlowPanel styleName="stepping-buttons button-container icon-colour__green">
         <i:SvgButton ui:field="filterButton"/>
         <i:SvgButton ui:field="firstButton"/>
         <i:SvgButton ui:field="backwardButton"/>

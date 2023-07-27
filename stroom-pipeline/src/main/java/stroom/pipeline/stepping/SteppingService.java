@@ -180,7 +180,8 @@ public class SteppingService {
 
             // Set the properties on this instance.
             for (final PipelineProperty property : properties) {
-                PipelineFactory.setProperty(pipelineElementRegistry,
+                PipelineFactory.setProperty(
+                        pipelineElementRegistry,
                         pipelineElement.getId(),
                         elementType,
                         elementInstance,

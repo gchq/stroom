@@ -4,7 +4,8 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="analyticProcessingEnabled" label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabled"/>
@@ -19,12 +20,12 @@
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
-            <l:StringListBox ui:field="node"/>
+            <l:SelectionBox ui:field="node"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingInfo" label="Processing Info">
             <g:FlowPanel styleName="form">
                 <g:SimplePanel ui:field="info" styleName="default-min-sizes dashboard-panel"/>
-                <g:Button ui:field="refresh" text="Refresh"/>
+                <b:Button ui:field="refresh" text="Refresh"/>
             </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>

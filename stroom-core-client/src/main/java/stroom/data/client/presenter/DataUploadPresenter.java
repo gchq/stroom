@@ -25,7 +25,7 @@ import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -79,7 +79,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                 final UploadDataRequest request = new UploadDataRequest(
                         resourceKey,
                         feedRef.getName(),
-                        getView().getType().getSelected(),
+                        getView().getType().getValue(),
                         effectiveMs,
                         getView().getMetaData(),
                         fileName);
@@ -113,7 +113,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
             AlertEvent.fireWarn(this, "Feed not set!", null);
             return false;
         }
-        if (getView().getType().getSelected() == null) {
+        if (getView().getType().getValue() == null) {
             AlertEvent.fireWarn(this, "Stream Type not set!", null);
             return false;
         }
@@ -182,7 +182,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
 
         FormPanel getForm();
 
-        StringListBox getType();
+        SelectionBox<String> getType();
 
         Long getEffectiveDate();
 

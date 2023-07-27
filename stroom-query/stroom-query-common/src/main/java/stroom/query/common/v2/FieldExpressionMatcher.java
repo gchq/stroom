@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
+import stroom.util.NullSafe;
 import stroom.util.shared.CompareUtil;
 
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ public class FieldExpressionMatcher {
 
     public FieldExpressionMatcher(final List<Field> fields) {
         this.fieldNameToFieldMap = new HashMap<>();
-        for (final Field field : fields) {
+        for (final Field field : NullSafe.list(fields)) {
             fieldNameToFieldMap.putIfAbsent(field.getName(), field);
         }
     }

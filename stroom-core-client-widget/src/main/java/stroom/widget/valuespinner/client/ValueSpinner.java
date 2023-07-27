@@ -17,26 +17,25 @@
 package stroom.widget.valuespinner.client;
 
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class ValueSpinner extends Composite implements Focus {
+public class ValueSpinner
+        extends Composite
+        implements Focus, HasValue<Long> {
 
     private final Spinner spinner;
     private final TextBox valueBox = new TextBox();
 
-    private final SpinnerEvent.Handler handler = event -> {
-        if (getSpinner() != null) {
-            getSpinner().setValue(event.getValue(), false);
-        }
-        valueBox.setText(formatValue(event.getValue()));
-    };
-
     public ValueSpinner() {
         spinner = new Spinner();
-        spinner.addSpinnerHandler(handler);
+        spinner.addValueChangeHandler(event -> valueBox.setText(formatValue(event.getValue())));
 
         valueBox.addStyleName("allow-focus");
         valueBox.addBlurHandler(event -> updateSpinner());
@@ -91,19 +90,19 @@ public class ValueSpinner extends Composite implements Focus {
         }
     }
 
-    /**
-     * @return the Spinner used by this widget
-     */
-    public Spinner getSpinner() {
-        return spinner;
-    }
-
-    /**
-     * @return the TextBox used by this widget
-     */
-    public TextBox getTextBox() {
-        return valueBox;
-    }
+//    /**
+//     * @return the Spinner used by this widget
+//     */
+////    public Spinner getSpinner() {
+////        return spinner;
+////    }
+//
+//    /**
+//     * @return the TextBox used by this widget
+//     */
+////    public TextBox getTextBox() {
+////        return valueBox;
+////    }
 
     /**
      * @return whether this widget is enabled.
@@ -155,15 +154,40 @@ public class ValueSpinner extends Composite implements Focus {
     }
 
     public int getIntValue() {
-        return (int) getSpinner().getValue();
+        return (int) spinner.getValue();
     }
 
-    public long getValue() {
-        return getSpinner().getValue();
+    public void setValue(final Integer value) {
+        if (value != null) {
+            setValue((long) value);
+        }
     }
 
-    public void setValue(final long value) {
-        spinner.setValue(value, false);
-        valueBox.setText(formatValue(value));
+    @Override
+    public Long getValue() {
+        return spinner.getValue();
+    }
+
+    @Override
+    public void setValue(final Long value) {
+        setValue(value, false);
+    }
+
+    @Override
+    public void setValue(final Long value, final boolean fireEvents) {
+        if (value != null) {
+            spinner.setValue(value, fireEvents);
+            valueBox.setText(formatValue(value));
+        }
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<Long> handler) {
+        return spinner.addValueChangeHandler(handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        spinner.fireEvent(event);
     }
 }

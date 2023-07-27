@@ -16,21 +16,23 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
+import stroom.svg.client.IconColour;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.Command;
 
 public class IconMenuItem extends MenuItem {
 
-    private final Icon enabledIcon;
-    private final Icon disabledIcon;
+    private final SvgImage enabledIcon;
+    private final SvgImage disabledIcon;
+    private final IconColour iconColour;
     private final boolean highlight;
 
     protected IconMenuItem(final int priority,
-                           final Icon enabledIcon,
-                           final Icon disabledIcon,
+                           final SvgImage enabledIcon,
+                           final SvgImage disabledIcon,
+                           final IconColour iconColour,
                            final String text,
                            final Action action,
                            final boolean enabled,
@@ -39,15 +41,20 @@ public class IconMenuItem extends MenuItem {
         super(priority, text, action, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
+        this.iconColour = iconColour;
         this.highlight = highlight;
     }
 
-    public Icon getEnabledIcon() {
+    public SvgImage getEnabledIcon() {
         return enabledIcon;
     }
 
-    public Icon getDisabledIcon() {
+    public SvgImage getDisabledIcon() {
         return disabledIcon;
+    }
+
+    public IconColour getIconColour() {
+        return iconColour;
     }
 
     public boolean isHighlight() {
@@ -57,17 +64,23 @@ public class IconMenuItem extends MenuItem {
     protected abstract static class AbstractBuilder<T extends IconMenuItem, B extends AbstractBuilder<T, ?>>
             extends MenuItem.AbstractBuilder<T, B> {
 
-        protected Icon enabledIcon = null;
-        protected Icon disabledIcon = null;
+        protected SvgImage enabledIcon = null;
+        protected SvgImage disabledIcon = null;
+        protected IconColour iconColour;
         protected boolean highlight;
 
-        public B icon(final Icon icon) {
+        public B icon(final SvgImage icon) {
             this.enabledIcon = icon;
             return self();
         }
 
-        public B disabledIcon(final Icon icon) {
+        public B disabledIcon(final SvgImage icon) {
             this.disabledIcon = icon;
+            return self();
+        }
+
+        public B iconColour(final IconColour iconColour) {
+            this.iconColour = iconColour;
             return self();
         }
 
@@ -90,13 +103,14 @@ public class IconMenuItem extends MenuItem {
         }
 
         public IconMenuItem build() {
-            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
-                text = ((Preset) enabledIcon).getTitle();
-            }
+//            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
+//                text = ((Preset) enabledIcon).getTitle();
+//            }
             return new IconMenuItem(
                     priority,
                     enabledIcon,
                     disabledIcon,
+                    iconColour,
                     text,
                     action,
                     enabled,

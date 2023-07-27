@@ -30,6 +30,7 @@ import java.util.Map.Entry;
  * Implements a SAX error handler for logging all errors to log4j.
  */
 public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
+    // elementId => Indicators
     private final Map<String, Indicators> indicatorsMap;
     private final Map<Severity, StoredErrorStats> statsMap = new HashMap<>();
 
@@ -42,8 +43,12 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
     }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message,
+    public void log(final Severity severity,
+                    final Location location,
+                    final String elementId,
+                    final String message,
                     final Throwable e) {
+
         final String msg = MessageUtil.getMessage(message, e);
 
         // Record the number of errors.
@@ -154,6 +159,9 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
         return sb.toString();
     }
 
+    /**
+     * @return Map of elementId => {@link Indicators}
+     */
     public Map<String, Indicators> getIndicatorsMap() {
         return indicatorsMap;
     }

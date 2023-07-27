@@ -19,13 +19,15 @@ package stroom.dashboard.client.text;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
 import stroom.docref.HasDisplayValue;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.Field;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -52,21 +54,21 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @UiField
     TextBox name;
     @UiField
-    ItemListBox<HasDisplayValue> table;
+    SelectionBox<HasDisplayValue> table;
     @UiField
-    ItemListBox<HasDisplayValue> streamIdField;
+    SelectionBox<HasDisplayValue> streamIdField;
     @UiField
-    ItemListBox<HasDisplayValue> partNoField;
+    SelectionBox<HasDisplayValue> partNoField;
     @UiField
-    ItemListBox<HasDisplayValue> recordNoField;
+    SelectionBox<HasDisplayValue> recordNoField;
     @UiField
-    ItemListBox<HasDisplayValue> lineFromField;
+    SelectionBox<HasDisplayValue> lineFromField;
     @UiField
-    ItemListBox<HasDisplayValue> colFromField;
+    SelectionBox<HasDisplayValue> colFromField;
     @UiField
-    ItemListBox<HasDisplayValue> lineToField;
+    SelectionBox<HasDisplayValue> lineToField;
     @UiField
-    ItemListBox<HasDisplayValue> colToField;
+    SelectionBox<HasDisplayValue> colToField;
     @UiField
     SimplePanel pipeline;
     @UiField
@@ -77,11 +79,6 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @Inject
     public BasicTextSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        table.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onTableChange();
-            }
-        });
     }
 
     @Override
@@ -111,7 +108,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setTableList(final List<Component> tableList) {
-        final HasDisplayValue table = this.table.getSelectedItem();
+        final HasDisplayValue table = this.table.getValue();
 
         this.table.clear();
         this.table.addItem(ANY);
@@ -123,23 +120,23 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
         this.table.addItems(newList);
 
         // Reselect table id.
-        this.table.setSelectedItem(table);
+        this.table.setValue(table);
     }
 
     @Override
     public Component getTable() {
-        if (ANY.equals(this.table.getSelectedItem())) {
+        if (ANY.equals(this.table.getValue())) {
             return null;
         }
-        return (Component) this.table.getSelectedItem();
+        return (Component) this.table.getValue();
     }
 
     @Override
     public void setTable(final Component table) {
         if (table == null) {
-            this.table.setSelectedItem(ANY);
+            this.table.setValue(ANY);
         } else {
-            this.table.setSelectedItem(table);
+            this.table.setValue(table);
         }
     }
 
@@ -154,15 +151,15 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
         setFieldNames(fields, colToField);
     }
 
-    private void setFieldNames(final List<Field> fields, final ItemListBox<HasDisplayValue> ctrl) {
-        final HasDisplayValue selected = ctrl.getSelectedItem();
+    private void setFieldNames(final List<Field> fields, final SelectionBox<HasDisplayValue> ctrl) {
+        final HasDisplayValue selected = ctrl.getValue();
         ctrl.clear();
         ctrl.addItem(NONE);
         final List<HasDisplayValue> newList = fields.stream().map(e -> (HasDisplayValue) e)
                 .sorted(Comparator.comparing(HasDisplayValue::getDisplayValue))
                 .collect(Collectors.toList());
         ctrl.addItems(newList);
-        ctrl.setSelectedItem(selected);
+        ctrl.setValue(selected);
     }
 
     @Override
@@ -172,7 +169,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setStreamIdField(final Field field) {
-        streamIdField.setSelectedItem(field);
+        streamIdField.setValue(field);
     }
 
     @Override
@@ -182,7 +179,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setPartNoField(final Field field) {
-        partNoField.setSelectedItem(field);
+        partNoField.setValue(field);
     }
 
     @Override
@@ -192,7 +189,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setRecordNoField(final Field field) {
-        recordNoField.setSelectedItem(field);
+        recordNoField.setValue(field);
     }
 
     @Override
@@ -202,7 +199,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setLineFromField(final Field field) {
-        lineFromField.setSelectedItem(field);
+        lineFromField.setValue(field);
     }
 
     @Override
@@ -212,7 +209,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setColFromField(final Field field) {
-        colFromField.setSelectedItem(field);
+        colFromField.setValue(field);
     }
 
     @Override
@@ -222,7 +219,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setLineToField(final Field field) {
-        lineToField.setSelectedItem(field);
+        lineToField.setValue(field);
     }
 
     @Override
@@ -232,14 +229,14 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public void setColToField(final Field field) {
-        colToField.setSelectedItem(field);
+        colToField.setValue(field);
     }
 
-    private Field getField(final ItemListBox<HasDisplayValue> ctrl) {
-        if (ctrl.getSelectedItem() == null || NONE.equals(ctrl.getSelectedItem())) {
+    private Field getField(final SelectionBox<HasDisplayValue> ctrl) {
+        if (ctrl.getValue() == null || NONE.equals(ctrl.getValue())) {
             return null;
         }
-        return (Field) ctrl.getSelectedItem();
+        return (Field) ctrl.getValue();
     }
 
     @Override
@@ -272,6 +269,13 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     public void onResize() {
         ((RequiresResize) widget).onResize();
+    }
+
+    @UiHandler("table")
+    public void onTableValueChange(final ValueChangeEvent<HasDisplayValue> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onTableChange();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, BasicTextSettingsViewImpl> {

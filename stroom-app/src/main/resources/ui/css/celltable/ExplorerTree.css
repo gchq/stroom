@@ -17,6 +17,10 @@
     width: 100%;
  }
 
+  .explorerTree .cellTableCell > div {
+     padding: 0;
+  }
+
 .explorerTree-container {
     overflow: auto;
     display: flex;
@@ -42,6 +46,12 @@
 
 .explorerCell-icon {
 	display: flex;
+	color: var(--icon-colour__foreground);
+}
+
+.explorerCell-icon svg {
+	width: var(--icon-width);
+	height: var(--icon-height)
 }
 
 .explorerCell-text {

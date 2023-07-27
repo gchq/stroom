@@ -1,6 +1,8 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.FunctionSignature;
+import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -12,18 +14,35 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class QueryHelpItem implements Comparable<QueryHelpItem> {
+public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
-    final String text;
+    static final int TOP_LEVEL_DEPTH = 0;
+
+    final String title;
     private final boolean heading;
     private final int depth;
+    // Hold the path to this item so we can use it to uniquely identify an item as some function names
+    // exist in multiple categories
+    protected String path;
 
     private Map<QueryHelpItem, QueryHelpItem> children;
 
-    public QueryHelpItem(final String text, final boolean heading, final int depth) {
-        this.text = text;
+    public QueryHelpItem(final QueryHelpItem parent,
+                         final String title,
+                         final boolean heading) {
+        this.title = title;
         this.heading = heading;
-        this.depth = depth;
+
+        if (parent != null) {
+            this.depth = parent.depth + 1;
+            this.path = parent.path + "/" + title;
+            // Ensure this item (or one equal to it) is included as a child on the parent
+            parent.addOrGetChild(this);
+        } else {
+            this.depth = TOP_LEVEL_DEPTH;
+            this.path = "/" + title;
+        }
+//        GWT.log("Creating: (depth " + this.depth + ") " + this.path);
     }
 
     public boolean hasChildren() {
@@ -34,7 +53,10 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
         if (children == null) {
             return null;
         }
-        return children.keySet().stream().sorted().collect(Collectors.toList());
+        return children.keySet()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public <T extends QueryHelpItem> T addOrGetChild(T child) {
@@ -42,7 +64,9 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
             children = new HashMap<>();
         }
 
-        return (T) children.computeIfAbsent(child, k -> child);
+        final QueryHelpItem child2 = children.computeIfAbsent(child, k -> child);
+
+        return (T) child2;
     }
 
     public void clear() {
@@ -50,7 +74,13 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
     }
 
     public String getInsertText() {
-        return text;
+        return title;
+    }
+
+    public abstract InsertType getInsertType();
+
+    public String getTitle() {
+        return title;
     }
 
     public int getDepth() {
@@ -64,7 +94,7 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
     public SafeHtml getLabel() {
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendHtmlConstant("<div class=\"" + getClassName() + "\">");
-        builder.appendEscaped(text);
+        builder.appendEscaped(title);
         builder.appendHtmlConstant("</div>");
         return builder.toSafeHtml();
     }
@@ -76,7 +106,7 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
     @Override
     public int compareTo(final QueryHelpItem o) {
         if (heading == o.heading) {
-            return text.compareTo(o.text);
+            return title.compareTo(o.title);
         }
         return Boolean.compare(o.heading, heading);
     }
@@ -90,37 +120,82 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
             return false;
         }
         final QueryHelpItem that = (QueryHelpItem) o;
-        return heading == that.heading && Objects.equals(text, that.text);
+        return Objects.equals(path, that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(text, heading);
+        return Objects.hash(path);
     }
 
-    public static class QueryHelpItemHeading extends QueryHelpItem {
 
-        public QueryHelpItemHeading(final String text, final int depth) {
-            super(text, true, depth);
+    // --------------------------------------------------------------------------------
+
+
+    public abstract static class QueryHelpItemHeading extends QueryHelpItem {
+
+        public QueryHelpItemHeading(final QueryHelpItem parent,
+                                    final String text) {
+            super(parent, text, true);
         }
 
         @Override
         String getClassName() {
             return super.getClassName() + " " + "queryHelpItem-heading";
         }
-    }
 
-    public static class FunctionHeadingItem extends QueryHelpItemHeading {
-
-        public FunctionHeadingItem(final String text, final int depth) {
-            super(text, depth);
+        @Override
+        public InsertType getInsertType() {
+            return InsertType.NOT_INSERTABLE;
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class TopLevelHeadingItem extends QueryHelpItemHeading {
+
+        private final SafeHtml detail;
+
+        public TopLevelHeadingItem(final String text, final SafeHtml detail) {
+            // Top level so no parent
+            super(null, text);
+            this.detail = detail;
+        }
+
+        @Override
+        public SafeHtml getDetail() {
+            return detail;
+        }
+
+        @Override
+        String getClassName() {
+            return super.getClassName() + " " + "queryHelpItem-topLevel";
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public abstract static class FunctionHeadingItem extends QueryHelpItemHeading {
+
+        public FunctionHeadingItem(final QueryHelpItem parent,
+                                   final String text) {
+            super(parent, text);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public static class FunctionCategoryItem extends FunctionHeadingItem {
 
-        public FunctionCategoryItem(final String heading, final int depth) {
-            super(heading, depth);
+        public FunctionCategoryItem(final QueryHelpItem parent,
+                                    final String heading) {
+            super(parent, heading);
         }
 
         @Override
@@ -129,15 +204,42 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class OverloadedFunctionHeadingItem extends FunctionHeadingItem {
+
+        public OverloadedFunctionHeadingItem(final QueryHelpItem parent,
+                                             final String heading) {
+            super(parent, heading);
+        }
+
+        @Override
+        String getClassName() {
+            return super.getClassName() + " queryHelpItem-functionHeading";
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public static class FunctionItem extends QueryHelpItem {
 
         private final FunctionSignature signature;
         private final String helpUrl;
+        private final String snippetText;
 
-        public FunctionItem(final FunctionSignature signature, final String helpUrl, final int depth) {
-            super(signature.getName(), false, depth);
+        public FunctionItem(final QueryHelpItem parent,
+                            final String title,
+                            final FunctionSignature signature,
+                            final String helpUrl) {
+            super(parent, title, false);
             this.signature = signature;
             this.helpUrl = helpUrl;
+            this.snippetText = FunctionSignatureUtil.buildSnippetText(signature);
+//            GWT.log("snippet: " + snippetText);
         }
 
         @Override
@@ -147,7 +249,19 @@ public class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         @Override
         String getClassName() {
-            return super.getClassName() + " " + "queryHelpItem-function";
+            return super.getClassName() + " queryHelpItem-function queryHelpItem-leaf";
+        }
+
+        @Override
+        public String getInsertText() {
+            return snippetText;
+        }
+
+        @Override
+        public InsertType getInsertType() {
+            return GwtNullSafe.isBlankString(snippetText)
+                    ? InsertType.BLANK
+                    : InsertType.SNIPPET;
         }
     }
 }

@@ -23,7 +23,7 @@
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */
     --code-color: var(--pink-700);
-    --border-color: transparent; /*#c5cde2;*/
+    --border-color: #ebebeb;
 
     --header__border-color: #dddddd;
     --row__background-color--even: #ebebeb;
@@ -43,6 +43,7 @@
     --button__background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
     --button__background-color: #f6f5f5;
     --button__border-color: #918e8c;
+    --button__image-color: #918e8c;
     --button__text-color: #000;
     --button__background-image--active: linear-gradient(#c8c9cb 0px, #c8cacd 10px, #c2c6c8 0px, #b5b7ba);
     --button__background-color--active: #c2c6c8;
@@ -122,13 +123,13 @@
      */
 
     /* Page */
-    --app__background-color: rgba(0, 0, 0, 0.025);/*#d50101;*/
-    --page__background-color: #fff;
+    --app__background-color: #fff;/*#d50101;*/
+    --page__background-color: var(--app__background-color);
     --page__text-color: rgba(0, 0, 0, 0.8);
 
     /* Splitter */
-    --splitter__background-color: #1d9bd1;
-    --splitter__border-color: #fff;
+    --splitter__background-color: var(--border-color);
+    --splitter__background-color--highlight: rgba(24, 94, 144, 0.9);
 
     /* Main curve tabs */
     --curve-tab__svg-color: #555;
@@ -136,7 +137,7 @@
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid rgb(200 200 200);
     --curve-tab__background-color--selected: #fff;
-    --curve-tab__background-color--hover: #fff;
+    --curve-tab__background-color--hover: rgba(var(--blue-300-rgb), .2);
     --curve-tab__box-shadow--selected: 0 0 4px 0px rgb(200 200 200 / 100%);
     --curve-tab__border-radius: .2rem;
 
@@ -152,8 +153,7 @@
     --form-group__label-color: #000;
 
     /* Dashboard */
-    --dashboard-panel__background-color: #fff;
-    --dashboard-panel__border-color: rgba(0, 0, 0, 0.06);
+    --dashboard-panel__background-color: var(--page__background-color);
     --dashboard-panel__grid-color: rgba(0, 0, 0, 0.03);
 
     /* ExpanderCell */
@@ -204,6 +204,7 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
+    --navigation__splitter__background-color: #002a59;
     --navigation__background-color: #004c98;
     --navigation__background-color--hovered: rgba(10,36,65,.4);
     --navigation__background-color--selected: rgba(10,36,65,.6);
@@ -212,7 +213,6 @@
     --navigation__background-color--selected--focussed: rgba(10,36,65,.8);
     --navigation__text-color: #fff;
     --navigation__text-color--selected: #fff;
-    --navigation__border-color: var(--navigation__background-color);
 
     /* Specific */
     --header__icon-color: #2185d0;
@@ -221,10 +221,10 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
-    --dialog__background-color: #fff; /*rgb(223, 234, 248);*/
-    --dialog__border-color: rgba(var(--black-rgb), .8);
-    --dialog__shadow: 0 0 50px 10px rgba(0, 0, 0, .7);
-    --popup__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
+    --dialog__background-color: var(--app__background-color);
+    --dialog__border-color: rgba(var(--black-rgb), .5);
+    --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .4);
+    --popup__shadow: 0 0 10px 1px rgba(0, 0, 0, .4);
 
     /* Status */
     --ok: var(--blue-500);

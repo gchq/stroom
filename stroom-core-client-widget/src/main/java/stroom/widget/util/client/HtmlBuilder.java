@@ -176,6 +176,10 @@ public class HtmlBuilder {
         return SafeHtmlUtils.fromTrustedString(sb.toString());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Attribute {
 
         private final SafeHtml name;

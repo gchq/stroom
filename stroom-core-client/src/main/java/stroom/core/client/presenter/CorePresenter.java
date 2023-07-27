@@ -16,9 +16,16 @@
 
 package stroom.core.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.main.client.event.ShowMainEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.api.event.CurrentUserChangedEvent;
+import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
@@ -37,18 +44,21 @@ import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 
 public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
-        implements TaskStartHandler, TaskEndHandler {
+        implements TaskStartHandler, TaskEndHandler, CurrentUserChangedHandler {
 
     @ContentSlot
     public static final Type<RevealContentHandler<?>> CORE = new Type<>();
 
     private final ClientSecurityContext securityContext;
+    private final UrlParameters urlParameters;
 
     @Inject
     public CorePresenter(final EventBus eventBus, final CoreView view, final CoreProxy proxy,
-                         final ClientSecurityContext securityContext) {
+                         final ClientSecurityContext securityContext,
+                         final UrlParameters urlParameters) {
         super(eventBus, view, proxy);
         this.securityContext = securityContext;
+        this.urlParameters = urlParameters;
     }
 
     @ProxyEvent
@@ -64,6 +74,34 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
     public void onTaskEnd(final TaskEndEvent event) {
         if (event.getTaskCount() == 0) {
             getView().hideWorking();
+        }
+    }
+
+    @ProxyEvent
+    @Override
+    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
+        final DocRef docRef = DocRef.builder()
+                .type(urlParameters.getType())
+                .uuid(urlParameters.getUuid())
+                .build();
+        if (UrlParameters.OPEN_DOC_ACTION.equals(urlParameters.getAction())) {
+            if (docRef.getType() == null) {
+                AlertEvent.fireError(this, "Error", "No document type specified", null);
+            } else if (docRef.getUuid() == null) {
+                AlertEvent.fireError(this, "Error", "No document UUID specified", null);
+            } else {
+                ShowMainEvent.fire(this, docRef);
+            }
+
+        } else {
+            // See if we want to open document directly.
+            if (docRef.getType() != null && docRef.getUuid() != null) {
+                OpenDocumentEvent.fire(this, docRef, true, true);
+
+            } else {
+                // Show the main presenter without an initial document.
+                ShowMainEvent.fire(this, null);
+            }
         }
     }
 

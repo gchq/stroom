@@ -104,8 +104,8 @@
 }
 
 .pipelineElementBox-image {
-	width: 16px;
-	height: 16px;
+	width: var(--icon-width);
+	height: var(--icon-height);
 	cursor: pointer;
 }
 
@@ -119,11 +119,11 @@
 	color: var(--pipeline-element-box__text-color--selected);
 }
 
-.pipelineElementBox-filterImage.pipelineElementBox-filterOff.svgIcon {
+.pipelineElementBox-filterOff .pipelineElementBox-filterImage.svgIcon {
     visibility: hidden;
     display: none;
 }
 
-.pipelineElementBox-filterImage.pipelineElementBox-filterOn.svgIcon {
+.pipelineElementBox-filterOn .pipelineElementBox-filterImage.svgIcon {
 
 }

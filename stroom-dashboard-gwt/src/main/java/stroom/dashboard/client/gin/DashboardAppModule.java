@@ -21,16 +21,17 @@ import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
-import stroom.dashboard.client.main.DashboardMainPresenter;
-import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
-import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
-import stroom.dashboard.client.main.DashboardMainViewImpl;
+import stroom.core.client.view.FullScreenViewImpl;
 import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.ClassificationWrapperView;
+import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
@@ -59,6 +60,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.data.grid.client.WrapperView;
 import stroom.data.grid.client.WrapperViewImpl;
+import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -99,18 +101,21 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
         bind(UrlParameters.class).in(Singleton.class);
+        bind(DelegatingAceCompleter.class).asEagerSingleton();
+        bind(DataDisplaySupport.class).asEagerSingleton();
 
         // Presenters
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
         bindPresenter(
-                DashboardMainPresenter.class,
-                DashboardMainView.class,
-                DashboardMainViewImpl.class,
-                DashboardMainProxy.class);
+                FullScreenPresenter.class,
+                FullScreenView.class,
+                FullScreenViewImpl.class,
+                FullScreenProxy.class);
 
         bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
+
 
         bindPresenterWidget(
                 EntityTreePresenter.class,

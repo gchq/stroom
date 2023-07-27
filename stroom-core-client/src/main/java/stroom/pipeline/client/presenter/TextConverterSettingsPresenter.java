@@ -19,7 +19,7 @@ package stroom.pipeline.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -44,28 +44,23 @@ public class TextConverterSettingsPresenter
     protected void onBind() {
         super.onBind();
         registerHandler(
-                getView().getConverterType().addSelectionHandler(event -> setDirty(true)));
-    }
-
-    @Override
-    public String getType() {
-        return TextConverterDoc.DOCUMENT_TYPE;
+                getView().getConverterType().addValueChangeHandler(event -> setDirty(true)));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final TextConverterDoc textConverter, final boolean readOnly) {
-        getView().getConverterType().setSelectedItem(textConverter.getConverterType());
+        getView().getConverterType().setValue(textConverter.getConverterType());
     }
 
     @Override
     protected TextConverterDoc onWrite(final TextConverterDoc textConverter) {
-        final TextConverterType converterType = getView().getConverterType().getSelectedItem();
+        final TextConverterType converterType = getView().getConverterType().getValue();
         textConverter.setConverterType(converterType);
         return textConverter;
     }
 
     public interface TextConverterSettingsView extends View {
 
-        ItemListBox<TextConverterDoc.TextConverterType> getConverterType();
+        SelectionBox<TextConverterDoc.TextConverterType> getConverterType();
     }
 }

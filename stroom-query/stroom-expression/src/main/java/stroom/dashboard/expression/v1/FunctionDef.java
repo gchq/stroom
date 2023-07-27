@@ -9,7 +9,16 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface FunctionDef {
 
+    String UNDEFINED = "[UNDEFINED]";
+
     String name();
+
+    /**
+     * The html link anchor to the section of the documentation page for this function.
+     * It should only need to be set if the name when converted into anchor format differs
+     * from the actual anchor.
+     */
+    String helpAnchor() default UNDEFINED;
 
     /**
      * Any alias names for the function
@@ -22,7 +31,6 @@ public @interface FunctionDef {
      * Defined as an array to allow us to not have one by default.
      */
     FunctionCategory[] commonCategory() default {};
-
 
     /**
      * An array of sub-categories that this function belongs to. The sub-categories represent a path

@@ -18,6 +18,7 @@
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.PoolItem;
@@ -33,7 +34,6 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -42,6 +42,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Location;
@@ -83,7 +84,7 @@ import javax.xml.transform.sax.TransformerHandler;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.XSLT)
+        icon = SvgImage.PIPELINE_XSLT)
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
 
     private final XsltPool xsltPool;
@@ -128,7 +129,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator,
                       final Provider<FeedHolder> feedHolder,
-                      final Provider<PipelineHolder> pipelineHolder) {
+                      final Provider<PipelineHolder> pipelineHolder,
+                      final DocRefInfoService docRefInfoService) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
@@ -138,7 +140,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
+        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore, docRefInfoService);
     }
 
     @Override

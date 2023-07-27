@@ -84,7 +84,7 @@ class DashboardResourceImpl implements DashboardResource {
         return dashboardServiceProvider.get().downloadQuery(request);
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceGeneration downloadSearchResults(final String nodeName,
                                                     final DownloadSearchResultsRequest request) {
@@ -110,7 +110,7 @@ class DashboardResourceImpl implements DashboardResource {
         }
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public DashboardSearchResponse search(final String nodeName, final DashboardSearchRequest request) {
         try {

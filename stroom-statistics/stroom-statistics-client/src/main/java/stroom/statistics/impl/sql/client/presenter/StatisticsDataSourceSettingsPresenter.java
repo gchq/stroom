@@ -19,11 +19,9 @@ package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasDocumentWrite;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
@@ -32,15 +30,12 @@ import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class StatisticsDataSourceSettingsPresenter
-        extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
-        implements HasDocumentRead<StatisticStoreDoc>, HasDocumentWrite<StatisticStoreDoc>, HasDirtyHandlers,
-        StatisticsDataSourceSettingsUiHandlers {
+        extends DocumentEditPresenter<StatisticsDataSourceSettingsView, StatisticStoreDoc>
+        implements StatisticsDataSourceSettingsUiHandlers {
 
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view) {
@@ -54,7 +49,7 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
         getView().onReadOnly(readOnly);
         if (document != null) {
             getView().setStatisticType(document.getStatisticType());
@@ -65,7 +60,7 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public StatisticStoreDoc write(final StatisticStoreDoc document) {
+    protected StatisticStoreDoc onWrite(final StatisticStoreDoc document) {
         if (document != null) {
             document.setStatisticType(getView().getStatisticType());
             document.setEnabled(getView().getEnabled().getValue());
@@ -73,11 +68,6 @@ public class StatisticsDataSourceSettingsPresenter
             document.setRollUpType(getView().getRollUpType());
         }
         return document;
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     public interface StatisticsDataSourceSettingsView

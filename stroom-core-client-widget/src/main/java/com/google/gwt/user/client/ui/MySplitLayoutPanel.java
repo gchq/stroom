@@ -68,7 +68,7 @@ import com.google.gwt.user.client.Event;
  */
 public class MySplitLayoutPanel extends DockLayoutPanel {
 
-    private static final int SPLITTER_SIZE = 6;
+    private static final int SPLITTER_SIZE = 7;
     public static final double HALF_N_HALF_SPLIT = 0.5;
     /**
      * The element that masks the screen so we can catch mouse events over

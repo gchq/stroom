@@ -18,8 +18,9 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.MouseUtil;
@@ -30,7 +31,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -55,7 +55,7 @@ public class AnalyticProcessingViewImpl
     @UiField
     MyDateBox maxMetaCreateTimeMs;
     @UiField
-    StringListBox node;
+    SelectionBox<String> node;
     @UiField
     SimplePanel info;
     @UiField
@@ -66,6 +66,7 @@ public class AnalyticProcessingViewImpl
     @Inject
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        refresh.setIcon(SvgImage.REFRESH);
     }
 
     @Override
@@ -114,24 +115,24 @@ public class AnalyticProcessingViewImpl
         this.node.addItems(nodes);
         if (selectedNode == null) {
             if (nodes.size() > 0) {
-                this.node.setSelected(nodes.get(0));
+                this.node.setValue(nodes.get(0));
             }
         } else {
-            this.node.setSelected(selectedNode);
+            this.node.setValue(selectedNode);
             selectedNode = null;
         }
     }
 
     @Override
     public String getNode() {
-        return this.node.getSelected();
+        return this.node.getValue();
     }
 
     @Override
     public void setNode(final String node) {
         if (node != null) {
             selectedNode = node;
-            this.node.setSelected(node);
+            this.node.setValue(node);
         }
     }
 

@@ -2,27 +2,25 @@ package stroom.analytics.impl;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
-import stroom.feed.api.FeedStore;
 import stroom.pipeline.writer.StreamAppender;
 import stroom.pipeline.writer.XMLWriter;
 
-import java.util.List;
 import javax.inject.Inject;
 
-public class DetectionsWriter implements RecordConsumer, ProcessLifecycleAware {
+public class DetectionsWriter implements DetectionConsumer, ProcessLifecycleAware {
 
-    private final RecordWriter recordWriter;
+    private final DetectionWriter detectionWriter;
     private final StreamAppender streamAppender;
 
 
     @Inject
-    public DetectionsWriter(final RecordWriter recordWriter,
+    public DetectionsWriter(final DetectionWriter detectionWriter,
                             final XMLWriter xmlWriter,
                             final StreamAppender streamAppender) {
-        this.recordWriter = recordWriter;
+        this.detectionWriter = detectionWriter;
         this.streamAppender = streamAppender;
 
-        recordWriter.setHandler(xmlWriter);
+        detectionWriter.setHandler(xmlWriter);
         xmlWriter.setTarget(streamAppender);
         xmlWriter.setIndentOutput(true);
         streamAppender.setStreamType(StreamTypeNames.DETECTIONS);
@@ -34,16 +32,16 @@ public class DetectionsWriter implements RecordConsumer, ProcessLifecycleAware {
 
     @Override
     public void start() {
-        recordWriter.start();
+        detectionWriter.start();
     }
 
     @Override
     public void end() {
-        recordWriter.end();
+        detectionWriter.end();
     }
 
     @Override
-    public void accept(final Record record) {
-        recordWriter.accept(record);
+    public void accept(final Detection detection) {
+        detectionWriter.accept(detection);
     }
 }

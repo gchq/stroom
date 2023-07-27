@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter.DocumentPermissionsView;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.Changes;
@@ -30,6 +30,7 @@ import stroom.security.shared.CopyPermissionsFromParentRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
+import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -39,7 +40,6 @@ import stroom.widget.tab.client.presenter.LinkTabsPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Button;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -214,7 +214,7 @@ public class DocumentPermissionsPresenter
                     .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
                             docRef,
                             changes,
-                            getView().getCascade().getSelectedItem()));
+                            getView().getCascade().getValue()));
         } else {
             e.hide();
         }
@@ -232,7 +232,7 @@ public class DocumentPermissionsPresenter
 
         void setTabsView(View view);
 
-        ItemListBox<ChangeDocumentPermissionsRequest.Cascade> getCascade();
+        SelectionBox<ChangeDocumentPermissionsRequest.Cascade> getCascade();
 
         void setCascadeVisible(boolean visible);
 

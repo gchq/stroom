@@ -131,6 +131,14 @@ public class GwtNullSafe {
         return str == null || str.isEmpty();
     }
 
+    public static String join(final CharSequence delimiter, final CharSequence... elements) {
+        if (elements == null || elements.length == 0) {
+            return "";
+        } else {
+            return String.join(delimiter, elements);
+        }
+    }
+
     /**
      * @return True if val is not null and true
      */
@@ -408,6 +416,15 @@ public class GwtNullSafe {
             return Optional.empty();
         } else {
             return Optional.ofNullable(Objects.requireNonNull(getter).apply(value));
+        }
+    }
+
+    /**
+     * If runnable is non-null run it.
+     */
+    public static void run(final Runnable runnable) {
+        if (runnable != null) {
+            runnable.run();
         }
     }
 

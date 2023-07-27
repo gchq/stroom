@@ -16,6 +16,7 @@
 
 package stroom.widget.button.client;
 
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -66,8 +67,8 @@ public class FabButton extends ButtonBase {
         }
     }
 
-    public void setIconClassName(final String iconClassName) {
-        face.setInnerHTML("<div class=\"" + iconClassName + "\"></div>");
+    public void setIcon(final SvgImage svgImage) {
+        face.setInnerHTML("<div class=\"svgIcon " + svgImage.getClassName() + "\">" + svgImage.getSvg() + "</div>");
     }
 
     @Override

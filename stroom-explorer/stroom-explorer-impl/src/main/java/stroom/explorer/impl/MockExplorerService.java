@@ -80,7 +80,7 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public List<DocumentType> getNonSystemTypes() {
+    public List<DocumentType> getTypes() {
         return null;
     }
 

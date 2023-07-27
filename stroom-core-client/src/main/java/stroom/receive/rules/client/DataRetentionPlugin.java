@@ -24,7 +24,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 
@@ -55,7 +55,7 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
     private MenuItem createDataRetentionMenuItem() {
         return new IconMenuItem.Builder()
                 .priority(51)
-                .icon(SvgPresets.HISTORY)
+                .icon(SvgImage.HISTORY)
                 .text("Data Retention")
                 .command(this::open)
                 .build();

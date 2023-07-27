@@ -8,7 +8,7 @@
             <g:TextBox ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="fsVolumeStatus" label="Status">
-            <l:ItemListBox ui:field="status" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="status" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="fsVolumeLimit" label="Limit">
             <g:TextBox ui:field="byteLimit" addStyleNames="w-100"/>

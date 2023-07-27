@@ -109,11 +109,6 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     }
 
     @Override
-    public String getType() {
-        return SolrIndexDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final SolrIndexDoc index, final boolean readOnly) {
         final SolrConnectionConfig connectionConfig = index.getSolrConnectionConfig();
         if (connectionConfig != null) {

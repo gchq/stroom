@@ -17,6 +17,7 @@
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.ParserFactoryPool;
@@ -31,7 +32,6 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.DocFinder;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -41,6 +41,7 @@ import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
+import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
@@ -64,7 +65,7 @@ import javax.inject.Provider;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.ROLE_HAS_CODE},
-        icon = ElementIcons.XML)
+        icon = SvgImage.PIPELINE_XML)
 public class XMLFragmentParser extends AbstractParser implements SupportsCodeInjection {
 
     private final ParserFactoryPool parserFactoryPool;
@@ -89,7 +90,8 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
                              final PathCreator pathCreator,
                              final Provider<FeedHolder> feedHolder,
                              final Provider<PipelineHolder> pipelineHolder,
-                             final Provider<LocationHolder> locationHolderProvider) {
+                             final Provider<LocationHolder> locationHolderProvider,
+                             final DocRefInfoService docRefInfoService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
@@ -97,7 +99,11 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(
+                TextConverterDoc.DOCUMENT_TYPE,
+                pathCreator,
+                textConverterStore,
+                docRefInfoService);
     }
 
     @Override

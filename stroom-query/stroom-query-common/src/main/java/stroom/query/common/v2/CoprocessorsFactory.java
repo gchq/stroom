@@ -100,8 +100,7 @@ public class CoprocessorsFactory {
                 if (coprocessor != null) {
                     coprocessorMap.put(coprocessorSettings.getCoprocessorId(), coprocessor);
 
-                    if (coprocessor instanceof TableCoprocessor) {
-                        final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
+                    if (coprocessor instanceof final TableCoprocessor tableCoprocessor) {
                         final TableCoprocessorSettings tableCoprocessorSettings =
                                 (TableCoprocessorSettings) coprocessorSettings;
                         for (final String componentId : tableCoprocessorSettings.getComponentIds()) {
@@ -117,8 +116,7 @@ public class CoprocessorsFactory {
         coprocessorMap.values().forEach(coprocessor -> {
             DocRef extractionPipeline = null;
 
-            if (coprocessor instanceof TableCoprocessor) {
-                final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
+            if (coprocessor instanceof final TableCoprocessor tableCoprocessor) {
                 if (tableCoprocessor.getTableSettings().extractValues()) {
                     extractionPipeline = tableCoprocessor.getTableSettings().getExtractionPipeline();
                 }
@@ -143,8 +141,7 @@ public class CoprocessorsFactory {
                                final Map<String, String> paramMap,
                                final ErrorConsumer errorConsumer,
                                final DataStoreSettings dataStoreSettings) {
-        if (settings instanceof TableCoprocessorSettings) {
-            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+        if (settings instanceof final TableCoprocessorSettings tableCoprocessorSettings) {
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
             final DataStore dataStore = create(
                     searchRequestSource,
@@ -156,8 +153,7 @@ public class CoprocessorsFactory {
                     dataStoreSettings,
                     errorConsumer);
             return new TableCoprocessor(tableSettings, dataStore, errorConsumer);
-        } else if (settings instanceof EventCoprocessorSettings) {
-            final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
+        } else if (settings instanceof final EventCoprocessorSettings eventCoprocessorSettings) {
             return new EventCoprocessor(eventCoprocessorSettings, fieldIndex, errorConsumer);
         }
 

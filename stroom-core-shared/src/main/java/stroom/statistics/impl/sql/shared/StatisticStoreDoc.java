@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -51,6 +52,7 @@ import java.util.Set;
 public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     public static final String DOCUMENT_TYPE = "StatisticStore";
+    public static final SvgImage ICON = SvgImage.DOCUMENT_STATISTIC_STORE;
 
     // IndexFields names
     public static final String FIELD_NAME_DATE_TIME = "Date Time";

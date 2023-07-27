@@ -128,7 +128,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     && securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.
-            getView().setPlayVisible(playButtonVisible);
+            getView().setSteppingVisible(playButtonVisible);
 
             getView().setClassification(classification);
             if (isHtml) {
@@ -725,6 +725,6 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
         void setClassification(String classification);
 
-        void setPlayVisible(boolean visible);
+        void setSteppingVisible(boolean visible);
     }
 }

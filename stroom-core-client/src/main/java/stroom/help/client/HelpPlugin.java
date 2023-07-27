@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -52,14 +52,14 @@ public class HelpPlugin extends Plugin {
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
                         helpMenuItem = new IconMenuItem.Builder()
                                 .priority(1)
-                                .icon(SvgPresets.HELP)
+                                .icon(SvgImage.HELP)
                                 .text("Help")
                                 .command(() -> Window.open(helpUrl, "_blank", ""))
                                 .build();
                     } else {
                         helpMenuItem = new IconMenuItem.Builder()
                                 .priority(1)
-                                .icon(SvgPresets.HELP)
+                                .icon(SvgImage.HELP)
                                 .text("Help is not configured!")
                                 .build();
                     }

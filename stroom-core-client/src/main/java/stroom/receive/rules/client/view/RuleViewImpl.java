@@ -17,7 +17,7 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.shared.RuleAction;
 
@@ -39,7 +39,7 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
     @UiField
     TextBox name;
     @UiField
-    ItemListBox<RuleAction> action;
+    SelectionBox<RuleAction> action;
 
     @Inject
     public RuleViewImpl(final RuleViewImpl.Binder binder) {
@@ -72,12 +72,12 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
 
     @Override
     public RuleAction getAction() {
-        return action.getSelectedItem();
+        return action.getValue();
     }
 
     @Override
     public void setAction(final RuleAction action) {
-        this.action.setSelectedItem(action);
+        this.action.setValue(action);
     }
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {
