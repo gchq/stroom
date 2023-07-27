@@ -4,6 +4,7 @@ import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.Annotation;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValDate;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
@@ -29,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
@@ -39,10 +41,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
             nullSafeEntry(AnnotationFields.ID, Annotation::getId),
-            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
+            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime, createTimeEpochMs ->
+                    Val.nullSafeCreate(createTimeEpochMs, ValDate::create)),
             nullSafeEntry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
-            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateTime),
+            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime, updateTimeEpochMs ->
+                    Val.nullSafeCreate(updateTimeEpochMs, ValDate::create)),
+            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
             nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
             nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
             nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
@@ -54,9 +58,11 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = Map.ofEntries(
             Map.entry(AnnotationFields.ID, Annotation::getId),
             Map.entry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
-            Map.entry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
+            Map.entry(AnnotationFields.CREATED_BY, annotation ->
+                    NullSafe.get(annotation.getCreateUser(), UserName::getUserIdentityForAudit)),
             Map.entry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
-            Map.entry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
+            Map.entry(AnnotationFields.UPDATED_BY, annotation ->
+                    NullSafe.get(annotation.getCreateUser(), UserName::getUserIdentityForAudit)),
             Map.entry(AnnotationFields.TITLE, Annotation::getTitle),
             Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
             Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
@@ -224,18 +230,33 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private static <T> Entry<String, Function<Annotation, Val>> nullSafeEntry(
             final String fieldName,
             final Function<Annotation, T> getter) {
+        return nullSafeEntry(fieldName, getter, null);
+    }
 
+    /**
+     * @param creator An explicit creator function to use rather than inferring it from the type.
+     */
+    private static <T> Entry<String, Function<Annotation, Val>> nullSafeEntry(
+            final String fieldName,
+            final Function<Annotation, T> getter,
+            final Function<T, Val> creator) {
+
+        Objects.requireNonNull(fieldName);
+        Objects.requireNonNull(getter);
         return Map.entry(fieldName, annotation -> {
             T value = getter.apply(annotation);
 
             if (value == null) {
                 return ValNull.INSTANCE;
             } else {
-                if (value instanceof String) {
+                if (creator != null) {
+                    return creator.apply(value);
+                } else if (value instanceof String) {
                     return ValString.create((String) value);
-                }
-                if (value instanceof Long) {
+                } else if (value instanceof Long) {
                     return ValLong.create((Long) value);
+                } else if (value instanceof final UserName userName) {
+                    return ValString.create(userName.getUserIdentityForAudit());
                 } else {
                     throw new RuntimeException("Unexpected type " + value.getClass().getName());
                 }

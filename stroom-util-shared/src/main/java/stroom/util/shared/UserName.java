@@ -23,11 +23,13 @@ public interface UserName extends HasAuditableUserIdentity {
     String getSubjectId();
 
     /**
-     * @return An optional, non-unique, more human friendly username for the user.
+     * @return An optional, potentially non-unique, more human friendly username for the user.
      * Will be null if this is a group or the IDP does not provide a preferred username
      * or one has not been set for the user.
      * Intended for display purposes only or to aid in identifying the user where {@code name}
-     * is an unfriendly UUID.
+     * is an unfriendly UUID. This value will be used for all the {@code (create|update)_user}
+     * columns or if it is null, the subjectId will be used instead
+     * (see {@link UserName#getUserIdentityForAudit()}.
      */
     String getDisplayName();
 
@@ -45,7 +47,6 @@ public interface UserName extends HasAuditableUserIdentity {
     /**
      * @return The stroom user UUID. May be null.
      */
-    // TODO: 25/07/2023 Do we want the stroom UUID on UserName?
     String getUuid();
 
     /**
@@ -59,6 +60,10 @@ public interface UserName extends HasAuditableUserIdentity {
     /**
      * Combine the name and displayName, only showing both if they are both present
      * and not equal. Useful for the User parts of the UI where showing both is helpful.
+     * i.e.
+     * <p>{@code '6798d3ca-c1a1-490e-a52e-132ade052468'} if there is no displayName</p>
+     * <p>{@code 'admin'} if the displayName and subjectId are the same</p>
+     * <p>{@code 'admin (6798d3ca-c1a1-490e-a52e-132ade052468)'} if they are different</p>
      */
     static String buildCombinedName(final UserName userName) {
         final String name = userName.getSubjectId();

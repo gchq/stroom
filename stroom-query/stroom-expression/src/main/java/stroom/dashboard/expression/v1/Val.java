@@ -17,6 +17,8 @@
 package stroom.dashboard.expression.v1;
 
 
+import java.util.Objects;
+
 public interface Val extends Param, Appendable {
     Val[] EMPTY_VALUES = new Val[0];
 
@@ -54,5 +56,38 @@ public interface Val extends Param, Appendable {
 
     static Val[] empty() {
         return EMPTY_VALUES;
+    }
+
+    /**
+     * Creates a Val in a null safe way, either returning {@link ValNull} or the product
+     * of the {@code creator} function.
+     */
+    static <T> Val nullSafeCreate(final T value,
+                                  final java.util.function.Function<T, Val> creator) {
+        Objects.requireNonNull(creator);
+        if (value == null) {
+            return ValNull.INSTANCE;
+        } else {
+            return creator.apply(value);
+        }
+    }
+
+    /**
+     * Creates a Val in a null safe way, either returning {@link ValNull} or the product
+     * of the {@code creator} function.
+     */
+    static <T1, T2> Val nullSafeCreate(final T1 value,
+                                       final java.util.function.Function<T1, T2> converter,
+                                       final java.util.function.Function<T2, Val> creator) {
+        if (value == null) {
+            return ValNull.INSTANCE;
+        } else {
+            final T2 value2 = Objects.requireNonNull(converter).apply(value);
+            if (value2 == null) {
+                return ValNull.INSTANCE;
+            } else {
+                return Objects.requireNonNull(creator).apply(value2);
+            }
+        }
     }
 }
