@@ -1,6 +1,6 @@
 package stroom.proxy.app.security;
 
-import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
 import stroom.security.common.impl.JwtContextFactory;
@@ -25,31 +25,37 @@ import javax.servlet.http.HttpServletRequest;
 @Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
+
     @Inject
     ProxyUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
                              final DefaultOpenIdCredentials defaultOpenIdCredentials,
                              final CertificateExtractor certificateExtractor,
-                             final ProcessingUserIdentityProvider processingUserIdentityProvider,
+//                             final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                             final ServiceUserFactory serviceUserFactory,
                              final JerseyClientFactory jerseyClientFactory) {
         super(jwtContextFactory,
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
                 certificateExtractor,
-                processingUserIdentityProvider,
+//                processingUserIdentityProvider,
+                serviceUserFactory,
                 jerseyClientFactory);
+        this.openIdConfigurationProvider = openIdConfigProvider;
     }
 
     @Override
     protected Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
-                                                 final HttpServletRequest request) {
+                                                    final HttpServletRequest request) {
         Objects.requireNonNull(jwtContext);
         // No notion of a local user identity so just wrap the claims in the jwt context
 
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
 
-        final String uniqueIdentity = getUniqueIdentity(jwtClaims);
-        final String displayName = getUserDisplayName(jwtClaims).orElse(null);
+        final String uniqueIdentity = JwtUtil.getUniqueIdentity(openIdConfigurationProvider.get(), jwtClaims);
+        final String displayName = JwtUtil.getUserDisplayName(openIdConfigurationProvider.get(), jwtClaims)
+                .orElse(null);
         final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
                 .orElse(null);
 
@@ -59,8 +65,8 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
     @Override
     protected Optional<UserIdentity> mapAuthFlowIdentity(final JwtContext jwtContext,
-                                                      final HttpServletRequest request,
-                                                      final TokenResponse tokenResponse) {
+                                                         final HttpServletRequest request,
+                                                         final TokenResponse tokenResponse) {
         throw new UnsupportedOperationException("UI Auth flow not applicable to stroom-proxy");
     }
 }

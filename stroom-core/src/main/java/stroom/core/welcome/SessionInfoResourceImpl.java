@@ -31,6 +31,7 @@ public class SessionInfoResourceImpl implements SessionInfoResource {
 
     @Override
     public SessionInfo get() {
+        // TODO: 26/07/2023 Would be nice to include the groups the user is a member of
         final UserName userName = NullSafe.get(
                 securityContextProvider.get().getUserIdentity(),
                 UserIdentity::asUserName);

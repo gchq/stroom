@@ -2,9 +2,9 @@ package stroom.security.common.impl;
 
 import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
-import stroom.security.common.impl.AbstractUserIdentityFactory.FetchTokenResult;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
+import stroom.util.authentication.Refreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
-public class UpdatableToken implements HasJwtClaims, Delayed, HasJwt {
+public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UpdatableToken.class);
 
@@ -112,7 +112,7 @@ public class UpdatableToken implements HasJwtClaims, Delayed, HasJwt {
      * Either means we need to use the refresh token to get new tokens or if there is no
      * refresh token then we need to request new tokens without using a refresh token.
      */
-    boolean isTokenRefreshRequired() {
+    public boolean isRefreshRequired() {
         final boolean isExpired = System.currentTimeMillis() >= expireTimeWithBufferEpochMs;
         if (additionalRefreshCondition != null) {
             LOGGER.trace(() -> LogUtil.message("isExpired: {}, additionalRefreshCondition: {}",
@@ -131,6 +131,37 @@ public class UpdatableToken implements HasJwtClaims, Delayed, HasJwt {
         return Instant.ofEpochMilli(expireTimeWithBufferEpochMs);
     }
 
+    @Override
+    public boolean refresh() {
+        final boolean didWork;
+        if (updateFunction == null) {
+            didWork = false;
+        } else {
+            final FetchTokenResult fetchTokenResult = updateFunction.apply(this);
+            if (fetchTokenResult != null) {
+                try {
+                    this.tokenResponse = Objects.requireNonNull(fetchTokenResult.tokenResponse());
+                    this.jwtClaims = Objects.requireNonNull(fetchTokenResult.jwtClaims());
+                    updateRefreshTime();
+                    didWork = true;
+                } catch (Exception e) {
+                    LOGGER.error("Error updating token for userIdentity: {}",
+                            LogUtil.typedValue(userIdentity), e);
+                    throw e;
+                }
+            } else {
+                LOGGER.trace("Function returned null, can't update state");
+                didWork = false;
+            }
+        }
+        return didWork;
+    }
+
+    @Override
+    public long getExpireTimeEpochMs() {
+        return expireTimeWithBufferEpochMs;
+    }
+
     /**
      * If isWorkRequiredPredicate returns true when tested against this, work will be
      * performed on this under synchronisation.
@@ -138,9 +169,9 @@ public class UpdatableToken implements HasJwtClaims, Delayed, HasJwt {
     public boolean refreshIfRequired() {
 
         final boolean didWork;
-        if (updateFunction != null && isTokenRefreshRequired()) {
+        if (updateFunction != null && isRefreshRequired()) {
             synchronized (this) {
-                if (isTokenRefreshRequired()) {
+                if (isRefreshRequired()) {
                     final FetchTokenResult fetchTokenResult = updateFunction.apply(this);
                     if (fetchTokenResult != null) {
                         try {
@@ -171,8 +202,8 @@ public class UpdatableToken implements HasJwtClaims, Delayed, HasJwt {
 
     @Override
     public int compareTo(final Delayed other) {
-        return Math.toIntExact(this.expireTimeWithBufferEpochMs
-                - ((UpdatableToken) other).expireTimeWithBufferEpochMs);
+        return Math.toIntExact(this.getExpireTimeEpochMs()
+                - ((Refreshable) other).getExpireTimeEpochMs());
     }
 
     @Override

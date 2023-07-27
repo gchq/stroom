@@ -1,8 +1,8 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
@@ -47,7 +47,6 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomUserIdentityFactory.class);
 
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserCache userCache;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
@@ -61,7 +60,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                      final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                      final CertificateExtractor certificateExtractor,
                                      final UserCache userCache,
-                                     final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                     final ServiceUserFactory serviceUserFactory,
                                      final UserService userService,
                                      final SecurityContext securityContext,
                                      final JerseyClientFactory jerseyClientFactory,
@@ -72,10 +71,11 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
                 certificateExtractor,
-                processingUserIdentityProvider,
+//                processingUserIdentityProvider,
+                serviceUserFactory,
                 jerseyClientFactory);
 
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
+//        this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;
         this.openIdConfigProvider = openIdConfigProvider;
@@ -120,7 +120,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                                          final HttpServletRequest request,
                                                          final TokenResponse tokenResponse) {
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-        final String subjectId = getUniqueIdentity(jwtClaims);
+        final String subjectId = JwtUtil.getUniqueIdentity(openIdConfigProvider.get(), jwtClaims);
         final Optional<User> optUser = userCache.getOrCreate(subjectId);
 
         return optUser
@@ -145,7 +145,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     private User updateUserInfo(final User user, final JwtClaims jwtClaims) {
 
         AtomicReference<User> userRef = new AtomicReference<>(user);
-        final String displayName = getUserDisplayName(jwtClaims)
+        final String displayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims)
                 .orElse(null);
 
         // Hopefully this one is enough of a standard to always be there.
@@ -300,8 +300,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
         try {
             final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            final String userId = getUniqueIdentity(jwtClaims);
-            final Optional<String> optDisplayName = getUserDisplayName(jwtClaims);
+            final String userId = JwtUtil.getUniqueIdentity(openIdConfigProvider.get(), jwtClaims);
+            final Optional<String> optDisplayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims);
             LOGGER.debug(() -> LogUtil.message("Getting API user identity for user id: {}, displayName: {}, uri: {}",
                     userId, optDisplayName, request.getRequestURI()));
 
@@ -353,8 +353,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     private Optional<UserIdentity> getProcessingUser(final JwtContext jwtContext) {
         try {
             final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            if (processingUserIdentityProvider.isProcessingUser(jwtClaims.getSubject(), jwtClaims.getIssuer())) {
-                return Optional.of(processingUserIdentityProvider.get());
+            if (isServiceUser(jwtClaims.getSubject(), jwtClaims.getIssuer())) {
+                return Optional.of(getServiceUserIdentity());
             }
         } catch (final MalformedClaimException e) {
             LOGGER.debug(e.getMessage(), e);

@@ -86,14 +86,13 @@ public class JerseyModule extends AbstractModule {
                     final UserIdentity userIdentity = securityContext.getUserIdentity();
 
                     final UserIdentityFactory userIdentityFactory = userIdentityFactoryProvider.get();
-                    if (!userIdentityFactory.isServiceUserIdentity(userIdentity)) {
+                    if (!userIdentityFactory.isServiceUser(userIdentity)) {
                         // We are running as a user who is not the service/proc user so need to put their
                         // identity in the headers. We can't use the human user identity as they may have
                         // an AWS token that we can't refresh.
                         builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, userIdentity.getSubjectId());
                     }
                     // Always authenticate as the proc user
-                    final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
                     final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
 
                     LOGGER.debug(() -> LogUtil.message("Adding auth headers to request, keys: '{}', userType: {}",
@@ -105,5 +104,4 @@ public class JerseyModule extends AbstractModule {
             };
         };
     }
-
 }

@@ -2,17 +2,18 @@ package stroom.security.common.impl;
 
 import stroom.security.api.HasJwt;
 import stroom.security.api.HasSession;
-import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.authentication.HasRefreshable;
+import stroom.util.authentication.Refreshable;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.jersey.JerseyClientFactory;
@@ -54,7 +55,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final CertificateExtractor certificateExtractor;
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    //    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
@@ -63,25 +65,30 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private volatile UserIdentity serviceUserIdentity;
 
     //    private final BlockingQueue<AbstractTokenUserIdentity> refreshTokensDelayQueue = new DelayQueue<>();
-    private final BlockingQueue<UpdatableToken> updatableTokensDelayQueue = new DelayQueue<>();
+    private final BlockingQueue<Refreshable> updatableTokensDelayQueue = new DelayQueue<>();
     private ExecutorService refreshExecutorService = null;
     private final AtomicBoolean isShutdownInProgress = new AtomicBoolean(false);
     // Don't change the configuration of this mapper after it is created, else not thread safe
     private final ObjectMapper objectMapper;
+    private final IdpType idpType;
 
     public AbstractUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                                        final Provider<OpenIdConfiguration> openIdConfigProvider,
                                        final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                        final CertificateExtractor certificateExtractor,
-                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
+//                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                       final ServiceUserFactory serviceUserFactory,
                                        final JerseyClientFactory jerseyClientFactory) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.certificateExtractor = certificateExtractor;
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
+//        this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.serviceUserFactory = serviceUserFactory;
         this.jerseyClientFactory = jerseyClientFactory;
-        objectMapper = createObjectMapper();
+        this.objectMapper = createObjectMapper();
+        // Bake this in as a restart is required for this prop
+        this.idpType = openIdConfigProvider.get().getIdentityProviderType();
     }
 
     /**
@@ -112,7 +119,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
         Optional<UserIdentity> optUserIdentity = Optional.empty();
 
-        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
         if (IdpType.NO_IDP.equals(idpType)) {
             throw new IllegalStateException(
                     "Attempting to get user identity from tokens in request when " +
@@ -165,7 +171,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     @Override
     public Map<String, String> getServiceUserAuthHeaders() {
-        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
         if (IdpType.NO_IDP.equals(idpType)) {
             LOGGER.debug("IdpType is {}", idpType);
             return Collections.emptyMap();
@@ -183,7 +188,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             return Collections.emptyMap();
 
         } else {
-            final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
             LOGGER.debug(() -> LogUtil.message("IdpType: {}, userIdentity type: {}",
                     idpType, userIdentity.getClass().getSimpleName()));
 
@@ -191,7 +195,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 return Collections.emptyMap();
 
             } else if (IdpType.TEST_CREDENTIALS.equals(idpType)
-                    && !processingUserIdentityProvider.isProcessingUser(userIdentity)) {
+                    && !serviceUserFactory.isServiceUser(userIdentity, getServiceUserIdentity())) {
                 // The processing user is a bit special so even when using hard-coded default open id
                 // creds the proc user uses tokens created by the internal IDP.
                 LOGGER.debug("Using default token");
@@ -241,7 +245,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                                           final AuthenticationState state) {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 
-        if (IdpType.NO_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+        if (IdpType.NO_IDP.equals(idpType)) {
             throw new IllegalStateException(
                     "Attempting to do OIDC auth flow with identityProviderType set to NONE.");
         }
@@ -268,12 +272,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return optUserIdentity;
     }
 
-//    private boolean isNewServiceAccountTokenRequired() {
-//        return serviceUserIdentity == null
-//                || (serviceUserIdentity instanceof final HasUpdatableToken hasUpdatableToken
-//                && hasUpdatableToken.hasTokenExpired());
-//    }
-
     @Override
     public UserIdentity getServiceUserIdentity() {
 
@@ -298,15 +296,52 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     }
 
     @Override
-    public boolean isServiceUserIdentity(final UserIdentity userIdentity) {
-        final UserIdentity serviceUserIdentity = getServiceUserIdentity();
-        // Use instance equality check as there should only ever be one ServiceUserIdentity
-        // in this JVM
-        final boolean isServiceUserIdentity = userIdentity instanceof ServiceUserIdentity
-                && userIdentity == serviceUserIdentity;
-        LOGGER.debug("isServiceUserIdentity: {}, userIdentity: {}, serviceUserIdentity: {}",
-                isServiceUserIdentity, userIdentity, serviceUserIdentity);
-        return isServiceUserIdentity;
+    public boolean isServiceUser(final UserIdentity userIdentity) {
+        return serviceUserFactory.isServiceUser(userIdentity, getServiceUserIdentity());
+//        final UserIdentity serviceUserIdentity = getServiceUserIdentity();
+//        // Use instance equality check as there should only ever be one ServiceUserIdentity
+//        // in this JVM
+//        final boolean isServiceUserIdentity = userIdentity instanceof ServiceUserIdentity
+//                && userIdentity == serviceUserIdentity;
+//        LOGGER.debug("isServiceUserIdentity: {}, userIdentity: {}, serviceUserIdentity: {}",
+//                isServiceUserIdentity, userIdentity, serviceUserIdentity);
+//        return isServiceUserIdentity;
+    }
+
+    @Override
+    public boolean isServiceUser(final String subject, final String issuer) {
+        final UserIdentity processingUserIdentity = getServiceUserIdentity();
+        if (processingUserIdentity instanceof final HasJwtClaims hasJwtClaims) {
+            return Optional.ofNullable(hasJwtClaims.getJwtClaims())
+                    .map(ThrowingFunction.unchecked(jwtClaims -> {
+                        final boolean isProcessingUser = Objects.equals(subject, jwtClaims.getSubject())
+                                && Objects.equals(issuer, jwtClaims.getIssuer());
+
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
+                                    subject,
+                                    jwtClaims.getSubject(),
+                                    issuer,
+                                    jwtClaims.getIssuer(),
+                                    isProcessingUser);
+                        }
+                        return isProcessingUser;
+                    }))
+                    .orElse(false);
+        } else {
+            final String requiredIssuer = openIdConfigProvider.get().getIssuer();
+            final boolean isProcessingUser = Objects.equals(subject, processingUserIdentity.getSubjectId())
+                    && Objects.equals(issuer, requiredIssuer);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
+                        subject,
+                        processingUserIdentity.getSubjectId(),
+                        issuer,
+                        requiredIssuer,
+                        isProcessingUser);
+            }
+            return isProcessingUser;
+        }
     }
 
     /**
@@ -393,8 +428,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                 Duration::ofSeconds)));
 
                 fetchTokenResult = refreshTokens(currentTokenResponse);
-                newTokenResponse = fetchTokenResult.tokenResponse;
-                jwtClaims = fetchTokenResult.jwtClaims;
+                newTokenResponse = fetchTokenResult.tokenResponse();
+                jwtClaims = fetchTokenResult.jwtClaims();
             } catch (final RuntimeException e) {
                 LOGGER.error("Error refreshing token for {} - {}", identity, e.getMessage(), e);
                 if (identity instanceof final HasSession userWithSession) {
@@ -442,13 +477,13 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 //        }
 //    }
 
-    protected void addTokenToRefreshQueue(final UpdatableToken updatableToken) {
-        if (updatableToken != null) {
-            LOGGER.debug(() -> LogUtil.message("Adding token for user: {} to the refresh queue, token: {}, delay: {}",
-                    NullSafe.get(updatableToken, UpdatableToken::getUserIdentity, UserIdentity::getSubjectId),
-                    updatableToken,
-                    Duration.ofMillis(updatableToken.getDelay(TimeUnit.MILLISECONDS))));
-            updatableTokensDelayQueue.add(updatableToken);
+    protected void addTokenToRefreshQueue(final Refreshable refreshable) {
+        if (refreshable != null) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Adding {} to the refresh queue, token: {}, delay: {}",
+                    refreshable,
+                    Duration.ofMillis(refreshable.getDelay(TimeUnit.MILLISECONDS))));
+            updatableTokensDelayQueue.add(refreshable);
         }
     }
 
@@ -499,8 +534,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         if (match) {
             optUserIdentity = mapAuthFlowIdentity(jwtContext, request, tokenResponse);
             optUserIdentity
-                    .filter(userIdentity -> userIdentity instanceof HasUpdatableToken)
-                    .map(userIdentity -> ((HasUpdatableToken) userIdentity).getUpdatableToken())
+                    .filter(userIdentity -> userIdentity instanceof HasRefreshable<?>)
+                    .map(userIdentity -> ((HasRefreshable<?>) userIdentity).getRefreshable())
                     .ifPresent(this::addTokenToRefreshQueue);
         } else {
             // If the nonces don't match we need to redirect to log in again.
@@ -511,127 +546,53 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return optUserIdentity;
     }
 
-//    private boolean createOrUpdateServiceUserIdentity() {
+    private UserIdentity createServiceUserIdentity() {
 //        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 //        final IdpType idpType = openIdConfiguration.getIdentityProviderType();
 //
-//        switch (idpType) {
-//            case NO_IDP:
-//                serviceUserIdentity = new UserIdentity() {
-//                    @Override
-//                    public String getId() {
-//                        return "NO_IDP SERVICE USER";
-//                    }
-//                };
-//                return true;
-//            case TEST_CREDENTIALS:
-//                createTestServiceUser();
-//                return true;
-//            case EXTERNAL_IDP:
-//                createOrUpdateExternalServiceUser(openIdConfiguration);
-//                return true;
-//            default:
-//                throw new RuntimeException(LogUtil.message("{} is not supported for property {}.",
-//                        openIdConfiguration.getIdentityProviderType(),
-//                        AbstractOpenIdConfig.PROP_NAME_IDP_TYPE));
-//        }
+//        final UserIdentity userIdentity = switch (idpType) {
+//            case NO_IDP -> new UserIdentity() {
+//                @Override
+//                public String getSubjectId() {
+//                    return "NO_IDP SERVICE USER";
+//                }
+//            };
+//            case TEST_CREDENTIALS -> createTestServiceUser();
+//            case EXTERNAL_IDP -> createExternalServiceUser();
+//            default -> throw new RuntimeException(LogUtil.message("{} is not supported for property {}.",
+//                    openIdConfiguration.getIdentityProviderType(),
+//                    AbstractOpenIdConfig.PROP_NAME_IDP_TYPE));
+//        };
+
+        // Delegate creation to an idpType appropriate class
+        final UserIdentity userIdentity = serviceUserFactory.createServiceUserIdentity();
+
+        if (userIdentity instanceof final HasRefreshable<?> updatableUserIdentity) {
+            NullSafe.consume(updatableUserIdentity.getRefreshable(),
+                    this::addTokenToRefreshQueue);
+        }
+        return userIdentity;
+    }
+
+//    private UserIdentity createTestServiceUser() {
+//        final UserIdentity serviceUserIdentity = new DefaultOpenIdCredsUserIdentity(
+//                defaultOpenIdCredentials.getApiKeyUserEmail(),
+//                defaultOpenIdCredentials.getApiKey());
+//        LOGGER.info("Created test service user identity {} {}",
+//                serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
+//        return serviceUserIdentity;
 //    }
 
-    private UserIdentity createServiceUserIdentity() {
-        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
-        final IdpType idpType = openIdConfiguration.getIdentityProviderType();
-
-        switch (idpType) {
-            case NO_IDP:
-                return new UserIdentity() {
-                    @Override
-                    public String getSubjectId() {
-                        return "NO_IDP SERVICE USER";
-                    }
-                };
-            case TEST_CREDENTIALS:
-                return createTestServiceUser();
-            case EXTERNAL_IDP:
-                return createExternalServiceUser();
-            default:
-                throw new RuntimeException(LogUtil.message("{} is not supported for property {}.",
-                        openIdConfiguration.getIdentityProviderType(),
-                        AbstractOpenIdConfig.PROP_NAME_IDP_TYPE));
-        }
-    }
-
-    private UserIdentity createTestServiceUser() {
-        final UserIdentity serviceUserIdentity = new DefaultOpenIdCredsUserIdentity(
-                defaultOpenIdCredentials.getApiKeyUserEmail(),
-                defaultOpenIdCredentials.getApiKey());
-        LOGGER.info("Created test service user identity {} {}",
-                serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
-        return serviceUserIdentity;
-    }
-
-    private FetchTokenResult fetchExternalServiceUserToken() {
-        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
-        final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
-
-        // Only need the access token for a client_credentials flow
-        final TokenResponse tokenResponse = new OpenIdTokenRequestHelper(
-                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
-                .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
-                .addScopes(openIdConfiguration.getClientCredentialsScopes())
-                .sendRequest(false);
-
-        final FetchTokenResult fetchTokenResult = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
-                .map(jwtContext ->
-                        new FetchTokenResult(tokenResponse, jwtContext.getJwtClaims()))
-                .orElseThrow(() -> {
-                    throw new RuntimeException("Unable to extract JWT claims for service user");
-                });
-
-        return fetchTokenResult;
-    }
-
-    private UserIdentity createExternalServiceUser() {
-        // Get the initial token
-        final FetchTokenResult fetchTokenResult = fetchExternalServiceUserToken();
-
-        final JwtClaims jwtClaims = fetchTokenResult.jwtClaims;
-        final UpdatableToken updatableToken = new UpdatableToken(
-                fetchTokenResult.tokenResponse,
-                jwtClaims,
-                updatableToken2 -> fetchExternalServiceUserToken());
-
-        // TODO: 03/03/2023 Need
-        final UserIdentity serviceUserIdentity = new ServiceUserIdentity(
-                getUniqueIdentity(jwtClaims),
-                getUserDisplayName(jwtClaims).orElse(null),
-                updatableToken);
-
-        // Associate the token with the user it is for
-        updatableToken.setUserIdentity(serviceUserIdentity);
-
-        LOGGER.info("Created external IDP service user identity {} {}",
-                serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
-
-        // Add the identity onto the queue so the tokens get refreshed
-        addTokenToRefreshQueue(updatableToken);
-        return serviceUserIdentity;
-    }
-
-//    private void createOrUpdateExternalServiceUser(final OpenIdConfiguration openIdConfiguration) {
+//    private FetchTokenResult fetchExternalServiceUserToken() {
+//        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 //        final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
-//        final OpenIdPostBuilder builder = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, objectMapper)
-//                .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
-//                .withClientId(openIdConfiguration.getClientId())
-//                .withClientSecret(openIdConfiguration.getClientSecret());
-//
-//        if (NullSafe.hasItems(openIdConfiguration.getClientCredentialsScopes())) {
-//            builder.withScopes(openIdConfiguration.getClientCredentialsScopes());
-//        }
-//
-//        final HttpPost httpPost = builder.build();
 //
 //        // Only need the access token for a client_credentials flow
-//        final TokenResponse tokenResponse = getTokenResponse(httpPost, tokenEndpoint, false);
+//        final TokenResponse tokenResponse = new OpenIdTokenRequestHelper(
+//                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
+//                .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
+//                .addScopes(openIdConfiguration.getClientCredentialsScopes())
+//                .sendRequest(false);
 //
 //        final FetchTokenResult fetchTokenResult = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
 //                .map(jwtContext ->
@@ -640,38 +601,47 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 //                    throw new RuntimeException("Unable to extract JWT claims for service user");
 //                });
 //
-//        if (serviceUserIdentity == null) {
-//            serviceUserIdentity = new ServiceUserIdentity(
-//                    fetchTokenResult.tokenResponse,
-//                    fetchTokenResult.jwtClaims);
-//            LOGGER.info("Created external IDP service user identity {} {}",
-//                    serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
-//        } else {
-//            if (!(serviceUserIdentity instanceof final ServiceUserIdentity serviceUserIdentity2)) {
-//                throw new RuntimeException(LogUtil.message("Unexpected type {}",
-//                        serviceUserIdentity.getClass().getSimpleName()));
-//            }
-//            serviceUserIdentity2.updateTokens(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
-//            LOGGER.info("Updated external IDP service user identity {} {}",
-//                    serviceUserIdentity2.getClass().getSimpleName(), serviceUserIdentity2);
-//        }
+//        return fetchTokenResult;
+//    }
+
+//    private UserIdentity createExternalServiceUser() {
+//        // Get the initial token
+//        final FetchTokenResult fetchTokenResult = fetchExternalServiceUserToken();
+//
+//        final JwtClaims jwtClaims = fetchTokenResult.jwtClaims();
+//        final UpdatableToken updatableToken = new UpdatableToken(
+//                fetchTokenResult.tokenResponse(),
+//                jwtClaims,
+//                updatableToken2 -> fetchExternalServiceUserToken());
+//
+//        final UserIdentity serviceUserIdentity = new ServiceUserIdentity(
+//                getUniqueIdentity(jwtClaims),
+//                getUserDisplayName(jwtClaims).orElse(null),
+//                updatableToken);
+//
+//        // Associate the token with the user it is for
+//        updatableToken.setUserIdentity(serviceUserIdentity);
+//
+//        LOGGER.info("Created external IDP service user identity {} {}",
+//                serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
 //
 //        // Add the identity onto the queue so the tokens get refreshed
-//        addUserIdentityToRefreshQueueIfRequired(serviceUserIdentity);
+//        addTokenToRefreshQueue(updatableToken);
+//        return serviceUserIdentity;
 //    }
 
     private void consumeFromRefreshQueue() {
         try {
             // We are called in an infinite while loop so drop out every 2s to allow
             // checking of shutdown state
-            final UpdatableToken updatableToken = updatableTokensDelayQueue.poll(
+            final Refreshable refreshable = updatableTokensDelayQueue.poll(
                     2, TimeUnit.SECONDS);
 
-            if (updatableToken != null) {
+            if (refreshable != null) {
                 // It is possible that something else has refreshed the token
                 LOGGER.debug("Consuming updatableToken {} from refresh queue (size after: {})",
-                        updatableToken, updatableTokensDelayQueue.size());
-                updatableToken.refreshIfRequired();
+                        refreshable, updatableTokensDelayQueue.size());
+                refreshable.refreshIfRequired();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -679,38 +649,38 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         }
     }
 
-    /**
-     * Gets the unique ID that links the identity on the IDP to the stroom_user.
-     * Maps to the 'name' column in stroom_user table.
-     */
-    protected String getUniqueIdentity(final JwtClaims jwtClaims) {
-        Objects.requireNonNull(jwtClaims);
-        final String uniqueIdentityClaim = openIdConfigProvider.get().getUniqueIdentityClaim();
-        final String id = JwtUtil.getClaimValue(jwtClaims, uniqueIdentityClaim)
-                .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                        "Expecting claims to contain configured uniqueIdentityClaim '{}' " +
-                                "but it is not there, jwtClaims: {}",
-                        uniqueIdentityClaim,
-                        jwtClaims)));
-
-        LOGGER.debug("uniqueIdentityClaim: {}, id: {}", uniqueIdentityClaim, id);
-
-        return id;
-    }
-
-    /**
-     * Gets the unique ID that links the identity on the IDP to the stroom_user.
-     * Maps to the 'name' column in stroom_user table.
-     */
-    protected Optional<String> getUserDisplayName(final JwtClaims jwtClaims) {
-        Objects.requireNonNull(jwtClaims);
-        final String userDisplayNameClaim = openIdConfigProvider.get().getUserDisplayNameClaim();
-        final Optional<String> userDisplayName = JwtUtil.getClaimValue(jwtClaims, userDisplayNameClaim);
-
-        LOGGER.debug("userDisplayNameClaim: {}, userDisplayName: {}", userDisplayNameClaim, userDisplayName);
-
-        return userDisplayName;
-    }
+//    /**
+//     * Gets the unique ID that links the identity on the IDP to the stroom_user.
+//     * Maps to the 'name' column in stroom_user table.
+//     */
+//    protected String getUniqueIdentity(final JwtClaims jwtClaims) {
+//        Objects.requireNonNull(jwtClaims);
+//        final String uniqueIdentityClaim = openIdConfigProvider.get().getUniqueIdentityClaim();
+//        final String id = JwtUtil.getClaimValue(jwtClaims, uniqueIdentityClaim)
+//                .orElseThrow(() -> new RuntimeException(LogUtil.message(
+//                        "Expecting claims to contain configured uniqueIdentityClaim '{}' " +
+//                                "but it is not there, jwtClaims: {}",
+//                        uniqueIdentityClaim,
+//                        jwtClaims)));
+//
+//        LOGGER.debug("uniqueIdentityClaim: {}, id: {}", uniqueIdentityClaim, id);
+//
+//        return id;
+//    }
+//
+//    /**
+//     * Gets the unique ID that links the identity on the IDP to the stroom_user.
+//     * Maps to the 'name' column in stroom_user table.
+//     */
+//    protected Optional<String> getUserDisplayName(final JwtClaims jwtClaims) {
+//        Objects.requireNonNull(jwtClaims);
+//        final String userDisplayNameClaim = openIdConfigProvider.get().getUserDisplayNameClaim();
+//        final Optional<String> userDisplayName = JwtUtil.getClaimValue(jwtClaims, userDisplayNameClaim);
+//
+//        LOGGER.debug("userDisplayNameClaim: {}, userDisplayName: {}", userDisplayNameClaim, userDisplayName);
+//
+//        return userDisplayName;
+//    }
 
     @Override
     public void start() throws Exception {
@@ -737,19 +707,4 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             LOGGER.info("Successfully shut down OIDC token refresh executor");
         }
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    protected record FetchTokenResult(
-            TokenResponse tokenResponse,
-            JwtClaims jwtClaims) {
-
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
 }

@@ -1,6 +1,5 @@
 package stroom.security.impl;
 
-import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
@@ -34,7 +33,6 @@ class SecurityContextImpl implements SecurityContext {
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final Provider<UserCache> userCacheProvider;
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final UserIdentityFactory userIdentityFactory;
 
     @Inject
@@ -43,13 +41,11 @@ class SecurityContextImpl implements SecurityContext {
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
             final Provider<UserCache> userCacheProvider,
-            final ProcessingUserIdentityProvider processingUserIdentityProvider,
             final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCacheProvider = userCacheProvider;
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.userIdentityFactory = userIdentityFactory;
     }
 
@@ -106,7 +102,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        return processingUserIdentityProvider.isProcessingUser(userIdentity);
+        return userIdentityFactory.isServiceUser(userIdentity);
     }
 
     @Override
@@ -161,7 +157,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        if (processingUserIdentityProvider.isProcessingUser(userIdentity)) {
+        if (userIdentityFactory.isServiceUser(userIdentity)) {
             return true;
         }
 
@@ -298,7 +294,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asProcessingUserResult(final Supplier<T> supplier) {
-        return asUserResult(processingUserIdentityProvider.get(), supplier);
+        return asUserResult(userIdentityFactory.getServiceUserIdentity(), supplier);
     }
 
     /**
@@ -306,7 +302,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asProcessingUser(final Runnable runnable) {
-        asUser(processingUserIdentityProvider.get(), runnable);
+        asUser(userIdentityFactory.getServiceUserIdentity(), runnable);
     }
 
     /**

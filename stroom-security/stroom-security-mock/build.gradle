@@ -7,6 +7,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-util-shared')
 
+    implementation libs.jakarta_servlet_api
     implementation libs.guice5
     implementation libs.ws_rs_api
 }

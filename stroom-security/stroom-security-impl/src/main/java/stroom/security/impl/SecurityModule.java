@@ -17,13 +17,15 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
-import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
-import stroom.security.common.impl.ExternalProcessingUserIdentityProvider;
+import stroom.security.common.impl.ExternalServiceUserFactory;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.TestCredentialsServiceUserFactory;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
@@ -66,9 +68,15 @@ public class SecurityModule extends AbstractModule {
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
 
-        bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
-        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
-                .addBinding(IdpType.EXTERNAL_IDP, ExternalProcessingUserIdentityProvider.class);
+        // TODO: 26/07/2023 Remove these
+//        bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
+//        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
+//                .addBinding(IdpType.EXTERNAL_IDP, ExternalProcessingUserIdentityProvider.class);
+
+        bind(ServiceUserFactory.class).to(DelegatingServiceUserFactory.class);
+        GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)
+                .addBinding(IdpType.EXTERNAL_IDP, ExternalServiceUserFactory.class)
+                .addBinding(IdpType.TEST_CREDENTIALS, TestCredentialsServiceUserFactory.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

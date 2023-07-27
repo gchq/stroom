@@ -4,9 +4,9 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
@@ -44,7 +44,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
     private final Provider<VolumeConfig> volumeConfigProvider;
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final UserIdentityFactory userIdentityFactory;
     private final PathCreator pathCreator;
     private final NodeInfo nodeInfo;
     private final Provider<EntityEventBus> entityEventBusProvider;
@@ -57,7 +57,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                        final IndexVolumeDao indexVolumeDao,
                                        final SecurityContext securityContext,
                                        final Provider<VolumeConfig> volumeConfigProvider,
-                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                       final UserIdentityFactory userIdentityFactory,
                                        final PathCreator pathCreator,
                                        final NodeInfo nodeInfo,
                                        final Provider<EntityEventBus> entityEventBusProvider) {
@@ -65,7 +65,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.volumeConfigProvider = volumeConfigProvider;
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.userIdentityFactory = userIdentityFactory;
         this.pathCreator = pathCreator;
         this.nodeInfo = nodeInfo;
         this.entityEventBusProvider = entityEventBusProvider;
@@ -164,7 +164,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                     if (isEnabled) {
                         if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
                             final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-                            final UserIdentity processingUserIdentity = processingUserIdentityProvider.get();
+                            final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
                             final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
                             indexVolumeGroup.setName(groupName);
                             AuditUtil.stamp(processingUserIdentity, indexVolumeGroup);

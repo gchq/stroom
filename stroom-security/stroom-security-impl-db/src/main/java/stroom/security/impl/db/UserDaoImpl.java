@@ -2,7 +2,7 @@ package stroom.security.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
@@ -76,14 +76,13 @@ public class UserDaoImpl implements UserDao {
             };
 
 
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final SecurityDbConnProvider securityDbConnProvider;
     private final GenericDao<StroomUserRecord, User, Integer> genericDao;
+    private final UserIdentityFactory userIdentityFactory;
 
     @Inject
-    public UserDaoImpl(final ProcessingUserIdentityProvider processingUserIdentityProvider,
-                       final SecurityDbConnProvider securityDbConnProvider) {
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
+    public UserDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
+                       final UserIdentityFactory userIdentityFactory) {
         this.securityDbConnProvider = securityDbConnProvider;
 
         genericDao = new GenericDao<>(
@@ -92,6 +91,7 @@ public class UserDaoImpl implements UserDao {
                 STROOM_USER.ID,
                 USER_TO_RECORD_MAPPER,
                 RECORD_TO_USER_MAPPER);
+        this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
@@ -282,7 +282,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     private Condition getExcludedUsersCondition() {
-        final String procUserId = processingUserIdentityProvider.get().getSubjectId();
-        return STROOM_USER.NAME.notEqual(procUserId);
+        final String procUserSubjectId = userIdentityFactory.getServiceUserIdentity().getSubjectId();
+        return STROOM_USER.NAME.notEqual(procUserSubjectId);
     }
 }

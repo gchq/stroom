@@ -1,6 +1,7 @@
 package stroom.security.common.impl;
 
 import stroom.security.openid.api.OpenId;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
@@ -74,6 +76,43 @@ public final class JwtUtil {
         LOGGER.debug(() -> "Claim value " + USER_NAME + "=" + jwtClaims.getClaimValue(USER_NAME));
         final String userId = (String) jwtClaims.getClaimValue(USER_NAME);
         return removePrefix(userId);
+    }
+
+    /**
+     * Gets the unique ID that links the identity on the IDP to the stroom_user.
+     * Maps to the 'name' column in stroom_user table.
+     */
+    public static String getUniqueIdentity(final OpenIdConfiguration openIdConfiguration,
+                                           final JwtClaims jwtClaims) {
+        Objects.requireNonNull(openIdConfiguration);
+        Objects.requireNonNull(jwtClaims);
+        final String uniqueIdentityClaim = openIdConfiguration.getUniqueIdentityClaim();
+        final String id = JwtUtil.getClaimValue(jwtClaims, uniqueIdentityClaim)
+                .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                        "Expecting claims to contain configured uniqueIdentityClaim '{}' " +
+                                "but it is not there, jwtClaims: {}",
+                        uniqueIdentityClaim,
+                        jwtClaims)));
+
+        LOGGER.debug("uniqueIdentityClaim: {}, id: {}", uniqueIdentityClaim, id);
+
+        return id;
+    }
+
+    /**
+     * Gets the unique ID that links the identity on the IDP to the stroom_user.
+     * Maps to the 'name' column in stroom_user table.
+     */
+    public static Optional<String> getUserDisplayName(final OpenIdConfiguration openIdConfiguration,
+                                                  final JwtClaims jwtClaims) {
+        Objects.requireNonNull(openIdConfiguration);
+        Objects.requireNonNull(jwtClaims);
+        final String userDisplayNameClaim = openIdConfiguration.getUserDisplayNameClaim();
+        final Optional<String> userDisplayName = JwtUtil.getClaimValue(jwtClaims, userDisplayNameClaim);
+
+        LOGGER.debug("userDisplayNameClaim: {}, userDisplayName: {}", userDisplayNameClaim, userDisplayName);
+
+        return userDisplayName;
     }
 
     public static String removePrefix(final String userId) {

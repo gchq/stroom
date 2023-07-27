@@ -9,43 +9,41 @@ import java.util.Map;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * Delegates to an implementation of ProcessingUserIdentityProvider depending on the type of
  * identity provider that is configured, e.g. internal vs external.
  */
+@Singleton
 public class DelegatingProcessingUserIdentityProvider implements ProcessingUserIdentityProvider {
 
-    private final Map<IdpType, ProcessingUserIdentityProvider> delegates;
-    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
+    private final ProcessingUserIdentityProvider delegate;
 
     @Inject // MapBinder injection
     public DelegatingProcessingUserIdentityProvider(final Map<IdpType, ProcessingUserIdentityProvider> delegates,
                                                     final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
-        this.delegates = delegates;
-        this.openIdConfigProvider = openIdConfigProvider;
-    }
-
-    @Override
-    public UserIdentity get() {
-        return getDelegate().get();
-    }
-
-    @Override
-    public boolean isProcessingUser(final UserIdentity userIdentity) {
-        return getDelegate().isProcessingUser(userIdentity);
-    }
-
-    @Override
-    public boolean isProcessingUser(final String subject, final String issuer) {
-        return getDelegate().isProcessingUser(subject, issuer);
-    }
-
-    private ProcessingUserIdentityProvider getDelegate() {
+        // Bake in the delegate as changing the idp type requires a restart so no point
+        // checking the config on every call
         final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
         final ProcessingUserIdentityProvider delegate = delegates.get(idpType);
 
         Objects.requireNonNull(delegate, () -> "No ProcessingUserIdentityProvider binding for type " + idpType);
-        return delegate;
+        this.delegate = delegate;
+    }
+
+    @Override
+    public UserIdentity get() {
+        return delegate.get();
+    }
+
+    @Override
+    public boolean isProcessingUser(final UserIdentity userIdentity) {
+        return delegate.isProcessingUser(userIdentity);
+    }
+
+    @Override
+    public boolean isProcessingUser(final String subject, final String issuer) {
+        return delegate.isProcessingUser(subject, issuer);
     }
 }

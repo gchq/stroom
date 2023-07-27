@@ -1,27 +1,25 @@
 package stroom.security.mock;
 
-import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 
 import java.util.Objects;
 
-public class MockProcessingUserIdentityProvider implements ProcessingUserIdentityProvider {
+public class MockServiceUserFactory implements ServiceUserFactory {
 
     private static final UserIdentity USER_IDENTITY = new MockProcessingUserIdentity();
 
     @Override
-    public UserIdentity get() {
+    public UserIdentity createServiceUserIdentity() {
         return USER_IDENTITY;
     }
 
     @Override
-    public boolean isProcessingUser(final UserIdentity userIdentity) {
-        return USER_IDENTITY.equals(userIdentity);
-    }
-
-    @Override
-    public boolean isProcessingUser(final String subject, final String issuer) {
-        return Objects.equals(subject, MockProcessingUserIdentity.INTERNAL_PROCESSING_USER_ID);
+    public boolean isServiceUser(final UserIdentity userIdentity,
+                                 final UserIdentity serviceUserIdentity) {
+        return Objects.equals(
+                userIdentity.getSubjectId(),
+                MockProcessingUserIdentity.PROCESSING_USER_ID);
     }
 
 
@@ -30,11 +28,11 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
 
     private static class MockProcessingUserIdentity implements UserIdentity {
 
-        protected static final String INTERNAL_PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
+        protected static final String PROCESSING_USER_ID = "MOCK_PROCESSING_USER";
 
         @Override
         public String getSubjectId() {
-            return INTERNAL_PROCESSING_USER_ID;
+            return PROCESSING_USER_ID;
         }
 
         @Override

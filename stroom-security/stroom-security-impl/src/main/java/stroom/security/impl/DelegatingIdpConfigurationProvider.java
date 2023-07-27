@@ -27,7 +27,6 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
     private final UriFactory uriFactory;
 
-
     @Inject
     public DelegatingIdpConfigurationProvider(
             final Provider<InternalIdpConfigurationProvider> internalIdpConfigurationProviderProvider,

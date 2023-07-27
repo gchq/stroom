@@ -1,6 +1,7 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.UserIdentity;
+import stroom.util.authentication.HasRefreshable;
 
 import java.util.Objects;
 
@@ -9,7 +10,8 @@ import java.util.Objects;
  * applications on the same IDP realm. I.e. Stroom's processing user.
  * This user uses the client credentials flow.
  */
-public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasUpdatableToken {
+public class ServiceUserIdentity
+        implements UserIdentity, HasJwtClaims, HasUpdatableToken, HasRefreshable<UpdatableToken> {
 
     private final String id;
     private final String displayName;
@@ -36,6 +38,11 @@ public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasUpdat
 
     @Override
     public UpdatableToken getUpdatableToken() {
+        return updatableToken;
+    }
+
+    @Override
+    public UpdatableToken getRefreshable() {
         return updatableToken;
     }
 

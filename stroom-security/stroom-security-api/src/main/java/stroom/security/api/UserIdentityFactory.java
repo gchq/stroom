@@ -25,7 +25,12 @@ public interface UserIdentityFactory {
     /**
      * Return true if userIdentity is the service user identity
      */
-    boolean isServiceUserIdentity(final UserIdentity userIdentity);
+    boolean isServiceUser(final UserIdentity userIdentity);
+
+    /**
+     * Return true if subject and issuer match those of the service userIdentity
+     */
+    boolean isServiceUser(final String subject, final String issuer);
 
     /**
      * True if the request contains the certs/headers needed to authenticate.

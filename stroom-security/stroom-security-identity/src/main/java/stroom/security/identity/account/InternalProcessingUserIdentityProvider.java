@@ -10,6 +10,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -49,8 +50,8 @@ class InternalProcessingUserIdentityProvider implements ProcessingUserIdentityPr
         if (userIdentity == null || lastFetchTime.get() < now - ONE_DAY) {
             synchronized (this) {
                 if (userIdentity == null || lastFetchTime.get() < now - ONE_DAY) {
-                    final String token = createToken();
-                    userIdentity = new InternalIdpProcessingUserIdentity(token);
+                    userIdentity = new InternalIdpProcessingUserIdentity(
+                            Duration.ofDays(1), this::createToken);
                     LOGGER.info("Created internal processing user identity {}", userIdentity);
                     lastFetchTime.set(now);
                 }
