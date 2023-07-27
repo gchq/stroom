@@ -81,9 +81,14 @@ class AnnotationDaoImpl implements AnnotationDao {
                       final ExpressionMapperFactory expressionMapperFactory,
                       final UserNameService userNameService) {
         this.connectionProvider = connectionProvider;
-
-        expressionMapper = expressionMapperFactory.create();
         this.userNameService = userNameService;
+        this.expressionMapper = createExpressionMapper(expressionMapperFactory, userNameService);
+        this.valueMapper = createValueMapper();
+    }
+
+    private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
+                                                    final UserNameService userNameService) {
+        final ExpressionMapper expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(AnnotationFields.ID_FIELD, ANNOTATION.ID, Long::valueOf);
 //        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
 //        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
@@ -104,8 +109,11 @@ class AnnotationDaoImpl implements AnnotationDao {
                         .orElse(null));
         expressionMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, value -> value);
         expressionMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, value -> value);
+        return expressionMapper;
+    }
 
-        valueMapper = new ValueMapper();
+    private ValueMapper createValueMapper() {
+        final ValueMapper valueMapper = new ValueMapper();
         valueMapper.map(AnnotationFields.ID_FIELD, ANNOTATION.ID, ValLong::create);
 //        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
 //        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
@@ -119,6 +127,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, this::mapdbUserToValString);
         valueMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, ValString::create);
         valueMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, ValString::create);
+        return valueMapper;
     }
 
     private long getDate(final String fieldName, final String value) {
@@ -559,9 +568,9 @@ class AnnotationDaoImpl implements AnnotationDao {
             return ValString.create(subjectId);
         } else {
             return NullSafe.getAsOptional(
-                    subjectId,
-                    this::mapdbUserToUserName,
-                    UserName::getUserIdentityForAudit,
+                            subjectId,
+                            this::mapdbUserToUserName,
+                            UserName::getUserIdentityForAudit,
                             value -> (Val) ValString.create(value))
                     .orElse(ValNull.INSTANCE);
         }
@@ -608,8 +617,8 @@ class AnnotationDaoImpl implements AnnotationDao {
                         field = ANNOTATION.SUBJECT;
                     } else if (AnnotationFields.STATUS.equals(sort.getId())) {
                         field = ANNOTATION.STATUS;
-                    // TODO: 27/03/2023 This is wrong as assignedTo in the db is the unique user ID, not the
-                    //  the display name
+                        // TODO: 27/03/2023 This is wrong as assignedTo in the db is the unique user ID, not the
+                        //  the display name
                     } else if (AnnotationFields.ASSIGNED_TO.equals(sort.getId())) {
                         field = ANNOTATION.ASSIGNED_TO;
                     } else if (AnnotationFields.COMMENT.equals(sort.getId())) {

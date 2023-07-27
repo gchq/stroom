@@ -36,18 +36,18 @@ import java.util.List;
 public class FindUserCriteria extends BaseCriteria {
 
     public static final String FIELD_NAME = "Unique Identity";
-    public static final String FIELD_PREFERRED_USERNAME = "Display Name";
+    public static final String FIELD_DISPLAY_NAME = "Display Name";
     public static final String FIELD_FULL_NAME = "Full Name";
 
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
-    public static final FilterFieldDefinition FIELD_DEF_PREFERRED_USERNAME = FilterFieldDefinition.defaultField(
-            FIELD_PREFERRED_USERNAME);
+    public static final FilterFieldDefinition FIELD_DEF_DISPLAY_NAME = FilterFieldDefinition.defaultField(
+            FIELD_DISPLAY_NAME);
     public static final FilterFieldDefinition FIELD_DEF_FULL_NAME = FilterFieldDefinition.qualifiedField(
             FIELD_FULL_NAME);
 
     public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_NAME,
-            FIELD_DEF_PREFERRED_USERNAME,
+            FIELD_DEF_DISPLAY_NAME,
             FIELD_DEF_FULL_NAME);
 
     /**

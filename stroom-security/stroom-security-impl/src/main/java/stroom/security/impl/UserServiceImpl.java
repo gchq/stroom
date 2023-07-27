@@ -55,26 +55,26 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getOrCreateUser(final UserName name, final Consumer<User> onCreateAction) {
-        return getOrCreate(name, false, onCreateAction);
+    public User getOrCreateUser(final UserName userName, final Consumer<User> onCreateAction) {
+        return getOrCreate(userName, false, onCreateAction);
     }
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
-        return getOrCreate(new SimpleUserName(name), true, onCreateAction);
+        return getOrCreate(SimpleUserName.fromGroupName(name), true, onCreateAction);
     }
 
-    private User getOrCreate(final UserName name,
+    private User getOrCreate(final UserName userName,
                              final boolean isGroup,
                              final Consumer<User> onCreateAction) {
-        final Optional<User> optional = userDao.getBySubjectId(name.getSubjectId(), isGroup);
+        final Optional<User> optional = userDao.getBySubjectId(userName.getSubjectId(), isGroup);
         return optional.orElseGet(() -> {
-            User user = new User();
+            final User user = new User();
             AuditUtil.stamp(securityContext, user);
             user.setUuid(UUID.randomUUID().toString());
-            user.setSubjectId(name.getSubjectId());
-            user.setDisplayName(name.getDisplayName());
-            user.setFullName(name.getFullName());
+            user.setSubjectId(userName.getSubjectId());
+            user.setDisplayName(userName.getDisplayName());
+            user.setFullName(userName.getFullName());
             user.setGroup(isGroup);
 
             return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {

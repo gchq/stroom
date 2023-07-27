@@ -2,6 +2,7 @@ package stroom.security.shared;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.UserName;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -68,6 +69,6 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Get all permissions for a given document type",
             operationId = "filterUsers")
-    List<SimpleUser> filterUsers(final FilterUsersRequest filterUsersRequest);
+    List<UserName> filterUsers(final FilterUsersRequest filterUsersRequest);
 
 }

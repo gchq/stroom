@@ -149,6 +149,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private SessionListResponse listSessionsOnThisNode() {
         return sessionMap.values().stream()
                 .map(httpSession -> {
+                    // Don't really care about userUuids for this
                     final UserName userName = UserIdentitySessionUtil.get(httpSession)
                             .map(UserIdentity::asUserName)
                             .orElse(null);

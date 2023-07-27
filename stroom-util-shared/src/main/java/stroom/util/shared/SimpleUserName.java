@@ -56,6 +56,10 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
         return new SimpleUserName(subjectId, null, null);
     }
 
+    public static SimpleUserName fromGroupName(final String name) {
+        return new SimpleUserName(name, null, null);
+    }
+
     @Override
     public String getSubjectId() {
         return subjectId;

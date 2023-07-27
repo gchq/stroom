@@ -145,16 +145,19 @@ public class SelectUserPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(newButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onNew();
-            }
-        }));
-        registerHandler(addMultipleButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAddMultiple();
-            }
-        }));
+        GwtNullSafe.consume(newButton, button ->
+                registerHandler(newButton.addClickHandler(event -> {
+                    if (MouseUtil.isPrimary(event)) {
+                        onNew();
+                    }
+                })));
+        // addMultipleButton not always present
+        GwtNullSafe.consume(addMultipleButton, button ->
+                registerHandler(addMultipleButton.addClickHandler(event -> {
+                    if (MouseUtil.isPrimary(event)) {
+                        onAddMultiple();
+                    }
+                })));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             selected = selectionModel.getSelected();
             if (event.getSelectionType().isDoubleSelect()) {

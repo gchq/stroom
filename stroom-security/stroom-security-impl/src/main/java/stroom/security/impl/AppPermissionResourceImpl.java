@@ -76,7 +76,8 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                         new SimpleUserName(
                                 userIdentity.getSubjectId(),
                                 userIdentity.getDisplayName(),
-                                userIdentity.getFullName().orElse(null)),
+                                userIdentity.getFullName().orElse(null),
+                                securityContext.getUserUuid()),
                         userAndPermissionsHelperProvider.get().get(hasStroomUserIdentity.getUuid()));
 
                 LOGGER.debug("Returning {}", userAndPermissions);

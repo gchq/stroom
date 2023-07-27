@@ -4,8 +4,6 @@ import stroom.config.global.shared.SessionInfoResource;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
 import stroom.util.shared.UserName;
@@ -32,9 +30,7 @@ public class SessionInfoResourceImpl implements SessionInfoResource {
     @Override
     public SessionInfo get() {
         // TODO: 26/07/2023 Would be nice to include the groups the user is a member of
-        final UserName userName = NullSafe.get(
-                securityContextProvider.get().getUserIdentity(),
-                UserIdentity::asUserName);
+        final UserName userName = securityContextProvider.get().getUserName();
         return new SessionInfo(
                 userName,
                 nodeInfoProvider.get().getThisNodeName(),

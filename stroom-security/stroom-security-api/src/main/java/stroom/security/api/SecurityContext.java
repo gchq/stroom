@@ -73,11 +73,17 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     UserIdentity getUserIdentity();
 
     default UserName getUserName() {
-        return new SimpleUserName(
-                getSubjectId(),
-//                getUserUuid(),
-                getUserIdentity().getDisplayName(),
-                getUserIdentity().getFullName().orElse(null));
+        final UserIdentity userIdentity = getUserIdentity();
+        final String displayName;
+        final String fullName;
+        if (userIdentity != null) {
+            displayName = userIdentity.getDisplayName();
+            fullName = userIdentity.getFullName().orElse(null);
+        } else {
+            displayName = null;
+            fullName = null;
+        }
+        return new SimpleUserName(getSubjectId(), displayName, fullName, getUserUuid());
     }
 
     /**

@@ -14,7 +14,7 @@ public interface UserDao {
 
     FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getSubjectId),
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, User::getDisplayName),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_DISPLAY_NAME, User::getDisplayName),
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, User::getFullName));
 
     User create(User user);

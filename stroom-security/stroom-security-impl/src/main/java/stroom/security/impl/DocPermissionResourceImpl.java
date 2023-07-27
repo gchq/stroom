@@ -22,7 +22,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
 import stroom.security.shared.FilterUsersRequest;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.SimpleUser;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
@@ -31,6 +30,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserName;
 
 import event.logging.AuthorisationActionType;
 import event.logging.AuthoriseEventAction;
@@ -67,10 +67,10 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
 
-    private static final FilterFieldMappers<SimpleUser> SIMPLE_USERS_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getSubjectId),
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, SimpleUser::getDisplayName),
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, SimpleUser::getFullName));
+    private static final FilterFieldMappers<UserName> USER_NAMES_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, UserName::getSubjectId),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_DISPLAY_NAME, UserName::getDisplayName),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, UserName::getFullName));
 
     private final Provider<UserService> userServiceProvider;
     private final Provider<DocumentPermissionServiceImpl> documentPermissionServiceProvider;
@@ -243,7 +243,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Limited benefit in logging the filtering of a list of user names
-    public List<SimpleUser> filterUsers(final FilterUsersRequest filterUsersRequest) {
+    public List<UserName> filterUsers(final FilterUsersRequest filterUsersRequest) {
         if (filterUsersRequest.getUsers() == null) {
             return null;
         } else {
@@ -251,8 +251,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             // consistently across the app.
             return QuickFilterPredicateFactory.filterStream(
                             filterUsersRequest.getQuickFilterInput(),
-                            SIMPLE_USERS_FILTER_FIELD_MAPPERS,
-                            filterUsersRequest.getUsers().stream())
+                            USER_NAMES_FILTER_FIELD_MAPPERS,
+                            NullSafe.stream(filterUsersRequest.getUsers()))
                     .collect(Collectors.toList());
         }
     }
