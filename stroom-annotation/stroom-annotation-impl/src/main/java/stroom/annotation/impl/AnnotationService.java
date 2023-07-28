@@ -20,9 +20,7 @@ import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.security.user.api.UserNameService;
-import stroom.util.NullSafe;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import java.util.List;
@@ -90,13 +88,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     }
 
     private UserName getCurrentUser() {
-        return NullSafe.get(
-                securityContext.getUserIdentity(),
-                userIdentity -> new SimpleUserName(
-                        userIdentity.getSubjectId(),
-                        userIdentity.getDisplayName(),
-                        userIdentity.getFullName().orElse(null),
-                        securityContext.getUserUuid()));
+        return securityContext.getUserName();
     }
 
     AnnotationDetail getDetail(Long annotationId) {

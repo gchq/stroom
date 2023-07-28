@@ -33,13 +33,11 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.UserName;
 
 import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.Field;
-import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.SelectJoinStep;
@@ -47,11 +45,9 @@ import org.jooq.impl.DSL;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -68,7 +64,7 @@ class AnnotationDaoImpl implements AnnotationDao {
             Annotation.TITLE, ANNOTATION.TITLE,
             Annotation.SUBJECT, ANNOTATION.SUBJECT,
             Annotation.STATUS, ANNOTATION.STATUS,
-            Annotation.ASSIGNED_TO, ANNOTATION.ASSIGNED_TO,
+            Annotation.ASSIGNED_TO, ANNOTATION.ASSIGNED_TO_UUID,
             Annotation.COMMENT, ANNOTATION.COMMENT);
 
     private final AnnotationDbConnProvider connectionProvider;
@@ -103,9 +99,9 @@ class AnnotationDaoImpl implements AnnotationDao {
         expressionMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
         expressionMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
         expressionMapper.map(AnnotationFields.STATUS_FIELD, ANNOTATION.STATUS, value -> value);
-        expressionMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, displayName ->
+        expressionMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO_UUID, displayName ->
                 userNameService.getByDisplayName(displayName)
-                        .map(UserName::getSubjectId)
+                        .map(UserName::getUuid)
                         .orElse(null));
         expressionMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, value -> value);
         expressionMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, value -> value);
@@ -118,13 +114,13 @@ class AnnotationDaoImpl implements AnnotationDao {
 //        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
 //        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
         valueMapper.map(AnnotationFields.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValLong::create);
-        valueMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, this::mapdbUserToValString);
+        valueMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
         valueMapper.map(AnnotationFields.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValLong::create);
-        valueMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, this::mapdbUserToValString);
+        valueMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, ValString::create);
         valueMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
         valueMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
         valueMapper.map(AnnotationFields.STATUS_FIELD, ANNOTATION.STATUS, ValString::create);
-        valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, this::mapdbUserToValString);
+        valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO_UUID, this::mapUserUuidToValString);
         valueMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, ValString::create);
         valueMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, ValString::create);
         return valueMapper;
@@ -196,17 +192,21 @@ class AnnotationDaoImpl implements AnnotationDao {
         entry.setId(record.get(ANNOTATION_ENTRY.ID));
         entry.setVersion(record.get(ANNOTATION_ENTRY.VERSION));
         entry.setCreateTime(record.get(ANNOTATION_ENTRY.CREATE_TIME_MS));
-        entry.setCreateUser(mapdbUserToUserName(record.get(ANNOTATION_ENTRY.CREATE_USER)));
+        entry.setCreateUser(record.get(ANNOTATION_ENTRY.CREATE_USER));
         entry.setUpdateTime(record.get(ANNOTATION_ENTRY.UPDATE_TIME_MS));
-        entry.setUpdateUser(mapdbUserToUserName(record.get(ANNOTATION_ENTRY.UPDATE_USER)));
+        entry.setUpdateUser(record.get(ANNOTATION_ENTRY.UPDATE_USER));
 
         final String type = record.get(ANNOTATION_ENTRY.TYPE);
         entry.setEntryType(type);
         final String data = record.get(ANNOTATION_ENTRY.DATA);
-        final EntryValue entryValue = Annotation.ASSIGNED_TO.equals(type)
-                ? UserNameEntryValue.of(mapdbUserToUserName(data))
-                : StringEntryValue.of(data);
-        entry.setEntryValue(entryValue);
+        if (data != null) {
+            final EntryValue entryValue = Annotation.ASSIGNED_TO.equals(type)
+                    ? UserNameEntryValue.of(mapUserUuidToUserName(data))
+                    : StringEntryValue.of(data);
+            entry.setEntryValue(entryValue);
+        } else {
+            entry.setEntryValue(null);
+        }
         return entry;
     }
 
@@ -215,13 +215,13 @@ class AnnotationDaoImpl implements AnnotationDao {
         annotation.setId(record.get(ANNOTATION.ID));
         annotation.setVersion(record.get(ANNOTATION.VERSION));
         annotation.setCreateTime(record.get(ANNOTATION.CREATE_TIME_MS));
-        annotation.setCreateUser(mapdbUserToUserName(record.get(ANNOTATION.CREATE_USER)));
+        annotation.setCreateUser(record.get(ANNOTATION.CREATE_USER));
         annotation.setUpdateTime(record.get(ANNOTATION.UPDATE_TIME_MS));
-        annotation.setUpdateUser(mapdbUserToUserName(record.get(ANNOTATION.UPDATE_USER)));
+        annotation.setUpdateUser(record.get(ANNOTATION.UPDATE_USER));
         annotation.setTitle(record.get(ANNOTATION.TITLE));
         annotation.setSubject(record.get(ANNOTATION.SUBJECT));
         annotation.setStatus(record.get(ANNOTATION.STATUS));
-        annotation.setAssignedTo(mapdbUserToUserName(record.get(ANNOTATION.ASSIGNED_TO)));
+        annotation.setAssignedTo(mapUserUuidToUserName(record.get(ANNOTATION.ASSIGNED_TO_UUID)));
         annotation.setComment(record.get(ANNOTATION.COMMENT));
         annotation.setHistory(record.get(ANNOTATION.HISTORY));
         return annotation;
@@ -240,7 +240,7 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public AnnotationDetail createEntry(final CreateEntryRequest request, final UserName user) {
+    public AnnotationDetail createEntry(final CreateEntryRequest request, final UserName currentUser) {
         final long now = System.currentTimeMillis();
 
         // Create the parent annotation first if it hasn't been already.
@@ -248,25 +248,26 @@ class AnnotationDaoImpl implements AnnotationDao {
         if (annotation.getId() == null) {
             annotation = request.getAnnotation();
             annotation.setCreateTime(now);
-            annotation.setCreateUser(user);
+            annotation.setCreateUser(currentUser.getUserIdentityForAudit());
             annotation.setUpdateTime(now);
-            annotation.setUpdateUser(user);
+            annotation.setUpdateUser(currentUser.getUserIdentityForAudit());
             annotation = create(annotation);
 
             // Create change entries for all fields so we know what their initial values were.
-            createEntry(annotation.getId(), user, now, Annotation.TITLE, annotation.getTitle());
-            createEntry(annotation.getId(), user, now, Annotation.SUBJECT, annotation.getSubject());
-            createEntry(annotation.getId(), user, now, Annotation.STATUS, annotation.getStatus());
+            createEntry(annotation.getId(), currentUser, now, Annotation.TITLE, annotation.getTitle());
+            createEntry(annotation.getId(), currentUser, now, Annotation.SUBJECT, annotation.getSubject());
+            createEntry(annotation.getId(), currentUser, now, Annotation.STATUS, annotation.getStatus());
             createEntry(
                     annotation.getId(),
-                    user,
+                    currentUser,
                     now,
                     Annotation.ASSIGNED_TO,
-                    annotation.getAssignedTo().getSubjectId());
-            createEntry(annotation.getId(), user, now, Annotation.COMMENT, annotation.getComment());
+                    NullSafe.get(annotation.getAssignedTo(), UserName::getUuid));
+            createEntry(annotation.getId(), currentUser, now, Annotation.COMMENT, annotation.getComment());
 
             final long annotationId = annotation.getId();
-            request.getLinkedEvents().forEach(eventID -> createEventLink(annotationId, eventID, user, now));
+            request.getLinkedEvents().forEach(eventID ->
+                    createEventLink(annotationId, eventID, currentUser, now));
         } else {
             // Update parent if we need to.
             final long annotationId = annotation.getId();
@@ -280,7 +281,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                         .set(ANNOTATION.HISTORY, DSL
                                 .when(ANNOTATION.HISTORY.isNull(), fieldValue)
                                 .otherwise(DSL.concat(ANNOTATION.HISTORY, "  |  " + fieldValue)))
-                        .set(ANNOTATION.UPDATE_USER, mapUserNameToDbUser(user))
+                        .set(ANNOTATION.UPDATE_USER, mapUserNameToAuditIdentifier(currentUser))
                         .set(ANNOTATION.UPDATE_TIME_MS, now)
                         .where(ANNOTATION.ID.eq(annotationId))
                         .execute());
@@ -289,21 +290,21 @@ class AnnotationDaoImpl implements AnnotationDao {
                 JooqUtil.context(connectionProvider, context -> context
                         .update(ANNOTATION)
                         .set(field, fieldValue)
-                        .set(ANNOTATION.UPDATE_USER, mapUserNameToDbUser(user))
+                        .set(ANNOTATION.UPDATE_USER, mapUserNameToAuditIdentifier(currentUser))
                         .set(ANNOTATION.UPDATE_TIME_MS, now)
                         .where(ANNOTATION.ID.eq(annotationId))
                         .execute());
             } else {
                 JooqUtil.context(connectionProvider, context -> context
                         .update(ANNOTATION)
-                        .set(ANNOTATION.UPDATE_USER, mapUserNameToDbUser(user))
+                        .set(ANNOTATION.UPDATE_USER, mapUserNameToAuditIdentifier(currentUser))
                         .set(ANNOTATION.UPDATE_TIME_MS, now)
                         .where(ANNOTATION.ID.eq(annotationId))
                         .execute());
             }
 
             // Create entry.
-            createEntry(annotation.getId(), user, now, request.getType(), fieldValue);
+            createEntry(annotation.getId(), currentUser, now, request.getType(), fieldValue);
         }
 
         // Now select everything back to provide refreshed details.
@@ -316,7 +317,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                              final String type,
                              final String fieldValue) {
         // Create entry.
-        final String userId = mapUserNameToDbUser(userName);
+        final String userAuditIdentifier = mapUserNameToAuditIdentifier(userName);
         final int count = JooqUtil.contextResult(connectionProvider, context -> context
                 .insertInto(ANNOTATION_ENTRY,
                         ANNOTATION_ENTRY.VERSION,
@@ -328,9 +329,9 @@ class AnnotationDaoImpl implements AnnotationDao {
                         ANNOTATION_ENTRY.TYPE,
                         ANNOTATION_ENTRY.DATA)
                 .values(1,
-                        userId,
+                        userAuditIdentifier,
                         now,
-                        userId,
+                        userAuditIdentifier,
                         now,
                         annotationId,
                         type,
@@ -353,18 +354,18 @@ class AnnotationDaoImpl implements AnnotationDao {
                                 ANNOTATION.TITLE,
                                 ANNOTATION.SUBJECT,
                                 ANNOTATION.STATUS,
-                                ANNOTATION.ASSIGNED_TO,
+                                ANNOTATION.ASSIGNED_TO_UUID,
                                 ANNOTATION.COMMENT,
                                 ANNOTATION.HISTORY)
                         .values(1,
-                                mapUserNameToDbUser(annotation.getCreateUser()),
+                                annotation.getCreateUser(),
                                 annotation.getCreateTime(),
-                                mapUserNameToDbUser(annotation.getUpdateUser()),
+                                annotation.getUpdateUser(),
                                 annotation.getUpdateTime(),
                                 annotation.getTitle(),
                                 annotation.getSubject(),
                                 annotation.getStatus(),
-                                mapUserNameToDbUser(annotation.getAssignedTo()),
+                                mapUserNameToUserUuid(annotation.getAssignedTo()),
                                 annotation.getComment(),
                                 annotation.getHistory())
                         .onDuplicateKeyIgnore()
@@ -445,37 +446,37 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public List<EventId> link(final EventLink eventLink, final UserName user) {
+    public List<EventId> link(final EventLink eventLink, final UserName currentUser) {
         final long now = System.currentTimeMillis();
-        createEventLink(eventLink.getAnnotationId(), eventLink.getEventId(), user, now);
+        createEventLink(eventLink.getAnnotationId(), eventLink.getEventId(), currentUser, now);
         return getLinkedEvents(eventLink.getAnnotationId());
     }
 
     @Override
-    public List<EventId> unlink(final EventLink eventLink, final UserName userName) {
+    public List<EventId> unlink(final EventLink eventLink, final UserName currentUser) {
         final long now = System.currentTimeMillis();
-        removeEventLink(eventLink.getAnnotationId(), eventLink.getEventId(), userName, now);
+        removeEventLink(eventLink.getAnnotationId(), eventLink.getEventId(), currentUser, now);
         return getLinkedEvents(eventLink.getAnnotationId());
     }
 
     @Override
-    public Integer setStatus(final SetStatusRequest request, final UserName userName) {
+    public Integer setStatus(final SetStatusRequest request, final UserName currentUser) {
         return changeFields(
                 request.getAnnotationIdList(),
-                userName,
+                currentUser,
                 Annotation.STATUS,
                 ANNOTATION.STATUS,
                 request.getStatus());
     }
 
     @Override
-    public Integer setAssignedTo(final SetAssignedToRequest request, final UserName user) {
+    public Integer setAssignedTo(final SetAssignedToRequest request, final UserName currentUser) {
         return changeFields(
                 request.getAnnotationIdList(),
-                user,
+                currentUser,
                 Annotation.ASSIGNED_TO,
-                ANNOTATION.ASSIGNED_TO,
-                request.getAssignedTo().getSubjectId());
+                ANNOTATION.ASSIGNED_TO_UUID,
+                NullSafe.get(request.getAssignedTo(), UserName::getUuid));
     }
 
     private Integer changeFields(final List<Long> annotationIdList,
@@ -505,7 +506,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         JooqUtil.context(connectionProvider, context -> context
                 .update(ANNOTATION)
                 .set(field, value)
-                .set(ANNOTATION.UPDATE_USER, mapUserNameToDbUser(user))
+                .set(ANNOTATION.UPDATE_USER, mapUserNameToAuditIdentifier(user))
                 .set(ANNOTATION.UPDATE_TIME_MS, now)
                 .where(ANNOTATION.ID.eq(annotationId))
                 .execute());
@@ -516,30 +517,17 @@ class AnnotationDaoImpl implements AnnotationDao {
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
                        final ValuesConsumer consumer) {
-        final List<AbstractField> fieldList = Arrays.asList(fields);
-
-        final PageRequest pageRequest = criteria.getPageRequest();
+        final List<AbstractField> fieldList = NullSafe.asList(fields);
         final Condition condition = createCondition(criteria.getExpression());
-        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
         final Mapper<?>[] mappers = valueMapper.getMappers(fields);
 
         JooqUtil.context(connectionProvider, context -> {
-            Integer offset = null;
-            Integer numberOfRows = null;
-
-            if (pageRequest != null) {
-                offset = pageRequest.getOffset();
-                numberOfRows = pageRequest.getLength();
-            }
-
             SelectJoinStep<?> select = context.select(dbFields)
                     .from(ANNOTATION);
 
             try (final Cursor<?> cursor = select
                     .where(condition)
-                    .orderBy(orderFields)
-                    .limit(offset, numberOfRows)
                     .fetchLazy()) {
 
                 while (cursor.hasNext()) {
@@ -561,81 +549,126 @@ class AnnotationDaoImpl implements AnnotationDao {
         });
     }
 
-    private Val mapdbUserToValString(final String subjectId) {
-        if (subjectId == null) {
+//    private Val mapSubjectIdToValString(final String subjectId) {
+//        if (subjectId == null) {
+//            return ValNull.INSTANCE;
+//        } else if (NullSafe.isBlankString(subjectId)) {
+//            return ValString.create(subjectId);
+//        } else {
+//            return NullSafe.getAsOptional(
+//                            subjectId,
+//                            this::mapSubjectIdToUserName,
+//                            UserName::getUserIdentityForAudit,
+//                            value -> (Val) ValString.create(value))
+//                    .orElse(ValNull.INSTANCE);
+//        }
+//    }
+
+    private Val mapUserUuidToValString(final String userUuid) {
+        if (userUuid == null) {
             return ValNull.INSTANCE;
-        } else if (NullSafe.isBlankString(subjectId)) {
-            return ValString.create(subjectId);
+        } else if (NullSafe.isBlankString(userUuid)) {
+            return ValString.create(userUuid);
         } else {
             return NullSafe.getAsOptional(
-                            subjectId,
-                            this::mapdbUserToUserName,
+                            userUuid,
+                            this::mapUserUuidToUserName,
                             UserName::getUserIdentityForAudit,
                             value -> (Val) ValString.create(value))
                     .orElse(ValNull.INSTANCE);
         }
     }
 
-    private UserName mapdbUserToUserName(final String subjectId) {
-        if (NullSafe.isBlankString(subjectId)) {
+//    private UserName mapSubjectIdToUserName(final String subjectId) {
+//        if (NullSafe.isBlankString(subjectId)) {
+//            return null;
+//        } else {
+//            return userNameService.getBySubjectId(subjectId)
+//                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+//                            "Expecting subjectId '{}' to exist but it doesn't", subjectId)));
+//        }
+//    }
+
+    private UserName mapUserUuidToUserName(final String userUuid) {
+        if (NullSafe.isBlankString(userUuid)) {
             return null;
         } else {
-            return userNameService.getBySubjectId(subjectId)
+            return userNameService.getByUuid(userUuid)
                     .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                            "Expecting subjectId '{}' to exist but it doesn't", subjectId)));
+                            "Expecting userUuid '{}' to exist but it doesn't", userUuid)));
         }
     }
 
-    private String mapUserNameToDbUser(final UserName userName) {
-        return NullSafe.get(userName, UserName::getSubjectId);
+    private String mapUserNameToUserUuid(final UserName userName) {
+        if (userName == null) {
+            return null;
+        } else {
+            return Objects.requireNonNull(userName.getUuid(), () -> "No user uuid found for username " + userName);
+        }
+    }
+//
+//    private String mapUserNameToSubjectId(final UserName userName) {
+//        final String userUuid = NullSafe.get(userName, UserName::getUuid);
+//        Objects.requireNonNull(userUuid, () -> "No user uuid found for username " + userName);
+//        return userUuid;
+//    }
+
+    private String mapUserNameToAuditIdentifier(final UserName userName) {
+        if (userName == null) {
+            return null;
+        } else {
+            return Objects.requireNonNull(
+                    userName.getUserIdentityForAudit(),
+                    () -> "No audit identity found for username " + userName);
+        }
     }
 
     private Condition createCondition(final ExpressionOperator expression) {
         return expressionMapper.apply(expression);
     }
 
-    private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
-        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
-            return Collections.singleton(ANNOTATION.ID);
-        }
-
-        return criteria.getSortList()
-                .stream()
-                .map(sort -> {
-                    Field<?> field;
-                    if (AnnotationFields.CREATED_ON.equals(sort.getId())) {
-                        field = ANNOTATION.CREATE_TIME_MS;
-                    } else if (AnnotationFields.CREATED_BY.equals(sort.getId())) {
-                        field = ANNOTATION.CREATE_USER;
-                    } else if (AnnotationFields.UPDATED_ON.equals(sort.getId())) {
-                        field = ANNOTATION.UPDATE_TIME_MS;
-                    } else if (AnnotationFields.UPDATED_BY.equals(sort.getId())) {
-                        field = ANNOTATION.UPDATE_USER;
-                    } else if (AnnotationFields.TITLE.equals(sort.getId())) {
-                        field = ANNOTATION.TITLE;
-                    } else if (AnnotationFields.SUBJECT.equals(sort.getId())) {
-                        field = ANNOTATION.SUBJECT;
-                    } else if (AnnotationFields.STATUS.equals(sort.getId())) {
-                        field = ANNOTATION.STATUS;
-                        // TODO: 27/03/2023 This is wrong as assignedTo in the db is the unique user ID, not the
-                        //  the display name
-                    } else if (AnnotationFields.ASSIGNED_TO.equals(sort.getId())) {
-                        field = ANNOTATION.ASSIGNED_TO;
-                    } else if (AnnotationFields.COMMENT.equals(sort.getId())) {
-                        field = ANNOTATION.COMMENT;
-                    } else if (AnnotationFields.HISTORY.equals(sort.getId())) {
-                        field = ANNOTATION.HISTORY;
-                    } else {
-                        field = ANNOTATION.ID;
-                    }
-
-                    OrderField<?> orderField = field;
-                    if (sort.isDesc()) {
-                        orderField = field.desc();
-                    }
-
-                    return orderField;
-                })
-                .collect(Collectors.toList());
-    }
+//    private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
+//        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
+//            return Collections.singleton(ANNOTATION.ID);
+//        }
+//
+//        return criteria.getSortList()
+//                .stream()
+//                .map(sort -> {
+//                    Field<?> field;
+//                    if (AnnotationFields.CREATED_ON.equals(sort.getId())) {
+//                        field = ANNOTATION.CREATE_TIME_MS;
+//                    } else if (AnnotationFields.CREATED_BY.equals(sort.getId())) {
+//                        field = ANNOTATION.CREATE_USER;
+//                    } else if (AnnotationFields.UPDATED_ON.equals(sort.getId())) {
+//                        field = ANNOTATION.UPDATE_TIME_MS;
+//                    } else if (AnnotationFields.UPDATED_BY.equals(sort.getId())) {
+//                        field = ANNOTATION.UPDATE_USER;
+//                    } else if (AnnotationFields.TITLE.equals(sort.getId())) {
+//                        field = ANNOTATION.TITLE;
+//                    } else if (AnnotationFields.SUBJECT.equals(sort.getId())) {
+//                        field = ANNOTATION.SUBJECT;
+//                    } else if (AnnotationFields.STATUS.equals(sort.getId())) {
+//                        field = ANNOTATION.STATUS;
+//                        // TODO: 27/03/2023 This is wrong as assignedTo in the db is the unique user ID, not the
+//                        //  the display name
+//                    } else if (AnnotationFields.ASSIGNED_TO.equals(sort.getId())) {
+//                        field = ANNOTATION.ASSIGNED_TO_UUID;
+//                    } else if (AnnotationFields.COMMENT.equals(sort.getId())) {
+//                        field = ANNOTATION.COMMENT;
+//                    } else if (AnnotationFields.HISTORY.equals(sort.getId())) {
+//                        field = ANNOTATION.HISTORY;
+//                    } else {
+//                        field = ANNOTATION.ID;
+//                    }
+//
+//                    OrderField<?> orderField = field;
+//                    if (sort.isDesc()) {
+//                        orderField = field.desc();
+//                    }
+//
+//                    return orderField;
+//                })
+//                .collect(Collectors.toList());
+//    }
 }

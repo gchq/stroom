@@ -58,11 +58,9 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = Map.ofEntries(
             Map.entry(AnnotationFields.ID, Annotation::getId),
             Map.entry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
-            Map.entry(AnnotationFields.CREATED_BY, annotation ->
-                    NullSafe.get(annotation.getCreateUser(), UserName::getUserIdentityForAudit)),
+            Map.entry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
             Map.entry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
-            Map.entry(AnnotationFields.UPDATED_BY, annotation ->
-                    NullSafe.get(annotation.getCreateUser(), UserName::getUserIdentityForAudit)),
+            Map.entry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
             Map.entry(AnnotationFields.TITLE, Annotation::getTitle),
             Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
             Map.entry(AnnotationFields.STATUS, Annotation::getStatus),

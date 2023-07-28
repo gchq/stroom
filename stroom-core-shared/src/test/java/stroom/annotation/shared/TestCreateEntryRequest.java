@@ -14,23 +14,23 @@ class TestCreateEntryRequest {
 
     protected static final UserName USER_1 = SimpleUserName.builder()
             .subjectId("myId1")
-            .subjectId("myDisplayName1")
+            .displayName("myDisplayName1")
             .build();
     protected static final UserName USER_2 = SimpleUserName.builder()
             .subjectId("myId2")
-            .subjectId("myDisplayName2")
+            .displayName("myDisplayName2")
             .build();
     protected static final UserName USER_3 = SimpleUserName.builder()
             .subjectId("myId3")
-            .subjectId("myDisplayName3")
+            .displayName("myDisplayName3")
             .build();
     protected static final Annotation ANNOTATION = new Annotation(
             1L,
             123,
             Instant.now().toEpochMilli(),
-            USER_1,
+            USER_1.getUserIdentityForAudit(),
             Instant.now().toEpochMilli(),
-            USER_2,
+            USER_2.getUserIdentityForAudit(),
             "myTitle",
             "mySubject",
             "myStatus",

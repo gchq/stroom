@@ -28,11 +28,11 @@ public class Annotation {
     @JsonProperty
     private Long createTime;
     @JsonProperty
-    private UserName createUser;
+    private String createUser;
     @JsonProperty
     private Long updateTime;
     @JsonProperty
-    private UserName updateUser;
+    private String updateUser;
     @JsonProperty
     private String title;
     @JsonProperty
@@ -53,9 +53,9 @@ public class Annotation {
     public Annotation(@JsonProperty("id") final Long id,
                       @JsonProperty("version") final Integer version,
                       @JsonProperty("createTime") final Long createTime,
-                      @JsonProperty("createUser") final UserName createUser,
+                      @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateTime") final Long updateTime,
-                      @JsonProperty("updateUser") final UserName updateUser,
+                      @JsonProperty("updateUser") final String updateUser,
                       @JsonProperty("title") final String title,
                       @JsonProperty("subject") final String subject,
                       @JsonProperty("status") final String status,
@@ -100,11 +100,11 @@ public class Annotation {
         this.createTime = createTime;
     }
 
-    public UserName getCreateUser() {
+    public String getCreateUser() {
         return createUser;
     }
 
-    public void setCreateUser(final UserName createUser) {
+    public void setCreateUser(final String createUser) {
         this.createUser = createUser;
     }
 
@@ -116,11 +116,11 @@ public class Annotation {
         this.updateTime = updateTime;
     }
 
-    public UserName getUpdateUser() {
+    public String getUpdateUser() {
         return updateUser;
     }
 
-    public void setUpdateUser(final UserName updateUser) {
+    public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
     }
 

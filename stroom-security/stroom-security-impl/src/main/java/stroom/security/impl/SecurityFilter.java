@@ -241,13 +241,13 @@ class SecurityFilter implements Filter {
     }
 
     private String getPostAuthRedirectUri(final HttpServletRequest request) {
-        // We have a a new request so we're going to redirect with an AuthenticationRequest.
+        // We have a new request, so we're going to redirect with an AuthenticationRequest.
         // Get the redirect URL for the auth service from the current request.
         final String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
                 .map(queryStr -> "?" + queryStr)
                 .orElse("");
 
-        // Dropwiz is likely sat behind Nginx with requests reverse proxied to it
+        // Dropwiz is likely sat behind Nginx with requests reverse proxied to it,
         // so we need to append just the path/query part to the public URI defined in config
         // rather than using the full url of the request
         return uriFactory.publicUri(originalPath).toString();

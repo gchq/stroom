@@ -862,6 +862,7 @@ class TestNullSafe {
                 .addCase(new String[0], Collections.emptyList())
                 .addCase(new String[]{"foo"}, List.of("foo"))
                 .addCase(new String[]{"foo", "bar"}, List.of("foo", "bar"))
+                .addThrowsCase(new String[]{"foo", null}, NullPointerException.class)
                 .build();
     }
 

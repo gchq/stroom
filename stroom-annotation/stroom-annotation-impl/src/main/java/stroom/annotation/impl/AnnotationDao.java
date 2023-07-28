@@ -40,17 +40,17 @@ public interface AnnotationDao {
 
     List<AnnotationDetail> getAnnotationDetailsForEvents(long streamId, long eventId);
 
-    AnnotationDetail createEntry(CreateEntryRequest request, UserName user);
+    AnnotationDetail createEntry(CreateEntryRequest request, UserName currentUser);
 
     List<EventId> getLinkedEvents(Long annotationId);
 
-    List<EventId> link(EventLink eventLink, UserName user);
+    List<EventId> link(EventLink eventLink, UserName currentUser);
 
-    List<EventId> unlink(EventLink eventLink, UserName user);
+    List<EventId> unlink(EventLink eventLink, UserName currentUser);
 
-    Integer setStatus(SetStatusRequest request, UserName user);
+    Integer setStatus(SetStatusRequest request, UserName currentUser);
 
-    Integer setAssignedTo(SetAssignedToRequest request, UserName user);
+    Integer setAssignedTo(SetAssignedToRequest request, UserName currentUser);
 
     void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
 }

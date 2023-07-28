@@ -323,14 +323,16 @@ public class NullSafe {
 
     /**
      * Returns the passed array of items or varargs items as a non-null list.
-     * Doesn't support null items in the list.
+     * Does not supports null items in the list.
+     * Uses {@link List#of()} under the hood.
+     * @return A non-null list of items. List should be assumed to be immutable.
      */
     @SafeVarargs
     @SuppressWarnings("varargs")
     public static <T> List<T> asList(final T... items) {
-        return items != null
-                ? List.of(items)
-                : Collections.emptyList();
+        return items == null || items.length == 0
+                ? Collections.emptyList()
+                : List.of(items);
     }
 
     /**

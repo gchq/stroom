@@ -1,5 +1,7 @@
 package stroom.util.shared;
 
+import java.util.Collection;
+
 /**
  * String utilities for client side or shared code
  */
@@ -109,6 +111,12 @@ public class StringUtil {
 
     public static String pluralSuffix(final int count) {
         return count > 1
+                ? "s"
+                : "";
+    }
+
+    public static String pluralSuffix(final Collection<?> collection) {
+        return collection != null && collection.size() > 1
                 ? "s"
                 : "";
     }

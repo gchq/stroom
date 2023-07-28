@@ -1,7 +1,5 @@
 package stroom.annotation.shared;
 
-import stroom.util.shared.UserName;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -17,11 +15,11 @@ public class AnnotationEntry {
     @JsonProperty
     private Long createTime;
     @JsonProperty
-    private UserName createUser;
+    private String createUser;
     @JsonProperty
     private Long updateTime;
     @JsonProperty
-    private UserName updateUser;
+    private String updateUser;
     @JsonProperty
     private String entryType;
     @JsonProperty
@@ -34,9 +32,9 @@ public class AnnotationEntry {
     public AnnotationEntry(@JsonProperty("id") final Long id,
                            @JsonProperty("version") final Integer version,
                            @JsonProperty("createTime") final Long createTime,
-                           @JsonProperty("createUser") final UserName createUser,
+                           @JsonProperty("createUser") final String createUser,
                            @JsonProperty("updateTime") final Long updateTime,
-                           @JsonProperty("updateUser") final UserName updateUser,
+                           @JsonProperty("updateUser") final String updateUser,
                            @JsonProperty("entryType") final String entryType,
                            @JsonProperty("entryValue") final EntryValue entryValue) {
         this.id = id;
@@ -73,11 +71,11 @@ public class AnnotationEntry {
         this.createTime = createTime;
     }
 
-    public UserName getCreateUser() {
+    public String getCreateUser() {
         return createUser;
     }
 
-    public void setCreateUser(final UserName createUser) {
+    public void setCreateUser(final String createUser) {
         this.createUser = createUser;
     }
 
@@ -89,11 +87,11 @@ public class AnnotationEntry {
         this.updateTime = updateTime;
     }
 
-    public UserName getUpdateUser() {
+    public String getUpdateUser() {
         return updateUser;
     }
 
-    public void setUpdateUser(final UserName updateUser) {
+    public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
     }
 

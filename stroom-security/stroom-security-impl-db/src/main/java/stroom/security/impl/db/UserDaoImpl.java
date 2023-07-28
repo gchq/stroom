@@ -8,12 +8,14 @@ import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
 import stroom.util.filter.QuickFilterPredicateFactory;
-import stroom.util.logging.LogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Record1;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +29,8 @@ import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 
 public class UserDaoImpl implements UserDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserDaoImpl.class);
 
     private static final Function<Record, User> RECORD_TO_USER_MAPPER = record -> {
         final User user = new User();
@@ -140,12 +144,26 @@ public class UserDaoImpl implements UserDao {
                 .where(STROOM_USER.DISPLAY_NAME.eq(displayName))
                 .fetch(RECORD_TO_USER_MAPPER::apply));
 
+        // Technically display name is not unique, (but it probably is) however things
+        // like annotations need to map from a displayName to a user record so we can only return one.
+        final Optional<User> optUser;
         if (users.size() > 1) {
-            throw new RuntimeException(LogUtil.message(
-                    "Found more than one user with displayName or unique name equal to '{}'", displayName));
+            optUser = users.stream()
+                    .min(Comparator.comparing(User::getCreateTimeMs));
+            final String userUuid = optUser.map(User::getUuid).orElse(null);
+            final String subjectId = optUser.map(User::getSubjectId).orElse(null);
+            LOGGER.error("Found {} users with the same display_name ('{}'). " +
+                            "Using user with subjectId: '{}' and userUuid: '{}'. Duplicate display names will cause " +
+                            "problems for anything mapping from a display name back to a user (e.g. annotations).",
+                    users.size(),
+                    displayName,
+                    subjectId,
+                    userUuid);
+        } else {
+            optUser = users.stream()
+                    .findFirst();
         }
-        return users.stream()
-                .findFirst();
+        return optUser;
     }
 
     @Override

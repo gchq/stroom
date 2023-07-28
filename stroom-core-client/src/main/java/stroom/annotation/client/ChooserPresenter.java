@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.MyCellTable;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.BasicSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
@@ -77,7 +78,9 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
             public SafeHtml getValue(final T value) {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                 builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
-                builder.appendEscaped(displayValueFunction.apply(value));
+                if (value != null) {
+                    builder.appendEscaped(displayValueFunction.apply(value));
+                }
                 builder.appendHtmlConstant("</div>");
                 return builder.toSafeHtml();
             }
@@ -105,7 +108,8 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
     }
 
     String getSelectedDisplayValue() {
-        return displayValueFunction.apply(getSelected());
+        final T selected = getSelected();
+        return GwtNullSafe.get(selected, displayValueFunction);
     }
 
     void setSelected(final T value) {

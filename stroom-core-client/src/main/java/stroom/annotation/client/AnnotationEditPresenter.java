@@ -35,6 +35,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserName;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -132,7 +133,17 @@ public class AnnotationEditPresenter
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
         getView().setUiHandlers(this);
-        this.assignedToPresenter.setDisplayValueFunction(UserName::getUserIdentityForAudit);
+        this.assignedToPresenter.setDisplayValueFunction(userName -> {
+            if (userName != null) {
+                if (!GwtNullSafe.isBlankString(userName.getFullName())) {
+                    return userName.getUserIdentityForAudit() + " ("  + userName.getFullName() + ")";
+                } else {
+                    return userName.getUserIdentityForAudit();
+                }
+            } else {
+                return null;
+            }
+        });
 
         this.statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
@@ -496,12 +507,12 @@ public class AnnotationEditPresenter
     private void addEntryText(final StringBuilder text,
                               final AnnotationEntry entry,
                               final Optional<EntryValue> currentValue) {
-        final String entryUiValue = entry.getEntryValue().asUiValue();
+        final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
         if (Annotation.COMMENT.equals(entry.getEntryType())) {
             text.append(dateTimeFormatter.format(entry.getCreateTime()));
             text.append(", ");
-            text.append(entry.getCreateUser().getUserIdentityForAudit());
+            text.append(entry.getCreateUser());
             text.append(", commented ");
             quote(text, entryUiValue);
             text.append("\n");
@@ -511,7 +522,7 @@ public class AnnotationEditPresenter
 
             text.append(dateTimeFormatter.format(entry.getCreateTime()));
             text.append(", ");
-            text.append(entry.getCreateUser().getUserIdentityForAudit());
+            text.append(entry.getCreateUser());
             text.append(", ");
             text.append(entry.getEntryType().toLowerCase());
             text.append("ed ");
@@ -522,12 +533,13 @@ public class AnnotationEditPresenter
             if (currentValue != null && currentValue.isPresent()) {
                 text.append(dateTimeFormatter.format(entry.getCreateTime()));
                 text.append(", ");
-                text.append(entry.getCreateUser().getUserIdentityForAudit());
+                text.append(entry.getCreateUser());
                 text.append(",");
                 if (areSameUser(entry.getCreateUser(), currentValue.get())) {
                     text.append(" removed their assignment");
                 } else {
                     text.append(" unassigned ");
+                    GWT.log("currentValue: " + currentValue.get());
                     quote(text, currentValue.get().asUiValue());
                 }
                 text.append("\n");
@@ -536,7 +548,7 @@ public class AnnotationEditPresenter
             if (entryUiValue != null && entryUiValue.trim().length() > 0) {
                 text.append(dateTimeFormatter.format(entry.getCreateTime()));
                 text.append(", ");
-                text.append(entry.getCreateUser().getUserIdentityForAudit());
+                text.append(entry.getCreateUser());
                 text.append(",");
 
                 if (areSameUser(entry.getCreateUser(), entry.getEntryValue())) {
@@ -550,7 +562,7 @@ public class AnnotationEditPresenter
         } else {
             text.append(dateTimeFormatter.format(entry.getCreateTime()));
             text.append(", ");
-            text.append(entry.getCreateUser().getUserIdentityForAudit());
+            text.append(entry.getCreateUser());
             text.append(",");
 
             if (currentValue != null && currentValue.isPresent()) {
@@ -577,13 +589,13 @@ public class AnnotationEditPresenter
                               final AnnotationEntry entry,
                               final Optional<EntryValue> currentValue,
                               final Date now) {
-        final String entryUiValue = entry.getEntryValue().asUiValue();
+        final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
         if (Annotation.COMMENT.equals(entry.getEntryType())) {
             html.appendHtmlConstant(HISTORY_LINE_START);
             html.appendHtmlConstant(HISTORY_COMMENT_BORDER_START);
             html.appendHtmlConstant(HISTORY_COMMENT_HEADER_START);
-            bold(html, entry.getCreateUser().getUserIdentityForAudit());
+            bold(html, entry.getCreateUser());
             html.appendEscaped(" commented ");
             html.append(getDurationLabel(entry.getCreateTime(), now));
             html.appendHtmlConstant(HISTORY_COMMENT_HEADER_END);
@@ -598,7 +610,7 @@ public class AnnotationEditPresenter
 
             html.appendHtmlConstant(HISTORY_LINE_START);
             html.appendHtmlConstant(HISTORY_ITEM_START);
-            bold(html, entry.getCreateUser().getUserIdentityForAudit());
+            bold(html, entry.getCreateUser());
             html.appendEscaped(" ");
             html.appendEscaped(entry.getEntryType().toLowerCase());
             html.appendEscaped("ed ");
@@ -615,7 +627,7 @@ public class AnnotationEditPresenter
                     if (currentValue.isPresent()) {
                         html.appendHtmlConstant(HISTORY_LINE_START);
                         html.appendHtmlConstant(HISTORY_ITEM_START);
-                        bold(html, entry.getCreateUser().getUserIdentityForAudit());
+                        bold(html, entry.getCreateUser());
                         if (areSameUser(entry.getCreateUser(), currentValue.get())) {
                             html.appendEscaped(" removed their assignment");
                         } else {
@@ -631,7 +643,7 @@ public class AnnotationEditPresenter
                     if (entryUiValue != null && entryUiValue.trim().length() > 0) {
                         html.appendHtmlConstant(HISTORY_LINE_START);
                         html.appendHtmlConstant(HISTORY_ITEM_START);
-                        bold(html, entry.getCreateUser().getUserIdentityForAudit());
+                        bold(html, entry.getCreateUser());
                         if (areSameUser(entry.getCreateUser(), entry.getEntryValue())) {
                             html.appendEscaped(" self-assigned this");
                         } else {
@@ -647,7 +659,7 @@ public class AnnotationEditPresenter
                 } else {
                     html.appendHtmlConstant(HISTORY_LINE_START);
                     html.appendHtmlConstant(HISTORY_ITEM_START);
-                    bold(html, entry.getCreateUser().getUserIdentityForAudit());
+                    bold(html, entry.getCreateUser());
                     if (currentValue.isPresent()) {
                         html.appendEscaped(" changed the ");
                     } else {
@@ -674,15 +686,21 @@ public class AnnotationEditPresenter
         }
     }
 
-    private boolean areSameUser(final UserName userName, final EntryValue entryValue) {
+    private boolean areSameUser(final String userAuditIdentifier, final EntryValue entryValue) {
         if (entryValue instanceof UserNameEntryValue) {
             @SuppressWarnings("PatternVariableCanBeUsed") // GWT ¯\_(ツ)_/¯
             final UserNameEntryValue userNameEntryValue = (UserNameEntryValue) entryValue;
-            return Objects.equals(userName, userNameEntryValue.getUserName());
+            return Objects.equals(
+                    userAuditIdentifier,
+                    GwtNullSafe.get(
+                            userNameEntryValue,
+                            UserNameEntryValue::getUserName,
+                            UserName::getUserIdentityForAudit));
         } else {
-            return userName == null && entryValue == null;
+            return userAuditIdentifier == null && entryValue == null;
         }
     }
+
 
     private static native boolean copy(final Element element) /*-{
         var activeElement = $doc.activeElement;
