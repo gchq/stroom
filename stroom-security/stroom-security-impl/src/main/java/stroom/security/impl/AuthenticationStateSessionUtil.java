@@ -31,7 +31,9 @@ public final class AuthenticationStateSessionUtil {
      * that Stroom makes to the Authentication Service. When Stroom is subsequently called the state is provided in the
      * URL to allow verification that the return request was expected.
      */
-    public static AuthenticationState create(final HttpServletRequest request, final String url) {
+    public static AuthenticationState create(final HttpServletRequest request,
+                                             final String url,
+                                             final boolean prompt) {
         final String stateId = createRandomString(8);
         final String nonce = createRandomString(20);
 
@@ -45,7 +47,7 @@ public final class AuthenticationStateSessionUtil {
                     request.getRequestURI());
         });
 
-        final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
+        final AuthenticationState state = new AuthenticationState(stateId, url, nonce, prompt);
 
         final Cache<String, AuthenticationState> cache = getOrCreateCache(request);
         cache.put(stateId, state);

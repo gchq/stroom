@@ -26,13 +26,16 @@ public class AuthenticationState {
     private final String initiatingUri;
     private final String redirectUri;
     private final String nonce;
+    private final boolean prompt;
 
     AuthenticationState(final String id,
                         final String url,
-                        final String nonce) {
+                        final String nonce,
+                        final boolean prompt) {
         this.id = id;
         this.url = url;
         this.nonce = nonce;
+        this.prompt = prompt;
 
         // Make sure the initiating URI doesn't contain any reserved OIDC params.
         this.initiatingUri = createInitiatingUri(url);
@@ -82,6 +85,15 @@ public class AuthenticationState {
         return nonce;
     }
 
+    /**
+     * Determine if the next auth call should force a prompt.
+     *
+     * @return True if the next auth call should force a prompt.
+     */
+    public boolean isPrompt() {
+        return prompt;
+    }
+
     @Override
     public String toString() {
         return "AuthenticationState{" +
@@ -90,6 +102,7 @@ public class AuthenticationState {
                 ", initiatingUri='" + initiatingUri + '\'' +
                 ", redirectUri='" + redirectUri + '\'' +
                 ", nonce='" + nonce + '\'' +
+                ", prompt=" + prompt +
                 '}';
     }
 

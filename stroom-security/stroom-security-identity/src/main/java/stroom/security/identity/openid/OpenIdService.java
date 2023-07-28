@@ -104,7 +104,7 @@ class OpenIdService {
 
         } else {
             // If the prompt is 'login' then we always want to prompt the user to login in with username and password.
-            final boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase("login");
+            final boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase(OpenId.LOGIN_PROMPT);
             if (requireLoginPrompt) {
                 LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
             }
@@ -289,7 +289,7 @@ class OpenIdService {
 
         final UriBuilder uriBuilder = UriBuilder.fromUri(uri);
         // Ensure we have no prompt so we don't go round in circles.
-        uriBuilder.replaceQueryParam("prompt", "");
+        uriBuilder.replaceQueryParam(OpenId.PROMPT, "");
         return uriBuilder.build().toString();
     }
 
