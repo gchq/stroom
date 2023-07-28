@@ -43,8 +43,7 @@ class OpenIdManager {
         }
 
         if (redirectUri == null) {
-            final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
-            redirectUri = frontChannelOIDC(request, uri);
+            redirectUri = frontChannelOIDC(request, postAuthRedirectUri);
         }
 
         return redirectUri;
@@ -60,7 +59,7 @@ class OpenIdManager {
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
         LOGGER.debug(() -> "frontChannelOIDC state=" + state);
-        return createAuthUri(request, endpoint, clientId, state, false);
+        return createAuthUri(request, endpoint, clientId, state);
     }
 
     private String backChannelOIDC(final HttpServletRequest request,
@@ -96,8 +95,8 @@ class OpenIdManager {
 
             // If we manage to login then redirect to the original URL held in the state.
             if (loggedIn) {
-                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getUri());
-                redirectUri = state.getUri();
+                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getInitiatingUri());
+                redirectUri = state.getInitiatingUri();
             }
         }
 
@@ -132,29 +131,25 @@ class OpenIdManager {
     }
 
     public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
-        final String redirectUri = OpenId.removeReservedParams(postAuthRedirectUri);
         final String endpoint = openIdConfig.getLogoutEndpoint();
         final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUri);
-        LOGGER.debug(() -> "logout state=" + state);
-        return createAuthUri(request, endpoint, clientId, state, true);
+        return createLogoutUri(endpoint, clientId, postAuthRedirectUri);
     }
 
     private String createAuthUri(final HttpServletRequest request,
                                  final String endpoint,
                                  final String clientId,
-                                 final AuthenticationState state,
-                                 final boolean prompt) {
+                                 final AuthenticationState state) {
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.RESPONSE_TYPE, OpenId.CODE);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, state.getUri());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, state.getRedirectUri());
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, OpenId.SCOPE__OPENID +
                 " " +
                 OpenId.SCOPE__EMAIL);
@@ -168,13 +163,21 @@ class OpenIdManager {
         final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
         if (!Strings.isNullOrEmpty(promptParam)) {
             uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, promptParam);
-        } else if (prompt) {
-            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, "login");
         }
 
         final String authenticationRequestUrl = uriBuilder.build().toString();
         LOGGER.info(() -> "Redirecting with an AuthenticationRequest to: " + authenticationRequestUrl);
         // We want to make sure that the client has the cookie.
         return authenticationRequestUrl;
+    }
+
+    private String createLogoutUri(final String endpoint,
+                                   final String clientId,
+                                   final String postAuthRedirectUri) {
+        UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, postAuthRedirectUri);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, "login");
+        return uriBuilder.build().toString();
     }
 }

@@ -79,7 +79,7 @@ public final class AuthenticationStateSessionUtil {
                     LOGGER.debug("Creating cache for session {}", sessionId);
                     cache = Caffeine.newBuilder()
                             .maximumSize(100)
-                            .expireAfterWrite(1, TimeUnit.MINUTES)
+                            .expireAfterWrite(10, TimeUnit.MINUTES)
                             .removalListener((key, value, cause) ->
                                     LOGGER.debug(() -> LogUtil.message(
                                             "Removing entry: {}, cause: {}, session: {}",

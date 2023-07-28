@@ -162,7 +162,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                 uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, promptParam);
             }
 
-            throw new RedirectionException(Status.SEE_OTHER, uriBuilder.build());
+            throw new RedirectionException(Status.TEMPORARY_REDIRECT, uriBuilder.build());
         } finally {
             stroomEventLoggingServiceProvider.get().log(
                     "AuthenticationResourceImpl.Logout",
