@@ -8248,6 +8248,8 @@ components:
       properties:
         componentId:
           type: string
+        downloadAllTables:
+          type: boolean
         fileType:
           type: string
           enum:
@@ -13182,6 +13184,8 @@ components:
             uniqueItems: true
           requestedRange:
             $ref: '#/components/schemas/OffsetRange'
+          tableName:
+            type: string
           tableSettings:
             $ref: '#/components/schemas/TableSettings'
       required:

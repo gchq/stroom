@@ -11649,6 +11649,9 @@
           "componentId" : {
             "type" : "string"
           },
+          "downloadAllTables" : {
+            "type" : "boolean"
+          },
           "fileType" : {
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV" ]
@@ -17581,6 +17584,9 @@
             },
             "requestedRange" : {
               "$ref" : "#/components/schemas/OffsetRange"
+            },
+            "tableName" : {
+              "type" : "string"
             },
             "tableSettings" : {
               "$ref" : "#/components/schemas/TableSettings"

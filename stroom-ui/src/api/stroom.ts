@@ -1143,6 +1143,7 @@ export interface DownloadQueryResultsRequest {
 
 export interface DownloadSearchResultsRequest {
   componentId?: string;
+  downloadAllTables?: boolean;
   fileType?: "EXCEL" | "CSV" | "TSV";
 
   /** @format int32 */
@@ -4358,6 +4359,7 @@ export type TableResult = Result & { fields?: Field[]; resultRange?: OffsetRange
 export type TableResultRequest = ComponentResultRequest & {
   openGroups?: string[];
   requestedRange?: OffsetRange;
+  tableName?: string;
   tableSettings?: TableSettings;
 };
 
