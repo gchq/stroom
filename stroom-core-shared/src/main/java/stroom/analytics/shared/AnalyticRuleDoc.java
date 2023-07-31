@@ -43,7 +43,7 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private final QueryLanguageVersion languageVersion;
     @JsonProperty
-    private final String query;
+    private String query;
     @JsonProperty
     private final AnalyticRuleType analyticRuleType;
     @JsonProperty
@@ -105,6 +105,10 @@ public class AnalyticRuleDoc extends Doc {
 
     public String getQuery() {
         return query;
+    }
+
+    public void setQuery(final String query) {
+        this.query = query;
     }
 
     public AnalyticRuleType getAnalyticRuleType() {

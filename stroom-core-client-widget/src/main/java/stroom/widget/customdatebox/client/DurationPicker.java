@@ -45,9 +45,7 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     @Override
     protected void onAttach() {
         super.onAttach();
-        handlerRegistrations.add(time.getTextBox().addKeyDownHandler(event ->
-                ValueChangeEvent.fire(this, getValue())));
-        handlerRegistrations.add(time.getSpinner().addSpinnerHandler(event ->
+        handlerRegistrations.add(time.addValueChangeHandler(event ->
                 ValueChangeEvent.fire(this, getValue())));
         handlerRegistrations.add(timeUnit.addValueChangeHandler(event ->
                 ValueChangeEvent.fire(this, getValue())));

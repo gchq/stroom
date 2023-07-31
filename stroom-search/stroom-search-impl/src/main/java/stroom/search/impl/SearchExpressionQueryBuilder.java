@@ -40,6 +40,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -228,9 +229,7 @@ public class SearchExpressionQueryBuilder {
         }
         final IndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
-            // Ignore missing fields.
-            return null;
-//            throw new SearchException("Field not found in index: " + field);
+            return new MatchNoDocsQuery();
         }
         final String fieldName = indexField.getFieldName();
 

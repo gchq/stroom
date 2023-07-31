@@ -48,9 +48,9 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
 
-        addTab(SHARDS, new DocumentEditTabProvider<IndexDoc>(indexSettingsPresenterProvider::get));
+        addTab(SHARDS, new DocumentEditTabProvider<IndexDoc>(indexShardPresenterProvider::get));
         addTab(FIELDS, new DocumentEditTabProvider<IndexDoc>(indexFieldListPresenterProvider::get));
-        addTab(SETTINGS, new DocumentEditTabProvider<IndexDoc>(indexShardPresenterProvider::get));
+        addTab(SETTINGS, new DocumentEditTabProvider<IndexDoc>(indexSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<IndexDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
