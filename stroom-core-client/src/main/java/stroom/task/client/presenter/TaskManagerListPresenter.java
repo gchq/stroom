@@ -48,6 +48,7 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
@@ -324,25 +325,21 @@ public class TaskManagerListPresenter
     }
 
     private SafeHtml buildTooltipHtml(final TaskProgress row) {
-        final TableBuilder tb = new TableBuilder();
-        tb
+        final TableBuilder tableBuilder = new TableBuilder()
                 .row(TableCell.header("Task", 2))
                 .row("Name", row.getTaskName())
                 .row("User", row.getUserName())
                 .row("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
                 .row("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
-                .row()
-                .row("Id", row.getId().toString())
-                .row("Thread Name", row.getThreadName());
+                .row("Id", GwtNullSafe.get(row.getId(), TaskId::getId));
 
-        if (row.getId() != null) {
-            final TaskId parentId = row.getId().getParentId();
-            if (parentId != null) {
-                tb.row("Parent Id", parentId.toString());
-            }
-        }
+        GwtNullSafe.consume(row.getId(), TaskId::getParentId, TaskId::getId, parentId ->
+                tableBuilder.row("Parent Id", parentId));
+
+        tableBuilder.row("Thread Name", row.getThreadName());
+
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
         return htmlBuilder.toSafeHtml();
     }
 
@@ -452,6 +449,10 @@ public class TaskManagerListPresenter
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class NameFilterTimer extends Timer {
 
