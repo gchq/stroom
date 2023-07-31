@@ -36,13 +36,14 @@ class TestUserNameEntryValue {
 
     @Test
     void getAsPersistedValue() {
+        final String uuid = UUID.randomUUID().toString();
         final UserNameEntryValue entryValue = UserNameEntryValue.of(new SimpleUserName(
                 "myId",
                 "myDisplayName",
                 "myFullName",
-                UUID.randomUUID().toString()));
+                uuid));
 
         assertThat(entryValue.asPersistedValue())
-                .isEqualTo("myId");
+                .isEqualTo(uuid);
     }
 }
