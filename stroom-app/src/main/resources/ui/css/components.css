@@ -340,13 +340,7 @@
 	opacity: .3 !important;
 }
 
-.tooltip {
-    border: 1px solid var(--dialog__border-color);
-    border-radius: 6px;
-    background-color: var(--tooltip__background-color);
-    box-shadow: var(--dialog__shadow);
-
-	padding: 1px 3px;
+.info-tooltip {
 	-moz-user-focus: initial;
 	-moz-user-input: initial;
 	-webkit-user-focus: initial;
@@ -364,7 +358,7 @@
   	opacity: 1;
 }
 
-.tooltip table {
+.info-tooltip table {
     white-space: pre;
     table-layout: fixed;
 }

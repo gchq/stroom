@@ -41,6 +41,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -127,11 +128,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         // Info column.
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
-            protected void showInfo(final NodeStatusResult row, final int x, final int y) {
+            protected void showInfo(final NodeStatusResult row, final PopupPosition popupPosition) {
                 nodeManager.info(
                         row.getNode().getName(),
-                        result -> showNodeInfoResult(row.getNode(), result, x, y),
-                        caught -> showNodeInfoError(caught, x, y));
+                        result -> showNodeInfoResult(row.getNode(), result, popupPosition),
+                        caught -> showNodeInfoError(caught, popupPosition));
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", 20);
@@ -275,7 +276,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final int x, final int y) {
+    private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final PopupPosition popupPosition) {
         final TableBuilder tb1 = new TableBuilder();
         final TableBuilder tb2 = new TableBuilder();
 
@@ -321,11 +322,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         htmlBuilder.div(tb1::write, Attribute.className("infoTable"));
         htmlBuilder.div(tb2::write, Attribute.className("infoTable"));
 
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
+        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
     }
 
-    private void showNodeInfoError(final Throwable caught, final int x, final int y) {
-        tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), x, y);
+    private void showNodeInfoError(final Throwable caught, final PopupPosition popupPosition) {
+        tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition);
     }
 
     @Override

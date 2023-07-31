@@ -53,6 +53,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -271,9 +272,9 @@ public class TaskManagerListPresenter
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
-            protected void showInfo(final TaskProgress row, final int x, final int y) {
+            protected void showInfo(final TaskProgress row, final PopupPosition popupPosition) {
                 final SafeHtml tooltipHtml = buildTooltipHtml(row);
-                tooltipPresenter.show(tooltipHtml, x, y);
+                tooltipPresenter.show(tooltipHtml, popupPosition);
             }
         };
         dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
