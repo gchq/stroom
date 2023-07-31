@@ -132,6 +132,12 @@ public class TaskManagerListPresenter
         dataGrid = new MyDataGrid<>(1000);
         view.setDataWidget(dataGrid);
 
+        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
+        autoRefreshButton.setTitle("Turn Auto Refresh Off");
+        autoRefreshButton.setState(autoRefresh);
+        getView().addButton(autoRefreshButton);
+
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
 
@@ -139,12 +145,6 @@ public class TaskManagerListPresenter
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.with("Collapse All", false));
         warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
-
-        autoRefreshButton = new InlineSvgToggleButton();
-        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
-        autoRefreshButton.setTitle("Turn Auto Refresh Off");
-        autoRefreshButton.setState(autoRefresh);
-        getView().addButton(autoRefreshButton);
 
         updateButtonStates();
 
