@@ -419,8 +419,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3429** : Fix error logging.
 
 
-
-
 ## [v7.2-beta.10] - 2023-05-05
 
 * Issue **#3428** : Automatically disable rules that error.
