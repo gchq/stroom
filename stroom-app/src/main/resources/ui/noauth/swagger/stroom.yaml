@@ -8047,6 +8047,7 @@ components:
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -8248,6 +8249,8 @@ components:
       properties:
         componentId:
           type: string
+        downloadAllTables:
+          type: boolean
         fileType:
           type: string
           enum:
@@ -8483,6 +8486,7 @@ components:
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -8668,6 +8672,7 @@ components:
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -10780,6 +10785,7 @@ components:
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -13123,6 +13129,12 @@ components:
               level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
               1 and 1 at level 2. In the absence of this field system defaults will
               apply
+        pageSize:
+          type: integer
+          format: int32
+          description: Defines the maximum number of rows to display in the table
+            at once (default 100).
+          example: 100
         queryId:
           type: string
           description: TODO
@@ -13182,6 +13194,8 @@ components:
             uniqueItems: true
           requestedRange:
             $ref: '#/components/schemas/OffsetRange'
+          tableName:
+            type: string
           tableSettings:
             $ref: '#/components/schemas/TableSettings'
       required:
