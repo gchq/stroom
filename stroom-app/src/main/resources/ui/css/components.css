@@ -1678,9 +1678,12 @@ button.main-menu svg {
     color: var(--heading-color);
     font-weight: bold;
     font-size: 125%;
-    height: 2.5em;
-    vertical-align: bottom;
     padding-bottom: 0.3em;
+}
+
+/* Make headers after the first add padding before */
+.infoTable tr:not(:first-of-type) th {
+    padding-top: 1rem;
 }
 
 .infoTable th, .infoTable td {

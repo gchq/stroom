@@ -46,24 +46,19 @@ public class ProcessorInfoBuilder {
         } else if (row instanceof ProcessorFilterRow) {
             final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
             final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
-            tb.row(TableCell.header("Stream Processor Filter", 2));
 
             if (filter.isReprocess()) {
-                tb
-                        .row()
-                        .row(TableCell.header("This is a reprocessing filter", 2));
+                tb.row(TableCell.header("Stream Processor Filter (reprocessing)", 2));
+            } else {
+                tb.row(TableCell.header("Stream Processor Filter", 2));
             }
 
             if (filter.getMinMetaCreateTimeMs() != null ||
                     filter.getMaxMetaCreateTimeMs() != null) {
-                tb
-                        .row()
-                        .row(TableCell.header("Constraints", 2));
                 if (filter.getMinMetaCreateTimeMs() != null) {
                     tb.row("Min Stream Create Ms",
                             ClientDateUtil.toISOString(filter.getMinMetaCreateTimeMs()));
                 }
-
                 if (filter.getMaxMetaCreateTimeMs() != null) {
                     tb.row("Max Stream Create Ms",
                             ClientDateUtil.toISOString(filter.getMaxMetaCreateTimeMs()));
