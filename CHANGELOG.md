@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* DB Migration : stroom-annotation - `V07_02_00_005__annotation_assigned_migration_to_uuid.sql`
+
+* DB Migration : stroom-annotation - `V07_02_00_010__annotation_entry_assigned_migration_to_uuid.sql`
+
+* DB Migration : stroom-config - `V07_02_00_005__preferences_column_rename.sql`
+
+* DB Migration : stroom-dashboard - `V07_02_00_005__query_add_owner_uuid.sql`
+
+* DB Migration : stroom-processor - `V07_02_00_005__processor_filter_add_owner_uuid_col.sql`
+
+* DB Migration : stroom-security - `V07_01_00_001__add_stroom_user_cols.sql`
+
+* DB Migration : stroom-security - `V07_01_00_002__rename_preferred_username_col.sql`
+
 * Issue **#3577** : Fix ownership permissions when creating a new entity.
 
 * Issue **#3613** : Fix error un-marshalling TimeRange.
