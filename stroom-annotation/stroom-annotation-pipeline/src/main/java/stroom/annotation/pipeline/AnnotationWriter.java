@@ -20,6 +20,7 @@ import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.StringEntryValue;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -174,15 +175,17 @@ class AnnotationWriter extends AbstractXMLFilter {
                 }
             }
         } else if (ANNOTATION_TAG.equals(localName) && currentAnnotation != null) {
-            CreateEntryRequest request = new CreateEntryRequest(currentAnnotation,
+            CreateEntryRequest request = new CreateEntryRequest(
+                    currentAnnotation,
                     Annotation.COMMENT,
-                    null,
+                    (StringEntryValue) null,
                     currentEventIds);
 
             try {
-                annotationCreator.createEntry(new CreateEntryRequest(currentAnnotation,
+                annotationCreator.createEntry(new CreateEntryRequest(
+                        currentAnnotation,
                         Annotation.COMMENT,
-                        null,
+                        (StringEntryValue) null,
                         currentEventIds));
 
             } catch (final RuntimeException e) {

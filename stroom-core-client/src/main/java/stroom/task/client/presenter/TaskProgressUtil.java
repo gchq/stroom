@@ -52,10 +52,39 @@ class TaskProgressUtil {
         // Validate criteria.
         criteria.validateSortField();
 
-        final Map<TaskId, TaskProgress> totalMap = input
-                .stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
+//        input
+//                .stream()
+//                .flatMap(List::stream)
+//                .map(TaskProgress::getId)
+//                .map(taskId -> GwtNullSafe.get(taskId.getParentId(), TaskId::getId)
+//                        + " - "
+//                        + taskId.getId())
+//                .forEach(GWT::log);
+
+        final Map<TaskId, TaskProgress> totalMap;
+        try {
+            totalMap = input
+                    .stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
+        } catch (Exception e) {
+//            try {
+//                input
+//                        .stream()
+//                        .flatMap(List::stream)
+//                        .collect(Collectors.groupingBy(TaskProgress::getId, Collectors.toList()))
+//                        .entrySet()
+//                        .stream()
+//                        .filter(entry -> entry.getValue().size() > 1)
+//                        .forEach(entry -> {
+//                            GWT.log("Task " + entry.getKey().getId() + " has "
+//                                    + entry.getValue().size() + " instances");
+//                        });
+//            } catch (Exception ex) {
+//                GWT.log("Error trying to debug error: " + ex.getMessage());
+//            }
+            throw new RuntimeException(e);
+        }
 
         List<TaskProgress> resultList = createList(totalMap, criteria, treeAction);
         final long total = resultList.size();

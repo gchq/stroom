@@ -25,7 +25,7 @@ public class TestSerialisation {
 
         final List<ProcessorListRow> rows = new ArrayList<>();
         rows.add(new ProcessorRow(new Expander(), new Processor()));
-        rows.add(new ProcessorFilterRow(new ProcessorFilter()));
+        rows.add(new ProcessorFilterRow(new ProcessorFilter(), "My display name"));
 
         final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(
                 rows,

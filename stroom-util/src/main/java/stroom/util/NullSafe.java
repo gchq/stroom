@@ -2,6 +2,7 @@ package stroom.util;
 
 import stroom.util.io.ByteSize;
 import stroom.util.logging.DurationTimer;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
 
@@ -31,6 +32,7 @@ public class NullSafe {
 
     /**
      * Allows you to safely compare a child property of val1 to other.
+     *
      * @return False if val1 is null else whether the child property of val1 is equal to other
      */
     public static <T1, T2> boolean equals(final T1 val1,
@@ -82,6 +84,7 @@ public class NullSafe {
 
     /**
      * Allows you to safely compare a grandchild property of val1 to other.
+     *
      * @return False if val1 is null or if val1's child property is null,
      * else whether the grandchild property of val1 is equal to other
      */
@@ -320,14 +323,16 @@ public class NullSafe {
 
     /**
      * Returns the passed array of items or varargs items as a non-null list.
-     * Doesn't support null items in the list.
+     * Does not supports null items in the list.
+     * Uses {@link List#of()} under the hood.
+     * @return A non-null list of items. List should be assumed to be immutable.
      */
     @SafeVarargs
     @SuppressWarnings("varargs")
     public static <T> List<T> asList(final T... items) {
-        return items != null
-                ? List.of(items)
-                : Collections.emptyList();
+        return items == null || items.length == 0
+                ? Collections.emptyList()
+                : List.of(items);
     }
 
     /**
@@ -455,6 +460,28 @@ public class NullSafe {
             return Optional.empty();
         } else {
             return Optional.ofNullable(Objects.requireNonNull(getter).apply(value));
+        }
+    }
+
+    /**
+     * Require that both {@code value} is non-null and the result of applying {@code getter} to
+     * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
+     *
+     * @throws NullPointerException
+     */
+    public static <T1, R> R requireNonNull(final T1 value,
+                                           final Function<T1, R> getter,
+                                           final Supplier<String> messageSupplier) {
+        if (value == null) {
+            throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
+        } else {
+            R result = Objects.requireNonNull(getter, "Null getter")
+                    .apply(value);
+            if (result == null) {
+                throw new NullPointerException(buildNullGetterResultMsg(0, messageSupplier));
+            } else {
+                return result;
+            }
         }
     }
 
@@ -588,6 +615,36 @@ public class NullSafe {
                 return Optional.empty();
             } else {
                 return Optional.ofNullable(Objects.requireNonNull(getter2).apply(value2));
+            }
+        }
+    }
+
+    /**
+     * Require that {@code value} is non-null, the result of applying {@code getter1} to
+     * {@code value} is non-null and the result applying {@code getter2} to the result
+     * of {@code getter1} is non-null. Throws an {@link NullPointerException} otherwise.
+     *
+     * @throws NullPointerException
+     */
+    public static <T1, T2, R> R requireNonNull(final T1 value,
+                                               final Function<T1, T2> getter1,
+                                               final Function<T2, R> getter2,
+                                               final Supplier<String> messageSupplier) {
+        if (value == null) {
+            throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1, "Null getter1")
+                    .apply(value);
+            if (value2 == null) {
+                throw new NullPointerException(buildNullGetterResultMsg(1, messageSupplier));
+            } else {
+                final R result = Objects.requireNonNull(getter2, "Null getter2")
+                        .apply(value2);
+                if (result == null) {
+                    throw new NullPointerException(buildNullGetterResultMsg(2, messageSupplier));
+                } else {
+                    return result;
+                }
             }
         }
     }
@@ -733,6 +790,41 @@ public class NullSafe {
                 final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
                 if (value3 != null) {
                     consumer.accept(value3);
+                }
+            }
+        }
+    }
+
+    /**
+     * Apply each getter to the value of <code>value</code> or the result from the previous
+     * getter while the result is non-null. The <code>predicate</code> is applied to the result of
+     * the last getter.
+     *
+     * @return false if any of the values/results are null, else return the value of the predicate when applied
+     * to the result of the last getter.
+     */
+    public static <T1, T2, T3, R> boolean test(final T1 value,
+                                               final Function<T1, T2> getter1,
+                                               final Function<T2, T3> getter2,
+                                               final Function<T3, R> getter3,
+                                               final Predicate<R> predicate) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1)
+                    .apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2)
+                        .apply(value2);
+                if (value3 == null) {
+                    return false;
+                } else {
+                    final R result = Objects.requireNonNull(getter3).apply(value3);
+                    return result != null
+                            && Objects.requireNonNull(predicate)
+                            .test(result);
                 }
             }
         }
@@ -920,5 +1012,20 @@ public class NullSafe {
         } else {
             return other;
         }
+    }
+
+    private static String buildNullValueMsg(final String variableName,
+                                            final Supplier<String> messageSupplier) {
+        return messageSupplier.get()
+                + LogUtil.message(" (Value of argument {} is null)", variableName);
+    }
+
+    private static String buildNullGetterResultMsg(final int getterNo,
+                                                   final Supplier<String> messageSupplier) {
+        return messageSupplier.get()
+                + LogUtil.message(" (Result of applying getter{} is null)",
+                (getterNo == 0
+                        ? ""
+                        : getterNo));
     }
 }

@@ -16,9 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -32,7 +31,6 @@ import java.util.Set;
 class QueryParams extends AbstractFunction {
 
     static final String NAME = "params";
-    private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
 
     private Generator gen = Null.GEN;
 
@@ -43,16 +41,13 @@ class QueryParams extends AbstractFunction {
     @Override
     public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
         if (staticMappedValues != null) {
-            final StringBuilder sb = new StringBuilder();
-            staticMappedValues.forEach((k, v) -> {
-                if (!INTERNAL_PARAMS.contains(k)) {
-                    sb.append(k);
-                    sb.append("=\"");
-                    sb.append(v);
-                    sb.append("\" ");
-                }
-            });
-            gen = new StaticValueGen(ValString.create(sb.toString().trim()));
+            final String str = staticMappedValues.entrySet()
+                    .stream()
+                    .filter(entry -> !ParamKeys.INTERNAL_PARAM_KEYS.contains(entry.getKey()))
+                    .map(entry ->
+                            entry.getKey() + "=\"" + entry.getValue() + "\"")
+                    .collect(Collectors.joining(" "));
+            gen = new StaticValueGen(ValString.create(str));
         }
     }
 

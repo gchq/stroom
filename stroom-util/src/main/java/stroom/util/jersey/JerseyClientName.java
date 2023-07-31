@@ -1,9 +1,20 @@
 package stroom.util.jersey;
 
+/**
+ * A set of names for distinct jersey clients. Each one should map to a server (or cluster of servers backed
+ * by a DNS name) such that the connection to each 'server' can be configured separately depending on the
+ * nature of the communication or the capabilities of the 'server'. The {@link JerseyClientName#DEFAULT}
+ * name provides the means for clients to use a common default config if the named one does not exist.
+ */
 public enum JerseyClientName {
 
     /**
-     * Client for Proxy to get content from a downstream stroom.
+     * Client for getting AWS public keys from <pre>https://public-keys.auth.elb.{}.amazonaws.com/{}</pre>
+     */
+    AWS_PUBLIC_KEYS,
+
+    /**
+     * Client for Proxy to get content from a downstream stroom/proxy.
      */
     CONTENT_SYNC,
 
@@ -21,8 +32,8 @@ public enum JerseyClientName {
     /**
      * Client for the HttpPostFilter.
      */
-    @Deprecated // HttpPostFilter is deprecated
-    HTTP_POST_FILTER,
+    @Deprecated
+    HTTP_POST_FILTER, // HttpPostFilter is deprecated, use HttpAppender which has content controlled config
 
     /**
      * Client for communications with an external Open ID Connect provider,
@@ -31,7 +42,7 @@ public enum JerseyClientName {
     OPEN_ID,
 
     /**
-     * Client for inter-node and proxy => stroom communications
+     * Client for inter-node stroom communications
      */
     STROOM,
 }

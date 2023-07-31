@@ -12,6 +12,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.time.Duration;
@@ -24,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -200,6 +205,70 @@ public class TestUtil {
                 Duration.ofSeconds(1));
     }
 
+    /**
+     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, ObjectMapper)}
+     */
+    public static <T> T testSerialisation(final T object,
+                                          final Class<T> clazz) {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        return testSerialisation(object, clazz, null, objectMapper);
+    }
+
+    /**
+     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, ObjectMapper)}
+     */
+    public static <T> T testSerialisation(final T object,
+                                          final Class<T> clazz,
+                                          final BiConsumer<ObjectMapper, String> jsonConsumer) {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        return testSerialisation(object, clazz, jsonConsumer, objectMapper);
+    }
+
+    /**
+     * Does a basic serialise - de-serialise test with an equality check on the initial
+     * and final objects. The optional jsonConsumer allows assertions to be performed
+     * by the caller on the serialised form.
+     *
+     * @return The de-serialised object for further inspection by the caller.
+     */
+    public static <T> T testSerialisation(final T object,
+                                          final Class<T> clazz,
+                                          final BiConsumer<ObjectMapper, String> jsonConsumer,
+                                          final ObjectMapper objectMapper) {
+        Objects.requireNonNull(object);
+        Objects.requireNonNull(clazz);
+        Objects.requireNonNull(objectMapper);
+
+        final String json;
+        try {
+            json = objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error serialising {}: {}", object, e.getMessage()), e);
+        }
+
+        LOGGER.debug(LogUtil.message("json for {}:\n{}", clazz.getSimpleName(), json));
+
+        if (jsonConsumer != null) {
+            jsonConsumer.accept(objectMapper, json);
+        }
+
+        final T object2;
+        try {
+            object2 = objectMapper.readValue(json, clazz);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error deserialising {}: {}", json, e.getMessage()), e);
+        }
+
+        Assertions.assertThat(object2)
+                .isEqualTo(object);
+
+        return object2;
+    }
+
     public static void comparePerformance(final int rounds,
                                           final int iterations,
                                           final Consumer<String> outputConsumer,
@@ -275,10 +344,18 @@ public class TestUtil {
                 tableStr));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static interface TestSetup {
 
         void run(final int rounds, final int iterations);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class TimedCase {
 

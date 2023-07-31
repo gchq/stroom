@@ -38,7 +38,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocRef createDocument(final String name) {
-        throw new PermissionException(securityContext.getUserId(), "You cannot create the System node");
+        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot create the System node");
     }
 
     @Override
@@ -49,7 +49,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
 
@@ -59,22 +59,24 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocRef moveDocument(final String uuid) {
-        throw new PermissionException(securityContext.getUserId(), "You cannot move the System node");
+        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot move the System node");
     }
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
-        throw new PermissionException(securityContext.getUserId(), "You cannot rename the System node");
+        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot rename the System node");
     }
 
     @Override
     public void deleteDocument(final String uuid) {
-        throw new PermissionException(securityContext.getUserId(), "You cannot delete the System node");
+        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot delete the System node");
     }
 
     @Override
     public DocRefInfo info(final String uuid) {
-        throw new PermissionException(securityContext.getUserId(), "You cannot get info about the System node");
+        throw new PermissionException(
+                securityContext.getUserIdentityForAudit(),
+                "You cannot get info about the System node");
     }
 
     @Override
@@ -111,8 +113,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        throw new PermissionException(
-                securityContext.getUserId(),
+        throw new PermissionException(securityContext.getUserIdentityForAudit(),
                 "You cannot perform findByNames on the System node handler");
     }
 
@@ -123,8 +124,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public Set<DocRef> listDocuments() {
-        throw new PermissionException(
-                securityContext.getUserId(),
+        throw new PermissionException(securityContext.getUserIdentityForAudit(),
                 "You cannot perform listDocuments on the System node handler");
     }
 }

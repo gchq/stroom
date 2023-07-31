@@ -82,7 +82,8 @@ public abstract class StroomIntegrationTest implements StroomTest {
             if (testTempDir == null) {
                 throw new NullPointerException("Temp dir is null");
             }
-            securityContext.asProcessingUser(() -> commonTestControl.setup(testTempDir));
+            securityContext.asProcessingUser(() ->
+                    commonTestControl.setup(testTempDir));
 
             CURRENT_TEST_CLASS_THREAD_LOCAL.set(this);
             LOGGER.debug("Set CURRENT_TEST_CLASS_THREAD_LOCAL to {} ({})",

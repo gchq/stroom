@@ -88,7 +88,7 @@ public class SystemInfoServiceImpl implements SystemInfoService {
 
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.VIEW_SYSTEM_INFO_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to view system information"
             );
         }

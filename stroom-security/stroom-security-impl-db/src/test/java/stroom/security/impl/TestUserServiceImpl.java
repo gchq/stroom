@@ -112,15 +112,15 @@ class TestUserServiceImpl {
         final User userGroup1 = createUserGroup("findGroup1");
         final User userGroup2 = createUserGroup("findGroup2");
 
-        assertThat(userService.find(new FindUserCriteria(user1.getName(), false)).size()).isEqualTo(1);
-        assertThat(userService.find(new FindUserCriteria(user2.getName(), false)).size()).isEqualTo(1);
-        assertThat(userService.find(new FindUserCriteria(userGroup1.getName(), true)).size()).isEqualTo(1);
-        assertThat(userService.find(new FindUserCriteria(userGroup2.getName(), true)).size()).isEqualTo(1);
+        assertThat(userService.find(new FindUserCriteria(user1.getSubjectId(), false)).size()).isEqualTo(1);
+        assertThat(userService.find(new FindUserCriteria(user2.getSubjectId(), false)).size()).isEqualTo(1);
+        assertThat(userService.find(new FindUserCriteria(userGroup1.getSubjectId(), true)).size()).isEqualTo(1);
+        assertThat(userService.find(new FindUserCriteria(userGroup2.getSubjectId(), true)).size()).isEqualTo(1);
 
-        assertThat(userService.find(new FindUserCriteria(user1.getName(), true)).size()).isEqualTo(0);
-        assertThat(userService.find(new FindUserCriteria(user2.getName(), true)).size()).isEqualTo(0);
-        assertThat(userService.find(new FindUserCriteria(userGroup1.getName(), false)).size()).isEqualTo(0);
-        assertThat(userService.find(new FindUserCriteria(userGroup2.getName(), false)).size()).isEqualTo(0);
+        assertThat(userService.find(new FindUserCriteria(user1.getSubjectId(), true)).size()).isEqualTo(0);
+        assertThat(userService.find(new FindUserCriteria(user2.getSubjectId(), true)).size()).isEqualTo(0);
+        assertThat(userService.find(new FindUserCriteria(userGroup1.getSubjectId(), false)).size()).isEqualTo(0);
+        assertThat(userService.find(new FindUserCriteria(userGroup2.getSubjectId(), false)).size()).isEqualTo(0);
 
         final Set<String> findUsers = userService.find(new FindUserCriteria(false))
                 .stream()

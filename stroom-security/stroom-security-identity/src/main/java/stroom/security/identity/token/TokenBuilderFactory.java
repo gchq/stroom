@@ -19,7 +19,10 @@
 package stroom.security.identity.token;
 
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -28,21 +31,30 @@ import javax.inject.Singleton;
 @Singleton
 public class TokenBuilderFactory {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TokenBuilderFactory.class);
+
     private final Provider<IdentityConfig> configProvider;
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
 
     @Inject
     public TokenBuilderFactory(final Provider<IdentityConfig> configProvider,
-                               final PublicJsonWebKeyProvider publicJsonWebKeyProvider) {
+                               final PublicJsonWebKeyProvider publicJsonWebKeyProvider,
+                               final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
         this.configProvider = configProvider;
         this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
     }
 
     public TokenBuilder builder() {
+        final String issuer = openIdConfigurationProvider.get().getIssuer();
+        LOGGER.debug("Creating token builder with issuer {}", issuer);
         final TokenBuilder tokenBuilder = new TokenBuilder();
         final IdentityConfig identityConfig = configProvider.get();
+        // The algorithm assumes that the default algorithm set in the config had that value when the
+        // default open id creds were generated.
         tokenBuilder
-                .issuer(identityConfig.getTokenConfig().getJwsIssuer())
+                .issuer(issuer)
                 .privateVerificationKey(publicJsonWebKeyProvider.getFirst())
                 .algorithm(identityConfig.getTokenConfig().getAlgorithm());
         return tokenBuilder;

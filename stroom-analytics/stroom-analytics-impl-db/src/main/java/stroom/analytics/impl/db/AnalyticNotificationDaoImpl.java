@@ -95,7 +95,7 @@ public class AnalyticNotificationDaoImpl implements AnalyticNotificationDao {
         final String config = serialise(notification.getConfig());
         final String notificationUuid = UUID.randomUUID().toString();
         final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .insertInto(ANALYTIC_NOTIFICATION,
                         ANALYTIC_NOTIFICATION.UUID,
@@ -127,7 +127,7 @@ public class AnalyticNotificationDaoImpl implements AnalyticNotificationDao {
 
         final String config = serialise(notification.getConfig());
         final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .update(ANALYTIC_NOTIFICATION)
                 .set(ANALYTIC_NOTIFICATION.VERSION, ANALYTIC_NOTIFICATION.VERSION.plus(1))

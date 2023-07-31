@@ -72,6 +72,7 @@ public class ProcessorInfoBuilder {
             }
 
             tb.row(SafeHtmlUtil.from("Id"), SafeHtmlUtil.from(filter.getId()));
+            tb.row(SafeHtmlUtil.from("Owner"), SafeHtmlUtil.from(processorFilterRow.getOwnerDisplayName()));
             tb.row("Created By", filter.getCreateUser());
             addRowDateString(tb, "Created On", filter.getCreateTimeMs());
             tb.row("Updated By", filter.getUpdateUser());

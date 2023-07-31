@@ -16,6 +16,8 @@
 
 package stroom.security.shared;
 
+import stroom.util.shared.UserName;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,22 +29,33 @@ import java.util.Set;
 public class UserAndPermissions {
 
     @JsonProperty
-    private final String userId;
+    private final UserName userName;
     @JsonProperty
     private final Set<String> permissions;
 
     @JsonCreator
-    public UserAndPermissions(@JsonProperty("userId") final String userId,
+    public UserAndPermissions(@JsonProperty("userName") final UserName userName,
                               @JsonProperty("permissions") final Set<String> permissions) {
-        this.userId = userId;
+        this.userName = userName;
         this.permissions = permissions;
     }
 
-    public String getUserId() {
-        return userId;
+    /**
+     * @return
+     */
+    public UserName getUserName() {
+        return userName;
     }
 
     public Set<String> getPermissions() {
         return permissions;
+    }
+
+    @Override
+    public String toString() {
+        return "UserAndPermissions{" +
+                "userId='" + userName + '\'' +
+                ", permissions=" + permissions +
+                '}';
     }
 }

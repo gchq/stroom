@@ -162,15 +162,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.core.receive.ReceiveDataConfig getReceiveDataConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.core.receive.ReceiveDataConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.data.retention.api.DataRetentionConfig getDataRetentionConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -468,6 +459,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.receive.common.ReceiveDataConfig getReceiveDataConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.receive.common.ReceiveDataConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.search.elastic.CryptoConfig getCryptoConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -639,10 +639,20 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.impl.OpenIdConfig getOpenIdConfig2(
+    stroom.security.impl.StroomOpenIdConfig getStroomOpenIdConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.security.impl.OpenIdConfig.class);
+                stroom.security.impl.StroomOpenIdConfig.class);
+    }
+
+    // Binding StroomOpenIdConfig to additional interface AbstractOpenIdConfig
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.openid.api.AbstractOpenIdConfig getAbstractOpenIdConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.StroomOpenIdConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -848,6 +858,16 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.query.common.v2.ResultStoreLmdbConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.util.cache.CacheConfig getCacheConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.util.cache.CacheConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

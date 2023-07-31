@@ -32,15 +32,28 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
-                    .onSuccess(result -> {
-                        final IconMenuItem apiKeysMenuItem;
-                        final SvgImage icon = SvgImage.KEY;
-                        apiKeysMenuItem = new IconMenuItem.Builder()
-                                .priority(5)
-                                .icon(icon)
-                                .text("API Keys")
-                                .command(() -> {
-                                    postMessage("manageTokens");
+                    .onSuccess(extendedUiConfig -> {
+                        if (!extendedUiConfig.isExternalIdentityProvider()) {
+                            addMenuItem(event);
+                        }
+                    })
+                    .onFailure(caught ->
+                            AlertEvent.fireError(
+                                    ApiKeysPlugin.this,
+                                    caught.getMessage(),
+                                    null));
+        }
+    }
+
+    private static void addMenuItem(final BeforeRevealMenubarEvent event) {
+        final IconMenuItem apiKeysMenuItem;
+        final SvgImage icon = SvgImage.KEY;
+        apiKeysMenuItem = new IconMenuItem.Builder()
+                .priority(5)
+                .icon(icon)
+                .text("API Keys")
+                .command(() -> {
+                    postMessage("manageTokens");
 
 //                                final Hyperlink hyperlink = new Builder()
 //                                        .text("API Keys")
@@ -49,15 +62,8 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
 //                                        .icon(icon)
 //                                        .build();
 //                                HyperlinkEvent.fire(this, hyperlink);
-                                })
-                                .build();
-                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
-                    })
-                    .onFailure(caught ->
-                            AlertEvent.fireError(
-                                    ApiKeysPlugin.this,
-                                    caught.getMessage(),
-                                    null));
-        }
+                })
+                .build();
+        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
     }
 }

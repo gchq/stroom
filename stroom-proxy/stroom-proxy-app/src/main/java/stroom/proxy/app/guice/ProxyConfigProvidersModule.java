@@ -13,15 +13,6 @@ import javax.annotation.processing.Generated;
 @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
 public class ProxyConfigProvidersModule extends AbstractModule {
 
-    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.util.io.PathConfig getPathConfig(
-            final ProxyConfigProvider proxyConfigProvider) {
-        return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.ProxyPathConfig.class);
-    }
-
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -36,10 +27,38 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.app.ProxyAuthenticationConfig getProxyAuthenticationConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.ProxyAuthenticationConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.ProxyConfig getProxyConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.app.ProxyConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.ProxyOpenIdConfig getProxyOpenIdConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.ProxyOpenIdConfig.class);
+    }
+
+    // Binding ProxyOpenIdConfig to additional interface AbstractOpenIdConfig
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.openid.api.AbstractOpenIdConfig getAbstractOpenIdConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.ProxyOpenIdConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -51,13 +70,23 @@ public class ProxyConfigProvidersModule extends AbstractModule {
                 stroom.proxy.app.ProxyPathConfig.class);
     }
 
+    // Binding ProxyPathConfig to additional interface PathConfig
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.ReceiveDataConfig getReceiveDataConfig(
+    stroom.util.io.PathConfig getPathConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.ReceiveDataConfig.class);
+                stroom.proxy.app.ProxyPathConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.ProxySecurityConfig getProxySecurityConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.ProxySecurityConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -130,6 +159,15 @@ public class ProxyConfigProvidersModule extends AbstractModule {
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.repo.ProxyRepoConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.common.ReceiveDataConfig getReceiveDataConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.receive.common.ReceiveDataConfig.class);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

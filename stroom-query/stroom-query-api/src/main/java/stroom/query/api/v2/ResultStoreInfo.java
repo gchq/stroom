@@ -15,7 +15,7 @@ public class ResultStoreInfo {
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
-    private final String userId;
+    private final String createUser;
     @JsonProperty
     private final long creationTime;
     @JsonProperty
@@ -35,7 +35,7 @@ public class ResultStoreInfo {
     public ResultStoreInfo(
             @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
             @JsonProperty("queryKey") final QueryKey queryKey,
-            @JsonProperty("userId") final String userId,
+            @JsonProperty("createUser") final String createUser,
             @JsonProperty("creationTime") final long creationTime,
             @JsonProperty("nodeName") final String nodeName,
             @JsonProperty("storeSize") final long storeSize,
@@ -45,7 +45,7 @@ public class ResultStoreInfo {
             @JsonProperty("storeLifespan") final LifespanInfo storeLifespan) {
         this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
-        this.userId = userId;
+        this.createUser = createUser;
         this.creationTime = creationTime;
         this.nodeName = nodeName;
         this.storeSize = storeSize;
@@ -63,8 +63,8 @@ public class ResultStoreInfo {
         return queryKey;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getCreateUser() {
+        return createUser;
     }
 
     public long getCreationTime() {

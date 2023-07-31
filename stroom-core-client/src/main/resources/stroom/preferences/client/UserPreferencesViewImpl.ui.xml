@@ -16,7 +16,7 @@
         <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme">
             <item:SelectionBox ui:field="editorTheme" addStyleNames="w-100"/>
         </form:FormGroup>
-        <!-- Ace editor theme -->
+        <!-- Ace editor key bindings -->
         <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings:">
             <item:SelectionBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
         </form:FormGroup>

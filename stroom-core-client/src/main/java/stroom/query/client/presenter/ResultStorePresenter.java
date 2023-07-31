@@ -64,7 +64,7 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
                 tb
                         .row(TableCell.header("Store Details", 2))
                         .row("UUID", resultStoreInfo.getQueryKey().getUuid())
-                        .row("User Id", resultStoreInfo.getUserId())
+                        .row("Create User", resultStoreInfo.getCreateUser())
                         .row("Creation Time", dateTimeFormatter.format(resultStoreInfo.getCreationTime()))
                         .row("Age", ModelStringUtil.formatDurationString(
                                 System.currentTimeMillis() - resultStoreInfo.getCreationTime()))

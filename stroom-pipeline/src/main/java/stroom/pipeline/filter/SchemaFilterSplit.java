@@ -59,7 +59,7 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         this.schemaFilter = schemaFilter;
 
         if (securityContext != null) {
-            schemaConstraint.setUser(securityContext.getUserId());
+            schemaConstraint.setUser(securityContext.getSubjectId());
         }
     }
 

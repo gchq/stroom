@@ -587,10 +587,22 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     itemsRetention: 100
   receive:
-    feedNamePattern: "^[A-Z0-9_-]{3,}$"
+    authenticationRequired: true
+    certificateAuthenticationEnabled: true
+    metaTypes:
+    - "Context"
+    - "Raw Reference"
+    - "Events"
+    - "Raw Events"
+    - "Reference"
+    - "Error"
+    - "Test Events"
+    - "Test Reference"
+    - "Detections"
+    - "Meta Data"
+    - "Records"
     receiptPolicyUuid: null
-    requireTokenAuthentication: false
-    unknownClassification: "UNKNOWN CLASSIFICATION"
+    tokenAuthenticationEnabled: false
   search:
     extraction:
       extractionDelayMs: 100
@@ -628,16 +640,25 @@ appConfig:
       authenticationRequired: true
       openId:
         authEndpoint: null
+        clientCredentialsScopes:
+        - "openid"
         clientId: null
         clientSecret: null
-        formTokenRequest: false
+        formTokenRequest: true
+        identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
+        logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
-        requestScope: null
+        requestScopes:
+        - "openid"
+        - "email"
         tokenEndpoint: null
-        useInternal: true
+        uniqueIdentityClaim: "sub"
+        userDisplayNameClaim: "preferred_username"
+        validIssuers: []
+        validateAudience: true
       preventLogin: false
     authorisation:
       db:
@@ -657,6 +678,14 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       userAppPermissionsCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      userByDisplayNameCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      userByUuidCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
@@ -738,7 +767,6 @@ appConfig:
         idTokenExpiration: "PT1H"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
-      useDefaultOpenIdCredentials: false
     webContent:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\

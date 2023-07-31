@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
@@ -122,13 +123,6 @@ public class AppPermissionsPresenter extends
                 ? new TickBoxCell.DefaultAppearance()
                 : new TickBoxCell.NoBorderAppearance();
 
-        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
-            @Override
-            public String getValue(final String row) {
-                return row;
-            }
-        }, "Permission", 200);
-
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
                 TickBoxCell.create(appearance, true, true, updateable)) {
@@ -142,6 +136,7 @@ public class AppPermissionsPresenter extends
                 return TickBoxState.fromBoolean(false);
             }
         };
+
         if (updateable) {
             selectionColumn.setFieldUpdater((index, permission, value) -> {
                 final ChangeUserRequest request = new ChangeUserRequest(
@@ -159,7 +154,24 @@ public class AppPermissionsPresenter extends
                         .changeUser(request);
             });
         }
-        dataGrid.addColumn(selectionColumn, "<br/>", 50);
+
+        dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+
+        // Perm name
+        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
+            @Override
+            public String getValue(final String permissionName) {
+                return permissionName;
+            }
+        }, "Permission", 200);
+
+        // Description
+        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
+            @Override
+            public String getValue(final String permissionName) {
+                return PermissionNames.getDescription(permissionName);
+            }
+        }, "Description", 700);
     }
 
     protected boolean isCurrentUserUpdate() {

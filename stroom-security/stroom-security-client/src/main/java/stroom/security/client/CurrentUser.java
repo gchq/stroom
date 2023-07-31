@@ -30,6 +30,7 @@ import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAndPermissions;
+import stroom.util.shared.UserName;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -50,7 +51,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final RestFactory restFactory;
     private final Provider<SplashPresenter> splashPresenterProvider;
     private final CurrentActivity currentActivity;
-    private String userId;
+    private UserName userName;
     private Set<String> permissions;
 
     @Inject
@@ -65,7 +66,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     public void clear() {
-        this.userId = null;
+        this.userName = null;
         this.permissions = null;
     }
 
@@ -73,10 +74,11 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         setUserAndPermissions(userAndPermissions, true);
     }
 
-    public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
+    public void setUserAndPermissions(final UserAndPermissions userAndPermissions,
+                                      final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.userId = userAndPermissions.getUserId();
+            this.userName = userAndPermissions.getUserName();
             this.permissions = userAndPermissions.getPermissions();
         }
 
@@ -90,13 +92,13 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     @Override
-    public String getUserId() {
-        return userId;
+    public UserName getUserName() {
+        return userName;
     }
 
     @Override
     public boolean isLoggedIn() {
-        return userId != null;
+        return userName != null;
     }
 
     private boolean isAdmin() {

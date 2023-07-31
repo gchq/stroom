@@ -79,7 +79,6 @@ class TestPredicateUtil {
                 .withSimpleEqualityAssertion()
                 .addCase(null, ALL_FRUITS)
                 .addCase(Collections.emptyList(), ALL_FRUITS)
-                .addCase(Collections.emptyList(), ALL_FRUITS)
                 .addCase(List.of(APPLE), List.of("apple"))
                 .addCase(List.of(APPLE, ORANGE), List.of("apple", "orange"))
                 .addCase(

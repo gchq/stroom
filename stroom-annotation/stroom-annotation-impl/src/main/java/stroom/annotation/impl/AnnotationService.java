@@ -19,7 +19,9 @@ import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.security.user.api.UserNameService;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserName;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -30,12 +32,15 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;
+    private final UserNameService userNameService;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final UserNameService userNameService) {
         this.annotationDao = annotationDao;
         this.securityContext = securityContext;
+        this.userNameService = userNameService;
     }
 
     @Override
@@ -70,7 +75,9 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         checkPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, securityContext.getUserId())
+                .addReplacementFilter(
+                        AnnotationFields.CURRENT_USER_FUNCTION,
+                        securityContext.getUserIdentityForAudit())
                 .build();
 
         ExpressionOperator expression = criteria.getExpression();
@@ -80,6 +87,10 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         annotationDao.search(criteria, fields, consumer);
     }
 
+    private UserName getCurrentUser() {
+        return securityContext.getUserName();
+    }
+
     AnnotationDetail getDetail(Long annotationId) {
         checkPermission();
         return annotationDao.getDetail(annotationId);
@@ -87,7 +98,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     public AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
-        return annotationDao.createEntry(request, securityContext.getUserId());
+        return annotationDao.createEntry(request, getCurrentUser());
     }
 
     List<EventId> getLinkedEvents(final Long annotationId) {
@@ -97,27 +108,29 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     List<EventId> link(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.link(eventLink, securityContext.getUserId());
+        return annotationDao.link(eventLink, getCurrentUser());
     }
 
     List<EventId> unlink(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.unlink(eventLink, securityContext.getUserId());
+        return annotationDao.unlink(eventLink, getCurrentUser());
     }
 
     Integer setStatus(SetStatusRequest request) {
         checkPermission();
-        return annotationDao.setStatus(request, securityContext.getUserId());
+        return annotationDao.setStatus(request, getCurrentUser());
     }
 
     Integer setAssignedTo(SetAssignedToRequest request) {
         checkPermission();
-        return annotationDao.setAssignedTo(request, securityContext.getUserId());
+        return annotationDao.setAssignedTo(request, getCurrentUser());
     }
 
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use annotations");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    "You do not have permission to use annotations");
         }
     }
 }

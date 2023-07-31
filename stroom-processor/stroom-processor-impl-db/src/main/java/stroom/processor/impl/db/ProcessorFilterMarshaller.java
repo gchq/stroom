@@ -27,7 +27,16 @@ import javax.xml.bind.JAXBException;
 public class ProcessorFilterMarshaller extends AbstractEntityMarshaller<ProcessorFilter, QueryData> {
 
     public ProcessorFilterMarshaller() throws JAXBException {
-        super(JAXBContext.newInstance(QueryData.class));
+        super(getJaxbContext());
+    }
+
+    private static JAXBContext getJaxbContext() throws JAXBException {
+
+        try {
+            return JAXBContext.newInstance(QueryData.class);
+        } catch (JAXBException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

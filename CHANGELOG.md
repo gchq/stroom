@@ -13,7 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.2-beta.43] - 2023-07-14
+## [v7.2-beta.43-open-id-3] - 2023-07-20
+
+* Issue **#3577** : Fix ownership permissions when creating a new entity.
+
+
+## [v7.2-beta.43-open-id-2] - 2023-07-20
+
+* Issue **#3613** : Fix error un-marshalling TimeRange.
+
+* Issue **#3612** : Change default for `forwardChunkSize` from null to 1048576 bytes so chunked transport is used to avoid out of memory errors.
+
+* Issue **#3620** : Fix `currentUser()` not returning display name in OIDC version.
+
+
+## [v7.2-beta.43-open-id-1] - 2023-07-17
 
 * Issue **#3570** : Fix problem of XSLT filter error using old name for an XSLT doc. Also fix handling of name pattern not matching when a default XSLT is provided.
 
@@ -32,7 +46,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3609** : Fix comments in quoted strings.
 
 
-## [v7.2-beta.42] - 2023-07-13
+## [v7.2-beta.42-open-id-1] - 2023-07-13
 
 * Issue **#3566** : Fix issue of query help text not updating correctly for some functions.
 
@@ -48,9 +62,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3579** : Fix the `Retention` column on the data viewer screen when the data retention rule contains disabled terms.
 
-
-## [v7.2-beta.41] - 2023-07-10
-
 * Fix styling for log pane toggle button in the stepper screen.
 
 * Issue **#3573** : Fix new dashboard panel size.
@@ -58,9 +69,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Fix various icon styling issues.
 
 * Issue **#3588** : Fix query parameters not being de-referenced in audit logs for dashboard search and download results. Fix double logging of download results.
-
-
-## [v7.2-beta.40] - 2023-07-05
 
 * Issue **#3575** : Duplicate tab now allows user to choose destination.
 
@@ -78,18 +86,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3569** : Fix stuck extraction tasks.
 
-
-## [v7.2-beta.39] - 2023-06-29
-
 * Issue **#3559** : Allow user to choose the location of new dashboard components.
-
-
-## [v7.2-beta.38] - 2023-06-29
 
 * Issue **#3567** : Improve analytics execution logging.
 
 
-## [v7.2-beta.36] - 2023-06-28
+## [v7.2-beta.36-open-id-1] - 2023-06-29
 
 * Issue **#3536** : Analytic notifications are now written using the detection schema.
 
@@ -113,18 +115,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
 
-
-## [v7.2-beta.35-restyle] - 2023-06-27
-
 * Issue **#3553** : Improve UI styling.
 
-
-## [v7.2-beta.35] - 2023-06-22
-
 * Issue **#3510** : Fix explorer scroll jumping issue.
-
-
-## [v7.2-beta.34] - 2023-06-21
 
 * Issue **#3542** : Stop logging expected task termination exceptions as errors.
 
@@ -149,7 +142,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3487** : Change ref log message `Reference data loader for {} was closed with a state of {}` from warn to debug as it is expected behaviour for a stream that is found to have been already loaded by another thread.
 
 
-## [v7.2-beta.33] - 2023-06-20
+## [v7.2-beta.33-open-id-1] - 2023-06-21
 
 * Issue **#3412** : Add a filter icon to pipeline elements in the stepper to show which elements have active filters. Change the _Change Filters_ screen to show which of the elements has active filter(s) and to select the element currently selected in the stepper. Add a context menu to the pipeline elements to allow editing/deleting of the step filters.
 
@@ -157,15 +150,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3537** : Fix spinner arrows showing as `MONO_ARROW_UP` and `MONO_ARROW_DOWN` text instead of icons.
 
-
-## [v7.2-beta.32] - 2023-06-19
-
 * Issue **#3528** : Fix null pointer exception when booting proxy with a non-null TlsConfiguration.
 
 * Issue **#3509** : Add field, function, statement picker.
-
-
-## [v7.2-beta.31] - 2023-06-15
 
 * Issue **#3482** : Add a log pane to the stepper to show all the info/warn/error/fatal messages in one place. Add button to toggle the new log pane. Add coloured border to pipeline elements in the stepper to indicate the presence of INFO/WARN/ERROR/FATAL messages.
 
@@ -175,37 +162,22 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3522** : Change the default stroom/proxy config files to set `detailedJsonProcessingExceptionMapper: true` so REST clients see the reason for a 400 Bad Request and it is also included in the app logs when using the Jersey logging feature logger.
 
+* Issue **#3305** : Fix index out of bounds exception.
 
-## [v7.2-beta.30] - 2023-06-14
+* Issue **#3305** : Fix index out of bounds exception.
 
 * Issue **#3305** : Fix index out of bounds exception.
 
 
-## [v7.2-beta.29] - 2023-06-14
-
-* Issue **#3305** : Fix index out of bounds exception.
-
-
-## [v7.2-beta.28] - 2023-06-14
-
-* Issue **#3305** : Fix index out of bounds exception.
-
-
-## [v7.2-beta.27] - 2023-06-13
+## [v7.2-beta.27-open-id-1] - 2023-06-14
 
 * Issue **#3304** : Make analytic results searchable.
-
-
-## [v7.2-beta.26] - 2023-06-13
 
 * Add support for syntax highlighting fenced blocks in markdown documentation.
 
 * Issue **#3506** : Make time picker and query buttons available from dashboards opened from links.
 
 * Issue **#3505** : Add debug.
-
-
-## [v7.2-beta.25] - 2023-06-12
 
 * Issue **#3512** : Increase col width to remove ellipsis.
 
@@ -215,9 +187,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3508** : Change toggle button.
 
-
-## [v7.2-beta.24] - 2023-06-06
-
 * Issue **#3490** : Fix LMDB row key for analytics.
 
 * Issue **#3488** : Change default index shard sorting to be by partition and not node.
@@ -225,9 +194,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3473** : Add debug to diagnose issue if it returns.
 
 * Issue **#3503** : Show all errors on top search toolbar.
-
-
-## [v7.2-beta.23] - 2023-06-05
 
 * Issue **#2197** : Add markdown documentation editor.
 
@@ -241,9 +207,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3499** : Fix rule shard query.
 
-
-## [v7.2-beta.22] - 2023-06-01
-
 * Issue **#3492** : Fix multiline list display for error pane.
 
 * Issue **#3480** : Fix menu item text wrapping.
@@ -251,9 +214,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3493** : Improve ctrl+f highlighting in ACE editor.
 
 * Issue **#3401** : Add analytic data shard page.
-
-
-## [v7.2-beta.21] - 2023-05-31
 
 * Issue **#3466** : Improve rule editing and configuration.
 
@@ -275,13 +235,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3476** : Ensure special fields are removed when dashboard data source is changed.
 
-
-## [v7.2-beta.20] - 2023-05-30
-
 * Issue **#3485** : Roll lmdb-java back to 0.8.2 to see if it fixes the FFI issue.
-
-
-## [v7.2-beta.19] - 2023-05-30
 
 * Fix inefficient cursor loops in ref data purge. Make other minor performance improvements.
 
@@ -294,7 +248,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3358** : Fix audit events for user preferences screen.
 
 
-## [v7.2-beta.18] - 2023-05-22
+## [v7.2-beta.18-open-id-1] - 2023-05-24
+
+* No change. Releasing with correct tag.
+
+
+## [v7.2-beta.10-open-id-7] - 2023-05-24
+
+* Fix Data screen fetching data twice and consequently logging the fetch audit event twice.
+
+* Issue **#3358** : Fix audit events for user preferences screen.
+
+* Issue **#3475** : Change proxy error handling to return 401 for token authentication failures.
+
+* Change internode comms to authenticate as the processing user then run as a user supplied in headers.
 
 * Issue **#3388** : Fix mouse selection drag scrolling in ace editor.
 
@@ -302,39 +269,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3423** : Catch exceptions thrown trying to update for deleted rules.
 
-
-## [v7.2-beta.17] - 2023-05-19
-
 * Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
 
-
-## [v7.2-beta.16] - 2023-05-18
-
 * Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
-
-
-## [v7.2-beta.15] - 2023-05-18
 
 * Issue **#3468** : Expected interrupted exceptions are now logged as debug not error.
 
 * Issue **#3469** : Stop non aggregate fields showing on aggregated rows.
 
-
-## [v7.2-beta.14] - 2023-05-17
-
 * Issue **#3465** : Fix index shard search for index name.
 
 * Issue **#3371** : Stats now supports multiple date terms and none. Fix stats with time selector and time series vis.
 
-
-## [v7.2-beta.13] - 2023-05-17
-
 * Issue **#3462** : Make enabled the first item in the list.
 
 * Issue **#3461** : Remove requirement for pipes in QL, add 'from', add 'select' instead of 'table', add 'between' operator.
-
-
-## [v7.2-beta.12] - 2023-05-16
 
 * Issue **#3441** : Min and Max expression functions now return correct type.
 
@@ -356,9 +305,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3432** : Fix processing of where clause in QL.
 
-
-## [v7.2-beta.11] - 2023-05-15
-
 * Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
 
 * Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
@@ -372,6 +318,52 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3449** : Ensure jersey client responses are closed properly.
 
 * Issue **#3429** : Fix error logging.
+
+
+## [v7.2-beta.10-open-id-6] - 2023-05-15
+
+* Uplift packaged send_to_stroom.sh version to v3.2.2.
+
+
+## [v7.2-beta.10-open-id-5] - 2023-05-15
+
+* Fix check style errors.
+
+
+## [v7.2-beta.10-open-id-4] - 2023-05-15
+
+* Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
+
+* Issue **#3395** : Fix nested use of selectors such as first() and last() in dashboard tables.
+
+* Issue **#3411** : Fix sorting or search results in LMDB.
+
+* Ensure the same request/response logging feature is used for all jersey clients and server in stroom and proxy.
+
+* Issue **#3449** : Ensure jersey client responses are closed properly.
+
+
+## [v7.2-beta.10-open-id-3] - 2023-05-12
+
+* Issue **#3117** : Fix problems with user display name not showing on welcome screen.
+
+
+## [v7.2-beta.10-open-id-2] - 2023-05-12
+
+* Change manage user command to run as processing user.
+
+* Change the CLI commands to also log to stdout/err.
+
+
+## [v7.2-beta.10-open-id] - 2023-05-10
+
+* Issue **#3117** : Add _Preferred Username_ and _Full name_ to the user permissions data grids when using an external IDP. This is to make it easier to identify which users are which when assigning permissions as the IDP unique identity may be a UUID.
+
+* Issue **#3118** : Hide the Tools => (API Keys|Users) menu items when using an external IDP.
+
+* Add editor key bindings to user preferences.
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
 
 
 ## [v7.2-beta.10] - 2023-05-05
@@ -5628,9 +5620,27 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43...HEAD
-[v7.2-beta.43]: https://github.com/gchq/stroom/compare/v7.2-beta.42...v7.2-beta.43
-[v7.2-beta.42]: https://github.com/gchq/stroom/compare/v7.2-beta.41...v7.2-beta.42
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-3...HEAD
+[v7.2-beta.43-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-2...v7.2-beta.43-open-id-3
+[v7.2-beta.43-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-1...v7.2-beta.43-open-id-2
+[v7.2-beta.43-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.42-open-id-1...v7.2-beta.43-open-id-1
+[v7.2-beta.42-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.36-open-id-1...v7.2-beta.42-open-id-1
+[v7.2-beta.36-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.33-open-id-1...v7.2-beta.36-open-id-1
+[v7.2-beta.33-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.27-open-id-1...v7.2-beta.33-open-id-1
+[v7.2-beta.27-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.18-open-id-1...v7.2-beta.27-open-id-1
+[v7.2-beta.18-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-7...v7.2-beta.18-open-id-1
+[v7.2-beta.10-open-id-7]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-6...v7.2-beta.10-open-id-7
+[v7.2-beta.10-open-id-6]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-5...v7.2-beta.10-open-id-6
+[v7.2-beta.10-open-id-5]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-4...v7.2-beta.10-open-id-5
+[v7.2-beta.10-open-id-4]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-3...v7.2-beta.10-open-id-4
+[v7.2-beta.10-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...v7.2-beta.10-open-id-3
+[v7.2-beta.10-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...v7.2-beta.10-open-id-2
+[v7.2-beta.10-open-id]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.10-open-id
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-3...HEAD
+[v7.2-beta.43-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-2...v7.2-beta.43-open-id-3
+[v7.2-beta.43-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-1...v7.2-beta.43-open-id-2
+[v7.2-beta.43-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.42-open-id-1...v7.2-beta.43-open-id-1
+[v7.2-beta.42-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.36-open-id-1...v7.2-beta.42-open-id-1
 [v7.2-beta.41]: https://github.com/gchq/stroom/compare/v7.2-beta.40...v7.2-beta.41
 [v7.2-beta.40]: https://github.com/gchq/stroom/compare/v7.2-beta.39...v7.2-beta.40
 [v7.2-beta.39]: https://github.com/gchq/stroom/compare/v7.2-beta.38...v7.2-beta.39

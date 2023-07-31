@@ -3,6 +3,9 @@ package stroom.proxy.app;
 import stroom.proxy.app.DbRecordCountAssertion.DbRecordCounts;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.security.openid.api.IdpType;
+import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
@@ -27,12 +30,15 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
     @Override
     protected ProxyConfig getProxyConfigOverride() {
         return ProxyConfig.builder()
-                .useDefaultOpenIdCredentials(true)
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
                 .proxyRepoConfig(ProxyRepoConfig.builder()
                         .storingEnabled(true)
                         .build())
+                .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
+                        .openIdConfig(new ProxyOpenIdConfig()
+                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
+                        .build()))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")
                         .maxAggregateAge(StroomDuration.ofSeconds(5))
@@ -42,6 +48,9 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                 .addForwardDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
                 .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .receiveDataConfig(ReceiveDataConfig.builder()
+                        .withAuthenticationRequired(false)
+                        .build())
                 .build();
     }
 

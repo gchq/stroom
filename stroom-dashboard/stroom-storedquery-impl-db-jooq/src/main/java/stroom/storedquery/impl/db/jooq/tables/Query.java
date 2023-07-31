@@ -4,16 +4,16 @@
 package stroom.storedquery.impl.db.jooq.tables;
 
 
-import stroom.storedquery.impl.db.jooq.Keys;
-import stroom.storedquery.impl.db.jooq.Stroom;
-import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row11;
+import org.jooq.Row12;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -22,6 +22,11 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
+
+import stroom.storedquery.impl.db.jooq.Indexes;
+import stroom.storedquery.impl.db.jooq.Keys;
+import stroom.storedquery.impl.db.jooq.Stroom;
+import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 
 
 /**
@@ -100,6 +105,11 @@ public class Query extends TableImpl<QueryRecord> {
      */
     public final TableField<QueryRecord, Boolean> FAVOURITE = createField(DSL.name("favourite"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.query.owner_uuid</code>.
+     */
+    public final TableField<QueryRecord, String> OWNER_UUID = createField(DSL.name("owner_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
     private Query(Name alias, Table<QueryRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -136,6 +146,11 @@ public class Query extends TableImpl<QueryRecord> {
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
+    }
+
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.QUERY_OWNER_UUID);
     }
 
     @Override
@@ -180,11 +195,11 @@ public class Query extends TableImpl<QueryRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row11 type methods
+    // Row12 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row11<Integer, Integer, Long, String, Long, String, String, String, String, String, Boolean> fieldsRow() {
-        return (Row11) super.fieldsRow();
+    public Row12<Integer, Integer, Long, String, Long, String, String, String, String, String, Boolean, String> fieldsRow() {
+        return (Row12) super.fieldsRow();
     }
 }

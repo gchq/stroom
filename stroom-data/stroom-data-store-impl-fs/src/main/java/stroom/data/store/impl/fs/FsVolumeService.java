@@ -155,7 +155,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 final FsVolumeState fileVolumeState = fileSystemVolumeStateDao.create(new FsVolumeState());
                 fileVolume.setVolumeState(fileVolumeState);
 
-                AuditUtil.stamp(securityContext.getUserId(), fileVolume);
+                AuditUtil.stamp(securityContext, fileVolume);
                 result = fsVolumeDao.create(fileVolume);
                 result.setVolumeState(fileVolume.getVolumeState());
             } catch (IOException e) {
@@ -181,7 +181,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     public FsVolume update(final FsVolume fileVolume) {
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
-            AuditUtil.stamp(securityContext.getUserId(), fileVolume);
+            AuditUtil.stamp(securityContext, fileVolume);
             final FsVolume result = fsVolumeDao.update(fileVolume);
 
             fireChange(EntityAction.UPDATE);
@@ -645,8 +645,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             return OptionalLong.of((long) (totalBytes * volumeConfigProvider.get()
                     .getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
-            LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}",
-                    FileUtil.getCanonicalPath(path)));
+            LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
+                    " Please manually set limit for index volume. {}",
+                    FileUtil.getCanonicalPath(path), e.getMessage()));
             return OptionalLong.empty();
         }
     }

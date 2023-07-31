@@ -1,0 +1,146 @@
+package stroom.security.impl;
+
+import stroom.config.common.UriFactory;
+import stroom.security.common.impl.ExternalIdpConfigurationProvider;
+import stroom.security.common.impl.IdpConfigurationProvider;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfigurationResponse;
+import stroom.util.NullSafe;
+
+import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+
+/**
+ * A front for the internal and external OIDC config providers. The useInternal prop in local
+ * config controls which delegate is used.
+ */
+public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvider {
+
+    private final IdpConfigurationProvider delegate;
+    // We must inject AbstractOpenIdConfig rather than OpenIdConfiguration as the latter is guice
+    // bound to this interface (IdpConfigurationProvider) to provide a derived config based on yaml
+    // config + config from the IDP. AbstractOpenIdConfig is bound to the local yaml config only, which is
+    // what we need here.
+    private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
+    private final UriFactory uriFactory;
+
+    @Inject
+    public DelegatingIdpConfigurationProvider(
+            final Provider<InternalIdpConfigurationProvider> internalIdpConfigurationProviderProvider,
+            final Provider<ExternalIdpConfigurationProvider> externalIdpConfigurationProviderProvider,
+            final Provider<StroomTestIdpConfigurationProvider> stroomTestIdpConfigurationProviderProvider,
+            final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider,
+            final UriFactory uriFactory) {
+
+        delegate = switch (localOpenIdConfigProvider.get().getIdentityProviderType()) {
+
+            case INTERNAL_IDP -> internalIdpConfigurationProviderProvider.get();
+            case EXTERNAL_IDP -> externalIdpConfigurationProviderProvider.get();
+            case TEST_CREDENTIALS -> stroomTestIdpConfigurationProviderProvider.get();
+            // Might need to create a NoIdpConfigurationProvider
+            case NO_IDP -> throw new UnsupportedOperationException(
+                    "No delegate when IDP type is " + IdpType.NO_IDP);
+        };
+        this.localOpenIdConfigProvider = localOpenIdConfigProvider;
+        this.uriFactory = uriFactory;
+    }
+
+    @Override
+    public OpenIdConfigurationResponse getConfigurationResponse() {
+        return delegate.getConfigurationResponse();
+    }
+
+    @Override
+    public IdpType getIdentityProviderType() {
+        return localOpenIdConfigProvider.get().getIdentityProviderType();
+    }
+
+    @Override
+    public String getOpenIdConfigurationEndpoint() {
+        return delegate.getOpenIdConfigurationEndpoint();
+    }
+
+    @Override
+    public String getIssuer() {
+        return delegate.getIssuer();
+    }
+
+    @Override
+    public String getAuthEndpoint() {
+        return delegate.getAuthEndpoint();
+    }
+
+    @Override
+    public String getTokenEndpoint() {
+        return delegate.getTokenEndpoint();
+    }
+
+    @Override
+    public String getJwksUri() {
+        return delegate.getJwksUri();
+    }
+
+    @Override
+    public String getLogoutEndpoint() {
+        final String logoutEndpoint = delegate.getLogoutEndpoint();
+        // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
+        // the session and redirect to perform a new auth flow.
+
+        return NullSafe.isBlankString(logoutEndpoint)
+                ? uriFactory.publicUri(InternalIdpConfigurationProvider.INTERNAL_AUTH_ENDPOINT).toString()
+                : logoutEndpoint;
+    }
+
+    @Override
+    public String getClientId() {
+        return delegate.getClientId();
+    }
+
+    @Override
+    public String getClientSecret() {
+        return delegate.getClientSecret();
+    }
+
+    @Override
+    public boolean isFormTokenRequest() {
+        return delegate.isFormTokenRequest();
+    }
+
+    @Override
+    public List<String> getRequestScopes() {
+        return delegate.getRequestScopes();
+    }
+
+    @Override
+    public List<String> getClientCredentialsScopes() {
+        return delegate.getClientCredentialsScopes();
+    }
+
+    @Override
+    public boolean isValidateAudience() {
+        return delegate.isValidateAudience();
+    }
+
+    @Override
+    public Set<String> getValidIssuers() {
+        return delegate.getValidIssuers();
+    }
+
+    @Override
+    public String getUniqueIdentityClaim() {
+        return delegate.getUniqueIdentityClaim();
+    }
+
+    @Override
+    public String getUserDisplayNameClaim() {
+        return delegate.getUserDisplayNameClaim();
+    }
+
+    @Override
+    public String getLogoutRedirectParamName() {
+        return delegate.getLogoutRedirectParamName();
+    }
+}

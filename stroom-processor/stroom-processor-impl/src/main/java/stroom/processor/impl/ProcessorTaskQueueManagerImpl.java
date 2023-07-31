@@ -221,7 +221,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         LOGGER.debug("assignTasks() called for node {}, count {}", nodeName, count);
 
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "Only the processing user is allowed to assign tasks");
         }
 
@@ -284,7 +284,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         .orElse(0)));
 
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "Only the processing user is allowed to abandon tasks");
         }
 

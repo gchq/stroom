@@ -46,6 +46,7 @@ public class EditorPresenter
         HasText,
         HasValueChangeHandlers<String> {
 
+    protected static final String VIM_KEY_BINDS_NAME = "VIM";
     private final EditorMenuPresenter contextMenu;
     private final DelegatingAceCompleter delegatingAceCompleter;
 
@@ -59,7 +60,7 @@ public class EditorPresenter
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
-        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentTheme.getEditorKeyBindings()));
+        setEditorKeyBindings(view, currentTheme.getEditorKeyBindings());
 
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
 
@@ -74,11 +75,16 @@ public class EditorPresenter
         }));
         registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
             view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()));
-            // For the moment only standard and vim bindings are supported given the boolean
-            // nature of the context menu
-            view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(event.getEditorKeyBindings()));
+            setEditorKeyBindings(view, event.getEditorKeyBindings());
         }));
     }
+
+    private void setEditorKeyBindings(final EditorView view, final String editorKeyBindingsName) {
+        // For the moment only standard and vim bindings are supported given the boolean
+        // nature of the context menu
+        view.setUserKeyBindingsPreference(VIM_KEY_BINDS_NAME.equalsIgnoreCase(editorKeyBindingsName));
+    }
+
 
     private AceEditorTheme getTheme(final String theme, final String editorTheme) {
         AceEditorTheme aceEditorTheme = AceEditorTheme.CHROME;

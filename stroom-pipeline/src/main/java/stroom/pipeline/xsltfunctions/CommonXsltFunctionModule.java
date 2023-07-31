@@ -118,8 +118,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
             super(
                     CurrentUser.FUNCTION_NAME,
                     0,
-                    0,
-                    new SequenceType[]{},
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }

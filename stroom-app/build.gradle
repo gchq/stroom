@@ -48,7 +48,7 @@ def uiDir = project.file('src/main/resources/ui')
 //def restResourceClassNames = []
 //def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
-def sendToStroomScriptVersion = 'send-to-stroom-v3.1.0'
+def sendToStroomScriptVersion = 'send-to-stroom-v3.2.2-1'
 def releaseBuildDir = "${projectDir}/build/release"
 def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
@@ -182,6 +182,7 @@ dependencies {
     implementation project(':stroom-search:stroom-searchable-api')
     implementation project(':stroom-search:stroom-searchable-impl')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-common-impl')
     implementation project(':stroom-security:stroom-security-identity')
     implementation project(':stroom-security:stroom-security-identity-db')
     implementation project(':stroom-security:stroom-security-identity-db-jooq')
@@ -278,6 +279,7 @@ dependencies {
     testImplementation project(':stroom-security:stroom-security-api')
     testImplementation project(':stroom-security:stroom-security-impl')
     testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-security:stroom-security-user-api')
     testImplementation project(':stroom-statistics:stroom-statistics-api')
     testImplementation project(':stroom-statistics:stroom-statistics-impl')
     testImplementation project(':stroom-statistics:stroom-statistics-impl-hbase')

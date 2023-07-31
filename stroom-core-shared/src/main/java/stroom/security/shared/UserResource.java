@@ -4,6 +4,7 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,12 +52,26 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     User fetch(@PathParam("userUuid") String userUuid);
 
     @POST
-    @Path("/create/{name}/{isGroup}")
+    @Path("/createGroup")
     @Operation(
-            summary = "Creates a user or group with the supplied name",
+            summary = "Creates a group with the supplied name",
+            operationId = "createGroup")
+    User createGroup(@Parameter(description = "name", required = true) String name);
+
+    @POST
+    @Path("/createUser")
+    @Operation(
+            summary = "Creates a user with the supplied name",
             operationId = "createUser")
-    User create(@PathParam("name") String name,
-                @PathParam("isGroup") Boolean isGroup);
+    User createUser(@Parameter(description = "name", required = true) UserName name);
+
+    @POST
+    @Path("/createUsers")
+    @Operation(
+            summary = "Creates a batch of users from a list of CSV entries. Each line is of the form " +
+                    "'id,displayName,fullName', where displayName and fullName are optional",
+            operationId = "createUsers")
+    List<User> createUsersFromCsv(@Parameter(description = "users", required = true) String usersCsvData);
 
     @DELETE
     @Path("/{uuid}")
@@ -86,5 +101,5 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @Operation(
             summary = "Gets a list of associated users",
             operationId = "getAssociatedUsers")
-    List<String> getAssociates(@QueryParam("filter") String filter);
+    List<UserName> getAssociates(@QueryParam("filter") String filter);
 }

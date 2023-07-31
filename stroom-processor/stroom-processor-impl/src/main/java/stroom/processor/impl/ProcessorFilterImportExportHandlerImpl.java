@@ -226,6 +226,8 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         processorFilter.setProcessorFilterTracker(null);
         processorFilter.setProcessor(null);
         processorFilter.setData(null);
+        // Owner is meaningless outside stroom
+        processorFilter.setOwnerUuid(null);
 
         if (omitAuditFields) {
             processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);

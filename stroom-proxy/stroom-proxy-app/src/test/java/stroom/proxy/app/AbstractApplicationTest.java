@@ -197,6 +197,9 @@ public abstract class AbstractApplicationTest {
         return config;
     }
 
+    /**
+     * @return A client for sending requests to the running server.
+     */
     Client getClient() {
         return client;
     }

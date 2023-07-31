@@ -50,7 +50,8 @@ public class ResultStore {
     private final SearchRequestSource searchRequestSource;
     private final Set<String> highlights = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final CoprocessorsImpl coprocessors;
-    private final String userId;
+    private final String userUuid;
+    private final String createUser;
     private final Instant creationTime;
     private volatile Instant lastAccessTime;
     private final String nodeName;
@@ -62,13 +63,15 @@ public class ResultStore {
 
     public ResultStore(final SearchRequestSource searchRequestSource,
                        final SizesProvider sizesProvider,
-                       final String userId,
+                       final String userUuid,
+                       final String createUser,
                        final CoprocessorsImpl coprocessors,
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings) {
         this.searchRequestSource = searchRequestSource;
         this.coprocessors = coprocessors;
-        this.userId = userId;
+        this.userUuid = userUuid;
+        this.createUser = createUser;
         this.creationTime = Instant.now();
         lastAccessTime = creationTime;
         this.nodeName = nodeName;
@@ -207,8 +210,12 @@ public class ResultStore {
         return coprocessors.getData(componentId);
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUserUuid() {
+        return userUuid;
+    }
+
+    public String getCreateUser() {
+        return createUser;
     }
 
     public Instant getCreationTime() {

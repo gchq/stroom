@@ -56,7 +56,7 @@ public class ClusterLockClusterHandler {
      */
     boolean tryLock(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "Only the processing user is allowed to try a cluster lock");
         }
 
@@ -98,7 +98,7 @@ public class ClusterLockClusterHandler {
      */
     boolean release(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "Only the processing user is allowed to release a cluster lock");
         }
 
@@ -145,7 +145,7 @@ public class ClusterLockClusterHandler {
      */
     boolean keepAlive(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "Only the processing user is allowed to keep a cluster lock alive");
         }
 

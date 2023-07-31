@@ -15,6 +15,7 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.jooq
+    implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
 

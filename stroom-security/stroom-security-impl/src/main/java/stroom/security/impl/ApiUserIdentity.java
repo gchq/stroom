@@ -1,38 +1,59 @@
 package stroom.security.impl;
 
-import stroom.docref.HasUuid;
-import stroom.security.api.HasJws;
+import stroom.security.api.HasJwt;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.HasJwtClaims;
+import stroom.security.shared.HasStroomUserIdentity;
+import stroom.util.NullSafe;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
+import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
+import java.util.Optional;
 
-class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
+class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdentity, HasJwtClaims, HasJwt {
 
     private final String userUuid;
-    private final String id;
+    private final String subjectId;
+    private final String displayName;
     private final String sessionId;
     private final JwtContext jwtContext;
 
+    /**
+     * @param userUuid    The stroom_user UUID
+     * @param subjectId   The unique ID on the IDP, i.e. the 'sub' claim
+     * @param displayName
+     */
     ApiUserIdentity(final String userUuid,
-                    final String id,
+                    final String subjectId,
+                    final String displayName,
                     final String sessionId,
                     final JwtContext jwtContext) {
         this.userUuid = userUuid;
-        this.id = id;
+        this.subjectId = subjectId;
+        // Fall back to id if not present
+        this.displayName = Objects.requireNonNullElse(displayName, subjectId);
         this.sessionId = sessionId;
         this.jwtContext = jwtContext;
     }
 
-    public String getUserUuid() {
-        return userUuid;
+    @Override
+    public String getSubjectId() {
+        return subjectId;
     }
 
     @Override
-    public String getId() {
-        return id;
+    public Optional<String> getFullName() {
+        return getClaimValue("name");
+    }
+
+    @Override
+    public String getDisplayName() {
+        return displayName;
     }
 
     @Override
@@ -41,13 +62,13 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
     }
 
     @Override
-    public String getJws() {
-        return jwtContext.getJwt();
+    public String getSessionId() {
+        return sessionId;
     }
 
     @Override
-    public String getSessionId() {
-        return sessionId;
+    public String getJwt() {
+        return NullSafe.get(jwtContext, JwtContext::getJwt);
     }
 
     @Override
@@ -59,17 +80,38 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
             return false;
         }
         final ApiUserIdentity that = (ApiUserIdentity) o;
-        return Objects.equals(userUuid, that.userUuid) && Objects.equals(id,
-                that.id) && Objects.equals(sessionId, that.sessionId);
+        return Objects.equals(userUuid, that.userUuid) && Objects.equals(subjectId,
+                that.subjectId) && Objects.equals(displayName, that.displayName) && Objects.equals(sessionId,
+                that.sessionId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userUuid, id, sessionId);
+        return Objects.hash(userUuid, subjectId, displayName, sessionId);
     }
 
     @Override
     public String toString() {
-        return getId();
+        return getSubjectId();
+    }
+
+    @Override
+    public JwtClaims getJwtClaims() {
+        return jwtContext.getJwtClaims();
+    }
+
+    @Override
+    public UserName asUserName() {
+        String displayName = getDisplayName();
+        if (Objects.equals(displayName, subjectId)) {
+            displayName = null;
+        }
+        return new SimpleUserName(
+                subjectId,
+                Objects.equals(displayName, subjectId)
+                        ? null
+                        : displayName,
+                getFullName().orElse(null),
+                userUuid);
     }
 }

@@ -24,6 +24,8 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
@@ -192,9 +194,23 @@ public class App extends Application<Config> {
         showInfo();
     }
 
-    private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
-        if (configuration.getProxyConfig().isUseDefaultOpenIdCredentials()) {
-            DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
+    private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
+
+        final boolean areDefaultOpenIdCredsInUse = NullSafe.test(configuration.getProxyConfig(),
+                ProxyConfig::getProxySecurityConfig,
+                ProxySecurityConfig::getAuthenticationConfig,
+                ProxyAuthenticationConfig::getOpenIdConfig,
+                openIdConfig ->
+                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
+
+        if (areDefaultOpenIdCredsInUse) {
+            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
+                    DefaultOpenIdCredentials.class);
+            final String propPath = configuration.getProxyConfig()
+                    .getProxySecurityConfig()
+                    .getAuthenticationConfig()
+                    .getOpenIdConfig()
+                    .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
             LOGGER.warn("" +
                     "\n  ---------------------------------------------------------------------------------------" +
                     "\n  " +
@@ -202,7 +218,7 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   These should only be used in test/demo environments. " +
-                    "\n   Set useDefaultOpenIdCredentials to false for production environments. " +
+                    "\n   Set " + propPath + " to EXTERNAL/NO_IDP for production environments." +
                     "The API key in use is:" +
                     "\n" +
                     "\n   " + defaultOpenIdCredentials.getApiKey() +

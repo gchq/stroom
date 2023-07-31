@@ -215,7 +215,10 @@ public abstract class AbstractSingleFlywayMigrationTest<
         final int lastPart = Integer.parseInt(parts[parts.length - 1]);
 
         if (lastPart == 1) {
-            throw new RuntimeException(LogUtil.message("Can't work with a part number of 1"));
+            throw new RuntimeException(LogUtil.message(
+                    "Can't work with a part number of 1. targetVersionStr: '{}'. " +
+                            "Make the last three digits of the script name a multiple of 5",
+                    targetVersionStr));
         }
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < parts.length - 1; i++) {
@@ -263,7 +266,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
      * @param value
      * @return
      */
-    protected String quote(final String value) {
+    protected static String quote(final String value) {
         if (value == null || value.equals("null")) {
             return "null";
         } else if (value.startsWith("'") && value.endsWith("'")) {
@@ -271,6 +274,58 @@ public abstract class AbstractSingleFlywayMigrationTest<
         } else {
             // Quote and escape any
             return "'" + value.replace("'", "''") + "'";
+        }
+    }
+
+    protected ScriptBuilder scriptBuilder() {
+        return new ScriptBuilder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class ScriptBuilder {
+
+        private final StringBuilder stringBuilder = new StringBuilder();
+
+        private ScriptBuilder() {
+        }
+
+        public ScriptBuilder append(final String sql) {
+            stringBuilder.append("\n")
+                    .append(sql);
+            return this;
+        }
+
+        public ScriptBuilder setParam(final String paramName, final String value) {
+            Objects.requireNonNull(paramName);
+            Objects.requireNonNull(value);
+            stringBuilder
+                    .append("\n")
+                    .append("SET @")
+                    .append(paramName)
+                    .append(" = ")
+                    .append(quote(value))
+                    .append(";");
+            return this;
+        }
+
+        public ScriptBuilder setParam(final String paramName, final Number value) {
+            Objects.requireNonNull(paramName);
+            Objects.requireNonNull(value);
+            stringBuilder
+                    .append("\n")
+                    .append("SET @")
+                    .append(paramName)
+                    .append(" = ")
+                    .append(value)
+                    .append(";");
+            return this;
+        }
+
+        public String build() {
+            return stringBuilder.toString();
         }
     }
 }

@@ -70,7 +70,7 @@ public class ProcessorServiceImpl implements ProcessorService {
                 processor.getPipelineUuid(),
                 DocumentPermissionNames.READ)) {
 
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to create this processor");
         }
 
@@ -103,7 +103,7 @@ public class ProcessorServiceImpl implements ProcessorService {
         if (!securityContext.hasDocumentPermission(
                 processor.getPipelineUuid(),
                 DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to create this processor");
         }
         return create(processor);
@@ -116,7 +116,7 @@ public class ProcessorServiceImpl implements ProcessorService {
             processor.setUuid(UUID.randomUUID().toString());
         }
 
-        AuditUtil.stamp(securityContext.getUserId(), processor);
+        AuditUtil.stamp(securityContext, processor);
 
         return securityContext.secureResult(PERMISSION, () ->
                 processorDao.create(processor));
@@ -140,7 +140,7 @@ public class ProcessorServiceImpl implements ProcessorService {
             processor.setUuid(UUID.randomUUID().toString());
         }
 
-        AuditUtil.stamp(securityContext.getUserId(), processor);
+        AuditUtil.stamp(securityContext, processor);
         return securityContext.secureResult(PERMISSION, () ->
                 processorDao.update(processor));
     }

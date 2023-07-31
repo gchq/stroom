@@ -21,6 +21,8 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
     private final CacheConfig userGroupsCache;
     private final CacheConfig userAppPermissionsCache;
     private final CacheConfig userCache;
+    private final CacheConfig userByDisplayNameCache;
+    private final CacheConfig userByUuidCache;
     private final CacheConfig userDocumentPermissionsCache;
     private final AuthorisationDbConfig dbConfig;
 
@@ -33,7 +35,18 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
                 .build();
+        // User is pretty much immutable apart from the displayName/fullName but any change to
+        // this, triggers an entity event to evict the item from the cache, so expireAfterAccess
+        // is ok.
         userCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(30))
+                .build();
+        userByDisplayNameCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(30))
+                .build();
+        userByUuidCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
                 .build();
@@ -49,12 +62,16 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty("userGroupsCache") final CacheConfig userGroupsCache,
             @JsonProperty("userAppPermissionsCache") final CacheConfig userAppPermissionsCache,
             @JsonProperty("userCache") final CacheConfig userCache,
+            @JsonProperty("userByDisplayNameCache") final CacheConfig userByDisplayNameCache,
+            @JsonProperty("userByUuidCache") final CacheConfig userByUuidCache,
             @JsonProperty("userDocumentPermissionsCache") final CacheConfig userDocumentPermissionsCache,
             @JsonProperty("db") final AuthorisationDbConfig dbConfig) {
 
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
+        this.userByDisplayNameCache = userByDisplayNameCache;
+        this.userByUuidCache = userByUuidCache;
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.dbConfig = dbConfig;
     }
@@ -69,6 +86,14 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
 
     public CacheConfig getUserCache() {
         return userCache;
+    }
+
+    public CacheConfig getUserByDisplayNameCache() {
+        return userByDisplayNameCache;
+    }
+
+    public CacheConfig getUserByUuidCache() {
+        return userByUuidCache;
     }
 
     public CacheConfig getUserDocumentPermissionsCache() {
@@ -87,10 +112,16 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
                 "userGroupsCache=" + userGroupsCache +
                 ", userAppPermissionsCache=" + userAppPermissionsCache +
                 ", userCache=" + userCache +
+                ", userByDisplayNameCache=" + userByDisplayNameCache +
+                ", userByUuidCache=" + userByUuidCache +
                 ", userDocumentPermissionsCache=" + userDocumentPermissionsCache +
                 ", dbConfig=" + dbConfig +
                 '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @BootStrapConfig
     public static class AuthorisationDbConfig extends AbstractDbConfig {

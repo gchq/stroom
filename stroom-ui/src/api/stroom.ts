@@ -281,12 +281,12 @@ export interface AnalyticRuleDoc {
 }
 
 export interface Annotation {
-  assignedTo?: string;
+  assignedTo?: UserName;
   comment?: string;
 
   /** @format int64 */
   createTime?: number;
-  createUser?: string;
+  createUser?: UserName;
   history?: string;
 
   /** @format int64 */
@@ -297,7 +297,7 @@ export interface Annotation {
 
   /** @format int64 */
   updateTime?: number;
-  updateUser?: string;
+  updateUser?: UserName;
 
   /** @format int32 */
   version?: number;
@@ -311,16 +311,16 @@ export interface AnnotationDetail {
 export interface AnnotationEntry {
   /** @format int64 */
   createTime?: number;
-  createUser?: string;
-  data?: string;
+  createUser?: UserName;
   entryType?: string;
+  entryValue?: EntryValue;
 
   /** @format int64 */
   id?: number;
 
   /** @format int64 */
   updateTime?: number;
-  updateUser?: string;
+  updateUser?: UserName;
 
   /** @format int32 */
   version?: number;
@@ -617,7 +617,7 @@ export interface CreateApiKeyRequest {
 
 export interface CreateEntryRequest {
   annotation?: Annotation;
-  data?: string;
+  entryValue?: EntryValue;
   linkedEvents?: EventId[];
   type?: string;
 }
@@ -1252,6 +1252,10 @@ export interface EntryCounts {
   rangeValueCount?: number;
 }
 
+export interface EntryValue {
+  type: string;
+}
+
 export type EventCoprocessorSettings = CoprocessorSettings & {
   maxEvent?: EventRef;
   maxEvents?: number;
@@ -1758,6 +1762,11 @@ export type ExpressionTerm = ExpressionItem & {
   value?: string;
 };
 
+export interface ExtendedUiConfig {
+  externalIdentityProvider?: boolean;
+  uiConfig?: UiConfig;
+}
+
 export interface FeedDoc {
   classification?: string;
   contextEncoding?: string;
@@ -2180,8 +2189,10 @@ export interface GetFeedStatusResponse {
     | "406 - 200 - Unknown compression"
     | "401 - 300 - Client Certificate Required"
     | "401 - 301 - Client Token Required"
+    | "401 - 302 - Client Token or Certificate Required"
     | "403 - 310 - Client Certificate not authorised"
     | "403 - 311 - Client Token not authorised"
+    | "403 - 312 - Client Token or Certificate not authorised"
     | "500 - 400 - Compressed stream invalid"
     | "500 - 999 - Unknown error";
 }
@@ -3680,19 +3691,19 @@ export interface ResultPageStoredQuery {
 /**
  * A page of results.
  */
-export interface ResultPageString {
+export interface ResultPageUser {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: string[];
+  values?: User[];
 }
 
 /**
  * A page of results.
  */
-export interface ResultPageUser {
+export interface ResultPageUserName {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: User[];
+  values?: UserName[];
 }
 
 /**
@@ -3944,7 +3955,7 @@ export interface SessionDetails {
 export interface SessionInfo {
   buildInfo?: BuildInfo;
   nodeName?: string;
-  userName?: string;
+  userName?: UserName;
 }
 
 export interface SessionListResponse {
@@ -3955,7 +3966,7 @@ export interface SessionListResponse {
 
 export interface SetAssignedToRequest {
   annotationIdList?: number[];
-  assignedTo?: string;
+  assignedTo?: UserName;
 }
 
 export interface SetStatusRequest {
@@ -3984,6 +3995,8 @@ export interface SimpleDuration {
 }
 
 export interface SimpleUser {
+  displayName?: string;
+  fullName?: string;
   name?: string;
   uuid?: string;
 }
@@ -4264,6 +4277,8 @@ export interface StringCriteria {
   string?: string;
   stringUpper?: string;
 }
+
+export type StringEntryValue = EntryValue & { value?: string };
 
 export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
@@ -4601,6 +4616,8 @@ export interface User {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  displayName?: string;
+  fullName?: string;
   group?: boolean;
 
   /** @format int32 */
@@ -4610,6 +4627,7 @@ export interface User {
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+  userIdentityForAudit?: string;
   uuid?: string;
 
   /** @format int32 */
@@ -4618,8 +4636,17 @@ export interface User {
 
 export interface UserAndPermissions {
   permissions?: string[];
-  userId?: string;
+  userName?: UserName;
 }
+
+export interface UserName {
+  displayName?: string;
+  fullName?: string;
+  name?: string;
+  userIdentityForAudit?: string;
+}
+
+export type UserNameEntryValue = EntryValue & { userName?: UserName };
 
 export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
@@ -6158,6 +6185,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     getConfigYamlValueByNodeAndName: (propertyName: string, nodeName: string, params: RequestParams = {}) =>
       this.request<any, OverrideValueString>({
         path: `/config/v1/clusterProperties/${propertyName}/yamlOverrideValue/${nodeName}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Global Config
+     * @name FetchExtendedUiConfig
+     * @summary Fetch the extended UI configuration
+     * @request GET:/config/v1/noauth/fetchExtendedUiConfig
+     * @secure
+     */
+    fetchExtendedUiConfig: (params: RequestParams = {}) =>
+      this.request<any, ExtendedUiConfig>({
+        path: `/config/v1/noauth/fetchExtendedUiConfig`,
         method: "GET",
         secure: true,
         ...params,
@@ -10516,9 +10560,45 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     findUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageString>({
+      this.request<any, ResultPageUserName>({
         path: `/userNames/v1/find`,
         method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name GetByDisplayName
+     * @summary Find the user name matching the supplied displayName
+     * @request GET:/userNames/v1/getByDisplayName/{displayName}
+     * @secure
+     */
+    getByDisplayName: (displayName: string, params: RequestParams = {}) =>
+      this.request<any, UserName>({
+        path: `/userNames/v1/getByDisplayName/${displayName}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name GetByUserId
+     * @summary Find the user name matching the supplied unique user ID
+     * @request GET:/userNames/v1/{userId}
+     * @secure
+     */
+    getByUserId: (userId: string, data: string, params: RequestParams = {}) =>
+      this.request<any, UserName>({
+        path: `/userNames/v1/${userId}`,
+        method: "GET",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -10554,7 +10634,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getAssociatedUsers: (query?: { filter?: string }, params: RequestParams = {}) =>
-      this.request<any, string[]>({
+      this.request<any, UserName[]>({
         path: `/users/v1/associates`,
         method: "GET",
         query: query,
@@ -10566,16 +10646,56 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name CreateUser
-     * @summary Creates a user or group with the supplied name
-     * @request POST:/users/v1/create/{name}/{isGroup}
+     * @name CreateGroup
+     * @summary Creates a group with the supplied name
+     * @request POST:/users/v1/createGroup
      * @secure
      */
-    createUser: (name: string, isGroup: boolean, params: RequestParams = {}) =>
+    createGroup: (data: string, params: RequestParams = {}) =>
       this.request<any, User>({
-        path: `/users/v1/create/${name}/${isGroup}`,
+        path: `/users/v1/createGroup`,
         method: "POST",
+        body: data,
         secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name CreateUser
+     * @summary Creates a user with the supplied name
+     * @request POST:/users/v1/createUser
+     * @secure
+     */
+    createUser: (data: UserName, params: RequestParams = {}) =>
+      this.request<any, User>({
+        path: `/users/v1/createUser`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name CreateUsers
+     * @summary Creates a batch of users from a list of CSV entries. Each line is of the form 'id,displayName,fullName', where displayName and fullName are optional
+     * @request POST:/users/v1/createUsers
+     * @secure
+     */
+    createUsers: (data: string, params: RequestParams = {}) =>
+      this.request<any, User[]>({
+        path: `/users/v1/createUsers`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 

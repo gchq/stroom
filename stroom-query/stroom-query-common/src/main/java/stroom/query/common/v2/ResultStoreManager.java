@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ParamKeys;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
@@ -22,8 +23,11 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TimeRange;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.user.api.UserNameService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,6 +35,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Preconditions;
@@ -62,15 +67,18 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     private final ExecutorProvider executorProvider;
     private final Map<QueryKey, ResultStore> resultStoreMap;
     private final StoreFactoryRegistry storeFactoryRegistry;
+    private final UserNameService userNameService;
 
     @Inject
     ResultStoreManager(final TaskContextFactory taskContextFactory,
                        final SecurityContext securityContext,
                        final ExecutorProvider executorProvider,
-                       final StoreFactoryRegistry storeFactoryRegistry) {
+                       final StoreFactoryRegistry storeFactoryRegistry,
+                       final UserNameService userNameService) {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
+        this.userNameService = userNameService;
         this.resultStoreMap = new ConcurrentHashMap<>();
         this.storeFactoryRegistry = storeFactoryRegistry;
     }
@@ -98,9 +106,14 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 lifespanInfo.isDestroyOnWindowClose());
     }
 
+    private boolean hasPermission(final ResultStore resultStore) {
+        return securityContext.isAdmin()
+                || Objects.equals(securityContext.getUserUuid(), resultStore.getUserUuid());
+    }
+
     private void checkPermissions(final ResultStore resultStore) {
-        if (!securityContext.isAdmin() && !resultStore.getUserId().equals(securityContext.getUserId())) {
-            throw new PermissionException(securityContext.getUserId(),
+        if (!hasPermission(resultStore)) {
+            throw new PermissionException(securityContext.getSubjectId(),
                     "You do not have permission to modify this store");
         }
     }
@@ -138,8 +151,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
         SearchRequest modifiedRequest = searchRequest;
 
-        final String userId = securityContext.getUserId();
-        Objects.requireNonNull(userId, "No user is logged in");
+        final String userUuid = securityContext.getUserUuid();
+        Objects.requireNonNull(userUuid, "No user is logged in");
 
         final ResultStore resultStore;
         if (modifiedRequest.getKey() != null) {
@@ -152,11 +165,10 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                     new RuntimeException(message));
 
             // Check user identity.
-            if (!resultStore.getUserId().equals(userId)) {
+            if (!Objects.equals(resultStore.getUserUuid(), userUuid)) {
                 throw new RuntimeException(
                         "You do not have permission to get the search results associated with this key");
             }
-
         } else {
             // If the query doesn't have a key then this is new.
             LOGGER.debug(() -> "New query");
@@ -182,7 +194,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             modifiedRequest = addQueryKey(modifiedRequest);
 
             // Add a param for `currentUser()`
-            modifiedRequest = addCurrentUserParam(userId, modifiedRequest);
+            modifiedRequest = addCurrentUserParam(modifiedRequest);
 
             // Add partition time constraints to the query.
             modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
@@ -226,8 +238,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
         SearchRequest modifiedRequest = searchRequest;
 
-        final String userId = securityContext.getUserId();
-        Objects.requireNonNull(userId, "No user is logged in");
+        final String userUuid = securityContext.getUserUuid();
+        Objects.requireNonNull(userUuid, "No user is logged in");
 
         final ResultStore resultStore;
         if (modifiedRequest.getKey() != null) {
@@ -239,7 +251,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                     new RuntimeException("No active search found for key = " + queryKey));
 
             // Check user identity.
-            if (!resultStore.getUserId().equals(userId)) {
+            if (!Objects.equals(resultStore.getUserUuid(), userUuid)) {
                 throw new RuntimeException(
                         "You do not have permission to get the search results associated with this key");
             }
@@ -269,7 +281,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             modifiedRequest = addQueryKey(modifiedRequest);
 
             // Add a param for `currentUser()`
-            modifiedRequest = addCurrentUserParam(userId, modifiedRequest);
+            modifiedRequest = addCurrentUserParam(modifiedRequest);
 
             // Add partition time constraints to the query.
             modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
@@ -307,22 +319,27 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     private SearchRequest addQueryKey(final SearchRequest searchRequest) {
         // Create a new search UUID.
-        final String uuid = UUID.randomUUID().toString();
-        LOGGER.debug(() -> "Creating new search UUID = " + uuid);
-        final QueryKey queryKey = new QueryKey(uuid);
+        final String searchUuid = UUID.randomUUID().toString();
+        LOGGER.debug(() -> "Creating new search UUID = " + searchUuid);
+        final QueryKey queryKey = new QueryKey(searchUuid);
         return searchRequest.copy().key(queryKey).build();
     }
 
-    private SearchRequest addCurrentUserParam(final String userId,
-                                              final SearchRequest searchRequest) {
+    private SearchRequest addCurrentUserParam(final SearchRequest searchRequest) {
         // Add a param for `currentUser()`
-        List<Param> params = searchRequest.getQuery().getParams();
-        if (params != null) {
-            params = new ArrayList<>(params);
-        } else {
-            params = new ArrayList<>();
-        }
-        params.add(new Param("currentUser()", userId));
+        final List<Param> params = NullSafe.getOrElseGet(
+                searchRequest.getQuery().getParams(),
+                params2 -> new ArrayList<>(params2),
+                ArrayList::new);
+
+        params.add(new Param(ParamKeys.CURRENT_USER, securityContext.getUserIdentityForAudit()));
+        params.add(new Param(ParamKeys.CURRENT_USER_SUBJECT_ID, securityContext.getSubjectId()));
+        NullSafe.consume(
+                securityContext.getUserIdentity(),
+                UserIdentity::getFullName,
+                optFullName -> optFullName.ifPresent(fullName ->
+                        params.add(new Param(ParamKeys.CURRENT_USER_FULL_NAME, fullName))));
+
         return searchRequest
                 .copy()
                 .query(searchRequest
@@ -454,15 +471,15 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             LOGGER.debug("/exists called with queryKey:\n{}", json);
         }
 
-        final String userId = securityContext.getUserId();
-        Objects.requireNonNull(userId, "No user is logged in");
+        final String userUuid = securityContext.getUserUuid();
+        Objects.requireNonNull(userUuid, "No user is logged in");
 
         final Optional<ResultStore> optionalResultStore =
                 getIfPresent(queryKey);
 
         if (optionalResultStore.isPresent()) {
             final ResultStore resultStore = optionalResultStore.get();
-            return resultStore.getUserId().equals(userId);
+            return Objects.equals(resultStore.getUserUuid(), userUuid);
         }
 
         return false;
@@ -599,11 +616,14 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     public ResultPage<ResultStoreInfo> find(final FindResultStoreCriteria criteria) {
         final List<ResultStoreInfo> list = new ArrayList<>();
         resultStoreMap.forEach((queryKey, resultStore) -> {
-            if (securityContext.isAdmin() || resultStore.getUserId().equals(securityContext.getUserId())) {
+            if (hasPermission(resultStore)) {
+                final UserName ownerUserName = userNameService.getByUuid(resultStore.getUserUuid())
+                                .orElseThrow(() -> new RuntimeException("No user name found for userUuid: "
+                                        + resultStore.getUserUuid()));
                 list.add(new ResultStoreInfo(
                         resultStore.getSearchRequestSource(),
                         queryKey,
-                        resultStore.getUserId(),
+                        ownerUserName.getUserIdentityForAudit(),
                         resultStore.getCreationTime().toEpochMilli(),
                         resultStore.getNodeName(),
                         resultStore.getCoprocessors().getByteSize(),
@@ -611,7 +631,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                         resultStore.getSearchTaskProgress(),
                         getLifespanInfo(resultStore.getResultStoreSettings().getSearchProcessLifespan()),
                         getLifespanInfo(resultStore.getResultStoreSettings().getStoreLifespan())));
+            } else {
+                LOGGER.debug(() -> LogUtil.message("User {} has no perms on resultStore {} with owner uuid: {}",
+                        securityContext.getUserIdentity(),
+                        resultStore,
+                        resultStore.getUserUuid()));
             }
+
         });
         return new ResultPage<>(list);
     }

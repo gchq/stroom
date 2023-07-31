@@ -21,7 +21,8 @@ public class ProcessorFilterFields {
     private static final Map<String, AbstractField> FIELD_MAP;
 
     public static final IdField ID = new IdField("Processor Filter Id");
-    public static final TextField CREATE_USER = new TextField("Processor Filter Create User");
+//    public static final TextField CREATE_USER = new TextField("Processor Filter Create User");
+    public static final TextField OWNER_UUID = new TextField("Processor Filter Owner User UUID");
     public static final LongField LAST_POLL_MS = new LongField("Processor Filter Last Poll Ms");
     public static final IntegerField PRIORITY = new IntegerField("Processor Filter Priority");
     public static final BooleanField ENABLED = new BooleanField("Processor Filter Enabled");
@@ -31,7 +32,7 @@ public class ProcessorFilterFields {
 
     static {
         FIELDS.add(ID);
-        FIELDS.add(CREATE_USER);
+        FIELDS.add(OWNER_UUID);
         FIELDS.add(LAST_POLL_MS);
         FIELDS.add(PRIORITY);
         FIELDS.add(ENABLED);

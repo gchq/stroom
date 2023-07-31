@@ -8,7 +8,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -34,16 +34,22 @@ public class UsersPlugin extends NodeToolsPlugin {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
                     .onSuccess(uiConfig -> {
-                        addManageUsers(event, uiConfig);
+                        if (!uiConfig.isExternalIdentityProvider()) {
+                            addManageUsers(event, uiConfig);
+                        }
 //                        addManageUserAuthorisations(event, uiConfig);
 //                        addManageGroupAuthorisations(event, uiConfig);
                     })
-                    .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
+                    .onFailure(caught ->
+                            AlertEvent.fireError(
+                                    UsersPlugin.this,
+                                    caught.getMessage(),
+                                    null));
         }
     }
 
     private void addManageUsers(final BeforeRevealMenubarEvent event,
-                                final UiConfig uiConfig) {
+                                final ExtendedUiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
         final SvgImage icon = SvgImage.USERS;
         usersMenuItem = new IconMenuItem.Builder()
