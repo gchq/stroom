@@ -257,7 +257,7 @@ class TestAnalytics extends StroomIntegrationTest {
                 where UserId = user5
                 and MissingField = bob
                 select StreamId, EventId, UserId""";
-        basicTest(query, 9, 6);
+        basicTest(query, 8, 1);
     }
 
     @Test

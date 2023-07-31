@@ -6,7 +6,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -20,6 +19,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class SelectionPopup extends Composite {
@@ -29,7 +29,6 @@ public class SelectionPopup extends Composite {
     private final PopupPanel popupPanel;
     private final TextBox textBox;
     private final ListBox listBox;
-    private int[] filteredIndexMapping;
     private SelectionBoxModel<?> model;
     private String lastFilterValue;
 
@@ -39,7 +38,7 @@ public class SelectionPopup extends Composite {
             super.onBind();
             registerHandler(popupPanel.addCloseHandler(event -> hide()));
             registerHandler(textBox.addKeyUpHandler(e -> onTextKeyUp(e)));
-            registerHandler(listBox.addClickHandler(e -> onListSelectionChange(e)));
+            registerHandler(listBox.addClickHandler(e -> onListSelectionChange()));
             registerHandler(listBox.addKeyUpHandler(e -> onListKeyUp(e)));
         }
     };
@@ -162,20 +161,17 @@ public class SelectionPopup extends Composite {
     private void updateListBox() {
         final int selectedIndex = model.getSelectedIndex();
         int filteredSelectedIndex = -1;
-        final String text = textBox.getValue();
+        final String text = textBox.getValue().toLowerCase(Locale.ROOT);
         if (!Objects.equals(text, lastFilterValue)) {
             lastFilterValue = text;
 
-            filteredIndexMapping = new int[model.getStrings().size()];
             List<String> filteredItems = new ArrayList<>(model.getStrings().size());
-            if (text != null && !text.isEmpty()) {
-                final String textLowerCase = text.toLowerCase();
+            if (!lastFilterValue.isEmpty()) {
                 int filteredIndex = 0;
                 int index = 0;
                 for (final String string : model.getStrings()) {
-                    if (string.toLowerCase().contains(textLowerCase)) {
+                    if (string.toLowerCase().contains(lastFilterValue)) {
                         filteredItems.add(string);
-                        filteredIndexMapping[filteredIndex] = index;
                         if (selectedIndex == index) {
                             filteredSelectedIndex = filteredIndex;
                         }
@@ -184,37 +180,47 @@ public class SelectionPopup extends Composite {
                     index++;
                 }
             } else {
-                int index = 0;
+                filteredItems = model.getStrings();
                 filteredSelectedIndex = selectedIndex;
-                for (final String string : model.getStrings()) {
-                    filteredItems.add(string);
-                    filteredIndexMapping[index] = index;
-                    index++;
-                }
             }
 
             listBox.clear();
-            listBox.setVisibleItemCount(filteredItems.size());
             for (final String string : filteredItems) {
                 listBox.addItem(string);
             }
-
+            listBox.setVisibleItemCount(Math.max(2, filteredItems.size()));
             listBox.setSelectedIndex(filteredSelectedIndex);
         }
     }
 
-    private void onListSelectionChange(final ClickEvent event) {
-        int index = -1;
-        if (listBox.getSelectedIndex() >= 0) {
-            index = filteredIndexMapping[listBox.getSelectedIndex()];
+    private void onListSelectionChange() {
+        int selectedIndex = -1;
+        final int filteredSelectedIndex = listBox.getSelectedIndex();
+        if (filteredSelectedIndex >= 0) {
+            if (!lastFilterValue.isEmpty()) {
+                int filteredIndex = 0;
+                int index = 0;
+                for (final String string : model.getStrings()) {
+                    if (string.toLowerCase().contains(lastFilterValue)) {
+                        if (filteredSelectedIndex == filteredIndex) {
+                            selectedIndex = index;
+                            break;
+                        }
+                        filteredIndex++;
+                    }
+                    index++;
+                }
+            } else {
+                selectedIndex = filteredSelectedIndex;
+            }
         }
-        model.setSelectedIndex(index);
+        model.setSelectedIndex(selectedIndex);
     }
 
     private void onListKeyUp(final KeyUpEvent event) {
         switch (event.getNativeKeyCode()) {
             case KeyCodes.KEY_ENTER:
-                model.setSelectedIndex(listBox.getSelectedIndex());
+                onListSelectionChange();
                 break;
             case KeyCodes.KEY_ESCAPE:
                 hide();

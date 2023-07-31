@@ -300,7 +300,7 @@ public class FlexLayout extends Composite {
                     }
 
                     // Add all invisible tabs, so we can move them all together if this is the only tab.
-                    final TabLayoutConfig currentParent = mouseTarget.currentParent;
+                    final TabLayoutConfig currentParent = selection.currentParent;
                     if (currentParent != null && currentParent.getVisibleTabCount() == 1) {
                         for (final TabConfig tabConfig : currentParent.getTabs()) {
                             if (!tabConfig.visible()) {

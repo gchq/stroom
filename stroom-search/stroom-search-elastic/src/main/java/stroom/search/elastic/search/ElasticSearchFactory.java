@@ -99,6 +99,10 @@ public class ElasticSearchFactory {
 
         return CompletableFuture
                 .runAsync(runnable, executor)
+                .exceptionally(e -> {
+                    resultStore.onFailure(resultStore.getNodeName(), e);
+                    return null;
+                })
                 .whenCompleteAsync((r, t) -> taskContextFactory.childContext(parentContext,
                         "Search Elasticsearch Index",
                         TerminateHandlerFactory.NOOP_FACTORY,

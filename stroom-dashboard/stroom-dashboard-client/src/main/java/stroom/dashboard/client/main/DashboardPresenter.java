@@ -516,6 +516,7 @@ public class DashboardPresenter
             if (dashboardConfig != null &&
                     dashboardConfig.getDesignMode() != null &&
                     dashboardConfig.getDesignMode()) {
+                editModeButton.setState(true);
                 setDesignMode(true);
             }
         }

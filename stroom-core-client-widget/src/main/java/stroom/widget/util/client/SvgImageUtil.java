@@ -19,11 +19,6 @@ public class SvgImageUtil {
     private SvgImageUtil() {
     }
 
-    public static SafeHtml toSafeHtml(final Preset preset) {
-        Objects.requireNonNull(preset);
-        return toSafeHtml(preset.getTitle(), preset.getSvgImage());
-    }
-
     public static SafeHtml toSafeHtml(final Preset preset, final String... classNames) {
         Objects.requireNonNull(preset);
         return toSafeHtml(preset.getTitle(), preset.getSvgImage(), classNames);
