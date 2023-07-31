@@ -900,3 +900,53 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   }
 }
 -----
+from 'Test Index'
+eval count = count()
+group by StreamId
+select StreamId as "Stream Id", count as Count
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "1234",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "count",
+        "name" : "Count",
+        "expression" : "count()",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----

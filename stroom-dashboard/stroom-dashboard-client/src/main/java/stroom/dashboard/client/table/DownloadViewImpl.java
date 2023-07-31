@@ -37,6 +37,8 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @UiField
     SelectionBox<DownloadSearchResultFileType> fileType;
     @UiField
+    CustomCheckBox downloadAllTables;
+    @UiField
     CustomCheckBox sample;
     @UiField
     ValueSpinner percent;
@@ -55,6 +57,18 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
         fileType.addItem(DownloadSearchResultFileType.TSV);
 
         fileType.setValue(DownloadSearchResultFileType.EXCEL);
+
+        downloadAllTables.setEnabled(isExcelFileTypeSelected());
+        fileType.addValueChangeHandler(event -> {
+            downloadAllTables.setEnabled(isExcelFileTypeSelected());
+            if (!isExcelFileTypeSelected()) {
+                downloadAllTables.setValue(false);
+            }
+        });
+    }
+
+    private boolean isExcelFileTypeSelected() {
+        return DownloadSearchResultFileType.EXCEL.equals(fileType.getValue());
     }
 
     @Override
@@ -70,6 +84,11 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @Override
     public DownloadSearchResultFileType getFileType() {
         return fileType.getValue();
+    }
+
+    @Override
+    public boolean downloadAllTables() {
+        return downloadAllTables.getValue();
     }
 
     @Override
