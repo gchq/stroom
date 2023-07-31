@@ -107,6 +107,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -981,6 +982,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             setSettings(createSettings());
         }
 
+        // Update the page size for the data grid.
+        updatePageSize();
+
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
         if (getTableSettings().getFields() != null) {
@@ -1019,7 +1023,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     protected void changeSettings() {
         super.changeSettings();
-        setQueryId(getTableSettings().getQueryId());
+        final TableComponentSettings tableComponentSettings = getTableSettings();
+        setQueryId(tableComponentSettings.getQueryId());
+        updatePageSize();
+    }
+
+    private void updatePageSize() {
+        final TableComponentSettings tableComponentSettings = getTableSettings();
+        final int start = dataGrid.getVisibleRange().getStart();
+        dataGrid.setVisibleRange(new Range(
+                start,
+                tableComponentSettings.getPageSize() == null
+                        ? 100
+                        : tableComponentSettings.getPageSize()));
     }
 
     @Override
@@ -1087,21 +1103,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void refresh() {
-        currentRequestCount++;
-        getView().setPaused(pause && currentRequestCount == 0);
-        getView().setRefreshing(true);
-        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
-            try {
-                if (result != null) {
-                    setDataInternal(result);
-                }
-            } catch (final Exception e) {
-                GWT.log(e.getMessage());
-            }
-            currentRequestCount--;
+        if (currentSearchModel != null) {
+            currentRequestCount++;
             getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.isSearching());
-        });
+            getView().setRefreshing(true);
+            currentSearchModel.refresh(getComponentConfig().getId(), result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                }
+                currentRequestCount--;
+                getView().setPaused(pause && currentRequestCount == 0);
+                getView().setRefreshing(currentSearchModel.isSearching());
+            });
+        }
     }
 
     void clear() {
