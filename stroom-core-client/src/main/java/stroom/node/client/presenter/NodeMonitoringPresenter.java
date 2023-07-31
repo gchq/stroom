@@ -198,7 +198,6 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                 final String barColourClass = pingResult.getPing() < unHealthyThresholdPing
                         ? "nodePingBar-bar__healthy"
                         : "nodePingBar-bar__unhealthy";
-                █
 
                 HtmlBuilder htmlBuilder = new HtmlBuilder();
                 htmlBuilder.div(hb1 ->
