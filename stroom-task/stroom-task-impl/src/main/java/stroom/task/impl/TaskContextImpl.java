@@ -141,10 +141,6 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
         return useAsRead;
     }
 
-    String getUserId() {
-        return userIdentity.getSubjectId();
-    }
-
     @Override
     public String getUserIdentityForAudit() {
         return NullSafe.get(userIdentity, UserIdentity::getUserIdentityForAudit);
