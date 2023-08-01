@@ -178,9 +178,8 @@ proxyConfig:
 
   # If you want multiple forward destinations then you will need to edit this file directly
   # instead of using env var substitution
-  forwardDestinations:
-    - type: "post"
-      enabled: {{ true | envVar('FORWARDING_ENABLED') }}
+  forwardHttpDestinations:
+    - enabled: {{ true | envVar('FORWARDING_ENABLED') }}
       name: "downstream"
       forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
       sslConfig:
