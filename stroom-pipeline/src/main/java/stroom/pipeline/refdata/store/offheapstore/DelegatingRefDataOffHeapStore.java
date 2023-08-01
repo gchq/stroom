@@ -4,6 +4,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.feed.api.FeedStore;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
@@ -613,41 +614,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             try (final Stream<Path> pathStream = Files.list(localDir)) {
                 final int storeCount = pathStream.filter(Files::isDirectory)
                         .filter(path -> path.getFileName().toString().contains(DELIMITER))
-                        .mapToInt(dir -> {
-                            final String dirName = dir.getFileName().toString();
-                            final String[] parts = DELIMITER_PATTERN.split(dirName);
-                            if (parts.length != 2) {
-                                LOGGER.error("Unable to parse store directory {}, parts: {}. Ignoring this store",
-                                        dir, parts);
-                                return 0;
-                            } else {
-                                // The dir name looks like '<feed name>___<feed uuid>' but the feed name has been
-                                // sanitised for the FS so we need to get the true feedName via a uuid lookup
-                                final String feedDocUuid = parts[1];
-                                final String feedName = NullSafe.get(
-                                        feedStore.info(feedDocUuid),
-                                        DocRefInfo::getDocRef,
-                                        DocRef::getName);
-
-                                if (!NullSafe.isBlankString(feedName)) {
-                                    LOGGER.debug("Found store for feed {}", feedName);
-                                    final RefDataOffHeapStore store = getOrCreateFeedSpecificStore(feedName);
-                                    if (store.isEmpty()) {
-                                        try {
-                                            closeAndDeleteStore(store);
-                                        } finally {
-                                            feedNameToStoreMap.remove(feedName);
-                                        }
-                                    } else {
-                                        feedNameToStoreMap.put(feedName, store);
-                                    }
-                                    return 1;
-                                } else {
-                                    LOGGER.error("No feed name for UUID {}. Ignoring store {}", feedDocUuid, dir);
-                                    return 0;
-                                }
-                            }
-                        })
+                        .mapToInt(this::initFeedSpecificStore)
                         .sum();
                 LOGGER.info("Discovered {} feed specific ref data stores in {}",
                         storeCount, localDir.toAbsolutePath());
@@ -657,6 +624,57 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             }
         } else {
             LOGGER.debug("localDir '{}' doesn't exist, no stores to create", localDir);
+        }
+    }
+
+    /**
+     * @return The count of feed stores initialised, 1 or 0.
+     */
+    private int initFeedSpecificStore(final Path storeDir) {
+        final String dirName = storeDir.getFileName().toString();
+        final String[] parts = DELIMITER_PATTERN.split(dirName);
+        if (parts.length != 2) {
+            LOGGER.error("Unable to parse ref store directory {} (parts: {}). Ignoring this store",
+                    storeDir, parts);
+            return 0;
+        } else {
+            // The dir name looks like '<feed name>___<feed uuid>' but the feed name has been
+            // sanitised for the FS so we need to get the true feedName via a uuid lookup
+            final String feedDocUuid = parts[1];
+            final String feedName;
+            try {
+                feedName = NullSafe.get(
+                        feedStore.info(feedDocUuid),
+                        DocRefInfo::getDocRef,
+                        DocRef::getName);
+            } catch (DocumentNotFoundException e) {
+                LOGGER.error("Feed with UUID '{}' not found for ref store directory {} (parts: {}). " +
+                                "Ignoring this directory. Consider deleting it if refers to a non-existent fee.",
+                        feedDocUuid, storeDir, parts);
+                return 0;
+            } catch (Exception e) {
+                LOGGER.error("Error initialising ref store directory {} (parts: {}). Ignoring this store. Error: {}",
+                        storeDir, parts, e.getMessage(), e);
+                return 0;
+            }
+
+            if (!NullSafe.isBlankString(feedName)) {
+                LOGGER.debug("Found store for feed {}", feedName);
+                final RefDataOffHeapStore store = getOrCreateFeedSpecificStore(feedName);
+                if (store.isEmpty()) {
+                    try {
+                        closeAndDeleteStore(store);
+                    } finally {
+                        feedNameToStoreMap.remove(feedName);
+                    }
+                } else {
+                    feedNameToStoreMap.put(feedName, store);
+                }
+                return 1;
+            } else {
+                LOGGER.error("No feed name for UUID {}. Ignoring store {}", feedDocUuid, storeDir);
+                return 0;
+            }
         }
     }
 
