@@ -128,6 +128,9 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "`stroom/ui`")
     private Boolean requireReactWrapper;
 
+    @JsonProperty
+    private final NodeMonitoringConfig nodeMonitoring;
+
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -150,6 +153,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         activity = new ActivityConfig();
         source = new SourceConfig();
         requireReactWrapper = true;
+        nodeMonitoring = new NodeMonitoringConfig();
     }
 
     @JsonCreator
@@ -174,7 +178,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("source") final SourceConfig source,
-                    @JsonProperty("requireReactWrapper") Boolean requireReactWrapper) {
+                    @JsonProperty("requireReactWrapper") Boolean requireReactWrapper,
+                    @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -196,6 +201,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.activity = activity;
         this.source = source;
         this.requireReactWrapper = requireReactWrapper;
+        this.nodeMonitoring = nodeMonitoring;
     }
 
     public String getWelcomeHtml() {
@@ -346,6 +352,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.requireReactWrapper = requireReactWrapper;
     }
 
+    public NodeMonitoringConfig getNodeMonitoring() {
+        return nodeMonitoring;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -374,7 +384,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(splash, uiConfig.splash)
                 && Objects.equals(activity, uiConfig.activity)
                 && Objects.equals(source, uiConfig.source)
-                && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper);
+                && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper)
+                && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring);
     }
 
     @Override
@@ -398,7 +409,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 splash,
                 activity,
                 source,
-                requireReactWrapper);
+                requireReactWrapper,
+                nodeMonitoring);
     }
 
     @Override
@@ -424,6 +436,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", activity=" + activity +
                 ", source=" + source +
                 ", requireReactWrapper=" + requireReactWrapper +
+                ", nodeMonitoring=" + nodeMonitoring +
                 '}';
     }
 }
