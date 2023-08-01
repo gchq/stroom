@@ -123,7 +123,8 @@ class TestProxyYamlUtil {
         // These list based props are empty by default, so that make it hard to see what the structure
         // of the list items is when looking at the generated yaml. Thus, we seed each one with a vanilla item.
         // This is not ideal as it means the generated yaml is not a true default, but hey ho?
-
+        // This is also a bit of a hack adding items to lists. The lists ought to be immutable but
+        // walking the whole tree to build it as you go is non-trivial.
         proxyConfig.getFileScanners().add(new FileScannerConfig());
         proxyConfig.getForwardHttpDestinations().add(new ForwardHttpPostConfig());
         proxyConfig.getForwardFileDestinations().add(new ForwardFileConfig());
