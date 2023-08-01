@@ -2,6 +2,10 @@ package stroom.proxy.dist;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyYamlUtil;
+import stroom.proxy.app.SqsConnectorConfig;
+import stroom.proxy.app.forwarder.ForwardFileConfig;
+import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
+import stroom.proxy.repo.FileScannerConfig;
 import stroom.util.NullSafe;
 import stroom.util.io.DiffUtil;
 
@@ -114,8 +118,18 @@ class TestProxyYamlUtil {
 
     static String getYamlFromJavaModel() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final ProxyConfig appConfig = new ProxyConfig();
-        ProxyYamlUtil.writeConfig(appConfig, byteArrayOutputStream);
+        final ProxyConfig proxyConfig = new ProxyConfig();
+
+        // These list based props are empty by default, so that make it hard to see what the structure
+        // of the list items is when looking at the generated yaml. Thus, we seed each one with a vanilla item.
+        // This is not ideal as it means the generated yaml is not a true default, but hey ho?
+
+        proxyConfig.getFileScanners().add(new FileScannerConfig());
+        proxyConfig.getForwardHttpDestinations().add(new ForwardHttpPostConfig());
+        proxyConfig.getForwardFileDestinations().add(new ForwardFileConfig());
+        proxyConfig.getSqsConnectors().add(new SqsConnectorConfig());
+
+        ProxyYamlUtil.writeConfig(proxyConfig, byteArrayOutputStream);
         return byteArrayOutputStream.toString();
     }
 
