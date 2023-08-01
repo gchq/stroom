@@ -659,15 +659,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final boolean showDetail = getTableSettings().showDetail();
         for (final Field field : fields) {
             if (field.getGroup() != null) {
-                final int group = field.getGroup();
-                if (group > maxGroup) {
-                    maxGroup = group;
-                }
+                maxGroup = Math.max(maxGroup, field.getGroup());
             }
         }
-        int maxDepth = maxGroup;
-        if (showDetail) {
-            maxDepth++;
+
+        int maxDepth = -1;
+        if (maxGroup > 0 || showDetail) {
+            maxDepth = maxGroup;
+            if (showDetail) {
+                maxDepth++;
+            }
         }
 
         final List<TableRow> processed = new ArrayList<>(values.size());

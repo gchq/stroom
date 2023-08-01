@@ -35,6 +35,7 @@ import stroom.widget.util.client.SafeHtmlUtil;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
@@ -59,7 +60,7 @@ public class QueryResultTablePresenter
         implements ResultConsumer {
 
     private int expanderColumnWidth;
-//    private final Column<TableRow, Expander> expanderColumn;
+    private final Column<TableRow, Expander> expanderColumn;
 
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
@@ -87,20 +88,20 @@ public class QueryResultTablePresenter
         pagerView.setDataWidget(dataGrid);
         tableView.setTableView(pagerView);
 
-//        // Expander column.
-//        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
-//            @Override
-//            public Expander getValue(final TableRow row) {
-//                if (row == null) {
-//                    return null;
-//                }
-//                return row.getExpander();
-//            }
-//        };
-//        expanderColumn.setFieldUpdater((index, result, value) -> {
-//            toggleOpenGroup(result.getGroupKey());
-//            ExpanderEvent.fire(this, result.getGroupKey());
-//        });
+        // Expander column.
+        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+            @Override
+            public Expander getValue(final TableRow row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getExpander();
+            }
+        };
+        expanderColumn.setFieldUpdater((index, result, value) -> {
+            toggleOpenGroup(result.getGroupKey());
+            ExpanderEvent.fire(this, result.getGroupKey());
+        });
     }
 
     private void toggleOpenGroup(final String group) {
@@ -355,8 +356,8 @@ public class QueryResultTablePresenter
     }
 
     private void addExpanderColumn() {
-//        dataGrid.addColumn(expanderColumn, "<br/>", expanderColumnWidth);
-//        existingColumns.add(expanderColumn);
+        dataGrid.addColumn(expanderColumn, "<br/>", expanderColumnWidth);
+        existingColumns.add(expanderColumn);
     }
 
     private void addColumn(final Field field) {
@@ -380,18 +381,19 @@ public class QueryResultTablePresenter
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
-        final boolean showDetail = true; //getTableSettings().showDetail();
+        final boolean showDetail = false;//getTableSettings().showDetail();
         for (final Field field : fields) {
             if (field.getGroup() != null) {
-                final int group = field.getGroup();
-                if (group > maxGroup) {
-                    maxGroup = group;
-                }
+                maxGroup = Math.max(maxGroup, field.getGroup());
             }
         }
-        int maxDepth = maxGroup;
-        if (showDetail) {
-            maxDepth++;
+
+        int maxDepth = -1;
+        if (maxGroup > 0 || showDetail) {
+            maxDepth = maxGroup;
+            if (showDetail) {
+                maxDepth++;
+            }
         }
 
         final List<TableRow> processed = new ArrayList<>(values.size());
@@ -447,7 +449,7 @@ public class QueryResultTablePresenter
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
-//        dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
+        dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
         return processed;
     }
