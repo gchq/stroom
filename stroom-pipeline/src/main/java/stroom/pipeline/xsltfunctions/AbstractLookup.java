@@ -148,7 +148,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         createLookupFailError(context, lookupIdentifier, e);
                     }
                 } else {
-                    outputInfo(Severity.WARNING,
+                    outputInfo(Severity.ERROR,
                             () -> "No reference loaders have been added to this XSLT step to perform a lookup",
                             lookupIdentifier,
                             traceLookup,
@@ -339,7 +339,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
         if (pipelineReferences.isEmpty()) {
             outputInfo(
-                    maxSeverity.atLeast(Severity.WARNING),
+                    maxSeverity.atLeast(Severity.ERROR),
                     () -> "No reference loaders are configured so the lookup cannot be performed. ",
                     result.getCurrentLookupIdentifier(),
                     trace,
