@@ -351,7 +351,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_STRING:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0) {
+                        if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
                                 writeFieldName();
                                 jsonGenerator.writeString(value);
@@ -367,7 +367,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_BOOLEAN:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0) {
+                        if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
                                 writeFieldName();
                                 jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
@@ -395,7 +395,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_NUMBER:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0) {
+                        if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
                                 writeFieldName();
                                 jsonGenerator.writeNumber(value);
@@ -421,12 +421,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * Whether to include the field in the destination document
      */
     private boolean includeField(final String fieldName) {
-        return fieldName != null && !fieldName.startsWith("_");
+        return fieldName == null || !fieldName.startsWith("_");
     }
 
     private void storeIndexNameVariableValue(final String value) {
         try {
-            if (value.length() > 0 && indexNameVariables.contains(currentDocFieldName)) {
+            if (!value.isEmpty() && indexNameVariables.contains(currentDocFieldName)) {
                 currentDocIndexNameVariables.put(currentDocFieldName, value);
             }
         } catch (IllegalArgumentException e) {
