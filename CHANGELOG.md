@@ -13,6 +13,57 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.44] - 2023-08-01
+
+* Issue **#3248** : Add ability to download multiple dashboard tables as Excel worksheets in a single file.
+
+* Issue **#3453** : Support Elasticsearch index name variable substitution.
+
+* Issue **#3613** : Fix error un-marshalling TimeRange.
+
+* Issue **#3612** : Change default for `forwardChunkSize` from null to 1048576 bytes so chunked transport is used to avoid out of memory errors.
+
+* Issue **#3619** : Fix index tab pane order.
+
+* Issue **#3621** : Changes to index time field now mark settings as dirty.
+
+* Issue **#3604** : Treat missing fields in expressions as false matches.
+
+* Issue **#3625** : Fix dashboard tab move behaviour.
+
+* Issue **#3622** : Fix _Dual_ data source not returning rows when the _Dummy_ column is not present in the table.
+
+* Issue **#3623** : Fix code completion for no-args functions, e.g. `currentUser()`.
+
+* Issue **#3617** : Prevent `GROUP BY` after `SELECT`.
+
+* Issue **#3418** : Add dependencies for views, queries and analytic rules.
+
+* Issue **#3641** : Change processor filter layout.
+
+* Issue **#3647** : Add auto refresh toggle button to server tasks page.
+
+* Issue **#3464** : Persist table page size setting per dashboard table.
+
+* Issue **#3645** : Increase contrast by lightening text colour.
+
+* Issue **#3644** : Clearing selection list filter with ESC now updates list.
+
+* Issue **#3635** : Fix error handling when initialising feed specific ref data stores.
+
+* Issue **#3639** : Improve layout on processor filter popup.
+
+* Issue **#3640** : Fix tooltip position.
+
+* Issue **#3638** : Change the proxy defaults yaml file to include a single default items for list based properties. Also fix the HTTP forward config prop name in the distribution/docker config file.
+
+* Issue **#3232** : Change the severity from WARNING to ERROR when there are no reference loaders configured on a ReferenceDataFilter.
+
+* Issue **#3657** : Fix expander col width.
+
+* Issue **#3648** : Simplify of pipeline property list and editor.
+
+
 ## [v7.2-beta.43] - 2023-07-14
 
 * Issue **#3570** : Fix problem of XSLT filter error using old name for an XSLT doc. Also fix handling of name pattern not matching when a default XSLT is provided.
@@ -5628,7 +5679,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.44...HEAD
+[v7.2-beta.44]: https://github.com/gchq/stroom/compare/v7.2-beta.43...v7.2-beta.44
 [v7.2-beta.43]: https://github.com/gchq/stroom/compare/v7.2-beta.42...v7.2-beta.43
 [v7.2-beta.42]: https://github.com/gchq/stroom/compare/v7.2-beta.41...v7.2-beta.42
 [v7.2-beta.41]: https://github.com/gchq/stroom/compare/v7.2-beta.40...v7.2-beta.41
