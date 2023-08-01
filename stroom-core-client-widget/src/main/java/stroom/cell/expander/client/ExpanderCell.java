@@ -69,7 +69,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
      * Get the maximum column width required to fit expander icons for all levels
      */
     public static int getColumnWidth(final int maxDepth) {
-        if (maxDepth > 0) {
+        if (maxDepth >= 0) {
             return (maxDepth * ICON_WIDTH) + ICON_WIDTH + PADDING;
         } else {
             return 0;
@@ -106,8 +106,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
             final int depth = value.getDepth();
             final int padding = (depth * ICON_WIDTH) + initialOffset;
             final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
-            String className = "expanderCell expanderIcon";
-
+            String className = "";
             final SvgImage expanderIcon;
             if (value.isLeaf()) {
                 expanderIcon = SvgImage.DOT;
@@ -119,13 +118,13 @@ public class ExpanderCell extends AbstractCell<Expander> {
                 className += " active";
             }
 
-            final SafeHtml expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(
-                    expanderIcon.getSvg());
-            className += " " + expanderIcon.getClassName();
+            final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
+                    expanderIcon,
+                    "expanderIcon" + className);
             sb.append(template.expander(
-                    className,
+                    "expanderCell",
                     style,
-                    expanderIconSafeHtml));
+                    iconSafeHtml));
 
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
