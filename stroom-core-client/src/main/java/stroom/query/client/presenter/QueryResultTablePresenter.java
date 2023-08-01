@@ -381,7 +381,7 @@ public class QueryResultTablePresenter
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
-        final boolean showDetail = false;//getTableSettings().showDetail();
+        final boolean showDetail = false; //getTableSettings().showDetail();
         for (final Field field : fields) {
             if (field.getGroup() != null) {
                 maxGroup = Math.max(maxGroup, field.getGroup());
