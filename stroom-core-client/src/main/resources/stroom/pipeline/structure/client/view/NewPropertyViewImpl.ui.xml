@@ -11,11 +11,20 @@
         <form:FormGroup identity="newPropertyName" label="Name">
             <g:Label ui:field="name" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
+        <form:FormGroup identity="newPropertyDescription" label="Description">
+            <g:Label ui:field="description" addStyleNames="stroom-control-label"/>
+        </form:FormGroup>
         <form:FormGroup identity="newPropertySource" label="Source">
             <i:SelectionBox ui:field="source" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertyValue" label="Value">
             <g:SimplePanel ui:field="value" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="defaultValueGroup" identity="newPropertyDefaultValue" label="Default Value">
+            <g:Label ui:field="defaultValue" addStyleNames="stroom-control-label"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="inheritedValueGroup" identity="newPropertyInheritedValue" label="Inherited Value">
+            <g:Label ui:field="inheritedValue" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
