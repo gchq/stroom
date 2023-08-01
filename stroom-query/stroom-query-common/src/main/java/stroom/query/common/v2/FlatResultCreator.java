@@ -381,9 +381,18 @@ public class FlatResultCreator implements ResultCreator {
 
     private static class Mapper {
 
-        private final int[] parentFieldIndices;
-        private final DataStore dataStore;
+        private final DataStoreFactory dataStoreFactory;
+        private final DataStoreSettings dataStoreSettings;
+        private final SearchRequestSource searchRequestSource;
+        private final QueryKey queryKey;
+        private final String componentId;
+        private final TableSettings child;
+        private final Map<String, String> paramMap;
         private final int maxItems;
+        private final ErrorConsumer errorConsumer;
+        private final FieldIndex childFieldIndex;
+
+        private final int[] parentFieldIndices;
 
         Mapper(final DataStoreFactory dataStoreFactory,
                final DataStoreSettings dataStoreSettings,
@@ -395,7 +404,15 @@ public class FlatResultCreator implements ResultCreator {
                final Map<String, String> paramMap,
                final int maxItems,
                final ErrorConsumer errorConsumer) {
+            this.dataStoreFactory = dataStoreFactory;
+            this.dataStoreSettings = dataStoreSettings;
+            this.searchRequestSource = searchRequestSource;
+            this.queryKey = queryKey;
+            this.componentId = componentId;
+            this.child = child;
+            this.paramMap = paramMap;
             this.maxItems = maxItems;
+            this.errorConsumer = errorConsumer;
 
             final FieldIndex parentFieldIndex = new FieldIndex();
 
@@ -405,7 +422,7 @@ public class FlatResultCreator implements ResultCreator {
             }
 
             // Extract child fields from expressions.
-            final FieldIndex childFieldIndex = new FieldIndex();
+            childFieldIndex = new FieldIndex();
             final List<Field> childFields = child != null
                     ? child.getFields()
                     : Collections.emptyList();
@@ -418,10 +435,12 @@ public class FlatResultCreator implements ResultCreator {
                 final Integer parentIndex = parentFieldIndex.getPos(childField);
                 parentFieldIndices[i] = Objects.requireNonNullElse(parentIndex, -1);
             }
+        }
 
+        public DataStore map(final DataStore dataStore, final TimeFilter timeFilter) {
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
-            dataStore = dataStoreFactory.create(
+            final DataStore childDataStore = dataStoreFactory.create(
                     searchRequestSource,
                     queryKey,
                     componentId,
@@ -430,14 +449,11 @@ public class FlatResultCreator implements ResultCreator {
                     paramMap,
                     dataStoreSettings,
                     errorConsumer);
-        }
 
-        public DataStore map(final DataStore dataStore, final TimeFilter timeFilter) {
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
             dataStore.getData(data -> {
                 final Optional<Items> optional = data.get(Key.ROOT_KEY, timeFilter);
-                this.dataStore.clear();
                 optional.ifPresent(items -> {
                     if (items.size() > 0) {
                         int itemCount = 0;
@@ -451,7 +467,7 @@ public class FlatResultCreator implements ResultCreator {
                                     values[i] = val;
                                 }
                             }
-                            this.dataStore.add(Val.of(values));
+                            childDataStore.add(Val.of(values));
 
                             // Trim the data to the parent first level result size.
                             itemCount++;
@@ -463,7 +479,7 @@ public class FlatResultCreator implements ResultCreator {
                 });
             });
 
-            return this.dataStore;
+            return childDataStore;
         }
     }
 

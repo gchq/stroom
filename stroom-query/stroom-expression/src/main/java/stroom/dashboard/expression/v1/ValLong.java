@@ -28,10 +28,6 @@ public final class ValLong implements ValNumber {
     }
 
     public static ValLong create(final long value) {
-        final int offset = 128;
-        if (value >= -128 && value <= 127) { // will cache
-            return ValLongCache.cache[(int) value + offset];
-        }
         return new ValLong(value);
     }
 
@@ -85,19 +81,5 @@ public final class ValLong implements ValNumber {
     @Override
     public int hashCode() {
         return Objects.hash(value);
-    }
-
-    private static class ValLongCache {
-
-        static final ValLong[] cache = new ValLong[-(-128) + 127 + 1];
-
-        static {
-            for (int i = 0; i < cache.length; i++) {
-                cache[i] = new ValLong(i - 128);
-            }
-        }
-
-        private ValLongCache() {
-        }
     }
 }
