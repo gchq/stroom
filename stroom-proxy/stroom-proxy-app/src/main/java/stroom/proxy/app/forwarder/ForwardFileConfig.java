@@ -21,6 +21,12 @@ public class ForwardFileConfig extends AbstractConfig implements ForwardConfig, 
     private final String name;
     private final String path;
 
+    public ForwardFileConfig() {
+        enabled = true;
+        name = null;
+        path = null;
+    }
+
     @SuppressWarnings("unused")
     @JsonCreator
     public ForwardFileConfig(@JsonProperty("enabled") final boolean enabled,
