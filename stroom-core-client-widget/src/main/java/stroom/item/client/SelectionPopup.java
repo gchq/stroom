@@ -100,8 +100,8 @@ public class SelectionPopup extends Composite {
             eventBinder.bind();
             popupPanel.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
                 popupPanel.setPopupPosition(
-                        position.getLeft(),
-                        position.getTop());
+                        (int) position.getRelativeRect().getLeft(),
+                        (int) position.getRelativeRect().getTop());
                 afterShow();
             });
         }

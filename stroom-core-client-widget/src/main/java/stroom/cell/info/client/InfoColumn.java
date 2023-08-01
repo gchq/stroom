@@ -19,8 +19,8 @@ package stroom.cell.info.client;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
@@ -46,20 +46,14 @@ public abstract class InfoColumn<T> extends Column<T, Preset> {
         Element target = event.getEventTarget().cast();
 
         // Find the parent TD.
-        while (target != null && !target.getTagName().equalsIgnoreCase("td")) {
+        while (target.getParentElement() != null &&
+                !target.getTagName().equalsIgnoreCase("td") &&
+                !target.getParentElement().getTagName().equalsIgnoreCase("td")) {
             target = target.getParentElement();
         }
-        if (target == null) {
-            target = event.getEventTarget().cast();
-        }
 
-        final PopupPosition position = new PopupPosition(
-                target.getAbsoluteRight(),
-                target.getAbsoluteRight(),
-                target.getAbsoluteTop(),
-                target.getAbsoluteTop(),
-                HorizontalLocation.RIGHT,
-                VerticalLocation.BELOW);
+        Rect relativeRect = new Rect(target);
+        final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
         showInfo(row, position);
     }
 }

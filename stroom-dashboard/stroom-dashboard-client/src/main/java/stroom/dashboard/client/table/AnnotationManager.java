@@ -30,7 +30,8 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -63,9 +64,9 @@ public class AnnotationManager {
         this.selectedItems = selectedItems;
 
         final Element target = event.getEventTarget().cast();
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
-                VerticalLocation.BELOW);
+        Rect relativeRect = new Rect(target);
+        relativeRect = relativeRect.grow(3);
+        final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
 
         final List<Item> menuItems = getMenuItems(tableComponentSettings, selectedItems);
         ShowMenuEvent
