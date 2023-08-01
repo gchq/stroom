@@ -951,6 +951,9 @@ appConfig:
     helpUrl: "https://gchq.github.io/stroom-docs/7.2/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    nodeMonitoring:
+      pingMaxThreshold: 500
+      pingWarnThreshold: 100
     oncontextmenu: "return false;"
     process:
       defaultRecordLimit: 1000000

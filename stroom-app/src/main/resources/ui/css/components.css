@@ -1734,12 +1734,25 @@ button.main-menu svg {
      height: 100%;
 }
 
-.nodePingBar-bar__healthy {
-     background-color: rgba(33, 150, 243, 0.6);
+.nodePingBar-bar.nodePingBar-severity__healthy {
+     background-color: var(--primary);
 }
 
-.nodePingBar-bar__unhealthy {
-     background-color: rgba(255, 111, 0, 0.6);
+.nodePingBar-bar.nodePingBar-severity__warn {
+     background-color: var(--warning);
+}
+
+.nodePingBar-bar.nodePingBar-severity__max {
+     background-color: var(--danger);
+}
+
+.nodePingBar-severity__healthy .nodePingBar-text {
+     color: var(--white);
+}
+
+.nodePingBar-severity__warn .nodePingBar-text,
+.nodePingBar-severity__max .nodePingBar-text {
+     color: var(--black);
 }
 
 .nodePingBar-text {
