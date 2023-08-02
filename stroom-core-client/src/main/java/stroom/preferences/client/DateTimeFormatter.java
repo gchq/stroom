@@ -39,7 +39,7 @@ public class DateTimeFormatter {
         int offsetMinutes = 0;
         String zoneId = "UTC";
 
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         if (userPreferences != null) {
             if (userPreferences.getDateTimePattern() != null
                     && userPreferences.getDateTimePattern().trim().length() > 0) {

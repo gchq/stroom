@@ -19,7 +19,7 @@ public class DateTimeSettingsFactory {
     }
 
     public DateTimeSettings getDateTimeSettings() {
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         return DateTimeSettings
                 .builder()
                 .dateTimePattern(userPreferences.getDateTimePattern())

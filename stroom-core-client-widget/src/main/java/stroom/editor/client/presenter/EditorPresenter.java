@@ -35,9 +35,9 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class EditorPresenter
@@ -54,12 +54,13 @@ public class EditorPresenter
                            final EditorView view,
                            final EditorMenuPresenter contextMenu,
                            final DelegatingAceCompleter delegatingAceCompleter,
-                           final CurrentTheme currentTheme) {
+                           final CurrentPreferences currentPreferences) {
         super(eventBus, view);
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
-        view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
-        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentTheme.getEditorKeyBindings()));
+        view.setTheme(getTheme(currentPreferences));
+        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentPreferences.getEditorKeyBindings()));
+        view.setUserLiveAutoCompletePreference(currentPreferences.getEditorLiveAutoCompletion().isOn());
 
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
 
@@ -72,29 +73,32 @@ public class EditorPresenter
                 eventBus.fireEvent(event);
             }
         }));
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
-            view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()));
-            // For the moment only standard and vim bindings are supported given the boolean
-            // nature of the context menu
-            view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(event.getEditorKeyBindings()));
-        }));
+        registerHandler(eventBus.addHandler(
+                ChangeCurrentPreferencesEvent.getType(),
+                this::handlePreferencesChange));
+    }
+
+    private void handlePreferencesChange(final ChangeCurrentPreferencesEvent event) {
+        final EditorView view = getView();
+        view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()));
+        // For the moment only standard and vim bindings are supported given the boolean
+        // nature of the context menu
+        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(event.getEditorKeyBindings()));
+        view.setUserLiveAutoCompletePreference(event.getEditorLiveAutoCompletion().isOn());
+    }
+
+    private AceEditorTheme getTheme(final CurrentPreferences currentPreferences) {
+        return getTheme(currentPreferences.getTheme(), currentPreferences.getEditorTheme());
     }
 
     private AceEditorTheme getTheme(final String theme, final String editorTheme) {
-        AceEditorTheme aceEditorTheme = AceEditorTheme.CHROME;
-        if (theme != null &&
-                theme.toLowerCase(Locale.ROOT).contains("dark")) {
-            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT;
-        }
-        if (editorTheme != null) {
-            aceEditorTheme = Arrays
-                    .stream(AceEditorTheme.values())
-                    .filter(t -> t.getName().equals(editorTheme))
-                    .findAny()
-                    .orElse(aceEditorTheme);
-        }
-
-        return aceEditorTheme;
+        // Just in case it is null
+        return Optional.ofNullable(editorTheme)
+                .map(AceEditorTheme::fromName)
+                .orElseGet(() ->
+                        theme != null && theme.toLowerCase(Locale.ROOT).contains("dark")
+                                ? AceEditorTheme.DEFAULT_DARK_THEME
+                                : AceEditorTheme.DEFAULT_LIGHT_THEME);
     }
 
     public String getEditorId() {

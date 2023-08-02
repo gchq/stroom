@@ -16,19 +16,21 @@
 
 package stroom.preferences.client;
 
+import stroom.item.client.DecoratedItem;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
+import stroom.ui.config.shared.UserPreferences.Toggle;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -41,6 +43,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public final class UserPreferencesViewImpl
         extends ViewWithUiHandlers<UserPreferencesUiHandlers>
@@ -71,9 +75,11 @@ public final class UserPreferencesViewImpl
     @UiField
     SelectionBox<String> theme;
     @UiField
-    SelectionBox<String> editorTheme;
+    SelectionBox<EditorThemeName> editorTheme;
     @UiField
     SelectionBox<String> editorKeyBindings;
+    @UiField
+    SelectionBox<String> editorLiveAutoCompletion;
     @UiField
     SelectionBox<String> density;
     @UiField
@@ -106,6 +112,7 @@ public final class UserPreferencesViewImpl
         revertToDefault.setIcon(SvgImage.UNDO);
 
         setEditorKeyBindingsValues();
+        setEditorLiveAutoCompletionValues();
 
         density.addItem("Default");
         density.addItem("Comfortable");
@@ -167,19 +174,30 @@ public final class UserPreferencesViewImpl
 
     @Override
     public String getEditorTheme() {
-        return editorTheme.getValue();
+        return editorTheme.getValue().getValue();
     }
 
     @Override
     public void setEditorTheme(final String editorTheme) {
-        this.editorTheme.setValue(editorTheme);
+        String localDisplayName = editorTheme;
+        if (localDisplayName != null) {
+            localDisplayName = localDisplayName.replace("_", " ");
+            localDisplayName = Character.toUpperCase(localDisplayName.charAt(0))
+                    + localDisplayName.substring(1);
+        }
+
+        this.editorTheme.setValue(new EditorThemeName(editorTheme, localDisplayName));
     }
 
     @Override
     public void setEditorThemes(final List<String> editorThemes) {
         this.editorTheme.clear();
-        this.editorTheme.addItem("");
-        this.editorTheme.addItems(editorThemes);
+
+        final List<EditorThemeName> editorThemeNames = GwtNullSafe.stream(editorThemes)
+                .map(this::createEditorThemeItem)
+                .collect(Collectors.toList());
+
+        this.editorTheme.addItems(editorThemeNames);
     }
 
     @Override
@@ -193,12 +211,40 @@ public final class UserPreferencesViewImpl
         this.editorKeyBindings.setValue(editorKeyBindings.getDisplayValue());
     }
 
+    private EditorThemeName createEditorThemeItem(final String editorTheme) {
+        String displayName = editorTheme;
+        if (displayName != null) {
+            displayName = displayName.replace("_", " ");
+            displayName = Character.toUpperCase(displayName.charAt(0))
+                    + displayName.substring(1);
+        }
+        return new EditorThemeName(editorTheme, displayName);
+    }
+
     public void setEditorKeyBindingsValues() {
         this.editorKeyBindings.clear();
         Arrays.stream(EditorKeyBindings.values())
                 .sorted(Comparator.comparing(EditorKeyBindings::getDisplayValue))
                 .map(EditorKeyBindings::getDisplayValue)
                 .forEach(displayName -> this.editorKeyBindings.addItem(displayName));
+    }
+
+    @Override
+    public Toggle getEditorLiveAutoCompletion() {
+        return Toggle.fromDisplayValue(editorLiveAutoCompletion.getValue());
+    }
+
+
+    @Override
+    public void setEditorLiveAutoCompletion(final Toggle editorLiveAutoCompletion) {
+        Objects.requireNonNull(editorLiveAutoCompletion);
+        this.editorLiveAutoCompletion.setValue(editorLiveAutoCompletion.getDisplayValue());
+    }
+
+    public void setEditorLiveAutoCompletionValues() {
+        this.editorLiveAutoCompletion.clear();
+        this.editorLiveAutoCompletion.addItem(Toggle.ON.getDisplayValue());
+        this.editorLiveAutoCompletion.addItem(Toggle.OFF.getDisplayValue());
     }
 
     @Override
@@ -343,7 +389,7 @@ public final class UserPreferencesViewImpl
     }
 
     @UiHandler("editorTheme")
-    public void onEditorThemeValueChange(final ValueChangeEvent<String> e) {
+    public void onEditorThemeValueChange(final ValueChangeEvent<EditorThemeName> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onChange();
         }
@@ -351,6 +397,13 @@ public final class UserPreferencesViewImpl
 
     @UiHandler("editorKeyBindings")
     public void onEditorKeyBindingsValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("editorLiveAutoCompletion")
+    public void onEditorLiveAutoCompletionValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onChange();
         }
@@ -406,11 +459,30 @@ public final class UserPreferencesViewImpl
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, UserPreferencesViewImpl> {
 
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static native String[] getTimeZoneIds()/*-{
         return $wnd.moment.tz.names();
     }-*/;
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class EditorThemeName extends DecoratedItem<String> {
+
+        public EditorThemeName(final String value, final String displayValue) {
+            super(value, displayValue);
+        }
+    }
 }
