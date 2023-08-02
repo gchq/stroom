@@ -5,10 +5,7 @@ import stroom.security.openid.api.OpenId;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.net.UrlUtils;
 import stroom.util.servlet.UserAgentSessionUtil;
-
-import com.google.common.base.Strings;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -37,20 +34,44 @@ class OpenIdManager {
                            final String postAuthRedirectUri) {
         String redirectUri = null;
 
-        // If we have completed the front channel flow then we will have a state id.
-        if (code != null && stateId != null) {
-            redirectUri = backChannelOIDC(request, code, stateId);
+        // Retrieve state if we have a state id param.
+        final AuthenticationState state = getState(request, stateId);
+
+        // If we have completed the front channel flow then we will have a code and state.
+        if (code != null && state != null) {
+            redirectUri = backChannelOIDC(request, code, state);
         }
 
+        // If we aren't doing back channel check yet or the back channel check failed then proceed with front channel.
         if (redirectUri == null) {
-            final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
-            redirectUri = frontChannelOIDC(request, uri);
+            if (state != null) {
+                // Restore the initiating URI as needed for logout.
+                redirectUri = frontChannelOIDC(request, state.getInitiatingUri(), state.isPrompt());
+            } else {
+                redirectUri = frontChannelOIDC(request, postAuthRedirectUri, false);
+            }
         }
 
         return redirectUri;
     }
 
-    private String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
+    private AuthenticationState getState(final HttpServletRequest request, final String stateId) {
+        AuthenticationState state = null;
+        if (stateId != null) {
+            // Check the state is one we requested.
+            state = AuthenticationStateSessionUtil.pop(request, stateId);
+            if (state == null) {
+                LOGGER.debug("Unable to find state {}", stateId);
+            } else {
+                LOGGER.debug("Found state {} {}", stateId, state);
+            }
+        }
+        return state;
+    }
+
+    private String frontChannelOIDC(final HttpServletRequest request,
+                                    final String postAuthRedirectUri,
+                                    final boolean prompt) {
         final String endpoint = openIdConfig.getAuthEndpoint();
         final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
@@ -58,47 +79,36 @@ class OpenIdManager {
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
         // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri, prompt);
         LOGGER.debug(() -> "frontChannelOIDC state=" + state);
-        return createAuthUri(request, endpoint, clientId, state, false);
+        return createAuthUri(request, endpoint, clientId, state);
     }
 
     private String backChannelOIDC(final HttpServletRequest request,
                                    final String code,
-                                   final String stateId) {
+                                   final AuthenticationState state) {
         Objects.requireNonNull(code, "Null code");
-        Objects.requireNonNull(stateId, "Null state Id");
 
         boolean loggedIn = false;
         String redirectUri = null;
 
-        // If we have a state id then this should be a return from the auth service.
-        LOGGER.debug(() -> "We have the following state: " + stateId);
+        LOGGER.debug(() -> "backChannelOIDC state=" + state);
+        final HttpSession session = request.getSession(false);
+        UserAgentSessionUtil.set(request);
 
-        // Check the state is one we requested.
-        final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
-        if (state == null) {
-            LOGGER.warn(() -> "Unexpected state: " + stateId);
+        final Optional<UserIdentity> optionalUserIdentity =
+                userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
 
-        } else {
-            LOGGER.debug(() -> "backChannelOIDC state=" + state);
-            final HttpSession session = request.getSession(false);
-            UserAgentSessionUtil.set(request);
+        if (optionalUserIdentity.isPresent()) {
+            // Set the token in the session.
+            UserIdentitySessionUtil.set(session, optionalUserIdentity.get());
+            loggedIn = true;
+        }
 
-            final Optional<UserIdentity> optionalUserIdentity =
-                    userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
-
-            if (optionalUserIdentity.isPresent()) {
-                // Set the token in the session.
-                UserIdentitySessionUtil.set(session, optionalUserIdentity.get());
-                loggedIn = true;
-            }
-
-            // If we manage to login then redirect to the original URL held in the state.
-            if (loggedIn) {
-                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getUri());
-                redirectUri = state.getUri();
-            }
+        // If we manage to login then redirect to the original URL held in the state.
+        if (loggedIn) {
+            LOGGER.info(() -> "Redirecting to initiating URI: " + state.getInitiatingUri());
+            redirectUri = state.getInitiatingUri();
         }
 
         return redirectUri;
@@ -132,49 +142,51 @@ class OpenIdManager {
     }
 
     public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
-        final String redirectUri = OpenId.removeReservedParams(postAuthRedirectUri);
         final String endpoint = openIdConfig.getLogoutEndpoint();
         final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUri);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri, true);
         LOGGER.debug(() -> "logout state=" + state);
-        return createAuthUri(request, endpoint, clientId, state, true);
+        return createLogoutUri(endpoint, clientId, state);
     }
 
     private String createAuthUri(final HttpServletRequest request,
                                  final String endpoint,
                                  final String clientId,
-                                 final AuthenticationState state,
-                                 final boolean prompt) {
+                                 final AuthenticationState state) {
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.RESPONSE_TYPE, OpenId.CODE);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, state.getUri());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, state.getRedirectUri());
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, OpenId.SCOPE__OPENID +
                 " " +
                 OpenId.SCOPE__EMAIL);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state.getId());
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.NONCE, state.getNonce());
 
-        // If there's 'prompt' in the request then we'll want to pass that on to the AuthenticationService.
-        // In OpenId 'prompt=login' asks the IP to present a login page to the user, and that's the effect
-        // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
-        // log in as the 'admin' user but the browser is always presenting a certificate.
-        final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
-        if (!Strings.isNullOrEmpty(promptParam)) {
-            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, promptParam);
-        } else if (prompt) {
-            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, "login");
+        // Determine if we want to force login regardless of IDP auth state.
+        if (state.isPrompt()) {
+            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, OpenId.LOGIN_PROMPT);
         }
 
         final String authenticationRequestUrl = uriBuilder.build().toString();
         LOGGER.info(() -> "Redirecting with an AuthenticationRequest to: " + authenticationRequestUrl);
         // We want to make sure that the client has the cookie.
         return authenticationRequestUrl;
+    }
+
+    private String createLogoutUri(final String endpoint,
+                                   final String clientId,
+                                   final AuthenticationState state) {
+        UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.POST_LOGOUT_REDIRECT_URI, state.getRedirectUri());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state.getId());
+        return uriBuilder.build().toString();
     }
 }

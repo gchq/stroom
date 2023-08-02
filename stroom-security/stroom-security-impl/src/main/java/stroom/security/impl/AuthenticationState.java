@@ -1,14 +1,46 @@
 package stroom.security.impl;
 
-public class AuthenticationState {
-    private final String id;
-    private final String uri;
-    private final String nonce;
+import stroom.security.openid.api.OpenId;
 
-    AuthenticationState(final String id, final String uri, final String nonce) {
+import java.util.Set;
+import javax.ws.rs.core.UriBuilder;
+
+public class AuthenticationState {
+
+    private static final Set<String> RESERVED_PARAMS = Set.of(
+            OpenId.AUTH_USER,
+            OpenId.CLIENT_ID,
+            OpenId.CLIENT_SECRET,
+            OpenId.CODE,
+            OpenId.GRANT_TYPE,
+            OpenId.NONCE,
+            OpenId.PROMPT,
+            OpenId.REDIRECT_URI,
+            OpenId.RESPONSE_TYPE,
+            OpenId.SCOPE,
+            OpenId.STATE
+    );
+
+    private final String id;
+    private final String url;
+    private final String initiatingUri;
+    private final String redirectUri;
+    private final String nonce;
+    private final boolean prompt;
+
+    AuthenticationState(final String id,
+                        final String url,
+                        final String nonce,
+                        final boolean prompt) {
         this.id = id;
-        this.uri = uri;
+        this.url = url;
         this.nonce = nonce;
+        this.prompt = prompt;
+
+        // Make sure the initiating URI doesn't contain any reserved OIDC params.
+        this.initiatingUri = createInitiatingUri(url);
+        // Create a simple redirect URI.
+        this.redirectUri = createRedirectUri(url);
     }
 
     /**
@@ -21,12 +53,21 @@ public class AuthenticationState {
     }
 
     /**
-     * The URI of the originating request that this state is linked to.
+     * The URI of the initiating request that this state is linked to.
      *
-     * @return The URL of the originating request that this state is linked to.
+     * @return The URL of the initiating request that this state is linked to.
      */
-    public String getUri() {
-        return uri;
+    public String getInitiatingUri() {
+        return initiatingUri;
+    }
+
+    /**
+     * The URI that should be sent to the IDP that the IDP will use to redirect back one authenticated.
+     *
+     * @return The URI that should be sent to the IDP that the IDP will use to redirect back one authenticated.
+     */
+    public String getRedirectUri() {
+        return redirectUri;
     }
 
     /**
@@ -44,12 +85,50 @@ public class AuthenticationState {
         return nonce;
     }
 
+    /**
+     * Determine if the next auth call should force a prompt.
+     *
+     * @return True if the next auth call should force a prompt.
+     */
+    public boolean isPrompt() {
+        return prompt;
+    }
+
     @Override
     public String toString() {
         return "AuthenticationState{" +
                 "id='" + id + '\'' +
-                ", uri='" + uri + '\'' +
+                ", url='" + url + '\'' +
+                ", initiatingUri='" + initiatingUri + '\'' +
+                ", redirectUri='" + redirectUri + '\'' +
                 ", nonce='" + nonce + '\'' +
+                ", prompt=" + prompt +
                 '}';
+    }
+
+    private static String createInitiatingUri(final String url) {
+        final UriBuilder uriBuilder = UriBuilder.fromUri(url);
+
+        // When the auth service has performed authentication it will redirect
+        // back to the current URL with some additional parameters (e.g.
+        // `state` and `accessCode`). It is important that these parameters are
+        // not provided by our redirect URL else the redirect URL that the
+        // authentication service redirects back to may end up with multiple
+        // copies of these parameters which will confuse Stroom as it will not
+        // know which one of the param values to use (i.e. which were on the
+        // original redirect request and which have been added by the
+        // authentication service). For this reason we will cleanse the URL of
+        // any reserved parameters here. The authentication service should do
+        // the same to the redirect URL before adding its additional
+        // parameters.
+        RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
+
+        return uriBuilder.build().toString();
+    }
+
+    private static String createRedirectUri(final String url) {
+        final UriBuilder uriBuilder = UriBuilder.fromUri(url);
+        uriBuilder.replaceQuery("");
+        return uriBuilder.build().toString();
     }
 }
