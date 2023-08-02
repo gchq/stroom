@@ -17,6 +17,7 @@
 
 package stroom.node.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -38,8 +39,11 @@ import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.NodeMonitoringConfig;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -67,11 +71,19 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         implements Refreshable {
 
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
+    private static final String CLASS_BASE = "nodePingBar";
+    private static final String PING_BAR_CLASS = CLASS_BASE + "-bar";
+    private static final String PING_TEXT_CLASS = CLASS_BASE + "-text";
+    private static final String PING_SEVERITY_CLASS_BASE = CLASS_BASE + "-severity";
+    private static final String PING_SEVERITY_CLASS_SUFFIX_HEALTHY = "__healthy";
+    private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "__warn";
+    private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "__max";
 
     private final MyDataGrid<NodeStatusResult> dataGrid;
     private final NodeManager nodeManager;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
+    private final UiConfigCache uiConfigCache;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
@@ -82,7 +94,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                                    final PagerView view,
                                    final NodeManager nodeManager,
                                    final TooltipPresenter tooltipPresenter,
-                                   final DateTimeFormatter dateTimeFormatter) {
+                                   final DateTimeFormatter dateTimeFormatter,
+                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
@@ -91,6 +104,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.uiConfigCache = uiConfigCache;
+
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
@@ -102,19 +117,31 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
 
             @Override
             protected void changeData(final FetchNodeStatusResponse data) {
-                // Ping each node.
-                data.getValues().forEach(row -> {
-                    final String nodeName = row.getNode().getName();
-                    nodeManager.ping(nodeName,
-                            ping -> {
-                                latestPing.put(nodeName, new PingResult(ping, null));
-                                super.changeData(data);
-                            },
-                            throwable -> {
-                                latestPing.put(nodeName, new PingResult(null, throwable.getMessage()));
-                                super.changeData(data);
+                uiConfigCache.get()
+                        .onSuccess(uiConfig -> {
+                            final NodeMonitoringConfig nodeMonitoringConfig = uiConfig.getNodeMonitoring();
+
+                            // Ping each node.
+                            data.getValues().forEach(row -> {
+                                final String nodeName = row.getNode().getName();
+                                nodeManager.ping(nodeName,
+                                        pingMs -> {
+                                            latestPing.put(nodeName, PingResult.success(pingMs, nodeMonitoringConfig));
+                                            super.changeData(data);
+                                        },
+                                        throwable -> {
+                                            latestPing.put(nodeName, PingResult.error(
+                                                    throwable.getMessage(), nodeMonitoringConfig));
+                                            super.changeData(data);
+                                        });
                             });
-                });
+                        })
+                        .onFailure(caught ->
+                                AlertEvent.fireError(
+                                        NodeMonitoringPresenter.this,
+                                        caught.getMessage(),
+                                        null));
+
                 super.changeData(data);
             }
         };
@@ -169,52 +196,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         dataGrid.addResizableColumn(hostNameColumn, "Cluster Base Endpoint URL", 400);
 
         // Ping (ms)
-        final Column<NodeStatusResult, SafeHtml> safeHtmlColumn = DataGridUtil.safeHtmlColumn(row -> {
-            if (row == null) {
-                return null;
-            }
-
-            final PingResult pingResult = latestPing.get(row.getNode().getName());
-            if (pingResult != null) {
-                if ("No response".equals(pingResult.getError())) {
-                    return SafeHtmlUtil.getSafeHtml(pingResult.getError());
-                }
-                if (pingResult.getError() != null) {
-                    return SafeHtmlUtil.getSafeHtml("Error");
-                }
-
-                // Bar widths are all relative to the longest ping.
-                final long unHealthyThresholdPing = 250;
-                final long highestPing = latestPing.values().stream()
-                        .filter(result -> result.getPing() != null)
-                        .mapToLong(PingResult::getPing)
-                        .max()
-                        .orElse(unHealthyThresholdPing);
-                final int maxBarWidthPct = 100;
-                final double barWidthPct = pingResult.getPing() > highestPing
-                        ? maxBarWidthPct
-                        : ((double) pingResult.getPing() / highestPing * maxBarWidthPct);
-
-                final String barColourClass = pingResult.getPing() < unHealthyThresholdPing
-                        ? "nodePingBar-bar__healthy"
-                        : "nodePingBar-bar__unhealthy";
-
-                HtmlBuilder htmlBuilder = new HtmlBuilder();
-                htmlBuilder.div(hb1 ->
-                        hb1.div(hb2 ->
-                                        hb2.span(hb3 ->
-                                                        hb3.append(THOUSANDS_FORMATTER
-                                                                .format(pingResult.getPing())),
-                                                Attribute.className("nodePingBar-text")),
-                                Attribute.className("nodePingBar-bar " +
-                                        barColourClass),
-                                Attribute.style("width:" +
-                                        barWidthPct +
-                                        "%")), Attribute.className("nodePingBar-outer"));
-                return htmlBuilder.toSafeHtml();
-            }
-            return SafeHtmlUtil.getSafeHtml("-");
-        });
+        final Column<NodeStatusResult, SafeHtml> safeHtmlColumn = DataGridUtil.safeHtmlColumn(this::getPingBarSafeHtml);
         dataGrid.addResizableColumn(safeHtmlColumn, "Ping (ms)", 300);
 
         // Master.
@@ -274,6 +256,64 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         dataGrid.addColumn(enabledColumn, "Enabled", 70);
 
         dataGrid.addEndColumn(new EndColumn<>());
+    }
+
+    private SafeHtml getPingBarSafeHtml(final NodeStatusResult row) {
+        if (row == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+
+        final PingResult pingResult = latestPing.get(row.getNode().getName());
+
+        if (pingResult != null) {
+            if ("No response".equals(pingResult.getError())) {
+                return SafeHtmlUtil.getSafeHtml(pingResult.getError());
+            }
+            if (pingResult.getError() != null) {
+                return SafeHtmlUtil.getSafeHtml("Error");
+            }
+            final Long ping = pingResult.getPing();
+            if (ping == null || ping < 0) {
+                return SafeHtmlUtil.getSafeHtml("Invalid ping value: "
+                        + GwtNullSafe.requireNonNullElse(ping, "null"));
+            }
+
+            return buildPingBar(ping, pingResult.getNodeMonitoringConfig());
+        }
+        return SafeHtmlUtil.getSafeHtml("-");
+    }
+
+    private SafeHtml buildPingBar(final long ping, final NodeMonitoringConfig nodeMonitoringConfig) {
+        final int warnThresholdMs = nodeMonitoringConfig.getPingWarnThreshold();
+        final int maxThresholdMs = nodeMonitoringConfig.getPingMaxThreshold();
+        final int maxBarWidthPct = 100;
+
+        final double barWidthPct = ping >= maxThresholdMs
+                ? maxBarWidthPct
+                : ((double) ping / maxThresholdMs * maxBarWidthPct);
+
+        final String severityClassSuffix;
+        if (ping >= maxThresholdMs) {
+            severityClassSuffix = PING_SEVERITY_CLASS_SUFFIX_MAX;
+        } else if (ping >= warnThresholdMs) {
+            severityClassSuffix = PING_SEVERITY_CLASS_SUFFIX_WARN;
+        } else {
+            severityClassSuffix = PING_SEVERITY_CLASS_SUFFIX_HEALTHY;
+        }
+        final String severityClass = PING_SEVERITY_CLASS_BASE + severityClassSuffix;
+
+        HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(hb1 ->
+                hb1.div(hb2 ->
+                                hb2.span(hb3 ->
+                                                hb3.append(THOUSANDS_FORMATTER
+                                                        .format(ping)),
+                                        Attribute.className(PING_TEXT_CLASS)),
+                        Attribute.className(PING_BAR_CLASS + " " + severityClass),
+                        Attribute.style("width:" +
+                                barWidthPct +
+                                "%")), Attribute.className("nodePingBar-outer"));
+        return htmlBuilder.toSafeHtml();
     }
 
     private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final PopupPosition popupPosition) {
@@ -349,14 +389,30 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         return "Nodes";
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class PingResult {
 
         private final Long ping;
         private final String error;
+        private final NodeMonitoringConfig nodeMonitoringConfig;
 
-        PingResult(final Long ping, final String error) {
+        PingResult(final Long ping,
+                   final String error,
+                   final NodeMonitoringConfig nodeMonitoringConfig) {
             this.ping = ping;
             this.error = error;
+            this.nodeMonitoringConfig = nodeMonitoringConfig;
+        }
+
+        static PingResult success(final Long ping, final NodeMonitoringConfig nodeMonitoringConfig) {
+            return new PingResult(ping, null, nodeMonitoringConfig);
+        }
+
+        static PingResult error(final String error, final NodeMonitoringConfig nodeMonitoringConfig) {
+            return new PingResult(null, error, nodeMonitoringConfig);
         }
 
         Long getPing() {
@@ -365,6 +421,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
 
         String getError() {
             return error;
+        }
+
+        public NodeMonitoringConfig getNodeMonitoringConfig() {
+            return nodeMonitoringConfig;
         }
     }
 }
