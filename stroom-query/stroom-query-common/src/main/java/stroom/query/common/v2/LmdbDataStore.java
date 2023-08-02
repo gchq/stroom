@@ -927,7 +927,7 @@ public class LmdbDataStore implements DataStore {
                                 final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
                                 final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
 
-                                list.add(ItemImpl.create(this, key, timeFilter, storedValues));
+                                list.add(new ItemImpl(this, key, timeFilter, storedValues));
                                 if (list.size >= trimmedSize && sorter == null) {
                                     // Stop without sorting etc.
                                     addMore = false;
@@ -1024,11 +1024,6 @@ public class LmdbDataStore implements DataStore {
         }
 
         @Override
-        public ItemImpl get(final int index) {
-            return array[index];
-        }
-
-        @Override
         public int size() {
             return size;
         }
@@ -1068,27 +1063,20 @@ public class LmdbDataStore implements DataStore {
     }
 
     public static class ItemImpl implements Item {
+
+        private final LmdbData data;
         private final Key key;
-        private final Val[] values;
+        private final TimeFilter timeFilter;
         private final StoredValues storedValues;
 
-        private ItemImpl(final Key key,
-                         final Val[] values,
-                         final StoredValues storedValues) {
+        public ItemImpl(final LmdbData data,
+                        final Key key,
+                        final TimeFilter timeFilter,
+                        final StoredValues storedValues) {
+            this.data = data;
             this.key = key;
-            this.values = values;
+            this.timeFilter = timeFilter;
             this.storedValues = storedValues;
-        }
-
-        public static ItemImpl create(final LmdbData data,
-                                      final Key key,
-                                      final TimeFilter timeFilter,
-                                      final StoredValues storedValues) {
-            final Val[] values = new Val[data.compiledFields.length];
-            for (int i = 0; i < values.length; i++) {
-                values[i] = createValue(data, key, timeFilter, storedValues, i);
-            }
-            return new ItemImpl(key, values, storedValues);
         }
 
         @Override
@@ -1098,16 +1086,7 @@ public class LmdbDataStore implements DataStore {
 
         @Override
         public Val getValue(final int index) {
-            if (index >= values.length) {
-                try {
-                    throw new ArrayIndexOutOfBoundsException("Attempt to get value for unknown field index: " + index);
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-                return ValNull.INSTANCE;
-            }
-
-            return values[index];
+            return createValue(data, key, timeFilter, storedValues, index);
         }
 
         private static Val createValue(final LmdbData data,

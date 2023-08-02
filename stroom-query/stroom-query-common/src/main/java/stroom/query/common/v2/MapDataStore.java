@@ -469,13 +469,13 @@ public class MapDataStore implements DataStore, Data {
 
         synchronized void add(final Key groupKey, final StoredValues storedValues) {
             if (groupingFunction != null || sortingFunction != null) {
-                list.add(ItemImpl.create(dataStore, groupKey, storedValues));
+                list.add(new ItemImpl(dataStore, groupKey, storedValues));
                 trimmed = false;
                 if (list.size() > maxSize) {
                     sortAndTrim();
                 }
             } else if (list.size() < trimmedSize) {
-                list.add(ItemImpl.create(dataStore, groupKey, storedValues));
+                list.add(new ItemImpl(dataStore, groupKey, storedValues));
             } else {
                 full = true;
                 removeHandler.accept(groupKey);
@@ -521,19 +521,8 @@ public class MapDataStore implements DataStore, Data {
         }
 
         @Override
-        public Item get(final int index) {
-            return copy().get(index);
-        }
-
-        @Override
         public int size() {
             return list.size();
-        }
-
-        @Override
-        public Iterable<StoredValues> getStoredValueIterable() {
-            final List<ItemImpl> items = copy();
-            return () -> items.stream().map(item -> item.storedValues).iterator();
         }
 
         @Override
@@ -544,26 +533,17 @@ public class MapDataStore implements DataStore, Data {
     }
 
     public static class ItemImpl implements Item {
+
+        private final MapDataStore dataStore;
         private final Key key;
-        private final Val[] values;
         private final StoredValues storedValues;
 
-        private ItemImpl(final Key key,
-                         final Val[] values,
-                         final StoredValues storedValues) {
+        public ItemImpl(final MapDataStore dataStore,
+                        final Key key,
+                        final StoredValues storedValues) {
+            this.dataStore = dataStore;
             this.key = key;
-            this.values = values;
             this.storedValues = storedValues;
-        }
-
-        public static ItemImpl create(final MapDataStore dataStore,
-                                      final Key key,
-                                      final StoredValues storedValues) {
-            final Val[] values = new Val[dataStore.compiledFieldsArray.length];
-            for (int i = 0; i < values.length; i++) {
-                values[i] = createValue(dataStore, key, storedValues, i);
-            }
-            return new ItemImpl(key, values, storedValues);
         }
 
         @Override
@@ -573,7 +553,7 @@ public class MapDataStore implements DataStore, Data {
 
         @Override
         public Val getValue(final int index) {
-            return values[index];
+            return createValue(dataStore, key, storedValues, index);
         }
 
         private static Val createValue(final MapDataStore dataStore,
@@ -681,7 +661,7 @@ public class MapDataStore implements DataStore, Data {
             return groupingMap
                     .entrySet()
                     .parallelStream()
-                    .map(e -> ItemImpl.create(MapDataStore.this, e.getKey(), e.getValue()));
+                    .map(e -> new ItemImpl(MapDataStore.this, e.getKey(), e.getValue()));
         }
     }
 }

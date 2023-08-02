@@ -29,6 +29,10 @@ public final class ValInteger implements ValNumber {
     }
 
     public static ValInteger create(final int value) {
+        final int offset = 128;
+        if (value >= -128 && value <= 127) { // will cache
+            return ValIntegerCache.cache[value + offset];
+        }
         return new ValInteger(value);
     }
 
@@ -82,5 +86,19 @@ public final class ValInteger implements ValNumber {
     @Override
     public int hashCode() {
         return Objects.hash(value);
+    }
+
+    private static class ValIntegerCache {
+
+        static final ValInteger[] cache = new ValInteger[-(-128) + 127 + 1];
+
+        static {
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new ValInteger(i - 128);
+            }
+        }
+
+        private ValIntegerCache() {
+        }
     }
 }

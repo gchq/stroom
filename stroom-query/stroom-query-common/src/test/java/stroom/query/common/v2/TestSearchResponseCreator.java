@@ -313,18 +313,8 @@ class TestSearchResponseCreator {
                         return Optional.of(new Items() {
 
                             @Override
-                            public Item get(final int index) {
-                                return item;
-                            }
-
-                            @Override
                             public int size() {
                                 return 1;
-                            }
-
-                            @Override
-                            public Iterable<StoredValues> getStoredValueIterable() {
-                                return List.of(storedValues);
                             }
 
                             @Override
