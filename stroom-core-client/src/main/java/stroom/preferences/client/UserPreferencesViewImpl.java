@@ -479,7 +479,7 @@ public final class UserPreferencesViewImpl
     // --------------------------------------------------------------------------------
 
 
-    private static class EditorThemeName extends DecoratedItem<String> {
+    public static class EditorThemeName extends DecoratedItem<String> {
 
         public EditorThemeName(final String value, final String displayValue) {
             super(value, displayValue);
