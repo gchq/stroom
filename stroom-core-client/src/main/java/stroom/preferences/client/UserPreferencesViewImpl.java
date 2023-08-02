@@ -182,7 +182,6 @@ public final class UserPreferencesViewImpl
     @Override
     public void setEditorThemes(final List<String> editorThemes) {
         this.editorTheme.clear();
-        this.editorTheme.addItem("");
         this.editorTheme.addItems(editorThemes);
     }
 

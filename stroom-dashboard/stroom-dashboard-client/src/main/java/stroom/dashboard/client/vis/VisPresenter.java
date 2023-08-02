@@ -37,7 +37,7 @@ import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -213,7 +213,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         scriptCache.bind();
         visFrame.bind();
 
-        registerHandler(getEventBus().addHandler(ChangeThemeEvent.getType(), event ->
+        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 visFrame.setClassName(getClassName(event.getTheme()))));
     }
 

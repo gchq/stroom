@@ -38,6 +38,7 @@ import javax.inject.Singleton;
 public class UserPreferences {
 
     public static final String DEFAULT_THEME = Themes.THEME_NAME_DARK;
+
     public static final EditorKeyBindings DEFAULT_EDITOR_KEY_BINDINGS = EditorKeyBindings.STANDARD;
     public static final Toggle DEFAULT_EDITOR_LIVE_AUTO_COMPLETION = Toggle.OFF;
     public static final String DEFAULT_EDITOR_THEME_LIGHT = "chrome";

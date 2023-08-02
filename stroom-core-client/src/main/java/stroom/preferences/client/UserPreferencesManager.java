@@ -14,10 +14,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.RootPanel;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
@@ -94,18 +94,19 @@ public class UserPreferencesManager {
 
     public void setCurrentPreferences(final UserPreferences userPreferences) {
         this.currentUserPreferences = userPreferences;
-        currentPreferences.setTheme(userPreferences.getTheme());
-        currentPreferences.setEditorTheme(userPreferences.getEditorTheme());
-        currentPreferences.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
-        currentPreferences.setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
+        applyUserPreferences(this.currentPreferences, userPreferences);
 
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
         String className = getCurrentPreferenceClasses();
         element.setClassName(className);
     }
 
-    public UserPreferences getCurrentPreferences() {
+    public UserPreferences getCurrentUserPreferences() {
         return currentUserPreferences;
+    }
+
+    public CurrentPreferences getCurrentPreferences() {
+        return currentPreferences;
     }
 
     public ThemeType geCurrentThemeType() {
@@ -149,10 +150,21 @@ public class UserPreferencesManager {
                 .collect(Collectors.toList());
     }
 
-    public List<String> getEditorThemes() {
-        return Arrays.stream(AceEditorTheme.values())
+    public List<String> getEditorThemes(final ThemeType themeType) {
+
+        final List<AceEditorTheme> themes = Objects.requireNonNull(themeType).equals(ThemeType.LIGHT)
+                ? AceEditorTheme.getLightThemes()
+                : AceEditorTheme.getDarkThemes();
+        return themes.stream()
                 .map(AceEditorTheme::getName)
                 .collect(Collectors.toList());
+    }
+
+    public String getDefaultEditorTheme(final ThemeType themeType) {
+        final AceEditorTheme aceEditorTheme = themeType.isLight()
+                ? AceEditorTheme.DEFAULT_LIGHT_THEME
+                : AceEditorTheme.DEFAULT_DARK_THEME;
+        return aceEditorTheme.getName();
     }
 
     public boolean isUtc() {
@@ -163,5 +175,20 @@ public class UserPreferencesManager {
             return false;
         }
         return true;
+    }
+
+    static CurrentPreferences buildCurrentPreferences(final UserPreferences userPreferences) {
+        Objects.requireNonNull(userPreferences);
+        final CurrentPreferences currentPreferences = new CurrentPreferences();
+        applyUserPreferences(currentPreferences, userPreferences);
+        return currentPreferences;
+    }
+
+    static void applyUserPreferences(final CurrentPreferences currentPreferences,
+                                     final UserPreferences userPreferences) {
+        currentPreferences.setTheme(userPreferences.getTheme());
+        currentPreferences.setEditorTheme(userPreferences.getEditorTheme());
+        currentPreferences.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
+        currentPreferences.setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
     }
 }

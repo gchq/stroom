@@ -18,11 +18,14 @@
 package stroom.preferences.client;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
+import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.ui.config.shared.UserPreferences.Toggle;
@@ -37,6 +40,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme.AceThemeType;
 
 import java.util.List;
 import java.util.Objects;
@@ -66,45 +71,42 @@ public final class UserPreferencesPresenter
 
     @Override
     public void onChange() {
-        final UserPreferences before = userPreferencesManager.getCurrentPreferences();
-        final UserPreferences after = write();
+        final UserPreferences before = userPreferencesManager.getCurrentUserPreferences();
+        UserPreferences after = write();
+
+        if (!Objects.equals(before.getTheme(), after.getTheme())) {
+            // Theme changed
+            final ThemeType themeTypeBefore = Themes.getThemeType(before.getTheme());
+            final ThemeType themeTypeAfter = Themes.getThemeType(after.getTheme());
+            if (!Objects.equals(themeTypeBefore, themeTypeAfter)) {
+                // Different theme type so change the list of editor themes
+                final List<String> editorThemes = userPreferencesManager.getEditorThemes(themeTypeAfter);
+                getView().setEditorThemes(editorThemes);
+                // As we have changed theme type, we need to set an editor theme for that new type
+                final String defaultEditorTheme = userPreferencesManager.getDefaultEditorTheme(themeTypeAfter);
+//                GWT.log("defaultEditorTheme: " + defaultEditorTheme);
+                getView().setEditorTheme(defaultEditorTheme);
+                // Update the prefs with the change
+                after = write();
+            }
+        }
         userPreferencesManager.setCurrentPreferences(after);
-        final String editorTheme = selectEditorTheme(before, after);
-        if (!editorTheme.equals(after.getEditorTheme())) {
-            // Editor theme was reset due to UI theme change, so show the new value in the dialog
-            getView().setEditorTheme(editorTheme);
-        }
-        triggerThemeChange(after.getTheme(), editorTheme, after.getEditorKeyBindings());
+
+//        GWT.log("theme: " + userPreferencesManager.getCurrentPreferences().getTheme()
+//        + " editorTheme: " + userPreferencesManager.getCurrentPreferences().getEditorTheme());
+        triggerThemeChange(userPreferencesManager.getCurrentPreferences());
     }
 
-    /**
-     * Choose an appropriate editor theme based on whether the UI theme is light or dark.
-     * If the UI theme has not changed, use the user's editor theme preference.
-     */
-    private String selectEditorTheme(final UserPreferences before, final UserPreferences after) {
-        final String beforeTheme = before.getTheme();
-        final String afterTheme = after.getTheme();
-        if (!beforeTheme.equals(afterTheme) || after.getEditorTheme() == null) {
-            // If the UI theme has changed, select an appropriate theme based on whether a light or dark theme
-            // was selected
-            return UserPreferences.getDefaultEditorTheme(afterTheme);
-        } else {
-            // No UI theme change, so accept the user's selection
-            return after.getEditorTheme();
-        }
-    }
-
-    private void triggerThemeChange(final String theme,
-                                    final String editorTheme,
-                                    final EditorKeyBindings editorKeyBindings) {
+    private void triggerThemeChange(final CurrentPreferences currentPreferences) {
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
-        ChangeThemeEvent.fire(handlers, theme, editorTheme, editorKeyBindings.name());
+        ChangeCurrentPreferencesEvent.fire(handlers, currentPreferences);
     }
 
     @Override
     public void onSetAsDefault() {
         ConfirmEvent.fire(this,
-                "Are you sure you want to set the current preferences for all users?",
+                "Are you sure you want to set the current preferences as the defaults for ALL users?" +
+                        "\nThis will not change individual users' saved preferences.",
                 (ok) -> {
                     if (ok) {
                         final UserPreferences userPreferences = write();
@@ -122,8 +124,9 @@ public final class UserPreferencesPresenter
         originalPreferences = userPreferences;
         read(userPreferences);
         userPreferencesManager.setCurrentPreferences(userPreferences);
-        final String editorTheme = selectEditorTheme(originalPreferences, userPreferences);
-        triggerThemeChange(userPreferences.getTheme(), editorTheme, userPreferences.getEditorKeyBindings());
+//        final String editorTheme = selectEditorTheme(originalPreferences, userPreferences);
+//        triggerThemeChange(userPreferences.getTheme(), editorTheme, userPreferences.getEditorKeyBindings());
+        triggerThemeChange(userPreferencesManager.getCurrentPreferences());
     }
 
     public void show() {
@@ -148,6 +151,8 @@ public final class UserPreferencesPresenter
                             }
                         } else {
                             userPreferencesManager.setCurrentPreferences(originalPreferences);
+                            // Ensure screens revert to the old prefs
+                            triggerThemeChange(userPreferencesManager.getCurrentPreferences());
                             e.hide();
                         }
                     })
@@ -156,13 +161,27 @@ public final class UserPreferencesPresenter
     }
 
     private void read(final UserPreferences userPreferences) {
-        getView().setThemes(userPreferencesManager.getThemes());
-        getView().setTheme(userPreferences.getTheme());
-        getView().setEditorThemes(userPreferencesManager.getEditorThemes());
-        final String editorTheme = userPreferences.getEditorTheme();
-        if (editorTheme != null) {
-            getView().setEditorTheme(editorTheme);
+        final String themeName = userPreferences.getTheme();
+        final ThemeType themeType = Themes.getThemeType(themeName);
+        final AceThemeType aceThemeType = ThemeType.LIGHT.equals(themeType)
+                ? AceThemeType.LIGHT
+                : AceThemeType.DARK;
+
+        String editorThemeName = userPreferences.getEditorTheme();
+        if (AceEditorTheme.isValidThemeName(editorThemeName)) {
+            if (!AceEditorTheme.matchesThemeType(themeName, aceThemeType)) {
+                // e.g. light editor theme with a dark stroom theme, so use an appropriate one
+                editorThemeName = getDefaultEditorTheme(aceThemeType).getName();
+            }
+        } else {
+            editorThemeName = getDefaultEditorTheme(aceThemeType).getName();
         }
+
+        getView().setThemes(userPreferencesManager.getThemes());
+        getView().setTheme(themeName);
+        // Get applicable editor themes for the stroom theme type
+        getView().setEditorThemes(userPreferencesManager.getEditorThemes(themeType));
+        getView().setEditorTheme(editorThemeName);
         getView().setEditorKeyBindings(userPreferences.getEditorKeyBindings());
         getView().setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
         getView().setDensity(userPreferences.getDensity());
@@ -178,6 +197,12 @@ public final class UserPreferencesPresenter
             getView().setTimeZoneOffsetHours(timeZone.getOffsetHours());
             getView().setTimeZoneOffsetMinutes(timeZone.getOffsetMinutes());
         }
+    }
+
+    private static AceEditorTheme getDefaultEditorTheme(final AceThemeType aceThemeType) {
+        return aceThemeType.isLight()
+                ? AceEditorTheme.DEFAULT_LIGHT_THEME
+                : AceEditorTheme.DEFAULT_DARK_THEME;
     }
 
     private UserPreferences write() {

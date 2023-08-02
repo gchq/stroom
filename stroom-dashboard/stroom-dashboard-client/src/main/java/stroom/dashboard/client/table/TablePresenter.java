@@ -546,7 +546,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private DateTimeSettings getDateTimeSettings() {
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         return DateTimeSettings
                 .builder()
                 .dateTimePattern(userPreferences.getDateTimePattern())
