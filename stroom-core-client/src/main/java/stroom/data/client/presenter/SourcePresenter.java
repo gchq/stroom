@@ -633,12 +633,19 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     private void setTitle(final FetchDataResult fetchDataResult) {
         final String streamType = fetchDataResult.getStreamTypeName();
         final SourceLocation sourceLocation = fetchDataResult.getSourceLocation();
-        getView().setTitle(
-                fetchDataResult.getFeedName(),
-                sourceLocation.getMetaId(),
-                sourceLocation.getPartIndex(),
-                sourceLocation.getRecordIndex(),
-                streamType);
+        if (DataType.NON_SEGMENTED.equals(fetchDataResult.getDataType())) {
+            getView().setNonSegmentedTitle(
+                    fetchDataResult.getFeedName(),
+                    sourceLocation.getMetaId(),
+                    sourceLocation.getPartIndex() + 1,
+                    streamType);
+        } else {
+            getView().setSegmentedTitle(
+                    fetchDataResult.getFeedName(),
+                    sourceLocation.getMetaId(),
+                    sourceLocation.getRecordIndex() + 1,
+                    streamType);
+        }
     }
 
     private void setEditorMode(final FetchDataResult fetchDataResult) {
@@ -874,10 +881,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
         void setNavigatorView(final View view);
 
-        void setTitle(final String feedName,
-                      final long id,
-                      final long partNo,
-                      final long segmentNo,
-                      final String type);
+        void setNonSegmentedTitle(final String feedName,
+                                  final long id,
+                                  final long partNo,
+                                  final String type);
+
+        void setSegmentedTitle(final String feedName,
+                               final long id,
+                               final long segmentNo,
+                               final String type);
     }
 }
