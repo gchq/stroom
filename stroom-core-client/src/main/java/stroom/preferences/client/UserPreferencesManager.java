@@ -3,11 +3,12 @@ package stroom.preferences.client;
 import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.CurrentTheme;
+import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -17,6 +18,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -27,18 +30,18 @@ public class UserPreferencesManager {
 
     private static final UserPreferencesResource PREFERENCES_RESOURCE = GWT.create(UserPreferencesResource.class);
     private final RestFactory restFactory;
-    private final CurrentTheme currentTheme;
+    private final CurrentPreferences currentPreferences;
 
     private static final Map<String, String> densityMap = new HashMap<>();
     private static final Map<String, String> fontMap = new HashMap<>();
     private static final Map<String, String> fontSizeMap = new HashMap<>();
-    private UserPreferences currentPreferences;
+    private UserPreferences currentUserPreferences;
 
     @Inject
     public UserPreferencesManager(final RestFactory restFactory,
-                                  final CurrentTheme currentTheme) {
+                                  final CurrentPreferences currentPreferences) {
         this.restFactory = restFactory;
-        this.currentTheme = currentTheme;
+        this.currentPreferences = currentPreferences;
 
         densityMap.put("Default", "stroom-density-comfortable");
         densityMap.put("Comfortable", "stroom-density-comfortable");
@@ -90,11 +93,11 @@ public class UserPreferencesManager {
     }
 
     public void setCurrentPreferences(final UserPreferences userPreferences) {
-        this.currentPreferences = userPreferences;
-
-        currentTheme.setTheme(userPreferences.getTheme());
-        currentTheme.setEditorTheme(userPreferences.getEditorTheme());
-        currentTheme.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
+        this.currentUserPreferences = userPreferences;
+        currentPreferences.setTheme(userPreferences.getTheme());
+        currentPreferences.setEditorTheme(userPreferences.getEditorTheme());
+        currentPreferences.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
+        currentPreferences.setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
 
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
         String className = getCurrentPreferenceClasses();
@@ -102,7 +105,7 @@ public class UserPreferencesManager {
     }
 
     public UserPreferences getCurrentPreferences() {
-        return currentPreferences;
+        return currentUserPreferences;
     }
 
     public ThemeType geCurrentThemeType() {
@@ -113,20 +116,26 @@ public class UserPreferencesManager {
      * @return A space delimited list of css classes for theme, density, font and font size.
      */
     public String getCurrentPreferenceClasses() {
-        String className = "stroom";
-        if (currentTheme.getTheme() != null) {
-            className += " " + Themes.getClassName(currentTheme.getTheme());
+        final StringJoiner classJoiner = new StringJoiner(" ")
+                .add("stroom");
+
+        if (currentUserPreferences != null) {
+            GwtNullSafe.consume(currentUserPreferences.getTheme(), theme ->
+                    classJoiner.add(Themes.getClassName(theme)));
+
+            Optional.ofNullable(currentUserPreferences.getDensity())
+                    .map(densityMap::get)
+                    .ifPresent(classJoiner::add);
+
+            Optional.ofNullable(currentUserPreferences.getFont())
+                    .map(fontMap::get)
+                    .ifPresent(classJoiner::add);
+
+            Optional.ofNullable(currentUserPreferences.getFontSize())
+                    .map(fontSizeMap::get)
+                    .ifPresent(classJoiner::add);
         }
-        if (currentPreferences != null && currentPreferences.getDensity() != null) {
-            className += " " + densityMap.get(currentPreferences.getDensity());
-        }
-        if (currentPreferences != null && currentPreferences.getFont() != null) {
-            className += " " + fontMap.get(currentPreferences.getFont());
-        }
-        if (currentPreferences != null && currentPreferences.getFontSize() != null) {
-            className += " " + fontSizeMap.get(currentPreferences.getFontSize());
-        }
-        return className;
+        return classJoiner.toString();
     }
 
     public List<String> getThemes() {
@@ -147,10 +156,10 @@ public class UserPreferencesManager {
     }
 
     public boolean isUtc() {
-        if (currentPreferences != null &&
-                currentPreferences.getTimeZone() != null &&
-                currentPreferences.getTimeZone().getUse() != null &&
-                currentPreferences.getTimeZone().getUse() != Use.UTC) {
+        if (currentUserPreferences != null &&
+                currentUserPreferences.getTimeZone() != null &&
+                currentUserPreferences.getTimeZone().getUse() != null &&
+                currentUserPreferences.getTimeZone().getUse() != Use.UTC) {
             return false;
         }
         return true;

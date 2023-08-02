@@ -25,6 +25,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
+import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -158,17 +159,18 @@ public final class UserPreferencesPresenter
         getView().setThemes(userPreferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
         getView().setEditorThemes(userPreferencesManager.getEditorThemes());
+        final String editorTheme = userPreferences.getEditorTheme();
+        if (editorTheme != null) {
+            getView().setEditorTheme(editorTheme);
+        }
         getView().setEditorKeyBindings(userPreferences.getEditorKeyBindings());
+        getView().setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
         getView().setDensity(userPreferences.getDensity());
         getView().setFonts(userPreferencesManager.getFonts());
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
         getView().setPattern(userPreferences.getDateTimePattern());
 
-        final String editorTheme = userPreferences.getEditorTheme();
-        if (editorTheme != null) {
-            getView().setEditorTheme(editorTheme);
-        }
         final TimeZone timeZone = userPreferences.getTimeZone();
         if (timeZone != null) {
             getView().setTimeZoneUse(timeZone.getUse());
@@ -190,6 +192,7 @@ public final class UserPreferencesPresenter
                 .theme(getView().getTheme())
                 .editorTheme(getView().getEditorTheme())
                 .editorKeyBindings(getView().getEditorKeyBindings())
+                .editorLiveAutoCompletion(getView().getEditorLiveAutoCompletion())
                 .density(getView().getDensity())
                 .font(getView().getFont())
                 .fontSize(getView().getFontSize())
@@ -197,6 +200,10 @@ public final class UserPreferencesPresenter
                 .timeZone(timeZone)
                 .build();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface UserPreferencesView extends View, Focus, HasUiHandlers<UserPreferencesUiHandlers> {
 
@@ -215,6 +222,10 @@ public final class UserPreferencesPresenter
         EditorKeyBindings getEditorKeyBindings();
 
         void setEditorKeyBindings(EditorKeyBindings editorKeyBindings);
+
+        Toggle getEditorLiveAutoCompletion();
+
+        void setEditorLiveAutoCompletion(Toggle editorLiveAutoCompletion);
 
         String getDensity();
 

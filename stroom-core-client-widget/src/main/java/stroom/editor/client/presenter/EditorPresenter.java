@@ -54,12 +54,13 @@ public class EditorPresenter
                            final EditorView view,
                            final EditorMenuPresenter contextMenu,
                            final DelegatingAceCompleter delegatingAceCompleter,
-                           final CurrentTheme currentTheme) {
+                           final CurrentPreferences currentPreferences) {
         super(eventBus, view);
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
-        view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
-        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentTheme.getEditorKeyBindings()));
+        view.setTheme(getTheme(currentPreferences.getTheme(), currentPreferences.getEditorTheme()));
+        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentPreferences.getEditorKeyBindings()));
+        view.setUserLiveAutoCompletePreference(currentPreferences.getEditorLiveAutoCompletion().isOn());
 
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
 

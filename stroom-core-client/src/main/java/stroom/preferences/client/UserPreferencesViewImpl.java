@@ -22,13 +22,13 @@ import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
+import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -41,6 +41,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public final class UserPreferencesViewImpl
         extends ViewWithUiHandlers<UserPreferencesUiHandlers>
@@ -75,6 +76,8 @@ public final class UserPreferencesViewImpl
     @UiField
     SelectionBox<String> editorKeyBindings;
     @UiField
+    SelectionBox<String> editorLiveAutoCompletion;
+    @UiField
     SelectionBox<String> density;
     @UiField
     SelectionBox<String> font;
@@ -106,6 +109,7 @@ public final class UserPreferencesViewImpl
         revertToDefault.setIcon(SvgImage.UNDO);
 
         setEditorKeyBindingsValues();
+        setEditorLiveAutoCompletionValues();
 
         density.addItem("Default");
         density.addItem("Comfortable");
@@ -199,6 +203,24 @@ public final class UserPreferencesViewImpl
                 .sorted(Comparator.comparing(EditorKeyBindings::getDisplayValue))
                 .map(EditorKeyBindings::getDisplayValue)
                 .forEach(displayName -> this.editorKeyBindings.addItem(displayName));
+    }
+
+    @Override
+    public Toggle getEditorLiveAutoCompletion() {
+        return Toggle.fromDisplayValue(editorLiveAutoCompletion.getValue());
+    }
+
+
+    @Override
+    public void setEditorLiveAutoCompletion(final Toggle editorLiveAutoCompletion) {
+        Objects.requireNonNull(editorLiveAutoCompletion);
+        this.editorLiveAutoCompletion.setValue(editorLiveAutoCompletion.getDisplayValue());
+    }
+
+    public void setEditorLiveAutoCompletionValues() {
+        this.editorLiveAutoCompletion.clear();
+        this.editorLiveAutoCompletion.addItem(Toggle.ON.getDisplayValue());
+        this.editorLiveAutoCompletion.addItem(Toggle.OFF.getDisplayValue());
     }
 
     @Override
@@ -356,6 +378,13 @@ public final class UserPreferencesViewImpl
         }
     }
 
+    @UiHandler("editorLiveAutoCompletion")
+    public void onEditorLiveAutoCompletionValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
     @UiHandler("density")
     public void onDensityValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
@@ -406,9 +435,17 @@ public final class UserPreferencesViewImpl
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, UserPreferencesViewImpl> {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static native String[] getTimeZoneIds()/*-{
         return $wnd.moment.tz.names();

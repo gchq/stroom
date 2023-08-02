@@ -38,7 +38,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeThemeEvent;
-import stroom.editor.client.presenter.CurrentTheme;
+import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -89,7 +89,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
-    private final CurrentTheme currentTheme;
+    private final CurrentPreferences currentPreferences;
     private final VisFrame visFrame;
 
     private VisFunction currentFunction;
@@ -115,12 +115,12 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public VisPresenter(final EventBus eventBus, final VisView view,
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
                         final RestFactory restFactory,
-                        final CurrentTheme currentTheme) {
+                        final CurrentPreferences currentPreferences) {
         super(eventBus, view, settingsPresenterProvider);
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
         this.restFactory = restFactory;
-        this.currentTheme = currentTheme;
+        this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
         visFrame.setUiHandlers(this);
@@ -509,7 +509,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 try {
                     if (loadedFunction == null || !loadedFunction.equals(function)) {
                         loadedFunction = function;
-                        visFrame.setVisType(function.getFunctionName(), getClassName(currentTheme.getTheme()));
+                        visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
                     }
 
                     if (currentData != null) {

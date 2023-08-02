@@ -78,6 +78,8 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
 
     void setUserKeyBindingsPreference(final boolean useVimBindings);
 
+    void setUserLiveAutoCompletePreference(final boolean isOn);
+
     Action getFormatAction();
 
     Option getStylesOption();
