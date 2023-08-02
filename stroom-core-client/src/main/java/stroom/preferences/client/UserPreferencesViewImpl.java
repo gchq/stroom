@@ -16,6 +16,7 @@
 
 package stroom.preferences.client;
 
+import stroom.item.client.DecoratedItem;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
@@ -23,6 +24,7 @@ import stroom.query.api.v2.TimeZone.Use;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.ui.config.shared.UserPreferences.Toggle;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -42,6 +44,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public final class UserPreferencesViewImpl
         extends ViewWithUiHandlers<UserPreferencesUiHandlers>
@@ -72,7 +75,7 @@ public final class UserPreferencesViewImpl
     @UiField
     SelectionBox<String> theme;
     @UiField
-    SelectionBox<String> editorTheme;
+    SelectionBox<EditorThemeName> editorTheme;
     @UiField
     SelectionBox<String> editorKeyBindings;
     @UiField
@@ -171,18 +174,30 @@ public final class UserPreferencesViewImpl
 
     @Override
     public String getEditorTheme() {
-        return editorTheme.getValue();
+        return editorTheme.getValue().getValue();
     }
 
     @Override
     public void setEditorTheme(final String editorTheme) {
-        this.editorTheme.setValue(editorTheme);
+        String localDisplayName = editorTheme;
+        if (localDisplayName != null) {
+            localDisplayName = localDisplayName.replace("_", " ");
+            localDisplayName = Character.toUpperCase(localDisplayName.charAt(0))
+                    + localDisplayName.substring(1);
+        }
+
+        this.editorTheme.setValue(new EditorThemeName(editorTheme, localDisplayName));
     }
 
     @Override
     public void setEditorThemes(final List<String> editorThemes) {
         this.editorTheme.clear();
-        this.editorTheme.addItems(editorThemes);
+
+        final List<EditorThemeName> editorThemeNames = GwtNullSafe.stream(editorThemes)
+                .map(this::createEditorThemeItem)
+                .collect(Collectors.toList());
+
+        this.editorTheme.addItems(editorThemeNames);
     }
 
     @Override
@@ -194,6 +209,16 @@ public final class UserPreferencesViewImpl
     @Override
     public void setEditorKeyBindings(EditorKeyBindings editorKeyBindings) {
         this.editorKeyBindings.setValue(editorKeyBindings.getDisplayValue());
+    }
+
+    private EditorThemeName createEditorThemeItem(final String editorTheme) {
+        String displayName = editorTheme;
+        if (displayName != null) {
+            displayName = displayName.replace("_", " ");
+            displayName = Character.toUpperCase(displayName.charAt(0))
+                    + displayName.substring(1);
+        }
+        return new EditorThemeName(editorTheme, displayName);
     }
 
     public void setEditorKeyBindingsValues() {
@@ -364,7 +389,7 @@ public final class UserPreferencesViewImpl
     }
 
     @UiHandler("editorTheme")
-    public void onEditorThemeValueChange(final ValueChangeEvent<String> e) {
+    public void onEditorThemeValueChange(final ValueChangeEvent<EditorThemeName> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onChange();
         }
@@ -449,4 +474,15 @@ public final class UserPreferencesViewImpl
     private static native String[] getTimeZoneIds()/*-{
         return $wnd.moment.tz.names();
     }-*/;
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class EditorThemeName extends DecoratedItem<String> {
+
+        public EditorThemeName(final String value, final String displayValue) {
+            super(value, displayValue);
+        }
+    }
 }

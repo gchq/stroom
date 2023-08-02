@@ -33,6 +33,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -92,8 +93,8 @@ public final class UserPreferencesPresenter
         }
         userPreferencesManager.setCurrentPreferences(after);
 
-//        GWT.log("theme: " + userPreferencesManager.getCurrentPreferences().getTheme()
-//        + " editorTheme: " + userPreferencesManager.getCurrentPreferences().getEditorTheme());
+        GWT.log("theme: " + userPreferencesManager.getCurrentPreferences().getTheme()
+                + " editorTheme: " + userPreferencesManager.getCurrentPreferences().getEditorTheme());
         triggerThemeChange(userPreferencesManager.getCurrentPreferences());
     }
 
