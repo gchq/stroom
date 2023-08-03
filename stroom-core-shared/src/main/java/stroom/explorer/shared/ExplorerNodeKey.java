@@ -17,6 +17,8 @@ public class ExplorerNodeKey {
     @JsonProperty
     private final String rootNodeUuid;
 
+    private volatile int hashcode;
+
     @JsonCreator
     public ExplorerNodeKey(@JsonProperty("type") final String type,
                            @JsonProperty("uuid") final String uuid,
@@ -40,7 +42,10 @@ public class ExplorerNodeKey {
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, uuid, rootNodeUuid);
+        if (hashcode == 0) {
+            hashcode = Objects.hash(type, uuid, rootNodeUuid);
+        }
+        return hashcode;
     }
 
     @Override
@@ -55,5 +60,14 @@ public class ExplorerNodeKey {
         return Objects.equals(type, that.type) &&
                 Objects.equals(uuid, that.uuid) &&
                 Objects.equals(rootNodeUuid, that.rootNodeUuid);
+    }
+
+    @Override
+    public String toString() {
+        return "ExplorerNodeKey{" +
+                "type='" + type + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", rootNodeUuid='" + rootNodeUuid + '\'' +
+                '}';
     }
 }

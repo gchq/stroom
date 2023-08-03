@@ -1,6 +1,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.svg.shared.SvgImage;
 
 import java.util.Objects;
 
@@ -14,11 +15,13 @@ public final class ExplorerConstants {
     public static final ExplorerNode SYSTEM_NODE = ExplorerNode.builder()
             .docRef(SYSTEM_DOC_REF)
             .rootNodeUuid(SYSTEM_DOC_REF.getUuid())
+            .icon(SvgImage.DOCUMENT_SYSTEM)
             .build();
     public static final DocRef FAVOURITES_DOC_REF = new DocRef(FAVOURITES, "1", FAVOURITES);
     public static final ExplorerNode FAVOURITES_NODE = ExplorerNode.builder()
             .docRef(FAVOURITES_DOC_REF)
             .rootNodeUuid(FAVOURITES_DOC_REF.getUuid())
+            .icon(SvgImage.FAVOURITES)
             .build();
 
     private ExplorerConstants() {
