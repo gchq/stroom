@@ -203,7 +203,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                                                 final List<ExplorerNodeKey> openedItems) {
         // Ensure root nodes are open if they have items
         final List<ExplorerNode> nodes = NullSafe.stream(rootNodes)
-//                .filter(ExplorerNode::hasChildren)
                 .map(rootNode -> {
                     if (rootNode.hasChildren()
                             && (rootNode.getNodeState() == null || NodeState.CLOSED.equals(rootNode.getNodeState()))) {
@@ -229,8 +228,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
         // Now ensure we always have favourite system root nodes
         final List<ExplorerNode> result = new ArrayList<>();
-        final Optional<ExplorerNode> optFavouriteNode = getMatchingNode(nodes, ExplorerConstants.FAVOURITES_NODE);
-        final Optional<ExplorerNode> optSystemNode = getMatchingNode(nodes, ExplorerConstants.SYSTEM_NODE);
+        final Optional<ExplorerNode> optFavouriteNode = removeMatchingNode(nodes, ExplorerConstants.FAVOURITES_NODE);
+        final Optional<ExplorerNode> optSystemNode = removeMatchingNode(nodes, ExplorerConstants.SYSTEM_NODE);
         result.add(optFavouriteNode.orElseGet(() ->
                 ExplorerConstants.FAVOURITES_NODE.copy()
                         .nodeState(NodeState.LEAF)
@@ -239,15 +238,26 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 ExplorerConstants.SYSTEM_NODE.copy()
                         .nodeState(NodeState.LEAF)
                         .build()));
-
+        // Add any remaining nodes, e.g. searchables
+        result.addAll(nodes);
         return result;
     }
 
-    private static Optional<ExplorerNode> getMatchingNode(final Collection<ExplorerNode> nodes,
-                                                          final ExplorerNode targetNode) {
-        return NullSafe.stream(nodes)
-                .filter(node -> Objects.equals(targetNode, node))
-                .findFirst();
+    private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
+                                                             final ExplorerNode targetNode) {
+        List<ExplorerNode> list = NullSafe.list(nodes);
+
+        for (int i = 0; i < list.size(); i++) {
+            final ExplorerNode node = list.get(i);
+            if (Objects.equals(node, targetNode)) {
+                nodes.remove(i);
+                return Optional.of(node);
+            }
+        }
+        return Optional.empty();
+//                .r
+//                .filter(node -> Objects.equals(targetNode, node))
+//                .findFirst();
     }
 
     private int getPriority(final ExplorerNode node) {
