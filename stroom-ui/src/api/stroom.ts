@@ -1143,6 +1143,7 @@ export interface DownloadQueryResultsRequest {
 
 export interface DownloadSearchResultsRequest {
   componentId?: string;
+  downloadAllTables?: boolean;
   fileType?: "EXCEL" | "CSV" | "TSV";
 
   /** @format int32 */
@@ -4373,6 +4374,7 @@ export type TableResult = Result & { fields?: Field[]; resultRange?: OffsetRange
 export type TableResultRequest = ComponentResultRequest & {
   openGroups?: string[];
   requestedRange?: OffsetRange;
+  tableName?: string;
   tableSettings?: TableSettings;
 };
 
@@ -5976,7 +5978,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/authentication/v1/noauth/logout
      * @secure
      */
-    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+    logout: (query: { post_logout_redirect_uri: string; state: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/authentication/v1/noauth/logout`,
         method: "GET",

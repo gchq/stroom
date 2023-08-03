@@ -256,7 +256,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
                 .withCode(code)
                 .withGrantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
-                .withRedirectUri(state.getUri())
+                .withRedirectUri(state.getRedirectUri())
                 .sendRequest(true);
 
         final Optional<UserIdentity> optUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())

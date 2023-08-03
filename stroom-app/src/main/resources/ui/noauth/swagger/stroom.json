@@ -1555,7 +1555,14 @@
         "operationId" : "logout",
         "parameters" : [ {
           "in" : "query",
-          "name" : "redirect_uri",
+          "name" : "post_logout_redirect_uri",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "state",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -11782,6 +11789,9 @@
           "componentId" : {
             "type" : "string"
           },
+          "downloadAllTables" : {
+            "type" : "boolean"
+          },
           "fileType" : {
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV" ]
@@ -17756,6 +17766,9 @@
             },
             "requestedRange" : {
               "$ref" : "#/components/schemas/OffsetRange"
+            },
+            "tableName" : {
+              "type" : "string"
             },
             "tableSettings" : {
               "$ref" : "#/components/schemas/TableSettings"
