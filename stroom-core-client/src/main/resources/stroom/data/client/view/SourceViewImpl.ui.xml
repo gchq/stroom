@@ -11,10 +11,10 @@
                 <g:Label styleName="sourceViewImpl-titleHeading">ID:</g:Label>
                 <g:Label ui:field="lblId" styleName="sourceViewImpl-titleText"/>
 
-                <g:Label styleName="sourceViewImpl-titleHeading">Part:</g:Label>
+                <g:Label ui:field="lblPartNoHeading" styleName="sourceViewImpl-titleHeading">Part:</g:Label>
                 <g:Label ui:field="lblPartNo" styleName="sourceViewImpl-titleText"/>
 
-                <g:Label styleName="sourceViewImpl-titleHeading">Record:</g:Label>
+                <g:Label ui:field="lblSegmentNoHeading" styleName="sourceViewImpl-titleHeading">Record:</g:Label>
                 <g:Label ui:field="lblSegmentNo" styleName="sourceViewImpl-titleText"/>
 
                 <g:Label styleName="sourceViewImpl-titleHeading">Stream Type:</g:Label>
