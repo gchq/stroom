@@ -668,11 +668,11 @@
     padding-left: 0.25em;
 }
 
-/*
 .dataViewImpl-layerContainer {
-    position: relative;
+    /* To make the info pane fit the remaining space in the parent rather
+    than 100% of the content */
+    height: 0px;
 }
-*/
 
 .dataViewImpl-sourceLinkLabel {
 }
