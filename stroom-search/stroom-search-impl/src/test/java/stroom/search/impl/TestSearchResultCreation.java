@@ -31,6 +31,7 @@ import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.IdentityItemMapper;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
 import stroom.query.common.v2.Key;
@@ -61,16 +62,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -471,14 +473,21 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
-            final Optional<Items> optional = data.get(Key.ROOT_KEY, null);
-            assertThat(optional).isPresent();
-            optional.ifPresent(items -> {
-                final Item dataItem = items.getIterable().iterator().next();
-                final Val val = dataItem.getValue(2);
+            final Items<Item> items = data.get(
+                    OffsetRange.ZERO_1000,
+                    Collections.singleton(Key.ROOT_KEY),
+                    null,
+                    IdentityItemMapper.INSTANCE);
+
+            assertThat(items.totalRowCount()).isNotZero();
+            final AtomicBoolean found = new AtomicBoolean();
+            items.fetch(item -> {
+                final Val val = item.getValue(2);
                 assertThat(val.toLong())
                         .isEqualTo(count);
+                found.set(true);
             });
+            assertThat(found.get()).isTrue();
         });
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
@@ -635,7 +644,7 @@ class TestSearchResultCreation {
         return ResultRequest.builder()
                 .componentId("table-BKJT6")
                 .addMappings(createGroupedUserTableSettings())
-                .requestedRange(OffsetRange.builder().offset(0L).length(100L).build())
+                .requestedRange(OffsetRange.ZERO_100)
                 .resultStyle(ResultStyle.TABLE)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -686,6 +695,7 @@ class TestSearchResultCreation {
                 .componentId("vis-QYG7H")
                 .addMappings(createGroupedUserTableSettings())
                 .addMappings(createDonutVisSettings())
+                .requestedRange(OffsetRange.ZERO_1000)
                 .resultStyle(ResultStyle.FLAT)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -719,7 +729,7 @@ class TestSearchResultCreation {
         return ResultRequest.builder()
                 .componentId("table-78LF4")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
-                .requestedRange(OffsetRange.builder().offset(0L).length(100L).build())
+                .requestedRange(OffsetRange.ZERO_100)
                 .resultStyle(ResultStyle.TABLE)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -779,6 +789,7 @@ class TestSearchResultCreation {
                 .componentId("vis-L1AL1")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
                 .addMappings(createBubbleVisSettings())
+                .requestedRange(OffsetRange.ZERO_1000)
                 .resultStyle(ResultStyle.FLAT)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -822,6 +833,7 @@ class TestSearchResultCreation {
                 .componentId("vis-SPSCW")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
                 .addMappings(createLineVisSettings())
+                .requestedRange(OffsetRange.ZERO_1000)
                 .resultStyle(ResultStyle.FLAT)
                 .fetch(Fetch.CHANGES)
                 .build();

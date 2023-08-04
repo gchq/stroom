@@ -14,7 +14,7 @@ public interface TableResultBuilder extends ResultBuilder<TableResultBuilder> {
 
     TableResultBuilder resultRange(OffsetRange resultRange);
 
-    TableResultBuilder totalResults(Integer totalResults);
+    TableResultBuilder totalResults(Long totalResults);
 
     TableResult build();
 }

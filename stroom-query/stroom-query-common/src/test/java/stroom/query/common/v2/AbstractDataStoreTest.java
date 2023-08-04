@@ -44,8 +44,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractDataStoreTest {
 
-    private final Sizes defaultMaxResultsSizes = Sizes.create(50);
-
     @BeforeAll
     static void beforeAll() {
         Metrics.setEnabled(true);
@@ -83,15 +81,14 @@ abstract class AbstractDataStoreTest {
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
                 .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
+                .requestedRange(new OffsetRange(0, 50))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+                fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
     }
 
     void noValuesTest() {
@@ -128,8 +125,7 @@ abstract class AbstractDataStoreTest {
                 .requestedRange(new OffsetRange(0, 1))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+                fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
@@ -211,11 +207,10 @@ abstract class AbstractDataStoreTest {
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId("componentX")
                     .addMappings(tableSettings)
-                    .requestedRange(new OffsetRange(0, 3000))
+                    .requestedRange(new OffsetRange(0, 50))
                     .build();
             final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    fieldFormatter,
-                    defaultMaxResultsSizes);
+                    fieldFormatter);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -258,7 +253,7 @@ abstract class AbstractDataStoreTest {
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
                 .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
+                .requestedRange(new OffsetRange(0, 50))
                 .build();
         checkResults(dataStore, tableResultRequest, 0, false);
     }
@@ -294,7 +289,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 0, true);
     }
@@ -336,7 +331,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 0, true);
     }
@@ -378,7 +373,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 1, false);
     }
@@ -420,7 +415,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 1, false);
     }
@@ -467,15 +462,14 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
 
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+                fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 
@@ -497,12 +491,12 @@ abstract class AbstractDataStoreTest {
 
         // Make sure we only get 2000 results.
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+                fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 
-        assertThat(searchResult.getTotalResults() <= 50).isTrue();
+        assertThat(searchResult.getResultRange().getLength() <= 50).isTrue();
+        assertThat(searchResult.getTotalResults() <= 3000).isTrue();
 
         String lastValue = null;
         for (final Row result : searchResult.getRows()) {

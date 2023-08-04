@@ -70,7 +70,7 @@ public class QueryResultTablePresenter
     private int currentRequestCount;
 //    private QueryModel currentSearchModel;
 
-    private OffsetRange requestedRange = new OffsetRange(0, 100);
+    private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private Set<String> openGroups = null;
 
 
@@ -301,8 +301,8 @@ public class QueryResultTablePresenter
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    dataGrid.setRowData(valuesRange.getOffset().intValue(), values);
-                    dataGrid.setRowCount(tableResult.getTotalResults(), true);
+                    dataGrid.setRowData((int) valuesRange.getOffset(), values);
+                    dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
 
 //                // Enable download of current results.

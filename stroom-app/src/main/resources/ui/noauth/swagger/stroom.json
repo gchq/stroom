@@ -14231,6 +14231,21 @@
           }
         }
       },
+      "NodeMonitoringConfig" : {
+        "type" : "object",
+        "properties" : {
+          "pingMaxThreshold" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
+          },
+          "pingWarnThreshold" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
+          }
+        }
+      },
       "NodeSearchTask" : {
         "type" : "object",
         "properties" : {
@@ -17567,7 +17582,7 @@
             },
             "totalResults" : {
               "type" : "integer",
-              "format" : "int32"
+              "format" : "int64"
             }
           }
         } ],
@@ -17958,6 +17973,9 @@
           },
           "namePattern" : {
             "type" : "string"
+          },
+          "nodeMonitoring" : {
+            "$ref" : "#/components/schemas/NodeMonitoringConfig"
           },
           "oncontextmenu" : {
             "type" : "string",

@@ -11,6 +11,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.test.util.MockitoExtension;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.DurationTimer;
@@ -30,7 +31,7 @@ import org.mockito.stubbing.Answer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -245,10 +246,7 @@ class TestSearchResponseCreator {
                 .addResultRequests(ResultRequest.builder()
                         .componentId(UUID.randomUUID().toString())
                         .resultStyle(ResultRequest.ResultStyle.TABLE)
-                        .requestedRange(OffsetRange.builder()
-                                .offset(0L)
-                                .length(100L)
-                                .build())
+                        .requestedRange(OffsetRange.ZERO_100)
                         .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
                                 .addFields(
@@ -308,23 +306,26 @@ class TestSearchResponseCreator {
 
             @Override
             public void getData(final Consumer<Data> consumer) {
-                consumer.accept((key, timeFilter) -> {
-                    if (key == Key.ROOT_KEY) {
-                        return Optional.of(new Items() {
-
+                final Data data = new Data() {
+                    @Override
+                    public <R> Items<R> get(final OffsetRange range,
+                                            final Set<Key> openGroups,
+                                            final TimeFilter timeFilter,
+                                            final ItemMapper<R> mapper) {
+                        return new Items<>() {
                             @Override
-                            public int size() {
-                                return 1;
+                            public long totalRowCount() {
+                                return 1L;
                             }
 
                             @Override
-                            public Iterable<Item> getIterable() {
-                                return List.of(item);
+                            public void fetch(final Consumer<R> resultConsumer) {
+                                resultConsumer.accept(mapper.create(null, item));
                             }
-                        });
+                        };
                     }
-                    return Optional.empty();
-                });
+                };
+                consumer.accept(data);
             }
 
             @Override

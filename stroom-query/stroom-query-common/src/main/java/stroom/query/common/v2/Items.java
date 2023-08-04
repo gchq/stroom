@@ -16,9 +16,11 @@
 
 package stroom.query.common.v2;
 
-public interface Items {
+import java.util.function.Consumer;
 
-    int size();
+public interface Items<R> {
 
-    Iterable<Item> getIterable();
+    long totalRowCount();
+
+    void fetch(Consumer<R> resultConsumer);
 }

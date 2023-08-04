@@ -28,8 +28,6 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DestroySearchRequest;
-import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.StoredQuery;
@@ -41,7 +39,6 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -78,7 +75,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -230,7 +226,7 @@ class DashboardServiceImpl implements DashboardService {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
-            Integer rowCount = null;
+            Long rowCount = null;
 
             try {
                 if (queryKey == null) {
@@ -253,8 +249,8 @@ class DashboardServiceImpl implements DashboardService {
                         .toList();
                 rowCount = tableResults
                         .stream()
-                        .map(TableResult::getTotalResults)
-                        .reduce(0, Integer::sum);
+                        .mapToLong(TableResult::getTotalResults)
+                        .sum();
 
                 if (tableResults.isEmpty()) {
                     throw new EntityServiceException("No result for component can be found");

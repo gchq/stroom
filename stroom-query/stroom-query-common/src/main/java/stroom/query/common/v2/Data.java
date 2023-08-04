@@ -1,8 +1,9 @@
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeFilter;
 
-import java.util.Optional;
+import java.util.Set;
 
 public interface Data {
 
@@ -13,5 +14,8 @@ public interface Data {
      * @param timeFilter The time filter to use to limit the data returned.
      * @return The filtered child items for the parent key.
      */
-    Optional<Items> get(Key key, TimeFilter timeFilter);
+    <R> Items<R> get(OffsetRange range,
+                     Set<Key> openGroups,
+                     TimeFilter timeFilter,
+                     ItemMapper<R> mapper);
 }

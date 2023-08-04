@@ -23,6 +23,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.util.LambdaLogger;
@@ -37,10 +38,12 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,6 +61,7 @@ public class MapDataStore implements DataStore, Data {
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
     private final ValueReferenceIndex valueReferenceIndex;
+    private final List<Field> fields;
     private final CompiledFields compiledFields;
     private final CompiledField[] compiledFieldsArray;
     private final CompiledSorter<ItemImpl>[] compiledSorters;
@@ -80,7 +84,8 @@ public class MapDataStore implements DataStore, Data {
                         final Map<String, String> paramMap,
                         final DataStoreSettings dataStoreSettings) {
         this.serialisers = serialisers;
-        this.compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
+        fields = tableSettings.getFields();
+        this.compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
         this.compiledFieldsArray = compiledFields.getCompiledFields();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFieldsArray, tableSettings.showDetail());
@@ -242,8 +247,8 @@ public class MapDataStore implements DataStore, Data {
             CompletableFuture.runAsync(() -> {
                 final ItemsImpl items = childMap.remove(parentKey);
                 if (items != null) {
-                    resultCount.addAndGet(-items.size());
-                    items.getIterable().forEach(item -> remove(item.getKey()));
+                    resultCount.addAndGet(-items.list.size());
+                    items.list.forEach(item -> remove(item.getKey()));
                 }
             });
         }
@@ -259,50 +264,129 @@ public class MapDataStore implements DataStore, Data {
         consumer.accept(this);
     }
 
-    /**
-     * Get child items from the data for the provided parent key and time filter.
-     *
-     * @param key        The parent key to get child items for.
-     * @param timeFilter The time filter to use to limit the data returned.
-     * @return The filtered child items for the parent key.
-     */
     @Override
-    public Optional<Items> get(final Key key, final TimeFilter timeFilter) {
-        return Optional.ofNullable(getInternal(key, timeFilter));
+    public <R> Items<R> get(final OffsetRange rng,
+                            final Set<Key> openGroups,
+                            final TimeFilter timeFilter,
+                            final ItemMapper<R> mapper) {
+        final OffsetRange range = Optional
+                .ofNullable(rng)
+                .orElse(OffsetRange.ZERO_100);
+        return new Items<>() {
+            private long totalRowCount = -1;
+
+            @Override
+            public long totalRowCount() {
+                if (this.totalRowCount == -1) {
+                    long totalRowCount = 0;
+
+                    if (openGroups == null) {
+                        for (final ItemsImpl items : childMap.values()) {
+                            final List<ItemImpl> list = items.copy();
+                            if (mapper.hidesRows()) {
+                                for (final ItemImpl item : list) {
+                                    final R row = mapper.create(fields, item);
+                                    if (row != null) {
+                                        totalRowCount++;
+                                    }
+                                }
+                            } else {
+                                totalRowCount += list.size();
+                            }
+                        }
+                    } else {
+
+                        // Calculate complete size of all requested data.
+                        final Set<Key> groups = new HashSet<>();
+                        groups.add(Key.ROOT_KEY);
+                        groups.addAll(openGroups);
+
+                        for (final Key parentKey : groups) {
+                            final ItemsImpl items = childMap.get(parentKey);
+                            if (items != null) {
+                                final List<ItemImpl> list = items.copy();
+                                if (mapper.hidesRows()) {
+                                    for (final ItemImpl item : list) {
+                                        final R row = mapper.create(fields, item);
+                                        if (row != null) {
+                                            totalRowCount++;
+                                        }
+                                    }
+                                } else {
+                                    totalRowCount += list.size();
+                                }
+                            }
+                        }
+                    }
+
+                    this.totalRowCount = totalRowCount;
+                }
+                return this.totalRowCount;
+            }
+
+            @Override
+            public void fetch(final Consumer<R> resultConsumer) {
+                final AtomicLong position = new AtomicLong();
+                final AtomicLong length = new AtomicLong();
+                getChildren(
+                        Key.ROOT_KEY,
+                        openGroups,
+                        mapper,
+                        range,
+                        position,
+                        length,
+                        resultConsumer);
+            }
+        };
     }
 
-    public ItemsImpl getInternal(final Key key, final TimeFilter timeFilter) {
-        if (timeFilter != null) {
-            throw new RuntimeException("Time filtering is not supported by the map data store");
-        }
-
-        final ItemsImpl result;
-        if (key == null) {
-            result = childMap.get(Key.ROOT_KEY);
-        } else {
-            result = childMap.get(key);
-        }
-        return result;
-    }
-
-    private List<ItemImpl> getChildren(final Key parentKey,
-                                       final TimeFilter timeFilter,
-                                       final int childDepth,
-                                       final int trimmedSize,
-                                       final boolean trimTop) {
-        ItemsImpl items = getInternal(parentKey, timeFilter);
+    private <R> void getChildren(final Key parentKey,
+                                 final Set<Key> openGroups,
+                                 final ItemMapper<R> mapper,
+                                 final OffsetRange range,
+                                 final AtomicLong offset,
+                                 final AtomicLong length,
+                                 final Consumer<R> resultConsumer) {
+        final ItemsImpl items = childMap.get(parentKey);
         if (items == null) {
-            return null;
+            return;
         }
-        List<ItemImpl> list = items.copy();
-        if (list.size() <= trimmedSize) {
-            return list;
+        final List<ItemImpl> list = items.copy();
+        for (final ItemImpl item : list) {
+            final R row = mapper.create(fields, item);
+            if (row != null) {
+                if (range.getOffset() <= offset.get()) {
+                    resultConsumer.accept(row);
+                    final long len = length.incrementAndGet();
+                    if (len >= range.getLength()) {
+                        return;
+                    }
+                }
+                offset.incrementAndGet();
+
+                // Add children if the group is open.
+                final Key key = item.key;
+                if (openGroups == null || openGroups.contains(key)) {
+                    getChildren(key,
+                            openGroups,
+                            mapper,
+                            range,
+                            offset,
+                            length,
+                            resultConsumer);
+                }
+            }
         }
-        if (trimTop) {
-            return list.subList(list.size() - trimmedSize, list.size());
-        } else {
-            return list.subList(0, trimmedSize);
+    }
+
+    private long countChildren(final Key parentKey) {
+        final ItemsImpl items = childMap.get(parentKey);
+        if (items == null) {
+            return 0;
         }
+        final List<ItemImpl> list = items.copy();
+        // FIXME : NOTE THIS COUNT IS NOT FILTERED BY THE MAPPER.
+        return list.size();
     }
 
     /**
@@ -330,7 +414,6 @@ public class MapDataStore implements DataStore, Data {
      * Read items from the supplied input and transfer them to the data store.
      *
      * @param input The input to read.
-     * @return True if we still happy to keep on receiving data, false otherwise.
      */
     @Override
     public void readPayload(final Input input) {
@@ -435,7 +518,7 @@ public class MapDataStore implements DataStore, Data {
         }
     }
 
-    public static class ItemsImpl implements Items {
+    public static class ItemsImpl {
 
         private final int trimmedSize;
         private final int maxSize;
@@ -454,12 +537,15 @@ public class MapDataStore implements DataStore, Data {
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction,
                   final Consumer<Key> removeHandler) {
-            this.trimmedSize = trimmedSize;
-            if (trimmedSize < Integer.MAX_VALUE / 2) {
-                this.maxSize = trimmedSize * 2;
-            } else {
-                this.maxSize = Integer.MAX_VALUE;
-            }
+
+            // FIXME : THIS IS HARD CODED TO REDUCE CHANCE OF OOME.
+            this.trimmedSize = Math.min(trimmedSize, 100_000); // Don't ever allow more than 100K data points.
+
+            int maxSize = this.trimmedSize * 2;
+            // FIXME : SEE ABOVE NOTE ABOUT HARD CODING.
+            maxSize = Math.min(maxSize, 200_000);
+            this.maxSize = Math.max(maxSize, 1_000);
+
             this.dataStore = dataStore;
             this.groupingFunction = groupingFunction;
             this.sortingFunction = sortingFunction;
@@ -518,17 +604,6 @@ public class MapDataStore implements DataStore, Data {
         private synchronized List<ItemImpl> copy() {
             sortAndTrim();
             return new ArrayList<>(list);
-        }
-
-        @Override
-        public int size() {
-            return list.size();
-        }
-
-        @Override
-        public Iterable<Item> getIterable() {
-            final List<ItemImpl> items = copy();
-            return () -> items.stream().map(item -> (Item) item).iterator();
         }
     }
 
@@ -591,8 +666,7 @@ public class MapDataStore implements DataStore, Data {
 
                     @Override
                     public long count() {
-                        final Optional<Items> optional = dataStore.get(key, null);
-                        return optional.map(Items::size).orElse(0);
+                        return dataStore.countChildren(key);
                     }
 
                     private StoredValues singleValue(final int trimmedSize, final boolean trimTop) {
@@ -606,16 +680,23 @@ public class MapDataStore implements DataStore, Data {
 
                     private Iterable<StoredValues> getStoredValueIterable(final int limit,
                                                                           final boolean trimTop) {
-                        final List<ItemImpl> items = dataStore.getChildren(
+                        final List<StoredValues> result = new ArrayList<>();
+                        dataStore.getChildren(
                                 key,
-                                null,
-                                key.getChildDepth(),
-                                limit,
-                                trimTop);
-                        if (items != null && items.size() > 0) {
-                            return () -> items.stream().map(item -> item.storedValues).iterator();
+                                Collections.emptySet(),
+                                IdentityItemMapper.INSTANCE,
+                                OffsetRange.ZERO_1000, // Max 1000 child items.
+                                new AtomicLong(),
+                                new AtomicLong(),
+                                item -> result.add(((ItemImpl) item).storedValues));
+                        if (result.size() > limit) {
+                            if (trimTop) {
+                                return result.subList(result.size() - limit, result.size());
+                            } else {
+                                return result.subList(0, limit);
+                            }
                         }
-                        return Collections::emptyIterator;
+                        return result;
                     }
                 };
                 val = generator.eval(storedValues, childDataSupplier);
@@ -649,8 +730,8 @@ public class MapDataStore implements DataStore, Data {
                         result = storedValues;
                     } else {
                         // Combine the new item into the original item.
-                        for (int i = 0; i < compiledFields.length; i++) {
-                            final Generator generator = compiledFields[i].getGenerator();
+                        for (final CompiledField compiledField : compiledFields) {
+                            final Generator generator = compiledField.getGenerator();
                             generator.merge(result, storedValues);
                         }
                     }
@@ -658,6 +739,7 @@ public class MapDataStore implements DataStore, Data {
                     return result;
                 });
             });
+
             return groupingMap
                     .entrySet()
                     .parallelStream()

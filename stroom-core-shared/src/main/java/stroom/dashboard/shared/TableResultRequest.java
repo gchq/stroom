@@ -131,7 +131,7 @@ public class TableResultRequest extends ComponentResultRequest {
         private Fetch fetch;
         private String tableName;
         private TableSettings tableSettings;
-        private OffsetRange requestedRange = new OffsetRange(0, 100);
+        private OffsetRange requestedRange = OffsetRange.ZERO_100;
         private Set<String> openGroups;
 
         private Builder() {

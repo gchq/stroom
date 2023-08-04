@@ -47,14 +47,14 @@ public class TableResult extends Result {
 
     @JsonPropertyDescription("The total number of results in this result set")
     @JsonProperty
-    private final Integer totalResults;
+    private final Long totalResults;
 
     @JsonCreator
     public TableResult(@JsonProperty("componentId") final String componentId,
                        @JsonProperty("fields") final List<Field> fields,
                        @JsonProperty("rows") final List<Row> rows,
                        @JsonProperty("resultRange") final OffsetRange resultRange,
-                       @JsonProperty("totalResults") final Integer totalResults,
+                       @JsonProperty("totalResults") final Long totalResults,
                        @JsonProperty("errors") final List<String> errors) {
         super(componentId, errors);
         this.fields = fields;
@@ -75,7 +75,7 @@ public class TableResult extends Result {
         return resultRange;
     }
 
-    public Integer getTotalResults() {
+    public Long getTotalResults() {
         return totalResults;
     }
 
@@ -129,7 +129,7 @@ public class TableResult extends Result {
         private List<Field> fields;
         private List<Row> rows;
         private OffsetRange resultRange;
-        private Integer totalResults;
+        private Long totalResults;
 
         private TableResultBuilderImpl() {
             rows = new ArrayList<>();
@@ -162,7 +162,7 @@ public class TableResult extends Result {
         }
 
         @Override
-        public TableResultBuilder totalResults(final Integer totalResults) {
+        public TableResultBuilder totalResults(final Long totalResults) {
             this.totalResults = totalResults;
             return this;
         }
@@ -174,9 +174,9 @@ public class TableResult extends Result {
 
         @Override
         public TableResult build() {
-            Integer totalResults = this.totalResults;
+            Long totalResults = this.totalResults;
             if (totalResults == null && rows != null) {
-                totalResults = rows.size();
+                totalResults = (long) rows.size();
             }
             return new TableResult(componentId, fields, rows, resultRange, totalResults, errors);
         }

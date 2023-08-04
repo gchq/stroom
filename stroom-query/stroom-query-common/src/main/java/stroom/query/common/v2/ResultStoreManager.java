@@ -393,7 +393,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                                 Collections.emptyList(),
                                 Collections.emptyList(),
                                 new OffsetRange(0, 0),
-                                0,
+                                0L,
                                 null))
                         .collect(Collectors.toList());
             } else {

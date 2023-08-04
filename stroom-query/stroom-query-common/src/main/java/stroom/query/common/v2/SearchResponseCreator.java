@@ -375,7 +375,7 @@ public class SearchResponseCreator {
                     result = resultCreator.create(dataStore, resultRequest);
                 }
             } catch (final RuntimeException e) {
-                result = new TableResult(componentId, null, null, null, 0,
+                result = new TableResult(componentId, null, null, null, 0L,
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)));
             }
         }
@@ -415,9 +415,7 @@ public class SearchResponseCreator {
                     final FieldFormatter fieldFormatter =
                             new FieldFormatter(
                                     new FormatterFactory(searchRequest.getDateTimeSettings()));
-                    resultCreator = new TableResultCreator(
-                            fieldFormatter,
-                            sizesProvider.getDefaultMaxResultsSizes());
+                    resultCreator = new TableResultCreator(fieldFormatter);
                 } else {
                     resultCreator = new FlatResultCreator(
                             new MapDataStoreFactory(() -> serialisers),
