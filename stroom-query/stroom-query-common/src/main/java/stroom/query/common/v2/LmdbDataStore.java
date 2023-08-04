@@ -71,6 +71,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Provider;
 
@@ -82,7 +83,6 @@ public class LmdbDataStore implements DataStore {
 
     private final LmdbEnv lmdbEnv;
     private final Dbi<ByteBuffer> dbi;
-
     private final FieldExpressionMatcher fieldExpressionMatcher;
     private final ExpressionOperator valueFilter;
     private final ValueReferenceIndex valueReferenceIndex;
@@ -456,14 +456,15 @@ public class LmdbDataStore implements DataStore {
                         final DeleteCommand deleteCommand) {
         final KeyRange<ByteBuffer> keyRange =
                 lmdbRowKeyFactory.createChildKeyRange(deleteCommand.getParentKey(), deleteCommand.getTimeFilter());
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn.getTxn(), keyRange)) {
-            for (final KeyVal<ByteBuffer> kv : cursorIterable) {
-                final ByteBuffer keyBuffer = kv.key();
+        iterate(dbi, writeTxn.getTxn(), keyRange, iterator -> {
+            while (iterator.hasNext()) {
+                final KeyVal<ByteBuffer> keyVal = iterator.next();
+                final ByteBuffer keyBuffer = keyVal.key();
                 if (keyBuffer.limit() > 1) {
                     dbi.delete(writeTxn.getTxn(), keyBuffer);
                 }
             }
-        }
+        });
         writeTxn.commit();
     }
 
@@ -740,25 +741,20 @@ public class LmdbDataStore implements DataStore {
 
         final AtomicReference<CurrentDbState> currentDbStateAtomicReference = new AtomicReference<>();
         final KeyRange<ByteBuffer> keyRange = LmdbRowKeyFactoryFactory.DB_STATE_KEY_RANGE;
-        lmdbEnv.doWithReadTxn(readTxn -> {
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                    readTxn,
-                    keyRange)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-
-                if (iterator.hasNext()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-                    final ByteBuffer key = keyVal.key();
-                    if (LmdbRowKeyFactoryFactory.isStateKey(key)) {
-                        final ByteBuffer val = keyVal.val();
-                        final long streamId = val.getLong(0);
-                        final long eventId = val.getLong(Long.BYTES);
-                        final long lastEventTime = val.getLong(Long.BYTES + Long.BYTES);
-                        currentDbStateAtomicReference.set(new CurrentDbState(streamId, eventId, lastEventTime));
+        lmdbEnv.doWithReadTxn(readTxn ->
+                iterate(dbi, readTxn, keyRange, iterator -> {
+                    if (iterator.hasNext()) {
+                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+                        final ByteBuffer key = keyVal.key();
+                        if (LmdbRowKeyFactoryFactory.isStateKey(key)) {
+                            final ByteBuffer val = keyVal.val();
+                            final long streamId = val.getLong(0);
+                            final long eventId = val.getLong(Long.BYTES);
+                            final long lastEventTime = val.getLong(Long.BYTES + Long.BYTES);
+                            currentDbStateAtomicReference.set(new CurrentDbState(streamId, eventId, lastEventTime));
+                        }
                     }
-                }
-            }
-        });
+                }));
 
         return currentDbStateAtomicReference.get();
     }
@@ -789,12 +785,12 @@ public class LmdbDataStore implements DataStore {
     }
 
     @Override
-    public <R> void fetch(final OffsetRange range,
-                          final OpenGroups openGroups,
-                          final TimeFilter timeFilter,
-                          final ItemMapper<R> mapper,
-                          final Consumer<R> resultConsumer,
-                          final Consumer<Long> totalRowCountConsumer) {
+    public synchronized <R> void fetch(final OffsetRange range,
+                                       final OpenGroups openGroups,
+                                       final TimeFilter timeFilter,
+                                       final ItemMapper<R> mapper,
+                                       final Consumer<R> resultConsumer,
+                                       final Consumer<Long> totalRowCountConsumer) {
         final OffsetRange enforcedRange = Optional
                 .ofNullable(range)
                 .orElse(OffsetRange.ZERO_100);
@@ -813,29 +809,33 @@ public class LmdbDataStore implements DataStore {
         } else {
             lmdbEnv.doWithReadTxn(readTxn ->
                     Metrics.measure("fetch", () -> {
-                        final FetchState fetchState = new FetchState();
-                        fetchState.countRows = totalRowCountConsumer != null;
-                        fetchState.reachedRowLimit = fetchState.length >= enforcedRange.getLength();
-                        fetchState.keepGoing = fetchState.justCount || !fetchState.reachedRowLimit;
+                        try {
+                            final FetchState fetchState = new FetchState();
+                            fetchState.countRows = totalRowCountConsumer != null;
+                            fetchState.reachedRowLimit = fetchState.length >= enforcedRange.getLength();
+                            fetchState.keepGoing = fetchState.justCount || !fetchState.reachedRowLimit;
 
-                        final LmdbReadContext readContext =
-                                new LmdbReadContext(LmdbDataStore.this, readTxn, timeFilter);
+                            final LmdbReadContext readContext =
+                                    new LmdbReadContext(LmdbDataStore.this, dbi, readTxn, timeFilter);
 
-                        getChildren(
-                                readContext,
-                                Key.ROOT_KEY,
-                                0,
-                                Integer.MAX_VALUE,
-                                false,
-                                openGroups,
-                                timeFilter,
-                                mapper,
-                                enforcedRange,
-                                fetchState,
-                                resultConsumer);
+                            getChildren(
+                                    readContext,
+                                    Key.ROOT_KEY,
+                                    0,
+                                    Integer.MAX_VALUE,
+                                    false,
+                                    openGroups,
+                                    timeFilter,
+                                    mapper,
+                                    enforcedRange,
+                                    fetchState,
+                                    resultConsumer);
 
-                        if (totalRowCountConsumer != null) {
-                            totalRowCountConsumer.accept(fetchState.totalRowCount);
+                            if (totalRowCountConsumer != null) {
+                                totalRowCountConsumer.accept(fetchState.totalRowCount);
+                            }
+                        } catch (final Throwable e) {
+                            LOGGER.error(e::getMessage, e);
                         }
                     }));
         }
@@ -906,11 +906,7 @@ public class LmdbDataStore implements DataStore {
         openGroups.complete(parentKey);
 
         final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                readContext.readTxn,
-                keyRange)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-
+        readContext.read(keyRange, iterator -> {
             while (fetchState.keepGoing &&
                     iterator.hasNext() &&
                     !Thread.currentThread().isInterrupted()) {
@@ -1023,7 +1019,7 @@ public class LmdbDataStore implements DataStore {
                     }
                 }
             }
-        }
+        });
     }
 
     private <R> void getSortedChildren(final LmdbReadContext readContext,
@@ -1057,12 +1053,7 @@ public class LmdbDataStore implements DataStore {
         maxSize = Math.max(maxSize, 1_000);
 
         final SortedItems sortedItems = new SortedItems(10, maxSize, trimmedSize, trimTop, sorter);
-
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                readContext.readTxn,
-                keyRange)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-
+        readContext.read(keyRange, iterator -> {
             while (iterator.hasNext()
                     && !Thread.currentThread().isInterrupted()) {
                 final KeyVal<ByteBuffer> keyVal = iterator.next();
@@ -1093,7 +1084,7 @@ public class LmdbDataStore implements DataStore {
                     }
                 }
             }
-        }
+        });
 
         // Finally transfer the sorted items to the result.
         for (final Item item : sortedItems.getIterable()) {
@@ -1134,18 +1125,68 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
+    public static <R> R iterateResult(final Dbi<ByteBuffer> dbi,
+                                      final Txn<ByteBuffer> readTxn,
+                                      final KeyRange<ByteBuffer> keyRange,
+                                      final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
+                readTxn,
+                keyRange)) {
+            try {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                return iteratorConsumer.apply(iterator);
+            } catch (final Throwable e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        } catch (final Throwable e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return null;
+    }
+
+    public static void iterate(final Dbi<ByteBuffer> dbi,
+                               final Txn<ByteBuffer> readTxn,
+                               final KeyRange<ByteBuffer> keyRange,
+                               final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
+                readTxn,
+                keyRange)) {
+            try {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                iteratorConsumer.accept(iterator);
+            } catch (final Throwable e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        } catch (final Throwable e) {
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
     private static class LmdbReadContext {
 
         private final LmdbDataStore dataStore;
+        private final Dbi<ByteBuffer> dbi;
         private final Txn<ByteBuffer> readTxn;
         private final TimeFilter timeFilter;
 
         public LmdbReadContext(final LmdbDataStore dataStore,
+                               final Dbi<ByteBuffer> dbi,
                                final Txn<ByteBuffer> readTxn,
                                final TimeFilter timeFilter) {
             this.dataStore = dataStore;
+            this.dbi = dbi;
             this.readTxn = readTxn;
             this.timeFilter = timeFilter;
+        }
+
+        public <R> R readResult(final KeyRange<ByteBuffer> keyRange,
+                                final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
+            return iterateResult(dbi, readTxn, keyRange, iteratorConsumer);
+        }
+
+        public void read(final KeyRange<ByteBuffer> keyRange,
+                         final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
+            iterate(dbi, readTxn, keyRange, iteratorConsumer);
         }
 
         public Val createValue(final Key key,
@@ -1253,8 +1294,6 @@ public class LmdbDataStore implements DataStore {
 
         private long countChildren(final Key parentKey,
                                    final int depth) {
-            long count = 0;
-
             // If we don't have any children at the requested depth then return 0.
             final LmdbDataStore dataStore = readContext.dataStore;
             if (dataStore.compiledSorters.length <= depth) {
@@ -1263,18 +1302,15 @@ public class LmdbDataStore implements DataStore {
 
             final KeyRange<ByteBuffer> keyRange = dataStore.lmdbRowKeyFactory.createChildKeyRange(parentKey);
 
-            try (final CursorIterable<ByteBuffer> cursorIterable =
-                    dataStore.dbi.iterate(readContext.readTxn, keyRange)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-
+            return readContext.readResult(keyRange, iterator -> {
+                long count = 0;
                 while (iterator.hasNext()
                         && !Thread.currentThread().isInterrupted()) {
                     // FIXME : NOTE THIS COUNT IS NOT FILTERED BY THE MAPPER.
                     count++;
                 }
-            }
-
-            return count;
+                return count;
+            });
         }
     }
 

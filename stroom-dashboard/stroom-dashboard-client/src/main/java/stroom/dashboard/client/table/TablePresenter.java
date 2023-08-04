@@ -664,11 +664,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         int maxDepth = -1;
-        if (maxGroup > 0 || showDetail) {
+        if (maxGroup > 0 && showDetail) {
+            maxDepth = maxGroup + 1;
+        } else if (maxGroup > 0) {
             maxDepth = maxGroup;
-            if (showDetail) {
-                maxDepth++;
-            }
+        } else if (maxGroup == 0 && showDetail) {
+            maxDepth = 1;
         }
 
         final List<TableRow> processed = new ArrayList<>(values.size());
