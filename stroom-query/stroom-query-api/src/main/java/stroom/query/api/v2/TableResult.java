@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -123,24 +124,32 @@ public class TableResult extends Result {
      * Builder for constructing a {@link TableResult tableResult}
      */
     public static final class TableResultBuilderImpl
-            extends AbstractResultBuilder<TableResultBuilder>
             implements TableResultBuilder {
 
+        private String componentId;
         private List<Field> fields;
-        private List<Row> rows;
+        private final List<Row> rows;
+        private List<String> errors;
         private OffsetRange resultRange;
         private Long totalResults;
 
         private TableResultBuilderImpl() {
             rows = new ArrayList<>();
+            errors = Collections.emptyList();
         }
 
         private TableResultBuilderImpl(final TableResult tableResult) {
-            super(tableResult);
+            componentId = tableResult.getComponentId();
             fields = tableResult.fields;
             rows = new ArrayList<>(tableResult.rows);
+            errors = tableResult.getErrors();
             resultRange = tableResult.resultRange;
             totalResults = tableResult.totalResults;
+        }
+
+        public TableResultBuilderImpl componentId(final String componentId) {
+            this.componentId = componentId;
+            return this;
         }
 
         @Override
@@ -156,6 +165,12 @@ public class TableResult extends Result {
         }
 
         @Override
+        public TableResultBuilder errors(final List<String> errors) {
+            this.errors = errors;
+            return this;
+        }
+
+        @Override
         public TableResultBuilder resultRange(final OffsetRange resultRange) {
             this.resultRange = resultRange;
             return this;
@@ -164,11 +179,6 @@ public class TableResult extends Result {
         @Override
         public TableResultBuilder totalResults(final Long totalResults) {
             this.totalResults = totalResults;
-            return this;
-        }
-
-        @Override
-        protected TableResultBuilderImpl self() {
             return this;
         }
 

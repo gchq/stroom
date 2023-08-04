@@ -29,7 +29,6 @@ import org.mockito.stubbing.Answer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -69,7 +68,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(false, null);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -101,7 +101,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(false, null);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -128,7 +129,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -157,7 +159,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -185,7 +188,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
 
         TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -206,7 +210,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
 
         timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest2));
+                searchResponseCreator.create(searchRequest2,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest2)));
 
         SearchResponse searchResponse2 = timedResult.getResult();
         actualDuration = timedResult.getDuration();

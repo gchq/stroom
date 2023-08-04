@@ -26,16 +26,16 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
-import stroom.query.util.LambdaLogger;
-import stroom.query.util.LambdaLoggerFactory;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.util.ArrayList;
@@ -52,8 +52,9 @@ public class FlatResultCreator implements ResultCreator {
     private final FieldFormatter fieldFormatter;
     private final List<Mapper> mappers;
     private final List<Field> fields;
-
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+    private final boolean cacheLastResult;
+    private FlatResult lastResult;
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
                              final SearchRequest searchRequest,
@@ -61,8 +62,10 @@ public class FlatResultCreator implements ResultCreator {
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
                              final FieldFormatter fieldFormatter,
-                             final Sizes defaultMaxResultsSizes) {
+                             final Sizes defaultMaxResultsSizes,
+                             final boolean cacheLastResult) {
         this.fieldFormatter = fieldFormatter;
+        this.cacheLastResult = cacheLastResult;
 
         // User may have added a vis pane but not defined the vis
         final List<TableSettings> tableSettings = resultRequest.getMappings()
@@ -175,17 +178,12 @@ public class FlatResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
-        FlatResultBuilder flatResultBuilder = FlatResult.builder();
-        create(dataStore, resultRequest, flatResultBuilder);
-        return flatResultBuilder.build();
-    }
+        final Fetch fetch = resultRequest.getFetch();
+        if (Fetch.NONE.equals(fetch)) {
+            return null;
+        }
 
-    @Override
-    public void create(final DataStore dataStore,
-                       final ResultRequest resultRequest,
-                       final ResultBuilder<?> resultBuilder) {
-        final FlatResultBuilder flatResultBuilder = (FlatResultBuilder) resultBuilder;
-
+        final FlatResultBuilder resultBuilder = FlatResult.builder();
         if (!errorConsumer.hasErrors()) {
             try {
                 // Map data.
@@ -244,9 +242,9 @@ public class FlatResultCreator implements ResultCreator {
                             }
 
                             // Add the values.
-                            flatResultBuilder.addValues(resultList);
+                            resultBuilder.addValues(resultList);
                         },
-                        flatResultBuilder::totalResults);
+                        resultBuilder::totalResults);
 
                 final List<Field> structure = new ArrayList<>();
                 structure.add(Field.builder().name(":ParentKey").build());
@@ -254,7 +252,7 @@ public class FlatResultCreator implements ResultCreator {
                 structure.add(Field.builder().name(":Depth").build());
                 structure.addAll(this.fields);
 
-                flatResultBuilder
+                resultBuilder
                         .componentId(resultRequest.getComponentId())
                         .errors(errorConsumer.getErrors())
                         .structure(structure);
@@ -269,9 +267,27 @@ public class FlatResultCreator implements ResultCreator {
             }
         }
 
-        flatResultBuilder
+        resultBuilder
                 .componentId(resultRequest.getComponentId())
                 .errors(errorConsumer.getErrors());
+        FlatResult result = resultBuilder.build();
+
+        if (cacheLastResult) {
+            if (Fetch.CHANGES.equals(fetch)) {
+                // See if we have delivered an identical result before, so we
+                // don't send more data to the client than we need to.
+                if (result.equals(lastResult)) {
+                    result = null;
+                } else {
+                    lastResult = result;
+                }
+            } else {
+                lastResult = result;
+            }
+        }
+
+        LOGGER.debug("Delivering {} for {}", result, resultRequest.getComponentId());
+        return result;
     }
 
     // TODO : Replace this with conversion at the item level.

@@ -751,10 +751,15 @@ public class AnalyticsExecutor {
 
             final FieldFormatter fieldFormatter =
                     new FieldFormatter(new FormatterFactory(null));
-            final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
+            final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
+                @Override
+                public TableResultBuilder createTableResultBuilder() {
+                    return tableResultConsumer;
+                }
+            };
 
             // Create result.
-            resultCreator.create(lmdbDataStore, resultRequest, tableResultConsumer);
+            resultCreator.create(lmdbDataStore, resultRequest);
 
             // Remember last successful execution time.
             final AnalyticNotificationState newState = notificationState.copy()

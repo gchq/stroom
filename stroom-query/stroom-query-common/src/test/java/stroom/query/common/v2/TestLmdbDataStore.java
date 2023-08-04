@@ -151,8 +151,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    fieldFormatter);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -224,8 +223,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);

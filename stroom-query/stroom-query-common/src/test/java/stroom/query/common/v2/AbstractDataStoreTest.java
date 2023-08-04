@@ -83,8 +83,7 @@ abstract class AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
@@ -124,8 +123,7 @@ abstract class AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 1))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
@@ -209,8 +207,7 @@ abstract class AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 50))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    fieldFormatter);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -468,8 +465,7 @@ abstract class AbstractDataStoreTest {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 
@@ -490,8 +486,7 @@ abstract class AbstractDataStoreTest {
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
         // Make sure we only get 2000 results.
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 

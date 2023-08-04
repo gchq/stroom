@@ -32,7 +32,6 @@ import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.IdentityItemMapper;
-import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultStore;
@@ -61,7 +60,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,11 +153,13 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.search(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest,
+                resultStore.makeDefaultResultCreators(searchRequest));
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
     }
+
 //
 //    @Test
 //    void testSinglePayloadTransfer() throws Exception {
@@ -285,7 +285,8 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.search(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest,
+                resultStore.makeDefaultResultCreators(searchRequest));
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -362,7 +363,8 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.search(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest,
+                resultStore.makeDefaultResultCreators(searchRequest));
 
         // Validate the search response.
         validateSearchResponse(searchResponse);

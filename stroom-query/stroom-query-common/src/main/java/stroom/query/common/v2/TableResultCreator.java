@@ -23,19 +23,17 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableResult.TableResultBuilderImpl;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,31 +46,36 @@ import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TableResultCreator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultCreator.class);
 
     private final FieldFormatter fieldFormatter;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+    private final boolean cacheLastResult;
+    private TableResult lastResult;
 
     public TableResultCreator(final FieldFormatter fieldFormatter) {
+        this(fieldFormatter, false);
+    }
+
+    public TableResultCreator(final FieldFormatter fieldFormatter,
+                              final boolean cacheLastResult) {
         this.fieldFormatter = fieldFormatter;
+        this.cacheLastResult = cacheLastResult;
+    }
+
+    public TableResultBuilder createTableResultBuilder() {
+        return TableResult.builder();
     }
 
     @Override
-    public Result create(final DataStore dataStore,
-                         final ResultRequest resultRequest) {
-        final TableResultBuilderImpl tableResultBuilder = TableResult.builder();
-        create(dataStore, resultRequest, tableResultBuilder);
-        tableResultBuilder.errors(errorConsumer.getErrors());
-        return tableResultBuilder.build();
-    }
+    public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
+        final Fetch fetch = resultRequest.getFetch();
+        if (Fetch.NONE.equals(fetch)) {
+            return null;
+        }
 
-    @Override
-    public void create(final DataStore dataStore,
-                       final ResultRequest resultRequest,
-                       final ResultBuilder<?> resultBuilder) {
-        final TableResultBuilder tableResultBuilder = (TableResultBuilder) resultBuilder;
-
+        final TableResultBuilder resultBuilder = createTableResultBuilder();
         final KeyFactory keyFactory = dataStore.getKeyFactory();
         final AtomicLong pageLength = new AtomicLong();
         final OffsetRange range = resultRequest.getRequestedRange();
@@ -84,7 +87,7 @@ public class TableResultCreator implements ResultCreator {
             final List<Field> fields = dataStore.getFields();
             TableSettings tableSettings = resultRequest.getMappings().get(0);
 
-            tableResultBuilder.fields(fields);
+            resultBuilder.fields(fields);
 
             // Create the row creator.
             Optional<ItemMapper<Row>> optionalRowCreator = Optional.empty();
@@ -118,10 +121,10 @@ public class TableResultCreator implements ResultCreator {
                     resultRequest.getTimeFilter(),
                     rowCreator,
                     row -> {
-                        tableResultBuilder.addRow(row);
+                        resultBuilder.addRow(row);
                         pageLength.incrementAndGet();
                     },
-                    tableResultBuilder::totalResults);
+                    resultBuilder::totalResults);
         } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
             errorConsumer.add(e);
@@ -135,8 +138,26 @@ public class TableResultCreator implements ResultCreator {
             offset = range.getOffset();
         }
 
-        tableResultBuilder.componentId(resultRequest.getComponentId());
-        tableResultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
+        resultBuilder.componentId(resultRequest.getComponentId());
+        resultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
+        TableResult result = resultBuilder.build();
+
+        if (cacheLastResult) {
+            if (Fetch.CHANGES.equals(fetch)) {
+                // See if we have delivered an identical result before, so we
+                // don't send more data to the client than we need to.
+                if (result.equals(lastResult)) {
+                    result = null;
+                } else {
+                    lastResult = result;
+                }
+            } else {
+                lastResult = result;
+            }
+        }
+
+        LOGGER.debug("Delivering {} for {}", result, resultRequest.getComponentId());
+        return result;
     }
 
     private static class SimpleRowCreator implements ItemMapper<Row> {

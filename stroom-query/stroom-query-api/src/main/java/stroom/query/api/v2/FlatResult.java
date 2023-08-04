@@ -109,20 +109,31 @@ public final class FlatResult extends Result {
      * Builder for constructing a {@link FlatResult}
      */
     public static final class FlatResultBuilderImpl
-            extends AbstractResultBuilder<FlatResultBuilder>
             implements FlatResultBuilder {
 
+        private String componentId;
         private List<Field> structure = Collections.emptyList();
-        private List<List<Object>> values = new ArrayList<>();
+        private final List<List<Object>> values;
+        private List<String> errors;
         private Long totalResults;
 
         private FlatResultBuilderImpl() {
+            values = new ArrayList<>();
+            errors = Collections.emptyList();
         }
 
         private FlatResultBuilderImpl(final FlatResult flatResult) {
-            this.structure = flatResult.structure;
-            this.values = flatResult.values;
+            componentId = flatResult.getComponentId();
+            structure = flatResult.structure;
+            values = new ArrayList<>(flatResult.values);
+            errors = flatResult.getErrors();
         }
+
+        public FlatResultBuilder componentId(final String componentId) {
+            this.componentId = componentId;
+            return this;
+        }
+
 
         /**
          * Add headings to our data
@@ -146,6 +157,13 @@ public final class FlatResult extends Result {
             return this;
         }
 
+        @Override
+        public FlatResultBuilder errors(final List<String> errors) {
+            this.errors = errors;
+            return this;
+        }
+
+
         /**
          * Fix the reported size of the result set.
          *
@@ -155,11 +173,6 @@ public final class FlatResult extends Result {
         @Override
         public FlatResultBuilder totalResults(final Long value) {
             this.totalResults = value;
-            return this;
-        }
-
-        @Override
-        protected FlatResultBuilderImpl self() {
             return this;
         }
 

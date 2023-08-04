@@ -248,10 +248,15 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                             doc, fieldArray, hitCount, valuesConsumer, expression, expressionMatcher);
                     final FieldFormatter fieldFormatter =
                             new FieldFormatter(new FormatterFactory(null));
-                    final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
+                    final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
+                        @Override
+                        public TableResultBuilder createTableResultBuilder() {
+                            return tableResultConsumer;
+                        }
+                    };
 
                     // Create result.
-                    resultCreator.create(lmdbDataStore, resultRequest, tableResultConsumer);
+                    resultCreator.create(lmdbDataStore, resultRequest);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                     errorConsumer.add(new RuntimeException(

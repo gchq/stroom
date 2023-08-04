@@ -17,80 +17,61 @@
 package stroom.dashboard.impl.download;
 
 import stroom.dashboard.impl.SampleGenerator;
-import stroom.dashboard.shared.DashboardSearchRequest;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableResultBuilder;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.UncheckedIOException;
 import java.util.List;
-import java.util.Map;
 
-public class SearchResultWriter {
+public class SearchResultWriter implements TableResultBuilder {
 
-    private final DashboardSearchRequest searchRequest;
-    private final List<TableResult> tableResults;
     private final SampleGenerator sampleGenerator;
+    private final Target target;
+    private List<Field> fields;
+    private long rowCount;
 
-    public SearchResultWriter(final DashboardSearchRequest searchRequest,
-                              final List<TableResult> tableResults,
-                              final SampleGenerator sampleGenerator) {
-        this.searchRequest = searchRequest;
-        this.tableResults = tableResults;
+    public SearchResultWriter(final SampleGenerator sampleGenerator,
+                              final Target target) throws IOException {
         this.sampleGenerator = sampleGenerator;
+        this.target = target;
     }
 
-    public void write(final Target target) throws IOException {
-        // Start writing.
-        target.start();
+    @Override
+    public TableResultBuilder componentId(final String componentId) {
+        return this;
+    }
 
-        // Map each component ID to its corresponding table request
-        final Map<String, TableResultRequest> tableRequestMap = new HashMap<>();
-        searchRequest.getComponentResultRequests().forEach(request -> {
-            if (request instanceof final TableResultRequest tableResultRequest) {
-                tableRequestMap.put(tableResultRequest.getComponentId(), tableResultRequest);
+    @Override
+    public TableResultBuilder fields(final List<Field> fields) {
+        this.fields = fields;
+
+        // Write heading.
+        try {
+            target.startLine();
+
+            int fieldIndex = 0;
+            for (final Field field : fields) {
+                if (field.isVisible()) {
+                    target.writeHeading(fieldIndex, field, field.getName());
+                }
+
+                fieldIndex++;
             }
-        });
-
-        for (final TableResult tableResult : tableResults) {
-            final TableResultRequest tableResultRequest = tableRequestMap.get(tableResult.getComponentId());
-            final List<Field> fields = tableResultRequest.getTableSettings().getFields();
-            final List<Row> rows = tableResult.getRows();
-
-            target.startTable(tableResultRequest.getTableName());
-
-            // Write heading.
-            writeHeadings(fields, target);
-
-            // Write content.
-            writeContent(rows, fields, sampleGenerator, target);
-
-            target.endTable();
+            target.endLine();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
 
-        // End writing.
-        target.end();
+        return this;
     }
 
-    private void writeHeadings(final List<Field> fields, final Target target) throws IOException {
-        target.startLine();
-
-        int fieldIndex = 0;
-        for (final Field field : fields) {
-            if (field.isVisible()) {
-                target.writeHeading(fieldIndex, field, field.getName());
-            }
-
-            fieldIndex++;
-        }
-        target.endLine();
-    }
-
-    private void writeContent(final List<Row> rows, final List<Field> fields,
-                              final SampleGenerator sampleGenerator, final Target target) throws IOException {
-        for (final Row row : rows) {
+    @Override
+    public TableResultBuilder addRow(final Row row) {
+        try {
             if (row.getDepth() == 0) {
                 if (sampleGenerator.includeResult()) {
                     target.startLine();
@@ -103,8 +84,36 @@ public class SearchResultWriter {
                     }
                     target.endLine();
                 }
+                rowCount++;
             }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder errors(final List<String> errors) {
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder resultRange(final OffsetRange resultRange) {
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder totalResults(final Long totalResults) {
+        return this;
+    }
+
+    @Override
+    public TableResult build() {
+        return null;
+    }
+
+    public long getRowCount() {
+        return rowCount;
     }
 
     public interface Target {
