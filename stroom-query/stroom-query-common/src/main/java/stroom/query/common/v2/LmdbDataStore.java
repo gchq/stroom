@@ -998,8 +998,8 @@ public class LmdbDataStore implements DataStore {
                                                 fetchState.keepGoing = false;
                                             }
                                         }
-                                        fetchState.offset++;
                                     }
+                                    fetchState.offset++;
                                 }
 
                                 // Add children if the group is open.
@@ -1044,7 +1044,7 @@ public class LmdbDataStore implements DataStore {
 
         final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
 
-        final int lengthRemaining = (int) (range.getLength() - fetchState.length);
+        final int lengthRemaining = (int) (range.getOffset() + range.getLength() - fetchState.length);
         trimmedSize = Math.min(trimmedSize, lengthRemaining);
 
         // FIXME : THIS IS HARD CODED AND DOESN'T MATTER FOR NORMAL PAGING, BUT WILL LIMIT RESULTS
@@ -1110,8 +1110,8 @@ public class LmdbDataStore implements DataStore {
                             fetchState.keepGoing = false;
                         }
                     }
-                    fetchState.offset++;
                 }
+                fetchState.offset++;
             }
 
             // Add children if the group is open.
