@@ -37,15 +37,13 @@ class FlatResultBuilderTest {
                                 .build())
         );
 
-        final List<List<Object>> list = new ArrayList<>();
         IntStream.range(0, numberResultSets).forEach(x -> {
             final List<Object> values = IntStream.range(0, numberFields).mapToObj(y ->
                     String.format("field%d_value%d", y, x)).collect(Collectors.toList());
-            list.add(values);
+            flatResultBuilder.addValues(values);
         });
 
         flatResultBuilder.structure(fields);
-        flatResultBuilder.values(list);
         final FlatResult flatResult = flatResultBuilder.build();
 
         // Then

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -112,8 +113,8 @@ public final class FlatResult extends Result {
             implements FlatResultBuilder {
 
         private List<Field> structure = Collections.emptyList();
-        private List<List<Object>> values = Collections.emptyList();
-        private Long overriddenSize;
+        private List<List<Object>> values = new ArrayList<>();
+        private Long totalResults;
 
         private FlatResultBuilderImpl() {
         }
@@ -136,12 +137,12 @@ public final class FlatResult extends Result {
         }
 
         /**
-         * @param values A collection of 'rows' to add to our values
+         * @param values A 'row' of data points to add to our values
          * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
         @Override
-        public FlatResultBuilderImpl values(final List<List<Object>> values) {
-            this.values = values;
+        public FlatResultBuilder addValues(final List<Object> values) {
+            this.values.add(values);
             return this;
         }
 
@@ -152,8 +153,8 @@ public final class FlatResult extends Result {
          * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
         @Override
-        public FlatResultBuilderImpl size(final Long value) {
-            this.overriddenSize = value;
+        public FlatResultBuilder totalResults(final Long value) {
+            this.totalResults = value;
             return this;
         }
 
@@ -164,8 +165,8 @@ public final class FlatResult extends Result {
 
         @Override
         public FlatResult build() {
-            if (null != overriddenSize) {
-                return new FlatResult(componentId, structure, values, overriddenSize, errors);
+            if (null != totalResults) {
+                return new FlatResult(componentId, structure, values, totalResults, errors);
             } else {
                 return new FlatResult(componentId, structure, values, (long) values.size(), errors);
             }

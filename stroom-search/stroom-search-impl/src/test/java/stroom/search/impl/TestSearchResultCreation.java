@@ -32,10 +32,9 @@ import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.IdentityItemMapper;
-import stroom.query.common.v2.Item;
-import stroom.query.common.v2.Items;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
@@ -73,6 +72,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -471,28 +471,26 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
+        final AtomicBoolean found = new AtomicBoolean();
+        final AtomicLong totalRowCount = new AtomicLong();
+
         final DataStore dataStore = resultStore.getData("table-78LF4");
-        dataStore.getData(data -> {
-            final Items<Item> items = data.get(
-                    OffsetRange.ZERO_1000,
-                    Collections.singleton(Key.ROOT_KEY),
-                    null,
-                    IdentityItemMapper.INSTANCE);
+        dataStore.fetch(
+                OffsetRange.ZERO_1000,
+                OpenGroupsImpl.root(),
+                null,
+                IdentityItemMapper.INSTANCE,
+                item -> {
+                    final Val val = item.getValue(2);
+                    assertThat(val.toLong())
+                            .isEqualTo(count);
+                    found.set(true);
+                },
+                totalRowCount::set);
 
-            assertThat(items.totalRowCount()).isNotZero();
-            final AtomicBoolean found = new AtomicBoolean();
-            items.fetch(item -> {
-                final Val val = item.getValue(2);
-                assertThat(val.toLong())
-                        .isEqualTo(count);
-                found.set(true);
-            });
-            assertThat(found.get()).isTrue();
-        });
 
-//        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
-//        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
-//        searchResponse.getResults().
+        assertThat(totalRowCount.get()).isNotZero();
+        assertThat(found.get()).isTrue();
     }
 
     private void supplyValues(final String[] values, final int[] mappings, final ValuesConsumer consumer) {

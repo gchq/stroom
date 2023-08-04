@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class FlatResultCreator implements ResultCreator {
 
@@ -194,64 +195,59 @@ public class FlatResultCreator implements ResultCreator {
                     mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
                 }
 
-                final List<List<Object>> results = new ArrayList<>();
+                final Map<Integer, List<Field>> groupFields = new HashMap<>();
+                for (final Field field : fields) {
+                    if (field.getGroup() != null) {
+                        groupFields.computeIfAbsent(field.getGroup(), k ->
+                                        new ArrayList<>())
+                                .add(field);
+                    }
+                }
 
                 // Get top level items.
-                mappedDataStore.getData(data -> {
-                    final Items<Item> items = data.get(
-                            resultRequest.getRequestedRange(),
-                            null,
-                            resultRequest.getTimeFilter(),
-                            IdentityItemMapper.INSTANCE);
+                mappedDataStore.fetch(
+                        resultRequest.getRequestedRange(),
+                        OpenGroups.ALL,
+                        resultRequest.getTimeFilter(),
+                        IdentityItemMapper.INSTANCE,
+                        item -> {
+                            final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
-                    final Map<Integer, List<Field>> groupFields = new HashMap<>();
-                    for (final Field field : fields) {
-                        if (field.getGroup() != null) {
-                            groupFields.computeIfAbsent(field.getGroup(), k ->
-                                            new ArrayList<>())
-                                    .add(field);
-                        }
-                    }
-
-                    flatResultBuilder.size((long) items.totalRowCount());
-                    items.fetch(item -> {
-                        final List<Object> resultList = new ArrayList<>(fields.size() + 3);
-
-                        final Key key = item.getKey();
-                        if (key != null) {
-                            resultList.add(toNodeKey(groupFields, key.getParent()));
-                            resultList.add(toNodeKey(groupFields, key));
-                            resultList.add(key.getDepth());
-                        } else {
-                            resultList.add(null);
-                            resultList.add(null);
-                            resultList.add(0);
-                        }
-
-                        // Convert all list into fully resolved objects evaluating
-                        // functions where necessary.
-                        int i = 0;
-                        for (final Field field : fields) {
-                            final Val val = item.getValue(i);
-                            Object result = null;
-                            if (val != null) {
-                                // Convert all list into fully resolved
-                                // objects evaluating functions where necessary.
-                                if (fieldFormatter != null) {
-                                    result = fieldFormatter.format(field, val);
-                                } else {
-                                    result = convert(field, val);
-                                }
+                            final Key key = item.getKey();
+                            if (key != null) {
+                                resultList.add(toNodeKey(groupFields, key.getParent()));
+                                resultList.add(toNodeKey(groupFields, key));
+                                resultList.add(key.getDepth());
+                            } else {
+                                resultList.add(null);
+                                resultList.add(null);
+                                resultList.add(0);
                             }
 
-                            resultList.add(result);
-                            i++;
-                        }
+                            // Convert all list into fully resolved objects evaluating
+                            // functions where necessary.
+                            int i = 0;
+                            for (final Field field : fields) {
+                                final Val val = item.getValue(i);
+                                Object result = null;
+                                if (val != null) {
+                                    // Convert all list into fully resolved
+                                    // objects evaluating functions where necessary.
+                                    if (fieldFormatter != null) {
+                                        result = fieldFormatter.format(field, val);
+                                    } else {
+                                        result = convert(field, val);
+                                    }
+                                }
 
-                        // Add the values.
-                        results.add(resultList);
-                    });
-                });
+                                resultList.add(result);
+                                i++;
+                            }
+
+                            // Add the values.
+                            flatResultBuilder.addValues(resultList);
+                        },
+                        flatResultBuilder::totalResults);
 
                 final List<Field> structure = new ArrayList<>();
                 structure.add(Field.builder().name(":ParentKey").build());
@@ -262,8 +258,7 @@ public class FlatResultCreator implements ResultCreator {
                 flatResultBuilder
                         .componentId(resultRequest.getComponentId())
                         .errors(errorConsumer.getErrors())
-                        .structure(structure)
-                        .values(results);
+                        .structure(structure);
 
             } catch (final UncheckedInterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
@@ -365,26 +360,24 @@ public class FlatResultCreator implements ResultCreator {
 
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
-            dataStore.getData(data -> {
-                final Items<Item> items = data.get(
-                        new OffsetRange(0, maxItems),
-                        Collections.singleton(Key.ROOT_KEY),
-                        timeFilter,
-                        IdentityItemMapper.INSTANCE);
-
-                items.fetch(item -> {
-                    final Val[] values = new Val[parentFieldIndices.length];
-                    for (int i = 0; i < parentFieldIndices.length; i++) {
-                        final int index = parentFieldIndices[i];
-                        if (index != -1) {
-                            // TODO : @66 Currently evaluating more values than will be needed.
-                            final Val val = item.getValue(index);
-                            values[i] = val;
+            dataStore.fetch(
+                    new OffsetRange(0, maxItems),
+                    OpenGroups.ALL,
+                    timeFilter,
+                    IdentityItemMapper.INSTANCE,
+                    item -> {
+                        final Val[] values = new Val[parentFieldIndices.length];
+                        for (int i = 0; i < parentFieldIndices.length; i++) {
+                            final int index = parentFieldIndices[i];
+                            if (index != -1) {
+                                // TODO : @66 Currently evaluating more values than will be needed.
+                                final Val val = item.getValue(index);
+                                values[i] = val;
+                            }
                         }
-                    }
-                    childDataStore.add(Val.of(values));
-                });
-            });
+                        childDataStore.add(Val.of(values));
+                    },
+                    null);
 
             return childDataStore;
         }

@@ -74,7 +74,6 @@ public class TableResultCreator implements ResultCreator {
         final TableResultBuilder tableResultBuilder = (TableResultBuilder) resultBuilder;
 
         final KeyFactory keyFactory = dataStore.getKeyFactory();
-        final AtomicLong totalResults = new AtomicLong();
         final AtomicLong pageLength = new AtomicLong();
         final OffsetRange range = resultRequest.getRequestedRange();
 
@@ -113,18 +112,16 @@ public class TableResultCreator implements ResultCreator {
 
             final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
             final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
-            dataStore.getData(data -> {
-                final Items<Row> items = data.get(
-                        range,
-                        openGroups,
-                        resultRequest.getTimeFilter(),
-                        rowCreator);
-                totalResults.set(items.totalRowCount());
-                items.fetch(row -> {
-                    tableResultBuilder.addRow(row);
-                    pageLength.incrementAndGet();
-                });
-            });
+            dataStore.fetch(
+                    range,
+                    new OpenGroupsImpl(openGroups),
+                    resultRequest.getTimeFilter(),
+                    rowCreator,
+                    row -> {
+                        tableResultBuilder.addRow(row);
+                        pageLength.incrementAndGet();
+                    },
+                    tableResultBuilder::totalResults);
         } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
             errorConsumer.add(e);
@@ -140,7 +137,6 @@ public class TableResultCreator implements ResultCreator {
 
         tableResultBuilder.componentId(resultRequest.getComponentId());
         tableResultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
-        tableResultBuilder.totalResults(totalResults.get());
     }
 
     private static class SimpleRowCreator implements ItemMapper<Row> {

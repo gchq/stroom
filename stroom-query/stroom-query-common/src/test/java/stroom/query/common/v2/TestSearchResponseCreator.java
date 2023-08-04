@@ -1,8 +1,6 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -277,8 +275,6 @@ class TestSearchResponseCreator {
 
     private DataStore createSingleItemDataObject() {
         final Key rootKey = Key.ROOT_KEY;
-        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
-        final StoredValues storedValues = valueReferenceIndex.createStoredValues();
 
         final Item item = new Item() {
             @Override
@@ -305,27 +301,16 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public void getData(final Consumer<Data> consumer) {
-                final Data data = new Data() {
-                    @Override
-                    public <R> Items<R> get(final OffsetRange range,
-                                            final Set<Key> openGroups,
-                                            final TimeFilter timeFilter,
-                                            final ItemMapper<R> mapper) {
-                        return new Items<>() {
-                            @Override
-                            public long totalRowCount() {
-                                return 1L;
-                            }
-
-                            @Override
-                            public void fetch(final Consumer<R> resultConsumer) {
-                                resultConsumer.accept(mapper.create(null, item));
-                            }
-                        };
-                    }
-                };
-                consumer.accept(data);
+            public <R> void fetch(final OffsetRange range,
+                                  final OpenGroups openGroups,
+                                  final TimeFilter timeFilter,
+                                  final ItemMapper<R> mapper,
+                                  final Consumer<R> resultConsumer,
+                                  final Consumer<Long> totalRowCountConsumer) {
+                resultConsumer.accept(mapper.create(getFields(), item));
+                if (totalRowCountConsumer != null) {
+                    totalRowCountConsumer.accept(1L);
+                }
             }
 
             @Override

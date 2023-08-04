@@ -38,12 +38,10 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -53,7 +51,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MapDataStore implements DataStore, Data {
+public class MapDataStore implements DataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
@@ -260,121 +258,74 @@ public class MapDataStore implements DataStore, Data {
     }
 
     @Override
-    public void getData(final Consumer<Data> consumer) {
-        consumer.accept(this);
-    }
-
-    @Override
-    public <R> Items<R> get(final OffsetRange rng,
-                            final Set<Key> openGroups,
-                            final TimeFilter timeFilter,
-                            final ItemMapper<R> mapper) {
-        final OffsetRange range = Optional
-                .ofNullable(rng)
+    public <R> void fetch(final OffsetRange range,
+                          final OpenGroups openGroups,
+                          final TimeFilter timeFilter,
+                          final ItemMapper<R> mapper,
+                          final Consumer<R> resultConsumer,
+                          final Consumer<Long> totalRowCountConsumer) {
+        final OffsetRange enforcedRange = Optional
+                .ofNullable(range)
                 .orElse(OffsetRange.ZERO_100);
-        return new Items<>() {
-            private long totalRowCount = -1;
 
-            @Override
-            public long totalRowCount() {
-                if (this.totalRowCount == -1) {
-                    long totalRowCount = 0;
+        final FetchState fetchState = new FetchState();
+        fetchState.countRows = totalRowCountConsumer != null;
+        fetchState.reachedRowLimit = fetchState.length >= enforcedRange.getLength();
+        fetchState.keepGoing = fetchState.justCount || !fetchState.reachedRowLimit;
 
-                    if (openGroups == null) {
-                        for (final ItemsImpl items : childMap.values()) {
-                            final List<ItemImpl> list = items.copy();
-                            if (mapper.hidesRows()) {
-                                for (final ItemImpl item : list) {
-                                    final R row = mapper.create(fields, item);
-                                    if (row != null) {
-                                        totalRowCount++;
-                                    }
-                                }
-                            } else {
-                                totalRowCount += list.size();
-                            }
-                        }
-                    } else {
+        getChildren(
+                Key.ROOT_KEY,
+                openGroups,
+                mapper,
+                enforcedRange,
+                fetchState,
+                resultConsumer);
 
-                        // Calculate complete size of all requested data.
-                        final Set<Key> groups = new HashSet<>();
-                        groups.add(Key.ROOT_KEY);
-                        groups.addAll(openGroups);
-
-                        for (final Key parentKey : groups) {
-                            final ItemsImpl items = childMap.get(parentKey);
-                            if (items != null) {
-                                final List<ItemImpl> list = items.copy();
-                                if (mapper.hidesRows()) {
-                                    for (final ItemImpl item : list) {
-                                        final R row = mapper.create(fields, item);
-                                        if (row != null) {
-                                            totalRowCount++;
-                                        }
-                                    }
-                                } else {
-                                    totalRowCount += list.size();
-                                }
-                            }
-                        }
-                    }
-
-                    this.totalRowCount = totalRowCount;
-                }
-                return this.totalRowCount;
-            }
-
-            @Override
-            public void fetch(final Consumer<R> resultConsumer) {
-                final AtomicLong position = new AtomicLong();
-                final AtomicLong length = new AtomicLong();
-                getChildren(
-                        Key.ROOT_KEY,
-                        openGroups,
-                        mapper,
-                        range,
-                        position,
-                        length,
-                        resultConsumer);
-            }
-        };
+        if (totalRowCountConsumer != null) {
+            totalRowCountConsumer.accept(fetchState.totalRowCount);
+        }
     }
 
     private <R> void getChildren(final Key parentKey,
-                                 final Set<Key> openGroups,
+                                 final OpenGroups openGroups,
                                  final ItemMapper<R> mapper,
                                  final OffsetRange range,
-                                 final AtomicLong offset,
-                                 final AtomicLong length,
+                                 final FetchState fetchState,
                                  final Consumer<R> resultConsumer) {
         final ItemsImpl items = childMap.get(parentKey);
         if (items == null) {
             return;
         }
         final List<ItemImpl> list = items.copy();
-        for (final ItemImpl item : list) {
-            final R row = mapper.create(fields, item);
-            if (row != null) {
-                if (range.getOffset() <= offset.get()) {
-                    resultConsumer.accept(row);
-                    final long len = length.incrementAndGet();
-                    if (len >= range.getLength()) {
-                        return;
-                    }
-                }
-                offset.incrementAndGet();
 
-                // Add children if the group is open.
-                final Key key = item.key;
-                if (openGroups == null || openGroups.contains(key)) {
-                    getChildren(key,
-                            openGroups,
-                            mapper,
-                            range,
-                            offset,
-                            length,
-                            resultConsumer);
+        // Transfer the sorted items to the result.
+        for (final Item item : list) {
+            fetchState.totalRowCount++;
+            if (!fetchState.reachedRowLimit) {
+                if (range.getOffset() <= fetchState.offset) {
+                    final R row = mapper.create(fields, item);
+                    resultConsumer.accept(row);
+                    fetchState.length++;
+                    fetchState.reachedRowLimit = fetchState.length >= range.getLength();
+                    if (fetchState.reachedRowLimit) {
+                        if (fetchState.countRows) {
+                            fetchState.justCount = true;
+                        } else {
+                            fetchState.keepGoing = false;
+                        }
+                    }
+                    fetchState.offset++;
                 }
+            }
+
+            // Add children if the group is open.
+            if (fetchState.keepGoing && openGroups.isOpen(item.getKey())) {
+                getChildren(item.getKey(),
+                        openGroups,
+                        mapper,
+                        range,
+                        fetchState,
+                        resultConsumer);
             }
         }
     }
@@ -516,6 +467,38 @@ public class MapDataStore implements DataStore, Data {
             }
             return val;
         }
+    }
+
+    private static class FetchState {
+
+        /**
+         * The current result offset.
+         */
+        long offset;
+        /**
+         * The current result length.
+         */
+        long length;
+        /**
+         * Determine if we are going to look through the whole store to count rows even when we have a result page
+         */
+        boolean countRows;
+        /**
+         * Once we have enough results we can just count results after
+         */
+        boolean justCount;
+        /**
+         * Track the total row count.
+         */
+        long totalRowCount;
+        /**
+         * Set to true once we no longer need any more results.
+         */
+        boolean reachedRowLimit;
+        /**
+         * Set to false if we don't want to keep looking through the store.
+         */
+        boolean keepGoing;
     }
 
     public static class ItemsImpl {
@@ -681,13 +664,17 @@ public class MapDataStore implements DataStore, Data {
                     private Iterable<StoredValues> getStoredValueIterable(final int limit,
                                                                           final boolean trimTop) {
                         final List<StoredValues> result = new ArrayList<>();
+                        final FetchState fetchState = new FetchState();
+                        fetchState.countRows = false;
+                        fetchState.reachedRowLimit = false;
+                        fetchState.keepGoing = true;
+
                         dataStore.getChildren(
                                 key,
-                                Collections.emptySet(),
+                                OpenGroups.NONE, // Don't traverse any child rows.
                                 IdentityItemMapper.INSTANCE,
                                 OffsetRange.ZERO_1000, // Max 1000 child items.
-                                new AtomicLong(),
-                                new AtomicLong(),
+                                fetchState,
                                 item -> result.add(((ItemImpl) item).storedValues));
                         if (result.size() > limit) {
                             if (trimTop) {

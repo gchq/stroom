@@ -15,10 +15,10 @@ public interface FlatResultBuilder extends ResultBuilder<FlatResultBuilder> {
     FlatResultBuilder structure(List<Field> structure);
 
     /**
-     * @param values A collection of 'rows' to add to our values
+     * @param values A 'row' of data points to add to our values
      * @return The {@link FlatResultBuilderImpl}, enabling method chaining
      */
-    FlatResultBuilder values(List<List<Object>> values);
+    FlatResultBuilder addValues(List<Object> values);
 
     /**
      * Fix the reported size of the result set.
@@ -26,7 +26,7 @@ public interface FlatResultBuilder extends ResultBuilder<FlatResultBuilder> {
      * @param value The size to use
      * @return The {@link FlatResultBuilderImpl}, enabling method chaining
      */
-    FlatResultBuilder size(Long value);
+    FlatResultBuilder totalResults(Long totalResults);
 
     FlatResult build();
 }
