@@ -135,7 +135,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private final LocationManager locationManager;
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
-            .requestedRange(new OffsetRange(0, 1000))
+            .requestedRange(OffsetRange.ZERO_1000)
             .build();
     private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
@@ -486,7 +486,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                         .forEach(tableSettings -> requests.add(TableResultRequest
                                                 .builder()
                                                 .componentId(tableSettings.getKey())
-                                                .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
+                                                .requestedRange(OffsetRange.UNBOUNDED)
                                                 .tableName(getTableName(tableSettings.getKey()))
                                                 .tableSettings(((TableComponentSettings) tableSettings.getValue())
                                                         .copy().buildTableSettings())
@@ -603,8 +603,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    dataGrid.setRowData(valuesRange.getOffset().intValue(), values);
-                    dataGrid.setRowCount(tableResult.getTotalResults(), true);
+                    dataGrid.setRowData((int) valuesRange.getOffset(), values);
+                    dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
 
                 // Enable download of current results.
@@ -664,11 +664,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         int maxDepth = -1;
-        if (maxGroup > 0 || showDetail) {
+        if (maxGroup > 0 && showDetail) {
+            maxDepth = maxGroup + 1;
+        } else if (maxGroup > 0) {
             maxDepth = maxGroup;
-            if (showDetail) {
-                maxDepth++;
-            }
+        } else if (maxGroup == 0 && showDetail) {
+            maxDepth = 1;
         }
 
         final List<TableRow> processed = new ArrayList<>(values.size());
@@ -1056,7 +1057,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .buildTableSettings();
         return tableResultRequest
                 .copy()
-                .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
+                .requestedRange(OffsetRange.UNBOUNDED)
                 .tableSettings(tableSettings)
                 .fetch(Fetch.ALL)
                 .build();

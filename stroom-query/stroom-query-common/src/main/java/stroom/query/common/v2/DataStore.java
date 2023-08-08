@@ -2,11 +2,14 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.TimeFilter;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public interface DataStore extends ValuesConsumer {
@@ -17,11 +20,18 @@ public interface DataStore extends ValuesConsumer {
     List<Field> getFields();
 
     /**
-     * Get data from the store
+     * Get child items from the data for the provided parent key and time filter.
      *
-     * @param consumer Consumer for the data.
+     * @param key        The parent key to get child items for.
+     * @param timeFilter The time filter to use to limit the data returned.
+     * @return The filtered child items for the parent key.
      */
-    void getData(Consumer<Data> consumer);
+    <R> void fetch(OffsetRange range,
+                   OpenGroups openGroups,
+                   TimeFilter timeFilter,
+                   ItemMapper<R> mapper,
+                   Consumer<R> resultConsumer,
+                   Consumer<Long> totalRowCountConsumer);
 
     /**
      * Clear the data store.

@@ -1,8 +1,6 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -11,6 +9,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.test.util.MockitoExtension;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.DurationTimer;
@@ -30,7 +29,6 @@ import org.mockito.stubbing.Answer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -70,7 +68,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(false, null);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -102,7 +101,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(false, null);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -129,7 +129,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -158,7 +159,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -186,7 +188,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
 
         TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -207,7 +210,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
 
         timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest2));
+                searchResponseCreator.create(searchRequest2,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest2)));
 
         SearchResponse searchResponse2 = timedResult.getResult();
         actualDuration = timedResult.getDuration();
@@ -245,10 +249,7 @@ class TestSearchResponseCreator {
                 .addResultRequests(ResultRequest.builder()
                         .componentId(UUID.randomUUID().toString())
                         .resultStyle(ResultRequest.ResultStyle.TABLE)
-                        .requestedRange(OffsetRange.builder()
-                                .offset(0L)
-                                .length(100L)
-                                .build())
+                        .requestedRange(OffsetRange.ZERO_100)
                         .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
                                 .addFields(
@@ -279,8 +280,6 @@ class TestSearchResponseCreator {
 
     private DataStore createSingleItemDataObject() {
         final Key rootKey = Key.ROOT_KEY;
-        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
-        final StoredValues storedValues = valueReferenceIndex.createStoredValues();
 
         final Item item = new Item() {
             @Override
@@ -307,34 +306,16 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public void getData(final Consumer<Data> consumer) {
-                consumer.accept((key, timeFilter) -> {
-                    if (key == Key.ROOT_KEY) {
-                        return Optional.of(new Items() {
-
-                            @Override
-                            public Item get(final int index) {
-                                return item;
-                            }
-
-                            @Override
-                            public int size() {
-                                return 1;
-                            }
-
-                            @Override
-                            public Iterable<StoredValues> getStoredValueIterable() {
-                                return List.of(storedValues);
-                            }
-
-                            @Override
-                            public Iterable<Item> getIterable() {
-                                return List.of(item);
-                            }
-                        });
-                    }
-                    return Optional.empty();
-                });
+            public <R> void fetch(final OffsetRange range,
+                                  final OpenGroups openGroups,
+                                  final TimeFilter timeFilter,
+                                  final ItemMapper<R> mapper,
+                                  final Consumer<R> resultConsumer,
+                                  final Consumer<Long> totalRowCountConsumer) {
+                resultConsumer.accept(mapper.create(getFields(), item));
+                if (totalRowCountConsumer != null) {
+                    totalRowCountConsumer.accept(1L);
+                }
             }
 
             @Override

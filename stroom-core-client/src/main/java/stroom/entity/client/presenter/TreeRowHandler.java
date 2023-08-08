@@ -42,20 +42,26 @@ public class TreeRowHandler<R> {
 
     public void handle(final List<R> rows) {
         int maxDepth = -1;
+        boolean hasParent = false;
         for (final R row : rows) {
             if (row instanceof TreeRow) {
                 final TreeRow treeRow = (TreeRow) row;
 
                 if (treeRow.getExpander() != null) {
-                    if (maxDepth < treeRow.getExpander().getDepth()) {
-                        maxDepth = treeRow.getExpander().getDepth();
-                    }
-
+                    maxDepth = Math.max(maxDepth, treeRow.getExpander().getDepth());
                     if (treeRow.getExpander().isExpanded()) {
                         action.setRowExpanded(row, true);
                     }
+                    if (!treeRow.getExpander().isLeaf()) {
+                        hasParent = true;
+                    }
                 }
             }
+        }
+
+        // If we have no parent rows then don't show the expander col.
+        if (!hasParent) {
+            maxDepth = -1;
         }
 
         // Set the width of the expander column so

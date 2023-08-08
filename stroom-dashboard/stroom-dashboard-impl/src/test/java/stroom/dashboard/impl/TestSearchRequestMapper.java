@@ -76,10 +76,10 @@ class TestSearchRequestMapper {
 
         TableResultRequest tableResultRequest = ((TableResultRequest) optional.get());
         ResultRequest resultRequest = resultRequests.get(0);
-        assertThat(tableResultRequest.getRequestedRange().getOffset().toString())
-                .isEqualTo(resultRequest.getRequestedRange().getOffset().toString());
-        assertThat(tableResultRequest.getRequestedRange().getLength().toString())
-                .isEqualTo(resultRequest.getRequestedRange().getLength().toString());
+        assertThat(tableResultRequest.getRequestedRange().getOffset())
+                .isEqualTo(resultRequest.getRequestedRange().getOffset());
+        assertThat(tableResultRequest.getRequestedRange().getLength())
+                .isEqualTo(resultRequest.getRequestedRange().getLength());
         assertThat(tableResultRequest.getOpenGroups())
                 .isEqualTo(resultRequest.getOpenGroups());
         // No test data for this at the moment

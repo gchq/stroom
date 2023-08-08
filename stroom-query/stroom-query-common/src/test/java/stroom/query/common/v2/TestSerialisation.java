@@ -309,7 +309,7 @@ class TestSerialisation {
                 fields,
                 rows,
                 new OffsetRange(1, 2),
-                1,
+                1L,
                 Collections.singletonList("tableResultError"));
         return new SearchResponse(
                 new QueryKey("test_uuid"),

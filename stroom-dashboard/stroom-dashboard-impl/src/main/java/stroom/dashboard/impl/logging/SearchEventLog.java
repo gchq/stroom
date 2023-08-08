@@ -48,14 +48,14 @@ public interface SearchEventLog {
                      Exception ex);
 
     default void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
-                                 Integer resultCount) {
+                                 Long resultCount) {
         downloadResults(downloadSearchResultsRequest,
                 resultCount,
                 null);
     }
 
     void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
-                         Integer resultCount,
+                         Long resultCount,
                          Exception ex);
 
     void search(String type,

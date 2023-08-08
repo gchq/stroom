@@ -46,7 +46,6 @@ import stroom.query.common.v2.CurrentDbState;
 import stroom.query.common.v2.DeleteCommand;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStore;
-import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
@@ -752,12 +751,15 @@ public class AnalyticsExecutor {
 
             final FieldFormatter fieldFormatter =
                     new FieldFormatter(new FormatterFactory(null));
-            final TableResultCreator resultCreator = new TableResultCreator(
-                    fieldFormatter,
-                    Sizes.create(Integer.MAX_VALUE));
+            final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
+                @Override
+                public TableResultBuilder createTableResultBuilder() {
+                    return tableResultConsumer;
+                }
+            };
 
             // Create result.
-            resultCreator.create(lmdbDataStore, resultRequest, tableResultConsumer);
+            resultCreator.create(lmdbDataStore, resultRequest);
 
             // Remember last successful execution time.
             final AnalyticNotificationState newState = notificationState.copy()
@@ -1073,7 +1075,7 @@ public class AnalyticsExecutor {
         }
 
         @Override
-        public TableResultConsumer totalResults(final Integer totalResults) {
+        public TableResultConsumer totalResults(final Long totalResults) {
             return this;
         }
 

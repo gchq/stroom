@@ -23,76 +23,62 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableResult.TableResultBuilderImpl;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TableResultCreator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultCreator.class);
 
     private final FieldFormatter fieldFormatter;
-    private final Sizes defaultMaxResultsSizes;
-//    private volatile List<Field> latestFields;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+    private final boolean cacheLastResult;
+    private TableResult lastResult;
+
+    public TableResultCreator(final FieldFormatter fieldFormatter) {
+        this(fieldFormatter, false);
+    }
 
     public TableResultCreator(final FieldFormatter fieldFormatter,
-                              final Sizes defaultMaxResultsSizes) {
+                              final boolean cacheLastResult) {
         this.fieldFormatter = fieldFormatter;
-        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
+        this.cacheLastResult = cacheLastResult;
+    }
+
+    public TableResultBuilder createTableResultBuilder() {
+        return TableResult.builder();
     }
 
     @Override
-    public Result create(final DataStore dataStore,
-                         final ResultRequest resultRequest) {
-        final TableResultBuilderImpl tableResultBuilder = TableResult.builder();
-        create(dataStore, resultRequest, tableResultBuilder);
-        tableResultBuilder.errors(errorConsumer.getErrors());
-        return tableResultBuilder.build();
-    }
-
-    @Override
-    public void create(final DataStore dataStore,
-                       final ResultRequest resultRequest,
-                       final ResultBuilder<?> resultBuilder) {
-        final TableResultBuilder tableResultBuilder = (TableResultBuilder) resultBuilder;
-
-        final KeyFactory keyFactory = dataStore.getKeyFactory();
-        final AtomicInteger totalResults = new AtomicInteger();
-        final AtomicInteger currentLength = new AtomicInteger();
-
-        final int offset;
-        final int length;
-        final OffsetRange range = resultRequest.getRequestedRange();
-        if (range != null) {
-            offset = range.getOffset().intValue();
-            length = range.getLength().intValue();
-        } else {
-            offset = 0;
-            length = Integer.MAX_VALUE;
+    public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
+        final Fetch fetch = resultRequest.getFetch();
+        if (Fetch.NONE.equals(fetch)) {
+            return null;
         }
+
+        final TableResultBuilder resultBuilder = createTableResultBuilder();
+        final KeyFactory keyFactory = dataStore.getKeyFactory();
+        final AtomicLong pageLength = new AtomicLong();
+        final OffsetRange range = resultRequest.getRequestedRange();
 
         try {
             // What is the interaction between the paging and the maxResults? The assumption is that
@@ -100,62 +86,45 @@ public class TableResultCreator implements ResultCreator {
             // that maxResults threshold
             final List<Field> fields = dataStore.getFields();
             TableSettings tableSettings = resultRequest.getMappings().get(0);
-//            WindowSupport windowSupport = new WindowSupport(tableSettings);
-//            tableSettings = windowSupport.getTableSettings();
 
-            tableResultBuilder.fields(fields);
-
-            // Create a set of sizes that are the minimum values for the combination of user provided sizes for
-            // the table and the default maximum sizes.
-            final Sizes maxResults = Sizes.min(
-                    Sizes.create(tableSettings != null
-                            ? tableSettings.getMaxResults()
-                            : Collections.emptyList()),
-                    defaultMaxResultsSizes);
+            resultBuilder.fields(fields);
 
             // Create the row creator.
-            Optional<RowCreator> optionalRowCreator = Optional.empty();
+            Optional<ItemMapper<Row>> optionalRowCreator = Optional.empty();
             if (tableSettings != null) {
                 optionalRowCreator = ConditionalFormattingRowCreator.create(
                         fieldFormatter,
                         keyFactory,
                         tableSettings.getAggregateFilter(),
                         tableSettings.getConditionalFormattingRules(),
-                        fields);
+                        fields,
+                        errorConsumer);
                 if (optionalRowCreator.isEmpty()) {
                     optionalRowCreator = FilteredRowCreator.create(
                             fieldFormatter,
                             keyFactory,
                             tableSettings.getAggregateFilter(),
-                            fields);
+                            fields,
+                            errorConsumer);
                 }
             }
 
             if (optionalRowCreator.isEmpty()) {
-                optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory);
+                optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
             }
 
-            final RowCreator rowCreator = optionalRowCreator.orElse(null);
-
+            final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
             final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
-            dataStore.getData(data -> {
-                final Optional<Items> optional = data.get(Key.ROOT_KEY, resultRequest.getTimeFilter());
-                optional.ifPresent(items ->
-                        addTableResults(data,
-                                fields,
-                                maxResults,
-                                offset,
-                                length,
-                                resultRequest.getTimeFilter(),
-                                openGroups,
-                                tableResultBuilder,
-                                currentLength,
-                                items,
-                                0,
-                                totalResults,
-                                rowCreator,
-                                errorConsumer));
-            });
+            dataStore.fetch(
+                    range,
+                    new OpenGroupsImpl(openGroups),
+                    resultRequest.getTimeFilter(),
+                    rowCreator,
+                    row -> {
+                        resultBuilder.addRow(row);
+                        pageLength.incrementAndGet();
+                    },
+                    resultBuilder::totalResults);
         } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
             errorConsumer.add(e);
@@ -164,113 +133,56 @@ public class TableResultCreator implements ResultCreator {
             errorConsumer.add(e);
         }
 
-        tableResultBuilder.componentId(resultRequest.getComponentId());
-        tableResultBuilder.resultRange(new OffsetRange(offset, currentLength.get()));
-        tableResultBuilder.totalResults(totalResults.get());
-    }
+        long offset = 0;
+        if (range != null) {
+            offset = range.getOffset();
+        }
 
-    private void addTableResults(final Data data,
-                                 final List<Field> fields,
-                                 final Sizes maxResults,
-                                 final int offset,
-                                 final int length,
-                                 final TimeFilter timeFilter,
-                                 final Set<Key> openGroups,
-                                 final TableResultBuilder tableResultBuilder,
-                                 final AtomicInteger currentLength,
-                                 final Items items,
-                                 final int depth,
-                                 final AtomicInteger pos,
-                                 final RowCreator rowCreator,
-                                 final ErrorConsumer errorConsumer) {
-        int maxResultsAtThisDepth = maxResults.size(depth);
-        int resultCountAtThisLevel = 0;
+        resultBuilder.componentId(resultRequest.getComponentId());
+        resultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
+        TableResult result = resultBuilder.build();
 
-        for (final Item item : items.getIterable()) {
-            boolean hide = false;
-
-            // If the result is within the requested window (offset + length) then add it.
-            if (pos.get() >= offset && currentLength.get() < length) {
-                final Row row = rowCreator.create(fields, item, depth, errorConsumer);
-                if (row != null) {
-                    tableResultBuilder.addRow(row);
-                    currentLength.incrementAndGet();
+        if (cacheLastResult) {
+            if (Fetch.CHANGES.equals(fetch)) {
+                // See if we have delivered an identical result before, so we
+                // don't send more data to the client than we need to.
+                if (result.equals(lastResult)) {
+                    result = null;
                 } else {
-                    hide = true;
+                    lastResult = result;
                 }
-            } else if (rowCreator.hidesRows()) {
-                final Row row = rowCreator.create(fields, item, depth, errorConsumer);
-                if (row == null) {
-                    hide = true;
-                }
-            }
-
-            if (!hide) {
-                // Increment the overall position.
-                pos.incrementAndGet();
-
-                // Add child results if a node is open.
-                if (openGroups != null && openGroups.contains(item.getKey())) {
-                    final Optional<Items> optional = data.get(item.getKey(), timeFilter);
-                    optional.ifPresent(childItems ->
-                            addTableResults(
-                                    data,
-                                    fields,
-                                    maxResults,
-                                    offset,
-                                    length,
-                                    timeFilter,
-                                    openGroups,
-                                    tableResultBuilder,
-                                    currentLength,
-                                    childItems,
-                                    depth + 1,
-                                    pos,
-                                    rowCreator,
-                                    errorConsumer));
-                }
-
-                // Increment the total results at this depth.
-                resultCountAtThisLevel++;
-                // Stop adding results if we have reached the maximum for this level.
-                if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
-                    break;
-                }
+            } else {
+                lastResult = result;
             }
         }
+
+        LOGGER.debug("Delivering {} for {}", result, resultRequest.getComponentId());
+        return result;
     }
 
-    private interface RowCreator {
-
-        Row create(List<Field> fields,
-                   Item item,
-                   int depth,
-                   ErrorConsumer errorConsumer);
-
-        boolean hidesRows();
-    }
-
-    private static class SimpleRowCreator implements RowCreator {
+    private static class SimpleRowCreator implements ItemMapper<Row> {
 
         private final FieldFormatter fieldFormatter;
         private final KeyFactory keyFactory;
+        private final ErrorConsumer errorConsumer;
 
         private SimpleRowCreator(final FieldFormatter fieldFormatter,
-                                 final KeyFactory keyFactory) {
+                                 final KeyFactory keyFactory,
+                                 final ErrorConsumer errorConsumer) {
             this.fieldFormatter = fieldFormatter;
             this.keyFactory = keyFactory;
+            this.errorConsumer = errorConsumer;
         }
 
-        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
-                                                  final KeyFactory keyFactory) {
-            return Optional.of(new SimpleRowCreator(fieldFormatter, keyFactory));
+        public static Optional<ItemMapper<Row>> create(final FieldFormatter fieldFormatter,
+                                                       final KeyFactory keyFactory,
+                                                       final ErrorConsumer errorConsumer) {
+            return Optional.of(new SimpleRowCreator(fieldFormatter, keyFactory, errorConsumer));
         }
 
         @Override
         public Row create(final List<Field> fields,
-                          final Item item,
-                          final int depth,
-                          final ErrorConsumer errorConsumer) {
+                          final Item item) {
             final List<String> stringValues = new ArrayList<>(fields.size());
             int i = 0;
             for (final Field field : fields) {
@@ -288,7 +200,7 @@ public class TableResultCreator implements ResultCreator {
             return Row.builder()
                     .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                     .values(stringValues)
-                    .depth(depth)
+                    .depth(item.getKey().getDepth())
                     .build();
         }
 
@@ -298,43 +210,46 @@ public class TableResultCreator implements ResultCreator {
         }
     }
 
-    private static class FilteredRowCreator implements RowCreator {
+    private static class FilteredRowCreator implements ItemMapper<Row> {
 
         private final FieldFormatter fieldFormatter;
         private final KeyFactory keyFactory;
         private final ExpressionOperator rowFilter;
         private final FieldExpressionMatcher expressionMatcher;
+        private final ErrorConsumer errorConsumer;
 
         private FilteredRowCreator(final FieldFormatter fieldFormatter,
                                    final KeyFactory keyFactory,
                                    final ExpressionOperator rowFilter,
-                                   final FieldExpressionMatcher expressionMatcher) {
+                                   final FieldExpressionMatcher expressionMatcher,
+                                   final ErrorConsumer errorConsumer) {
             this.fieldFormatter = fieldFormatter;
             this.keyFactory = keyFactory;
             this.rowFilter = rowFilter;
             this.expressionMatcher = expressionMatcher;
+            this.errorConsumer = errorConsumer;
         }
 
-        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
-                                                  final KeyFactory keyFactory,
-                                                  final ExpressionOperator rowFilter,
-                                                  final List<Field> fields) {
+        public static Optional<ItemMapper<Row>> create(final FieldFormatter fieldFormatter,
+                                                       final KeyFactory keyFactory,
+                                                       final ExpressionOperator rowFilter,
+                                                       final List<Field> fields,
+                                                       final ErrorConsumer errorConsumer) {
             if (rowFilter != null) {
                 final FieldExpressionMatcher expressionMatcher = new FieldExpressionMatcher(fields);
                 return Optional.of(new FilteredRowCreator(
                         fieldFormatter,
                         keyFactory,
                         rowFilter,
-                        expressionMatcher));
+                        expressionMatcher,
+                        errorConsumer));
             }
             return Optional.empty();
         }
 
         @Override
         public Row create(final List<Field> fields,
-                          final Item item,
-                          final int depth,
-                          final ErrorConsumer errorConsumer) {
+                          final Item item) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
@@ -357,7 +272,7 @@ public class TableResultCreator implements ResultCreator {
                 row = Row.builder()
                         .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                         .values(stringValues)
-                        .depth(depth)
+                        .depth(item.getKey().getDepth())
                         .build();
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
@@ -373,31 +288,35 @@ public class TableResultCreator implements ResultCreator {
         }
     }
 
-    private static class ConditionalFormattingRowCreator implements RowCreator {
+    private static class ConditionalFormattingRowCreator implements ItemMapper<Row> {
 
         private final FieldFormatter fieldFormatter;
         private final KeyFactory keyFactory;
         private final ExpressionOperator rowFilter;
         private final List<ConditionalFormattingRule> rules;
         private final FieldExpressionMatcher expressionMatcher;
+        private final ErrorConsumer errorConsumer;
 
         private ConditionalFormattingRowCreator(final FieldFormatter fieldFormatter,
                                                 final KeyFactory keyFactory,
                                                 final ExpressionOperator rowFilter,
                                                 final List<ConditionalFormattingRule> rules,
-                                                final FieldExpressionMatcher expressionMatcher) {
+                                                final FieldExpressionMatcher expressionMatcher,
+                                                final ErrorConsumer errorConsumer) {
             this.fieldFormatter = fieldFormatter;
             this.keyFactory = keyFactory;
             this.rowFilter = rowFilter;
             this.rules = rules;
             this.expressionMatcher = expressionMatcher;
+            this.errorConsumer = errorConsumer;
         }
 
-        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
-                                                  final KeyFactory keyFactory,
-                                                  final ExpressionOperator rowFilter,
-                                                  final List<ConditionalFormattingRule> rules,
-                                                  final List<Field> fields) {
+        public static Optional<ItemMapper<Row>> create(final FieldFormatter fieldFormatter,
+                                                       final KeyFactory keyFactory,
+                                                       final ExpressionOperator rowFilter,
+                                                       final List<ConditionalFormattingRule> rules,
+                                                       final List<Field> fields,
+                                                       final ErrorConsumer errorConsumer) {
             // Create conditional formatting expression matcher.
             if (rules != null) {
                 final List<ConditionalFormattingRule> activeRules = rules
@@ -412,7 +331,8 @@ public class TableResultCreator implements ResultCreator {
                             keyFactory,
                             rowFilter,
                             activeRules,
-                            expressionMatcher));
+                            expressionMatcher,
+                            errorConsumer));
                 }
             }
 
@@ -421,9 +341,7 @@ public class TableResultCreator implements ResultCreator {
 
         @Override
         public Row create(final List<Field> fields,
-                          final Item item,
-                          final int depth,
-                          final ErrorConsumer errorConsumer) {
+                          final Item item) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
@@ -476,7 +394,7 @@ public class TableResultCreator implements ResultCreator {
                     final Row.Builder builder = Row.builder()
                             .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                             .values(stringValues)
-                            .depth(depth);
+                            .depth(item.getKey().getDepth());
 
                     if (matchingRule.getBackgroundColor() != null
                             && !matchingRule.getBackgroundColor().isEmpty()) {
@@ -493,7 +411,7 @@ public class TableResultCreator implements ResultCreator {
                 row = Row.builder()
                         .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                         .values(stringValues)
-                        .depth(depth)
+                        .depth(item.getKey().getDepth())
                         .build();
             }
 

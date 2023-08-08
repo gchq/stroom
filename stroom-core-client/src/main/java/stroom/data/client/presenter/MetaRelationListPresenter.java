@@ -130,10 +130,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 if (meta.getParentMetaId() == null || streamMap.get(meta.getParentMetaId()) == null) {
                     newData.add(row);
                     addChildren(row, data, newData, depth + 1);
-
-                    if (maxDepth < depth) {
-                        maxDepth = depth;
-                    }
                 }
             } else {
                 // Add children.
@@ -143,10 +139,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                         hasChildren.add(meta.getParentMetaId());
                         newData.add(row);
                         addChildren(row, data, newData, depth + 1);
-
-                        if (maxDepth < depth) {
-                            maxDepth = depth;
-                        }
+                        maxDepth = Math.max(maxDepth, depth);
                     }
                 }
             }
