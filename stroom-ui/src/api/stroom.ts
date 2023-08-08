@@ -5977,7 +5977,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/authentication/v1/noauth/logout
      * @secure
      */
-    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+    logout: (query: { post_logout_redirect_uri: string; state: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/authentication/v1/noauth/logout`,
         method: "GET",

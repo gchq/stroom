@@ -1555,7 +1555,14 @@
         "operationId" : "logout",
         "parameters" : [ {
           "in" : "query",
-          "name" : "redirect_uri",
+          "name" : "post_logout_redirect_uri",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "state",
           "required" : true,
           "schema" : {
             "type" : "string"

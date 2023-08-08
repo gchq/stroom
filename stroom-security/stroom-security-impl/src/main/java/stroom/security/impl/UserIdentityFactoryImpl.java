@@ -128,7 +128,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                     OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE,
                     OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId(),
                     OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret(),
-                    OpenId.REDIRECT_URI, state.getUri());
+                    OpenId.REDIRECT_URI, state.getRedirectUri());
 
             tokenResponse = getTokenResponse(mapper, tokenEndpoint, formParams);
         } else {
@@ -138,7 +138,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                         .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
                         .clientId(resolvedOpenIdConfig.getClientId())
                         .clientSecret(resolvedOpenIdConfig.getClientSecret())
-                        .redirectUri(state.getUri())
+                        .redirectUri(state.getRedirectUri())
                         .build();
                 tokenResponse = getTokenResponse(mapper, tokenEndpoint, tokenRequest);
             } catch (final Exception e) {
