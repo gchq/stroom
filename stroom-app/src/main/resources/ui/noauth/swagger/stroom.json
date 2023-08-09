@@ -18152,6 +18152,10 @@
             "type" : "string",
             "enum" : [ "STANDARD", "VIM" ]
           },
+          "editorLiveAutoCompletion" : {
+            "type" : "string",
+            "enum" : [ "ON", "OFF" ]
+          },
           "editorTheme" : {
             "type" : "string"
           },

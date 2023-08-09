@@ -269,7 +269,7 @@ public class LmdbDataStore implements DataStore {
         final CurrentDbState currentDbState = currentDbStateFactory.createCurrentDbState(values);
 
         Key parentKey = Key.ROOT_KEY;
-        long parentGroupHash = 0;
+        ByteBuffer parentRowKey = null;
 
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final StoredValues storedValues = valueReferenceIndex.createStoredValues();
@@ -301,12 +301,13 @@ public class LmdbDataStore implements DataStore {
             final long groupHash = valHasher.hash(groupValues);
             final Key key = storedValueKeyFactory.createKey(parentKey, timeMs, groupValues);
 
-            final ByteBuffer rowKey = lmdbRowKeyFactory.create(depth, parentGroupHash, groupHash, timeMs);
+            final ByteBuffer rowKey = lmdbRowKeyFactory.create(depth, parentRowKey, groupHash, timeMs);
             final ByteBuffer rowValue = lmdbRowValueFactory.create(storedValues);
 
             put(new LmdbKV(currentDbState, rowKey, rowValue));
-            parentGroupHash = groupHash;
+
             parentKey = key;
+            parentRowKey = rowKey;
         }
     }
 
