@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.46] - 2023-08-09
+
+* Issue **#3683** : Fix XML header being written multiple times with RolledFileAppender and compression enabled.
+
+
 ## [v7.2-beta.45] - 2023-08-09
 
 * Issue **#3636** : Remove OIDC redirect URI parameters.
@@ -5708,7 +5713,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.45...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.46...HEAD
+[v7.2-beta.46]: https://github.com/gchq/stroom/compare/v7.2-beta.45...v7.2-beta.46
 [v7.2-beta.45]: https://github.com/gchq/stroom/compare/v7.2-beta.44...v7.2-beta.45
 [v7.2-beta.44]: https://github.com/gchq/stroom/compare/v7.2-beta.43...v7.2-beta.44
 [v7.2-beta.43]: https://github.com/gchq/stroom/compare/v7.2-beta.42...v7.2-beta.43
