@@ -13,6 +13,35 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.45] - 2023-08-09
+
+* Issue **#3636** : Remove OIDC redirect URI parameters.
+
+* Issue **#3649** : Change the node monitoring ping bars to have a consistent and configurable (`pingWarnThreshold` and `pingMaxThreshold`) scale. Change the ping bar to use a three colour scheme.
+
+* Issue **#3660** : Fix high search memory usage.
+
+* Issue **#3664** : Make editor Live Auto Completion a user preference.
+
+* Change user preferences to set the list of available editor themes based on the stroom theme, i.e. light editor themes for a light stroom theme.
+
+* Change editor theme names in user preferences to be more human friendly.
+
+* Issue **#3631** : Fix missing structure heading items in query helper.
+
+* Issue **#3667** : Fix data viewer info pane not being scrollable.
+
+* Issue **#3659** : Fix the display of `Part`/`Record` on the source screen depending on whether data is segmented or not.
+
+* Issue **#3665** : Fix nested group keys.
+
+* Issue **#3677** : Fix `indexOf()` docs.
+
+* Issue **#3680** : Fix dashboard save as behaviour.
+
+* Issue **#3637** : Add copy expression term/operator button.
+
+
 ## [v7.2-beta.44] - 2023-08-01
 
 * Issue **#3248** : Add ability to download multiple dashboard tables as Excel worksheets in a single file.
@@ -5679,7 +5708,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.44...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.45...HEAD
+[v7.2-beta.45]: https://github.com/gchq/stroom/compare/v7.2-beta.44...v7.2-beta.45
 [v7.2-beta.44]: https://github.com/gchq/stroom/compare/v7.2-beta.43...v7.2-beta.44
 [v7.2-beta.43]: https://github.com/gchq/stroom/compare/v7.2-beta.42...v7.2-beta.43
 [v7.2-beta.42]: https://github.com/gchq/stroom/compare/v7.2-beta.41...v7.2-beta.42
