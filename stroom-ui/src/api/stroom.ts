@@ -4654,6 +4654,7 @@ export interface UserPreferences {
   dateTimePattern?: string;
   density?: string;
   editorKeyBindings?: "STANDARD" | "VIM";
+  editorLiveAutoCompletion?: "ON" | "OFF";
   editorTheme?: string;
   font?: string;
   fontSize?: string;
