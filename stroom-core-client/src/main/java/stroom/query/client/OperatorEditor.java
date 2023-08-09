@@ -53,11 +53,15 @@ public class OperatorEditor extends Composite {
 
         fixStyle(listBox, 50);
 
-        layout = new FlowPanel();
-        layout.add(listBox);
+        final FlowPanel inner = new FlowPanel();
+        inner.setStyleName("termEditor-inner");
+        inner.add(listBox);
 
+        layout = new FlowPanel();
+        layout.add(inner);
         layout.setVisible(false);
-        layout.setStyleName("termEditor-layout");
+        layout.setStyleName("termEditor-outer");
+
         initWidget(layout);
     }
 

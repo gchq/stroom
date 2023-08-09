@@ -109,21 +109,25 @@ public class TermEditor extends Composite {
 
         fieldTypeLabel = createFieldTypeLabel();
 
-        layout = new FlowPanel();
-        layout.add(fieldListBox);
-        layout.add(conditionListBox);
-        layout.add(value);
-        layout.add(valueFrom);
-        layout.add(date);
-        layout.add(dateFrom);
-        layout.add(andLabel);
-        layout.add(valueTo);
-        layout.add(dateTo);
-        layout.add(docRefWidget);
-        layout.add(fieldTypeLabel);
+        final FlowPanel inner = new FlowPanel();
+        inner.setStyleName("termEditor-inner");
+        inner.add(fieldListBox);
+        inner.add(conditionListBox);
+        inner.add(value);
+        inner.add(valueFrom);
+        inner.add(date);
+        inner.add(dateFrom);
+        inner.add(andLabel);
+        inner.add(valueTo);
+        inner.add(dateTo);
+        inner.add(docRefWidget);
 
+        layout = new FlowPanel();
+        layout.add(inner);
+        layout.add(fieldTypeLabel);
         layout.setVisible(false);
-        layout.setStyleName("termEditor-layout");
+        layout.setStyleName("termEditor-outer");
+
         initWidget(layout);
     }
 

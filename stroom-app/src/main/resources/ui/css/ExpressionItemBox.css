@@ -16,80 +16,52 @@
 
 .expressionItemBox-background {
 	position: absolute;
-	left: -100000;
-	top: -100000;
-	border: 1px solid rgba(0,0,0,0);
+	left: -100000px;
+	top: -100000px;
+}
+
+.expressionItemBox-background .termEditor-inner {
 	border-radius: 5px;
-	/*box-shadow: rgba(0, 0, 0, 0) 0 2px 4px, rgba(0, 0, 0, 0) 0 0 3px;*/
 	z-index: 3;
 	min-width: 50px;
 }
 
-.expressionItemBox-background select, .expressionItemBox-background input {
-/*
-    height: 24px;
-    padding: 1px 0px 0px 4px;
-    */
-}
-
-.expressionItemBox-selectable {
-	transition: box-shadow .3s, border .3s, background-color .3s;
-	-webkit-transition: box-shadow .3s, border .3s, background-color .3s;
-	-moz-transition: box-shadow .3s, border .3s, background-color .3s;
-	-o-transition: box-shadow .3s, border .3s, background-color .3s;
+.expressionItemBox-selectable .termEditor-inner {
 	cursor: pointer;
 }
 
-.expressionItemBox-background.expressionItemBox-selectable:hover {
-	border: 1px solid rgba(0,0,0,.2);
-	background-color: var(--expression-item-box__background-color--hover);
-	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
+.expressionItemBox-selectable:hover .termEditor-inner {
+	background-color: var(--row__background-color--hovered);
 }
 
-.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected {
-	border: solid 1px rgb(33 150 243);
-	background-color: var(--expression-item-box__background-color--selected);
-	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
+.expressionItemBox-selectable.expressionItemBox-selected .termEditor-inner {
+	background-color: var(--row__background-color--selected--focussed);
 }
 
-.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected * {
+.expressionItemBox-selectable.expressionItemBox-selected * {
 	color: var(--row__text-color--selected);
 }
 
-.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled {
-	border: 1px solid rgba(0,0,0,.2);
+.expressionItemBox-selectable.expressionItemBox-disabled .termEditor-inner {
 	background-color: var(--expression-item-box__background-color--disabled);
-	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
 }
 
-.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected:hover {
-	border: solid 1px rgb(33 150 243);
-	background-color: var(--expression-item-box__background-color--selected);
-	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
+.expressionItemBox-selectable.expressionItemBox-selected:focus .termEditor-inner {
+	background-color: var(--row__background-color--selected--focussed);
 }
 
-.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled:hover {
-	border: 1px solid rgba(0,0,0,.2);
+.expressionItemBox-selectable.expressionItemBox-selected.expressionItemBox-disabled:hover .termEditor-inner {
 	background-color: var(--expression-item-box__background-color--disabled);
-	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
 }
 
-.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-hotspot {
-	border: solid 1px rgb(33 150 243);
+.expressionItemBox-selectable.expressionItemBox-hotspot .termEditor-inner {
 	background-color: var(--expression-item-box__background-color--hotspot);
-	/*box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;*/
-}
-
-.expressionItemBox-image {
-	position: absolute;
-	left: 3px;
-	top: 1px;
 }
 
 .expressionItemBox-label {
 	padding: 3px 5px 3px 5px;
 }
 
-.expressionItemBox-labelDisabled {
+.expressionItemBox-disabled * {
 	color: #999;
 }
