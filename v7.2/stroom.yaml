@@ -1071,7 +1071,12 @@ paths:
       operationId: logout
       parameters:
       - in: query
-        name: redirect_uri
+        name: post_logout_redirect_uri
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: state
         required: true
         schema:
           type: string
@@ -10507,6 +10512,17 @@ components:
         version:
           type: integer
           format: int32
+    NodeMonitoringConfig:
+      type: object
+      properties:
+        pingMaxThreshold:
+          type: integer
+          format: int32
+          minimum: 1
+        pingWarnThreshold:
+          type: integer
+          format: int32
+          minimum: 1
     NodeSearchTask:
       type: object
       properties:
@@ -13173,7 +13189,7 @@ components:
               $ref: '#/components/schemas/Row'
           totalResults:
             type: integer
-            format: int32
+            format: int64
       description: Object for describing a set of results in a table form that supports
         grouped data
       required:
@@ -13486,6 +13502,8 @@ components:
           type: string
         namePattern:
           type: string
+        nodeMonitoring:
+          $ref: '#/components/schemas/NodeMonitoringConfig'
         oncontextmenu:
           type: string
           pattern: ^return (true|false);$
@@ -13608,6 +13626,11 @@ components:
           enum:
           - STANDARD
           - VIM
+        editorLiveAutoCompletion:
+          type: string
+          enum:
+          - "ON"
+          - "OFF"
         editorTheme:
           type: string
         font:
