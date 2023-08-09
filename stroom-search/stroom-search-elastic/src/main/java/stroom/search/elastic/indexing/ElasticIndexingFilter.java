@@ -426,7 +426,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private void storeIndexNameVariableValue(final String value) {
         try {
-            if (value.length() > 0 && indexNameVariables.contains(currentDocFieldName)) {
+            if (value != null && indexNameVariables.contains(currentDocFieldName)) {
                 currentDocIndexNameVariables.put(currentDocFieldName, value);
             }
         } catch (IllegalArgumentException e) {
