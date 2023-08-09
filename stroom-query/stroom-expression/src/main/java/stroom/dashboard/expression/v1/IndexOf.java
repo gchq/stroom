@@ -28,7 +28,7 @@ import java.util.function.Supplier;
         commonReturnType = ValInteger.class,
         commonReturnDescription = "The first position of subString.",
         signatures = @FunctionSignature(
-                description = "Finds the first position (zero based) of subString in inputString or -1 if " +
+                description = "Finds the first position (zero based) of subString in inputString or `null` if " +
                         "it cannot be found. Uses a simple literal match.",
                 args = {
                         @FunctionArg(
@@ -113,6 +113,7 @@ class IndexOf extends AbstractFunction {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private final Generator stringGenerator;
 
         Gen(final Generator childGenerator, final Generator stringGenerator) {
