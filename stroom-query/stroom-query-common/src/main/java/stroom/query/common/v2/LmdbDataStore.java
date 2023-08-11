@@ -209,7 +209,7 @@ public class LmdbDataStore implements DataStore {
      * @param values The values to add to the store.
      */
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         // Filter incoming data.
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();
         Map<String, Object> fieldIdToValueMap = null;

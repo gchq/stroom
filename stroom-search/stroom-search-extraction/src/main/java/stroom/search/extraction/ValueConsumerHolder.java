@@ -1,22 +1,31 @@
 package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.pipeline.filter.FieldValue;
 import stroom.query.api.v2.QueryKey;
 import stroom.util.pipeline.scope.PipelineScoped;
 
-import java.util.List;
-import java.util.function.Consumer;
+import javax.inject.Inject;
 
 @PipelineScoped
-public class ExtractionStateHolder {
+public class ValueConsumerHolder implements ValuesConsumer {
 
+    private final ExtractionState extractionState;
     private QueryKey queryKey;
     private ValuesConsumer receiver;
     private FieldIndex fieldIndex;
-    private int count;
-    private Consumer<List<FieldValue>> fieldListConsumer;
+
+    @Inject
+    ValueConsumerHolder(final ExtractionState extractionState) {
+        this.extractionState = extractionState;
+    }
+
+    @Override
+    public void accept(final Val[] values) {
+        receiver.accept(values);
+        extractionState.incrementCount();
+    }
 
     public QueryKey getQueryKey() {
         return queryKey;
@@ -24,10 +33,6 @@ public class ExtractionStateHolder {
 
     public void setQueryKey(final QueryKey queryKey) {
         this.queryKey = queryKey;
-    }
-
-    public ValuesConsumer getReceiver() {
-        return receiver;
     }
 
     public void setReceiver(final ValuesConsumer receiver) {
@@ -40,21 +45,5 @@ public class ExtractionStateHolder {
 
     public void setFieldIndex(final FieldIndex fieldIndex) {
         this.fieldIndex = fieldIndex;
-    }
-
-    public Consumer<List<FieldValue>> getFieldListConsumer() {
-        return fieldListConsumer;
-    }
-
-    public void setFieldListConsumer(final Consumer<List<FieldValue>> fieldListConsumer) {
-        this.fieldListConsumer = fieldListConsumer;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public void incrementCount() {
-        count++;
     }
 }

@@ -424,7 +424,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             !Thread.currentThread().isInterrupted()) {
                         LOGGER.trace("Adding result");
                         final Val[] values = resultSetMapper.apply(resultSet);
-                        valuesConsumer.add(values);
+                        valuesConsumer.accept(values);
                         count++;
                     }
 

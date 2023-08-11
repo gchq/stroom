@@ -79,7 +79,7 @@ public class AlertWriter implements ValuesConsumer {
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         // Analytics generation search extraction - create records when filters match
         if (values == null || values.length == 0) {
             log(Severity.WARNING, "No values to extract from ", null);

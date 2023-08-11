@@ -132,7 +132,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         Metrics.measure("Added data", () -> {
             for (int i = 0; i < 300_000; i++) {
                 final Val val = ValString.create("Text " + i + "test".repeat(1000));
-                dataStore.add(Val.of(val, val));
+                dataStore.accept(Val.of(val, val));
             }
 
             // Wait for all items to be added.
@@ -210,7 +210,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 final Val streamId = ValLong.create(i);
                 final Val eventId = ValLong.create(j);
                 final Val eventTime = ValLong.create(System.currentTimeMillis());
-                dataStore.add(Val.of(streamId, eventId, eventTime));
+                dataStore.accept(Val.of(streamId, eventId, eventTime));
             }
         }
 
@@ -264,7 +264,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 final Val streamId = ValLong.create(i);
                 final Val eventId = ValLong.create(j);
                 final Val eventTime = ValLong.create(System.currentTimeMillis());
-                dataStore2.add(Val.of(streamId, eventId, eventTime));
+                dataStore2.accept(Val.of(streamId, eventId, eventTime));
             }
         }
 

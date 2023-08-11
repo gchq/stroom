@@ -9965,9 +9965,6 @@
           "enabled" : {
             "type" : "boolean"
           },
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
           "maxMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -18184,6 +18181,9 @@
           },
           "description" : {
             "type" : "string"
+          },
+          "filter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
           },
           "name" : {
             "type" : "string"

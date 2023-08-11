@@ -117,6 +117,7 @@ class TestAnalytics extends StroomIntegrationTest {
         for (final Meta meta : metaList.getValues()) {
             metaService.delete(meta.getId());
         }
+        analyticRuleStore.list().forEach(docRef -> analyticRuleStore.deleteDocument(docRef.getUuid()));
     }
 
     @Override

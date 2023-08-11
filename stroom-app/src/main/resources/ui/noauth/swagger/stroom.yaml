@@ -6874,8 +6874,6 @@ components:
           type: string
         enabled:
           type: boolean
-        expression:
-          $ref: '#/components/schemas/ExpressionOperator'
         maxMetaCreateTimeMs:
           type: integer
           format: int64
@@ -13644,6 +13642,8 @@ components:
           $ref: '#/components/schemas/DocRef'
         description:
           type: string
+        filter:
+          $ref: '#/components/schemas/ExpressionOperator'
         name:
           type: string
         pipeline:

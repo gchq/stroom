@@ -259,7 +259,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(Val.of(arr));
+                        consumer.accept(Val.of(arr));
                     });
                 }
             }

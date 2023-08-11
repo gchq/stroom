@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
 
-public class DetectionWriter implements DetectionConsumer, ProcessLifecycleAware {
+public class DetectionWriter implements DetectionConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DetectionWriter.class);
 

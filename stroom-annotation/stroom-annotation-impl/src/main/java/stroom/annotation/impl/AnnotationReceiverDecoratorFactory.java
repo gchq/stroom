@@ -141,7 +141,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                             setValue(copy, fieldIndex, field, annotation);
                         }
 
-                        valuesConsumer.add(Val.of(copy));
+                        valuesConsumer.accept(Val.of(copy));
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);

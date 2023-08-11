@@ -25,7 +25,6 @@ class AnalyticErrorWritingExecutor {
 
     void exec(final String taskName,
               final String errorFeedName,
-              final String analyticUuid,
               final String pipelineUuid,
               final TaskContext parentTaskContext,
               final Consumer<TaskContext> taskContextConsumer) {
@@ -35,7 +34,6 @@ class AnalyticErrorWritingExecutor {
                 final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
                 analyticErrorWriter.exec(
                         errorFeedName,
-                        analyticUuid,
                         pipelineUuid,
                         () -> taskContextConsumer.accept(taskContext));
             }).run();

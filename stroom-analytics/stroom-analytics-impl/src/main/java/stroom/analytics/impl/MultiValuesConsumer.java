@@ -17,11 +17,11 @@ class MultiValuesConsumer implements ValuesConsumer {
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         if (values != null && values.length > 0) {
             subConsumers.forEach(subReceiver -> {
                 try {
-                    subReceiver.add(values);
+                    subReceiver.accept(values);
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                 }

@@ -451,7 +451,7 @@ public class FlatResultCreator implements ResultCreator {
                                     values[i] = val;
                                 }
                             }
-                            this.dataStore.add(Val.of(values));
+                            this.dataStore.accept(Val.of(values));
 
                             // Trim the data to the parent first level result size.
                             itemCount++;

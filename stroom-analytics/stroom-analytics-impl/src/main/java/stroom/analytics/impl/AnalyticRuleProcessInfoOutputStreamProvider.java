@@ -28,7 +28,6 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
 
     private final Store streamStore;
     private final String feedName;
-    private final String analyticUuid;
     private final String pipelineUuid;
     private final RecordCount recordCount;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -38,13 +37,11 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
 
     AnalyticRuleProcessInfoOutputStreamProvider(final Store streamStore,
                                                 final String feedName,
-                                                final String analyticUuid,
                                                 final String pipelineUuid,
                                                 final RecordCount recordCount,
                                                 final ErrorReceiverProxy errorReceiverProxy) {
         this.streamStore = streamStore;
         this.feedName = feedName;
-        this.analyticUuid = analyticUuid;
         this.pipelineUuid = pipelineUuid;
         this.recordCount = recordCount;
         this.errorReceiverProxy = errorReceiverProxy;
@@ -72,7 +69,7 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
             final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feedName)
                     .typeName(StreamTypeNames.ERROR)
-                    .processorUuid(analyticUuid)
+//                    .processorUuid(analyticUuid)
                     .pipelineUuid(pipelineUuid)
                     .build();
 

@@ -315,7 +315,7 @@ public class ElasticSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(Val.of(values));
+                    valuesConsumer.accept(Val.of(values));
                 }
             }
         } catch (final UncheckedInterruptedException e) {
