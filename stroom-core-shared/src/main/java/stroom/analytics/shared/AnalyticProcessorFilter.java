@@ -1,7 +1,5 @@
 package stroom.analytics.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -179,7 +177,6 @@ public class AnalyticProcessorFilter {
         private String updateUser;
         private String analyticUuid;
         private boolean enabled;
-        private ExpressionOperator expression;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private String node;
@@ -240,11 +237,6 @@ public class AnalyticProcessorFilter {
             this.analyticUuid = analyticUuid;
             return this;
         }
-
-//        public Builder expression(final ExpressionOperator expression) {
-//            this.expression = expression;
-//            return this;
-//        }
 
         public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
