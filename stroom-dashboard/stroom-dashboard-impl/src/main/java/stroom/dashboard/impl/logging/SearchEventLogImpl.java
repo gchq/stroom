@@ -129,7 +129,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     @Override
     public void downloadResults(final DownloadSearchResultsRequest request,
-                                final Integer resultCount,
+                                final Long resultCount,
                                 final Exception e) {
         securityContext.insecure(() -> {
             try {
@@ -178,6 +178,11 @@ public class SearchEventLogImpl implements SearchEventLog {
                                                         .addData(Data.builder()
                                                                 .withName("percent")
                                                                 .withValue(String.valueOf(request.getPercent()))
+                                                                .build())
+                                                        .addData(Data.builder()
+                                                                .withName("allTables")
+                                                                .withValue(String.valueOf(
+                                                                        request.isDownloadAllTables()))
                                                                 .build())
                                                         .build())
                                                 .build())

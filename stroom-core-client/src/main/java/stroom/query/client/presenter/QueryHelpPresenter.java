@@ -21,7 +21,7 @@ import stroom.dashboard.shared.FunctionSignature.OverloadType;
 import stroom.data.table.client.MyCellTable;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
-import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.KeyedAceCompletionProvider;
 import stroom.entity.client.presenter.MarkdownConverter;
@@ -161,7 +161,7 @@ public class QueryHelpPresenter
         getView().setElementChooser(elementChooser);
 
         // Markdown styling has the light/dark theme baked in so have to rebuild it on theme change
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
+        registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
             // Rebuild the structure menu items as they contain markdown
             buildStructureMenuItems(() -> {
                 elementSelectionModel.clear();

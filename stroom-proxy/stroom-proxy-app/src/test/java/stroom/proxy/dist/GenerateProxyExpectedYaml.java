@@ -23,13 +23,14 @@ public class GenerateProxyExpectedYaml {
 
     private static final String PROXY_CONFIG = "proxyConfig";
 
-    private static final String HEADER = "" +
-            "# This file is generated based on all the default configuration values that are built into stroom.\n" +
-            "# It serves as an example of the structure of the full configuration tree.\n" +
-            "# If any configuration item is not explicitly set then these defaults will be used instead.\n" +
-            "# Some configuration items are expected to set,\n" +
-            "# e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,\n" +
-            "# but most can be left with their default values.";
+    private static final String HEADER = """
+            # This file is generated based on all the default configuration values that are built into stroom-proxy.
+            # It serves as an example of the structure of the full configuration tree.
+            # If any configuration item is not explicitly set then these defaults will be used instead.
+            # An exception to this is some list based properties like 'fileScanners', 'forwardFileDestinations',
+            # 'forwardHttpDestinations' and 'sqsConnectors' where the default is an empty list but a single
+            # item has been included in this file to show the defaults for each list item.
+            # Some configuration items are expected to set but most can be left with their default values.""";
 
     /**
      * Builds a fresh config object tree with all the hard coded default values
@@ -60,7 +61,6 @@ public class GenerateProxyExpectedYaml {
         }
 
         final String generatedYaml = TestProxyYamlUtil.getYamlFromJavaModel();
-
 
         List<String> outputLines;
         if (args.length > 0) {

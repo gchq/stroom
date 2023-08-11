@@ -92,6 +92,10 @@
     opacity: 0;
 }
 
+.multiline .dataGridCell {
+    vertical-align: top;
+}
+
 .multiline .dataGridHeader > div,
 .multiline .dataGridCell > div {
 	white-space: normal;

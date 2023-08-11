@@ -230,8 +230,10 @@ class NodeResourceImpl implements NodeResource {
                 SyncInvoker::get);
 
         Objects.requireNonNull(ping, "Null ping");
-
         return System.currentTimeMillis() - now;
+
+        // This line for testing in dev
+//        return new Random().nextLong(600L);
     }
 
     @Override

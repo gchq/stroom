@@ -69,6 +69,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
+    public void addButton(final ButtonView buttonView) {
+        buttonPanel.addButton(buttonView);
+    }
+
+    @Override
     public ToggleButtonView addToggleButton(final Preset primaryPreset,
                                             final Preset secondaryPreset) {
         return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);

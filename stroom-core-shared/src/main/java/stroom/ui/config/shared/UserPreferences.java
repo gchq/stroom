@@ -19,6 +19,7 @@ package stroom.ui.config.shared;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.Themes.ThemeType;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,7 +38,9 @@ import javax.inject.Singleton;
 public class UserPreferences {
 
     public static final String DEFAULT_THEME = Themes.THEME_NAME_DARK;
+
     public static final EditorKeyBindings DEFAULT_EDITOR_KEY_BINDINGS = EditorKeyBindings.STANDARD;
+    public static final Toggle DEFAULT_EDITOR_LIVE_AUTO_COMPLETION = Toggle.OFF;
     public static final String DEFAULT_EDITOR_THEME_LIGHT = "chrome";
     public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night";
     public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
@@ -53,6 +56,10 @@ public class UserPreferences {
     @JsonProperty
     @JsonPropertyDescription("The key bindings to use in the Ace text editor")
     private final EditorKeyBindings editorKeyBindings;
+
+    @JsonProperty
+    @JsonPropertyDescription("Enabled state of live editor auto completion")
+    private final Toggle editorLiveAutoCompletion;
 
     @JsonProperty
     @JsonPropertyDescription("Layout density to use")
@@ -78,6 +85,7 @@ public class UserPreferences {
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
                            @JsonProperty("editorKeyBindings") final EditorKeyBindings editorKeyBindings,
+                           @JsonProperty("editorLiveAutoCompletion") final Toggle editorLiveAutoCompletion,
                            @JsonProperty("density") final String density,
                            @JsonProperty("font") final String font,
                            @JsonProperty("fontSize") final String fontSize,
@@ -85,9 +93,10 @@ public class UserPreferences {
                            @JsonProperty("timeZone") final TimeZone timeZone) {
         this.theme = theme;
         this.editorTheme = editorTheme;
-        this.editorKeyBindings = editorKeyBindings != null
-                ? editorKeyBindings
-                : DEFAULT_EDITOR_KEY_BINDINGS;
+        this.editorKeyBindings = GwtNullSafe.requireNonNullElse(
+                editorKeyBindings, DEFAULT_EDITOR_KEY_BINDINGS);
+        this.editorLiveAutoCompletion = GwtNullSafe.requireNonNullElse(
+                editorLiveAutoCompletion, DEFAULT_EDITOR_LIVE_AUTO_COMPLETION);
         this.density = density;
         this.font = font;
         this.fontSize = fontSize;
@@ -105,6 +114,10 @@ public class UserPreferences {
 
     public EditorKeyBindings getEditorKeyBindings() {
         return editorKeyBindings;
+    }
+
+    public Toggle getEditorLiveAutoCompletion() {
+        return editorLiveAutoCompletion;
     }
 
     public String getDensity() {
@@ -136,16 +149,28 @@ public class UserPreferences {
             return false;
         }
         final UserPreferences that = (UserPreferences) o;
-        return Objects.equals(theme, that.theme) && Objects.equals(editorTheme,
-                that.editorTheme) && Objects.equals(editorKeyBindings,
-                that.editorKeyBindings) && Objects.equals(density, that.density) && Objects.equals(font,
-                that.font) && Objects.equals(fontSize, that.fontSize) && Objects.equals(dateTimePattern,
-                that.dateTimePattern) && Objects.equals(timeZone, that.timeZone);
+        return Objects.equals(theme, that.theme)
+                && Objects.equals(editorTheme, that.editorTheme)
+                && Objects.equals(editorKeyBindings, that.editorKeyBindings)
+                && Objects.equals(editorLiveAutoCompletion, that.editorLiveAutoCompletion)
+                && Objects.equals(density, that.density)
+                && Objects.equals(font, that.font)
+                && Objects.equals(fontSize, that.fontSize)
+                && Objects.equals(dateTimePattern, that.dateTimePattern)
+                && Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(theme, editorTheme, editorKeyBindings, density, font, fontSize, dateTimePattern, timeZone);
+        return Objects.hash(theme,
+                editorTheme,
+                editorKeyBindings,
+                editorLiveAutoCompletion,
+                density,
+                font,
+                fontSize,
+                dateTimePattern,
+                timeZone);
     }
 
     @Override
@@ -154,6 +179,7 @@ public class UserPreferences {
                 "theme='" + theme + '\'' +
                 ", editorTheme='" + editorTheme + '\'' +
                 ", editorKeyBindings='" + editorKeyBindings + '\'' +
+                ", editorLiveAutoCompletion='" + editorLiveAutoCompletion + '\'' +
                 ", density='" + density + '\'' +
                 ", font='" + font + '\'' +
                 ", fontSize='" + fontSize + '\'' +
@@ -215,10 +241,10 @@ public class UserPreferences {
 
     public static final class Builder {
 
-
         private String theme;
         private String editorTheme;
         private EditorKeyBindings editorKeyBindings;
+        private Toggle editorLiveAutoCompletion;
         private String density;
         private String font;
         private String fontSize;
@@ -229,6 +255,7 @@ public class UserPreferences {
             theme = DEFAULT_THEME;
             editorTheme = getDefaultEditorTheme(DEFAULT_THEME);
             editorKeyBindings = DEFAULT_EDITOR_KEY_BINDINGS;
+            editorLiveAutoCompletion = DEFAULT_EDITOR_LIVE_AUTO_COMPLETION;
             density = "Default";
             font = "Roboto";
             fontSize = "Medium";
@@ -240,6 +267,7 @@ public class UserPreferences {
             this.theme = userPreferences.theme;
             this.editorTheme = userPreferences.editorTheme;
             this.editorKeyBindings = userPreferences.editorKeyBindings;
+            this.editorLiveAutoCompletion = userPreferences.editorLiveAutoCompletion;
             this.density = userPreferences.density;
             this.font = userPreferences.font;
             this.fontSize = userPreferences.fontSize;
@@ -259,6 +287,11 @@ public class UserPreferences {
 
         public Builder editorKeyBindings(final EditorKeyBindings editorKeyBindings) {
             this.editorKeyBindings = editorKeyBindings;
+            return this;
+        }
+
+        public Builder editorLiveAutoCompletion(final Toggle editorLiveAutoCompletion) {
+            this.editorLiveAutoCompletion = editorLiveAutoCompletion;
             return this;
         }
 
@@ -292,11 +325,44 @@ public class UserPreferences {
                     theme,
                     editorTheme,
                     editorKeyBindings,
+                    editorLiveAutoCompletion,
                     density,
                     font,
                     fontSize,
                     dateTimePattern,
                     timeZone);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum Toggle {
+        ON("On", true),
+        OFF("Off", false);
+
+        private final String displayValue;
+        private final boolean isOn;
+
+        Toggle(final String displayValue, final boolean isOn) {
+            this.displayValue = displayValue;
+            this.isOn = isOn;
+        }
+
+        public static Toggle fromDisplayValue(final String displayValue) {
+            Objects.requireNonNull(displayValue);
+            return "on".equalsIgnoreCase(displayValue)
+                    ? ON
+                    : OFF;
+        }
+
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        public boolean isOn() {
+            return isOn;
         }
     }
 }

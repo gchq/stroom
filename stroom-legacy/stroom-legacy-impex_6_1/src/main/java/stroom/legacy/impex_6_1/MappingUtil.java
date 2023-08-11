@@ -199,6 +199,7 @@ public final class MappingUtil {
                 value.getExtractValues(),
                 map(value.getExtractionPipeline()),
                 maxResults,
+                100,
                 value.getShowDetail(),
                 mapList(value.getConditionalFormattingRules(), MappingUtil::map),
                 value.getModelVersion());

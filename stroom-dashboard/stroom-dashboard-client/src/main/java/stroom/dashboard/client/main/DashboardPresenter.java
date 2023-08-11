@@ -281,8 +281,10 @@ public class DashboardPresenter
 
         if (designMode) {
             editModeButton.setTitle("Exit Design Mode");
+            editModeButton.setState(true);
         } else {
             editModeButton.setTitle("Enter Design Mode");
+            editModeButton.setState(false);
         }
     }
 
@@ -519,6 +521,9 @@ public class DashboardPresenter
                 editModeButton.setState(true);
                 setDesignMode(true);
             }
+        } else {
+            // Turn on design mode if this is a read after a save or save as.
+            setDesignMode(true);
         }
 
         addComponentButton.setEnabled(!readOnly && !embedded);
@@ -590,23 +595,21 @@ public class DashboardPresenter
 
     @Override
     protected DashboardDoc onWrite(final DashboardDoc dashboard) {
-        if (isDirty()) {
-            final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
-            for (final Component component : components) {
-                final ComponentConfig componentConfig = component.write();
-                componentDataList.add(componentConfig);
-            }
-
-            final DashboardConfig dashboardConfig = new DashboardConfig();
-            dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
-            dashboardConfig.setComponents(componentDataList);
-            dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
-            dashboardConfig.setLayoutConstraints(layoutConstraints);
-            dashboardConfig.setPreferredSize(preferredSize);
-            dashboardConfig.setDesignMode(false);
-            dashboardConfig.setModelVersion(VERSION_7_2_0);
-            dashboard.setDashboardConfig(dashboardConfig);
+        final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
+        for (final Component component : components) {
+            final ComponentConfig componentConfig = component.write();
+            componentDataList.add(componentConfig);
         }
+
+        final DashboardConfig dashboardConfig = new DashboardConfig();
+        dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
+        dashboardConfig.setComponents(componentDataList);
+        dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
+        dashboardConfig.setLayoutConstraints(layoutConstraints);
+        dashboardConfig.setPreferredSize(preferredSize);
+        dashboardConfig.setDesignMode(false);
+        dashboardConfig.setModelVersion(VERSION_7_2_0);
+        dashboard.setDashboardConfig(dashboardConfig);
         return dashboard;
     }
 

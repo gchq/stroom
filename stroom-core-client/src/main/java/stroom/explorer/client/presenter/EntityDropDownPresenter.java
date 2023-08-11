@@ -103,5 +103,10 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
 
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
+        if (!enabled) {
+            getView().asWidget().getElement().addClassName("disabled");
+        } else {
+            getView().asWidget().getElement().removeClassName("disabled");
+        }
     }
 }

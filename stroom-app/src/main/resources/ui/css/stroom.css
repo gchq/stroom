@@ -621,6 +621,7 @@ input:-webkit-autofill:active {
 .gwt-DateBox:disabled,
 .stroom-DropDownTree:disabled,
 .stroom-control:disabled,
+.stroom-control.disabled,
 select:disabled,
 textarea:disabled,
 input:disabled,

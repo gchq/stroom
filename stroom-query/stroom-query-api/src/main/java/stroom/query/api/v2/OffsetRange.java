@@ -30,51 +30,57 @@ import java.util.Objects;
 @Schema(description = "The offset and length of a range of data in a sub-set of a query result set")
 public final class OffsetRange {
 
+    public static final OffsetRange ZERO_100 = new OffsetRange(0L, 100L);
+    public static final OffsetRange ZERO_1000 = new OffsetRange(0L, 1000L);
+    public static final OffsetRange UNBOUNDED = new OffsetRange(0, Integer.MAX_VALUE);
     @Schema(description = "The start offset for this sub-set of data, where zero is the offset of the first record " +
             "in the full result set",
             example = "0",
             required = true)
     @JsonProperty
-    private final Long offset;
+    private final long offset;
 
     @Schema(description = "The length in records of the sub-set of results",
             example = "100",
             required = true)
     @JsonProperty
-    private final Long length;
+    private final long length;
 
-
-    public OffsetRange(final Integer offset, final Integer length) {
-        this.offset = offset.longValue();
-        this.length = length.longValue();
+    public OffsetRange(final int offset, final int length) {
+        this.offset = offset;
+        this.length = length;
     }
 
     @JsonCreator
     public OffsetRange(@JsonProperty("offset") final Long offset,
                        @JsonProperty("length") final Long length) {
-        this.offset = offset;
-        this.length = length;
+        this.offset = offset == null
+                ? 0
+                : offset;
+        this.length = length == null
+                ? 100
+                : length;
     }
 
-    public Long getOffset() {
+    public long getOffset() {
         return offset;
     }
 
-    public Long getLength() {
+    public long getLength() {
         return length;
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        OffsetRange that = (OffsetRange) o;
-        return Objects.equals(offset, that.offset) &&
-                Objects.equals(length, that.length);
+        final OffsetRange that = (OffsetRange) o;
+        return offset == that.offset &&
+                length == that.length;
     }
 
     @Override
@@ -103,8 +109,8 @@ public final class OffsetRange {
      */
     public static final class Builder {
 
-        private Long offset;
-        private Long length;
+        private long offset;
+        private long length = 100;
 
         private Builder() {
         }
@@ -119,7 +125,7 @@ public final class OffsetRange {
          *              where zero is the offset of the first record in the full result set
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder offset(final Long value) {
+        public Builder offset(final long value) {
             this.offset = value;
             return this;
         }
@@ -128,7 +134,7 @@ public final class OffsetRange {
          * @param value The length in records of the sub-set of results
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder length(final Long value) {
+        public Builder length(final long value) {
             this.length = value;
             return this;
         }

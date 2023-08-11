@@ -52,9 +52,10 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -449,8 +450,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     private void showMenu(final ClickEvent event, final List<Item> menuItems) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3, target.getAbsoluteRight(),
-                target.getAbsoluteTop(), target.getAbsoluteBottom() + 3, null, VerticalLocation.BELOW);
+        Rect relativeRect = new Rect(target);
+        relativeRect = relativeRect.grow(3);
+        final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
         showMenu(menuItems, popupPosition);
     }
 

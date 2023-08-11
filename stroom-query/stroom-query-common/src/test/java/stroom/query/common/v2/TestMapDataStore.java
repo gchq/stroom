@@ -50,6 +50,11 @@ class TestMapDataStore extends AbstractDataStoreTest {
     }
 
     @Test
+    void nestedTest() {
+        super.nestedTest();
+    }
+
+    @Test
     void noValuesTest() {
         super.noValuesTest();
     }

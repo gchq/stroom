@@ -9,6 +9,9 @@
             <list:SelectionBox ui:field="fileType"/>
         </form:FormGroup>
         <form:FormGroup>
+          <view:CustomCheckBox ui:field="downloadAllTables" identity="searchDownloadAllTables" label="Download All Tables"/>
+        </form:FormGroup>
+        <form:FormGroup>
             <view:CustomCheckBox ui:field="sample" identity="searchDownloadSampleOnly" label="Sample Only"/>
         </form:FormGroup>
         <form:FormGroup identity="searchDownloadSampleSize" label="Sample Size (%)">

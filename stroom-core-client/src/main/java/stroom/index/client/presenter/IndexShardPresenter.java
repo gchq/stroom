@@ -47,6 +47,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -245,7 +246,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
         // Info column.
         final InfoColumn<IndexShard> infoColumn = new InfoColumn<IndexShard>() {
             @Override
-            protected void showInfo(final IndexShard indexShard, final int x, final int y) {
+            protected void showInfo(final IndexShard indexShard, final PopupPosition popupPosition) {
                 final TableBuilder tb = new TableBuilder();
 
                 if (index != null) {
@@ -278,7 +279,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 htmlBuilder.div(tb::write, Attribute.className("infoTable"));
 
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
