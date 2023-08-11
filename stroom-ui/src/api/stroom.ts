@@ -216,9 +216,6 @@ export interface AnalyticProcessorFilter {
   createUser?: string;
   enabled?: boolean;
 
-  /** A logical addOperator term in a query expression tree */
-  expression?: ExpressionOperator;
-
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
 
@@ -4659,6 +4656,9 @@ export interface ViewDoc {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
   description?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  filter?: ExpressionOperator;
   name?: string;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
