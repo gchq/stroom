@@ -60,6 +60,7 @@ public class AnalyticRuleSettingsViewImpl
 
         analyticRuleType.addItem(AnalyticRuleType.EVENT);
         analyticRuleType.addItem(AnalyticRuleType.AGGREGATE);
+        analyticRuleType.addItem(AnalyticRuleType.BATCH_QUERY);
     }
 
     @Override
