@@ -143,82 +143,80 @@ public class SearchResponseMapper {
     private VisResult mapVisResult(final FlatResult result) {
         String json = null;
         List<String> errors = result.getErrors();
-        if (errors == null || errors.size() == 0) {
-            try {
-                final List<stroom.query.api.v2.Field> fields = result.getStructure();
-                if (fields != null && result.getValues() != null) {
-                    int valueOffset = 0;
+        try {
+            final List<stroom.query.api.v2.Field> fields = result.getStructure();
+            if (fields != null && result.getValues() != null) {
+                int valueOffset = 0;
 
-                    final Map<Integer, List<String>> typeMap = new HashMap<>();
-                    final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
-                    int maxDepth = 0;
-                    for (final stroom.query.api.v2.Field field : fields) {
-                        // Ignore key and depth fields.
-                        if (field.getName() != null && field.getName().startsWith(":")) {
+                final Map<Integer, List<String>> typeMap = new HashMap<>();
+                final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
+                int maxDepth = 0;
+                for (final stroom.query.api.v2.Field field : fields) {
+                    // Ignore key and depth fields.
+                    if (field.getName() != null && field.getName().startsWith(":")) {
+                        valueOffset++;
+
+                    } else {
+                        String type = Type.GENERAL.name();
+                        if (field.getFormat() != null && field.getFormat().getType() != null) {
+                            type = field.getFormat().getType().name();
+                        }
+                        typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
+
+                        // The vizes need to know what the sort direction is for the various fields/keys
+                        String sortDirection = null;
+                        if (field.getSort() != null && field.getSort().getDirection() != null) {
+                            sortDirection = field.getSort().getDirection().getDisplayValue();
+                        }
+                        sortDirectionMap.computeIfAbsent(field.getGroup(),
+                                k -> new ArrayList<>()).add(sortDirection);
+
+                        if (field.getGroup() != null) {
+                            maxDepth = Math.max(maxDepth, field.getGroup() + 1);
                             valueOffset++;
-
-                        } else {
-                            String type = Type.GENERAL.name();
-                            if (field.getFormat() != null && field.getFormat().getType() != null) {
-                                type = field.getFormat().getType().name();
-                            }
-                            typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
-
-                            // The vizes need to know what the sort direction is for the various fields/keys
-                            String sortDirection = null;
-                            if (field.getSort() != null && field.getSort().getDirection() != null) {
-                                sortDirection = field.getSort().getDirection().getDisplayValue();
-                            }
-                            sortDirectionMap.computeIfAbsent(field.getGroup(),
-                                    k -> new ArrayList<>()).add(sortDirection);
-
-                            if (field.getGroup() != null) {
-                                maxDepth = Math.max(maxDepth, field.getGroup() + 1);
-                                valueOffset++;
-                            }
                         }
                     }
-
-                    // Create an array of types.
-                    String[][] types = new String[maxDepth + 1][];
-                    for (final Entry<Integer, List<String>> entry : typeMap.entrySet()) {
-                        int group = maxDepth;
-                        if (entry.getKey() != null) {
-                            group = entry.getKey();
-                        }
-
-                        String[] row = new String[entry.getValue().size()];
-                        row = entry.getValue().toArray(row);
-                        types[group] = row;
-                    }
-
-                    // Create an array of sortDirections
-                    String[][] sortDirections = new String[maxDepth + 1][];
-                    for (final Entry<Integer, List<String>> entry : sortDirectionMap.entrySet()) {
-                        int group = maxDepth;
-                        if (entry.getKey() != null) {
-                            group = entry.getKey();
-                        }
-
-                        String[] row = new String[entry.getValue().size()];
-                        row = entry.getValue().toArray(row);
-                        sortDirections[group] = row;
-                    }
-
-                    final int valueCount = fields.size() - valueOffset;
-
-                    final Map<Object, List<List<Object>>> map = new HashMap<>();
-                    for (final List<Object> row : result.getValues()) {
-                        map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
-                    }
-
-                    final Store store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
-                    json = getMapper(false).writeValueAsString(store);
                 }
-            } catch (final JsonProcessingException | RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-                errors = Collections.singletonList(ExceptionStringUtil.getMessage(e));
+
+                // Create an array of types.
+                String[][] types = new String[maxDepth + 1][];
+                for (final Entry<Integer, List<String>> entry : typeMap.entrySet()) {
+                    int group = maxDepth;
+                    if (entry.getKey() != null) {
+                        group = entry.getKey();
+                    }
+
+                    String[] row = new String[entry.getValue().size()];
+                    row = entry.getValue().toArray(row);
+                    types[group] = row;
+                }
+
+                // Create an array of sortDirections
+                String[][] sortDirections = new String[maxDepth + 1][];
+                for (final Entry<Integer, List<String>> entry : sortDirectionMap.entrySet()) {
+                    int group = maxDepth;
+                    if (entry.getKey() != null) {
+                        group = entry.getKey();
+                    }
+
+                    String[] row = new String[entry.getValue().size()];
+                    row = entry.getValue().toArray(row);
+                    sortDirections[group] = row;
+                }
+
+                final int valueCount = fields.size() - valueOffset;
+
+                final Map<Object, List<List<Object>>> map = new HashMap<>();
+                for (final List<Object> row : result.getValues()) {
+                    map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
+                }
+
+                final Store store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
+                json = getMapper(false).writeValueAsString(store);
             }
+        } catch (final JsonProcessingException | RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            errors = Collections.singletonList(ExceptionStringUtil.getMessage(e));
         }
 
         return new VisResult(result.getComponentId(), json, result.getSize(), errors);

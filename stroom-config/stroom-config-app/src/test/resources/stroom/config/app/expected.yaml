@@ -30,7 +30,6 @@ appConfig:
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
-      storeSize: "1000000,100,10,1"
       valueQueueSize: 10000
     rulesFolderList: []
     timezone: "UTC"
@@ -610,7 +609,6 @@ appConfig:
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
-      storeSize: "1000000,100,10,1"
       valueQueueSize: 10000
     shard:
       indexShardSearcherCache:

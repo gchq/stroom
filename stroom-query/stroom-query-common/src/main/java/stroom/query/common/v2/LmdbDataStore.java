@@ -91,12 +91,9 @@ public class LmdbDataStore implements DataStore {
     private final CompiledField[] compiledFieldArray;
     private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
-    private final Sizes maxResults;
+    //    private final PutFilter putFilter;
     private final AtomicLong totalResultCount = new AtomicLong();
-    private final boolean limitResultCount;
     private final AtomicLong resultCount = new AtomicLong();
-
-    private final AtomicBoolean hasEnoughData = new AtomicBoolean();
     private final AtomicBoolean shutdown = new AtomicBoolean();
 
     private final LmdbWriteQueue queue;
@@ -139,7 +136,6 @@ public class LmdbDataStore implements DataStore {
                          final Provider<Executor> executorProvider,
                          final ErrorConsumer errorConsumer) {
         this.serialisers = serialisers;
-        this.maxResults = dataStoreSettings.getMaxResults();
         this.queryKey = queryKey;
         this.componentId = componentId;
         this.fieldIndex = fieldIndex;
@@ -184,17 +180,29 @@ public class LmdbDataStore implements DataStore {
                 .build();
         this.dbi = lmdbEnv.openDbi(queryKey + "_" + componentId);
 
-        // Find out if we have any sorting.
-        boolean hasSort = false;
-        for (final CompiledSorter<Item> sorter : compiledSorters) {
-            if (sorter != null) {
-                hasSort = true;
-                break;
-            }
-        }
-
-        // Determine if we are going to limit the result count.
-        limitResultCount = maxResults != null && !hasSort && !compiledDepths.hasGroup();
+//        // Find out if we have any sorting.
+//        boolean hasSort = false;
+//        for (final CompiledSorter<Item> sorter : compiledSorters) {
+//            if (sorter != null) {
+//                hasSort = true;
+//                break;
+//            }
+//        }
+//
+//        // Determine if we are going to limit the result count.
+//        boolean limitResultCount = dataStoreSettings.getMaxResults() != null && !hasSort &&
+//        !compiledDepths.hasGroup();
+//        if (limitResultCount) {
+//            putFilter = new LimitedPutFilter(
+//                    totalResultCount,
+//                    dataStoreSettings.getMaxResults().size(0),
+//                    completionState);
+//        } else {
+//            putFilter = new BasicPutFilter(totalResultCount);
+//        }
+//
+//        // TODO : For now don't filter any puts.
+//        putFilter = new BasicPutFilter(totalResultCount);
 
         // Start transfer loop.
         executorProvider.get().execute(this::transfer);
@@ -315,29 +323,72 @@ public class LmdbDataStore implements DataStore {
         LOGGER.trace(() -> "put");
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_PUT);
 
-        // Some searches can be terminated early if the user is not sorting or grouping.
-        boolean allow = true;
-        if (limitResultCount) {
-            // No sorting or grouping, so we can stop the search as soon as we have the number of results requested by
-            // the client
-            allow = !hasEnoughData.get();
-            if (allow) {
-                final long currentResultCount = totalResultCount.getAndIncrement();
-                if (currentResultCount >= maxResults.size(0)) {
-                    allow = false;
+        totalResultCount.getAndIncrement();
+        doPut(queueItem);
 
-                    // If we have enough data then we can stop transferring data and complete.
-                    if (hasEnoughData.compareAndSet(false, true)) {
-                        completionState.signalComplete();
-                    }
-                }
-            }
-        }
-
-        if (allow) {
-            doPut(queueItem);
-        }
+//        // Some searches can be terminated early if the user is not sorting or grouping.
+//        putFilter.put(queueItem, this::doPut);
     }
+
+//    interface PutFilter {
+//
+//        void put(LmdbQueueItem queueItem, Consumer<LmdbQueueItem> consumer);
+//    }
+//
+//    private static class BasicPutFilter implements PutFilter {
+//
+//        private final AtomicLong totalResultCount;
+//
+//        public BasicPutFilter(final AtomicLong totalResultCount) {
+//            this.totalResultCount = totalResultCount;
+//        }
+//
+//        @Override
+//        public void put(final LmdbQueueItem queueItem, final Consumer<LmdbQueueItem> consumer) {
+//            totalResultCount.getAndIncrement();
+//            consumer.accept(queueItem);
+//        }
+//    }
+//
+//    private static class LimitedPutFilter implements PutFilter {
+//
+//        private final AtomicLong totalResultCount;
+//        private final AtomicBoolean hasEnoughData = new AtomicBoolean();
+//        private final long maxResults;
+//        private final CompletionState completionState;
+//
+//        public LimitedPutFilter(final AtomicLong totalResultCount,
+//                                final long maxResults,
+//                                final CompletionState completionState) {
+//            this.totalResultCount = totalResultCount;
+//            this.maxResults = maxResults;
+//            this.completionState = completionState;
+//        }
+//
+//        @Override
+//        public void put(final LmdbQueueItem queueItem, final Consumer<LmdbQueueItem> consumer) {
+//            // Some searches can be terminated early if the user is not sorting or grouping.
+//            boolean allow;
+//            // No sorting or grouping, so we can stop the search as soon as we have the number of results requested by
+//            // the client
+//            allow = !hasEnoughData.get();
+//            if (allow) {
+//                final long currentResultCount = totalResultCount.getAndIncrement();
+//                if (currentResultCount >= maxResults) {
+//                    allow = false;
+//
+//                    // If we have enough data then we can stop transferring data and complete.
+//                    if (hasEnoughData.compareAndSet(false, true)) {
+//                        completionState.signalComplete();
+//                    }
+//                }
+//            }
+//
+//            if (allow) {
+//                consumer.accept(queueItem);
+//            }
+//        }
+//    }
 
     private void doPut(final LmdbQueueItem queueItem) {
         try {

@@ -53,7 +53,6 @@ class TestSearchResponseCreator {
         Mockito.when(mockStore.getHighlights()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getData(Mockito.any())).thenReturn(createSingleItemDataObject());
         Mockito.when(sizesProvider.getDefaultMaxResultsSizes()).thenReturn(Sizes.create(Integer.MAX_VALUE));
-        Mockito.when(sizesProvider.getStoreSizes()).thenReturn(Sizes.create(Integer.MAX_VALUE));
     }
 
     @Test

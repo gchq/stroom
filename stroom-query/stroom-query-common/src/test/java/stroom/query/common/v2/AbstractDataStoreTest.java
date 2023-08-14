@@ -654,13 +654,11 @@ abstract class AbstractDataStoreTest {
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
         final Sizes defaultMaxResultsSizes = Sizes.create(50);
-        final Sizes storeSize = Sizes.create(100);
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
         final DataStoreSettings dataStoreSettings = DataStoreSettings
                 .createBasicSearchResultStoreSettings()
                 .copy()
                 .maxResults(maxResults)
-                .storeSize(storeSize)
                 .build();
         return create(tableSettings, dataStoreSettings);
     }
@@ -670,7 +668,7 @@ abstract class AbstractDataStoreTest {
                 .createBasicSearchResultStoreSettings()
                 .copy()
                 .maxResults(Sizes.create(Integer.MAX_VALUE))
-                .storeSize(Sizes.create(Integer.MAX_VALUE)).build();
+                .build();
         return create(tableSettings, dataStoreSettings);
     }
 

@@ -92,7 +92,6 @@ public class FlatResultCreator implements ResultCreator {
                         .createBasicSearchResultStoreSettings()
                         .copy()
                         .maxResults(maxResults)
-                        .storeSize(Sizes.create(Integer.MAX_VALUE))
                         .build();
 
 

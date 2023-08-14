@@ -76,10 +76,12 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
             return new MapDataStore(
                     new Serialisers(resultStoreConfig),
+                    componentId,
                     tableSettings,
                     fieldIndex,
                     paramMap,
-                    dataStoreSettings);
+                    dataStoreSettings,
+                    errorConsumer);
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
             final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory

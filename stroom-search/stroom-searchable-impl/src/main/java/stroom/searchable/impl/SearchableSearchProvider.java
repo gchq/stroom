@@ -17,7 +17,6 @@ import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
-import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
@@ -53,7 +52,6 @@ class SearchableSearchProvider implements SearchProvider {
     private final Executor executor;
     private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
-    private final SearchResultStoreConfig config;
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
     private final CoprocessorsFactory coprocessorsFactory;
@@ -64,7 +62,6 @@ class SearchableSearchProvider implements SearchProvider {
     SearchableSearchProvider(final Executor executor,
                              final TaskManager taskManager,
                              final TaskContextFactory taskContextFactory,
-                             final SearchResultStoreConfig config,
                              final UiConfig clientConfig,
                              final SearchableProvider searchableProvider,
                              final CoprocessorsFactory coprocessorsFactory,
@@ -73,7 +70,6 @@ class SearchableSearchProvider implements SearchProvider {
         this.executor = executor;
         this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
-        this.config = config;
         this.clientConfig = clientConfig;
         this.searchableProvider = searchableProvider;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -139,7 +135,6 @@ class SearchableSearchProvider implements SearchProvider {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);
 
-        final Sizes storeSize = getStoreSizes();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
@@ -248,11 +243,6 @@ class SearchableSearchProvider implements SearchProvider {
 
     private Sizes getDefaultMaxResultsSizes() {
         final String value = clientConfig.getDefaultMaxResults();
-        return extractValues(value);
-    }
-
-    private Sizes getStoreSizes() {
-        final String value = config.getStoreSize();
         return extractValues(value);
     }
 

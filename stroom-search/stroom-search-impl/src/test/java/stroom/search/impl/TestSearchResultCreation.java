@@ -535,18 +535,7 @@ class TestSearchResultCreation {
 
     private SizesProvider createSizesProvider() throws ParseException {
         final Sizes defaultMaxResultsSizes = Sizes.parse(null);
-        final Sizes storeSize = Sizes.parse("1000000,100,10,1");
-        return new SizesProvider() {
-            @Override
-            public Sizes getDefaultMaxResultsSizes() {
-                return defaultMaxResultsSizes;
-            }
-
-            @Override
-            public Sizes getStoreSizes() {
-                return storeSize;
-            }
-        };
+        return () -> defaultMaxResultsSizes;
     }
 
     private ValuesConsumer createExtractionReceiver(final Coprocessors coprocessors) {

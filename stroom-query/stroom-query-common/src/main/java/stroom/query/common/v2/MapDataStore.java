@@ -20,6 +20,7 @@ import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.Field;
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +55,7 @@ public class MapDataStore implements DataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
+    private final String componentId;
     private final Serialisers serialisers;
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
@@ -65,7 +66,6 @@ public class MapDataStore implements DataStore {
     private final CompiledSorter<ItemImpl>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
-    private final Sizes storeSize;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
 
@@ -73,14 +73,18 @@ public class MapDataStore implements DataStore {
     private final boolean hasSort;
     private final CompletionState completionState = new CompletionStateImpl();
     private final KeyFactory keyFactory;
+    private final ErrorConsumer errorConsumer;
 
     private volatile boolean hasEnoughData;
 
     public MapDataStore(final Serialisers serialisers,
+                        final String componentId,
                         final TableSettings tableSettings,
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
-                        final DataStoreSettings dataStoreSettings) {
+                        final DataStoreSettings dataStoreSettings,
+                        final ErrorConsumer errorConsumer) {
+        this.componentId = componentId;
         this.serialisers = serialisers;
         fields = tableSettings.getFields();
         this.compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
@@ -92,7 +96,7 @@ public class MapDataStore implements DataStore {
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         this.maxResults = dataStoreSettings.getMaxResults();
-        this.storeSize = dataStoreSettings.getStoreSize();
+        this.errorConsumer = errorConsumer;
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
@@ -212,7 +216,8 @@ public class MapDataStore implements DataStore {
 
             if (result == null) {
                 result = new ItemsImpl(
-                        storeSize.size(depth),
+                        depth,
+                        maxResults.size(depth),
                         this,
                         groupingFunction,
                         sortingFunction,
@@ -266,7 +271,7 @@ public class MapDataStore implements DataStore {
                           final Consumer<Long> totalRowCountConsumer) {
         final OffsetRange enforcedRange = Optional
                 .ofNullable(range)
-                .orElse(OffsetRange.ZERO_100);
+                .orElse(OffsetRange.UNBOUNDED);
 
         final FetchState fetchState = new FetchState();
         fetchState.countRows = totalRowCountConsumer != null;
@@ -503,6 +508,7 @@ public class MapDataStore implements DataStore {
 
     public static class ItemsImpl {
 
+        private final int depth;
         private final int trimmedSize;
         private final int maxSize;
         private final MapDataStore dataStore;
@@ -513,19 +519,18 @@ public class MapDataStore implements DataStore {
         private volatile List<ItemImpl> list;
 
         private volatile boolean trimmed = true;
-        private volatile boolean full;
 
-        ItemsImpl(final int trimmedSize,
+        ItemsImpl(final int depth,
+                  final int trimmedSize,
                   final MapDataStore dataStore,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction,
                   final Consumer<Key> removeHandler) {
+            this.depth = depth;
+            this.trimmedSize = trimmedSize;
 
-            // FIXME : THIS IS HARD CODED TO REDUCE CHANCE OF OOME.
-            this.trimmedSize = Math.min(trimmedSize, 100_000); // Don't ever allow more than 100K data points.
-
+            // FIXME : HARD CODED.
             int maxSize = this.trimmedSize * 2;
-            // FIXME : SEE ABOVE NOTE ABOUT HARD CODING.
             maxSize = Math.min(maxSize, 200_000);
             this.maxSize = Math.max(maxSize, 1_000);
 
@@ -546,7 +551,7 @@ public class MapDataStore implements DataStore {
             } else if (list.size() < trimmedSize) {
                 list.add(new ItemImpl(dataStore, groupKey, storedValues));
             } else {
-                full = true;
+                logTruncation();
                 removeHandler.accept(groupKey);
             }
         }
@@ -573,15 +578,28 @@ public class MapDataStore implements DataStore {
                                 .collect(Collectors.toList());
                     }
 
-                    while (list.size() > trimmedSize) {
-                        final ItemImpl lastItem = list.remove(list.size() - 1);
+                    if (list.size() > trimmedSize) {
+                        logTruncation();
+                        while (list.size() > trimmedSize) {
+                            final ItemImpl lastItem = list.remove(list.size() - 1);
 
-                        // Tell the remove handler that we have removed an item.
-                        removeHandler.accept(lastItem.getKey());
+                            // Tell the remove handler that we have removed an item.
+                            removeHandler.accept(lastItem.getKey());
+                        }
                     }
                 }
                 trimmed = true;
             }
+        }
+
+        private void logTruncation() {
+            dataStore.errorConsumer.add(() ->
+                    "Truncating data for vis '" +
+                            dataStore.componentId +
+                            "' to " +
+                            trimmedSize +
+                            " data points at depth " +
+                            depth);
         }
 
         private synchronized List<ItemImpl> copy() {

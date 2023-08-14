@@ -1,6 +1,5 @@
 package stroom.search.impl;
 
-import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.ui.config.shared.UiConfig;
@@ -18,23 +17,15 @@ public class SizesProviderImpl implements SizesProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(SizesProviderImpl.class);
 
     private final Provider<UiConfig> uiConfigProvider;
-    private final SearchResultStoreConfig searchConfig;
 
     @Inject
-    public SizesProviderImpl(final Provider<UiConfig> uiConfigProvider,
-                             final SearchResultStoreConfig searchConfig) {
+    public SizesProviderImpl(final Provider<UiConfig> uiConfigProvider) {
         this.uiConfigProvider = uiConfigProvider;
-        this.searchConfig = searchConfig;
     }
 
     @Override
     public Sizes getDefaultMaxResultsSizes() {
         return extractValues(uiConfigProvider.get().getDefaultMaxResults());
-    }
-
-    @Override
-    public Sizes getStoreSizes() {
-        return extractValues(searchConfig.getStoreSize());
     }
 
     private Sizes extractValues(String value) {

@@ -361,10 +361,10 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
                     currentSettings = getJSONSettings();
                     currentData = getJSONData(visResult);
-                    final List<String> errors = visResult.getErrors();
-                    if (currentError == null && errors != null && !errors.isEmpty()) {
-                        currentError = String.join("\n", errors);
-                    }
+//                    final List<String> errors = visResult.getErrors();
+//                    if (currentError == null && errors != null && !errors.isEmpty()) {
+//                        currentError = String.join("\n", errors);
+//                    }
                 }
 
                 // Put a new function in the cache if there isn't one already.
