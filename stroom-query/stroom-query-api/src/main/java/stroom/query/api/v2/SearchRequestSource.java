@@ -102,6 +102,7 @@ public class SearchRequestSource {
 
     public enum SourceType implements HasDisplayValue {
         ANALYTIC_RULE("Analytic Rule", true, true, true),
+        BATCH_ANALYTIC_RULE("Batch Analytic Rule", false, false, false),
         ANALYTIC_RULE_UI("Analytic Rule UI", true, true, true),
         DASHBOARD_UI("Dashboard UI", false, false, false),
         QUERY_UI("Query UI", false, false, false),

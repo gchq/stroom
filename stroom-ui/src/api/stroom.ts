@@ -258,7 +258,7 @@ export interface AnalyticProcessorFilterTracker {
 }
 
 export interface AnalyticRuleDoc {
-  analyticRuleType?: "EVENT" | "AGGREGATE";
+  analyticRuleType?: "EVENT" | "AGGREGATE" | "BATCH_QUERY";
 
   /** @format int64 */
   createTimeMs?: number;
@@ -3867,7 +3867,14 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ANALYTIC_RULE" | "ANALYTIC_RULE_UI" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?:
+    | "ANALYTIC_RULE"
+    | "BATCH_ANALYTIC_RULE"
+    | "ANALYTIC_RULE_UI"
+    | "DASHBOARD_UI"
+    | "QUERY_UI"
+    | "API"
+    | "BATCH_SEARCH";
 }
 
 /**

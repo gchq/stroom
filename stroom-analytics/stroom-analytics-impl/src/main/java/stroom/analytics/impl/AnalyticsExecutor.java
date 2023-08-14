@@ -72,7 +72,6 @@ import stroom.util.time.SimpleDurationUtil;
 import stroom.view.impl.ViewStore;
 import stroom.view.shared.ViewDoc;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -122,9 +121,10 @@ public class AnalyticsExecutor {
     private final AnalyticProcessorFilterDao analyticProcessorFilterDao;
     private final AnalyticProcessorFilterTrackerDao analyticProcessorFilterTrackerDao;
     private final AnalyticNotificationDao analyticNotificationDao;
-    private final AnalyticNotificationStateDao analyticNotificationStateDao;
+    private final AnalyticNotificationService analyticNotificationService;
     private final NodeInfo nodeInfo;
     private final ExpressionMatcher metaExpressionMatcher;
+    private final BatchAnalyticExecutor batchAnalyticExecutor;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
     private boolean allowUpToDateProcessing = true;
@@ -152,10 +152,11 @@ public class AnalyticsExecutor {
                              final AnalyticProcessorFilterDao analyticProcessorFilterDao,
                              final AnalyticProcessorFilterTrackerDao analyticProcessorFilterTrackerDao,
                              final AnalyticNotificationDao analyticNotificationDao,
-                             final AnalyticNotificationStateDao analyticNotificationStateDao,
+                             final AnalyticNotificationService analyticNotificationService,
                              final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
                              final NodeInfo nodeInfo,
-                             final ExpressionMatcherFactory expressionMatcherFactory) {
+                             final ExpressionMatcherFactory expressionMatcherFactory,
+                             final BatchAnalyticExecutor batchAnalyticExecutor) {
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.executorProvider = executorProvider;
         this.detectionsWriterProvider = detectionsWriterProvider;
@@ -175,10 +176,11 @@ public class AnalyticsExecutor {
         this.analyticProcessorFilterDao = analyticProcessorFilterDao;
         this.analyticProcessorFilterTrackerDao = analyticProcessorFilterTrackerDao;
         this.analyticNotificationDao = analyticNotificationDao;
-        this.analyticNotificationStateDao = analyticNotificationStateDao;
+        this.analyticNotificationService = analyticNotificationService;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
         this.nodeInfo = nodeInfo;
         this.metaExpressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
+        this.batchAnalyticExecutor = batchAnalyticExecutor;
     }
 
     private void info(final Supplier<String> messageSupplier) {
@@ -221,14 +223,19 @@ public class AnalyticsExecutor {
 
         // Group rules by transformation pipeline.
         final Map<DocRef, List<LoadedAnalytic>> pipelineGroupMap = new HashMap<>();
+        final List<LoadedAnalytic> batchAnalytics = new ArrayList<>();
         for (final LoadedAnalytic loadedAnalytic : loadedAnalyticList) {
-            if (loadedAnalytic.viewDoc != null && loadedAnalytic.viewDoc.getPipeline() != null) {
-                pipelineGroupMap
-                        .computeIfAbsent(loadedAnalytic.viewDoc.getPipeline(), k -> new ArrayList<>())
-                        .add(loadedAnalytic);
+            if (loadedAnalytic.viewDoc() != null && loadedAnalytic.viewDoc().getPipeline() != null) {
+                if (AnalyticRuleType.BATCH_QUERY.equals(loadedAnalytic.analyticRuleDoc().getAnalyticRuleType())) {
+                    batchAnalytics.add(loadedAnalytic);
+                } else {
+                    pipelineGroupMap
+                            .computeIfAbsent(loadedAnalytic.viewDoc().getPipeline(), k -> new ArrayList<>())
+                            .add(loadedAnalytic);
+                }
             } else {
                 // If there isn't a view then update tracker and forget this rule.
-                analyticProcessorFilterTrackerDao.update(loadedAnalytic.trackerBuilder.build());
+                analyticProcessorFilterTrackerDao.update(loadedAnalytic.trackerBuilder().build());
             }
         }
 
@@ -237,19 +244,25 @@ public class AnalyticsExecutor {
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<DocRef, List<LoadedAnalytic>> entry : pipelineGroupMap.entrySet()) {
-            final String pipelineIdentity = entry.getKey().toInfoString();
-
-            final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
-                    "Pipeline: " + pipelineIdentity,
-                    taskContext -> {
-                        final boolean complete =
-                                processPipeline(entry.getKey(), entry.getValue(), taskContext);
-                        if (!complete) {
-                            allComplete.set(false);
-                        }
-                    });
-            completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
+            final DocRef pipelineRef = entry.getKey();
+            final List<LoadedAnalytic> analytics = entry.getValue();
+            if (analytics.size() > 0) {
+                final String pipelineIdentity = pipelineRef.toInfoString();
+                final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
+                        "Pipeline: " + pipelineIdentity,
+                        taskContext -> {
+                            final boolean complete =
+                                    processPipeline(pipelineRef, analytics, taskContext);
+                            if (!complete) {
+                                allComplete.set(false);
+                            }
+                        });
+                completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
+            }
         }
+
+        // Process batch analytics.
+        batchAnalyticExecutor.processBatchAnalytics(batchAnalytics, completableFutures, parentTaskContext);
 
         // Join.
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
@@ -264,10 +277,10 @@ public class AnalyticsExecutor {
         final List<Meta> sortedMetaList = getMetaBatch(analytics);
 
         // Update the poll time for the trackers.
-        final long startTimeMs = System.currentTimeMillis();
+        final LocalDateTime startTime = LocalDateTime.now();
         analytics.forEach(loadedAnalytic -> {
-            loadedAnalytic.trackerBuilder.lastPollMs(startTimeMs);
-            loadedAnalytic.trackerBuilder.lastPollTaskCount(sortedMetaList.size());
+            loadedAnalytic.trackerBuilder().lastPollMs(startTime.toInstant(ZoneOffset.UTC).toEpochMilli());
+            loadedAnalytic.trackerBuilder().lastPollTaskCount(sortedMetaList.size());
         });
 
         // Now process each stream with the pipeline.
@@ -280,7 +293,7 @@ public class AnalyticsExecutor {
                     } else {
                         LOGGER.info("Complete for now");
                         analytics.forEach(loadedAnalytic ->
-                                loadedAnalytic.trackerBuilder.message("Complete for now"));
+                                loadedAnalytic.trackerBuilder().message("Complete for now"));
                         break;
                     }
                 } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -289,18 +302,18 @@ public class AnalyticsExecutor {
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                     analytics.forEach(loadedAnalytic ->
-                            loadedAnalytic.trackerBuilder.message(e.getMessage()));
+                            loadedAnalytic.trackerBuilder().message(e.getMessage()));
                     throw e;
                 }
             }
         }
 
         // Execute notifications on LMDB stores and sync.
-        executePostProcessNotifications(analytics, parentTaskContext, startTimeMs, sortedMetaList);
+        executePostProcessNotifications(analytics, parentTaskContext, startTime, sortedMetaList);
 
         // Update all trackers.
         for (final LoadedAnalytic analytic : analytics) {
-            updateFilterTracker(analytic.trackerBuilder.build());
+            updateFilterTracker(analytic.trackerBuilder().build());
         }
 
         return sortedMetaList.size() < maxMetaListSize;
@@ -310,7 +323,7 @@ public class AnalyticsExecutor {
         // Group by filter.
         final Map<ExpressionOperator, List<LoadedAnalytic>> filterGroupMap = new HashMap<>();
         for (final LoadedAnalytic loadedAnalytic : analytics) {
-            ExpressionOperator operator = loadedAnalytic.viewDoc.getFilter();
+            ExpressionOperator operator = loadedAnalytic.viewDoc().getFilter();
             if (operator == null) {
                 operator = ExpressionOperator.builder().build();
             }
@@ -329,7 +342,7 @@ public class AnalyticsExecutor {
             Long maxCreateTime = null;
 
             for (final LoadedAnalytic loadedAnalytic : filterGroupEntry.getValue()) {
-                final AnalyticProcessorFilterTracker tracker = loadedAnalytic.trackerBuilder.build();
+                final AnalyticProcessorFilterTracker tracker = loadedAnalytic.trackerBuilder().build();
                 // Start at the next meta.
                 Long lastMetaId = tracker.getLastMetaId();
                 final Long lastEventId = tracker.getLastEventId();
@@ -338,8 +351,10 @@ public class AnalyticsExecutor {
                 }
 
                 minMetaId = getMin(minMetaId, lastMetaId);
-                minCreateTime = getMin(minCreateTime, loadedAnalytic.analyticProcessorFilter.getMinMetaCreateTimeMs());
-                maxCreateTime = getMax(maxCreateTime, loadedAnalytic.analyticProcessorFilter.getMaxMetaCreateTimeMs());
+                minCreateTime = getMin(minCreateTime,
+                        loadedAnalytic.analyticProcessorFilter().getMinMetaCreateTimeMs());
+                maxCreateTime = getMax(maxCreateTime,
+                        loadedAnalytic.analyticProcessorFilter().getMaxMetaCreateTimeMs());
             }
 
             final ExpressionOperator findMetaExpression = filterGroupEntry.getKey();
@@ -374,9 +389,10 @@ public class AnalyticsExecutor {
 
         // Determine which rules will take part in this process.
         for (final LoadedAnalytic analytic : analytics) {
-            if (useLmdb(analytic.analyticRuleDoc)) {
+            if (analytic.analyticRuleDoc().getAnalyticRuleType() == null ||
+                    AnalyticRuleType.AGGREGATE.equals(analytic.analyticRuleDoc().getAnalyticRuleType())) {
                 fieldListConsumers.addAll(createLmdbConsumer(analytic, meta, metaAttributeMap));
-            } else {
+            } else if (AnalyticRuleType.EVENT.equals(analytic.analyticRuleDoc().getAnalyticRuleType())) {
                 fieldListConsumers.addAll(createEventConsumer(analytic, meta, metaAttributeMap));
             }
         }
@@ -391,7 +407,7 @@ public class AnalyticsExecutor {
         }
 
         if (fieldListConsumer != null) {
-            analyticErrorWritingExecutor.exec(
+            analyticErrorWritingExecutor.wrap(
                     "Analytics Stream Processor",
                     meta.getFeedName(),
                     pipelineDocRef.getUuid(),
@@ -417,10 +433,10 @@ public class AnalyticsExecutor {
                         final ExtractionState extractionState = extractionStateProvider.get();
 
                         analytics.forEach(analytic -> {
-                            analytic.trackerBuilder.incrementMetaCount();
-                            analytic.trackerBuilder.addEventCount(extractionState.getCount());
+                            analytic.trackerBuilder().incrementMetaCount();
+                            analytic.trackerBuilder().addEventCount(extractionState.getCount());
                         });
-                    });
+                    }).run();
         }
     }
 
@@ -432,7 +448,7 @@ public class AnalyticsExecutor {
             return Collections.emptyList();
         }
 
-        final AnalyticProcessorFilterTracker tracker = analytic.trackerBuilder.build();
+        final AnalyticProcessorFilterTracker tracker = analytic.trackerBuilder().build();
 
         // Create receiver to insert into the pipeline.
         // After a shutdown we may wish to resume event processing from a specific event id.
@@ -441,7 +457,7 @@ public class AnalyticsExecutor {
             minEventId = tracker.getLastEventId() + 1;
         }
 
-        final AnalyticDataStore dataStore = analyticDataStores.get(analytic.analyticRuleDoc);
+        final AnalyticDataStore dataStore = analyticDataStores.get(analytic.analyticRuleDoc());
         final SearchRequest searchRequest = dataStore.searchRequest();
 
         // Get or create LMDB data store.
@@ -472,10 +488,10 @@ public class AnalyticsExecutor {
         }
 
         final List<AnalyticNotification> notifications =
-                analyticNotificationDao.getByAnalyticUuid(analytic.analyticRuleDoc.getUuid());
+                analyticNotificationDao.getByAnalyticUuid(analytic.analyticRuleDoc().getUuid());
 
         // Create field index.
-        final SearchRequest searchRequest = analytic.searchRequest;
+        final SearchRequest searchRequest = analytic.searchRequest();
         final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
         final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
         final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(), paramMap);
@@ -487,16 +503,19 @@ public class AnalyticsExecutor {
 
         final List<AnalyticFieldListConsumer> analyticFieldListConsumers = new ArrayList<>(notifications.size());
         for (final AnalyticNotification notification : notifications) {
-            final AnalyticNotificationState analyticNotificationState = getNotificationState(notification);
+            final AnalyticNotificationState analyticNotificationState =
+                    analyticNotificationService.getNotificationState(notification);
             final AnalyticNotificationConfig config = notification.getConfig();
             if (notification.isEnabled() &&
                     config instanceof final AnalyticNotificationStreamConfig streamConfig) {
                 try {
                     final DetectionWriterProxy detectionWriter = detectionWriterProxyProvider.get();
-                    detectionWriter.setAnalyticRuleDoc(analytic.analyticRuleDoc);
+                    detectionWriter.setAnalyticRuleDoc(analytic.analyticRuleDoc());
                     detectionWriter.setCompiledFields(compiledFields);
                     detectionWriter.setFieldIndex(fieldIndex);
-                    detectionWriter.setStreamConfig(streamConfig);
+                    if (!streamConfig.isUseSourceFeedIfPossible()) {
+                        detectionWriter.setDestinationFeed(streamConfig.getDestinationFeed());
+                    }
 
                     final AnalyticFieldListConsumer analyticFieldListConsumer =
                             new EventAnalyticFieldListConsumer(
@@ -513,7 +532,10 @@ public class AnalyticsExecutor {
                     throw e;
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
-                    disableNotification(analytic.ruleIdentity, notification, analyticNotificationState, e.getMessage());
+                    analyticNotificationService.disableNotification(analytic.ruleIdentity(),
+                            notification,
+                            analyticNotificationState,
+                            e.getMessage());
                 }
             }
         }
@@ -524,7 +546,7 @@ public class AnalyticsExecutor {
     private boolean ignoreStream(final LoadedAnalytic analytic,
                                  final Meta meta,
                                  final Map<String, Object> metaAttributeMap) {
-        final AnalyticProcessorFilterTracker tracker = analytic.trackerBuilder.build();
+        final AnalyticProcessorFilterTracker tracker = analytic.trackerBuilder().build();
         final Long lastMetaId = tracker.getLastMetaId();
         final Long lastEventId = tracker.getLastEventId();
 
@@ -536,23 +558,16 @@ public class AnalyticsExecutor {
             minMetaId = getMin(null, lastMetaId);
         }
 
-        final long minCreateTime = getMin(null, analytic.analyticProcessorFilter.getMinMetaCreateTimeMs());
-        final long maxCreateTime = getMax(null, analytic.analyticProcessorFilter.getMaxMetaCreateTimeMs());
+        final long minCreateTime =
+                getMin(null, analytic.analyticProcessorFilter().getMinMetaCreateTimeMs());
+        final long maxCreateTime =
+                getMax(null, analytic.analyticProcessorFilter().getMaxMetaCreateTimeMs());
 
         // Check this analytic should process this meta.
         return meta.getId() < minMetaId ||
                 meta.getCreateMs() < minCreateTime ||
                 meta.getCreateMs() > maxCreateTime ||
-                !metaExpressionMatcher.match(metaAttributeMap, analytic.viewDoc.getFilter());
-    }
-
-    private record LoadedAnalytic(String ruleIdentity,
-                                  AnalyticRuleDoc analyticRuleDoc,
-                                  AnalyticProcessorFilter analyticProcessorFilter,
-                                  AnalyticProcessorFilterTracker.Builder trackerBuilder,
-                                  SearchRequest searchRequest,
-                                  ViewDoc viewDoc) {
-
+                !metaExpressionMatcher.match(metaAttributeMap, analytic.viewDoc().getFilter());
     }
 
     private void deleteOldStores() {
@@ -681,51 +696,25 @@ public class AnalyticsExecutor {
 //            analyticProcessorFilterTrackerDao.update(trackerBuilder.build());
 //        }
 //    }
+//
+//    private void disableFilter(final String ruleIdentity,
+//                               final AnalyticProcessorFilter filter,
+//                               final AnalyticProcessorFilterTracker.Builder trackerBuilder,
+//                               final String message) {
+//        LOGGER.info("Disabling processing for: {}", ruleIdentity);
+//        trackerBuilder.message(message);
+//
+//        try {
+//            final AnalyticProcessorFilter updatedFilter = filter
+//                    .copy()
+//                    .enabled(false)
+//                    .build();
+//            analyticProcessorFilterDao.update(updatedFilter);
+//        } catch (final RuntimeException e) {
+//            LOGGER.error(e::getMessage, e);
+//        }
+//    }
 
-    private void disableFilter(final String ruleIdentity,
-                               final AnalyticProcessorFilter filter,
-                               final AnalyticProcessorFilterTracker.Builder trackerBuilder,
-                               final String message) {
-        LOGGER.info("Disabling processing for: {}", ruleIdentity);
-        trackerBuilder.message(message);
-
-        try {
-            final AnalyticProcessorFilter updatedFilter = filter
-                    .copy()
-                    .enabled(false)
-                    .build();
-            analyticProcessorFilterDao.update(updatedFilter);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-    }
-
-    private void disableNotification(final String ruleIdentity,
-                                     final AnalyticNotification notification,
-                                     final AnalyticNotificationState state,
-                                     final String message) {
-        LOGGER.info("Disabling notification {} for: {}", notification.getUuid(), ruleIdentity);
-
-        try {
-            final AnalyticNotificationState updatedState = state
-                    .copy()
-                    .message(message)
-                    .build();
-            analyticNotificationStateDao.update(updatedState);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-
-        try {
-            final AnalyticNotification updatedNotification = notification
-                    .copy()
-                    .enabled(false)
-                    .build();
-            analyticNotificationDao.update(updatedNotification);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-    }
 
 //    private void processEventAnalytic(final AnalyticRuleDoc analyticRuleDoc,
 //                                      final String ruleIdentity,
@@ -1025,91 +1014,91 @@ public class AnalyticsExecutor {
 
     private void executePostProcessNotifications(final List<LoadedAnalytic> analytics,
                                                  final TaskContext parentTaskContext,
-                                                 final long startTimeMs,
+                                                 final LocalDateTime startTime,
                                                  final List<Meta> metaList) {
         // Execute notifications on LMDB stores and sync.
         for (final LoadedAnalytic analytic : analytics) {
-            if (useLmdb(analytic.analyticRuleDoc)) {
-                final AnalyticDataStore dataStore = analyticDataStores.get(analytic.analyticRuleDoc);
+            if (useLmdb(analytic.analyticRuleDoc())) {
+                final AnalyticDataStore dataStore = analyticDataStores.get(analytic.analyticRuleDoc());
 
                 // Get or create LMDB data store.
                 final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
                 CurrentDbState currentDbState = lmdbDataStore.sync();
 
                 // Remember meta load state.
-                updateTrackerWithLmdbState(analytic.trackerBuilder, currentDbState);
+                updateTrackerWithLmdbState(analytic.trackerBuilder(), currentDbState);
 
                 // Determine if we have processed all of the current data.
                 final boolean uptoDate = allowUpToDateProcessing && metaList.size() < maxMetaListSize;
 
                 // Now execute notifications.
                 executeLmdbNotifications(
-                        analytic.analyticRuleDoc,
-                        analytic.ruleIdentity,
+                        analytic,
                         dataStore,
                         currentDbState,
                         parentTaskContext,
                         uptoDate,
-                        startTimeMs);
+                        startTime);
 
                 // Delete old data from the DB.
-                applyDataRetentionRules(lmdbDataStore, analytic.analyticRuleDoc);
+                applyDataRetentionRules(lmdbDataStore, analytic.analyticRuleDoc());
             }
         }
     }
 
-    private void executeLmdbNotifications(final AnalyticRuleDoc analyticRuleDoc,
-                                          final String ruleIdentity,
+    private void executeLmdbNotifications(final LoadedAnalytic analytic,
                                           final AnalyticDataStore dataStore,
                                           final CurrentDbState currentDbState,
                                           final TaskContext parentTaskContext,
                                           final boolean upToDate,
-                                          final long startTimeMs) {
+                                          final LocalDateTime startTime) {
         final List<AnalyticNotification> notifications =
-                analyticNotificationDao.getByAnalyticUuid(analyticRuleDoc.getUuid());
+                analyticNotificationDao.getByAnalyticUuid(analytic.analyticRuleDoc().getUuid());
         for (final AnalyticNotification notification : notifications) {
             if (notification.isEnabled()) {
-                final AnalyticNotificationState notificationState = getNotificationState(notification);
+                final AnalyticNotificationState notificationState =
+                        analyticNotificationService.getNotificationState(notification);
                 try {
                     executeLmdbNotification(
-                            analyticRuleDoc,
-                            ruleIdentity,
+                            analytic,
                             notification,
                             notificationState,
                             dataStore,
                             currentDbState,
                             parentTaskContext,
                             upToDate,
-                            startTimeMs);
+                            startTime);
                 } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
                     LOGGER.debug(e::getMessage, e);
                     throw e;
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
-                    disableNotification(ruleIdentity, notification, notificationState, e.getMessage());
+                    analyticNotificationService.disableNotification(analytic.ruleIdentity(),
+                            notification,
+                            notificationState,
+                            e.getMessage());
                 }
             }
         }
     }
 
-    private void executeLmdbNotification(final AnalyticRuleDoc analyticRuleDoc,
-                                         final String ruleIdentity,
+    private void executeLmdbNotification(final LoadedAnalytic analytic,
                                          final AnalyticNotification notification,
                                          final AnalyticNotificationState notificationState,
                                          final AnalyticDataStore dataStore,
                                          final CurrentDbState currentDbState,
                                          final TaskContext parentTaskContext,
                                          final boolean upToDate,
-                                         final long startTimeMs) {
+                                         final LocalDateTime startTime) {
         final AnalyticNotificationConfig config = notification.getConfig();
         if (config instanceof final AnalyticNotificationStreamConfig streamConfig) {
             final DocRef feedDocRef = streamConfig.getDestinationFeed();
             if (feedDocRef == null) {
                 throw new RuntimeException("Destination feed not specified for notification in: " +
-                        ruleIdentity);
+                        analytic.ruleIdentity());
             }
 
-            analyticErrorWritingExecutor.exec(
+            analyticErrorWritingExecutor.wrap(
                     "Analytics Aggregate Rule Executor",
                     feedDocRef.getName(),
                     null,
@@ -1120,7 +1109,7 @@ public class AnalyticsExecutor {
                         detectionsWriter.start();
                         try {
                             try {
-                                runNotification(analyticRuleDoc,
+                                runNotification(analytic,
                                         notification,
                                         streamConfig,
                                         notificationState,
@@ -1128,7 +1117,7 @@ public class AnalyticsExecutor {
                                         dataStore,
                                         currentDbState,
                                         upToDate,
-                                        startTimeMs);
+                                        startTime);
                             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
                                 LOGGER.debug(e::getMessage, e);
                                 throw e;
@@ -1139,13 +1128,13 @@ public class AnalyticsExecutor {
                         } finally {
                             detectionsWriter.end();
                         }
-                    });
+                    }).run();
 
         }
 
     }
 
-    private void runNotification(final AnalyticRuleDoc analyticRuleDoc,
+    private void runNotification(final LoadedAnalytic analytic,
                                  final AnalyticNotification notification,
                                  final AnalyticNotificationStreamConfig streamConfig,
                                  final AnalyticNotificationState notificationState,
@@ -1153,51 +1142,33 @@ public class AnalyticsExecutor {
                                  final AnalyticDataStore dataStore,
                                  final CurrentDbState currentDbState,
                                  final boolean upToDate,
-                                 final long startTimeMs) {
+                                 final LocalDateTime startTime) {
+
+        final Optional<LocalDateTime> lastEventTime = Optional
+                .ofNullable(currentDbState)
+                .map(CurrentDbState::getLastEventTime)
+                .map(time -> LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneOffset.UTC));
 
         SearchRequest searchRequest = dataStore.searchRequest();
         final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
-        final QueryKey queryKey = analyticRuleDoc.getQueryKey();
-        final SimpleDuration timeToWaitForData = streamConfig.getTimeToWaitForData();
-        final Long lastTime = notificationState.getLastExecutionTime();
-        final LocalDateTime from;
-        if (lastTime == null) {
-            // Execute from the beginning of time as this hasn't executed before.
-            from = BEGINNING_OF_TIME;
-        } else {
-            // Get the last time we executed plus one millisecond as this will be the start of the new window.
-            from = LocalDateTime.ofInstant(Instant.ofEpochMilli(lastTime), ZoneOffset.UTC).plus(Duration.ofMillis(1));
-        }
+        final QueryKey queryKey = analytic.analyticRuleDoc().getQueryKey();
+        final Optional<TimeFilter> optionalTimeFilter = analytic.createTimeFilter(
+                streamConfig,
+                notificationState,
+                upToDate,
+                startTime,
+                lastEventTime);
 
-        // Execute up to most recent data minus the time to wait for data to arrive.
-        LocalDateTime to;
-
-        // If the current processing is up-to-date then use the processing start time as the basis for the window end.
-        if (upToDate) {
-            to = LocalDateTime.ofInstant(Instant.ofEpochMilli(startTimeMs), ZoneOffset.UTC);
-        } else {
-            to = Optional
-                    .ofNullable(currentDbState)
-                    .map(CurrentDbState::getLastEventTime)
-                    .map(time -> LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneOffset.UTC))
-                    .orElse(BEGINNING_OF_TIME);
-        }
-
-        // Subtract the waiting period from the window end.
-        to = SimpleDurationUtil.minus(to, timeToWaitForData);
-
-        if (to.isAfter(from)) {
+        if (optionalTimeFilter.isPresent()) {
             // Create a time filter.
-            final TimeFilter timeFilter = new TimeFilter(
-                    from.toInstant(ZoneOffset.UTC).toEpochMilli(),
-                    to.toInstant(ZoneOffset.UTC).toEpochMilli());
+            final TimeFilter timeFilter = optionalTimeFilter.get();
 
             searchRequest = searchRequest.copy().key(queryKey).incremental(true).build();
             // Perform the search.
             ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
             resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
             final TableResultConsumer tableResultConsumer =
-                    new TableResultConsumer(analyticRuleDoc, detectionConsumer);
+                    new TableResultConsumer(analytic.analyticRuleDoc(), detectionConsumer);
 
             final FieldFormatter fieldFormatter =
                     new FieldFormatter(new FormatterFactory(null));
@@ -1213,9 +1184,9 @@ public class AnalyticsExecutor {
 
             // Remember last successful execution time.
             final AnalyticNotificationState newState = notificationState.copy()
-                    .lastExecutionTime(to.toInstant(ZoneOffset.UTC).toEpochMilli())
+                    .lastExecutionTime(timeFilter.getTo())
                     .build();
-            updateNotificationState(newState);
+            analyticNotificationService.updateNotificationState(newState);
         }
     }
 
@@ -1324,27 +1295,6 @@ public class AnalyticsExecutor {
                 .orElseThrow(() -> new RuntimeException("Unable to load tracker"));
 //        ruleStateCache.put(analyticProcessorFilter.analyticUuid(), analyticProcessorFilter);
         return tracker;
-    }
-
-    private AnalyticNotificationState getNotificationState(final AnalyticNotification notification) {
-        Optional<AnalyticNotificationState> optionalAnalyticNotificationState =
-                analyticNotificationStateDao.get(notification.getUuid());
-        while (optionalAnalyticNotificationState.isEmpty()) {
-            final AnalyticNotificationState state = AnalyticNotificationState.builder()
-                    .notificationUuid(notification.getUuid())
-                    .build();
-            analyticNotificationStateDao.create(state);
-            optionalAnalyticNotificationState = analyticNotificationStateDao.get(notification.getUuid());
-        }
-        return optionalAnalyticNotificationState.get();
-    }
-
-    private AnalyticNotificationState updateNotificationState(AnalyticNotificationState state) {
-        analyticNotificationStateDao.update(state);
-        state = analyticNotificationStateDao.get(state.getNotificationUuid())
-                .orElseThrow(() -> new RuntimeException("Unable to load notification state"));
-//        ruleStateCache.put(analyticProcessorFilter.analyticUuid(), analyticProcessorFilter);
-        return state;
     }
 
     private boolean useLmdb(final AnalyticRuleDoc analyticRuleDoc) {

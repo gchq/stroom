@@ -65,6 +65,7 @@ public class ExtractionDecorator {
     private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
+    private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final QueryKey queryKey;
 
     private final Map<DocRef, PipelineData> pipelineDataMap = new ConcurrentHashMap<>();
@@ -83,6 +84,7 @@ public class ExtractionDecorator {
                         final PipelineDataCache pipelineDataCache,
                         final Provider<ExtractionTaskHandler> handlerProvider,
                         final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
+                        final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                         final QueryKey queryKey) {
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
@@ -95,6 +97,7 @@ public class ExtractionDecorator {
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
         this.valueConsumerHolderProvider = valueConsumerHolderProvider;
+        this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.queryKey = queryKey;
 
         // Create a queue to receive values and store them for asynchronous processing.
@@ -334,6 +337,12 @@ public class ExtractionDecorator {
                             valueConsumerHolder.setQueryKey(queryKey);
                             valueConsumerHolder.setFieldIndex(receiver.fieldIndex);
                             valueConsumerHolder.setReceiver(receiver.valuesConsumer);
+
+                            final StandardFieldListConsumer fieldListConsumer = new StandardFieldListConsumer();
+                            fieldListConsumer.setQueryKey(queryKey);
+                            fieldListConsumer.setFieldIndex(receiver.fieldIndex);
+                            fieldListConsumer.setReceiver(receiver.valuesConsumer);
+                            fieldListConsumerHolderProvider.get().setFieldListConsumer(fieldListConsumer);
 
                             return handler.extract(
                                     taskContext,

@@ -4,7 +4,8 @@ import stroom.docref.HasDisplayValue;
 
 public enum AnalyticRuleType implements HasDisplayValue {
     EVENT("Event"),
-    AGGREGATE("Aggregate");
+    AGGREGATE("Aggregate"),
+    BATCH_QUERY("Batch Query");
 
     private final String displayValue;
 

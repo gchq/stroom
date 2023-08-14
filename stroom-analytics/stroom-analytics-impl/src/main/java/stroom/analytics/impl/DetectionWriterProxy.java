@@ -3,13 +3,13 @@ package stroom.analytics.impl;
 import stroom.analytics.impl.DetectionConsumer.Detection;
 import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
 import stroom.analytics.impl.DetectionConsumer.Value;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.common.v2.CompiledField;
@@ -36,7 +36,7 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final FieldFormatter fieldFormatter;
     private final Provider<DetectionsWriter> detectionsWriterProvider;
-    private AnalyticNotificationStreamConfig streamConfig;
+    private DocRef destinationFeed;
 //    private final String additionalFieldsPrefix;
 //    private final boolean outputIndexFields;
 
@@ -64,9 +64,7 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
     private DetectionConsumer getDetectionConsumer() {
         if (detectionConsumer == null) {
             final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
-            if (!streamConfig.isUseSourceFeedIfPossible()) {
-                detectionsWriter.setFeed(streamConfig.getDestinationFeed());
-            }
+            detectionsWriter.setFeed(destinationFeed);
             detectionConsumer = detectionsWriter;
         }
         return detectionConsumer;
@@ -96,13 +94,9 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
         this.fieldIndex = fieldIndex;
     }
 
-    public void setStreamConfig(final AnalyticNotificationStreamConfig streamConfig) {
-        this.streamConfig = streamConfig;
+    public void setDestinationFeed(final DocRef destinationFeed) {
+        this.destinationFeed = destinationFeed;
     }
-
-    //    public void setDetectionConsumer(final DetectionConsumer detectionConsumer) {
-//        this.detectionConsumer = detectionConsumer;
-//    }
 
     @Override
     public void accept(final Val[] values) {

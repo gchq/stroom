@@ -6933,6 +6933,7 @@ components:
           enum:
           - EVENT
           - AGGREGATE
+          - BATCH_QUERY
         createTimeMs:
           type: integer
           format: int64
@@ -12286,6 +12287,7 @@ components:
           type: string
           enum:
           - ANALYTIC_RULE
+          - BATCH_ANALYTIC_RULE
           - ANALYTIC_RULE_UI
           - DASHBOARD_UI
           - QUERY_UI

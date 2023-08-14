@@ -41,11 +41,8 @@ import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
@@ -62,7 +59,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.UUID;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -280,15 +276,32 @@ class TestAnalytics extends StroomIntegrationTest {
         basicTest(query, 9, 6);
     }
 
+    @Test
+    void testSingleEventBatch() {
+        // Add alert
+        final String query = """
+                from index_view
+                where UserId = user5
+                select StreamId, EventId, UserId""";
+        basicTest(query, 9, 6, AnalyticRuleType.BATCH_QUERY);
+    }
+
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {
+        basicTest(query, expectedStreams, expectedRecords, AnalyticRuleType.EVENT);
+    }
+
+    private void basicTest(final String query,
+                           final int expectedStreams,
+                           final int expectedRecords,
+                           final AnalyticRuleType analyticRuleType) {
         final DocRef alertRuleDocRef = analyticRuleStore.createDocument("Threshold Event Rule");
         AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(alertRuleDocRef);
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.EVENT)
+                .analyticRuleType(analyticRuleType)
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
@@ -331,7 +344,7 @@ class TestAnalytics extends StroomIntegrationTest {
         final AnalyticNotificationConfig config = AnalyticNotificationStreamConfig.builder()
                 .timeToWaitForData(SimpleDuration.builder().time(timeToWaitSeconds).timeUnit(TimeUnit.SECONDS).build())
                 .destinationFeed(detections)
-                .useSourceFeedIfPossible(true)
+                .useSourceFeedIfPossible(false)
                 .build();
         final AnalyticNotification notification = AnalyticNotification.builder()
                 .version(1)
