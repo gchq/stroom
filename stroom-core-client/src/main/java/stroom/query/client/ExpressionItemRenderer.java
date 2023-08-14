@@ -100,7 +100,17 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
         }
 
         if (widget == null) {
-            widget = new Label(item.toString(), false);
+            final Label label = new Label(item.toString(), false);
+            label.addStyleName("expressionItemBox-label");
+
+            final FlowPanel inner = new FlowPanel();
+            inner.setStyleName("termEditor-inner");
+            inner.add(label);
+
+            final FlowPanel layout = new FlowPanel();
+            layout.add(inner);
+            layout.setStyleName("termEditor-outer");
+            widget = layout;
         }
 
         box.setInnerWidget(widget);

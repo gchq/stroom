@@ -31,6 +31,8 @@ public class DownloadSearchResultsRequest {
     @JsonProperty
     private final DownloadSearchResultFileType fileType;
     @JsonProperty
+    private final boolean downloadAllTables;
+    @JsonProperty
     private final boolean sample;
     @JsonProperty
     private final int percent;
@@ -39,11 +41,13 @@ public class DownloadSearchResultsRequest {
     public DownloadSearchResultsRequest(@JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
                                         @JsonProperty("componentId") final String componentId,
                                         @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
+                                        @JsonProperty("downloadAllTables") final boolean downloadAllTables,
                                         @JsonProperty("sample") final boolean sample,
                                         @JsonProperty("percent") final int percent) {
         this.searchRequest = searchRequest;
         this.componentId = componentId;
         this.fileType = fileType;
+        this.downloadAllTables = downloadAllTables;
         this.sample = sample;
         this.percent = percent;
     }
@@ -58,6 +62,10 @@ public class DownloadSearchResultsRequest {
 
     public DownloadSearchResultFileType getFileType() {
         return fileType;
+    }
+
+    public boolean isDownloadAllTables() {
+        return downloadAllTables;
     }
 
     public boolean isSample() {

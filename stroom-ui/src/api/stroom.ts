@@ -960,6 +960,7 @@ export interface DocumentType {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -1143,6 +1144,7 @@ export interface DownloadQueryResultsRequest {
 
 export interface DownloadSearchResultsRequest {
   componentId?: string;
+  downloadAllTables?: boolean;
   fileType?: "EXCEL" | "CSV" | "TSV";
 
   /** @format int32 */
@@ -1299,6 +1301,7 @@ export interface ExplorerDocContentMatch {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -1477,6 +1480,7 @@ export interface ExplorerNode {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -2624,6 +2628,20 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeMonitoringConfig {
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingMaxThreshold?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingWarnThreshold?: number;
+}
+
 export interface NodeSearchTask {
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
@@ -2804,6 +2822,7 @@ export interface PipelineElementType {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -4343,6 +4362,13 @@ export interface TableComponentSettings {
    */
   maxResults?: number[];
 
+  /**
+   * Defines the maximum number of rows to display in the table at once (default 100).
+   * @format int32
+   * @example 100
+   */
+  pageSize?: number;
+
   /** TODO */
   queryId: string;
   showDetail?: boolean;
@@ -4358,6 +4384,7 @@ export type TableResult = Result & { fields?: Field[]; resultRange?: OffsetRange
 export type TableResultRequest = ComponentResultRequest & {
   openGroups?: string[];
   requestedRange?: OffsetRange;
+  tableName?: string;
   tableSettings?: TableSettings;
 };
 
@@ -4552,6 +4579,7 @@ export interface UiConfig {
   htmlTitle?: string;
   maintenanceMessage?: string;
   namePattern?: string;
+  nodeMonitoring?: NodeMonitoringConfig;
 
   /** @pattern ^return (true|false);$ */
   oncontextmenu?: string;
@@ -4626,6 +4654,7 @@ export interface UserPreferences {
   dateTimePattern?: string;
   density?: string;
   editorKeyBindings?: "STANDARD" | "VIM";
+  editorLiveAutoCompletion?: "ON" | "OFF";
   editorTheme?: string;
   font?: string;
   fontSize?: string;
@@ -5949,7 +5978,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/authentication/v1/noauth/logout
      * @secure
      */
-    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+    logout: (query: { post_logout_redirect_uri: string; state: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/authentication/v1/noauth/logout`,
         method: "GET",

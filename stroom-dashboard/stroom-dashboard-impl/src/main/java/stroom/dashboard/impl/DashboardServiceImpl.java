@@ -28,7 +28,6 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.StoredQuery;
@@ -40,18 +39,22 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.Row;
+import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableResultBuilder;
+import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
+import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
+import stroom.query.common.v2.TableResultCreator;
+import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -79,12 +82,13 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
@@ -179,17 +183,14 @@ class DashboardServiceImpl implements DashboardService {
                             .forEach(componentResultRequest -> {
 
                                 ComponentResultRequest newRequest = null;
-                                if (componentResultRequest instanceof TableResultRequest) {
-                                    final TableResultRequest tableResultRequest =
-                                            (TableResultRequest) componentResultRequest;
+                                if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
                                     // Remove special fields.
                                     tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
                                     newRequest = tableResultRequest
                                             .copy()
                                             .fetch(Fetch.ALL)
                                             .build();
-                                } else if (componentResultRequest instanceof VisResultRequest) {
-                                    final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
+                                } else if (componentResultRequest instanceof final VisResultRequest visResultRequest) {
                                     newRequest = visResultRequest
                                             .copy()
                                             .fetch(Fetch.ALL)
@@ -224,76 +225,114 @@ class DashboardServiceImpl implements DashboardService {
         });
     }
 
-
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
         return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
-            ResourceKey resourceKey;
-
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
-            final Search search = searchRequest.getSearch();
-            Integer rowCount = null;
+            ResourceKey resourceKey;
+            long totalRowCount = 0;
 
             try {
                 if (queryKey == null) {
                     throw new EntityServiceException("No query is active");
                 }
 
+                final Map<String, TableResultRequest> tableRequestMap = request
+                        .getSearchRequest()
+                        .getComponentResultRequests()
+                        .stream()
+                        .filter(req -> req instanceof TableResultRequest)
+                        .filter(req -> request.isDownloadAllTables() ||
+                                req.getComponentId().equals(request.getComponentId()))
+                        .collect(Collectors.toMap(
+                                ComponentResultRequest::getComponentId,
+                                req -> (TableResultRequest) req));
+
                 SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
-                SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
+                final List<ResultRequest> resultRequests = mappedRequest
+                        .getResultRequests()
+                        .stream()
+                        .filter(req -> ResultStyle.TABLE.equals(req.getResultStyle()))
+                        .filter(req -> request.isDownloadAllTables() ||
+                                req.getComponentId().equals(request.getComponentId()))
+                        .toList();
 
-                if (searchResponse == null || searchResponse.getResults() == null) {
-                    throw new EntityServiceException("No results can be found");
+                if (resultRequests.size() == 0) {
+                    throw new EntityServiceException("No tables specified for download");
                 }
 
-                Result result = null;
-                for (final Result res : searchResponse.getResults()) {
-                    if (res.getComponentId().equals(request.getComponentId())) {
-                        result = res;
-                        break;
-                    }
-                }
-
-                if (result == null) {
-                    throw new EntityServiceException("No result for component can be found");
-                }
-
-                if (!(result instanceof TableResult)) {
-                    throw new EntityServiceException("Result is not a table");
-                }
-
-                final TableResult tableResult = (TableResult) result;
+                final RequestAndStore requestAndStore = searchResponseCreatorManager
+                        .getResultStore(mappedRequest);
 
                 // Import file.
-                String fileName = getResultsFilename(request);
-
+                final String fileName = getResultsFilename(request);
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final Optional<ComponentResultRequest> optional = searchRequest.getComponentResultRequests()
-                        .stream()
-                        .filter(r -> r.getComponentId().equals(request.getComponentId()))
-                        .findFirst();
-                if (optional.isEmpty()) {
-                    throw new EntityServiceException("No component result request found");
+                final FieldFormatter fieldFormatter =
+                        new FieldFormatter(
+                                new FormatterFactory(searchRequest.getDateTimeSettings()));
+
+                // Start target
+                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
+                    SearchResultWriter.Target target = null;
+
+                    // Write delimited file.
+                    switch (request.getFileType()) {
+                        case CSV:
+                            target = new DelimitedTarget(outputStream, ",");
+                            break;
+                        case TSV:
+                            target = new DelimitedTarget(outputStream, "\t");
+                            break;
+                        case EXCEL:
+                            target = new ExcelTarget(outputStream, searchRequest.getDateTimeSettings());
+                            break;
+                    }
+
+                    try {
+                        target.start();
+
+                        for (final ResultRequest resultRequest : resultRequests) {
+                            final TableResultRequest tableResultRequest =
+                                    tableRequestMap.get(resultRequest.getComponentId());
+                            try {
+                                target.startTable(tableResultRequest.getTableName());
+
+                                final SampleGenerator sampleGenerator =
+                                        new SampleGenerator(request.isSample(), request.getPercent());
+                                final SearchResultWriter searchResultWriter = new SearchResultWriter(
+                                        sampleGenerator,
+                                        target);
+                                final TableResultCreator tableResultCreator =
+                                        new TableResultCreator(fieldFormatter) {
+                                            @Override
+                                            public TableResultBuilder createTableResultBuilder() {
+                                                return searchResultWriter;
+                                            }
+                                        };
+
+                                final Map<String, ResultCreator> resultCreatorMap =
+                                        Map.of(resultRequest.getComponentId(), tableResultCreator);
+                                searchResponseCreatorManager.search(requestAndStore, resultCreatorMap);
+                                totalRowCount += searchResultWriter.getRowCount();
+
+                            } finally {
+                                target.endTable();
+                            }
+                        }
+                    } finally {
+                        target.end();
+                    }
+
+                } catch (final IOException e) {
+                    throw EntityServiceExceptionUtil.create(e);
                 }
 
-                if (!(optional.get() instanceof TableResultRequest)) {
-                    throw new EntityServiceException("Component result request is not a table");
-                }
-
-                final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
-                final List<Field> fields = tableResultRequest.getTableSettings().getFields();
-                final List<Row> rows = tableResult.getRows();
-                rowCount = tableResult.getTotalResults();
-
-                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent(),
-                        searchRequest.getDateTimeSettings());
-
-                searchEventLog.downloadResults(request, rowCount);
+                searchEventLog.downloadResults(request, totalRowCount);
             } catch (final RuntimeException e) {
-                searchEventLog.downloadResults(request, rowCount, e);
+                searchEventLog.downloadResults(request, totalRowCount, e);
                 throw EntityServiceExceptionUtil.create(e);
             }
 
@@ -327,38 +366,6 @@ class DashboardServiceImpl implements DashboardService {
         fileName = fileName.replace(" ", "_");
         fileName = fileName + "." + extension;
         return fileName;
-    }
-
-    private void download(final List<Field> fields,
-                          final List<Row> rows,
-                          final Path file,
-                          final DownloadSearchResultFileType fileType,
-                          final boolean sample,
-                          final int percent,
-                          final DateTimeSettings dateTimeSettings) {
-        try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-            SearchResultWriter.Target target = null;
-
-            // Write delimited file.
-            switch (fileType) {
-                case CSV:
-                    target = new DelimitedTarget(outputStream, ",");
-                    break;
-                case TSV:
-                    target = new DelimitedTarget(outputStream, "\t");
-                    break;
-                case EXCEL:
-                    target = new ExcelTarget(outputStream, dateTimeSettings);
-                    break;
-            }
-
-            final SampleGenerator sampleGenerator = new SampleGenerator(sample, percent);
-            final SearchResultWriter searchResultWriter = new SearchResultWriter(fields, rows, sampleGenerator);
-            searchResultWriter.write(target);
-
-        } catch (final IOException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        }
     }
 
     @Override

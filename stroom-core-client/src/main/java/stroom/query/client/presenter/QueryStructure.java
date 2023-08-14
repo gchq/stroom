@@ -38,7 +38,8 @@ public class QueryStructure implements HasHandlers {
     private final UiConfigCache uiConfigCache;
     private final MarkdownConverter markdownConverter;
 
-    private List<StructureQueryHelpItem> items;
+
+    private List<StructureQueryHelpItem> orphanedItems;
     private ThemeType themeType = null;
 
 
@@ -58,22 +59,24 @@ public class QueryStructure implements HasHandlers {
             final Consumer<List<StructureQueryHelpItem>> consumer) {
         // Theme is baked into the html due to the way prism works, so we need to rebuild
         // if the theme has changed
-        if (items != null && !hasThemeChanged()) {
-            consumer.accept(items);
+        if (GwtNullSafe.hasItems(orphanedItems) && !hasThemeChanged()) {
+            // Build a new list of items attaching each to the new parent
+            consumer.accept(cloneWithNewParent(parent, orphanedItems));
         } else {
             fetchHelpUrl(helpUrl -> {
                 final Rest<List<StructureElement>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {
-                            items = result
+                            orphanedItems = result
                                     .stream()
                                     .map(structureElement -> {
                                         final SafeHtml detailHtml = buildDescriptionHtml(
                                                 structureElement.getDescription());
 
-                                        // ctor adds the item to its parent
+                                        // No parent at this point as we want to hold these
+                                        // items for other many callers to re-use
                                         return new StructureQueryHelpItem(
-                                                parent,
+                                                null,
                                                 structureElement.getTitle(),
                                                 detailHtml,
                                                 structureElement.getSnippets(),
@@ -83,7 +86,7 @@ public class QueryStructure implements HasHandlers {
                             // Not the theme type in use when we built, so we can see if a rebuild is needed
                             // in future
                             themeType = markdownConverter.geCurrentThemeType();
-                            consumer.accept(items);
+                            consumer.accept(cloneWithNewParent(parent, orphanedItems));
                         })
                         .onFailure(throwable -> AlertEvent.fireError(
                                 this,
@@ -93,6 +96,13 @@ public class QueryStructure implements HasHandlers {
                         .fetchStructureElements();
             });
         }
+    }
+
+    private List<StructureQueryHelpItem> cloneWithNewParent(final QueryHelpItem parent,
+                                                      final List<StructureQueryHelpItem> items) {
+        return GwtNullSafe.stream(items)
+                .map(item -> item.withNewParent(parent))
+                .collect(Collectors.toList());
     }
 
     private SafeHtml buildDescriptionHtml(final String description) {
@@ -145,6 +155,15 @@ public class QueryStructure implements HasHandlers {
             super(parent, title, false);
             this.detail = buildDetailHtml(title, detail, helpUrl);
             this.snippets = new ArrayList<>(snippets);
+        }
+
+        private StructureQueryHelpItem(final QueryHelpItem parent,
+                                      final String title,
+                                      final SafeHtml detail,
+                                      final List<String> snippets) {
+            super(parent, title, false);
+            this.detail = detail;
+            this.snippets = snippets;
         }
 
         private static SafeHtml buildDetailHtml(final String title,
@@ -208,6 +227,10 @@ public class QueryStructure implements HasHandlers {
 
         public List<String> getSnippets() {
             return snippets;
+        }
+
+        public StructureQueryHelpItem withNewParent(final QueryHelpItem newParent) {
+            return new StructureQueryHelpItem(newParent, title, detail, snippets);
         }
     }
 }

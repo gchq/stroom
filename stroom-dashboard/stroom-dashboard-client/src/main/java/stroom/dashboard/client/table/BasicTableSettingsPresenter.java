@@ -100,6 +100,14 @@ public class BasicTableSettingsPresenter
         getView().setMaxResults(maxResults);
     }
 
+    private int getPageSize() {
+        return getView().getPageSize();
+    }
+
+    private void setPageSize(final int pageSize) {
+        getView().setPageSize(pageSize);
+    }
+
     private boolean showDetail() {
         return getView().isShowDetail();
     }
@@ -120,6 +128,10 @@ public class BasicTableSettingsPresenter
         setExtractValues(settings.extractValues());
         setPipeline(settings.getExtractionPipeline());
         setMaxResults(fromList(settings.getMaxResults()));
+        setPageSize(settings.getPageSize() != null
+                ? settings.getPageSize()
+                : 100);
+
         setShowDetail(settings.showDetail());
     }
 
@@ -138,6 +150,7 @@ public class BasicTableSettingsPresenter
                 .extractValues(extractValues())
                 .extractionPipeline(getPipeline())
                 .maxResults(toList(getMaxResults()))
+                .pageSize(getPageSize())
                 .showDetail(showDetail())
                 .build();
     }
@@ -155,6 +168,7 @@ public class BasicTableSettingsPresenter
                 Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
                 Objects.equals(oldSettings.getExtractionPipeline(), newSettings.getExtractionPipeline()) &&
                 Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
+                Objects.equals(oldSettings.getPageSize(), newSettings.getPageSize()) &&
                 Objects.equals(oldSettings.getShowDetail(), newSettings.getShowDetail());
 
         return !equal;
@@ -210,6 +224,10 @@ public class BasicTableSettingsPresenter
         String getMaxResults();
 
         void setMaxResults(String maxResults);
+
+        int getPageSize();
+
+        void setPageSize(int pageSize);
 
         boolean isShowDetail();
 

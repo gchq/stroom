@@ -11,24 +11,25 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class SizesProviderImpl implements SizesProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SizesProviderImpl.class);
 
-    private final UiConfig uiConfig;
+    private final Provider<UiConfig> uiConfigProvider;
     private final SearchResultStoreConfig searchConfig;
 
     @Inject
-    public SizesProviderImpl(final UiConfig uiConfig,
+    public SizesProviderImpl(final Provider<UiConfig> uiConfigProvider,
                              final SearchResultStoreConfig searchConfig) {
-        this.uiConfig = uiConfig;
+        this.uiConfigProvider = uiConfigProvider;
         this.searchConfig = searchConfig;
     }
 
     @Override
     public Sizes getDefaultMaxResultsSizes() {
-        return extractValues(uiConfig.getDefaultMaxResults());
+        return extractValues(uiConfigProvider.get().getDefaultMaxResults());
     }
 
     @Override

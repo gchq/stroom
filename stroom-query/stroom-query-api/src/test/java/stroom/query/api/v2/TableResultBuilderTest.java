@@ -48,6 +48,6 @@ class TableResultBuilderTest {
                 assertThat(row.getGroupKey().startsWith("rowGroup")).isTrue()
         ).count();
         assertThat(rowCount).isEqualTo((long) numberResults);
-        assertThat(tableResult.getTotalResults()).isEqualTo(numberResults);
+        assertThat(tableResult.getTotalResults().intValue()).isEqualTo(numberResults);
     }
 }

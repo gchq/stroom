@@ -1,13 +1,16 @@
 package stroom.editor.client.presenter;
 
+import stroom.ui.config.shared.UserPreferences.Toggle;
+
 import javax.inject.Singleton;
 
 @Singleton
-public class CurrentTheme {
+public class CurrentPreferences {
 
     private String theme;
     private String editorTheme;
     private String editorKeyBindings;
+    private Toggle editorLiveAutoCompletion;
 
     public String getTheme() {
         return theme;
@@ -21,6 +24,10 @@ public class CurrentTheme {
         return editorKeyBindings;
     }
 
+    public Toggle getEditorLiveAutoCompletion() {
+        return editorLiveAutoCompletion;
+    }
+
     public void setTheme(final String theme) {
         this.theme = theme;
     }
@@ -31,5 +38,9 @@ public class CurrentTheme {
 
     public void setEditorKeyBindings(final String editorKeyBindings) {
         this.editorKeyBindings = editorKeyBindings;
+    }
+
+    public void setEditorLiveAutoCompletion(final Toggle editorLiveAutoCompletion) {
+        this.editorLiveAutoCompletion = editorLiveAutoCompletion;
     }
 }

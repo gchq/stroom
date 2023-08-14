@@ -30,7 +30,8 @@ import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -108,12 +109,9 @@ public class FieldsManager implements HeadingListener {
                                 element = element.getParentElement();
                             }
 
-                            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                                    target.getAbsoluteRight(),
-                                    target.getAbsoluteTop(),
-                                    target.getAbsoluteBottom(),
-                                    null,
-                                    VerticalLocation.BELOW);
+                            Rect relativeRect = new Rect(element);
+                            relativeRect = relativeRect.grow(3);
+                            final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
 
                             ShowMenuEvent
                                     .builder()

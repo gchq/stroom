@@ -65,8 +65,7 @@ public class SearchExpressionQueryBuilder {
     public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final Map<String, ElasticIndexField> indexFieldsMap,
                                         final DateTimeSettings dateTimeSettings,
-                                        final long nowEpochMilli
-    ) {
+                                        final long nowEpochMilli) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.dateTimeSettings = dateTimeSettings;
@@ -133,9 +132,7 @@ public class SearchExpressionQueryBuilder {
         }
         final ElasticIndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
-            // Ignore missing fields.
-            return null;
-//            throw new ResourceNotFoundException("Field not found in index: " + field);
+            throw new SearchException("Field not found in index: " + field);
         }
         final String fieldName = indexField.getFieldName();
 
@@ -229,8 +226,9 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY -> {
                     return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 }
-                default -> throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldUse().getDisplayValue() + " field type");
+                default -> throw new UnsupportedOperationException("Unsupported condition '" +
+                        condition.getDisplayValue() + "' for " + indexField.getFieldUse().getDisplayValue() +
+                        " field type");
             }
         }
     }
@@ -321,7 +319,7 @@ public class SearchExpressionQueryBuilder {
             case IN_DICTIONARY -> {
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
             }
-            default -> throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
+            default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                     indexField.getFieldUse().getDisplayValue() + " field type");
         }
     }

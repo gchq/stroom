@@ -18,7 +18,7 @@ public interface LmdbRowKeyFactory {
      * @return A new LMDB row key.
      */
     ByteBuffer create(int depth,
-                      long parentGroupHash,
+                      ByteBuffer parentRowKey,
                       long groupHash,
                       long timeMs);
 

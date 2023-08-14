@@ -340,13 +340,7 @@
 	opacity: .3 !important;
 }
 
-.tooltip {
-    border: 1px solid var(--dialog__border-color);
-    border-radius: 6px;
-    background-color: var(--tooltip__background-color);
-    box-shadow: var(--dialog__shadow);
-
-	padding: 1px 3px;
+.info-tooltip {
 	-moz-user-focus: initial;
 	-moz-user-input: initial;
 	-webkit-user-focus: initial;
@@ -364,7 +358,7 @@
   	opacity: 1;
 }
 
-.tooltip table {
+.info-tooltip table {
     white-space: pre;
     table-layout: fixed;
 }
@@ -607,11 +601,10 @@
 
 .pager-textBox {
     display: inline-block;
-    width: 30px;
-    height: 14px;
+    width: 42px;
+    height: 22px;
     padding: 0;
     margin: 0;
-    margin-top: 2px;
     border: none;
 }
 
@@ -675,11 +668,11 @@
     padding-left: 0.25em;
 }
 
-/*
 .dataViewImpl-layerContainer {
-    position: relative;
+    /* To make the info pane fit the remaining space in the parent rather
+    than 100% of the content */
+    height: 0px;
 }
-*/
 
 .dataViewImpl-sourceLinkLabel {
 }
@@ -1679,9 +1672,12 @@ button.main-menu svg {
     color: var(--heading-color);
     font-weight: bold;
     font-size: 125%;
-    height: 2.5em;
-    vertical-align: bottom;
     padding-bottom: 0.3em;
+}
+
+/* Make headers after the first add padding before */
+.infoTable tr:not(:first-of-type) th {
+    padding-top: 1rem;
 }
 
 .infoTable th, .infoTable td {
@@ -1738,12 +1734,25 @@ button.main-menu svg {
      height: 100%;
 }
 
-.nodePingBar-bar__healthy {
-     background-color: rgba(33, 150, 243, 0.6);
+.nodePingBar-bar.nodePingBar-severity__healthy {
+     background-color: var(--primary);
 }
 
-.nodePingBar-bar__unhealthy {
-     background-color: rgba(255, 111, 0, 0.6);
+.nodePingBar-bar.nodePingBar-severity__warn {
+     background-color: var(--warning);
+}
+
+.nodePingBar-bar.nodePingBar-severity__max {
+     background-color: var(--danger);
+}
+
+.nodePingBar-severity__healthy .nodePingBar-text {
+     color: var(--white);
+}
+
+.nodePingBar-severity__warn .nodePingBar-text,
+.nodePingBar-severity__max .nodePingBar-text {
+     color: var(--black);
 }
 
 .nodePingBar-text {

@@ -56,6 +56,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -211,9 +212,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         // Info column.
         final InfoColumn<ProcessorListRow> infoColumn = new InfoColumn<ProcessorListRow>() {
             @Override
-            protected void showInfo(final ProcessorListRow row, final int x, final int y) {
+            protected void showInfo(final ProcessorListRow row, final PopupPosition popupPosition) {
                 final SafeHtml safeHtml = processorInfoBuilder.get(row);
-                tooltipPresenter.show(safeHtml, x, y);
+                tooltipPresenter.show(safeHtml, popupPosition);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

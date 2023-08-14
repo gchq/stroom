@@ -461,9 +461,9 @@ class stroom.query.api.v2.OffsetRange - public final native void java.lang.Objec
 class stroom.query.api.v2.OffsetRange - public final void java.lang.Object.wait() throws java.lang.InterruptedException
 class stroom.query.api.v2.OffsetRange - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
 class stroom.query.api.v2.OffsetRange - public int stroom.query.api.v2.OffsetRange.hashCode()
-class stroom.query.api.v2.OffsetRange - public java.lang.Long stroom.query.api.v2.OffsetRange.getLength()
-class stroom.query.api.v2.OffsetRange - public java.lang.Long stroom.query.api.v2.OffsetRange.getOffset()
 class stroom.query.api.v2.OffsetRange - public java.lang.String stroom.query.api.v2.OffsetRange.toString()
+class stroom.query.api.v2.OffsetRange - public long stroom.query.api.v2.OffsetRange.getLength()
+class stroom.query.api.v2.OffsetRange - public long stroom.query.api.v2.OffsetRange.getOffset()
 class stroom.query.api.v2.OffsetRange - public static stroom.query.api.v2.OffsetRange$Builder stroom.query.api.v2.OffsetRange.builder()
 class stroom.query.api.v2.OffsetRange - public stroom.query.api.v2.OffsetRange$Builder stroom.query.api.v2.OffsetRange.copy()
 class stroom.query.api.v2.OffsetRange$Builder - public boolean java.lang.Object.equals(java.lang.Object)
@@ -476,8 +476,8 @@ class stroom.query.api.v2.OffsetRange$Builder - public final void java.lang.Obje
 class stroom.query.api.v2.OffsetRange$Builder - public java.lang.String java.lang.Object.toString()
 class stroom.query.api.v2.OffsetRange$Builder - public native int java.lang.Object.hashCode()
 class stroom.query.api.v2.OffsetRange$Builder - public stroom.query.api.v2.OffsetRange stroom.query.api.v2.OffsetRange$Builder.build()
-class stroom.query.api.v2.OffsetRange$Builder - public stroom.query.api.v2.OffsetRange$Builder stroom.query.api.v2.OffsetRange$Builder.length(java.lang.Long)
-class stroom.query.api.v2.OffsetRange$Builder - public stroom.query.api.v2.OffsetRange$Builder stroom.query.api.v2.OffsetRange$Builder.offset(java.lang.Long)
+class stroom.query.api.v2.OffsetRange$Builder - public stroom.query.api.v2.OffsetRange$Builder stroom.query.api.v2.OffsetRange$Builder.length(long)
+class stroom.query.api.v2.OffsetRange$Builder - public stroom.query.api.v2.OffsetRange$Builder stroom.query.api.v2.OffsetRange$Builder.offset(long)
 class stroom.query.api.v2.Param - public boolean stroom.query.api.v2.Param.equals(java.lang.Object)
 class stroom.query.api.v2.Param - public final native java.lang.Class<?> java.lang.Object.getClass()
 class stroom.query.api.v2.Param - public final native void java.lang.Object.notify()

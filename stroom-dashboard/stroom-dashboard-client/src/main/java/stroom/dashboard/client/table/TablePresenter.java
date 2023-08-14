@@ -107,6 +107,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -134,7 +135,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private final LocationManager locationManager;
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
-            .requestedRange(new OffsetRange(0, 1000))
+            .requestedRange(OffsetRange.ZERO_1000)
             .build();
     private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
@@ -478,16 +479,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .onShow(e -> downloadPresenter.getView().focus())
                         .onHideRequest(e -> {
                             if (e.isOk()) {
-                                final TableResultRequest tableResultRequest = TableResultRequest
-                                        .builder()
-                                        .componentId(getComponentConfig().getId())
-                                        .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
-                                        .tableSettings(TablePresenter.this.tableResultRequest.getTableSettings())
-                                        .fetch(Fetch.ALL)
-                                        .build();
-
                                 final List<ComponentResultRequest> requests = new ArrayList<>();
-                                requests.add(tableResultRequest);
+                                currentSearch.getComponentSettingsMap().entrySet()
+                                        .stream()
+                                        .filter(settings -> settings.getValue() instanceof TableComponentSettings)
+                                        .forEach(tableSettings -> requests.add(TableResultRequest
+                                                .builder()
+                                                .componentId(tableSettings.getKey())
+                                                .requestedRange(OffsetRange.UNBOUNDED)
+                                                .tableName(getTableName(tableSettings.getKey()))
+                                                .tableSettings(((TableComponentSettings) tableSettings.getValue())
+                                                        .copy().buildTableSettings())
+                                                .fetch(Fetch.ALL)
+                                                .build()));
 
                                 final Search search = Search
                                         .builder()
@@ -514,6 +518,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 searchRequest,
                                                 getComponentConfig().getId(),
                                                 downloadPresenter.getFileType(),
+                                                downloadPresenter.downloadAllTables(),
                                                 downloadPresenter.isSample(),
                                                 downloadPresenter.getPercent());
                                 final Rest<ResourceGeneration> rest = restFactory.create();
@@ -534,8 +539,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
+    private String getTableName(final String componentId) {
+        return Optional.ofNullable(getComponents().get(componentId))
+                .map(component -> component.getComponentConfig().getName())
+                .orElse(null);
+    }
+
     private DateTimeSettings getDateTimeSettings() {
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         return DateTimeSettings
                 .builder()
                 .dateTimePattern(userPreferences.getDateTimePattern())
@@ -592,8 +603,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    dataGrid.setRowData(valuesRange.getOffset().intValue(), values);
-                    dataGrid.setRowCount(tableResult.getTotalResults(), true);
+                    dataGrid.setRowData((int) valuesRange.getOffset(), values);
+                    dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
 
                 // Enable download of current results.
@@ -648,15 +659,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final boolean showDetail = getTableSettings().showDetail();
         for (final Field field : fields) {
             if (field.getGroup() != null) {
-                final int group = field.getGroup();
-                if (group > maxGroup) {
-                    maxGroup = group;
-                }
+                maxGroup = Math.max(maxGroup, field.getGroup());
             }
         }
-        int maxDepth = maxGroup;
-        if (showDetail) {
-            maxDepth++;
+
+        int maxDepth = -1;
+        if (maxGroup > 0 && showDetail) {
+            maxDepth = maxGroup + 1;
+        } else if (maxGroup > 0) {
+            maxDepth = maxGroup;
+        } else if (maxGroup == 0 && showDetail) {
+            maxDepth = 1;
         }
 
         final List<TableRow> processed = new ArrayList<>(values.size());
@@ -971,6 +984,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             setSettings(createSettings());
         }
 
+        // Update the page size for the data grid.
+        updatePageSize();
+
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
         if (getTableSettings().getFields() != null) {
@@ -1009,7 +1025,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     protected void changeSettings() {
         super.changeSettings();
-        setQueryId(getTableSettings().getQueryId());
+        final TableComponentSettings tableComponentSettings = getTableSettings();
+        setQueryId(tableComponentSettings.getQueryId());
+        updatePageSize();
+    }
+
+    private void updatePageSize() {
+        final TableComponentSettings tableComponentSettings = getTableSettings();
+        final int start = dataGrid.getVisibleRange().getStart();
+        dataGrid.setVisibleRange(new Range(
+                start,
+                tableComponentSettings.getPageSize() == null
+                        ? 100
+                        : tableComponentSettings.getPageSize()));
     }
 
     @Override
@@ -1029,7 +1057,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .buildTableSettings();
         return tableResultRequest
                 .copy()
-                .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
+                .requestedRange(OffsetRange.UNBOUNDED)
                 .tableSettings(tableSettings)
                 .fetch(Fetch.ALL)
                 .build();
@@ -1077,21 +1105,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void refresh() {
-        currentRequestCount++;
-        getView().setPaused(pause && currentRequestCount == 0);
-        getView().setRefreshing(true);
-        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
-            try {
-                if (result != null) {
-                    setDataInternal(result);
-                }
-            } catch (final Exception e) {
-                GWT.log(e.getMessage());
-            }
-            currentRequestCount--;
+        if (currentSearchModel != null) {
+            currentRequestCount++;
             getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.isSearching());
-        });
+            getView().setRefreshing(true);
+            currentSearchModel.refresh(getComponentConfig().getId(), result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                }
+                currentRequestCount--;
+                getView().setPaused(pause && currentRequestCount == 0);
+                getView().setRefreshing(currentSearchModel.isSearching());
+            });
+        }
     }
 
     void clear() {

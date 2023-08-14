@@ -729,6 +729,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.ui.config.shared.NodeMonitoringConfig getNodeMonitoringConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ui.config.shared.NodeMonitoringConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.ui.config.shared.ProcessConfig getProcessConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

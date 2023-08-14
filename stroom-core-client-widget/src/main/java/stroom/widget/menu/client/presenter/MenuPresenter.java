@@ -22,7 +22,7 @@ import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.Rect;
 
@@ -94,14 +94,11 @@ public class MenuPresenter
 
                         final Rect dialog = new Rect(getWidget().getElement());
                         final Rect selection = new Rect(element);
-                        final Rect min = Rect.min(dialog, selection);
-                        final PopupPosition popupPosition = new PopupPosition(
-                                (int) min.getRight() + HORIZONTAL_PADDING,
-                                (int) min.getLeft() - HORIZONTAL_PADDING,
-                                (int) min.getTop() + VERTICAL_PADDING + 30,
-                                (int) min.getTop() - VERTICAL_PADDING,
-                                HorizontalLocation.RIGHT,
-                                null);
+                        Rect relativeRect = Rect.min(dialog, selection);
+                        relativeRect = relativeRect.growX(HORIZONTAL_PADDING);
+                        relativeRect = relativeRect.growY(VERTICAL_PADDING);
+
+                        final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.RIGHT);
 
                         ShowPopupEvent.builder(presenter)
                                 .popupType(PopupType.POPUP)

@@ -9,11 +9,11 @@
             </g:north>
             <g:center>
                 <g:ThinSplitLayoutPanel vSplits="0.5" addStyleNames="max">
-                    <g:north size="200">
+                    <g:west size="600">
                         <g:MaxScrollPanel addStyleNames="max dashboard-panel">
-                            <g:SimplePanel ui:field="info"/>
+                            <g:SimplePanel ui:field="info" addStyleNames="info-page"/>
                         </g:MaxScrollPanel>
-                    </g:north>
+                    </g:west>
                     <g:center>
                         <g:MaxScrollPanel addStyleNames="max dashboard-panel">
                             <g:SimplePanel ui:field="details"/>
@@ -24,4 +24,4 @@
         </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
 </ui:UiBinder>
- 
+

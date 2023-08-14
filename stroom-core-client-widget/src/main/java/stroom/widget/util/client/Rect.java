@@ -68,6 +68,18 @@ public class Rect {
         return new Rect(top, bottom, left, right);
     }
 
+    public Rect grow(final double amount) {
+        return new Rect(top - amount, bottom + amount, left - amount, right + amount);
+    }
+
+    public Rect growX(final double amount) {
+        return new Rect(top, bottom, left - amount, right + amount);
+    }
+
+    public Rect growY(final double amount) {
+        return new Rect(top - amount, bottom + amount, left, right);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

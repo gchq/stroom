@@ -16,9 +16,13 @@
         <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme">
             <item:SelectionBox ui:field="editorTheme" addStyleNames="w-100"/>
         </form:FormGroup>
-        <!-- Ace editor theme -->
+        <!-- Ace editor key bindings -->
         <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings:">
             <item:SelectionBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Ace editor live auto completion -->
+        <form:FormGroup identity="userPreferencesEditorLiveAutoCompletion" label="Editor Live Auto Completion:">
+            <item:SelectionBox ui:field="editorLiveAutoCompletion" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Layout Density -->
         <form:FormGroup identity="userPreferencesLayoutDensity" label="Layout Density">

@@ -17,7 +17,6 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
@@ -74,6 +73,10 @@ public class ResultStore {
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
         searchResponseCreator = new SearchResponseCreator(sizesProvider, this);
+    }
+
+    public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {
+        return searchResponseCreator.makeDefaultResultCreators(searchRequest);
     }
 
     public SearchRequestSource getSearchRequestSource() {
@@ -235,17 +238,11 @@ public class ResultStore {
         return null;
     }
 
-    public SearchResponse search(final SearchRequest request) {
-        final SearchResponse response = searchResponseCreator.create(request);
+    public SearchResponse search(final SearchRequest request,
+                                 final Map<String, ResultCreator> resultCreatorMap) {
+        final SearchResponse response = searchResponseCreator.create(request, resultCreatorMap);
         lastAccessTime = Instant.now();
         return response;
-    }
-
-    public boolean search(final SearchRequest request,
-                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
-        final boolean complete = searchResponseCreator.create(request, resultBuilderMap);
-        lastAccessTime = Instant.now();
-        return complete;
     }
 
     public void setResultStoreSettings(final ResultStoreSettings resultStoreSettings) {

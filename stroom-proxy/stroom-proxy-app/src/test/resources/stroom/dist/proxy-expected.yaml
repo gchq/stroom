@@ -44,9 +44,22 @@ proxyConfig:
       expireAfterWrite: null
       maximumSize: 1000
     url: null
-  fileScanners: []
-  forwardFileDestinations: []
-  forwardHttpDestinations: []
+  fileScanners:
+  - path: null
+    scanFrequency: "PT1M"
+  forwardFileDestinations:
+  - enabled: true
+    name: null
+    path: null
+  forwardHttpDestinations:
+  - enabled: true
+    forwardChunkSize: "1M"
+    forwardDelay: "PT0S"
+    forwardTimeout: "PT30S"
+    forwardUrl: null
+    name: null
+    sslConfig: null
+    userAgent: null
   forwardRetry:
     failedForwardDir: "failures"
     maxRetryDelay: "PT1H"
@@ -87,7 +100,12 @@ proxyConfig:
   repository:
     repoDir: "repo"
     storingEnabled: true
-  sqsConnectors: []
+  sqsConnectors:
+  - awsProfileName: null
+    awsRegionName: null
+    pollFrequency: "PT10S"
+    queueName: null
+    queueUrl: null
   threads:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2

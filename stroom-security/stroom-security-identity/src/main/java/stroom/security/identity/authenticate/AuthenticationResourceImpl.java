@@ -128,9 +128,9 @@ class AuthenticationResourceImpl implements AuthenticationResource {
      */
     @Timed
     @Override
-    public Boolean logout(
-            final HttpServletRequest request,
-            final String redirectUri) {
+    public Boolean logout(final HttpServletRequest request,
+                          final String postLogoutRedirectUri,
+                          final String state) {
         LOGGER.debug("Received a logout request");
         final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                 .withLogonType(AuthenticateLogonType.INTERACTIVE)
@@ -156,13 +156,9 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
 
         try {
-            UriBuilder uriBuilder = UriBuilder.fromUri(redirectUri);
-            final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
-            if (!Strings.isNullOrEmpty(promptParam)) {
-                uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, promptParam);
-            }
-
-            throw new RedirectionException(Status.SEE_OTHER, uriBuilder.build());
+            UriBuilder uriBuilder = UriBuilder.fromUri(postLogoutRedirectUri);
+            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state);
+            throw new RedirectionException(Status.TEMPORARY_REDIRECT, uriBuilder.build());
         } finally {
             stroomEventLoggingServiceProvider.get().log(
                     "AuthenticationResourceImpl.Logout",

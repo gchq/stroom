@@ -55,7 +55,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestLmdbDataStore extends AbstractDataStoreTest {
 
-    private final Sizes defaultMaxResultsSizes = Sizes.create(50);
     private Path tempDir;
     private ExecutorService executorService;
 
@@ -146,19 +145,18 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         Metrics.report();
 
         Metrics.measure("Retrieved data", () -> {
-            // Make sure we only get 50 results.
+            // Make sure we only get 3000 results.
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId("componentX")
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    fieldFormatter,
-                    defaultMaxResultsSizes);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
-            assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+            assertThat(searchResult.getResultRange().getLength()).isEqualTo(3000);
+            assertThat(searchResult.getTotalResults().intValue()).isEqualTo(300_000);
         });
         Metrics.report();
     }
@@ -223,15 +221,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("0")
                 .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
+                .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(10000);
 
         // Close the db.
         dataStore.getCompletionState().signalComplete();
@@ -256,7 +253,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore2,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(10000);
 
         // Load some more data.
         for (int i = 101; i <= 200; i++) {
@@ -277,12 +275,18 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore2,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(20000);
     }
 
     @Test
     void basicTest() {
         super.basicTest();
+    }
+
+    @Test
+    void nestedTest() {
+        super.nestedTest();
     }
 
     @Test
