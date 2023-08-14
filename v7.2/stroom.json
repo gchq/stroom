@@ -9972,9 +9972,6 @@
           "enabled" : {
             "type" : "boolean"
           },
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
           "maxMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10046,7 +10043,7 @@
         "properties" : {
           "analyticRuleType" : {
             "type" : "string",
-            "enum" : [ "EVENT", "AGGREGATE" ]
+            "enum" : [ "EVENT", "AGGREGATE", "BATCH_QUERY" ]
           },
           "createTimeMs" : {
             "type" : "integer",
@@ -16403,7 +16400,7 @@
           },
           "sourceType" : {
             "type" : "string",
-            "enum" : [ "ANALYTIC_RULE", "ANALYTIC_RULE_UI", "DASHBOARD_UI", "QUERY_UI", "API", "BATCH_SEARCH" ]
+            "enum" : [ "ANALYTIC_RULE", "BATCH_ANALYTIC_RULE", "ANALYTIC_RULE_UI", "DASHBOARD_UI", "QUERY_UI", "API", "BATCH_SEARCH" ]
           }
         }
       },
@@ -18225,6 +18222,9 @@
           },
           "description" : {
             "type" : "string"
+          },
+          "filter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
           },
           "name" : {
             "type" : "string"
