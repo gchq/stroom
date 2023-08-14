@@ -47,22 +47,22 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-    private final ExtractionStateHolder extractionStateHolder;
+    private final ValueConsumerHolder valueConsumerHolder;
 
     private QueryKey queryKey;
     private FieldIndex fieldIndex;
     private Val[] values;
 
     @Inject
-    public SearchResultOutputFilter(final ExtractionStateHolder extractionStateHolder) {
-        this.extractionStateHolder = extractionStateHolder;
+    public SearchResultOutputFilter(final ValueConsumerHolder valueConsumerHolder) {
+        this.valueConsumerHolder = valueConsumerHolder;
     }
 
     @Override
     public void startProcessing() {
         super.startProcessing();
-        this.queryKey = extractionStateHolder.getQueryKey();
-        this.fieldIndex = extractionStateHolder.getFieldIndex();
+        this.queryKey = valueConsumerHolder.getQueryKey();
+        this.fieldIndex = valueConsumerHolder.getFieldIndex();
     }
 
     @Override
@@ -97,8 +97,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
             SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
             SearchDebugUtil.writeExtractionData(values);
-            extractionStateHolder.getReceiver().add(Val.of(values));
-            extractionStateHolder.incrementCount();
+            valueConsumerHolder.accept(Val.of(values));
             values = null;
         }
     }

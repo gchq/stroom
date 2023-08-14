@@ -284,7 +284,7 @@ public class IndexShardSearchTaskHandler {
                 }
             }
 
-            valuesConsumer.add(Val.of(values));
+            valuesConsumer.accept(Val.of(values));
         } catch (final UncheckedInterruptedException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {

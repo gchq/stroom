@@ -6,7 +6,7 @@ import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CompiledFields;
-import stroom.search.extraction.ExtractionStateHolder;
+import stroom.search.extraction.ValueConsumerHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,13 +15,13 @@ import javax.inject.Provider;
 
 public class MultiValuesReceiverFactory {
 
-    private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
+    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
     private final Provider<AlertWriter> alertWriterProvider;
 
     @Inject
-    public MultiValuesReceiverFactory(final Provider<ExtractionStateHolder> extractionStateHolderProvider,
+    public MultiValuesReceiverFactory(final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
                                       final Provider<AlertWriter> alertWriterProvider) {
-        this.extractionStateHolderProvider = extractionStateHolderProvider;
+        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
         this.alertWriterProvider = alertWriterProvider;
     }
 
@@ -70,10 +70,10 @@ public class MultiValuesReceiverFactory {
         }
 
         final MultiValuesConsumer receiver = new MultiValuesConsumer(subConsumers);
-        final ExtractionStateHolder extractionStateHolder = extractionStateHolderProvider.get();
-        extractionStateHolder.setFieldIndex(fieldIndexMap);
-        extractionStateHolder.setQueryKey(new QueryKey("alert"));
-        extractionStateHolder.setReceiver(receiver);
+        final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
+        valueConsumerHolder.setFieldIndex(fieldIndexMap);
+        valueConsumerHolder.setQueryKey(new QueryKey("alert"));
+        valueConsumerHolder.setReceiver(receiver);
 
         return receiver;
     }

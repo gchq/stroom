@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 
 public class SearchRequestBuilder {
 
+    public static final String COMPONENT_ID = "table";
+
     private SearchRequestBuilder() {
     }
 
@@ -460,7 +462,7 @@ public class SearchRequestBuilder {
 //                .showDetail(true)
                 .build();
 
-        final ResultRequest tableResultRequest = new ResultRequest("1234",
+        final ResultRequest tableResultRequest = new ResultRequest(COMPONENT_ID,
                 Collections.singletonList(tableSettings),
                 null,
                 null,

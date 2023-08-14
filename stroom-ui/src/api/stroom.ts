@@ -216,9 +216,6 @@ export interface AnalyticProcessorFilter {
   createUser?: string;
   enabled?: boolean;
 
-  /** A logical addOperator term in a query expression tree */
-  expression?: ExpressionOperator;
-
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
 
@@ -261,7 +258,7 @@ export interface AnalyticProcessorFilterTracker {
 }
 
 export interface AnalyticRuleDoc {
-  analyticRuleType?: "EVENT" | "AGGREGATE";
+  analyticRuleType?: "EVENT" | "AGGREGATE" | "BATCH_QUERY";
 
   /** @format int64 */
   createTimeMs?: number;
@@ -3870,7 +3867,14 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ANALYTIC_RULE" | "ANALYTIC_RULE_UI" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?:
+    | "ANALYTIC_RULE"
+    | "BATCH_ANALYTIC_RULE"
+    | "ANALYTIC_RULE_UI"
+    | "DASHBOARD_UI"
+    | "QUERY_UI"
+    | "API"
+    | "BATCH_SEARCH";
 }
 
 /**
@@ -4688,6 +4692,9 @@ export interface ViewDoc {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
   description?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  filter?: ExpressionOperator;
   name?: string;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */

@@ -43,8 +43,8 @@ public class TableCoprocessor implements Coprocessor, HasCompletionState {
     }
 
     @Override
-    public void add(final Val[] values) {
-        dataStore.add(values);
+    public void accept(final Val[] values) {
+        dataStore.accept(values);
     }
 
     @Override

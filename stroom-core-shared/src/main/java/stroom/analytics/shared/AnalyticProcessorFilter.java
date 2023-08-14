@@ -1,7 +1,5 @@
 package stroom.analytics.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -31,8 +29,6 @@ public class AnalyticProcessorFilter {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
-    private final ExpressionOperator expression;
-    @JsonProperty
     private final Long minMetaCreateTimeMs;
     @JsonProperty
     private final Long maxMetaCreateTimeMs;
@@ -48,7 +44,6 @@ public class AnalyticProcessorFilter {
                                    @JsonProperty("updateUser") final String updateUser,
                                    @JsonProperty("analyticUuid") final String analyticUuid,
                                    @JsonProperty("enabled") final boolean enabled,
-                                   @JsonProperty("expression") final ExpressionOperator expression,
                                    @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                    @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
                                    @JsonProperty("node") final String node) {
@@ -60,7 +55,6 @@ public class AnalyticProcessorFilter {
         this.updateUser = updateUser;
         this.analyticUuid = analyticUuid;
         this.enabled = enabled;
-        this.expression = expression;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.node = node;
@@ -99,10 +93,6 @@ public class AnalyticProcessorFilter {
         return enabled;
     }
 
-    public ExpressionOperator getExpression() {
-        return expression;
-    }
-
     public Long getMinMetaCreateTimeMs() {
         return minMetaCreateTimeMs;
     }
@@ -132,7 +122,6 @@ public class AnalyticProcessorFilter {
                 Objects.equals(createUser, filter.createUser) &&
                 Objects.equals(updateUser, filter.updateUser) &&
                 Objects.equals(analyticUuid, filter.analyticUuid) &&
-                Objects.equals(expression, filter.expression) &&
                 Objects.equals(minMetaCreateTimeMs, filter.minMetaCreateTimeMs) &&
                 Objects.equals(maxMetaCreateTimeMs, filter.maxMetaCreateTimeMs) &&
                 Objects.equals(node, filter.node);
@@ -148,7 +137,6 @@ public class AnalyticProcessorFilter {
                 updateUser,
                 analyticUuid,
                 enabled,
-                expression,
                 minMetaCreateTimeMs,
                 maxMetaCreateTimeMs,
                 node);
@@ -165,7 +153,6 @@ public class AnalyticProcessorFilter {
                 ", updateUser='" + updateUser + '\'' +
                 ", analyticUuid='" + analyticUuid + '\'' +
                 ", enabled=" + enabled +
-                ", expression=" + expression +
                 ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 ", node='" + node + '\'' +
@@ -190,7 +177,6 @@ public class AnalyticProcessorFilter {
         private String updateUser;
         private String analyticUuid;
         private boolean enabled;
-        private ExpressionOperator expression;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private String node;
@@ -207,7 +193,6 @@ public class AnalyticProcessorFilter {
             this.updateUser = filter.updateUser;
             this.analyticUuid = filter.analyticUuid;
             this.enabled = filter.enabled;
-            this.expression = filter.expression;
             this.minMetaCreateTimeMs = filter.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = filter.maxMetaCreateTimeMs;
             this.node = filter.node;
@@ -253,11 +238,6 @@ public class AnalyticProcessorFilter {
             return this;
         }
 
-        public Builder expression(final ExpressionOperator expression) {
-            this.expression = expression;
-            return this;
-        }
-
         public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
             return this;
@@ -283,7 +263,6 @@ public class AnalyticProcessorFilter {
                     updateUser,
                     analyticUuid,
                     enabled,
-                    expression,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
                     node);

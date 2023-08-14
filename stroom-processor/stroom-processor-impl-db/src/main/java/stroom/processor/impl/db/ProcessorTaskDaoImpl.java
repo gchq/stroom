@@ -880,7 +880,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(Val.of(arr));
+                        consumer.accept(Val.of(arr));
                     });
                 }
             }

@@ -2,28 +2,34 @@ package stroom.processor.impl;
 
 import stroom.node.api.NodeInfo;
 import stroom.processor.shared.ProcessorTaskList;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ProcessorTaskTestHelper {
 
     private final PrioritisedFilters prioritisedFilters;
     private final ProcessorTaskCreator processorTaskCreator;
     private final ProcessorTaskQueueManager processorTaskQueueManager;
+    private final Provider<ProcessorConfig> processorConfigProvider;
     private final NodeInfo nodeInfo;
 
     @Inject
     public ProcessorTaskTestHelper(final PrioritisedFilters prioritisedFilters,
                                    final ProcessorTaskCreator processorTaskCreator,
                                    final ProcessorTaskQueueManager processorTaskQueueManager,
+                                   final Provider<ProcessorConfig> processorConfigProvider,
                                    final NodeInfo nodeInfo) {
         this.prioritisedFilters = prioritisedFilters;
         this.processorTaskCreator = processorTaskCreator;
         this.processorTaskQueueManager = processorTaskQueueManager;
+        this.processorConfigProvider = processorConfigProvider;
         this.nodeInfo = nodeInfo;
     }
 
     public void createAndQueueTasks() {
+        processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
         prioritisedFilters.reset();
         processorTaskCreator.exec();
         processorTaskQueueManager.exec();

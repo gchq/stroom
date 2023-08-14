@@ -41,11 +41,8 @@ import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
@@ -117,6 +114,7 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         for (final Meta meta : metaList.getValues()) {
             metaService.delete(meta.getId());
         }
+        analyticRuleStore.list().forEach(docRef -> analyticRuleStore.deleteDocument(docRef.getUuid()));
     }
 
     @Override
@@ -193,9 +191,9 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
                 .updateUser("test")
                 .analyticUuid(analyticRuleDoc.getUuid())
                 .enabled(true)
-                .expression(ExpressionOperator.builder().addTerm(MetaFields.FIELD_TYPE,
-                        Condition.EQUALS,
-                        StreamTypeNames.EVENTS).build())
+//                .expression(ExpressionOperator.builder().addTerm(MetaFields.FIELD_TYPE,
+//                        Condition.EQUALS,
+//                        StreamTypeNames.EVENTS).build())
                 .node(nodeInfo.getThisNodeName())
                 .build();
         analyticProcessorFilterDao.create(filter);
@@ -206,7 +204,7 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         final AnalyticNotificationConfig config = AnalyticNotificationStreamConfig.builder()
                 .timeToWaitForData(SimpleDuration.builder().time(timeToWaitSeconds).timeUnit(TimeUnit.SECONDS).build())
                 .destinationFeed(detections)
-                .useSourceFeedIfPossible(true)
+                .useSourceFeedIfPossible(false)
                 .build();
         final AnalyticNotification notification = AnalyticNotification.builder()
                 .version(1)

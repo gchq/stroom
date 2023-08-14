@@ -71,7 +71,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + i;
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -131,7 +131,7 @@ abstract class AbstractDataStoreTest {
         for (long i = 1; i <= 10; i++) {
             for (long j = 1; j <= 10; j++) {
                 for (long k = 1; k <= 10; k++) {
-                    dataStore.add(Val.of(ValLong.create(i), ValLong.create(j), ValLong.create(k)));
+                    dataStore.accept(Val.of(ValLong.create(i), ValLong.create(j), ValLong.create(k)));
                 }
             }
         }
@@ -248,7 +248,7 @@ abstract class AbstractDataStoreTest {
         final DataStore dataStore = create(tableSettings);
 
         for (int i = 0; i < 1; i++) {
-            dataStore.add(Val.of(ValString.create("jbloggs")));
+            dataStore.accept(Val.of(ValString.create("jbloggs")));
         }
 
         // Wait for all items to be added.
@@ -309,7 +309,7 @@ abstract class AbstractDataStoreTest {
                 final String key = UUID.randomUUID().toString();
                 for (int j = 0; j < 100000; j++) {
                     final String value = UUID.randomUUID().toString();
-                    dataStore.add(Val.of(ValString.create(key), ValString.create(value)));
+                    dataStore.accept(Val.of(ValString.create(key), ValString.create(value)));
                 }
             }
         });
@@ -373,7 +373,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -408,7 +408,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = String.valueOf((int) (Math.random() * 100));
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -450,7 +450,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -492,7 +492,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -534,7 +534,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -581,7 +581,7 @@ abstract class AbstractDataStoreTest {
         final DataStore dataStore = create(tableSettings);
 
         for (int i = 1; i <= 30; i++) {
-            dataStore.add(Val.of(ValString.create("group"), ValLong.create(i)));
+            dataStore.accept(Val.of(ValString.create("group"), ValLong.create(i)));
         }
 
         // Wait for all items to be added.

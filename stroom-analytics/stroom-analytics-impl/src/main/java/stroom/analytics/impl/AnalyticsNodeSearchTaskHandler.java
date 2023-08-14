@@ -382,7 +382,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                             values[i] = ValString.create(value);
                         }
                     }
-                    consumer.add(values);
+                    consumer.accept(values);
                 }
 
             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {

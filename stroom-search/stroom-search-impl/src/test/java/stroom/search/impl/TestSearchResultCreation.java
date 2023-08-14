@@ -502,7 +502,7 @@ class TestSearchResultCreation {
             final int target = mappings[j];
             vals[target] = ValString.create(value);
         }
-        consumer.add(Val.of(vals));
+        consumer.accept(Val.of(vals));
     }
 
     private void transferPayloads(final Coprocessors source, final Coprocessors target) {
@@ -548,7 +548,7 @@ class TestSearchResultCreation {
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
+                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.accept(values));
             }
             receivers.put(docRef, receiver);
         });

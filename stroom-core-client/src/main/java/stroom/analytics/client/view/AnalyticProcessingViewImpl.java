@@ -20,7 +20,9 @@ import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticPro
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
+import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.MouseUtil;
@@ -35,7 +37,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
@@ -49,13 +50,15 @@ public class AnalyticProcessingViewImpl
     @UiField
     CustomCheckBox enabled;
     @UiField
-    SimplePanel expression;
-    @UiField
     MyDateBox minMetaCreateTimeMs;
     @UiField
     MyDateBox maxMetaCreateTimeMs;
     @UiField
     SelectionBox<String> node;
+    @UiField
+    CustomCheckBox storeData;
+    @UiField
+    DurationPicker dataRetention;
     @UiField
     SimplePanel info;
     @UiField
@@ -82,11 +85,6 @@ public class AnalyticProcessingViewImpl
     @Override
     public void setEnabled(final boolean enabled) {
         this.enabled.setValue(enabled);
-    }
-
-    @Override
-    public void setExpressionView(final View view) {
-        expression.setWidget(view.asWidget());
     }
 
     @Override
@@ -137,6 +135,27 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
+    public boolean isStoreData() {
+        return storeData.getValue();
+    }
+
+    @Override
+    public void setStoreData(final boolean storeData) {
+        this.storeData.setValue(storeData);
+    }
+
+    @Override
+    public SimpleDuration getDataRetention() {
+        return dataRetention.getValue();
+    }
+
+    @Override
+    public void setDataRetention(final SimpleDuration dataRetention) {
+        this.dataRetention.setValue(dataRetention);
+    }
+
+
+    @Override
     public void setInfo(final SafeHtml info) {
         this.info.setWidget(new HTML(info));
     }
@@ -158,6 +177,16 @@ public class AnalyticProcessingViewImpl
 
     @UiHandler("node")
     public void onNode(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("storeData")
+    public void onStoreData(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("dataRetention")
+    public void onDataRetention(final ValueChangeEvent<SimpleDuration> event) {
         getUiHandlers().onDirty();
     }
 

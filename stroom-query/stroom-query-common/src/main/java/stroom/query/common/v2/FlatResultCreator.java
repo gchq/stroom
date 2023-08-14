@@ -389,7 +389,7 @@ public class FlatResultCreator implements ResultCreator {
                                 values[i] = val;
                             }
                         }
-                        childDataStore.add(Val.of(values));
+                        childDataStore.accept(Val.of(values));
                     },
                     null);
 

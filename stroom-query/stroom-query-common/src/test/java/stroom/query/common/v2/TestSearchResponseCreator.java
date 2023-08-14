@@ -296,7 +296,7 @@ class TestSearchResponseCreator {
 
         return new DataStore() {
             @Override
-            public void add(final Val[] values) {
+            public void accept(final Val[] values) {
             }
 
             @Override
