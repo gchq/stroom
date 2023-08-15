@@ -228,7 +228,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                     tableSettings = tableSettings
                             .copy()
-                            .maxResults(List.of(1000000))
+                            .maxResults(List.of(1000000L))
                             .build();
                     final List<TableSettings> mappings = List.of(tableSettings);
                     final OffsetRange requestRange = OffsetRange.ZERO_100;

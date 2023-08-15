@@ -157,7 +157,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private SearchModel currentSearchModel;
     private FieldAddPresenter fieldAddPresenter;
     private boolean ignoreRangeChange;
-    private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
+    private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private int currentRequestCount;
 
@@ -221,9 +221,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     final String value = result.getDefaultMaxResults();
                     if (value != null) {
                         final String[] parts = value.split(",");
-                        final int[] arr = new int[parts.length];
+                        final long[] arr = new long[parts.length];
                         for (int i = 0; i < arr.length; i++) {
-                            arr[i] = Integer.parseInt(parts[i].trim());
+                            arr[i] = Long.parseLong(parts[i].trim());
                         }
                         maxResults = arr;
                     }
@@ -1133,7 +1133,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private TableComponentSettings createSettings() {
-        List<Integer> arr = null;
+        List<Long> arr = null;
         if (maxResults != null && maxResults.length > 0) {
             arr = new ArrayList<>();
             arr.add(maxResults[0]);

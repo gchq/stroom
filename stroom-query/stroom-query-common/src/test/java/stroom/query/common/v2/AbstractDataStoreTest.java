@@ -667,7 +667,7 @@ abstract class AbstractDataStoreTest {
         final DataStoreSettings dataStoreSettings = DataStoreSettings
                 .createBasicSearchResultStoreSettings()
                 .copy()
-                .maxResults(Sizes.create(Integer.MAX_VALUE))
+                .maxResults(Sizes.unlimited())
                 .build();
         return create(tableSettings, dataStoreSettings);
     }

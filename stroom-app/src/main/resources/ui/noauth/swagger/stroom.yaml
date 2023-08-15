@@ -6931,9 +6931,9 @@ components:
         analyticRuleType:
           type: string
           enum:
-          - EVENT
-          - AGGREGATE
-          - BATCH_QUERY
+          - STREAMING
+          - TABLE_CREATION
+          - INDEX_QUERY
         createTimeMs:
           type: integer
           format: int64
@@ -13140,7 +13140,7 @@ components:
           example: 1000,10,1
           items:
             type: integer
-            format: int32
+            format: int64
             description: Defines the maximum number of results to return at each grouping
               level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
               1 and 1 at level 2. In the absence of this field system defaults will
@@ -13241,7 +13241,7 @@ components:
           example: 1000,10,1
           items:
             type: integer
-            format: int32
+            format: int64
             description: Defines the maximum number of results to return at each grouping
               level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
               1 and 1 at level 2. In the absence of this field system defaults will

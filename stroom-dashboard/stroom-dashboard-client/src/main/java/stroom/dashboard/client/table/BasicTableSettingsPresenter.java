@@ -174,7 +174,7 @@ public class BasicTableSettingsPresenter
         return !equal;
     }
 
-    private String fromList(final List<Integer> maxResults) {
+    private String fromList(final List<Long> maxResults) {
         if (maxResults == null || maxResults.size() == 0) {
             return "";
         }
@@ -189,16 +189,16 @@ public class BasicTableSettingsPresenter
         return sb.toString();
     }
 
-    private List<Integer> toList(final String string) {
+    private List<Long> toList(final String string) {
         if (string == null || string.length() == 0) {
             return null;
         }
 
         final String[] parts = string.split(",");
-        final List<Integer> list = new ArrayList<>();
+        final List<Long> list = new ArrayList<>();
         for (final String part : parts) {
             try {
-                list.add(Integer.parseInt(part.trim()));
+                list.add(Long.parseLong(part.trim()));
             } catch (final RuntimeException e) {
                 // Ignore.
             }

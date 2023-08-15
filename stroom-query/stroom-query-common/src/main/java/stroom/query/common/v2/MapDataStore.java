@@ -521,13 +521,15 @@ public class MapDataStore implements DataStore {
         private volatile boolean trimmed = true;
 
         ItemsImpl(final int depth,
-                  final int trimmedSize,
+                  final long limit,
                   final MapDataStore dataStore,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction,
                   final Consumer<Key> removeHandler) {
             this.depth = depth;
-            this.trimmedSize = trimmedSize;
+
+            // FIXME : THIS IS HARD CODED AND WILL LIMIT RESULTS
+            trimmedSize = (int) Math.max(Math.min(limit, 500_000), 0);
 
             // FIXME : HARD CODED.
             int maxSize = this.trimmedSize * 2;

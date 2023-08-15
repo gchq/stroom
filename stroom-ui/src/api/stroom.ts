@@ -258,7 +258,7 @@ export interface AnalyticProcessorFilterTracker {
 }
 
 export interface AnalyticRuleDoc {
-  analyticRuleType?: "EVENT" | "AGGREGATE" | "BATCH_QUERY";
+  analyticRuleType?: "STREAMING" | "TABLE_CREATION" | "INDEX_QUERY";
 
   /** @format int64 */
   createTimeMs?: number;

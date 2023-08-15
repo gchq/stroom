@@ -674,7 +674,7 @@ class TestSearchResultCreation {
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
                         "Example Extraction"))
-                .addMaxResults(1000000)
+                .addMaxResults(1000000L)
                 .build();
     }
 
@@ -708,7 +708,7 @@ class TestSearchResultCreation {
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addMaxResults(20, 20)
+                .addMaxResults(20L, 20L)
                 .showDetail(true)
                 .build();
     }
@@ -768,7 +768,7 @@ class TestSearchResultCreation {
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
                         "Example Extraction"))
-                .addMaxResults(1000000)
+                .addMaxResults(1000000L)
                 .build();
     }
 
@@ -811,7 +811,7 @@ class TestSearchResultCreation {
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addMaxResults(20, 10, 500)
+                .addMaxResults(20L, 10L, 500L)
                 .showDetail(true)
                 .build();
     }
@@ -856,7 +856,7 @@ class TestSearchResultCreation {
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addMaxResults(20, 100, 1000)
+                .addMaxResults(20L, 100L, 1000L)
                 .showDetail(true)
                 .build();
     }

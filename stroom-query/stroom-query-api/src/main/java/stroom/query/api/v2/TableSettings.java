@@ -84,7 +84,7 @@ public final class TableSettings {
             "system defaults will apply",
             example = "1000,10,1")
     @JsonProperty
-    private final List<Integer> maxResults;
+    private final List<Long> maxResults;
 
     @Schema(description = "When grouping is used a value of true indicates that the results will include the full " +
             "detail of any results aggregated into a group as well as their aggregates. A value of false " +
@@ -111,7 +111,7 @@ public final class TableSettings {
             final ExpressionOperator aggregateFilter,
             final Boolean extractValues,
             final DocRef extractionPipeline,
-            final List<Integer> maxResults,
+            final List<Long> maxResults,
             final Boolean showDetail,
             final List<ConditionalFormattingRule> conditionalFormattingRules) {
         this.queryId = queryId;
@@ -136,7 +136,7 @@ public final class TableSettings {
             @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-            @JsonProperty("maxResults") final List<Integer> maxResults,
+            @JsonProperty("maxResults") final List<Long> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion) { // deprecated modelVersion.
@@ -188,7 +188,7 @@ public final class TableSettings {
         return extractionPipeline;
     }
 
-    public List<Integer> getMaxResults() {
+    public List<Long> getMaxResults() {
         return maxResults;
     }
 
@@ -275,7 +275,7 @@ public final class TableSettings {
         private ExpressionOperator aggregateFilter;
         private Boolean extractValues;
         private DocRef extractionPipeline;
-        private List<Integer> maxResults;
+        private List<Long> maxResults;
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
 
@@ -389,7 +389,7 @@ public final class TableSettings {
             return this.extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
         }
 
-        public Builder maxResults(final List<Integer> maxResults) {
+        public Builder maxResults(final List<Long> maxResults) {
             this.maxResults = maxResults;
             return this;
         }
@@ -398,7 +398,7 @@ public final class TableSettings {
          * @param values The max result value
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
-        public Builder addMaxResults(final Integer... values) {
+        public Builder addMaxResults(final Long... values) {
             return addMaxResults(Arrays.asList(values));
         }
 
@@ -408,7 +408,7 @@ public final class TableSettings {
          * @param values The list of max result values
          * @return this builder
          */
-        public Builder addMaxResults(final Collection<Integer> values) {
+        public Builder addMaxResults(final Collection<Long> values) {
             if (this.maxResults == null) {
                 this.maxResults = new ArrayList<>(values);
             } else {

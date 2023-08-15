@@ -129,7 +129,7 @@ class TestSerialisation {
                                         .build())
                                 .extractValues(false)
                                 .extractionPipeline("docRefName2", "docRefUuid2", "docRefType2")
-                                .addMaxResults(1, 2)
+                                .addMaxResults(1L, 2L)
                                 .showDetail(false)
                                 .build())
                         .build())

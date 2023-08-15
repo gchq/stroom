@@ -155,8 +155,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
-            assertThat(searchResult.getResultRange().getLength()).isEqualTo(3000);
-            assertThat(searchResult.getTotalResults().intValue()).isEqualTo(300_000);
+            assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+            assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
         });
         Metrics.report();
     }

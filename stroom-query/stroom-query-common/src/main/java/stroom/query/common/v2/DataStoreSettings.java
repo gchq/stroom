@@ -24,7 +24,7 @@ public class DataStoreSettings {
         return DataStoreSettings
                 .builder()
                 .storeLatestEventReference(true)
-                .maxResults(Sizes.create(Integer.MAX_VALUE))
+                .maxResults(Sizes.unlimited())
                 .build();
     }
 
@@ -88,7 +88,7 @@ public class DataStoreSettings {
 
         private boolean producePayloads;
         private boolean storeLatestEventReference;
-        private Sizes maxResults = Sizes.create(List.of(1000000, 100, 10, 1));
+        private Sizes maxResults = Sizes.create(List.of(1000000L, 100L, 10L, 1L));
 
         private Builder() {
         }

@@ -687,7 +687,7 @@ public class SearchRequestBuilder {
         for (final AbstractToken t : children) {
             if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
                 try {
-                    tableSettingsBuilder.addMaxResults(Integer.parseInt(t.getUnescapedText()));
+                    tableSettingsBuilder.addMaxResults(Long.parseLong(t.getUnescapedText()));
                 } catch (final NumberFormatException e) {
                     throw new TokenException(t, "Syntax exception, expected number");
                 }

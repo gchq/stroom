@@ -405,7 +405,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 tableSettings = tableSettings
                         .copy()
                         .aggregateFilter(null)
-                        .maxResults(List.of(1000000))
+                        .maxResults(List.of(1000000L))
                         .build();
                 final List<TableSettings> mappings = List.of(tableSettings);
                 final TimeFilter timeFilter = DateExpressionParser

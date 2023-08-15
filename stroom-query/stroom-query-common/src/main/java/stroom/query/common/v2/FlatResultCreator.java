@@ -79,21 +79,18 @@ public class FlatResultCreator implements ResultCreator {
                 final TableSettings parent = tableSettings.get(i);
                 final TableSettings child = tableSettings.get(i + 1);
 
-                // Create a set of sizes that are the minimum values for the combination of user provided sizes for the
-                // parent table and the default maximum sizes.
-                final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
-                final int maxItems = sizes.size(0);
+                final Sizes maxResults;
+                if (child != null && child.getMaxResults() != null && child.getMaxResults().size() > 0) {
+                    maxResults = Sizes.create(child.getMaxResults());
+                } else {
+                    maxResults = defaultMaxResultsSizes;
+                }
 
-                final List<Integer> childMaxResults = child != null
-                        ? child.getMaxResults()
-                        : Collections.emptyList();
-                final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
                 final DataStoreSettings dataStoreSettings = DataStoreSettings
                         .createBasicSearchResultStoreSettings()
                         .copy()
                         .maxResults(maxResults)
                         .build();
-
 
                 mappers.add(new Mapper(
                         dataStoreFactory,
@@ -104,7 +101,6 @@ public class FlatResultCreator implements ResultCreator {
                         parent,
                         child,
                         paramMap,
-                        maxItems,
                         errorConsumer));
             }
         } else {
@@ -310,7 +306,6 @@ public class FlatResultCreator implements ResultCreator {
         private final String componentId;
         private final TableSettings child;
         private final Map<String, String> paramMap;
-        private final int maxItems;
         private final ErrorConsumer errorConsumer;
         private final FieldIndex childFieldIndex;
 
@@ -324,7 +319,6 @@ public class FlatResultCreator implements ResultCreator {
                final TableSettings parent,
                final TableSettings child,
                final Map<String, String> paramMap,
-               final int maxItems,
                final ErrorConsumer errorConsumer) {
             this.dataStoreFactory = dataStoreFactory;
             this.dataStoreSettings = dataStoreSettings;
@@ -333,7 +327,6 @@ public class FlatResultCreator implements ResultCreator {
             this.componentId = componentId;
             this.child = child;
             this.paramMap = paramMap;
-            this.maxItems = maxItems;
             this.errorConsumer = errorConsumer;
 
             final FieldIndex parentFieldIndex = new FieldIndex();
@@ -375,8 +368,8 @@ public class FlatResultCreator implements ResultCreator {
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
             dataStore.fetch(
-                    new OffsetRange(0, maxItems),
-                    OpenGroups.ALL,
+                    OffsetRange.UNBOUNDED,
+                    OpenGroups.NONE,
                     timeFilter,
                     IdentityItemMapper.INSTANCE,
                     item -> {

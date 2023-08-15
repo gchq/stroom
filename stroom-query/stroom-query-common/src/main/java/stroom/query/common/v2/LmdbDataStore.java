@@ -91,7 +91,7 @@ public class LmdbDataStore implements DataStore {
     private final CompiledField[] compiledFieldArray;
     private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
-    //    private final PutFilter putFilter;
+    private final LmdbPutFilter putFilter;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
     private final AtomicBoolean shutdown = new AtomicBoolean();
@@ -103,6 +103,7 @@ public class LmdbDataStore implements DataStore {
     private final String componentId;
     private final FieldIndex fieldIndex;
     private final boolean producePayloads;
+    private final Sizes maxResultSizes;
     private final ErrorConsumer errorConsumer;
     private final LmdbRowKeyFactory lmdbRowKeyFactory;
     private final LmdbRowValueFactory lmdbRowValueFactory;
@@ -140,6 +141,9 @@ public class LmdbDataStore implements DataStore {
         this.componentId = componentId;
         this.fieldIndex = fieldIndex;
         this.producePayloads = dataStoreSettings.isProducePayloads();
+        this.maxResultSizes = dataStoreSettings.getMaxResults() == null
+                ? Sizes.unlimited()
+                : dataStoreSettings.getMaxResults();
         this.errorConsumer = errorConsumer;
 
         // Ensure we have a source type.
@@ -180,29 +184,14 @@ public class LmdbDataStore implements DataStore {
                 .build();
         this.dbi = lmdbEnv.openDbi(queryKey + "_" + componentId);
 
-//        // Find out if we have any sorting.
-//        boolean hasSort = false;
-//        for (final CompiledSorter<Item> sorter : compiledSorters) {
-//            if (sorter != null) {
-//                hasSort = true;
-//                break;
-//            }
-//        }
-//
-//        // Determine if we are going to limit the result count.
-//        boolean limitResultCount = dataStoreSettings.getMaxResults() != null && !hasSort &&
-//        !compiledDepths.hasGroup();
-//        if (limitResultCount) {
-//            putFilter = new LimitedPutFilter(
-//                    totalResultCount,
-//                    dataStoreSettings.getMaxResults().size(0),
-//                    completionState);
-//        } else {
-//            putFilter = new BasicPutFilter(totalResultCount);
-//        }
-//
-//        // TODO : For now don't filter any puts.
-//        putFilter = new BasicPutFilter(totalResultCount);
+        // Filter puts to the store if we need to. This filter has the effect of preventing addition of items if we have
+        // reached the max result size if specified and aren't grouping or sorting.
+        putFilter = LmdbPutFilterFactory.create(
+                compiledSorters,
+                compiledDepths,
+                maxResultSizes,
+                totalResultCount,
+                completionState);
 
         // Start transfer loop.
         executorProvider.get().execute(this::transfer);
@@ -323,72 +312,9 @@ public class LmdbDataStore implements DataStore {
         LOGGER.trace(() -> "put");
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_PUT);
 
-        totalResultCount.getAndIncrement();
-        doPut(queueItem);
-
-//        // Some searches can be terminated early if the user is not sorting or grouping.
-//        putFilter.put(queueItem, this::doPut);
+        // Some searches can be terminated early if the user is not sorting or grouping.
+        putFilter.put(queueItem, this::doPut);
     }
-
-//    interface PutFilter {
-//
-//        void put(LmdbQueueItem queueItem, Consumer<LmdbQueueItem> consumer);
-//    }
-//
-//    private static class BasicPutFilter implements PutFilter {
-//
-//        private final AtomicLong totalResultCount;
-//
-//        public BasicPutFilter(final AtomicLong totalResultCount) {
-//            this.totalResultCount = totalResultCount;
-//        }
-//
-//        @Override
-//        public void put(final LmdbQueueItem queueItem, final Consumer<LmdbQueueItem> consumer) {
-//            totalResultCount.getAndIncrement();
-//            consumer.accept(queueItem);
-//        }
-//    }
-//
-//    private static class LimitedPutFilter implements PutFilter {
-//
-//        private final AtomicLong totalResultCount;
-//        private final AtomicBoolean hasEnoughData = new AtomicBoolean();
-//        private final long maxResults;
-//        private final CompletionState completionState;
-//
-//        public LimitedPutFilter(final AtomicLong totalResultCount,
-//                                final long maxResults,
-//                                final CompletionState completionState) {
-//            this.totalResultCount = totalResultCount;
-//            this.maxResults = maxResults;
-//            this.completionState = completionState;
-//        }
-//
-//        @Override
-//        public void put(final LmdbQueueItem queueItem, final Consumer<LmdbQueueItem> consumer) {
-//            // Some searches can be terminated early if the user is not sorting or grouping.
-//            boolean allow;
-//            // No sorting or grouping, so we can stop the search as soon as we have the number of results requested by
-//            // the client
-//            allow = !hasEnoughData.get();
-//            if (allow) {
-//                final long currentResultCount = totalResultCount.getAndIncrement();
-//                if (currentResultCount >= maxResults) {
-//                    allow = false;
-//
-//                    // If we have enough data then we can stop transferring data and complete.
-//                    if (hasEnoughData.compareAndSet(false, true)) {
-//                        completionState.signalComplete();
-//                    }
-//                }
-//            }
-//
-//            if (allow) {
-//                consumer.accept(queueItem);
-//            }
-//        }
-//    }
 
     private void doPut(final LmdbQueueItem queueItem) {
         try {
@@ -874,7 +800,7 @@ public class LmdbDataStore implements DataStore {
                                     readContext,
                                     Key.ROOT_KEY,
                                     0,
-                                    Integer.MAX_VALUE,
+                                    maxResultSizes.size(0),
                                     false,
                                     openGroups,
                                     timeFilter,
@@ -896,7 +822,7 @@ public class LmdbDataStore implements DataStore {
     private <R> void getChildren(final LmdbReadContext readContext,
                                  final Key parentKey,
                                  final int depth,
-                                 int trimmedSize,
+                                 long limit,
                                  final boolean trimTop,
                                  final OpenGroups openGroups,
                                  final TimeFilter timeFilter,
@@ -914,6 +840,7 @@ public class LmdbDataStore implements DataStore {
                         readContext,
                         parentKey,
                         depth,
+                        limit,
                         openGroups,
                         timeFilter,
                         mapper,
@@ -926,7 +853,7 @@ public class LmdbDataStore implements DataStore {
                         readContext,
                         parentKey,
                         depth,
-                        trimmedSize,
+                        limit,
                         trimTop,
                         openGroups,
                         timeFilter,
@@ -948,6 +875,7 @@ public class LmdbDataStore implements DataStore {
     private <R> void getUnsortedChildren(final LmdbReadContext readContext,
                                          final Key parentKey,
                                          final int depth,
+                                         final long limit,
                                          final OpenGroups openGroups,
                                          final TimeFilter timeFilter,
                                          final ItemMapper<R> mapper,
@@ -959,6 +887,8 @@ public class LmdbDataStore implements DataStore {
 
         final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
         readContext.read(keyRange, iterator -> {
+            long childCount = 0;
+
             while (fetchState.keepGoing &&
                     iterator.hasNext() &&
                     !Thread.currentThread().isInterrupted()) {
@@ -980,6 +910,10 @@ public class LmdbDataStore implements DataStore {
                                     storedValues);
                             final R row = mapper.create(fields, item);
                             if (row != null) {
+                                if (childCount >= limit) {
+                                    break;
+                                }
+                                childCount++;
                                 fetchState.totalRowCount++;
 
                                 // Add children if the group is open.
@@ -990,6 +924,7 @@ public class LmdbDataStore implements DataStore {
                                             readContext,
                                             key,
                                             childDepth,
+                                            maxResultSizes.size(childDepth),
                                             openGroups,
                                             timeFilter,
                                             mapper,
@@ -999,6 +934,10 @@ public class LmdbDataStore implements DataStore {
                                 }
                             }
                         } else {
+                            if (childCount >= limit) {
+                                break;
+                            }
+                            childCount++;
                             fetchState.totalRowCount++;
 
                             // Only bother to test open groups if we have some left.
@@ -1013,6 +952,7 @@ public class LmdbDataStore implements DataStore {
                                             readContext,
                                             key,
                                             childDepth,
+                                            maxResultSizes.size(childDepth),
                                             openGroups,
                                             timeFilter,
                                             mapper,
@@ -1033,7 +973,12 @@ public class LmdbDataStore implements DataStore {
                                     storedValues);
                             final R row = mapper.create(fields, item);
                             if (row != null) {
+                                if (childCount >= limit) {
+                                    break;
+                                }
+                                childCount++;
                                 fetchState.totalRowCount++;
+
                                 if (!fetchState.reachedRowLimit) {
                                     if (range.getOffset() <= fetchState.offset) {
                                         resultConsumer.accept(row);
@@ -1059,6 +1004,7 @@ public class LmdbDataStore implements DataStore {
                                             readContext,
                                             key,
                                             childDepth,
+                                            maxResultSizes.size(childDepth),
                                             openGroups,
                                             timeFilter,
                                             mapper,
@@ -1077,7 +1023,7 @@ public class LmdbDataStore implements DataStore {
     private <R> void getSortedChildren(final LmdbReadContext readContext,
                                        final Key parentKey,
                                        final int depth,
-                                       int trimmedSize,
+                                       final long limit,
                                        final boolean trimTop,
                                        final OpenGroups openGroups,
                                        final TimeFilter timeFilter,
@@ -1092,12 +1038,11 @@ public class LmdbDataStore implements DataStore {
 
         final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
 
-        final int lengthRemaining = (int) (range.getOffset() + range.getLength() - fetchState.length);
-        trimmedSize = Math.min(trimmedSize, lengthRemaining);
+        final long lengthRemaining = range.getOffset() + range.getLength() - fetchState.length;
 
         // FIXME : THIS IS HARD CODED AND DOESN'T MATTER FOR NORMAL PAGING, BUT WILL LIMIT RESULTS
         // DOWNLOADED TO EXCEL ETC IF SORTING IS USED.
-        trimmedSize = Math.min(trimmedSize, 500_000); // Don't ever allow more than 500K rows in a page.
+        final int trimmedSize = (int) Math.max(Math.min(Math.min(limit, lengthRemaining), 500_000), 0);
 
         int maxSize = trimmedSize * 2;
         // FIXME : SEE ABOVE NOTE ABOUT HARD CODING.
@@ -1106,6 +1051,7 @@ public class LmdbDataStore implements DataStore {
 
         final SortedItems sortedItems = new SortedItems(10, maxSize, trimmedSize, trimTop, sorter);
         readContext.read(keyRange, iterator -> {
+            long totalRowCount = 0;
             while (iterator.hasNext()
                     && !Thread.currentThread().isInterrupted()) {
                 final KeyVal<ByteBuffer> keyVal = iterator.next();
@@ -1126,20 +1072,29 @@ public class LmdbDataStore implements DataStore {
                         if (mapper.hidesRows()) {
                             final R row = mapper.create(fields, item);
                             if (row != null) {
-                                fetchState.totalRowCount++;
+                                totalRowCount++;
                                 sortedItems.add(new ItemImpl(readContext, key, storedValues));
                             }
                         } else {
-                            fetchState.totalRowCount++;
+                            totalRowCount++;
                             sortedItems.add(new ItemImpl(readContext, key, storedValues));
                         }
                     }
                 }
             }
+
+            // If there is a limit then pretend that the total row count is constrained.
+            fetchState.totalRowCount += Math.min(totalRowCount, limit);
         });
 
         // Finally transfer the sorted items to the result.
+        long childCount = 0;
         for (final Item item : sortedItems.getIterable()) {
+            if (childCount >= limit) {
+                break;
+            }
+            childCount++;
+
             if (!fetchState.reachedRowLimit) {
                 if (range.getOffset() <= fetchState.offset) {
                     final R row = mapper.create(fields, item);
@@ -1165,7 +1120,7 @@ public class LmdbDataStore implements DataStore {
                 getChildren(readContext,
                         item.getKey(),
                         childDepth,
-                        trimmedSize,
+                        maxResultSizes.size(childDepth),
                         trimTop,
                         openGroups,
                         timeFilter,

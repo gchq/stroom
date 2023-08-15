@@ -255,13 +255,13 @@ class SearchableSearchProvider implements SearchProvider {
             try {
                 return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
-                        .map(Integer::valueOf)
+                        .map(Long::valueOf)
                         .collect(Collectors.toList()));
             } catch (final Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
-        return Sizes.create(Integer.MAX_VALUE);
+        return Sizes.unlimited();
     }
 
     @Override
