@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.50] - 2023-08-15
+
+* Add quick rule creation UI.
+
+
 ## [v7.2-beta.49] - 2023-08-15
 
 * Add quick rule creation UI.
@@ -5730,7 +5735,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.49...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.50...HEAD
+[v7.2-beta.50]: https://github.com/gchq/stroom/compare/v7.2-beta.49...v7.2-beta.50
 [v7.2-beta.49]: https://github.com/gchq/stroom/compare/v7.2-beta.48...v7.2-beta.49
 [v7.2-beta.48]: https://github.com/gchq/stroom/compare/v7.2-beta.47...v7.2-beta.48
 [v7.2-beta.47]: https://github.com/gchq/stroom/compare/v7.2-beta.46...v7.2-beta.47
