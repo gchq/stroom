@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.49-open-id-4] - 2023-08-15
+
 * Add quick rule creation UI.
 
 * Issue **#3694** : Fix dashboard table maximum results.
@@ -5705,7 +5707,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.49-open-id-4...HEAD
+[v7.2-beta.49-open-id-4]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-3...v7.2-beta.49-open-id-4
 [v7.2-beta.43-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-2...v7.2-beta.43-open-id-3
 [v7.2-beta.43-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-1...v7.2-beta.43-open-id-2
 [v7.2-beta.43-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.42-open-id-1...v7.2-beta.43-open-id-1
@@ -5721,7 +5724,8 @@ Improve error handling during reference data initialisation.
 [v7.2-beta.10-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...v7.2-beta.10-open-id-3
 [v7.2-beta.10-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...v7.2-beta.10-open-id-2
 [v7.2-beta.10-open-id]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.10-open-id
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.49-open-id-4...HEAD
+[v7.2-beta.49-open-id-4]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-3...v7.2-beta.49-open-id-4
 [v7.2-beta.43-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-2...v7.2-beta.43-open-id-3
 [v7.2-beta.43-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.43-open-id-1...v7.2-beta.43-open-id-2
 [v7.2-beta.43-open-id-1]: https://github.com/gchq/stroom/compare/v7.2-beta.42-open-id-1...v7.2-beta.43-open-id-1
