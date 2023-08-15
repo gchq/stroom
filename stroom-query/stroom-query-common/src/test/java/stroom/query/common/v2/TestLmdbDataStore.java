@@ -145,7 +145,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         Metrics.report();
 
         Metrics.measure("Retrieved data", () -> {
-            // Make sure we only get 3000 results.
+            // Make sure we only get 50 results.
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId("componentX")
                     .addMappings(tableSettings)
