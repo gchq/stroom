@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
@@ -17,8 +18,10 @@ import java.util.Objects;
 public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
+    @JsonPropertyDescription("The default node to execute the analytic on.")
     private final String defaultNode;
     @JsonProperty
+    @JsonPropertyDescription("The default feed to send analytic results to.")
     private final DocRef defaultFeed;
 
     public AnalyticUiDefaultConfig() {
