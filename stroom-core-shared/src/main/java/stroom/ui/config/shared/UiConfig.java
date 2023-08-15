@@ -130,6 +130,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     private final NodeMonitoringConfig nodeMonitoring;
+    @JsonProperty
+    private final AnalyticUiDefaultConfig analyticUiDefaultConfig;
 
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -154,6 +156,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         source = new SourceConfig();
         requireReactWrapper = true;
         nodeMonitoring = new NodeMonitoringConfig();
+        analyticUiDefaultConfig = new AnalyticUiDefaultConfig();
     }
 
     @JsonCreator
@@ -179,7 +182,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("source") final SourceConfig source,
                     @JsonProperty("requireReactWrapper") Boolean requireReactWrapper,
-                    @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring) {
+                    @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring,
+                    @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -202,6 +206,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.source = source;
         this.requireReactWrapper = requireReactWrapper;
         this.nodeMonitoring = nodeMonitoring;
+        this.analyticUiDefaultConfig = analyticUiDefaultConfig;
     }
 
     public String getWelcomeHtml() {
@@ -356,6 +361,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return nodeMonitoring;
     }
 
+    public AnalyticUiDefaultConfig getAnalyticUiDefaultConfig() {
+        return analyticUiDefaultConfig;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -385,6 +394,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(activity, uiConfig.activity)
                 && Objects.equals(source, uiConfig.source)
                 && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper)
+                && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
                 && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring);
     }
 
@@ -410,7 +420,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 activity,
                 source,
                 requireReactWrapper,
-                nodeMonitoring);
+                nodeMonitoring,
+                analyticUiDefaultConfig);
     }
 
     @Override
@@ -437,6 +448,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", source=" + source +
                 ", requireReactWrapper=" + requireReactWrapper +
                 ", nodeMonitoring=" + nodeMonitoring +
+                ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
                 '}';
     }
 }
