@@ -148,7 +148,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .getFromDocRef(docRef);
     }
 
-    private void loadNewRule(final DocRef ruleDoc, final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+    private void loadNewRule(final DocRef ruleDocRef, final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final Rest<AnalyticRuleDoc> rest = restFactory.create();
         rest
                 .onSuccess(doc -> {
@@ -159,22 +159,24 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                             .dataRetention(SimpleDuration.builder().time(1).timeUnit(TimeUnit.DAYS).build())
                             .analyticRuleType(AnalyticRuleType.INDEX_QUERY)
                             .build();
-                    updateRule(updated, analyticUiDefaultConfig);
+                    updateRule(ruleDocRef, updated, analyticUiDefaultConfig);
                 })
                 .call(ANALYTIC_RULE_RESOURCE)
-                .fetch(ruleDoc.getUuid());
+                .fetch(ruleDocRef.getUuid());
     }
 
-    private void updateRule(final AnalyticRuleDoc ruleDoc,
+    private void updateRule(final DocRef ruleDocRef,
+                            final AnalyticRuleDoc ruleDoc,
                             final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final Rest<AnalyticRuleDoc> rest = restFactory.create();
         rest
-                .onSuccess(doc -> createNewNotification(ruleDoc, analyticUiDefaultConfig))
+                .onSuccess(doc -> createNewNotification(ruleDocRef, ruleDoc, analyticUiDefaultConfig))
                 .call(ANALYTIC_RULE_RESOURCE)
-                .update(ruleDoc.getUuid(), ruleDoc);
+                .update(ruleDocRef.getUuid(), ruleDoc);
     }
 
-    private void createNewNotification(final AnalyticRuleDoc ruleDoc,
+    private void createNewNotification(final DocRef ruleDocRef,
+                                       final AnalyticRuleDoc ruleDoc,
                                        final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig
                 .builder()
@@ -184,21 +186,22 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .build();
         final AnalyticNotification newNotification = AnalyticNotification
                 .builder()
-                .analyticUuid(ruleDoc.getUuid())
+                .analyticUuid(ruleDocRef.getUuid())
                 .enabled(true)
                 .config(config)
                 .build();
         final Rest<AnalyticNotification> rest = restFactory.create();
         rest
-                .onSuccess(result -> createNewProcessorFilter(ruleDoc, analyticUiDefaultConfig))
+                .onSuccess(result -> createNewProcessorFilter(ruleDocRef, ruleDoc, analyticUiDefaultConfig))
                 .call(ANALYTIC_NOTIFICATION_RESOURCE)
                 .create(newNotification);
     }
 
-    private void createNewProcessorFilter(final AnalyticRuleDoc ruleDoc,
+    private void createNewProcessorFilter(final DocRef ruleDocRef,
+                                          final AnalyticRuleDoc ruleDoc,
                                           final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final AnalyticProcessorFilter newFilter = AnalyticProcessorFilter.builder()
-                .analyticUuid(ruleDoc.getUuid())
+                .analyticUuid(ruleDocRef.getUuid())
                 .enabled(true)
                 .minMetaCreateTimeMs(System.currentTimeMillis())
                 .maxMetaCreateTimeMs(null)
@@ -207,8 +210,11 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         final Rest<AnalyticProcessorFilter> rest = restFactory.create();
         rest
                 .onSuccess(result ->
-                        AlertEvent.fireInfo(QueryDocEditPresenter.this, "Created New Rule", () ->
-                                RefreshDocumentEvent.fire(QueryDocEditPresenter.this, docRef)))
+                        AlertEvent.fireInfo(QueryDocEditPresenter.this,
+                                "Created new rule '" +
+                                        ruleDocRef.getName() +
+                                        "'", () ->
+                                        RefreshDocumentEvent.fire(QueryDocEditPresenter.this, ruleDocRef)))
                 .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
                 .create(newFilter);
     }
