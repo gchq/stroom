@@ -939,6 +939,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
+    analyticUiDefaultConfig: {}
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
