@@ -13,11 +13,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.2-beta.50-open-id-5] - 2023-08-15
-
-* Add quick rule creation UI.
-* 
-
 ## [v7.2-beta.49-open-id-4] - 2023-08-15
 
 * Add quick rule creation UI.
