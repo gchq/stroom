@@ -277,6 +277,12 @@ export interface AnalyticRuleDoc {
   version?: string;
 }
 
+export interface AnalyticUiDefaultConfig {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultFeed?: DocRef;
+  defaultNode?: string;
+}
+
 export interface Annotation {
   assignedTo?: string;
   comment?: string;
@@ -4572,6 +4578,7 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
+  analyticUiDefaultConfig?: AnalyticUiDefaultConfig;
   defaultMaxResults?: string;
   helpSubPathDocumentation?: string;
   helpSubPathExpressions?: string;
