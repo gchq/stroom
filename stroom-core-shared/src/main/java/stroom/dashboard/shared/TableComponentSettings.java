@@ -41,13 +41,14 @@ import java.util.Objects;
         "extractValues",
         "extractionPipeline",
         "maxResults",
+        "pageSize",
         "showDetail",
         "conditionalFormattingRules",
         "modelVersion"})
 @JsonInclude(Include.NON_NULL)
 public class TableComponentSettings implements ComponentSettings {
 
-    public static final int[] DEFAULT_MAX_RESULTS = {1000000};
+    public static final long[] DEFAULT_MAX_RESULTS = {1000000L};
 
     @Schema(description = "TODO", required = true)
     @JsonProperty
@@ -74,7 +75,13 @@ public class TableComponentSettings implements ComponentSettings {
             "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
             "In the absence of this field system defaults will apply")
     @JsonProperty
-    private final List<Integer> maxResults;
+    private final List<Long> maxResults;
+
+    @Schema(description = "Defines the maximum number of rows to display in the table at once (default 100).",
+            example = "100")
+    @JsonPropertyDescription("Defines the maximum number of rows to display in the table at once (default 100).")
+    @JsonProperty
+    private final Integer pageSize;
 
     @JsonPropertyDescription("When grouping is used a value of true indicates that the results will include the full " +
             "detail of any results aggregated into a group as well as their aggregates. A value of " +
@@ -96,7 +103,8 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("fields") final List<Field> fields,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-            @JsonProperty("maxResults") final List<Integer> maxResults,
+            @JsonProperty("maxResults") final List<Long> maxResults,
+            @JsonProperty("pageSize") final Integer pageSize,
             @JsonProperty("showDetail") final Boolean showDetail,
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
@@ -108,6 +116,7 @@ public class TableComponentSettings implements ComponentSettings {
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
+        this.pageSize = pageSize;
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
@@ -140,8 +149,12 @@ public class TableComponentSettings implements ComponentSettings {
         return extractionPipeline;
     }
 
-    public List<Integer> getMaxResults() {
+    public List<Long> getMaxResults() {
         return maxResults;
+    }
+
+    public Integer getPageSize() {
+        return pageSize;
     }
 
     public Boolean getShowDetail() {
@@ -178,6 +191,7 @@ public class TableComponentSettings implements ComponentSettings {
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
+                Objects.equals(pageSize, that.pageSize) &&
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                 Objects.equals(modelVersion, that.modelVersion);
@@ -192,6 +206,7 @@ public class TableComponentSettings implements ComponentSettings {
                 extractValues,
                 extractionPipeline,
                 maxResults,
+                pageSize,
                 showDetail,
                 conditionalFormattingRules,
                 modelVersion);
@@ -206,6 +221,7 @@ public class TableComponentSettings implements ComponentSettings {
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + maxResults +
+                ", pageSize=" + pageSize +
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", modelVersion='" + modelVersion + '\'' +
@@ -231,7 +247,8 @@ public class TableComponentSettings implements ComponentSettings {
         private List<Field> fields;
         private Boolean extractValues;
         private DocRef extractionPipeline;
-        private List<Integer> maxResults;
+        private List<Long> maxResults;
+        private Integer pageSize;
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
@@ -250,6 +267,7 @@ public class TableComponentSettings implements ComponentSettings {
             this.maxResults = tableSettings.maxResults == null
                     ? null
                     : new ArrayList<>(tableSettings.maxResults);
+            this.pageSize = tableSettings.pageSize;
             this.showDetail = tableSettings.showDetail;
             this.conditionalFormattingRules = tableSettings.conditionalFormattingRules == null
                     ? null
@@ -335,8 +353,13 @@ public class TableComponentSettings implements ComponentSettings {
             return this.extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
         }
 
-        public Builder maxResults(final List<Integer> maxResults) {
+        public Builder maxResults(final List<Long> maxResults) {
             this.maxResults = maxResults;
+            return this;
+        }
+
+        public Builder pageSize(final Integer pageSize) {
+            this.pageSize = pageSize;
             return this;
         }
 
@@ -370,6 +393,7 @@ public class TableComponentSettings implements ComponentSettings {
                     extractValues,
                     extractionPipeline,
                     maxResults,
+                    pageSize,
                     showDetail,
                     conditionalFormattingRules,
                     modelVersion);
@@ -386,7 +410,8 @@ public class TableComponentSettings implements ComponentSettings {
                     extractionPipeline,
                     maxResults,
                     showDetail,
-                    conditionalFormattingRules);
+                    conditionalFormattingRules,
+                    null);
         }
     }
 }

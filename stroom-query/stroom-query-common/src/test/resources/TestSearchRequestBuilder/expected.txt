@@ -59,7 +59,7 @@ select "Stream Id", "Event Id", "Event Time", "Status"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "Stream Id",
@@ -165,7 +165,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -272,7 +272,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -377,7 +377,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -482,7 +482,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -561,7 +561,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -639,7 +639,7 @@ select StreamId
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -690,7 +690,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -769,7 +769,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -848,7 +848,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",
@@ -918,7 +918,7 @@ select StreamId as "Stream Id", count as Count
     }
   },
   "resultRequests" : [ {
-    "componentId" : "1234",
+    "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
         "id" : "StreamId",

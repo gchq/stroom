@@ -320,7 +320,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
                 }
             }
 
-            valuesConsumer.add(Val.of(values));
+            valuesConsumer.accept(Val.of(values));
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);

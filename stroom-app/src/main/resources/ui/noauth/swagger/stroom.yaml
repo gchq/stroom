@@ -6968,8 +6968,6 @@ components:
           type: string
         enabled:
           type: boolean
-        expression:
-          $ref: '#/components/schemas/ExpressionOperator'
         maxMetaCreateTimeMs:
           type: integer
           format: int64
@@ -7022,8 +7020,9 @@ components:
         analyticRuleType:
           type: string
           enum:
-          - EVENT
-          - AGGREGATE
+          - STREAMING
+          - TABLE_CREATION
+          - INDEX_QUERY
         createTimeMs:
           type: integer
           format: int64
@@ -7052,6 +7051,13 @@ components:
         uuid:
           type: string
         version:
+          type: string
+    AnalyticUiDefaultConfig:
+      type: object
+      properties:
+        defaultFeed:
+          $ref: '#/components/schemas/DocRef'
+        defaultNode:
           type: string
     Annotation:
       type: object
@@ -8137,10 +8143,12 @@ components:
           - ADD
           - ADD_ABOVE
           - ADD_BELOW
+          - ADD_MULTIPLE
           - ALERT
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -8584,10 +8592,12 @@ components:
           - ADD
           - ADD_ABOVE
           - ADD_BELOW
+          - ADD_MULTIPLE
           - ALERT
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -8769,10 +8779,12 @@ components:
           - ADD
           - ADD_ABOVE
           - ADD_BELOW
+          - ADD_MULTIPLE
           - ALERT
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -9917,9 +9929,9 @@ components:
           - 401 - 300 - Client Certificate Required
           - 401 - 301 - Client Token Required
           - 401 - 302 - Client Token or Certificate Required
-          - 403 - 310 - Client Certificate not authorised
-          - 403 - 311 - Client Token not authorised
-          - 403 - 312 - Client Token or Certificate not authorised
+          - 401 - 310 - Client Certificate failed authentication
+          - 401 - 311 - Client Token failed authentication
+          - 401 - 312 - Client Token or Certificate failed authentication
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -10616,6 +10628,17 @@ components:
         version:
           type: integer
           format: int32
+    NodeMonitoringConfig:
+      type: object
+      properties:
+        pingMaxThreshold:
+          type: integer
+          format: int32
+          minimum: 1
+        pingWarnThreshold:
+          type: integer
+          format: int32
+          minimum: 1
     NodeSearchTask:
       type: object
       properties:
@@ -10890,10 +10913,12 @@ components:
           - ADD
           - ADD_ABOVE
           - ADD_BELOW
+          - ADD_MULTIPLE
           - ALERT
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
           - CANCEL
           - CASE_SENSITIVE
@@ -12380,6 +12405,7 @@ components:
           type: string
           enum:
           - ANALYTIC_RULE
+          - BATCH_ANALYTIC_RULE
           - ANALYTIC_RULE_UI
           - DASHBOARD_UI
           - QUERY_UI
@@ -13244,11 +13270,17 @@ components:
           example: 1000,10,1
           items:
             type: integer
-            format: int32
+            format: int64
             description: Defines the maximum number of results to return at each grouping
               level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
               1 and 1 at level 2. In the absence of this field system defaults will
               apply
+        pageSize:
+          type: integer
+          format: int32
+          description: Defines the maximum number of rows to display in the table
+            at once (default 100).
+          example: 100
         queryId:
           type: string
           description: TODO
@@ -13287,7 +13319,7 @@ components:
               $ref: '#/components/schemas/Row'
           totalResults:
             type: integer
-            format: int32
+            format: int64
       description: Object for describing a set of results in a table form that supports
         grouped data
       required:
@@ -13339,7 +13371,7 @@ components:
           example: 1000,10,1
           items:
             type: integer
-            format: int32
+            format: int64
             description: Defines the maximum number of results to return at each grouping
               level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
               1 and 1 at level 2. In the absence of this field system defaults will
@@ -13564,6 +13596,9 @@ components:
           format: int64
         id_token:
           type: string
+        refresh_expires_in:
+          type: integer
+          format: int64
         refresh_token:
           type: string
         refresh_token_expires_in:
@@ -13578,6 +13613,8 @@ components:
           type: string
         activity:
           $ref: '#/components/schemas/ActivityConfig'
+        analyticUiDefaultConfig:
+          $ref: '#/components/schemas/AnalyticUiDefaultConfig'
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:
@@ -13600,6 +13637,8 @@ components:
           type: string
         namePattern:
           type: string
+        nodeMonitoring:
+          $ref: '#/components/schemas/NodeMonitoringConfig'
         oncontextmenu:
           type: string
           pattern: ^return (true|false);$
@@ -13747,6 +13786,11 @@ components:
           enum:
           - STANDARD
           - VIM
+        editorLiveAutoCompletion:
+          type: string
+          enum:
+          - "ON"
+          - "OFF"
         editorTheme:
           type: string
         font:
@@ -13797,6 +13841,8 @@ components:
           $ref: '#/components/schemas/DocRef'
         description:
           type: string
+        filter:
+          $ref: '#/components/schemas/ExpressionOperator'
         name:
           type: string
         pipeline:

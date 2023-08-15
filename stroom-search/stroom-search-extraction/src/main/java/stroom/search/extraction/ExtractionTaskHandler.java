@@ -73,7 +73,7 @@ public class ExtractionTaskHandler {
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
     private final IdEnrichmentExpectedIds idEnrichmentExpectedIds;
-    private final ExtractionStateHolder extractionStateHolder;
+    private final ExtractionState extractionState;
 
     @Inject
     ExtractionTaskHandler(final Store streamStore,
@@ -87,7 +87,7 @@ public class ExtractionTaskHandler {
                           final PipelineStore pipelineStore,
                           final SecurityContext securityContext,
                           final IdEnrichmentExpectedIds idEnrichmentExpectedIds,
-                          final ExtractionStateHolder extractionStateHolder) {
+                          final ExtractionState extractionState) {
         this.streamStore = streamStore;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
@@ -99,7 +99,7 @@ public class ExtractionTaskHandler {
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
         this.idEnrichmentExpectedIds = idEnrichmentExpectedIds;
-        this.extractionStateHolder = extractionStateHolder;
+        this.extractionState = extractionState;
     }
 
     public Meta extract(final TaskContext taskContext,
@@ -147,7 +147,7 @@ public class ExtractionTaskHandler {
                 processData(queryKey, source, eventIds, pipelineRef, pipeline, errorConsumer);
 
                 // Ensure count is the same.
-                if (eventIds.length != extractionStateHolder.getCount()) {
+                if (eventIds.length != extractionState.getCount()) {
                     LOGGER.debug(() -> "Extraction count mismatch");
                 }
             }

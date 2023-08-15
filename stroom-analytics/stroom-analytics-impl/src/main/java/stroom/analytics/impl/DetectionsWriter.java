@@ -7,7 +7,7 @@ import stroom.pipeline.writer.XMLWriter;
 
 import javax.inject.Inject;
 
-public class DetectionsWriter implements DetectionConsumer, ProcessLifecycleAware {
+public class DetectionsWriter implements DetectionConsumer {
 
     private final DetectionWriter detectionWriter;
     private final StreamAppender streamAppender;

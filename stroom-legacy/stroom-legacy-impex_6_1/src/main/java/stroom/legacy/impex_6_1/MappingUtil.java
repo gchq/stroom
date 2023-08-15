@@ -184,10 +184,10 @@ public final class MappingUtil {
             return null;
         }
 
-        List<Integer> maxResults = null;
+        List<Long> maxResults = null;
         if (value.getMaxResults() != null) {
             maxResults = new ArrayList<>();
-            for (int results : value.getMaxResults()) {
+            for (long results : value.getMaxResults()) {
                 maxResults.add(results);
             }
         }
@@ -199,6 +199,7 @@ public final class MappingUtil {
                 value.getExtractValues(),
                 map(value.getExtractionPipeline()),
                 maxResults,
+                100,
                 value.getShowDetail(),
                 mapList(value.getConditionalFormattingRules(), MappingUtil::map),
                 value.getModelVersion());

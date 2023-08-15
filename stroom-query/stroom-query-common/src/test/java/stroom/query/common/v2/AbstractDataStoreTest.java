@@ -38,13 +38,16 @@ import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.BeforeAll;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractDataStoreTest {
-
-    private final Sizes defaultMaxResultsSizes = Sizes.create(50);
 
     @BeforeAll
     static void beforeAll() {
@@ -68,7 +71,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + i;
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -83,15 +86,150 @@ abstract class AbstractDataStoreTest {
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
                 .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
+                .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+    }
+
+    void nestedTest() {
+        final FormatterFactory formatterFactory = new FormatterFactory(null);
+        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
+                        .id("Col1")
+                        .name("Col1")
+                        .expression(ParamSubstituteUtil.makeParam("Col1"))
+                        .format(Format.NUMBER)
+                        .group(0)
+                        .sort(Sort.builder().order(0).build())
+                        .build())
+                .addFields(Field.builder()
+                        .id("Col2")
+                        .name("Col2")
+                        .expression(ParamSubstituteUtil.makeParam("Col2"))
+                        .format(Format.NUMBER)
+                        .group(1)
+                        .sort(Sort.builder().order(1).build())
+                        .build())
+                .addFields(Field.builder()
+                        .id("Col3")
+                        .name("Col3")
+                        .expression(ParamSubstituteUtil.makeParam("Col3"))
+                        .format(Format.NUMBER)
+                        .group(2)
+                        .sort(Sort.builder().order(2).build())
+                        .build())
+                .build();
+
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
+
+        for (long i = 1; i <= 10; i++) {
+            for (long j = 1; j <= 10; j++) {
+                for (long k = 1; k <= 10; k++) {
+                    dataStore.accept(Val.of(ValLong.create(i), ValLong.create(j), ValLong.create(k)));
+                }
+            }
+        }
+
+        // Wait for all items to be added.
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
+
+        // Make sure we only get 10 results.
+        ResultRequest tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 10000))
+                .build();
+        TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore,
+                tableResultRequest);
+
+        testRows(searchResult, 1);
+
+        // Now open all first level groups.
+        Set<String> openGroups = searchResult
+                .getRows()
+                .stream()
+                .map(Row::getGroupKey)
+                .collect(Collectors.toSet());
+        tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 10000))
+                .openGroups(openGroups)
+                .build();
+        searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore,
+                tableResultRequest);
+
+        testRows(searchResult, 2);
+
+        // Now open all first and second level groups.
+        openGroups = searchResult
+                .getRows()
+                .stream()
+                .map(Row::getGroupKey)
+                .collect(Collectors.toSet());
+        tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 10000))
+                .openGroups(openGroups)
+                .build();
+        searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore,
+                tableResultRequest);
+
+        testRows(searchResult, 3);
+    }
+
+    private void testRows(final TableResult searchResult, int maxDepth) {
+        // Create expected test rows.
+        List<List<String>> expectedRows = new ArrayList<>();
+        createRows(expectedRows, Collections.emptyList(), 1, maxDepth, 10, 3);
+
+        // Test row count.
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(expectedRows.size());
+
+        // Test rows.
+        int i = 0;
+        for (final Row row : searchResult.getRows()) {
+            final List<String> rowValues = row.getValues();
+            assertThat(rowValues).isEqualTo(expectedRows.get(i++));
+        }
+    }
+
+    private void createRows(List<List<String>> rows,
+                            List<String> parentRow,
+                            int currentDepth,
+                            int maxDepth,
+                            int count,
+                            int columns) {
+        for (long i = 1; i <= count; i++) {
+            final List<String> newParentRow = new ArrayList<>(parentRow);
+            newParentRow.add(Long.toString(i));
+
+            final List<String> row = new ArrayList<>(newParentRow);
+            for (int j = row.size(); j < columns; j++) {
+                row.add(null);
+            }
+            rows.add(row);
+            if (currentDepth < maxDepth) {
+                createRows(rows, newParentRow, currentDepth + 1, maxDepth, count, columns);
+            }
+        }
     }
 
     void noValuesTest() {
@@ -110,7 +248,7 @@ abstract class AbstractDataStoreTest {
         final DataStore dataStore = create(tableSettings);
 
         for (int i = 0; i < 1; i++) {
-            dataStore.add(Val.of(ValString.create("jbloggs")));
+            dataStore.accept(Val.of(ValString.create("jbloggs")));
         }
 
         // Wait for all items to be added.
@@ -127,9 +265,7 @@ abstract class AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 1))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
@@ -166,19 +302,14 @@ abstract class AbstractDataStoreTest {
                 .showDetail(true)
                 .build();
 
-        final DataStoreSettings dataStoreSettings = DataStoreSettings
-                .createBasicSearchResultStoreSettings()
-                .copy()
-                .maxResults(Sizes.create(Integer.MAX_VALUE))
-                .storeSize(Sizes.create(Integer.MAX_VALUE)).build();
-        final DataStore dataStore = create(tableSettings, dataStoreSettings);
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
 
         Metrics.measure("Loaded data", () -> {
             for (int i = 0; i < 100; i++) {
                 final String key = UUID.randomUUID().toString();
                 for (int j = 0; j < 100000; j++) {
                     final String value = UUID.randomUUID().toString();
-                    dataStore.add(Val.of(ValString.create(key), ValString.create(value)));
+                    dataStore.accept(Val.of(ValString.create(key), ValString.create(value)));
                 }
             }
         });
@@ -211,11 +342,9 @@ abstract class AbstractDataStoreTest {
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId("componentX")
                     .addMappings(tableSettings)
-                    .requestedRange(new OffsetRange(0, 3000))
+                    .requestedRange(new OffsetRange(0, 50))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    fieldFormatter,
-                    defaultMaxResultsSizes);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -244,7 +373,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -258,7 +387,7 @@ abstract class AbstractDataStoreTest {
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
                 .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
+                .requestedRange(new OffsetRange(0, 50))
                 .build();
         checkResults(dataStore, tableResultRequest, 0, false);
     }
@@ -279,7 +408,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = String.valueOf((int) (Math.random() * 100));
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -294,7 +423,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 0, true);
     }
@@ -321,7 +450,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -336,7 +465,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 0, true);
     }
@@ -363,7 +492,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -378,7 +507,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 1, false);
     }
@@ -405,7 +534,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Val.of(ValString.create(text)));
+            dataStore.accept(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -420,7 +549,7 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
         checkResults(dataStore, tableResultRequest, 1, false);
     }
@@ -452,7 +581,7 @@ abstract class AbstractDataStoreTest {
         final DataStore dataStore = create(tableSettings);
 
         for (int i = 1; i <= 30; i++) {
-            dataStore.add(Val.of(ValString.create("group"), ValLong.create(i)));
+            dataStore.accept(Val.of(ValString.create("group"), ValLong.create(i)));
         }
 
         // Wait for all items to be added.
@@ -467,15 +596,13 @@ abstract class AbstractDataStoreTest {
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
-                        .requestedRange(new OffsetRange(0, 3000))
+                        .requestedRange(new OffsetRange(0, 50))
                         .build();
 
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 
@@ -496,13 +623,12 @@ abstract class AbstractDataStoreTest {
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
         // Make sure we only get 2000 results.
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 
-        assertThat(searchResult.getTotalResults() <= 50).isTrue();
+        assertThat(searchResult.getResultRange().getLength() <= 50).isTrue();
+        assertThat(searchResult.getTotalResults() <= 3000).isTrue();
 
         String lastValue = null;
         for (final Row result : searchResult.getRows()) {
@@ -528,13 +654,20 @@ abstract class AbstractDataStoreTest {
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
         final Sizes defaultMaxResultsSizes = Sizes.create(50);
-        final Sizes storeSize = Sizes.create(100);
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
         final DataStoreSettings dataStoreSettings = DataStoreSettings
                 .createBasicSearchResultStoreSettings()
                 .copy()
                 .maxResults(maxResults)
-                .storeSize(storeSize)
+                .build();
+        return create(tableSettings, dataStoreSettings);
+    }
+
+    DataStore createUnlimitedDataStore(final TableSettings tableSettings) {
+        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                .createBasicSearchResultStoreSettings()
+                .copy()
+                .maxResults(Sizes.unlimited())
                 .build();
         return create(tableSettings, dataStoreSettings);
     }

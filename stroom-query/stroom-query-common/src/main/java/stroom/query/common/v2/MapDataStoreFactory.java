@@ -34,10 +34,12 @@ public class MapDataStoreFactory implements DataStoreFactory {
 
         return new MapDataStore(
                 serialisersProvider.get(),
+                componentId,
                 tableSettings,
                 fieldIndex,
                 paramMap,
-                dataStoreSettings);
+                dataStoreSettings,
+                errorConsumer);
     }
 
     @Override

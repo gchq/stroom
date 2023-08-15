@@ -21,7 +21,6 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     private final int maxStringFieldLength;
 
     private final ResultStoreLmdbConfig lmdbConfig;
-    private final String storeSize;
 
     AbstractResultStoreConfig() {
         this(10_000,
@@ -30,8 +29,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
-                "1000000,100,10,1");
+                ResultStoreLmdbConfig.builder().localDir("search_results").build());
     }
 
     AbstractResultStoreConfig(final int maxPutsBeforeCommit,
@@ -40,8 +38,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                               final ByteSize maxPayloadSize,
                               final int maxStringFieldLength,
                               final int valueQueueSize,
-                              final ResultStoreLmdbConfig lmdbConfig,
-                              final String storeSize) {
+                              final ResultStoreLmdbConfig lmdbConfig) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
         this.minPayloadSize = minPayloadSize;
@@ -49,7 +46,6 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
         this.maxStringFieldLength = maxStringFieldLength;
         this.valueQueueSize = valueQueueSize;
         this.lmdbConfig = lmdbConfig;
-        this.storeSize = storeSize;
     }
 
 
@@ -95,11 +91,6 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
         return lmdbConfig;
     }
 
-    @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
-    public String getStoreSize() {
-        return storeSize;
-    }
-
     @Override
     public String toString() {
         return "ResultStoreConfig{" +
@@ -110,7 +101,6 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                 ", maxPayloadSize=" + maxPayloadSize +
                 ", maxStringFieldLength=" + maxStringFieldLength +
                 ", lmdbConfig=" + lmdbConfig +
-                ", storeSize='" + storeSize + '\'' +
                 '}';
     }
 }

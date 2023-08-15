@@ -168,7 +168,6 @@ public class CoprocessorsFactory {
                              final Map<String, String> paramMap,
                              final DataStoreSettings dataStoreSettings,
                              final ErrorConsumer errorConsumer) {
-        final Sizes storeSizes = sizesProvider.getStoreSizes();
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
@@ -177,7 +176,7 @@ public class CoprocessorsFactory {
         final DataStoreSettings modifiedSettings =
                 dataStoreSettings.copy()
                         .maxResults(maxResults)
-                        .storeSize(storeSizes).build();
+                        .build();
 
         return dataStoreFactory.create(
                 searchRequestSource,

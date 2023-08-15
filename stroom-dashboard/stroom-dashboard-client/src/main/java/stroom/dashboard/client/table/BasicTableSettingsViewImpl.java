@@ -20,6 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -51,11 +52,16 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     @UiField
     TextBox maxResults;
     @UiField
+    ValueSpinner pageSize;
+    @UiField
     CustomCheckBox showDetail;
 
     @Inject
     public BasicTableSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        pageSize.setValue(100);
+        pageSize.setMin(1);
+        pageSize.setMax(10000);
     }
 
     @Override
@@ -129,6 +135,16 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     @Override
     public void setMaxResults(final String maxResults) {
         this.maxResults.setText(maxResults);
+    }
+
+    @Override
+    public int getPageSize() {
+        return pageSize.getIntValue();
+    }
+
+    @Override
+    public void setPageSize(final int pageSize) {
+        this.pageSize.setValue(pageSize);
     }
 
     @Override

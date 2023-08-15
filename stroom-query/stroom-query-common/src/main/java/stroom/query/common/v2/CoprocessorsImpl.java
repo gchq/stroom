@@ -66,11 +66,11 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         counter.increment();
         LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
         // Give the data array to each of our coprocessors
-        coprocessorMap.values().forEach(coprocessor -> coprocessor.add(values));
+        coprocessorMap.values().forEach(coprocessor -> coprocessor.accept(values));
     }
 
     @Override

@@ -16,23 +16,22 @@
 
 package stroom.editor.client.presenter;
 
+import stroom.ui.config.shared.UserPreferences.Toggle;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
+import java.util.Objects;
+
+public class ChangeCurrentPreferencesEvent extends GwtEvent<ChangeCurrentPreferencesEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final String theme;
-    private final String editorTheme;
-    private final String editorKeyBindings;
+    private final CurrentPreferences currentPreferences;
 
-    private ChangeThemeEvent(final String theme,
-                             final String editorTheme,
-                             final String editorKeyBindings) {
-        this.theme = theme;
-        this.editorTheme = editorTheme;
-        this.editorKeyBindings = editorKeyBindings;
+    private ChangeCurrentPreferencesEvent(final CurrentPreferences currentPreferences) {
+        Objects.requireNonNull(currentPreferences);
+        this.currentPreferences = currentPreferences;
     }
 
     public static Type<Handler> getType() {
@@ -43,10 +42,8 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers,
-                            final String theme,
-                            final String editorTheme,
-                            final String editorKeyBindings) {
-        handlers.fireEvent(new ChangeThemeEvent(theme, editorTheme, editorKeyBindings));
+                            final CurrentPreferences currentPreferences) {
+        handlers.fireEvent(new ChangeCurrentPreferencesEvent(currentPreferences));
     }
 
     @Override
@@ -60,23 +57,26 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
     }
 
     public String getTheme() {
-        return theme;
+        return currentPreferences.getTheme();
     }
 
     public String getEditorTheme() {
-        return editorTheme;
+        return currentPreferences.getEditorTheme();
     }
 
     public String getEditorKeyBindings() {
-        return editorKeyBindings;
+        return currentPreferences.getEditorKeyBindings();
     }
 
+    public Toggle getEditorLiveAutoCompletion() {
+        return currentPreferences.getEditorLiveAutoCompletion();
+    }
 
     // --------------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {
 
-        void onChange(ChangeThemeEvent event);
+        void onChange(ChangeCurrentPreferencesEvent event);
     }
 }

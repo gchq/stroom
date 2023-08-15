@@ -68,7 +68,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final ExtractionStateHolder extractionStateHolder;
+    private final ValueConsumerHolder valueConsumerHolder;
     private final LocationFactoryProxy locationFactory;
     private final Configuration config = new Configuration();
     private final PipelineConfiguration pipeConfig = config.makePipelineConfiguration();
@@ -94,10 +94,10 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
                                        final ErrorReceiverProxy errorReceiverProxy,
-                                       final ExtractionStateHolder extractionStateHolder) {
+                                       final ValueConsumerHolder valueConsumerHolder) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.extractionStateHolder = extractionStateHolder;
+        this.valueConsumerHolder = valueConsumerHolder;
     }
 
     /**
@@ -131,7 +131,6 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                 topLevelUri = uri;
                 topLevelQName = qName;
                 topLevelAtts = atts;
-                extractionStateHolder.incrementCount();
 
             } else if (depth == 2) {
                 if (!secondLevelElementToCreateDocs.equals((localName))) {
@@ -168,7 +167,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
 
     private void createXPathExecutables() {
-        final FieldIndex fieldIndex = extractionStateHolder.getFieldIndex();
+        final FieldIndex fieldIndex = valueConsumerHolder.getFieldIndex();
         xPathExecutables = new XPathExecutable[fieldIndex.size()];
 
         fieldIndex.forEach((index, fieldName) -> {
@@ -327,7 +326,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
                         values[field] = ValString.create(thisVal.toString());
                     }
-                    extractionStateHolder.getReceiver().add(Val.of(values));
+                    valueConsumerHolder.accept(Val.of(values));
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);

@@ -2,5 +2,5 @@ package stroom.dashboard.expression.v1;
 
 public interface ValuesConsumer {
 
-    void add(Val[] values);
+    void accept(Val[] values);
 }

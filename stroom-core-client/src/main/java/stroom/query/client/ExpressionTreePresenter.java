@@ -36,6 +36,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
@@ -96,6 +97,54 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     public void addTerm() {
         addNewItem(new Term());
+    }
+
+    public void copy() {
+        if (selectionModel != null) {
+            final Item selectedItem = selectionModel.getSelectedObject();
+            if (selectedItem != null) {
+                Item parent = tree.getParent(selectedItem);
+                if (parent == null) {
+                    parent = tree.getRoot();
+                }
+
+                copy(parent, selectedItem);
+
+                fireDirty();
+
+                getView().refresh();
+            }
+        }
+    }
+
+    private void copy(final Item parent, final Item item) {
+        if (item instanceof Operator) {
+            final Operator operator = (Operator) item;
+            List<Item> children = tree.getChildren(operator);
+            if (children != null) {
+                children = new ArrayList<>(children);
+            }
+
+            final Operator newOperator = new Operator();
+            newOperator.setOp(operator.getOp());
+            newOperator.setEnabled(operator.isEnabled());
+            tree.addChild(parent, newOperator);
+
+            if (children != null) {
+                for (final Item child : children) {
+                    copy(newOperator, child);
+                }
+            }
+        } else if (item instanceof Term) {
+            final Term term = (Term) item;
+            final Term newTerm = new Term();
+            newTerm.setField(term.getField());
+            newTerm.setCondition(term.getCondition());
+            newTerm.setValue(term.getValue());
+            newTerm.setDocRef(term.getDocRef());
+            newTerm.setEnabled(term.isEnabled());
+            tree.addChild(parent, newTerm);
+        }
     }
 
     public void disable() {
@@ -163,7 +212,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
                     operator = selected;
                 } else {
                     final Item parent = tree.getParent(selected);
-                    if (parent != null && parent instanceof Operator) {
+                    if (parent instanceof Operator) {
                         operator = parent;
                     }
                 }
@@ -171,7 +220,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
             if (operator == null) {
                 final Item root = tree.getRoot();
-                if (root != null && root instanceof Operator) {
+                if (root instanceof Operator) {
                     operator = root;
                 }
             }

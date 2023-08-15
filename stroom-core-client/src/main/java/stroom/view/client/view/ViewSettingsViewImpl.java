@@ -34,8 +34,8 @@ public class ViewSettingsViewImpl extends ViewImpl implements ViewSettingsView {
     SimplePanel dataSource;
     @UiField
     SimplePanel pipeline;
-//    @UiField
-//    SimplePanel expression;
+    @UiField
+    SimplePanel expression;
 
     @Inject
     public ViewSettingsViewImpl(final Binder binder) {
@@ -57,10 +57,10 @@ public class ViewSettingsViewImpl extends ViewImpl implements ViewSettingsView {
         pipeline.setWidget(view.asWidget());
     }
 
-//    @Override
-//    public void setExpressionView(final View view) {
-//        expression.setWidget(view.asWidget());
-//    }
+    @Override
+    public void setExpressionView(final View view) {
+        expression.setWidget(view.asWidget());
+    }
 
     public interface Binder extends UiBinder<Widget, ViewSettingsViewImpl> {
 

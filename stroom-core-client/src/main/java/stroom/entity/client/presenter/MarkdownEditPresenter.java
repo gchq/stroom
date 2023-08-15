@@ -21,7 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -100,7 +100,7 @@ public class MarkdownEditPresenter
         toolbar.addButton(editModeButton);
         helpButton = toolbar.addButton(SvgPresets.HELP.title("Documentation help"));
 
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
+        registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 updateMarkdownOnIFramePresenter()));
     }
 

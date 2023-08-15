@@ -46,7 +46,6 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
-import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
@@ -229,10 +228,10 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                     tableSettings = tableSettings
                             .copy()
-                            .maxResults(List.of(1000000))
+                            .maxResults(List.of(1000000L))
                             .build();
                     final List<TableSettings> mappings = List.of(tableSettings);
-                    final OffsetRange requestRange = OffsetRange.builder().offset(0L).length(100L).build();
+                    final OffsetRange requestRange = OffsetRange.ZERO_100;
                     final TimeFilter timeFilter = DateExpressionParser
                             .getTimeFilter(
                                     task.getQuery().getTimeRange(),
@@ -249,12 +248,15 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                             doc, fieldArray, hitCount, valuesConsumer, expression, expressionMatcher);
                     final FieldFormatter fieldFormatter =
                             new FieldFormatter(new FormatterFactory(null));
-                    final TableResultCreator resultCreator = new TableResultCreator(
-                            fieldFormatter,
-                            Sizes.create(Integer.MAX_VALUE));
+                    final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
+                        @Override
+                        public TableResultBuilder createTableResultBuilder() {
+                            return tableResultConsumer;
+                        }
+                    };
 
                     // Create result.
-                    resultCreator.create(lmdbDataStore, resultRequest, tableResultConsumer);
+                    resultCreator.create(lmdbDataStore, resultRequest);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                     errorConsumer.add(new RuntimeException(
@@ -380,7 +382,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                             values[i] = ValString.create(value);
                         }
                     }
-                    consumer.add(values);
+                    consumer.accept(values);
                 }
 
             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -400,7 +402,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         }
 
         @Override
-        public TableResultConsumer totalResults(final Integer totalResults) {
+        public TableResultConsumer totalResults(final Long totalResults) {
             return this;
         }
 

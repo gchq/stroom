@@ -216,9 +216,6 @@ export interface AnalyticProcessorFilter {
   createUser?: string;
   enabled?: boolean;
 
-  /** A logical addOperator term in a query expression tree */
-  expression?: ExpressionOperator;
-
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
 
@@ -261,7 +258,7 @@ export interface AnalyticProcessorFilterTracker {
 }
 
 export interface AnalyticRuleDoc {
-  analyticRuleType?: "EVENT" | "AGGREGATE";
+  analyticRuleType?: "STREAMING" | "TABLE_CREATION" | "INDEX_QUERY";
 
   /** @format int64 */
   createTimeMs?: number;
@@ -278,6 +275,12 @@ export interface AnalyticRuleDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface AnalyticUiDefaultConfig {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultFeed?: DocRef;
+  defaultNode?: string;
 }
 
 export interface Annotation {
@@ -956,10 +959,12 @@ export interface DocumentType {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -1300,10 +1305,12 @@ export interface ExplorerDocContentMatch {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -1478,10 +1485,12 @@ export interface ExplorerNode {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -2191,9 +2200,9 @@ export interface GetFeedStatusResponse {
     | "401 - 300 - Client Certificate Required"
     | "401 - 301 - Client Token Required"
     | "401 - 302 - Client Token or Certificate Required"
-    | "403 - 310 - Client Certificate not authorised"
-    | "403 - 311 - Client Token not authorised"
-    | "403 - 312 - Client Token or Certificate not authorised"
+    | "401 - 310 - Client Certificate failed authentication"
+    | "401 - 311 - Client Token failed authentication"
+    | "401 - 312 - Client Token or Certificate failed authentication"
     | "500 - 400 - Compressed stream invalid"
     | "500 - 999 - Unknown error";
 }
@@ -2636,6 +2645,20 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeMonitoringConfig {
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingMaxThreshold?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingWarnThreshold?: number;
+}
+
 export interface NodeSearchTask {
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
@@ -2812,10 +2835,12 @@ export interface PipelineElementType {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -3863,7 +3888,14 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ANALYTIC_RULE" | "ANALYTIC_RULE_UI" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?:
+    | "ANALYTIC_RULE"
+    | "BATCH_ANALYTIC_RULE"
+    | "ANALYTIC_RULE_UI"
+    | "DASHBOARD_UI"
+    | "QUERY_UI"
+    | "API"
+    | "BATCH_SEARCH";
 }
 
 /**
@@ -4359,6 +4391,13 @@ export interface TableComponentSettings {
    */
   maxResults?: number[];
 
+  /**
+   * Defines the maximum number of rows to display in the table at once (default 100).
+   * @format int32
+   * @example 100
+   */
+  pageSize?: number;
+
   /** TODO */
   queryId: string;
   showDetail?: boolean;
@@ -4548,6 +4587,9 @@ export interface TokenResponse {
   /** @format int64 */
   expires_in?: number;
   id_token?: string;
+
+  /** @format int64 */
+  refresh_expires_in?: number;
   refresh_token?: string;
 
   /** @format int64 */
@@ -4558,6 +4600,7 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
+  analyticUiDefaultConfig?: AnalyticUiDefaultConfig;
   defaultMaxResults?: string;
   helpSubPathDocumentation?: string;
   helpSubPathExpressions?: string;
@@ -4569,6 +4612,7 @@ export interface UiConfig {
   htmlTitle?: string;
   maintenanceMessage?: string;
   namePattern?: string;
+  nodeMonitoring?: NodeMonitoringConfig;
 
   /** @pattern ^return (true|false);$ */
   oncontextmenu?: string;
@@ -4655,6 +4699,7 @@ export interface UserPreferences {
   dateTimePattern?: string;
   density?: string;
   editorKeyBindings?: "STANDARD" | "VIM";
+  editorLiveAutoCompletion?: "ON" | "OFF";
   editorTheme?: string;
   font?: string;
   fontSize?: string;
@@ -4688,6 +4733,9 @@ export interface ViewDoc {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
   description?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  filter?: ExpressionOperator;
   name?: string;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */

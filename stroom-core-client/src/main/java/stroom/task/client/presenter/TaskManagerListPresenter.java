@@ -37,6 +37,7 @@ import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -51,6 +52,8 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -101,6 +104,7 @@ public class TaskManagerListPresenter
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
     private final ButtonView warningsButton;
+    private final InlineSvgToggleButton autoRefreshButton;
 
     private String currentWarnings;
     private Column<TaskProgress, Expander> expanderColumn;
@@ -110,6 +114,7 @@ public class TaskManagerListPresenter
 
     private Range range;
     private Consumer<TaskProgressResponse> dataConsumer;
+    private boolean autoRefresh = true;
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
@@ -127,6 +132,12 @@ public class TaskManagerListPresenter
 
         dataGrid = new MyDataGrid<>(1000);
         view.setDataWidget(dataGrid);
+
+        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
+        autoRefreshButton.setTitle("Turn Auto Refresh Off");
+        autoRefreshButton.setState(autoRefresh);
+        getView().addButton(autoRefreshButton);
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
@@ -189,6 +200,18 @@ public class TaskManagerListPresenter
                 showWarnings();
             }
         }));
+
+        registerHandler(autoRefreshButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                autoRefresh = !autoRefresh;
+                if (autoRefresh) {
+                    autoRefreshButton.setTitle("Turn Auto Refresh Off");
+                    internalRefresh();
+                } else {
+                    autoRefreshButton.setTitle("Turn Auto Refresh On");
+                }
+            }
+        }));
     }
 
     private void showWarnings() {
@@ -244,14 +267,14 @@ public class TaskManagerListPresenter
             // need to clear the expandAllRequestState prior to fetching
             treeAction.resetExpandAllRequestState();
             updateButtonStates();
-            refresh();
+            internalRefresh();
         });
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
-            protected void showInfo(final TaskProgress row, final int x, final int y) {
+            protected void showInfo(final TaskProgress row, final PopupPosition popupPosition) {
                 final SafeHtml tooltipHtml = buildTooltipHtml(row);
-                tooltipPresenter.show(tooltipHtml, x, y);
+                tooltipPresenter.show(tooltipHtml, popupPosition);
             }
         };
         dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -358,6 +381,12 @@ public class TaskManagerListPresenter
 
     @Override
     public void refresh() {
+        if (autoRefresh) {
+            internalRefresh();
+        }
+    }
+
+    private void internalRefresh() {
         treeAction.resetExpandAllRequestState();
         dataProvider.refresh();
     }
@@ -436,7 +465,7 @@ public class TaskManagerListPresenter
         for (final TaskProgress taskProgress : cloneSelectedTaskProgress) {
             doTerminate(taskProgress);
         }
-        refresh();
+        internalRefresh();
     }
 
     private void doTerminate(final TaskProgress taskProgress) {
@@ -472,7 +501,7 @@ public class TaskManagerListPresenter
                 // This is a new filter so reset all the expander states
                 treeAction.reset();
                 criteria.setNameFilter(filter);
-                refresh();
+                internalRefresh();
             }
         }
 

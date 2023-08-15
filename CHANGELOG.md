@@ -13,6 +13,91 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Add quick rule creation UI.
+
+* Issue **#3694** : Fix dashboard table maximum results.
+
+* Issue **#3304** : Improve analytic processing.
+
+* Issue **#3691** : Fix vis data point truncation.
+
+* Issue **#3683** : Fix XML header being written multiple times with RolledFileAppender and compression enabled.
+
+* Issue **#3636** : Remove OIDC redirect URI parameters.
+
+* Issue **#3649** : Change the node monitoring ping bars to have a consistent and configurable (`pingWarnThreshold` and `pingMaxThreshold`) scale. Change the ping bar to use a three colour scheme.
+
+* Issue **#3660** : Fix high search memory usage.
+
+* Issue **#3664** : Make editor Live Auto Completion a user preference.
+
+* Change user preferences to set the list of available editor themes based on the stroom theme, i.e. light editor themes for a light stroom theme.
+
+* Change editor theme names in user preferences to be more human friendly.
+
+* Issue **#3631** : Fix missing structure heading items in query helper.
+
+* Issue **#3667** : Fix data viewer info pane not being scrollable.
+
+* Issue **#3659** : Fix the display of `Part`/`Record` on the source screen depending on whether data is segmented or not.
+
+* Issue **#3665** : Fix nested group keys.
+
+* Issue **#3677** : Fix `indexOf()` docs.
+
+* Issue **#3680** : Fix dashboard save as behaviour.
+
+* Issue **#3637** : Add copy expression term/operator button.
+
+* Issue **#3248** : Add ability to download multiple dashboard tables as Excel worksheets in a single file.
+
+* Issue **#3453** : Support Elasticsearch index name variable substitution.
+
+* Issue **#3613** : Fix error un-marshalling TimeRange.
+
+* Issue **#3612** : Change default for `forwardChunkSize` from null to 1048576 bytes so chunked transport is used to avoid out of memory errors.
+
+* Issue **#3619** : Fix index tab pane order.
+
+* Issue **#3621** : Changes to index time field now mark settings as dirty.
+
+* Issue **#3604** : Treat missing fields in expressions as false matches.
+
+* Issue **#3625** : Fix dashboard tab move behaviour.
+
+* Issue **#3622** : Fix _Dual_ data source not returning rows when the _Dummy_ column is not present in the table.
+
+* Issue **#3623** : Fix code completion for no-args functions, e.g. `currentUser()`.
+
+* Issue **#3617** : Prevent `GROUP BY` after `SELECT`.
+
+* Issue **#3418** : Add dependencies for views, queries and analytic rules.
+
+* Issue **#3641** : Change processor filter layout.
+
+* Issue **#3647** : Add auto refresh toggle button to server tasks page.
+
+* Issue **#3464** : Persist table page size setting per dashboard table.
+
+* Issue **#3645** : Increase contrast by lightening text colour.
+
+* Issue **#3644** : Clearing selection list filter with ESC now updates list.
+
+* Issue **#3635** : Fix error handling when initialising feed specific ref data stores.
+
+* Issue **#3639** : Improve layout on processor filter popup.
+
+* Issue **#3640** : Fix tooltip position.
+
+* Issue **#3638** : Change the proxy defaults yaml file to include a single default items for list based properties. Also fix the HTTP forward config prop name in the distribution/docker config file.
+
+* Issue **#3232** : Change the severity from WARNING to ERROR when there are no reference loaders configured on a ReferenceDataFilter.
+
+* Issue **#3657** : Fix expander col width.
+
+* Issue **#3648** : Simplify of pipeline property list and editor.
+
+
 ## [v7.2-beta.43-open-id-3] - 2023-07-20
 
 * Issue **#3577** : Fix ownership permissions when creating a new entity.

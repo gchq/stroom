@@ -1,12 +1,11 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.impl.DetectionConsumer.Detection;
-
 import java.time.Instant;
 import java.util.List;
-import java.util.function.Consumer;
 
-public interface DetectionConsumer extends Consumer<Detection> {
+public interface DetectionConsumer extends ProcessLifecycleAware {
+
+    void accept(Detection detection);
 
     record Detection(Instant detectTime,
                      String detectorName,

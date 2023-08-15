@@ -51,6 +51,6 @@ public class SearchableDual implements Searchable {
         for (int i = 0; i < fields.length; i++) {
             valArr[i] = ValString.create("X");
         }
-        consumer.add(Val.of(valArr));
+        consumer.accept(Val.of(valArr));
     }
 }
