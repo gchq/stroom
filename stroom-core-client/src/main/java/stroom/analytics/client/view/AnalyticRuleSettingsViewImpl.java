@@ -58,9 +58,9 @@ public class AnalyticRuleSettingsViewImpl
             getUiHandlers().onDirty();
         });
 
-        analyticRuleType.addItem(AnalyticRuleType.EVENT);
-        analyticRuleType.addItem(AnalyticRuleType.AGGREGATE);
-        analyticRuleType.addItem(AnalyticRuleType.BATCH_QUERY);
+        analyticRuleType.addItem(AnalyticRuleType.STREAMING);
+        analyticRuleType.addItem(AnalyticRuleType.TABLE_CREATION);
+        analyticRuleType.addItem(AnalyticRuleType.INDEX_QUERY);
     }
 
     @Override

@@ -18,6 +18,7 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
+import stroom.analytics.shared.AnalyticRuleType;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.SimpleDuration;
@@ -56,7 +57,7 @@ public class AnalyticProcessingViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
-    CustomCheckBox storeData;
+    SelectionBox<AnalyticRuleType> processingType;
     @UiField
     DurationPicker dataRetention;
     @UiField
@@ -70,6 +71,10 @@ public class AnalyticProcessingViewImpl
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         refresh.setIcon(SvgImage.REFRESH);
+
+        processingType.addItem(AnalyticRuleType.STREAMING);
+        processingType.addItem(AnalyticRuleType.TABLE_CREATION);
+        processingType.addItem(AnalyticRuleType.INDEX_QUERY);
     }
 
     @Override
@@ -135,13 +140,13 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
-    public boolean isStoreData() {
-        return storeData.getValue();
+    public AnalyticRuleType getProcessingType() {
+        return this.processingType.getValue();
     }
 
     @Override
-    public void setStoreData(final boolean storeData) {
-        this.storeData.setValue(storeData);
+    public void setProcessingType(final AnalyticRuleType analyticRuleType) {
+        this.processingType.setValue(analyticRuleType);
     }
 
     @Override
@@ -180,8 +185,8 @@ public class AnalyticProcessingViewImpl
         getUiHandlers().onDirty();
     }
 
-    @UiHandler("storeData")
-    public void onStoreData(final ValueChangeEvent<Boolean> event) {
+    @UiHandler("processingType")
+    public void onProcessingType(final ValueChangeEvent<AnalyticRuleType> event) {
         getUiHandlers().onDirty();
     }
 

@@ -176,9 +176,7 @@ public class AnalyticProcessingPresenter
         analyticRuleUuid = analyticRuleDoc.getUuid();
         refresh(analyticRuleUuid);
 
-        getView().setStoreData(
-                analyticRuleDoc.getAnalyticRuleType() == null ||
-                        analyticRuleDoc.getAnalyticRuleType() == AnalyticRuleType.AGGREGATE);
+        getView().setProcessingType(analyticRuleDoc.getAnalyticRuleType());
         getView().setDataRetention(analyticRuleDoc.getDataRetention());
     }
 
@@ -215,9 +213,7 @@ public class AnalyticProcessingPresenter
 
         return analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .analyticRuleType(getView().isStoreData()
-                        ? AnalyticRuleType.AGGREGATE
-                        : AnalyticRuleType.EVENT)
+                .analyticRuleType(getView().getProcessingType())
                 .dataRetention(getView().getDataRetention())
                 .build();
     }
@@ -247,9 +243,9 @@ public class AnalyticProcessingPresenter
 
         void setNode(final String node);
 
-        boolean isStoreData();
+        AnalyticRuleType getProcessingType();
 
-        void setStoreData(boolean storeData);
+        void setProcessingType(AnalyticRuleType analyticRuleType);
 
         SimpleDuration getDataRetention();
 

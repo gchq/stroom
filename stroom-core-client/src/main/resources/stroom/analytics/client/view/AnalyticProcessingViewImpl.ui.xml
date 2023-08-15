@@ -20,8 +20,8 @@
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
             <l:SelectionBox ui:field="node"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticRuleSettingsAlertRuleType" label="Store Data">
-            <tickbox:CustomCheckBox ui:field="storeData"/>
+        <form:FormGroup identity="analyticProcessingType" label="Processing Type">
+            <l:SelectionBox ui:field="processingType"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsDataRetention" label="Time To Keep Data In The Store">
             <d:DurationPicker ui:field="dataRetention"/>
