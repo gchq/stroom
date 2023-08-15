@@ -10086,6 +10086,17 @@
           }
         }
       },
+      "AnalyticUiDefaultConfig" : {
+        "type" : "object",
+        "properties" : {
+          "defaultFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "defaultNode" : {
+            "type" : "string"
+          }
+        }
+      },
       "Annotation" : {
         "type" : "object",
         "properties" : {
@@ -17944,6 +17955,9 @@
           },
           "activity" : {
             "$ref" : "#/components/schemas/ActivityConfig"
+          },
+          "analyticUiDefaultConfig" : {
+            "$ref" : "#/components/schemas/AnalyticUiDefaultConfig"
           },
           "defaultMaxResults" : {
             "type" : "string"
