@@ -890,6 +890,7 @@ public class LmdbDataStore implements DataStore {
             long childCount = 0;
 
             while (fetchState.keepGoing &&
+                    childCount < limit &&
                     iterator.hasNext() &&
                     !Thread.currentThread().isInterrupted()) {
 
@@ -910,9 +911,6 @@ public class LmdbDataStore implements DataStore {
                                     storedValues);
                             final R row = mapper.create(fields, item);
                             if (row != null) {
-                                if (childCount >= limit) {
-                                    break;
-                                }
                                 childCount++;
                                 fetchState.totalRowCount++;
 
@@ -934,9 +932,6 @@ public class LmdbDataStore implements DataStore {
                                 }
                             }
                         } else {
-                            if (childCount >= limit) {
-                                break;
-                            }
                             childCount++;
                             fetchState.totalRowCount++;
 
@@ -973,9 +968,6 @@ public class LmdbDataStore implements DataStore {
                                     storedValues);
                             final R row = mapper.create(fields, item);
                             if (row != null) {
-                                if (childCount >= limit) {
-                                    break;
-                                }
                                 childCount++;
                                 fetchState.totalRowCount++;
 
