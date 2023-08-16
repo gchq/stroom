@@ -7020,9 +7020,9 @@ components:
         analyticRuleType:
           type: string
           enum:
-          - STREAMING
-          - TABLE_CREATION
-          - INDEX_QUERY
+          - EVENT
+          - AGGREGATE
+          - BATCH_QUERY
         createTimeMs:
           type: integer
           format: int64

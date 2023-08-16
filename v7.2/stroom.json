@@ -10176,7 +10176,7 @@
         "properties" : {
           "analyticRuleType" : {
             "type" : "string",
-            "enum" : [ "STREAMING", "TABLE_CREATION", "INDEX_QUERY" ]
+            "enum" : [ "EVENT", "AGGREGATE", "BATCH_QUERY" ]
           },
           "createTimeMs" : {
             "type" : "integer",
