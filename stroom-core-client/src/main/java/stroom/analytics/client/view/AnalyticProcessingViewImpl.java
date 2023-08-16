@@ -72,9 +72,9 @@ public class AnalyticProcessingViewImpl
         widget = binder.createAndBindUi(this);
         refresh.setIcon(SvgImage.REFRESH);
 
-        processingType.addItem(AnalyticRuleType.STREAMING);
-        processingType.addItem(AnalyticRuleType.TABLE_CREATION);
-        processingType.addItem(AnalyticRuleType.INDEX_QUERY);
+        processingType.addItem(AnalyticRuleType.EVENT);
+        processingType.addItem(AnalyticRuleType.AGGREGATE);
+        processingType.addItem(AnalyticRuleType.BATCH_QUERY);
     }
 
     @Override

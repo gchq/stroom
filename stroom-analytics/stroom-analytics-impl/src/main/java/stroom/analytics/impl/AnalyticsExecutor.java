@@ -226,7 +226,7 @@ public class AnalyticsExecutor {
         final List<LoadedAnalytic> batchAnalytics = new ArrayList<>();
         for (final LoadedAnalytic loadedAnalytic : loadedAnalyticList) {
             if (loadedAnalytic.viewDoc() != null && loadedAnalytic.viewDoc().getPipeline() != null) {
-                if (AnalyticRuleType.INDEX_QUERY.equals(loadedAnalytic.analyticRuleDoc().getAnalyticRuleType())) {
+                if (AnalyticRuleType.BATCH_QUERY.equals(loadedAnalytic.analyticRuleDoc().getAnalyticRuleType())) {
                     batchAnalytics.add(loadedAnalytic);
                 } else {
                     pipelineGroupMap
@@ -390,9 +390,9 @@ public class AnalyticsExecutor {
         // Determine which rules will take part in this process.
         for (final LoadedAnalytic analytic : analytics) {
             if (analytic.analyticRuleDoc().getAnalyticRuleType() == null ||
-                    AnalyticRuleType.TABLE_CREATION.equals(analytic.analyticRuleDoc().getAnalyticRuleType())) {
+                    AnalyticRuleType.AGGREGATE.equals(analytic.analyticRuleDoc().getAnalyticRuleType())) {
                 fieldListConsumers.addAll(createLmdbConsumer(analytic, meta, metaAttributeMap));
-            } else if (AnalyticRuleType.STREAMING.equals(analytic.analyticRuleDoc().getAnalyticRuleType())) {
+            } else if (AnalyticRuleType.EVENT.equals(analytic.analyticRuleDoc().getAnalyticRuleType())) {
                 fieldListConsumers.addAll(createEventConsumer(analytic, meta, metaAttributeMap));
             }
         }
@@ -1298,7 +1298,7 @@ public class AnalyticsExecutor {
     }
 
     private boolean useLmdb(final AnalyticRuleDoc analyticRuleDoc) {
-        return analyticRuleDoc.getAnalyticRuleType() == AnalyticRuleType.TABLE_CREATION ||
+        return analyticRuleDoc.getAnalyticRuleType() == AnalyticRuleType.AGGREGATE ||
                 analyticRuleDoc.getAnalyticRuleType() == null;
     }
 
