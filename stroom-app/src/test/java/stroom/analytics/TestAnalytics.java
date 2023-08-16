@@ -149,7 +149,7 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.TABLE_CREATION)
+                .analyticRuleType(AnalyticRuleType.AGGREGATE)
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
@@ -187,7 +187,7 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.TABLE_CREATION)
+                .analyticRuleType(AnalyticRuleType.AGGREGATE)
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
@@ -225,7 +225,7 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.TABLE_CREATION)
+                .analyticRuleType(AnalyticRuleType.AGGREGATE)
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
@@ -283,13 +283,13 @@ class TestAnalytics extends StroomIntegrationTest {
                 from index_view
                 where UserId = user5
                 select StreamId, EventId, UserId""";
-        basicTest(query, 9, 6, AnalyticRuleType.INDEX_QUERY);
+        basicTest(query, 9, 6, AnalyticRuleType.BATCH_QUERY);
     }
 
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {
-        basicTest(query, expectedStreams, expectedRecords, AnalyticRuleType.STREAMING);
+        basicTest(query, expectedStreams, expectedRecords, AnalyticRuleType.EVENT);
     }
 
     private void basicTest(final String query,

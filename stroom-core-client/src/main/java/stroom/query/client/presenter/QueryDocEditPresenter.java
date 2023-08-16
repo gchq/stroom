@@ -157,7 +157,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                             .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                             .query(queryEditPresenter.getQuery())
                             .dataRetention(SimpleDuration.builder().time(1).timeUnit(TimeUnit.DAYS).build())
-                            .analyticRuleType(AnalyticRuleType.INDEX_QUERY)
+                            .analyticRuleType(AnalyticRuleType.BATCH_QUERY)
                             .build();
                     updateRule(ruleDocRef, updated, analyticUiDefaultConfig);
                 })
