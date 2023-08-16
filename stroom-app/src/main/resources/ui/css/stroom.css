@@ -861,6 +861,10 @@ select option:disabled {
     overflow: auto;
 }
 
+.overflow-hidden {
+    overflow: hidden;
+}
+
 .clickableLabel.enabled {
     cursor: pointer;
 }

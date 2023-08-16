@@ -5,7 +5,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <g:SimplePanel ui:field="dataGridView" styleName="dock-max stroom-control__no-padding"/>
+        <g:SimplePanel ui:field="dataGridView" styleName="dock-max stroom-control__no-padding default-min-sizes"/>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="enableFilters" identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters"/>
         </form:FormGroup>
