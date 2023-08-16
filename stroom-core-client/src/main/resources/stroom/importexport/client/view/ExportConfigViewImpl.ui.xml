@@ -13,7 +13,7 @@
                         <p:SvgButton ui:field="typeFilter"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
-                <g:SimplePanel ui:field="tree" styleName="dock-max stroom-control"/>
+                <g:MaxScrollPanel ui:field="tree" styleName="dock-max stroom-control"/>
             </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>
