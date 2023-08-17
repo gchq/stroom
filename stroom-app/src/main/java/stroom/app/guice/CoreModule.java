@@ -11,7 +11,7 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.ActivityModule());
         install(new stroom.activity.impl.db.ActivityDaoModule());
-        install(new stroom.analytics.impl.AlertModule());
+//        install(new stroom.analytics.impl.AlertModule());
         install(new stroom.analytics.impl.AnalyticsModule());
         install(new stroom.analytics.impl.db.AnalyticsDaoModule());
         install(new stroom.annotation.impl.AnnotationModule());

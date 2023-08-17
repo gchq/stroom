@@ -23,7 +23,16 @@
         <form:FormGroup identity="analyticProcessingType" label="Processing Type">
             <l:SelectionBox ui:field="processingType"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticRuleSettingsDataRetention" label="Time To Keep Data In The Store">
+        <form:FormGroup ui:field="queryFrequencyFormGroup" identity="analyticRuleSettingsQueryFrequency"
+                        label="Query Frequency">
+            <d:DurationPicker ui:field="queryFrequency"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="timeToWaitForDataFormGroup" identity="analyticRuleSettingsTimeToWaitForData"
+                        label="Time To Wait For Data To Be Indexed">
+            <d:DurationPicker ui:field="timeToWaitForData"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="dataRetentionFormGroup" identity="analyticRuleSettingsDataRetention"
+                        label="Time To Keep Data In The Table">
             <d:DurationPicker ui:field="dataRetention"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingInfo" label="Processing Info">

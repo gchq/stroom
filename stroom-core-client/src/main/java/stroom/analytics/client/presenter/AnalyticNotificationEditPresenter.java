@@ -29,7 +29,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -91,7 +90,6 @@ public class AnalyticNotificationEditPresenter
                                     null);
                         } else {
                             final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig.builder()
-                                    .timeToWaitForData(getView().getTimeToWaitForData())
                                     .destinationFeed(feed)
                                     .useSourceFeedIfPossible(getView().isUseSourceFeedIfPossible())
                                     .build();
@@ -134,7 +132,6 @@ public class AnalyticNotificationEditPresenter
         final AnalyticNotificationConfig config = notification.getConfig();
         if (config instanceof AnalyticNotificationStreamConfig) {
             final AnalyticNotificationStreamConfig streamConfig = (AnalyticNotificationStreamConfig) config;
-            getView().setTimeToWaitForData(streamConfig.getTimeToWaitForData());
             getView().setUseSourceFeedIfPossible(streamConfig.isUseSourceFeedIfPossible());
             feedPresenter.setSelectedEntityReference(streamConfig.getDestinationFeed());
         }
@@ -145,10 +142,6 @@ public class AnalyticNotificationEditPresenter
         boolean isEnabled();
 
         void setEnabled(final boolean enabled);
-
-        SimpleDuration getTimeToWaitForData();
-
-        void setTimeToWaitForData(SimpleDuration timeToWaitForData);
 
         void setDestinationFeedView(View view);
 

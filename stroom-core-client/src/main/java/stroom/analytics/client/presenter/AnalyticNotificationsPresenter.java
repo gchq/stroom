@@ -41,8 +41,6 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.time.SimpleDuration;
-import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -189,30 +187,6 @@ public class AnalyticNotificationsPresenter
 
         dataGrid.addResizableColumn(enabledColumn, "Enabled", 100);
 
-        // Time to wait for data.
-        final Column<AnalyticNotificationRow, String> delayColumn =
-                new Column<AnalyticNotificationRow, String>(new TextCell()) {
-                    @Override
-                    public String getValue(final AnalyticNotificationRow row) {
-                        return Optional.ofNullable(row)
-                                .map(AnalyticNotificationRow::getAnalyticNotification)
-                                .map(AnalyticNotification::getConfig)
-                                .map(config -> {
-                                    if (config instanceof AnalyticNotificationStreamConfig) {
-                                        return (AnalyticNotificationStreamConfig) config;
-                                    }
-                                    return null;
-                                })
-                                .map(AnalyticNotificationStreamConfig::getTimeToWaitForData)
-                                .map(timeToWaitForData ->
-                                        timeToWaitForData.getTime() +
-                                                " " +
-                                                timeToWaitForData.getTimeUnit().getDisplayValue())
-                                .orElse(null);
-                    }
-                };
-        dataGrid.addResizableColumn(delayColumn, "Time To Wait", 300);
-
         // Feed.
         final Column<AnalyticNotificationRow, String> feedColumn =
                 new Column<AnalyticNotificationRow, String>(new TextCell()) {
@@ -254,7 +228,7 @@ public class AnalyticNotificationsPresenter
             public String getValue(final AnalyticNotificationRow row) {
                 return Optional.ofNullable(row)
                         .map(AnalyticNotificationRow::getAnalyticNotificationState)
-                        .map(AnalyticNotificationState::getLastExecutionTime)
+                        .map(AnalyticNotificationState::getLastTimeFilterTo)
                         .map(dateTimeFormatter::formatWithDuration)
                         .orElse(null);
             }
@@ -290,7 +264,6 @@ public class AnalyticNotificationsPresenter
         final AnalyticNotificationEditPresenter editor = editProvider.get();
         final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig
                 .builder()
-                .timeToWaitForData(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
                 .useSourceFeedIfPossible(true)
                 .build();
         final AnalyticNotification newNotification = AnalyticNotification

@@ -44,6 +44,12 @@ public class AnalyticsModule extends AbstractModule {
                         .description("Run analytics periodically")
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
+                        .advanced(true))
+                .bindJobTo(ScheduledAnalyticsExecutorRunnable.class, builder -> builder
+                        .name("Scheduled Analytics Executor")
+                        .description("Run scheduled index query analytics periodically")
+                        .schedule(PERIODIC, "10m")
+                        .enabled(false)
                         .advanced(true));
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
 
@@ -67,6 +73,14 @@ public class AnalyticsModule extends AbstractModule {
 
         @Inject
         AnalyticsExecutorRunnable(final AnalyticsExecutor executor) {
+            super(executor::exec);
+        }
+    }
+
+    private static class ScheduledAnalyticsExecutorRunnable extends RunnableWrapper {
+
+        @Inject
+        ScheduledAnalyticsExecutorRunnable(final ScheduledQueryAnalyticExecutor executor) {
             super(executor::exec);
         }
     }

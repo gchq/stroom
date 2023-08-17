@@ -18,6 +18,7 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.analytics.shared.AnalyticConfig;
 import stroom.analytics.shared.AnalyticNotification;
 import stroom.analytics.shared.AnalyticNotificationResource;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
@@ -27,10 +28,11 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.analytics.shared.ScheduledQueryAnalyticConfig;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
@@ -152,12 +154,14 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         final Rest<AnalyticRuleDoc> rest = restFactory.create();
         rest
                 .onSuccess(doc -> {
+                    final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
+                    final AnalyticConfig analyticConfig = new ScheduledQueryAnalyticConfig(oneHour, oneHour);
                     AnalyticRuleDoc updated = doc
                             .copy()
                             .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                             .query(queryEditPresenter.getQuery())
-                            .dataRetention(SimpleDuration.builder().time(1).timeUnit(TimeUnit.DAYS).build())
-                            .analyticRuleType(AnalyticRuleType.BATCH_QUERY)
+                            .analyticRuleType(AnalyticRuleType.SCHEDULED_QUERY)
+                            .analyticConfig(analyticConfig)
                             .build();
                     updateRule(ruleDocRef, updated, analyticUiDefaultConfig);
                 })
@@ -180,7 +184,6 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                        final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig
                 .builder()
-                .timeToWaitForData(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
                 .useSourceFeedIfPossible(false)
                 .destinationFeed(analyticUiDefaultConfig.getDefaultFeed())
                 .build();
@@ -210,11 +213,11 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         final Rest<AnalyticProcessorFilter> rest = restFactory.create();
         rest
                 .onSuccess(result ->
-                        AlertEvent.fireInfo(QueryDocEditPresenter.this,
-                                "Created new rule '" +
-                                        ruleDocRef.getName() +
-                                        "'", () ->
-                                        RefreshDocumentEvent.fire(QueryDocEditPresenter.this, ruleDocRef)))
+                        OpenDocumentEvent.fire(
+                                QueryDocEditPresenter.this,
+                                ruleDocRef,
+                                true,
+                                false))
                 .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
                 .create(newFilter);
     }

@@ -1,7 +1,5 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticNotificationState;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticProcessorFilterTracker;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -11,10 +9,7 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.view.shared.ViewDoc;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 public record LoadedAnalytic(String ruleIdentity,
@@ -24,25 +19,20 @@ public record LoadedAnalytic(String ruleIdentity,
                              SearchRequest searchRequest,
                              ViewDoc viewDoc) {
 
-    private static final LocalDateTime BEGINNING_OF_TIME =
-            LocalDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneOffset.UTC);
+    private static final Instant BEGINNING_OF_TIME = Instant.ofEpochMilli(0);
 
-    public Optional<TimeFilter> createTimeFilter(final AnalyticNotificationStreamConfig streamConfig,
-                                                 final AnalyticNotificationState notificationState,
+    public Optional<TimeFilter> createTimeFilter(final SimpleDuration timeToWaitForData,
+                                                 final Long lastTimeFilterTo,
                                                  final boolean upToDate,
-                                                 final LocalDateTime startTime,
-                                                 final Optional<LocalDateTime> optionalLastEventTime) {
-        final SimpleDuration timeToWaitForData = streamConfig.getTimeToWaitForData();
-        final Long lastTime = notificationState.getLastExecutionTime();
-        LocalDateTime from = null;
-        LocalDateTime to;
+                                                 final Instant startTime,
+                                                 final Optional<Instant> optionalLastEventTime) {
+        Instant from = null;
+        Instant to;
 
-        if (lastTime == null) {
+        if (lastTimeFilterTo == null) {
             if (analyticProcessorFilter() != null) {
                 if (analyticProcessorFilter().getMinMetaCreateTimeMs() != null) {
-                    from = LocalDateTime.ofInstant(
-                            Instant.ofEpochMilli(analyticProcessorFilter().getMinMetaCreateTimeMs()),
-                            ZoneOffset.UTC);
+                    from = Instant.ofEpochMilli(analyticProcessorFilter().getMinMetaCreateTimeMs());
                 }
             }
 
@@ -51,8 +41,7 @@ public record LoadedAnalytic(String ruleIdentity,
             }
         } else {
             // Get the last time we executed plus one millisecond as this will be the start of the new window.
-            from = LocalDateTime.ofInstant(Instant.ofEpochMilli(lastTime),
-                    ZoneOffset.UTC).plus(Duration.ofMillis(1));
+            from = Instant.ofEpochMilli(lastTimeFilterTo);
         }
 
         // If the current processing is up-to-date then use the processing start time as the basis for the window end.
@@ -68,9 +57,7 @@ public record LoadedAnalytic(String ruleIdentity,
         // Limit max time.
         if (analyticProcessorFilter() != null) {
             if (analyticProcessorFilter().getMaxMetaCreateTimeMs() != null) {
-                final LocalDateTime maxTime = LocalDateTime.ofInstant(
-                        Instant.ofEpochMilli(analyticProcessorFilter().getMaxMetaCreateTimeMs()),
-                        ZoneOffset.UTC);
+                final Instant maxTime = Instant.ofEpochMilli(analyticProcessorFilter().getMaxMetaCreateTimeMs());
                 if (to.isAfter(maxTime)) {
                     to = maxTime;
                 }
@@ -78,9 +65,7 @@ public record LoadedAnalytic(String ruleIdentity,
         }
 
         if (to.isAfter(from)) {
-            final TimeFilter timeFilter = new TimeFilter(
-                    from.toInstant(ZoneOffset.UTC).toEpochMilli(),
-                    to.toInstant(ZoneOffset.UTC).toEpochMilli());
+            final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
             return Optional.of(timeFilter);
         }
 

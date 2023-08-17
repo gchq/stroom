@@ -28,6 +28,7 @@ import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.analytics.shared.TableBuilderAnalyticConfig;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -76,6 +77,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
 class TestAnalytics extends StroomIntegrationTest {
+
+    private static final SimpleDuration ONE_SECOND = SimpleDuration
+            .builder()
+            .time(1)
+            .timeUnit(TimeUnit.SECONDS)
+            .build();
 
     private static boolean doneSetup;
 
@@ -149,11 +156,12 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.TABLE_BUILDER)
+                .analyticConfig(new TableBuilderAnalyticConfig(ONE_SECOND, ONE_SECOND))
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
-        createNotification(analyticRuleDoc, 1);
+        createNotification(analyticRuleDoc);
 
         // Now run the search process.
         analyticsExecutor.exec();
@@ -187,11 +195,11 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.TABLE_BUILDER)
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
-        createNotification(analyticRuleDoc, 0);
+        createNotification(analyticRuleDoc);
 
         // Now run the search process.
         analyticsExecutor.exec();
@@ -225,11 +233,11 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.TABLE_BUILDER)
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
-        createNotification(analyticRuleDoc, 0);
+        createNotification(analyticRuleDoc);
 
         // Now run the search process.
         analyticsExecutor.exec();
@@ -277,19 +285,19 @@ class TestAnalytics extends StroomIntegrationTest {
     }
 
     @Test
-    void testSingleEventBatch() {
+    void testSingleEventScheduledQuery() {
         // Add alert
         final String query = """
                 from index_view
                 where UserId = user5
                 select StreamId, EventId, UserId""";
-        basicTest(query, 9, 6, AnalyticRuleType.BATCH_QUERY);
+        basicTest(query, 9, 6, AnalyticRuleType.SCHEDULED_QUERY);
     }
 
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {
-        basicTest(query, expectedStreams, expectedRecords, AnalyticRuleType.EVENT);
+        basicTest(query, expectedStreams, expectedRecords, AnalyticRuleType.STREAMING);
     }
 
     private void basicTest(final String query,
@@ -305,7 +313,7 @@ class TestAnalytics extends StroomIntegrationTest {
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
-        createNotification(analyticRuleDoc, 0);
+        createNotification(analyticRuleDoc);
 
         // Now run the search process.
         analyticsExecutor.exec();
@@ -339,10 +347,8 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticProcessorFilterDao.create(filter);
     }
 
-    private void createNotification(final AnalyticRuleDoc analyticRuleDoc,
-                                    final int timeToWaitSeconds) {
+    private void createNotification(final AnalyticRuleDoc analyticRuleDoc) {
         final AnalyticNotificationConfig config = AnalyticNotificationStreamConfig.builder()
-                .timeToWaitForData(SimpleDuration.builder().time(timeToWaitSeconds).timeUnit(TimeUnit.SECONDS).build())
                 .destinationFeed(detections)
                 .useSourceFeedIfPossible(false)
                 .build();

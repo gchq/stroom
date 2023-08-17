@@ -22,9 +22,11 @@ import stroom.analytics.shared.AnalyticRuleType;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.MouseUtil;
 
@@ -59,6 +61,16 @@ public class AnalyticProcessingViewImpl
     @UiField
     SelectionBox<AnalyticRuleType> processingType;
     @UiField
+    FormGroup queryFrequencyFormGroup;
+    @UiField
+    DurationPicker queryFrequency;
+    @UiField
+    FormGroup timeToWaitForDataFormGroup;
+    @UiField
+    DurationPicker timeToWaitForData;
+    @UiField
+    FormGroup dataRetentionFormGroup;
+    @UiField
     DurationPicker dataRetention;
     @UiField
     SimplePanel info;
@@ -72,9 +84,14 @@ public class AnalyticProcessingViewImpl
         widget = binder.createAndBindUi(this);
         refresh.setIcon(SvgImage.REFRESH);
 
-        processingType.addItem(AnalyticRuleType.EVENT);
-        processingType.addItem(AnalyticRuleType.AGGREGATE);
-        processingType.addItem(AnalyticRuleType.BATCH_QUERY);
+        processingType.addItem(AnalyticRuleType.STREAMING);
+        processingType.addItem(AnalyticRuleType.TABLE_BUILDER);
+        processingType.addItem(AnalyticRuleType.SCHEDULED_QUERY);
+
+        updateProcessingType(null);
+        queryFrequency.setValue(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build());
+        timeToWaitForData.setValue(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build());
+        dataRetention.setValue(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build());
     }
 
     @Override
@@ -147,6 +164,31 @@ public class AnalyticProcessingViewImpl
     @Override
     public void setProcessingType(final AnalyticRuleType analyticRuleType) {
         this.processingType.setValue(analyticRuleType);
+        updateProcessingType(processingType.getValue());
+    }
+
+    @Override
+    public SimpleDuration getQueryFrequency() {
+        return this.queryFrequency.getValue();
+    }
+
+    @Override
+    public void setQueryFrequency(final SimpleDuration queryFrequency) {
+        if (queryFrequency != null) {
+            this.queryFrequency.setValue(queryFrequency);
+        }
+    }
+
+    @Override
+    public SimpleDuration getTimeToWaitForData() {
+        return this.timeToWaitForData.getValue();
+    }
+
+    @Override
+    public void setTimeToWaitForData(final SimpleDuration timeToWaitForData) {
+        if (timeToWaitForData != null) {
+            this.timeToWaitForData.setValue(timeToWaitForData);
+        }
     }
 
     @Override
@@ -156,9 +198,10 @@ public class AnalyticProcessingViewImpl
 
     @Override
     public void setDataRetention(final SimpleDuration dataRetention) {
-        this.dataRetention.setValue(dataRetention);
+        if (dataRetention != null) {
+            this.dataRetention.setValue(dataRetention);
+        }
     }
-
 
     @Override
     public void setInfo(final SafeHtml info) {
@@ -187,6 +230,45 @@ public class AnalyticProcessingViewImpl
 
     @UiHandler("processingType")
     public void onProcessingType(final ValueChangeEvent<AnalyticRuleType> event) {
+        updateProcessingType(processingType.getValue());
+        getUiHandlers().onProcessingTypeChange();
+    }
+
+    private void updateProcessingType(final AnalyticRuleType analyticRuleType) {
+        if (analyticRuleType == null) {
+            queryFrequencyFormGroup.setVisible(false);
+            timeToWaitForDataFormGroup.setVisible(false);
+            dataRetentionFormGroup.setVisible(false);
+        } else {
+            switch (analyticRuleType) {
+                case STREAMING:
+                    queryFrequencyFormGroup.setVisible(false);
+                    timeToWaitForDataFormGroup.setVisible(false);
+                    dataRetentionFormGroup.setVisible(false);
+                    break;
+                case TABLE_BUILDER:
+                    queryFrequencyFormGroup.setVisible(false);
+                    timeToWaitForDataFormGroup.setVisible(true);
+                    dataRetentionFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setLabel("Aggregation Period");
+                    break;
+                case SCHEDULED_QUERY:
+                    queryFrequencyFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setVisible(true);
+                    dataRetentionFormGroup.setVisible(false);
+                    timeToWaitForDataFormGroup.setLabel("Time To Wait For Data To Be Indexed");
+                    break;
+            }
+        }
+    }
+
+    @UiHandler("queryFrequency")
+    public void onQueryFrequency(final ValueChangeEvent<SimpleDuration> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("timeToWaitForData")
+    public void onTimeToWaitForData(final ValueChangeEvent<SimpleDuration> event) {
         getUiHandlers().onDirty();
     }
 

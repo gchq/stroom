@@ -48,8 +48,6 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.time.SimpleDuration;
-import stroom.util.shared.time.TimeUnit;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -60,6 +58,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -140,11 +139,11 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .analyticRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.TABLE_BUILDER)
                 .build();
         analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
         createProcessorFilters(analyticRuleDoc);
-        createNotification(analyticRuleDoc, 0);
+        createNotification(analyticRuleDoc);
 
         // Now run the search process.
         analyticsExecutor.setAllowUpToDateProcessing(false);
@@ -163,7 +162,7 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
 
         // Load more data and test again.
         // Add some data.
-        final LocalDateTime localDateTime = LocalDateTime.now().minusSeconds(10);
+        final LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10);
         analyticsDataSetup.addNewData(localDateTime);
         analyticsDataSetup.checkStreamCount(11);
 
@@ -199,10 +198,8 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         analyticProcessorFilterDao.create(filter);
     }
 
-    private void createNotification(final AnalyticRuleDoc analyticRuleDoc,
-                                    final int timeToWaitSeconds) {
+    private void createNotification(final AnalyticRuleDoc analyticRuleDoc) {
         final AnalyticNotificationConfig config = AnalyticNotificationStreamConfig.builder()
-                .timeToWaitForData(SimpleDuration.builder().time(timeToWaitSeconds).timeUnit(TimeUnit.SECONDS).build())
                 .destinationFeed(detections)
                 .useSourceFeedIfPossible(false)
                 .build();

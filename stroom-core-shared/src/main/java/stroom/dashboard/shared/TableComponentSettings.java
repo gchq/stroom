@@ -48,7 +48,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class TableComponentSettings implements ComponentSettings {
 
-    public static final long[] DEFAULT_MAX_RESULTS = {1000000L};
+    public static final long[] DEFAULT_MAX_RESULTS = {};
 
     @Schema(description = "TODO", required = true)
     @JsonProperty

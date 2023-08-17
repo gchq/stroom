@@ -18,6 +18,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleType;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
@@ -35,7 +36,6 @@ import javax.inject.Provider;
 public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
     private static final TabData QUERY = new TabDataImpl("Query");
-//    private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
     private static final TabData PROCESSING = new TabDataImpl("Processing");
     private static final TabData SHARDS = new TabDataImpl("Shards");
@@ -46,7 +46,6 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final Provider<AnalyticQueryEditPresenter> queryEditPresenterProvider,
-//                                 final Provider<AnalyticRuleSettingsPresenter> settingsPresenterProvider,
                                  final Provider<AnalyticNotificationsPresenter> notificationsPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
@@ -57,9 +56,13 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
             queryEditPresenter = queryEditPresenterProvider.get();
             return queryEditPresenter;
         }));
-//        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+
+        final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
+        analyticProcessingPresenter.addChangeDataHandler(e ->
+                setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
+
+        addTab(PROCESSING, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
         addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationsPresenterProvider::get));
-        addTab(PROCESSING, new DocumentEditTabProvider<>(processPresenterProvider::get));
         addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
@@ -78,6 +81,16 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
             }
         });
         selectTab(QUERY);
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
+        super.onRead(docRef, document, readOnly);
+        setRuleType(document.getAnalyticRuleType());
+    }
+
+    private void setRuleType(final AnalyticRuleType analyticRuleType) {
+        setTabHidden(SHARDS, analyticRuleType != AnalyticRuleType.TABLE_BUILDER);
     }
 
     @Override

@@ -13,16 +13,16 @@ public class AnalyticNotificationState {
     @JsonProperty
     private final String notificationUuid;
     @JsonProperty
-    private final Long lastExecutionTime;
+    private final Long lastTimeFilterTo;
     @JsonProperty
     private final String message;
 
     @JsonCreator
     public AnalyticNotificationState(@JsonProperty("notificationUuid") final String notificationUuid,
-                                     @JsonProperty("lastExecutionTime") final Long lastExecutionTime,
+                                     @JsonProperty("lastTimeFilterTo") final Long lastTimeFilterTo,
                                      @JsonProperty("message") final String message) {
         this.notificationUuid = notificationUuid;
-        this.lastExecutionTime = lastExecutionTime;
+        this.lastTimeFilterTo = lastTimeFilterTo;
         this.message = message;
     }
 
@@ -30,8 +30,8 @@ public class AnalyticNotificationState {
         return notificationUuid;
     }
 
-    public Long getLastExecutionTime() {
-        return lastExecutionTime;
+    public Long getLastTimeFilterTo() {
+        return lastTimeFilterTo;
     }
 
     public String getMessage() {
@@ -49,7 +49,7 @@ public class AnalyticNotificationState {
     public static class Builder {
 
         private String notificationUuid;
-        private Long lastExecutionTime;
+        private Long lastTimeFilterTo;
         private String message;
 
         private Builder() {
@@ -57,7 +57,7 @@ public class AnalyticNotificationState {
 
         private Builder(final AnalyticNotificationState analyticNotificationState) {
             this.notificationUuid = analyticNotificationState.notificationUuid;
-            this.lastExecutionTime = analyticNotificationState.lastExecutionTime;
+            this.lastTimeFilterTo = analyticNotificationState.lastTimeFilterTo;
             this.message = analyticNotificationState.message;
         }
 
@@ -67,8 +67,8 @@ public class AnalyticNotificationState {
         }
 
 
-        public Builder lastExecutionTime(final Long lastExecutionTime) {
-            this.lastExecutionTime = lastExecutionTime;
+        public Builder lastTimeFilterTo(final Long lastTimeFilterTo) {
+            this.lastTimeFilterTo = lastTimeFilterTo;
             return this;
         }
 
@@ -80,7 +80,7 @@ public class AnalyticNotificationState {
         public AnalyticNotificationState build() {
             return new AnalyticNotificationState(
                     notificationUuid,
-                    lastExecutionTime,
+                    lastTimeFilterTo,
                     message);
         }
     }

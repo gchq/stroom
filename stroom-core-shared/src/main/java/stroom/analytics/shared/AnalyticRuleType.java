@@ -3,9 +3,9 @@ package stroom.analytics.shared;
 import stroom.docref.HasDisplayValue;
 
 public enum AnalyticRuleType implements HasDisplayValue {
-    EVENT("Event"),
-    AGGREGATE("Aggregate"),
-    BATCH_QUERY("Batch Query");
+    STREAMING("Streaming"),
+    TABLE_BUILDER("Table Builder"),
+    SCHEDULED_QUERY("Scheduled Query");
 
     private final String displayValue;
 

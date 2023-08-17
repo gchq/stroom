@@ -4,7 +4,9 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,8 +68,18 @@ public class SimpleDurationUtil {
         }
     }
 
+    public static Instant plus(final Instant dateTime,
+                                final SimpleDuration simpleDuration) {
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(dateTime, ZoneOffset.UTC);
+        localDateTime = plus(localDateTime, simpleDuration);
+        return localDateTime.toInstant(ZoneOffset.UTC);
+    }
+
     public static LocalDateTime plus(final LocalDateTime dateTime,
                                      final SimpleDuration simpleDuration) {
+        if (simpleDuration == null) {
+            return dateTime;
+        }
         switch (simpleDuration.getTimeUnit()) {
             case NANOSECONDS:
                 return dateTime.plusNanos(simpleDuration.getTime());
@@ -91,8 +103,18 @@ public class SimpleDurationUtil {
         throw new UnsupportedOperationException("Unknown time unit");
     }
 
+    public static Instant minus(final Instant dateTime,
+                                final SimpleDuration simpleDuration) {
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(dateTime, ZoneOffset.UTC);
+        localDateTime = minus(localDateTime, simpleDuration);
+        return localDateTime.toInstant(ZoneOffset.UTC);
+    }
+
     public static LocalDateTime minus(final LocalDateTime dateTime,
                                       final SimpleDuration simpleDuration) {
+        if (simpleDuration == null) {
+            return dateTime;
+        }
         switch (simpleDuration.getTimeUnit()) {
             case NANOSECONDS:
                 return dateTime.minusNanos(simpleDuration.getTime());

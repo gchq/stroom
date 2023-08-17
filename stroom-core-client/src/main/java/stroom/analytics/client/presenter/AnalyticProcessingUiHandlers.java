@@ -6,4 +6,6 @@ public interface AnalyticProcessingUiHandlers extends DirtyUiHandlers {
 
     void onRefreshProcessingStatus();
 
+    void onProcessingTypeChange();
+
 }

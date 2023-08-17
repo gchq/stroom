@@ -19,6 +19,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
+import stroom.analytics.shared.AnalyticConfig;
 import stroom.analytics.shared.AnalyticProcessorFilter;
 import stroom.analytics.shared.AnalyticProcessorFilterResource;
 import stroom.analytics.shared.AnalyticProcessorFilterTracker;
@@ -26,11 +27,17 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.FindAnalyticProcessorFilterCriteria;
 import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.analytics.shared.ScheduledQueryAnalyticConfig;
+import stroom.analytics.shared.StreamingAnalyticConfig;
+import stroom.analytics.shared.TableBuilderAnalyticConfig;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.node.client.NodeManager;
+import stroom.pipeline.client.event.ChangeDataEvent;
+import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
@@ -43,6 +50,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
@@ -50,7 +58,7 @@ import java.util.List;
 
 public class AnalyticProcessingPresenter
         extends DocumentEditPresenter<AnalyticProcessingView, AnalyticRuleDoc>
-        implements AnalyticProcessingUiHandlers {
+        implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticRuleType> {
 
     private static final AnalyticProcessorFilterResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
             GWT.create(AnalyticProcessorFilterResource.class);
@@ -112,6 +120,16 @@ public class AnalyticProcessingPresenter
     @Override
     public void onRefreshProcessingStatus() {
         refreshTracker();
+    }
+
+    @Override
+    public void onProcessingTypeChange() {
+        ChangeDataEvent.fire(this, getView().getProcessingType());
+    }
+
+    @Override
+    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<AnalyticRuleType> handler) {
+        return addHandlerToSource(ChangeDataEvent.getType(), handler);
     }
 
     private void refreshTracker() {
@@ -176,8 +194,22 @@ public class AnalyticProcessingPresenter
         analyticRuleUuid = analyticRuleDoc.getUuid();
         refresh(analyticRuleUuid);
 
-        getView().setProcessingType(analyticRuleDoc.getAnalyticRuleType());
-        getView().setDataRetention(analyticRuleDoc.getDataRetention());
+        getView().setProcessingType(analyticRuleDoc.getAnalyticRuleType() == null
+                ? AnalyticRuleType.SCHEDULED_QUERY
+                : analyticRuleDoc.getAnalyticRuleType());
+
+        if (analyticRuleDoc.getAnalyticConfig() instanceof TableBuilderAnalyticConfig) {
+            final TableBuilderAnalyticConfig tableBuilderAnalyticConfig =
+                    (TableBuilderAnalyticConfig) analyticRuleDoc.getAnalyticConfig();
+            getView().setDataRetention(tableBuilderAnalyticConfig.getDataRetention());
+            getView().setTimeToWaitForData(tableBuilderAnalyticConfig.getTimeToWaitForData());
+        } else if (analyticRuleDoc.getAnalyticConfig() instanceof ScheduledQueryAnalyticConfig) {
+            final ScheduledQueryAnalyticConfig scheduledQueryAnalyticConfig =
+                    (ScheduledQueryAnalyticConfig) analyticRuleDoc.getAnalyticConfig();
+
+            getView().setQueryFrequency(scheduledQueryAnalyticConfig.getQueryFrequency());
+            getView().setTimeToWaitForData(scheduledQueryAnalyticConfig.getTimeToWaitForData());
+        }
     }
 
     private void refresh(final String analyticDocUuid) {
@@ -211,10 +243,26 @@ public class AnalyticProcessingPresenter
                     .create(newFilter);
         }
 
+        AnalyticConfig analyticConfig = null;
+        switch (getView().getProcessingType()) {
+            case STREAMING:
+                analyticConfig = new StreamingAnalyticConfig();
+                break;
+            case TABLE_BUILDER:
+                analyticConfig =
+                        new TableBuilderAnalyticConfig(getView().getTimeToWaitForData(), getView().getDataRetention());
+                break;
+            case SCHEDULED_QUERY:
+                analyticConfig =
+                        new ScheduledQueryAnalyticConfig(getView().getTimeToWaitForData(),
+                                getView().getQueryFrequency());
+                break;
+        }
+
         return analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .analyticRuleType(getView().getProcessingType())
-                .dataRetention(getView().getDataRetention())
+                .analyticConfig(analyticConfig)
                 .build();
     }
 
@@ -246,6 +294,14 @@ public class AnalyticProcessingPresenter
         AnalyticRuleType getProcessingType();
 
         void setProcessingType(AnalyticRuleType analyticRuleType);
+
+        SimpleDuration getQueryFrequency();
+
+        void setQueryFrequency(SimpleDuration queryFrequency);
+
+        SimpleDuration getTimeToWaitForData();
+
+        void setTimeToWaitForData(SimpleDuration timeToWaitForData);
 
         SimpleDuration getDataRetention();
 

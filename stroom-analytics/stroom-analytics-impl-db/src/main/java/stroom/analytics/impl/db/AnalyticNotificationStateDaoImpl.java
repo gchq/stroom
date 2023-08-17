@@ -44,7 +44,7 @@ public class AnalyticNotificationStateDaoImpl implements AnalyticNotificationSta
                         ANALYTIC_NOTIFICATION_STATE.LAST_EXECUTION_TIME,
                         ANALYTIC_NOTIFICATION_STATE.MESSAGE)
                 .values(notificationState.getNotificationUuid(),
-                        notificationState.getLastExecutionTime(),
+                        notificationState.getLastTimeFilterTo(),
                         notificationState.getMessage())
                 .execute());
     }
@@ -53,7 +53,7 @@ public class AnalyticNotificationStateDaoImpl implements AnalyticNotificationSta
     public void update(final AnalyticNotificationState notificationState) {
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .update(ANALYTIC_NOTIFICATION_STATE)
-                .set(ANALYTIC_NOTIFICATION_STATE.LAST_EXECUTION_TIME, notificationState.getLastExecutionTime())
+                .set(ANALYTIC_NOTIFICATION_STATE.LAST_EXECUTION_TIME, notificationState.getLastTimeFilterTo())
                 .set(ANALYTIC_NOTIFICATION_STATE.MESSAGE, notificationState.getMessage())
                 .where(ANALYTIC_NOTIFICATION_STATE.FK_ANALYTIC_NOTIFICATION_UUID
                         .eq(notificationState.getNotificationUuid()))
@@ -72,7 +72,7 @@ public class AnalyticNotificationStateDaoImpl implements AnalyticNotificationSta
     private AnalyticNotificationState recordToAnalyticNotificationState(final Record record) {
         return AnalyticNotificationState.builder()
                 .notificationUuid(record.get(ANALYTIC_NOTIFICATION_STATE.FK_ANALYTIC_NOTIFICATION_UUID))
-                .lastExecutionTime(record.get(ANALYTIC_NOTIFICATION_STATE.LAST_EXECUTION_TIME))
+                .lastTimeFilterTo(record.get(ANALYTIC_NOTIFICATION_STATE.LAST_EXECUTION_TIME))
                 .message(record.get(ANALYTIC_NOTIFICATION_STATE.MESSAGE))
                 .build();
     }
