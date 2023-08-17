@@ -35,6 +35,8 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
 
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -126,6 +128,12 @@ public class QueryEditPresenter
             queryHelpPresenter.updateQuery(editorPresenter.getText(), indexLoader::loadDataSource);
             setDirty(true);
         }));
+        registerHandler(editorPresenter.getView().asWidget().addDomHandler(e -> {
+            if (e.isShiftKeyDown() && KeyCodes.KEY_ENTER == e.getNativeKeyCode()) {
+                e.preventDefault();
+                run(true, true);
+            }
+        }, KeyDownEvent.getType()));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
         registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
