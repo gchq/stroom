@@ -34,8 +34,6 @@ public class AnalyticNotificationEditViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox enabled;
-    @UiField
     SimplePanel destinationFeed;
     @UiField
     CustomCheckBox useSourceFeedIfPossible;
@@ -48,21 +46,6 @@ public class AnalyticNotificationEditViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void focus() {
-        enabled.setFocus(true);
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return this.enabled.getValue();
-    }
-
-    @Override
-    public void setEnabled(final boolean enabled) {
-        this.enabled.setValue(enabled);
     }
 
     @Override

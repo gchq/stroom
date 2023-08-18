@@ -16,7 +16,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.api.AlertManager;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.job.api.ScheduledJobsBinder;
@@ -37,16 +36,21 @@ public class AnalyticsModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(AlertManager.class).to(AlertManagerImpl.class);
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(AnalyticsExecutorRunnable.class, builder -> builder
-                        .name("Analytics Executor")
-                        .description("Run analytics periodically")
+                .bindJobTo(TableBuilderAnalyticsExecutorRunnable.class, builder -> builder
+                        .name("Analytics Executor: Table Builder")
+                        .description("Run table building analytics periodically")
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
                         .advanced(true))
+                .bindJobTo(StreamingAnalyticsExecutorRunnable.class, builder -> builder
+                        .name("Analytics Executor: Streaming")
+                        .description("Run streaming analytics periodically")
+                        .schedule(PERIODIC, "1m")
+                        .enabled(false)
+                        .advanced(true))
                 .bindJobTo(ScheduledAnalyticsExecutorRunnable.class, builder -> builder
-                        .name("Scheduled Analytics Executor")
+                        .name("Analytics Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
@@ -54,8 +58,7 @@ public class AnalyticsModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
 
         RestResourcesBinder.create(binder())
-                .bind(AnalyticNotificationResourceImpl.class)
-                .bind(AnalyticProcessorFilterResourceImpl.class)
+                .bind(AnalyticProcessResourceImpl.class)
                 .bind(AnalyticDataShardResourceImpl.class);
 
         // Live federated search provision.
@@ -69,10 +72,18 @@ public class AnalyticsModule extends AbstractModule {
                 .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);
     }
 
-    private static class AnalyticsExecutorRunnable extends RunnableWrapper {
+    private static class TableBuilderAnalyticsExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        AnalyticsExecutorRunnable(final AnalyticsExecutor executor) {
+        TableBuilderAnalyticsExecutorRunnable(final TableBuilderAnalyticsExecutor executor) {
+            super(executor::exec);
+        }
+    }
+
+    private static class StreamingAnalyticsExecutorRunnable extends RunnableWrapper {
+
+        @Inject
+        StreamingAnalyticsExecutorRunnable(final StreamingAnalyticsExecutor executor) {
             super(executor::exec);
         }
     }

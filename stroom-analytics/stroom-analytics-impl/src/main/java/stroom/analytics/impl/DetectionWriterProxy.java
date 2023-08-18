@@ -49,14 +49,14 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
 
     @Inject
     public DetectionWriterProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                final AlertConfig alertConfig,
+                                final AnalyticsConfig analyticsConfig,
                                 final Provider<DetectionsWriter> detectionsWriterProvider) {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.detectionsWriterProvider = detectionsWriterProvider;
 
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
-                .localZoneId(alertConfig.getTimezone())
+                .localZoneId(analyticsConfig.getTimezone())
                 .build();
         fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeSettings));
     }
@@ -123,26 +123,18 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
             final Generator generator = compiledField.getGenerator();
 
             if (generator != null) {
-                if (compiledField.hasAggregate()) {
-                    LOGGER.error("Rules error: Query " +
-                            analyticRuleDoc.getUuid() +
-                            " contains aggregate functions." +
-                            " This is not supported for Event Type Rules.");
-                    return null;
-                } else {
-                    generator.set(vals, storedValues);
-                    final Val value = generator.eval(storedValues, null);
-                    output[index] = new CompiledFieldValue(compiledField, value);
+                generator.set(vals, storedValues);
+                final Val value = generator.eval(storedValues, null);
+                output[index] = new CompiledFieldValue(compiledField, value);
 
-                    if (compiledField.getCompiledFilter() != null) {
-                        // If we are filtering then we need to evaluate this field
-                        // now so that we can filter the resultant value.
+                if (compiledField.getCompiledFilter() != null) {
+                    // If we are filtering then we need to evaluate this field
+                    // now so that we can filter the resultant value.
 
-                        if (compiledField.getCompiledFilter() != null && value != null
-                                && !compiledField.getCompiledFilter().match(value.toString())) {
-                            // We want to exclude this item.
-                            return null;
-                        }
+                    if (compiledField.getCompiledFilter() != null && value != null
+                            && !compiledField.getCompiledFilter().match(value.toString())) {
+                        // We want to exclude this item.
+                        return null;
                     }
                 }
             }

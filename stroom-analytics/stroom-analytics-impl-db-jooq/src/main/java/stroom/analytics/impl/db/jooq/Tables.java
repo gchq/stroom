@@ -4,10 +4,8 @@
 package stroom.analytics.impl.db.jooq;
 
 
-import stroom.analytics.impl.db.jooq.tables.AnalyticNotification;
-import stroom.analytics.impl.db.jooq.tables.AnalyticNotificationState;
-import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilter;
-import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilterTracker;
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcess;
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcessTracker;
 
 
 /**
@@ -17,22 +15,12 @@ import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilterTracker;
 public class Tables {
 
     /**
-     * The table <code>stroom.analytic_notification</code>.
+     * The table <code>stroom.analytic_process</code>.
      */
-    public static final AnalyticNotification ANALYTIC_NOTIFICATION = AnalyticNotification.ANALYTIC_NOTIFICATION;
+    public static final AnalyticProcess ANALYTIC_PROCESS = AnalyticProcess.ANALYTIC_PROCESS;
 
     /**
-     * The table <code>stroom.analytic_notification_state</code>.
+     * The table <code>stroom.analytic_process_tracker</code>.
      */
-    public static final AnalyticNotificationState ANALYTIC_NOTIFICATION_STATE = AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE;
-
-    /**
-     * The table <code>stroom.analytic_processor_filter</code>.
-     */
-    public static final AnalyticProcessorFilter ANALYTIC_PROCESSOR_FILTER = AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER;
-
-    /**
-     * The table <code>stroom.analytic_processor_filter_tracker</code>.
-     */
-    public static final AnalyticProcessorFilterTracker ANALYTIC_PROCESSOR_FILTER_TRACKER = AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER;
+    public static final AnalyticProcessTracker ANALYTIC_PROCESS_TRACKER = AnalyticProcessTracker.ANALYTIC_PROCESS_TRACKER;
 }

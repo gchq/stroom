@@ -16,23 +16,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  alerting:
-    additionalFieldsPrefix: "_"
-    reportAllExtractedFieldsEnabled: false
-    resultStore:
-      lmdb:
-        localDir: "analytic_store"
-        maxReaders: 10
-        maxStoreSize: "10G"
-        readAheadEnabled: true
-      maxPayloadSize: "1G"
-      maxPutsBeforeCommit: 10000
-      maxStringFieldLength: 1000
-      minPayloadSize: "1M"
-      offHeapResults: true
-      valueQueueSize: 10000
-    rulesFolderList: []
-    timezone: "UTC"
   analytics:
     db:
       connection:
@@ -50,6 +33,19 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    resultStore:
+      lmdb:
+        localDir: "analytic_store"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+      maxPayloadSize: "1G"
+      maxPutsBeforeCommit: 10000
+      maxStringFieldLength: 1000
+      minPayloadSize: "1M"
+      offHeapResults: true
+      valueQueueSize: 10000
+    timezone: "UTC"
   annotation:
     createText: "Create Annotation"
     db:

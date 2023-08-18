@@ -17,48 +17,30 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
-import stroom.analytics.shared.AnalyticNotification;
 import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationResource;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.function.Consumer;
-
 public class AnalyticNotificationEditPresenter
-        extends MyPresenterWidget<AnalyticNotificationEditView> {
-
-    private static final AnalyticNotificationResource ANALYTIC_NOTIFICATION_RESOURCE =
-            GWT.create(AnalyticNotificationResource.class);
-
-    private final RestFactory restFactory;
+        extends DocumentEditPresenter<AnalyticNotificationEditView, AnalyticRuleDoc> {
 
     private final EntityDropDownPresenter feedPresenter;
 
     @Inject
     public AnalyticNotificationEditPresenter(final EventBus eventBus,
                                              final AnalyticNotificationEditView view,
-                                             final RestFactory restFactory,
                                              final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
-        this.restFactory = restFactory;
         this.feedPresenter = feedPresenter;
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
@@ -66,70 +48,9 @@ public class AnalyticNotificationEditPresenter
         view.setDestinationFeedView(feedPresenter.getView());
     }
 
-    public void show(final AnalyticNotification notification,
-                     final Consumer<AnalyticNotification> consumer,
-                     final boolean create) {
-        final String caption = create
-                ? "Create Notification"
-                : "Edit Notification";
-        read(notification);
-
-        final PopupSize popupSize = PopupSize.resizable(640, 480);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption(caption)
-                .modal(true)
-                .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final DocRef feed = feedPresenter.getSelectedEntityReference();
-                        if (feed == null) {
-                            AlertEvent.fireError(this,
-                                    "The destination feed must be set.",
-                                    null);
-                        } else {
-                            final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig.builder()
-                                    .destinationFeed(feed)
-                                    .useSourceFeedIfPossible(getView().isUseSourceFeedIfPossible())
-                                    .build();
-
-                            final AnalyticNotification updated = notification.copy()
-                                    .enabled(getView().isEnabled())
-                                    .config(config)
-                                    .build();
-
-                            final Rest<AnalyticNotification> rest = restFactory.create();
-                            if (create) {
-                                rest
-                                        .onSuccess(result -> {
-                                            consumer.accept(result);
-                                            e.hide();
-                                        })
-                                        .call(ANALYTIC_NOTIFICATION_RESOURCE)
-                                        .create(updated);
-                            } else {
-                                rest
-                                        .onSuccess(result -> {
-                                            consumer.accept(result);
-                                            e.hide();
-                                        })
-                                        .call(ANALYTIC_NOTIFICATION_RESOURCE)
-                                        .update(updated.getUuid(), updated);
-                            }
-                        }
-
-                    } else {
-                        e.hide();
-                    }
-                })
-                .fire();
-    }
-
-    private void read(final AnalyticNotification notification) {
-        getView().setEnabled(notification.isEnabled());
-
-        final AnalyticNotificationConfig config = notification.getConfig();
+    @Override
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
+        final AnalyticNotificationConfig config = document.getAnalyticNotificationConfig();
         if (config instanceof AnalyticNotificationStreamConfig) {
             final AnalyticNotificationStreamConfig streamConfig = (AnalyticNotificationStreamConfig) config;
             getView().setUseSourceFeedIfPossible(streamConfig.isUseSourceFeedIfPossible());
@@ -137,11 +58,15 @@ public class AnalyticNotificationEditPresenter
         }
     }
 
-    public interface AnalyticNotificationEditView extends View, Focus {
+    @Override
+    protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc document) {
+        final AnalyticNotificationStreamConfig streamConfig = new AnalyticNotificationStreamConfig(
+                feedPresenter.getSelectedEntityReference(),
+                getView().isUseSourceFeedIfPossible());
+        return document.copy().analyticNotificationConfig(streamConfig).build();
+    }
 
-        boolean isEnabled();
-
-        void setEnabled(final boolean enabled);
+    public interface AnalyticNotificationEditView extends View {
 
         void setDestinationFeedView(View view);
 

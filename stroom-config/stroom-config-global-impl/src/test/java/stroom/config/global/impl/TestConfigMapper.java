@@ -1,7 +1,6 @@
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
-import stroom.analytics.impl.AlertConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.bytebuffer.ByteBufferPoolConfig;
@@ -911,7 +910,6 @@ class TestConfigMapper {
         public TestConfig(
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
-                @JsonProperty(PROP_NAME_ALERTING) final AlertConfig alertConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
@@ -967,7 +965,6 @@ class TestConfigMapper {
 
             super(haltBootOnConfigValidationFailure,
                     activityConfig,
-                    alertConfig,
                     analyticsConfig,
                     annotationConfig,
                     byteBufferPoolConfig,

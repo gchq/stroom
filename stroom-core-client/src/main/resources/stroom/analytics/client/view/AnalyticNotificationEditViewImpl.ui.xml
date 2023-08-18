@@ -4,10 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="notificationEnabled" label="Enabled">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
-        </form:FormGroup>
-        <form:FormGroup identity="notificationDestinationFeed" label="Destination Feed For Alerts">
+        <form:FormGroup identity="notificationDestinationFeed" label="Destination Feed For Detections">
             <g:SimplePanel ui:field="destinationFeed"/>
         </form:FormGroup>
         <form:FormGroup identity="notificationUseSourceFeedIfPossible" label="Use Source Feed If Possible">

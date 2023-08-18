@@ -4,17 +4,15 @@
 package stroom.analytics.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcess;
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcessTracker;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.analytics.impl.db.jooq.tables.AnalyticNotification;
-import stroom.analytics.impl.db.jooq.tables.AnalyticNotificationState;
-import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilter;
-import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilterTracker;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -31,24 +29,14 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
-     * The table <code>stroom.analytic_notification</code>.
+     * The table <code>stroom.analytic_process</code>.
      */
-    public final AnalyticNotification ANALYTIC_NOTIFICATION = AnalyticNotification.ANALYTIC_NOTIFICATION;
+    public final AnalyticProcess ANALYTIC_PROCESS = AnalyticProcess.ANALYTIC_PROCESS;
 
     /**
-     * The table <code>stroom.analytic_notification_state</code>.
+     * The table <code>stroom.analytic_process_tracker</code>.
      */
-    public final AnalyticNotificationState ANALYTIC_NOTIFICATION_STATE = AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE;
-
-    /**
-     * The table <code>stroom.analytic_processor_filter</code>.
-     */
-    public final AnalyticProcessorFilter ANALYTIC_PROCESSOR_FILTER = AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER;
-
-    /**
-     * The table <code>stroom.analytic_processor_filter_tracker</code>.
-     */
-    public final AnalyticProcessorFilterTracker ANALYTIC_PROCESSOR_FILTER_TRACKER = AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER;
+    public final AnalyticProcessTracker ANALYTIC_PROCESS_TRACKER = AnalyticProcessTracker.ANALYTIC_PROCESS_TRACKER;
 
     /**
      * No further instances allowed
@@ -66,10 +54,8 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            AnalyticNotification.ANALYTIC_NOTIFICATION,
-            AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE,
-            AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER,
-            AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER
+            AnalyticProcess.ANALYTIC_PROCESS,
+            AnalyticProcessTracker.ANALYTIC_PROCESS_TRACKER
         );
     }
 }

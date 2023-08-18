@@ -1,9 +1,7 @@
 package stroom.analytics.impl.db;
 
-import stroom.analytics.impl.AnalyticNotificationDao;
-import stroom.analytics.impl.AnalyticNotificationStateDao;
-import stroom.analytics.impl.AnalyticProcessorFilterDao;
-import stroom.analytics.impl.AnalyticProcessorFilterTrackerDao;
+import stroom.analytics.impl.AnalyticProcessDao;
+import stroom.analytics.impl.AnalyticProcessTrackerDao;
 
 import com.google.inject.AbstractModule;
 
@@ -13,9 +11,7 @@ public class AnalyticsDaoModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
-        bind(AnalyticProcessorFilterDao.class).to(AnalyticProcessorFilterDaoImpl.class);
-        bind(AnalyticProcessorFilterTrackerDao.class).to(AnalyticProcessorFilterTrackerDaoImpl.class);
-        bind(AnalyticNotificationDao.class).to(AnalyticNotificationDaoImpl.class);
-        bind(AnalyticNotificationStateDao.class).to(AnalyticNotificationStateDaoImpl.class);
+        bind(AnalyticProcessDao.class).to(AnalyticProcessDaoImpl.class);
+        bind(AnalyticProcessTrackerDao.class).to(AnalyticProcessTrackerDaoImpl.class);
     }
 }

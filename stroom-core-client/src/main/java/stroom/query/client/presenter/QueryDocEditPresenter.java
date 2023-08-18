@@ -18,17 +18,14 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.analytics.shared.AnalyticConfig;
-import stroom.analytics.shared.AnalyticNotification;
-import stroom.analytics.shared.AnalyticNotificationResource;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
-import stroom.analytics.shared.AnalyticProcessorFilter;
-import stroom.analytics.shared.AnalyticProcessorFilterResource;
+import stroom.analytics.shared.AnalyticProcess;
+import stroom.analytics.shared.AnalyticProcessResource;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
-import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.analytics.shared.ScheduledQueryAnalyticConfig;
+import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -61,10 +58,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
-    private static final AnalyticNotificationResource ANALYTIC_NOTIFICATION_RESOURCE =
-            GWT.create(AnalyticNotificationResource.class);
-    private static final AnalyticProcessorFilterResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
-            GWT.create(AnalyticProcessorFilterResource.class);
+    private static final AnalyticProcessResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
+            GWT.create(AnalyticProcessResource.class);
 
     private final QueryEditPresenter queryEditPresenter;
     private final RestFactory restFactory;
@@ -108,9 +103,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 setDirty(true);
             }
         }));
-        registerHandler(createRuleButton.addClickHandler(event -> {
-            createRule();
-        }));
+        registerHandler(createRuleButton.addClickHandler(event -> createRule()));
     }
 
     private void createRule() {
@@ -155,13 +148,25 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         rest
                 .onSuccess(doc -> {
                     final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-                    final AnalyticConfig analyticConfig = new ScheduledQueryAnalyticConfig(oneHour, oneHour);
+                    final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
+                            ScheduledQueryAnalyticProcessConfig.builder()
+                                    .minEventTimeMs(System.currentTimeMillis())
+                                    .maxEventTimeMs(null)
+                                    .queryFrequency(oneHour)
+                                    .timeToWaitForData(oneHour)
+                                    .build();
+                    final AnalyticNotificationStreamConfig analyticNotificationConfig =
+                            AnalyticNotificationStreamConfig.builder()
+                                    .useSourceFeedIfPossible(false)
+                                    .destinationFeed(analyticUiDefaultConfig.getDefaultFeed())
+                                    .build();
                     AnalyticRuleDoc updated = doc
                             .copy()
                             .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                             .query(queryEditPresenter.getQuery())
-                            .analyticRuleType(AnalyticRuleType.SCHEDULED_QUERY)
-                            .analyticConfig(analyticConfig)
+                            .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                            .analyticProcessConfig(analyticProcessConfig)
+                            .analyticNotificationConfig(analyticNotificationConfig)
                             .build();
                     updateRule(ruleDocRef, updated, analyticUiDefaultConfig);
                 })
@@ -174,43 +179,19 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                             final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final Rest<AnalyticRuleDoc> rest = restFactory.create();
         rest
-                .onSuccess(doc -> createNewNotification(ruleDocRef, ruleDoc, analyticUiDefaultConfig))
+                .onSuccess(doc -> createNewProcessorFilter(ruleDocRef, analyticUiDefaultConfig))
                 .call(ANALYTIC_RULE_RESOURCE)
                 .update(ruleDocRef.getUuid(), ruleDoc);
     }
 
-    private void createNewNotification(final DocRef ruleDocRef,
-                                       final AnalyticRuleDoc ruleDoc,
-                                       final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
-        final AnalyticNotificationStreamConfig config = AnalyticNotificationStreamConfig
-                .builder()
-                .useSourceFeedIfPossible(false)
-                .destinationFeed(analyticUiDefaultConfig.getDefaultFeed())
-                .build();
-        final AnalyticNotification newNotification = AnalyticNotification
-                .builder()
-                .analyticUuid(ruleDocRef.getUuid())
-                .enabled(true)
-                .config(config)
-                .build();
-        final Rest<AnalyticNotification> rest = restFactory.create();
-        rest
-                .onSuccess(result -> createNewProcessorFilter(ruleDocRef, ruleDoc, analyticUiDefaultConfig))
-                .call(ANALYTIC_NOTIFICATION_RESOURCE)
-                .create(newNotification);
-    }
-
     private void createNewProcessorFilter(final DocRef ruleDocRef,
-                                          final AnalyticRuleDoc ruleDoc,
                                           final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
-        final AnalyticProcessorFilter newFilter = AnalyticProcessorFilter.builder()
+        final AnalyticProcess newFilter = AnalyticProcess.builder()
                 .analyticUuid(ruleDocRef.getUuid())
                 .enabled(true)
-                .minMetaCreateTimeMs(System.currentTimeMillis())
-                .maxMetaCreateTimeMs(null)
                 .node(analyticUiDefaultConfig.getDefaultNode())
                 .build();
-        final Rest<AnalyticProcessorFilter> rest = restFactory.create();
+        final Rest<AnalyticProcess> rest = restFactory.create();
         rest
                 .onSuccess(result ->
                         OpenDocumentEvent.fire(

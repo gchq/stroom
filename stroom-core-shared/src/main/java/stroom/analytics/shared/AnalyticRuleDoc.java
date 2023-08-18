@@ -42,16 +42,19 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private String query;
     @JsonProperty
-    private final AnalyticRuleType analyticRuleType;
+    private final AnalyticProcessType analyticProcessType;
     @JsonProperty
-    private final AnalyticConfig analyticConfig;
+    private final AnalyticProcessConfig analyticProcessConfig;
+    @JsonProperty
+    private final AnalyticNotificationConfig analyticNotificationConfig;
 
     public AnalyticRuleDoc() {
         description = null;
         languageVersion = null;
         query = null;
-        analyticRuleType = null;
-        analyticConfig = null;
+        analyticProcessType = null;
+        analyticProcessConfig = null;
+        analyticNotificationConfig = null;
     }
 
     @JsonCreator
@@ -66,14 +69,17 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("description") final String description,
                            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                            @JsonProperty("query") final String query,
-                           @JsonProperty("analyticRuleType") AnalyticRuleType analyticRuleType,
-                           @JsonProperty("analyticConfig") final AnalyticConfig analyticConfig) {
+                           @JsonProperty("analyticProcessType") AnalyticProcessType analyticProcessType,
+                           @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
+                           @JsonProperty("analyticNotificationConfig")
+                               final AnalyticNotificationConfig analyticNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.query = query;
-        this.analyticRuleType = analyticRuleType;
-        this.analyticConfig = analyticConfig;
+        this.analyticProcessType = analyticProcessType;
+        this.analyticProcessConfig = analyticProcessConfig;
+        this.analyticNotificationConfig = analyticNotificationConfig;
     }
 
     /**
@@ -108,12 +114,16 @@ public class AnalyticRuleDoc extends Doc {
         this.query = query;
     }
 
-    public AnalyticRuleType getAnalyticRuleType() {
-        return analyticRuleType;
+    public AnalyticProcessType getAnalyticProcessType() {
+        return analyticProcessType;
     }
 
-    public AnalyticConfig getAnalyticConfig() {
-        return analyticConfig;
+    public AnalyticProcessConfig getAnalyticProcessConfig() {
+        return analyticProcessConfig;
+    }
+
+    public AnalyticNotificationConfig getAnalyticNotificationConfig() {
+        return analyticNotificationConfig;
     }
 
     @Override
@@ -131,8 +141,9 @@ public class AnalyticRuleDoc extends Doc {
         return Objects.equals(description, that.description) &&
                 languageVersion == that.languageVersion &&
                 Objects.equals(query, that.query) &&
-                analyticRuleType == that.analyticRuleType &&
-                Objects.equals(analyticConfig, that.analyticConfig);
+                analyticProcessType == that.analyticProcessType &&
+                Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
+                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig);
     }
 
     @Override
@@ -141,8 +152,9 @@ public class AnalyticRuleDoc extends Doc {
                 description,
                 languageVersion,
                 query,
-                analyticRuleType,
-                analyticConfig);
+                analyticProcessType,
+                analyticProcessConfig,
+                analyticNotificationConfig);
     }
 
     @Override
@@ -151,8 +163,9 @@ public class AnalyticRuleDoc extends Doc {
                 "description='" + description + '\'' +
                 ", languageVersion=" + languageVersion +
                 ", query='" + query + '\'' +
-                ", analyticRuleType=" + analyticRuleType +
-                ", analyticConfig=" + analyticConfig +
+                ", analyticRuleType=" + analyticProcessType +
+                ", analyticConfig=" + analyticProcessConfig +
+                ", analyticNotificationConfig=" + analyticNotificationConfig +
                 '}';
     }
 
@@ -169,8 +182,9 @@ public class AnalyticRuleDoc extends Doc {
         private String description;
         private QueryLanguageVersion languageVersion;
         private String query;
-        private AnalyticRuleType analyticRuleType;
-        private AnalyticConfig analyticConfig;
+        private AnalyticProcessType analyticProcessType;
+        private AnalyticProcessConfig analyticProcessConfig;
+        private AnalyticNotificationConfig analyticNotificationConfig;
 
         public Builder() {
         }
@@ -180,8 +194,9 @@ public class AnalyticRuleDoc extends Doc {
             this.description = doc.description;
             this.languageVersion = doc.languageVersion;
             this.query = doc.query;
-            this.analyticRuleType = doc.analyticRuleType;
-            this.analyticConfig = doc.analyticConfig;
+            this.analyticProcessType = doc.analyticProcessType;
+            this.analyticProcessConfig = doc.analyticProcessConfig;
+            this.analyticNotificationConfig = doc.analyticNotificationConfig;
         }
 
         public Builder description(final String description) {
@@ -199,13 +214,18 @@ public class AnalyticRuleDoc extends Doc {
             return self();
         }
 
-        public Builder analyticRuleType(final AnalyticRuleType analyticRuleType) {
-            this.analyticRuleType = analyticRuleType;
+        public Builder analyticProcessType(final AnalyticProcessType analyticProcessType) {
+            this.analyticProcessType = analyticProcessType;
             return self();
         }
 
-        public Builder analyticConfig(final AnalyticConfig analyticConfig) {
-            this.analyticConfig = analyticConfig;
+        public Builder analyticProcessConfig(final AnalyticProcessConfig analyticProcessConfig) {
+            this.analyticProcessConfig = analyticProcessConfig;
+            return self();
+        }
+
+        public Builder analyticNotificationConfig(final AnalyticNotificationConfig analyticNotificationConfig) {
+            this.analyticNotificationConfig = analyticNotificationConfig;
             return self();
         }
 
@@ -228,8 +248,9 @@ public class AnalyticRuleDoc extends Doc {
                     description,
                     languageVersion,
                     query,
-                    analyticRuleType,
-                    analyticConfig);
+                    analyticProcessType,
+                    analyticProcessConfig,
+                    analyticNotificationConfig);
         }
     }
 }

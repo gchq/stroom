@@ -4,13 +4,12 @@
 package stroom.analytics.impl.db.jooq;
 
 
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcess;
+
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.analytics.impl.db.jooq.tables.AnalyticNotification;
-import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilter;
 
 
 /**
@@ -23,6 +22,5 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index ANALYTIC_NOTIFICATION_ANALYTIC_NOTIFICATION_ANALYTIC_UUID_IDX = Internal.createIndex(DSL.name("analytic_notification_analytic_uuid_idx"), AnalyticNotification.ANALYTIC_NOTIFICATION, new OrderField[] { AnalyticNotification.ANALYTIC_NOTIFICATION.ANALYTIC_UUID }, false);
-    public static final Index ANALYTIC_PROCESSOR_FILTER_ANALYTIC_PROCESSOR_FILTER_ANALYTIC_UUID_IDX = Internal.createIndex(DSL.name("analytic_processor_filter_analytic_uuid_idx"), AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER, new OrderField[] { AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER.ANALYTIC_UUID }, false);
+    public static final Index ANALYTIC_PROCESS_ANALYTIC_PROCESS_ANALYTIC_UUID_IDX = Internal.createIndex(DSL.name("analytic_process_analytic_uuid_idx"), AnalyticProcess.ANALYTIC_PROCESS, new OrderField[] { AnalyticProcess.ANALYTIC_PROCESS.ANALYTIC_UUID }, false);
 }

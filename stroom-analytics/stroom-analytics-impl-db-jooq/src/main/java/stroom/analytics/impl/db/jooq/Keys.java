@@ -4,20 +4,16 @@
 package stroom.analytics.impl.db.jooq;
 
 
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcess;
+import stroom.analytics.impl.db.jooq.tables.AnalyticProcessTracker;
+import stroom.analytics.impl.db.jooq.tables.records.AnalyticProcessRecord;
+import stroom.analytics.impl.db.jooq.tables.records.AnalyticProcessTrackerRecord;
+
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.analytics.impl.db.jooq.tables.AnalyticNotification;
-import stroom.analytics.impl.db.jooq.tables.AnalyticNotificationState;
-import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilter;
-import stroom.analytics.impl.db.jooq.tables.AnalyticProcessorFilterTracker;
-import stroom.analytics.impl.db.jooq.tables.records.AnalyticNotificationRecord;
-import stroom.analytics.impl.db.jooq.tables.records.AnalyticNotificationStateRecord;
-import stroom.analytics.impl.db.jooq.tables.records.AnalyticProcessorFilterRecord;
-import stroom.analytics.impl.db.jooq.tables.records.AnalyticProcessorFilterTrackerRecord;
 
 
 /**
@@ -31,15 +27,12 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<AnalyticNotificationRecord> KEY_ANALYTIC_NOTIFICATION_PRIMARY = Internal.createUniqueKey(AnalyticNotification.ANALYTIC_NOTIFICATION, DSL.name("KEY_analytic_notification_PRIMARY"), new TableField[] { AnalyticNotification.ANALYTIC_NOTIFICATION.UUID }, true);
-    public static final UniqueKey<AnalyticNotificationStateRecord> KEY_ANALYTIC_NOTIFICATION_STATE_PRIMARY = Internal.createUniqueKey(AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE, DSL.name("KEY_analytic_notification_state_PRIMARY"), new TableField[] { AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE.FK_ANALYTIC_NOTIFICATION_UUID }, true);
-    public static final UniqueKey<AnalyticProcessorFilterRecord> KEY_ANALYTIC_PROCESSOR_FILTER_PRIMARY = Internal.createUniqueKey(AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER, DSL.name("KEY_analytic_processor_filter_PRIMARY"), new TableField[] { AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER.UUID }, true);
-    public static final UniqueKey<AnalyticProcessorFilterTrackerRecord> KEY_ANALYTIC_PROCESSOR_FILTER_TRACKER_PRIMARY = Internal.createUniqueKey(AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER, DSL.name("KEY_analytic_processor_filter_tracker_PRIMARY"), new TableField[] { AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER.FK_ANALYTIC_PROCESSOR_FILTER_UUID }, true);
+    public static final UniqueKey<AnalyticProcessRecord> KEY_ANALYTIC_PROCESS_PRIMARY = Internal.createUniqueKey(AnalyticProcess.ANALYTIC_PROCESS, DSL.name("KEY_analytic_process_PRIMARY"), new TableField[] { AnalyticProcess.ANALYTIC_PROCESS.UUID }, true);
+    public static final UniqueKey<AnalyticProcessTrackerRecord> KEY_ANALYTIC_PROCESS_TRACKER_PRIMARY = Internal.createUniqueKey(AnalyticProcessTracker.ANALYTIC_PROCESS_TRACKER, DSL.name("KEY_analytic_process_tracker_PRIMARY"), new TableField[] { AnalyticProcessTracker.ANALYTIC_PROCESS_TRACKER.FK_ANALYTIC_PROCESS_UUID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<AnalyticNotificationStateRecord, AnalyticNotificationRecord> FK_ANALYTIC_NOTIFICATION_UUID = Internal.createForeignKey(AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE, DSL.name("fk_analytic_notification_uuid"), new TableField[] { AnalyticNotificationState.ANALYTIC_NOTIFICATION_STATE.FK_ANALYTIC_NOTIFICATION_UUID }, Keys.KEY_ANALYTIC_NOTIFICATION_PRIMARY, new TableField[] { AnalyticNotification.ANALYTIC_NOTIFICATION.UUID }, true);
-    public static final ForeignKey<AnalyticProcessorFilterTrackerRecord, AnalyticProcessorFilterRecord> FK_ANALYTIC_PROCESSOR_FILTER_UUID = Internal.createForeignKey(AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER, DSL.name("fk_analytic_processor_filter_uuid"), new TableField[] { AnalyticProcessorFilterTracker.ANALYTIC_PROCESSOR_FILTER_TRACKER.FK_ANALYTIC_PROCESSOR_FILTER_UUID }, Keys.KEY_ANALYTIC_PROCESSOR_FILTER_PRIMARY, new TableField[] { AnalyticProcessorFilter.ANALYTIC_PROCESSOR_FILTER.UUID }, true);
+    public static final ForeignKey<AnalyticProcessTrackerRecord, AnalyticProcessRecord> FK_ANALYTIC_PROCESS_UUID = Internal.createForeignKey(AnalyticProcessTracker.ANALYTIC_PROCESS_TRACKER, DSL.name("fk_analytic_process_uuid"), new TableField[] { AnalyticProcessTracker.ANALYTIC_PROCESS_TRACKER.FK_ANALYTIC_PROCESS_UUID }, Keys.KEY_ANALYTIC_PROCESS_PRIMARY, new TableField[] { AnalyticProcess.ANALYTIC_PROCESS.UUID }, true);
 }

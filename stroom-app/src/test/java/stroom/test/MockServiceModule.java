@@ -1,7 +1,6 @@
 package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
-import stroom.analytics.mock.MockAlertModule;
 import stroom.app.guice.JerseyModule;
 import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
@@ -50,7 +49,6 @@ public class MockServiceModule extends AbstractModule {
     protected void configure() {
         install(new JerseyModule());
         install(new MockActivityModule());
-        install(new MockAlertModule());
         install(new MockDocRefInfoModule());
         install(new CacheModule());
         install(new MockMetaModule());

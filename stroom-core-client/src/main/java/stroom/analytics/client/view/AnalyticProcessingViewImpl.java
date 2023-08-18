@@ -18,7 +18,7 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
-import stroom.analytics.shared.AnalyticRuleType;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.SimpleDuration;
@@ -59,7 +59,7 @@ public class AnalyticProcessingViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
-    SelectionBox<AnalyticRuleType> processingType;
+    SelectionBox<AnalyticProcessType> processingType;
     @UiField
     FormGroup queryFrequencyFormGroup;
     @UiField
@@ -84,9 +84,9 @@ public class AnalyticProcessingViewImpl
         widget = binder.createAndBindUi(this);
         refresh.setIcon(SvgImage.REFRESH);
 
-        processingType.addItem(AnalyticRuleType.STREAMING);
-        processingType.addItem(AnalyticRuleType.TABLE_BUILDER);
-        processingType.addItem(AnalyticRuleType.SCHEDULED_QUERY);
+        processingType.addItem(AnalyticProcessType.STREAMING);
+        processingType.addItem(AnalyticProcessType.TABLE_BUILDER);
+        processingType.addItem(AnalyticProcessType.SCHEDULED_QUERY);
 
         updateProcessingType(null);
         queryFrequency.setValue(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build());
@@ -157,13 +157,13 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
-    public AnalyticRuleType getProcessingType() {
+    public AnalyticProcessType getProcessingType() {
         return this.processingType.getValue();
     }
 
     @Override
-    public void setProcessingType(final AnalyticRuleType analyticRuleType) {
-        this.processingType.setValue(analyticRuleType);
+    public void setProcessingType(final AnalyticProcessType analyticProcessType) {
+        this.processingType.setValue(analyticProcessType);
         updateProcessingType(processingType.getValue());
     }
 
@@ -229,18 +229,18 @@ public class AnalyticProcessingViewImpl
     }
 
     @UiHandler("processingType")
-    public void onProcessingType(final ValueChangeEvent<AnalyticRuleType> event) {
+    public void onProcessingType(final ValueChangeEvent<AnalyticProcessType> event) {
         updateProcessingType(processingType.getValue());
         getUiHandlers().onProcessingTypeChange();
     }
 
-    private void updateProcessingType(final AnalyticRuleType analyticRuleType) {
-        if (analyticRuleType == null) {
+    private void updateProcessingType(final AnalyticProcessType analyticProcessType) {
+        if (analyticProcessType == null) {
             queryFrequencyFormGroup.setVisible(false);
             timeToWaitForDataFormGroup.setVisible(false);
             dataRetentionFormGroup.setVisible(false);
         } else {
-            switch (analyticRuleType) {
+            switch (analyticProcessType) {
                 case STREAMING:
                     queryFrequencyFormGroup.setVisible(false);
                     timeToWaitForDataFormGroup.setVisible(false);

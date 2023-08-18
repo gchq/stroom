@@ -16,8 +16,6 @@
 
 package stroom.index.impl;
 
-import stroom.analytics.api.AlertManager;
-import stroom.analytics.api.AlertProcessor;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexDoc;
@@ -54,7 +52,6 @@ import org.xml.sax.SAXException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.TreeMap;
 import javax.inject.Inject;
 
@@ -86,7 +83,6 @@ class IndexingFilter extends AbstractXMLFilter {
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final IndexStructureCache indexStructureCache;
-    private final AlertManager alertManager;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private IndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
@@ -100,8 +96,6 @@ class IndexingFilter extends AbstractXMLFilter {
 
     private Locator locator;
 
-
-    private Optional<AlertProcessor> alertProcessor;
     private Long currentEventTime;
     private Partition defaultPartition;
 
@@ -110,14 +104,12 @@ class IndexingFilter extends AbstractXMLFilter {
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
-                   final IndexStructureCache indexStructureCache,
-                   final AlertManager alertManager) {
+                   final IndexStructureCache indexStructureCache) {
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
         this.indexStructureCache = indexStructureCache;
-        this.alertManager = alertManager;
     }
 
     /**
@@ -248,7 +240,6 @@ class IndexingFilter extends AbstractXMLFilter {
                 final IndexShardKey indexShardKey =
                         indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKeyUtil.createKey(index, k));
 
-                checkAlerts();
                 indexer.addDocument(indexShardKey, document);
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
@@ -336,38 +327,6 @@ class IndexingFilter extends AbstractXMLFilter {
             }
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);
-        }
-    }
-
-    private void checkAlerts() {
-        try {
-            if (alertProcessor == null) {
-                alertProcessor = alertManager.createAlertProcessor(new DocRef(IndexDoc.DOCUMENT_TYPE,
-                        indexRef.getUuid()));
-            }
-            alertProcessor.ifPresent(ap -> ap.addIfNeeded(document));
-
-        } catch (RuntimeException ex) {
-            LOGGER.error(ex.getMessage(), ex);
-        }
-    }
-
-    // For debug purposes, todo remove at some point
-    private int numberOfEndProcessingCalls = 0;
-
-    @Override
-    public void endProcessing() {
-        if (alertProcessor != null) {
-            alertProcessor.ifPresent(AlertProcessor::createAlerts);
-        }
-
-        super.endProcessing();
-
-        numberOfEndProcessingCalls++;
-
-        if (numberOfEndProcessingCalls > 1) {
-            LOGGER.warn("Indexing filter in " + indexRef.getName() +
-                    " finish processing number " + numberOfEndProcessingCalls);
         }
     }
 
