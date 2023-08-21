@@ -1,5 +1,8 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.impl.DetectionConsumer.Detection;
+import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
+import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
@@ -8,15 +11,18 @@ import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
 import stroom.analytics.shared.ScheduledQueryAnalyticTrackerData;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexConstants;
 import stroom.node.api.NodeInfo;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
@@ -25,11 +31,16 @@ import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.DataStore;
-import stroom.query.common.v2.IdentityItemMapper;
-import stroom.query.common.v2.Item;
+import stroom.query.common.v2.ErrorConsumerImpl;
+import stroom.query.common.v2.FilteredRowCreator;
+import stroom.query.common.v2.ItemMapper;
+import stroom.query.common.v2.KeyFactory;
 import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
+import stroom.query.common.v2.SimpleRowCreator;
+import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.task.api.ExecutorProvider;
@@ -42,6 +53,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Severity;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
@@ -51,6 +63,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -69,6 +83,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
+    private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -79,7 +94,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
                                    final TaskContextFactory taskContextFactory,
                                    final NodeInfo nodeInfo,
-                                   final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
+                                   final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
+                                   final Provider<ErrorReceiverProxy> errorReceiverProxyProvider) {
         this.analyticHelper = analyticHelper;
         this.dataSourceResolver = dataSourceResolver;
         this.executorProvider = executorProvider;
@@ -89,6 +105,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
+        this.errorReceiverProxyProvider = errorReceiverProxyProvider;
     }
 
     public void exec() {
@@ -174,6 +191,8 @@ public class ScheduledQueryAnalyticExecutor {
     private void processScheduledQueryAnalytic(final ScheduledQueryAnalytic analytic,
                                                final AnalyticNotificationStreamConfig streamConfig,
                                                final TimeFilter timeFilter) {
+        final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+
         try {
             final TimeRange timeRange = new TimeRange("Custom",
                     Condition.BETWEEN,
@@ -233,26 +252,88 @@ public class ScheduledQueryAnalyticExecutor {
 
                     try {
                         detectionWriter.start();
-
-                        final Consumer<Item> itemConsumer = item -> {
-                            final Val[] vals = new Val[compiledFields.getCompiledFields().length];
-                            for (int i = 0; i < vals.length; i++) {
-                                vals[i] = item.getValue(i);
+                        final AnalyticRuleDoc analyticRuleDoc = analytic.analyticRuleDoc;
+                        final Consumer<Row> itemConsumer = row -> {
+                            Long streamId = null;
+                            Long eventId = null;
+                            final List<Value> values = new ArrayList<>();
+                            for (int i = 0; i < dataStore.getFields().size(); i++) {
+                                if (i < row.getValues().size()) {
+                                    final String fieldName = dataStore.getFields().get(i).getName();
+                                    final String value = row.getValues().get(i);
+                                    if (value != null) {
+                                        if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                                            streamId = DetectionWriterProxy.getSafeLong(value);
+                                        } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                                            eventId = DetectionWriterProxy.getSafeLong(value);
+                                        }
+                                        values.add(new Value(fieldName, value));
+                                    }
+                                }
                             }
-                            detectionWriter.accept(vals);
+
+                            List<LinkedEvent> linkedEvents = null;
+                            if (streamId != null || eventId != null) {
+                                linkedEvents = List.of(new LinkedEvent(null, streamId, eventId));
+                            }
+
+                            final Detection detection = new Detection(
+                                    Instant.now(),
+                                    analyticRuleDoc.getName(),
+                                    analyticRuleDoc.getUuid(),
+                                    analyticRuleDoc.getVersion(),
+                                    null,
+                                    null,
+                                    analyticRuleDoc.getDescription(),
+                                    null,
+                                    UUID.randomUUID().toString(),
+                                    0,
+                                    false,
+                                    values,
+                                    linkedEvents);
+                            detectionWriter.getDetectionConsumer().accept(detection);
                         };
                         final Consumer<Long> countConsumer = count -> {
 
                         };
+
+                        final KeyFactory keyFactory = dataStore.getKeyFactory();
+                        final FieldFormatter fieldFormatter =
+                                new FieldFormatter(
+                                        new FormatterFactory(sampleRequest.getDateTimeSettings()));
+
+                        // Create the row creator.
+                        Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
+                                fieldFormatter,
+                                keyFactory,
+                                tableSettings.getAggregateFilter(),
+                                dataStore.getFields(),
+                                errorConsumer);
+
+                        if (optionalRowCreator.isEmpty()) {
+                            optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
+                        }
+
+                        final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
+
                         dataStore.fetch(
                                 OffsetRange.UNBOUNDED,
                                 OpenGroups.NONE,
                                 resultRequest.getTimeFilter(),
-                                IdentityItemMapper.INSTANCE,
+                                rowCreator,
                                 itemConsumer,
                                 countConsumer);
 
                     } finally {
+                        final List<String> errors = errorConsumer.getErrors();
+                        if (errors != null && errors.size() > 0) {
+                            for (final String error : errors) {
+                                errorReceiverProxyProvider.get()
+                                        .getErrorReceiver()
+                                        .log(Severity.ERROR, null, null, error, null);
+                            }
+                        }
+
                         detectionWriter.end();
                     }
                 } finally {

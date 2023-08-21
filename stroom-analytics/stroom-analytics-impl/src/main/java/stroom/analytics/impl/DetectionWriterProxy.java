@@ -37,8 +37,6 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
     private final FieldFormatter fieldFormatter;
     private final Provider<DetectionsWriter> detectionsWriterProvider;
     private DocRef destinationFeed;
-//    private final String additionalFieldsPrefix;
-//    private final boolean outputIndexFields;
 
     private FieldIndex fieldIndex;
     private DetectionConsumer detectionConsumer;
@@ -61,7 +59,7 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
         fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeSettings));
     }
 
-    private DetectionConsumer getDetectionConsumer() {
+    public DetectionConsumer getDetectionConsumer() {
         if (detectionConsumer == null) {
             final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
             detectionsWriter.setFeed(destinationFeed);
@@ -190,17 +188,9 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
             final CompiledFieldValue compiledFieldValue = fieldVals[idx];
             if (compiledFieldValue != null && compiledFieldValue.getVal() != null) {
                 if (fieldIndex.getStreamIdFieldIndex() == idx) {
-                    try {
-                        streamId.set(compiledFieldValue.getVal().toLong());
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
+                    streamId.set(getSafeLong(compiledFieldValue.getVal()));
                 } else if (fieldIndex.getEventIdFieldIndex() == idx) {
-                    try {
-                        eventId.set(compiledFieldValue.getVal().toLong());
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
+                    eventId.set(getSafeLong(compiledFieldValue.getVal()));
                 } else {
                     final String fieldValStr =
                             fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
@@ -229,6 +219,24 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();
         detectionConsumer.accept(detection);
+    }
+
+    public static Long getSafeLong(final String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public static Long getSafeLong(final Val value) {
+        try {
+            return value.toLong();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return null;
     }
 
     private static class CompiledFieldValue {

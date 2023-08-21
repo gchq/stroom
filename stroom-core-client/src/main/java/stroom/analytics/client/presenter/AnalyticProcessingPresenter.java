@@ -135,7 +135,9 @@ public class AnalyticProcessingPresenter
                 addRowDateString(tb, "Last Event Time", td.getLastEventTime());
                 tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
                 tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
-                tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                if (td.getMessage() != null && td.getMessage().length() > 0) {
+                    tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                }
 
             } else if (trackerData instanceof ScheduledQueryAnalyticTrackerData) {
                 final ScheduledQueryAnalyticTrackerData td =
@@ -144,7 +146,9 @@ public class AnalyticProcessingPresenter
                 addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
                 addRowDateString(tb, "Last Window Start Time", td.getLastWindowStartTimeMs());
                 addRowDateString(tb, "Last Window End Time", td.getLastWindowEndTimeMs());
-                tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                if (td.getMessage() != null && td.getMessage().length() > 0) {
+                    tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                }
 
             } else if (trackerData instanceof StreamingAnalyticTrackerData) {
                 final StreamingAnalyticTrackerData td =
@@ -155,7 +159,9 @@ public class AnalyticProcessingPresenter
                 tb.row(SafeHtmlUtil.from("Last Steam Id"), SafeHtmlUtil.from(td.getLastStreamId()));
                 tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
                 tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
-                tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                if (td.getMessage() != null && td.getMessage().length() > 0) {
+                    tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                }
             }
         }
 
@@ -166,7 +172,11 @@ public class AnalyticProcessingPresenter
 
     private void addRowDateString(final TableBuilder tb, final String label, final Long ms) {
         if (ms != null) {
-            tb.row(label, dateTimeFormatter.formatWithDuration(ms));
+            if (ms == 0) {
+                tb.row(label, "---");
+            } else {
+                tb.row(label, dateTimeFormatter.formatWithDuration(ms));
+            }
         }
     }
 
