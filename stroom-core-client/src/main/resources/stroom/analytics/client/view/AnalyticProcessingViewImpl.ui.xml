@@ -8,34 +8,55 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="analyticProcessingEnabled" label="Enabled">
+        <form:FormGroup identity="analyticProcessingEnabled"
+                        label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabled"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingMinMetaCreateTimeMs" label="Min Data Create Time">
-            <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingMaxMetaCreateTimeMs" label="Max Data Create Time">
-            <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
+        <form:FormGroup identity="analyticProcessingNode"
+                        label="Processing Node">
             <l:SelectionBox ui:field="node"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingType" label="Processing Type">
+        <form:FormGroup identity="analyticProcessingType"
+                        label="Processing Type">
             <l:SelectionBox ui:field="processingType"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="queryFrequencyFormGroup" identity="analyticRuleSettingsQueryFrequency"
+        <form:FormGroup ui:field="analyticProcessingMinMetaCreateTimeMs"
+                        identity="analyticProcessingMinMetaCreateTimeMs"
+                        label="Min Data Create Time">
+            <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="analyticProcessingMaxMetaCreateTimeMs"
+                        identity="analyticProcessingMaxMetaCreateTimeMs"
+                        label="Max Data Create Time">
+            <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="analyticProcessingMinEventTimeMs"
+                        identity="analyticProcessingMinEventTimeMs"
+                        label="Min Event Time">
+            <c:MyDateBox ui:field="minEventTimeMs"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="analyticProcessingMaxEventTimeMs"
+                        identity="analyticProcessingMaxEventTimeMs"
+                        label="Max Event Time">
+            <c:MyDateBox ui:field="maxEventTimeMs"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="queryFrequencyFormGroup"
+                        identity="queryFrequencyFormGroup"
                         label="Query Frequency">
             <d:DurationPicker ui:field="queryFrequency"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="timeToWaitForDataFormGroup" identity="analyticRuleSettingsTimeToWaitForData"
+        <form:FormGroup ui:field="timeToWaitForDataFormGroup"
+                        identity="analyticRuleSettingsTimeToWaitForData"
                         label="Time To Wait For Data To Be Indexed">
             <d:DurationPicker ui:field="timeToWaitForData"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="dataRetentionFormGroup" identity="analyticRuleSettingsDataRetention"
+        <form:FormGroup ui:field="dataRetentionFormGroup"
+                        identity="analyticRuleSettingsDataRetention"
                         label="Time To Keep Data In The Table">
             <d:DurationPicker ui:field="dataRetention"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingInfo" label="Processing Info">
+        <form:FormGroup identity="analyticProcessingInfo"
+                        label="Processing Info">
             <g:FlowPanel styleName="form">
                 <g:SimplePanel ui:field="info" styleName="default-min-sizes dashboard-panel"/>
                 <b:Button ui:field="refresh" text="Refresh"/>

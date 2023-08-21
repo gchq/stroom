@@ -16,67 +16,28 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticProcess;
 import stroom.analytics.shared.AnalyticProcessResource;
-import stroom.analytics.shared.AnalyticProcessTracker;
-import stroom.analytics.shared.FindAnalyticProcessCriteria;
+import stroom.analytics.shared.AnalyticTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.util.shared.ResultPage;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged(OperationType.UNLOGGED)
 class AnalyticProcessResourceImpl implements AnalyticProcessResource {
 
-    private final Provider<AnalyticProcessDao> analyticProcessorDaoProvider;
-    private final Provider<AnalyticProcessTrackerDao> analyticProcessorTrackerDaoProvider;
+    private final Provider<AnalyticTrackerDao> analyticProcessorTrackerDaoProvider;
 
     @Inject
-    AnalyticProcessResourceImpl(final Provider<AnalyticProcessDao> analyticProcessorDaoProvider,
-                                final Provider<AnalyticProcessTrackerDao>
-                                          analyticProcessorTrackerDaoProvider) {
-        this.analyticProcessorDaoProvider = analyticProcessorDaoProvider;
+    AnalyticProcessResourceImpl(final Provider<AnalyticTrackerDao> analyticProcessorTrackerDaoProvider) {
         this.analyticProcessorTrackerDaoProvider = analyticProcessorTrackerDaoProvider;
     }
 
     @Override
-    public ResultPage<AnalyticProcess> find(final FindAnalyticProcessCriteria criteria) {
-        final AnalyticProcessDao analyticProcessDao = analyticProcessorDaoProvider.get();
-        final Optional<AnalyticProcess> optionalFilter =
-                analyticProcessDao.getByAnalyticUuid(criteria.getAnalyticDocUuid());
-        final List<AnalyticProcess> list = optionalFilter
-                .map(List::of)
-                .orElse(Collections.emptyList());
-        return ResultPage.createCriterialBasedList(list, criteria);
-    }
-
-    @Override
-    public AnalyticProcess create(final AnalyticProcess analyticProcess) {
-        final AnalyticProcessDao analyticProcessDao = analyticProcessorDaoProvider.get();
-        return analyticProcessDao.create(analyticProcess);
-    }
-
-    @Override
-    public AnalyticProcess update(final String uuid, final AnalyticProcess analyticProcess) {
-        final AnalyticProcessDao analyticProcessDao = analyticProcessorDaoProvider.get();
-        return analyticProcessDao.update(analyticProcess);
-    }
-
-    @Override
-    public Boolean delete(final String uuid, final AnalyticProcess analyticProcess) {
-        final AnalyticProcessDao analyticProcessDao = analyticProcessorDaoProvider.get();
-        return analyticProcessDao.delete(analyticProcess);
-    }
-
-    @Override
-    public AnalyticProcessTracker getTracker(final String filterUuid) {
-        final AnalyticProcessTrackerDao analyticProcessTrackerDao =
+    public AnalyticTracker getTracker(final String filterUuid) {
+        final AnalyticTrackerDao analyticTrackerDao =
                 analyticProcessorTrackerDaoProvider.get();
-        return analyticProcessTrackerDao.get(filterUuid).orElse(null);
+        return analyticTrackerDao.get(filterUuid).orElse(null);
     }
 }

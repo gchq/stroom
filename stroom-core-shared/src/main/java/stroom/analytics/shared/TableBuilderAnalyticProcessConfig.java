@@ -1,5 +1,6 @@
 package stroom.analytics.shared;
 
+import stroom.analytics.shared.TableBuilderAnalyticProcessConfig.AnalyticProcessConfigBuilder;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -12,7 +13,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
+public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig<AnalyticProcessConfigBuilder> {
 
     @JsonProperty
     private final Long minMetaCreateTimeMs;
@@ -24,10 +25,13 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
     private final SimpleDuration dataRetention;
 
     @JsonCreator
-    public TableBuilderAnalyticProcessConfig(@JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
+    public TableBuilderAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
+                                             @JsonProperty("node") final String node,
+                                             @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                              @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
                                              @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                              @JsonProperty("dataRetention") final SimpleDuration dataRetention) {
+        super(enabled, node);
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.dataRetention = dataRetention;
@@ -58,6 +62,9 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+        if (!super.equals(o)) {
+            return false;
+        }
         final TableBuilderAnalyticProcessConfig that = (TableBuilderAnalyticProcessConfig) o;
         return Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
                 Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs) &&
@@ -67,67 +74,82 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(minMetaCreateTimeMs, maxMetaCreateTimeMs, timeToWaitForData, dataRetention);
+        return Objects.hash(super.hashCode(),
+                minMetaCreateTimeMs,
+                maxMetaCreateTimeMs,
+                timeToWaitForData,
+                dataRetention);
     }
 
     @Override
     public String toString() {
         return "TableBuilderAnalyticProcessConfig{" +
-                "minMetaCreateTimeMs=" + minMetaCreateTimeMs +
+                "enabled=" + enabled +
+                ", node=" + node +
+                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 ", timeToWaitForData=" + timeToWaitForData +
                 ", dataRetention=" + dataRetention +
                 '}';
     }
 
-
-    public Builder copy() {
-        return new Builder(this);
+    @Override
+    public AnalyticProcessConfigBuilder copy() {
+        return new AnalyticProcessConfigBuilder(this);
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static AnalyticProcessConfigBuilder builder() {
+        return new AnalyticProcessConfigBuilder();
     }
 
-    public static class Builder {
+    public static class AnalyticProcessConfigBuilder extends
+            AbstractAnalyticProcessConfigBuilder<TableBuilderAnalyticProcessConfig, AnalyticProcessConfigBuilder> {
 
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private SimpleDuration timeToWaitForData;
         private SimpleDuration dataRetention;
 
-        private Builder() {
+        private AnalyticProcessConfigBuilder() {
         }
 
-        private Builder(final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+        private AnalyticProcessConfigBuilder(
+                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+            super(tableBuilderAnalyticProcessConfig);
             this.minMetaCreateTimeMs = tableBuilderAnalyticProcessConfig.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = tableBuilderAnalyticProcessConfig.maxMetaCreateTimeMs;
             this.timeToWaitForData = tableBuilderAnalyticProcessConfig.timeToWaitForData;
             this.dataRetention = tableBuilderAnalyticProcessConfig.dataRetention;
         }
 
-        public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        public AnalyticProcessConfigBuilder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
-            return this;
+            return self();
         }
 
-        public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        public AnalyticProcessConfigBuilder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
-            return this;
+            return self();
         }
 
-        public Builder timeToWaitForData(final SimpleDuration timeToWaitForData) {
+        public AnalyticProcessConfigBuilder timeToWaitForData(final SimpleDuration timeToWaitForData) {
             this.timeToWaitForData = timeToWaitForData;
-            return this;
+            return self();
         }
 
-        public Builder dataRetention(final SimpleDuration dataRetention) {
+        public AnalyticProcessConfigBuilder dataRetention(final SimpleDuration dataRetention) {
             this.dataRetention = dataRetention;
+            return self();
+        }
+
+        protected AnalyticProcessConfigBuilder self() {
             return this;
         }
 
         public TableBuilderAnalyticProcessConfig build() {
             return new TableBuilderAnalyticProcessConfig(
+                    enabled,
+                    node,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
                     timeToWaitForData,

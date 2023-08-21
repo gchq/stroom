@@ -1,7 +1,6 @@
 package stroom.analytics.impl.db;
 
-import stroom.analytics.impl.AnalyticProcessDao;
-import stroom.analytics.impl.AnalyticProcessTrackerDao;
+import stroom.analytics.impl.AnalyticTrackerDao;
 
 import com.google.inject.AbstractModule;
 
@@ -11,7 +10,6 @@ public class AnalyticsDaoModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
-        bind(AnalyticProcessDao.class).to(AnalyticProcessDaoImpl.class);
-        bind(AnalyticProcessTrackerDao.class).to(AnalyticProcessTrackerDaoImpl.class);
+        bind(AnalyticTrackerDao.class).to(AnalyticTrackerDaoImpl.class);
     }
 }

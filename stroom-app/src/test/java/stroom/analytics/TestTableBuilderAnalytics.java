@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.analytics.impl.TableBuilderAnalyticsExecutor;
+import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -28,6 +28,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
@@ -54,7 +55,9 @@ import javax.inject.Inject;
 class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
 
     @Inject
-    private TableBuilderAnalyticsExecutor analyticsExecutor;
+    private TableBuilderAnalyticExecutor analyticsExecutor;
+    @Inject
+    private NodeInfo nodeInfo;
 
     @Test
     void testHavingCount() {
@@ -100,7 +103,13 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)
-                .analyticProcessConfig(new TableBuilderAnalyticProcessConfig(null, null, INSTANT, null))
+                .analyticProcessConfig(new TableBuilderAnalyticProcessConfig(
+                        true,
+                        nodeInfo.getThisNodeName(),
+                        null,
+                        null,
+                        INSTANT,
+                        null))
                 .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
                         .destinationFeed(detections)
                         .useSourceFeedIfPossible(false)

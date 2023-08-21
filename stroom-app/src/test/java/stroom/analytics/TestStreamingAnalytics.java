@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.analytics.impl.StreamingAnalyticsExecutor;
+import stroom.analytics.impl.StreamingAnalyticExecutor;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -28,6 +28,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
@@ -54,7 +55,9 @@ import javax.inject.Inject;
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject
-    private StreamingAnalyticsExecutor analyticsExecutor;
+    private StreamingAnalyticExecutor analyticsExecutor;
+    @Inject
+    private NodeInfo nodeInfo;
 
     @Test
     void testSingleEvent() {
@@ -99,7 +102,11 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .analyticProcessConfig(new StreamingAnalyticProcessConfig(null, null))
+                .analyticProcessConfig(new StreamingAnalyticProcessConfig(
+                        true,
+                        nodeInfo.getThisNodeName(),
+                        null,
+                        null))
                 .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
                         .destinationFeed(detections)
                         .useSourceFeedIfPossible(false)

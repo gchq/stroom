@@ -177,35 +177,9 @@ export type AnalyticNotificationStreamConfig = AnalyticNotificationConfig & {
   useSourceFeedIfPossible?: boolean;
 };
 
-export interface AnalyticProcess {
-  analyticUuid?: string;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
+export interface AnalyticProcessConfig {
   enabled?: boolean;
   node?: string;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-
-  /** @format int32 */
-  version?: number;
-}
-
-export interface AnalyticProcessConfig {
-  type: string;
-}
-
-export interface AnalyticProcessTracker {
-  analyticProcessTrackerData?: AnalyticProcessTrackerData;
-  filterUuid?: string;
-}
-
-export interface AnalyticProcessTrackerData {
-  message?: string;
   type: string;
 }
 
@@ -228,6 +202,16 @@ export interface AnalyticRuleDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface AnalyticTracker {
+  analyticTrackerData?: AnalyticTrackerData;
+  analyticUuid?: string;
+}
+
+export interface AnalyticTrackerData {
+  message?: string;
+  type: string;
 }
 
 export interface AnalyticUiDefaultConfig {
@@ -1876,14 +1860,6 @@ export interface FindAnalyticDataShardCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
-export interface FindAnalyticProcessCriteria {
-  analyticDocUuid?: string;
-  pageRequest?: PageRequest;
-  quickFilterInput?: string;
-  sort?: string;
-  sortList?: CriteriaFieldSort[];
-}
-
 export interface FindDBTableCriteria {
   pageRequest?: PageRequest;
   sort?: string;
@@ -3494,15 +3470,6 @@ export interface ResultPageAnalyticDataShard {
 /**
  * A page of results.
  */
-export interface ResultPageAnalyticProcess {
-  /** Details of the page of results being returned. */
-  pageResponse?: PageResponse;
-  values?: AnalyticProcess[];
-}
-
-/**
- * A page of results.
- */
 export interface ResultPageCustomRollUpMask {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -3736,7 +3703,7 @@ export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
   timeToWaitForData?: SimpleDuration;
 };
 
-export type ScheduledQueryAnalyticProcessTrackerData = AnalyticProcessTrackerData & {
+export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
   lastExecutionTimeMs?: number;
   lastWindowEndTimeMs?: number;
   lastWindowStartTimeMs?: number;
@@ -4240,7 +4207,7 @@ export type StreamingAnalyticProcessConfig = AnalyticProcessConfig & {
   minMetaCreateTimeMs?: number;
 };
 
-export type StreamingAnalyticProcessTrackerData = AnalyticProcessTrackerData & {
+export type StreamingAnalyticTrackerData = AnalyticTrackerData & {
   lastExecutionTimeMs?: number;
   lastStreamCount?: number;
   lastStreamId?: number;
@@ -4324,7 +4291,7 @@ export type TableBuilderAnalyticProcessConfig = AnalyticProcessConfig & {
   timeToWaitForData?: SimpleDuration;
 };
 
-export type TableBuilderAnalyticProcessTrackerData = AnalyticProcessTrackerData & {
+export type TableBuilderAnalyticTrackerData = AnalyticTrackerData & {
   lastEventId?: number;
   lastEventTime?: number;
   lastExecutionTimeMs?: number;
@@ -5322,91 +5289,15 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags AnalyticProcess
-     * @name CreateAnalyticProcess
-     * @summary Create an analytic process
-     * @request POST:/analyticProcess/v1
-     * @secure
-     */
-    createAnalyticProcess: (data: AnalyticProcess, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcess>({
-        path: `/analyticProcess/v1`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcess
-     * @name FindAnalyticProcess
-     * @summary Find the analytic process for the specified analytic
-     * @request POST:/analyticProcess/v1/find
-     * @secure
-     */
-    findAnalyticProcess: (data: FindAnalyticProcessCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageAnalyticProcess>({
-        path: `/analyticProcess/v1/find`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcess
      * @name FindAnalyticProcessTracker
      * @summary Find the analytic process tracker for the specified process
      * @request POST:/analyticProcess/v1/tracker
      * @secure
      */
     findAnalyticProcessTracker: (data: string, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcessTracker>({
+      this.request<any, AnalyticTracker>({
         path: `/analyticProcess/v1/tracker`,
         method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcess
-     * @name UpdateAnalyticProcess
-     * @summary Delete an analytic process
-     * @request DELETE:/analyticProcess/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticProcess: (uuid: string, data: AnalyticProcess, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/analyticProcess/v1/${uuid}`,
-        method: "DELETE",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcess
-     * @name UpdateAnalyticProcess1
-     * @summary Update an analytic process
-     * @request PUT:/analyticProcess/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticProcess1: (uuid: string, data: AnalyticProcess, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcess>({
-        path: `/analyticProcess/v1/${uuid}`,
-        method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,

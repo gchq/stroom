@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ScheduledQueryAnalyticProcessTrackerData extends AnalyticProcessTrackerData {
+public class ScheduledQueryAnalyticTrackerData extends AnalyticTrackerData {
 
     @JsonProperty
     private Long lastExecutionTimeMs;
@@ -19,15 +19,14 @@ public class ScheduledQueryAnalyticProcessTrackerData extends AnalyticProcessTra
     @JsonProperty
     private Long lastWindowEndTimeMs;
 
-    public ScheduledQueryAnalyticProcessTrackerData() {
+    public ScheduledQueryAnalyticTrackerData() {
     }
 
     @JsonCreator
-    public ScheduledQueryAnalyticProcessTrackerData(@JsonProperty("lastExecutionTimeMs") final Long lastExecutionTimeMs,
-                                                    @JsonProperty("lastWindowStartTimeMs")
-                                                    final Long lastWindowStartTimeMs,
-                                                    @JsonProperty("lastWindowEndTimeMs") final Long lastWindowEndTimeMs,
-                                                    @JsonProperty("message") final String message) {
+    public ScheduledQueryAnalyticTrackerData(@JsonProperty("lastExecutionTimeMs") final Long lastExecutionTimeMs,
+                                             @JsonProperty("lastWindowStartTimeMs") final Long lastWindowStartTimeMs,
+                                             @JsonProperty("lastWindowEndTimeMs") final Long lastWindowEndTimeMs,
+                                             @JsonProperty("message") final String message) {
         super(message);
         this.lastExecutionTimeMs = lastExecutionTimeMs;
         this.lastWindowStartTimeMs = lastWindowStartTimeMs;
@@ -69,7 +68,7 @@ public class ScheduledQueryAnalyticProcessTrackerData extends AnalyticProcessTra
         if (!super.equals(o)) {
             return false;
         }
-        final ScheduledQueryAnalyticProcessTrackerData that = (ScheduledQueryAnalyticProcessTrackerData) o;
+        final ScheduledQueryAnalyticTrackerData that = (ScheduledQueryAnalyticTrackerData) o;
         return Objects.equals(lastExecutionTimeMs, that.lastExecutionTimeMs) &&
                 Objects.equals(lastWindowStartTimeMs, that.lastWindowStartTimeMs) &&
                 Objects.equals(lastWindowEndTimeMs, that.lastWindowEndTimeMs);

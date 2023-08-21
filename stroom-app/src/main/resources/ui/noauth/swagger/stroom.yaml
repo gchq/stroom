@@ -360,46 +360,6 @@ paths:
       summary: Get the data for the shard
       tags:
       - AnalyticNotifications
-  /analyticProcess/v1:
-    post:
-      operationId: createAnalyticProcess
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcess'
-        description: process
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticProcess'
-          description: default response
-      summary: Create an analytic process
-      tags:
-      - AnalyticProcess
-  /analyticProcess/v1/find:
-    post:
-      operationId: findAnalyticProcess
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FindAnalyticProcessCriteria'
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageAnalyticProcess'
-          description: default response
-      summary: Find the analytic process for the specified analytic
-      tags:
-      - AnalyticProcess
   /analyticProcess/v1/tracker:
     post:
       operationId: findAnalyticProcessTracker
@@ -415,60 +375,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AnalyticProcessTracker'
+                $ref: '#/components/schemas/AnalyticTracker'
           description: default response
       summary: Find the analytic process tracker for the specified process
-      tags:
-      - AnalyticProcess
-  /analyticProcess/v1/{uuid}:
-    delete:
-      operationId: updateAnalyticProcess
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcess'
-        description: process
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Delete an analytic process
-      tags:
-      - AnalyticProcess
-    put:
-      operationId: updateAnalyticProcess_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcess'
-        description: process
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticProcess'
-          description: default response
-      summary: Update an analytic process
       tags:
       - AnalyticProcess
   /analyticRule/v1/{uuid}:
@@ -6733,52 +6642,14 @@ components:
             $ref: '#/components/schemas/DocRef'
           useSourceFeedIfPossible:
             type: boolean
-    AnalyticProcess:
-      type: object
-      properties:
-        analyticUuid:
-          type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        enabled:
-          type: boolean
-        node:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: integer
-          format: int32
     AnalyticProcessConfig:
       type: object
       discriminator:
         propertyName: type
       properties:
-        type:
-          type: string
-      required:
-      - type
-    AnalyticProcessTracker:
-      type: object
-      properties:
-        analyticProcessTrackerData:
-          $ref: '#/components/schemas/AnalyticProcessTrackerData'
-        filterUuid:
-          type: string
-    AnalyticProcessTrackerData:
-      type: object
-      discriminator:
-        propertyName: type
-      properties:
-        message:
+        enabled:
+          type: boolean
+        node:
           type: string
         type:
           type: string
@@ -6824,6 +6695,24 @@ components:
           type: string
         version:
           type: string
+    AnalyticTracker:
+      type: object
+      properties:
+        analyticTrackerData:
+          $ref: '#/components/schemas/AnalyticTrackerData'
+        analyticUuid:
+          type: string
+    AnalyticTrackerData:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+      required:
+      - type
     AnalyticUiDefaultConfig:
       type: object
       properties:
@@ -9164,22 +9053,6 @@ components:
           items:
             $ref: '#/components/schemas/SimpleUser'
     FindAnalyticDataShardCriteria:
-      type: object
-      properties:
-        analyticDocUuid:
-          type: string
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        quickFilterInput:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
-    FindAnalyticProcessCriteria:
       type: object
       properties:
         analyticDocUuid:
@@ -11686,16 +11559,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AnalyticDataShard'
-    ResultPageAnalyticProcess:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnalyticProcess'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -12001,10 +11864,10 @@ components:
             $ref: '#/components/schemas/SimpleDuration'
           timeToWaitForData:
             $ref: '#/components/schemas/SimpleDuration'
-    ScheduledQueryAnalyticProcessTrackerData:
+    ScheduledQueryAnalyticTrackerData:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessTrackerData'
+      - $ref: '#/components/schemas/AnalyticTrackerData'
       - type: object
         properties:
           lastExecutionTimeMs:
@@ -12839,10 +12702,10 @@ components:
           minMetaCreateTimeMs:
             type: integer
             format: int64
-    StreamingAnalyticProcessTrackerData:
+    StreamingAnalyticTrackerData:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessTrackerData'
+      - $ref: '#/components/schemas/AnalyticTrackerData'
       - type: object
         properties:
           lastExecutionTimeMs:
@@ -13039,10 +12902,10 @@ components:
             format: int64
           timeToWaitForData:
             $ref: '#/components/schemas/SimpleDuration'
-    TableBuilderAnalyticProcessTrackerData:
+    TableBuilderAnalyticTrackerData:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessTrackerData'
+      - $ref: '#/components/schemas/AnalyticTrackerData'
       - type: object
         properties:
           lastEventId:

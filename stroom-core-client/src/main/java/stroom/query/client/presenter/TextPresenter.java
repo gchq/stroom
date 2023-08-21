@@ -271,7 +271,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
     }
 
     public void show(final SourceLocation sourceLocation) {
-                final FetchDataRequest request = new FetchDataRequest(sourceLocation);
+        final FetchDataRequest request = new FetchDataRequest(sourceLocation);
 //        request.setPipeline(getTextSettings().getPipeline());
 //        request.setShowAsHtml(getTextSettings().isShowAsHtml());
 
@@ -345,7 +345,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //                            && !(
 //                            getTextSettings().getLineFromField() != null
 //                                    && getTextSettings().getLineToField() != null)) { // Allow just line positions to
-//                        //                                                               be used rather than record no.
+//                        //                                                              be used rather than record no.
 //                        message = "No record number field is configured";
 //
 //                    } else if (getTextSettings().getRecordNoField() != null && currentRecordIndex == null) {

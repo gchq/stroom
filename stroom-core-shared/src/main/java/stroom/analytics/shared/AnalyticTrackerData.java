@@ -11,19 +11,19 @@ import java.util.Objects;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = StreamingAnalyticProcessTrackerData.class, name = "streaming"),
-        @JsonSubTypes.Type(value = TableBuilderAnalyticProcessTrackerData.class, name = "table_builder"),
-        @JsonSubTypes.Type(value = ScheduledQueryAnalyticProcessTrackerData.class, name = "scheduled_query"),
+        @JsonSubTypes.Type(value = StreamingAnalyticTrackerData.class, name = "streaming"),
+        @JsonSubTypes.Type(value = TableBuilderAnalyticTrackerData.class, name = "table_builder"),
+        @JsonSubTypes.Type(value = ScheduledQueryAnalyticTrackerData.class, name = "scheduled_query"),
 })
-public abstract class AnalyticProcessTrackerData {
+public abstract class AnalyticTrackerData {
 
     @JsonProperty
     private String message;
 
-    public AnalyticProcessTrackerData() {
+    public AnalyticTrackerData() {
     }
 
-    public AnalyticProcessTrackerData(final String message) {
+    public AnalyticTrackerData(final String message) {
         this.message = message;
     }
 
@@ -43,7 +43,7 @@ public abstract class AnalyticProcessTrackerData {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AnalyticProcessTrackerData that = (AnalyticProcessTrackerData) o;
+        final AnalyticTrackerData that = (AnalyticTrackerData) o;
         return Objects.equals(message, that.message);
     }
 
@@ -54,7 +54,7 @@ public abstract class AnalyticProcessTrackerData {
 
     @Override
     public String toString() {
-        return "AnalyticProcessorTrackerData{" +
+        return "AnalyticTrackerData{" +
                 "message='" + message + '\'' +
                 '}';
     }

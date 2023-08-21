@@ -28,6 +28,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
@@ -55,6 +56,8 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
 
     @Inject
     private ScheduledQueryAnalyticExecutor analyticsExecutor;
+    @Inject
+    private NodeInfo nodeInfo;
 
     @Test
     void testSingleEventScheduledQuery() {
@@ -72,7 +75,13 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .analyticProcessConfig(new ScheduledQueryAnalyticProcessConfig(null, null, INSTANT, INSTANT))
+                .analyticProcessConfig(new ScheduledQueryAnalyticProcessConfig(
+                        true,
+                        nodeInfo.getThisNodeName(),
+                        null,
+                        null,
+                        INSTANT,
+                        INSTANT))
                 .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
                         .destinationFeed(detections)
                         .useSourceFeedIfPossible(false)

@@ -1,12 +1,12 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
-import stroom.analytics.shared.AnalyticProcess;
-import stroom.analytics.shared.AnalyticProcessTracker;
+import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessTrackerData;
+import stroom.analytics.shared.ScheduledQueryAnalyticTrackerData;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.docref.DocRef;
@@ -51,7 +51,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -164,7 +163,7 @@ public class ScheduledQueryAnalyticExecutor {
                             analytic.trackerData().setMessage(e.getMessage());
                             LOGGER.info("Disabling: " + analytic.ruleIdentity());
                             analyticHelper.updateTracker(analytic.tracker);
-                            analyticHelper.disableProcess(analytic.analyticProcess());
+                            analyticHelper.disableProcess(analytic.analyticRuleDoc());
                         }
                     }
                 }
@@ -279,72 +278,70 @@ public class ScheduledQueryAnalyticExecutor {
         final List<ScheduledQueryAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
-            final Optional<AnalyticProcess> optionalProcess = analyticHelper.getProcess(analyticRuleDoc);
-            optionalProcess.ifPresent(process -> {
-                if (process.isEnabled() &&
-                        nodeInfo.getThisNodeName().equals(process.getNode()) &&
-                        AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                    final AnalyticProcessTracker tracker = analyticHelper.getTracker(process);
+            final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+            if (analyticProcessConfig != null &&
+                    analyticProcessConfig.isEnabled() &&
+                    nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
+                    AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
+                final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
 
 
-                    ScheduledQueryAnalyticProcessTrackerData analyticProcessorTrackerData;
-                    if (tracker.getAnalyticProcessTrackerData() instanceof
-                            ScheduledQueryAnalyticProcessTrackerData) {
-                        analyticProcessorTrackerData = (ScheduledQueryAnalyticProcessTrackerData)
-                                tracker.getAnalyticProcessTrackerData();
+                ScheduledQueryAnalyticTrackerData analyticProcessorTrackerData;
+                if (tracker.getAnalyticTrackerData() instanceof
+                        ScheduledQueryAnalyticTrackerData) {
+                    analyticProcessorTrackerData = (ScheduledQueryAnalyticTrackerData)
+                            tracker.getAnalyticTrackerData();
+                } else {
+                    analyticProcessorTrackerData = new ScheduledQueryAnalyticTrackerData();
+                    tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
+                }
+
+                try {
+                    ViewDoc viewDoc = null;
+
+                    // Try and get view.
+                    final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
+                    final SearchRequest searchRequest = analyticRuleSearchRequestHelper
+                            .create(analyticRuleDoc);
+                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
+
+                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                        tracker.getAnalyticTrackerData()
+                                .setMessage("Error: Rule needs to reference a view");
+
                     } else {
-                        analyticProcessorTrackerData = new ScheduledQueryAnalyticProcessTrackerData();
-                        tracker.setAnalyticProcessTrackerData(analyticProcessorTrackerData);
+                        // Load view.
+                        viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
                     }
 
+                    if (!(analyticRuleDoc.getAnalyticProcessConfig()
+                            instanceof ScheduledQueryAnalyticProcessConfig)) {
+                        LOGGER.debug("Error: Invalid process config {}",
+                                AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
+                        tracker.getAnalyticTrackerData()
+                                .setMessage("Error: Invalid process config.");
+
+                    } else {
+                        analyticList.add(new ScheduledQueryAnalytic(
+                                ruleIdentity,
+                                analyticRuleDoc,
+                                (ScheduledQueryAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
+                                tracker,
+                                analyticProcessorTrackerData,
+                                searchRequest,
+                                viewDoc));
+                    }
+
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e.getMessage(), e);
                     try {
-                        ViewDoc viewDoc = null;
-
-                        // Try and get view.
-                        final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
-                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper
-                                .create(analyticRuleDoc);
-                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
-
-                        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                            tracker.getAnalyticProcessTrackerData()
-                                    .setMessage("Error: Rule needs to reference a view");
-
-                        } else {
-                            // Load view.
-                            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
-                        }
-
-                        if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                                instanceof ScheduledQueryAnalyticProcessConfig)) {
-                            LOGGER.debug("Error: Invalid process config {}",
-                                    AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
-                            tracker.getAnalyticProcessTrackerData()
-                                    .setMessage("Error: Invalid process config.");
-
-                        } else {
-                            analyticList.add(new ScheduledQueryAnalytic(
-                                    ruleIdentity,
-                                    analyticRuleDoc,
-                                    process,
-                                    (ScheduledQueryAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                                    tracker,
-                                    analyticProcessorTrackerData,
-                                    searchRequest,
-                                    viewDoc));
-                        }
-
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                        try {
-                            tracker.getAnalyticProcessTrackerData().setMessage(e.getMessage());
-                            analyticHelper.updateTracker(tracker);
-                        } catch (final RuntimeException e2) {
-                            LOGGER.error(e2::getMessage, e2);
-                        }
+                        tracker.getAnalyticTrackerData().setMessage(e.getMessage());
+                        analyticHelper.updateTracker(tracker);
+                    } catch (final RuntimeException e2) {
+                        LOGGER.error(e2::getMessage, e2);
                     }
                 }
-            });
+            }
         }
         analyticHelper.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
         return analyticList;
@@ -352,10 +349,9 @@ public class ScheduledQueryAnalyticExecutor {
 
     private record ScheduledQueryAnalytic(String ruleIdentity,
                                           AnalyticRuleDoc analyticRuleDoc,
-                                          AnalyticProcess analyticProcess,
                                           ScheduledQueryAnalyticProcessConfig analyticProcessConfig,
-                                          AnalyticProcessTracker tracker,
-                                          ScheduledQueryAnalyticProcessTrackerData trackerData,
+                                          AnalyticTracker tracker,
+                                          ScheduledQueryAnalyticTrackerData trackerData,
                                           SearchRequest searchRequest,
                                           ViewDoc viewDoc) {
 

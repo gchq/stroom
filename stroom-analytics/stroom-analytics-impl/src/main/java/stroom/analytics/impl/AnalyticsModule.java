@@ -37,20 +37,20 @@ public class AnalyticsModule extends AbstractModule {
     @Override
     protected void configure() {
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(TableBuilderAnalyticsExecutorRunnable.class, builder -> builder
-                        .name("Analytics Executor: Table Builder")
+                .bindJobTo(TableBuilderAnalyticExecutorRunnable.class, builder -> builder
+                        .name("Analytic Executor: Table Builder")
                         .description("Run table building analytics periodically")
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
                         .advanced(true))
-                .bindJobTo(StreamingAnalyticsExecutorRunnable.class, builder -> builder
-                        .name("Analytics Executor: Streaming")
+                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
+                        .name("Analytic Executor: Streaming")
                         .description("Run streaming analytics periodically")
                         .schedule(PERIODIC, "1m")
                         .enabled(false)
                         .advanced(true))
-                .bindJobTo(ScheduledAnalyticsExecutorRunnable.class, builder -> builder
-                        .name("Analytics Executor: Scheduled Query")
+                .bindJobTo(ScheduledAnalyticExecutorRunnable.class, builder -> builder
+                        .name("Analytic Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
@@ -72,26 +72,26 @@ public class AnalyticsModule extends AbstractModule {
                 .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);
     }
 
-    private static class TableBuilderAnalyticsExecutorRunnable extends RunnableWrapper {
+    private static class TableBuilderAnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        TableBuilderAnalyticsExecutorRunnable(final TableBuilderAnalyticsExecutor executor) {
+        TableBuilderAnalyticExecutorRunnable(final TableBuilderAnalyticExecutor executor) {
             super(executor::exec);
         }
     }
 
-    private static class StreamingAnalyticsExecutorRunnable extends RunnableWrapper {
+    private static class StreamingAnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        StreamingAnalyticsExecutorRunnable(final StreamingAnalyticsExecutor executor) {
+        StreamingAnalyticExecutorRunnable(final StreamingAnalyticExecutor executor) {
             super(executor::exec);
         }
     }
 
-    private static class ScheduledAnalyticsExecutorRunnable extends RunnableWrapper {
+    private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        ScheduledAnalyticsExecutorRunnable(final ScheduledQueryAnalyticExecutor executor) {
+        ScheduledAnalyticExecutorRunnable(final ScheduledQueryAnalyticExecutor executor) {
             super(executor::exec);
         }
     }

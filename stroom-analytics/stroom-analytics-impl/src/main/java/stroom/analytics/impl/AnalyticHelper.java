@@ -1,9 +1,9 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AnalyticProcess;
-import stroom.analytics.shared.AnalyticProcessTracker;
+import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticTracker;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -31,22 +31,19 @@ public class AnalyticHelper {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticHelper.class);
 
     private final AnalyticRuleStore analyticRuleStore;
-    private final AnalyticProcessDao analyticProcessDao;
-    private final AnalyticProcessTrackerDao analyticProcessTrackerDao;
+    private final AnalyticTrackerDao analyticTrackerDao;
     private final TaskContextFactory taskContextFactory;
     private final ViewStore viewStore;
     private final MetaService metaService;
 
     @Inject
     public AnalyticHelper(final AnalyticRuleStore analyticRuleStore,
-                          final AnalyticProcessDao analyticProcessDao,
-                          final AnalyticProcessTrackerDao analyticProcessTrackerDao,
+                          final AnalyticTrackerDao analyticTrackerDao,
                           final TaskContextFactory taskContextFactory,
                           final ViewStore viewStore,
                           final MetaService metaService) {
         this.analyticRuleStore = analyticRuleStore;
-        this.analyticProcessDao = analyticProcessDao;
-        this.analyticProcessTrackerDao = analyticProcessTrackerDao;
+        this.analyticTrackerDao = analyticTrackerDao;
         this.taskContextFactory = taskContextFactory;
         this.viewStore = viewStore;
         this.metaService = metaService;
@@ -75,12 +72,19 @@ public class AnalyticHelper {
                 ")";
     }
 
-    public Optional<AnalyticProcess> getProcess(final AnalyticRuleDoc analyticRuleDoc) {
-        return analyticProcessDao.getByAnalyticUuid(analyticRuleDoc.getUuid());
-    }
-
-    public void disableProcess(final AnalyticProcess analyticProcess) {
-        analyticProcessDao.update(analyticProcess.copy().enabled(false).build());
+    public void disableProcess(final AnalyticRuleDoc analyticRuleDoc) {
+        final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+        if (analyticProcessConfig != null) {
+            final AnalyticRuleDoc modified = analyticRuleDoc
+                    .copy()
+                    .analyticProcessConfig(
+                            analyticProcessConfig
+                                    .copy()
+                                    .enabled(false)
+                                    .build())
+                    .build();
+            analyticRuleStore.writeDocument(modified);
+        }
     }
 
     public List<AnalyticRuleDoc> getRules() {
@@ -99,19 +103,19 @@ public class AnalyticHelper {
         return rules;
     }
 
-    public AnalyticProcessTracker getTracker(final AnalyticProcess filter) {
-        Optional<AnalyticProcessTracker> optionalTracker =
-                analyticProcessTrackerDao.get(filter.getUuid());
+    public AnalyticTracker getTracker(final AnalyticRuleDoc analyticRuleDoc) {
+        Optional<AnalyticTracker> optionalTracker =
+                analyticTrackerDao.get(analyticRuleDoc.getUuid());
         while (optionalTracker.isEmpty()) {
-            final AnalyticProcessTracker tracker = new AnalyticProcessTracker(filter.getUuid(), null);
-            analyticProcessTrackerDao.create(tracker);
-            optionalTracker = analyticProcessTrackerDao.get(filter.getUuid());
+            final AnalyticTracker tracker = new AnalyticTracker(analyticRuleDoc.getUuid(), null);
+            analyticTrackerDao.create(tracker);
+            optionalTracker = analyticTrackerDao.get(analyticRuleDoc.getUuid());
         }
         return optionalTracker.get();
     }
 
-    public void updateTracker(final AnalyticProcessTracker tracker) {
-        analyticProcessTrackerDao.update(tracker);
+    public void updateTracker(final AnalyticTracker tracker) {
+        analyticTrackerDao.update(tracker);
     }
 
     public void info(final Supplier<String> messageSupplier) {

@@ -1,5 +1,7 @@
 package stroom.analytics.shared;
 
+import stroom.analytics.shared.StreamingAnalyticProcessConfig.AnalyticProcessConfigBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -10,7 +12,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
+public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig<AnalyticProcessConfigBuilder> {
 
     @JsonProperty
     private final Long minMetaCreateTimeMs;
@@ -18,8 +20,11 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
     private final Long maxMetaCreateTimeMs;
 
     @JsonCreator
-    public StreamingAnalyticProcessConfig(@JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
+    public StreamingAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
+                                          @JsonProperty("node") final String node,
+                                          @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                           @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
+        super(enabled, node);
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
     }
@@ -40,6 +45,9 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+        if (!super.equals(o)) {
+            return false;
+        }
         final StreamingAnalyticProcessConfig that = (StreamingAnalyticProcessConfig) o;
         return Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
                 Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs);
@@ -47,50 +55,64 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(minMetaCreateTimeMs, maxMetaCreateTimeMs);
+        return Objects.hash(super.hashCode(), minMetaCreateTimeMs, maxMetaCreateTimeMs);
     }
 
     @Override
     public String toString() {
         return "StreamingAnalyticProcessConfig{" +
-                "minMetaCreateTimeMs=" + minMetaCreateTimeMs +
+                "enabled=" + enabled +
+                ", node=" + node +
+                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 '}';
     }
 
-    public Builder copy() {
-        return new Builder(this);
+    @Override
+    public AnalyticProcessConfigBuilder copy() {
+        return new AnalyticProcessConfigBuilder(this);
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static AnalyticProcessConfigBuilder builder() {
+        return new AnalyticProcessConfigBuilder();
     }
 
-    public static class Builder {
+    public static class AnalyticProcessConfigBuilder
+            extends AbstractAnalyticProcessConfigBuilder<StreamingAnalyticProcessConfig, AnalyticProcessConfigBuilder> {
 
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
 
-        private Builder() {
+        private AnalyticProcessConfigBuilder() {
+            super();
         }
 
-        private Builder(final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+        private AnalyticProcessConfigBuilder(final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+            super(streamingAnalyticProcessConfig);
             this.minMetaCreateTimeMs = streamingAnalyticProcessConfig.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = streamingAnalyticProcessConfig.maxMetaCreateTimeMs;
         }
 
-        public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        public AnalyticProcessConfigBuilder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
-            return this;
+            return self();
         }
 
-        public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        public AnalyticProcessConfigBuilder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+            return self();
+        }
+
+        @Override
+        protected AnalyticProcessConfigBuilder self() {
             return this;
         }
 
+        @Override
         public StreamingAnalyticProcessConfig build() {
             return new StreamingAnalyticProcessConfig(
+                    enabled,
+                    node,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs);
         }

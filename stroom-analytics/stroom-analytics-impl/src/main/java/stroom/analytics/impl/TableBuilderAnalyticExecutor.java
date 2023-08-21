@@ -6,12 +6,12 @@ import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
 import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticNotificationConfig;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
-import stroom.analytics.shared.AnalyticProcess;
-import stroom.analytics.shared.AnalyticProcessTracker;
+import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
-import stroom.analytics.shared.TableBuilderAnalyticProcessTrackerData;
+import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -82,9 +82,9 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-public class TableBuilderAnalyticsExecutor {
+public class TableBuilderAnalyticExecutor {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableBuilderAnalyticsExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableBuilderAnalyticExecutor.class);
     private static final int DEFAULT_MAX_META_LIST_SIZE = 1000;
 
     private final ExecutorProvider executorProvider;
@@ -98,7 +98,7 @@ public class TableBuilderAnalyticsExecutor {
     private final AnalyticDataStores analyticDataStores;
     private final TaskContextFactory taskContextFactory;
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
-    private final AnalyticProcessTrackerDao analyticProcessTrackerDao;
+    private final AnalyticTrackerDao analyticTrackerDao;
     private final ExpressionMatcher metaExpressionMatcher;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
@@ -110,23 +110,23 @@ public class TableBuilderAnalyticsExecutor {
     private final AnalyticHelper analyticHelper;
 
     @Inject
-    public TableBuilderAnalyticsExecutor(final ExecutorProvider executorProvider,
-                                         final SecurityContext securityContext,
-                                         final Provider<DetectionsWriter> detectionsWriterProvider,
-                                         final PipelineStore pipelineStore,
-                                         final PipelineDataCache pipelineDataCache,
-                                         final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
-                                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
-                                         final Provider<ExtractionState> extractionStateProvider,
-                                         final TaskContextFactory taskContextFactory,
-                                         final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
-                                         final AnalyticDataStores analyticDataStores,
-                                         final AnalyticProcessTrackerDao analyticProcessTrackerDao,
-                                         final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
-                                         final ExpressionMatcherFactory expressionMatcherFactory,
-                                         final AnalyticHelper analyticHelper,
-                                         final NodeInfo nodeInfo,
-                                         final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
+    public TableBuilderAnalyticExecutor(final ExecutorProvider executorProvider,
+                                        final SecurityContext securityContext,
+                                        final Provider<DetectionsWriter> detectionsWriterProvider,
+                                        final PipelineStore pipelineStore,
+                                        final PipelineDataCache pipelineDataCache,
+                                        final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
+                                        final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
+                                        final Provider<ExtractionState> extractionStateProvider,
+                                        final TaskContextFactory taskContextFactory,
+                                        final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                                        final AnalyticDataStores analyticDataStores,
+                                        final AnalyticTrackerDao analyticTrackerDao,
+                                        final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
+                                        final ExpressionMatcherFactory expressionMatcherFactory,
+                                        final AnalyticHelper analyticHelper,
+                                        final NodeInfo nodeInfo,
+                                        final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
         this.executorProvider = executorProvider;
         this.detectionsWriterProvider = detectionsWriterProvider;
         this.securityContext = securityContext;
@@ -138,7 +138,7 @@ public class TableBuilderAnalyticsExecutor {
         this.taskContextFactory = taskContextFactory;
         this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
         this.analyticDataStores = analyticDataStores;
-        this.analyticProcessTrackerDao = analyticProcessTrackerDao;
+        this.analyticTrackerDao = analyticTrackerDao;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
         this.metaExpressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
         this.analyticHelper = analyticHelper;
@@ -292,7 +292,7 @@ public class TableBuilderAnalyticsExecutor {
             Long maxCreateTime = null;
 
             for (final TableBuilderAnalytic analytic : filterGroupEntry.getValue()) {
-                final TableBuilderAnalyticProcessTrackerData trackerData = analytic.trackerData();
+                final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData();
 
                 // Start at the next meta.
                 Long lastMetaId = trackerData.getLastStreamId();
@@ -388,7 +388,7 @@ public class TableBuilderAnalyticsExecutor {
 
     private AnalyticFieldListConsumer createLmdbConsumer(final TableBuilderAnalytic analytic,
                                                          final Meta meta) {
-        final TableBuilderAnalyticProcessTrackerData trackerData = analytic.trackerData;
+        final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData;
 
         // Create receiver to insert into the pipeline.
         // After a shutdown we may wish to resume event processing from a specific event id.
@@ -420,7 +420,7 @@ public class TableBuilderAnalyticsExecutor {
     private boolean ignoreStream(final TableBuilderAnalytic analytic,
                                  final Meta meta,
                                  final Map<String, Object> metaAttributeMap) {
-        final TableBuilderAnalyticProcessTrackerData trackerData = analytic.trackerData;
+        final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData;
         final Long lastMetaId = trackerData.getLastStreamId();
         final Long lastEventId = trackerData.getLastEventId();
 
@@ -494,7 +494,7 @@ public class TableBuilderAnalyticsExecutor {
             analytic.trackerData().setMessage(e.getMessage());
             LOGGER.info("Disabling: " + analytic.ruleIdentity());
             analyticHelper.updateTracker(analytic.tracker);
-            analyticHelper.disableProcess(analytic.analyticProcess());
+            analyticHelper.disableProcess(analytic.analyticRuleDoc);
         }
     }
 
@@ -639,7 +639,7 @@ public class TableBuilderAnalyticsExecutor {
         return pipelineDataCache.get(pipelineDoc);
     }
 
-    private void updateTrackerWithLmdbState(final TableBuilderAnalyticProcessTrackerData trackerData,
+    private void updateTrackerWithLmdbState(final TableBuilderAnalyticTrackerData trackerData,
                                             final CurrentDbState currentDbState) {
         if (currentDbState != null) {
             trackerData.setLastStreamId(currentDbState.getStreamId());
@@ -766,81 +766,79 @@ public class TableBuilderAnalyticsExecutor {
         final List<TableBuilderAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
-            final Optional<AnalyticProcess> optionalProcess = analyticHelper.getProcess(analyticRuleDoc);
-            optionalProcess.ifPresent(process -> {
-                if (process.isEnabled() &&
-                        nodeInfo.getThisNodeName().equals(process.getNode()) &&
-                        AnalyticProcessType.TABLE_BUILDER.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                    final AnalyticProcessTracker tracker = analyticHelper.getTracker(process);
+            final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+            if (analyticProcessConfig != null &&
+                    analyticProcessConfig.isEnabled() &&
+                    nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
+                    AnalyticProcessType.TABLE_BUILDER.equals(analyticRuleDoc.getAnalyticProcessType())) {
+                final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
 
-                    TableBuilderAnalyticProcessTrackerData analyticProcessorTrackerData;
-                    if (tracker.getAnalyticProcessTrackerData() instanceof
-                            TableBuilderAnalyticProcessTrackerData) {
-                        analyticProcessorTrackerData = (TableBuilderAnalyticProcessTrackerData)
-                                tracker.getAnalyticProcessTrackerData();
+                TableBuilderAnalyticTrackerData analyticProcessorTrackerData;
+                if (tracker.getAnalyticTrackerData() instanceof
+                        TableBuilderAnalyticTrackerData) {
+                    analyticProcessorTrackerData = (TableBuilderAnalyticTrackerData)
+                            tracker.getAnalyticTrackerData();
+                } else {
+                    analyticProcessorTrackerData = new TableBuilderAnalyticTrackerData();
+                    tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
+                }
+
+                try {
+                    ViewDoc viewDoc = null;
+
+                    // Try and get view.
+                    final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
+                    final SearchRequest searchRequest = analyticRuleSearchRequestHelper
+                            .create(analyticRuleDoc);
+                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
+
+                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                        tracker.getAnalyticTrackerData()
+                                .setMessage("Error: Rule needs to reference a view");
+
                     } else {
-                        analyticProcessorTrackerData = new TableBuilderAnalyticProcessTrackerData();
-                        tracker.setAnalyticProcessTrackerData(analyticProcessorTrackerData);
+                        // Load view.
+                        viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
                     }
 
+                    if (!(analyticRuleDoc.getAnalyticProcessConfig()
+                            instanceof TableBuilderAnalyticProcessConfig)) {
+                        LOGGER.debug("Error: Invalid process config {}",
+                                AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
+                        tracker.getAnalyticTrackerData()
+                                .setMessage("Error: Invalid process config.");
+
+                    } else {
+                        final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
+
+                        // Get or create LMDB data store.
+                        final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
+                        final CurrentDbState currentDbState = lmdbDataStore.sync();
+
+                        // Update tracker state from LMDB.
+                        updateTrackerWithLmdbState(analyticProcessorTrackerData,
+                                currentDbState);
+
+                        analyticList.add(new TableBuilderAnalytic(
+                                ruleIdentity,
+                                analyticRuleDoc,
+                                (TableBuilderAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
+                                tracker,
+                                analyticProcessorTrackerData,
+                                searchRequest,
+                                viewDoc));
+                    }
+
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e.getMessage(), e);
                     try {
-                        ViewDoc viewDoc = null;
-
-                        // Try and get view.
-                        final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
-                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper
-                                .create(analyticRuleDoc);
-                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
-
-                        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                            tracker.getAnalyticProcessTrackerData()
-                                    .setMessage("Error: Rule needs to reference a view");
-
-                        } else {
-                            // Load view.
-                            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
-                        }
-
-                        if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                                instanceof TableBuilderAnalyticProcessConfig)) {
-                            LOGGER.debug("Error: Invalid process config {}",
-                                    AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
-                            tracker.getAnalyticProcessTrackerData()
-                                    .setMessage("Error: Invalid process config.");
-
-                        } else {
-                            final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
-
-                            // Get or create LMDB data store.
-                            final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
-                            final CurrentDbState currentDbState = lmdbDataStore.sync();
-
-                            // Update tracker state from LMDB.
-                            updateTrackerWithLmdbState(analyticProcessorTrackerData,
-                                    currentDbState);
-
-                            analyticList.add(new TableBuilderAnalytic(
-                                    ruleIdentity,
-                                    analyticRuleDoc,
-                                    process,
-                                    (TableBuilderAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                                    tracker,
-                                    analyticProcessorTrackerData,
-                                    searchRequest,
-                                    viewDoc));
-                        }
-
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                        try {
-                            tracker.getAnalyticProcessTrackerData().setMessage(e.getMessage());
-                            analyticProcessTrackerDao.update(tracker);
-                        } catch (final RuntimeException e2) {
-                            LOGGER.error(e2::getMessage, e2);
-                        }
+                        tracker.getAnalyticTrackerData().setMessage(e.getMessage());
+                        analyticTrackerDao.update(tracker);
+                    } catch (final RuntimeException e2) {
+                        LOGGER.error(e2::getMessage, e2);
                     }
                 }
-            });
+            }
         }
         info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
         return analyticList;
@@ -848,10 +846,9 @@ public class TableBuilderAnalyticsExecutor {
 
     private record TableBuilderAnalytic(String ruleIdentity,
                                         AnalyticRuleDoc analyticRuleDoc,
-                                        AnalyticProcess analyticProcess,
                                         TableBuilderAnalyticProcessConfig analyticProcessConfig,
-                                        AnalyticProcessTracker tracker,
-                                        TableBuilderAnalyticProcessTrackerData trackerData,
+                                        AnalyticTracker tracker,
+                                        TableBuilderAnalyticTrackerData trackerData,
                                         SearchRequest searchRequest,
                                         ViewDoc viewDoc) {
 

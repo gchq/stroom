@@ -2,12 +2,12 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticNotificationConfig;
 import stroom.analytics.shared.AnalyticNotificationStreamConfig;
-import stroom.analytics.shared.AnalyticProcess;
-import stroom.analytics.shared.AnalyticProcessTracker;
+import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.StreamingAnalyticProcessConfig;
-import stroom.analytics.shared.StreamingAnalyticProcessTrackerData;
+import stroom.analytics.shared.StreamingAnalyticTrackerData;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -60,9 +60,9 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-public class StreamingAnalyticsExecutor {
+public class StreamingAnalyticExecutor {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamingAnalyticsExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamingAnalyticExecutor.class);
     private static final int DEFAULT_MAX_META_LIST_SIZE = 1000;
 
     private final ExecutorProvider executorProvider;
@@ -85,21 +85,21 @@ public class StreamingAnalyticsExecutor {
     private final AnalyticHelper analyticHelper;
 
     @Inject
-    public StreamingAnalyticsExecutor(final ExecutorProvider executorProvider,
-                                      final SecurityContext securityContext,
-                                      final PipelineStore pipelineStore,
-                                      final PipelineDataCache pipelineDataCache,
-                                      final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
-                                      final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
-                                      final Provider<ExtractionState> extractionStateProvider,
-                                      final TaskContextFactory taskContextFactory,
-                                      final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
-                                      final Provider<DetectionWriterProxy> detectionWriterProxyProvider,
-                                      final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
-                                      final ExpressionMatcherFactory expressionMatcherFactory,
-                                      final AnalyticHelper analyticHelper,
-                                      final NodeInfo nodeInfo,
-                                      final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
+    public StreamingAnalyticExecutor(final ExecutorProvider executorProvider,
+                                     final SecurityContext securityContext,
+                                     final PipelineStore pipelineStore,
+                                     final PipelineDataCache pipelineDataCache,
+                                     final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
+                                     final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
+                                     final Provider<ExtractionState> extractionStateProvider,
+                                     final TaskContextFactory taskContextFactory,
+                                     final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                                     final Provider<DetectionWriterProxy> detectionWriterProxyProvider,
+                                     final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
+                                     final ExpressionMatcherFactory expressionMatcherFactory,
+                                     final AnalyticHelper analyticHelper,
+                                     final NodeInfo nodeInfo,
+                                     final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
         this.executorProvider = executorProvider;
         this.securityContext = securityContext;
         this.pipelineStore = pipelineStore;
@@ -207,7 +207,7 @@ public class StreamingAnalyticsExecutor {
                         LOGGER.info("Complete for now");
                         analytics.forEach(loadedAnalytic ->
                                 loadedAnalytic.tracker()
-                                        .getAnalyticProcessTrackerData().setMessage("Complete for now"));
+                                        .getAnalyticTrackerData().setMessage("Complete for now"));
                         break;
                     }
                 } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -216,7 +216,7 @@ public class StreamingAnalyticsExecutor {
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                     analytics.forEach(loadedAnalytic ->
-                            loadedAnalytic.tracker().getAnalyticProcessTrackerData().setMessage(e.getMessage()));
+                            loadedAnalytic.tracker().getAnalyticTrackerData().setMessage(e.getMessage()));
                     throw e;
                 }
             }
@@ -253,7 +253,7 @@ public class StreamingAnalyticsExecutor {
             Long maxCreateTime = null;
 
             for (final StreamingAnalytic streamingAnalytic : filterGroupEntry.getValue()) {
-                final StreamingAnalyticProcessTrackerData trackerData = streamingAnalytic.trackerData();
+                final StreamingAnalyticTrackerData trackerData = streamingAnalytic.trackerData();
 
                 // Start at the next meta.
                 Long lastMetaId = trackerData.getLastStreamId();
@@ -391,7 +391,7 @@ public class StreamingAnalyticsExecutor {
                 analytic.trackerData().setMessage(e.getMessage());
                 LOGGER.info("Disabling: " + analytic.ruleIdentity());
                 analyticHelper.updateTracker(analytic.tracker);
-                analyticHelper.disableProcess(analytic.analyticProcess());
+                analyticHelper.disableProcess(analytic.analyticRuleDoc);
             }
         }
 
@@ -435,71 +435,69 @@ public class StreamingAnalyticsExecutor {
         final List<StreamingAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
-            final Optional<AnalyticProcess> optionalProcess = analyticHelper.getProcess(analyticRuleDoc);
-            optionalProcess.ifPresent(process -> {
-                if (process.isEnabled() &&
-                        nodeInfo.getThisNodeName().equals(process.getNode()) &&
-                        AnalyticProcessType.STREAMING.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                    final AnalyticProcessTracker tracker = analyticHelper.getTracker(process);
+            final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+            if (analyticProcessConfig != null &&
+                    analyticProcessConfig.isEnabled() &&
+                    nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
+                    AnalyticProcessType.STREAMING.equals(analyticRuleDoc.getAnalyticProcessType())) {
+                final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
 
-                    StreamingAnalyticProcessTrackerData analyticProcessorTrackerData;
-                    if (tracker.getAnalyticProcessTrackerData() instanceof
-                            StreamingAnalyticProcessTrackerData) {
-                        analyticProcessorTrackerData = (StreamingAnalyticProcessTrackerData)
-                                tracker.getAnalyticProcessTrackerData();
+                StreamingAnalyticTrackerData analyticProcessorTrackerData;
+                if (tracker.getAnalyticTrackerData() instanceof
+                        StreamingAnalyticTrackerData) {
+                    analyticProcessorTrackerData = (StreamingAnalyticTrackerData)
+                            tracker.getAnalyticTrackerData();
+                } else {
+                    analyticProcessorTrackerData = new StreamingAnalyticTrackerData();
+                    tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
+                }
+
+                try {
+                    ViewDoc viewDoc = null;
+
+                    // Try and get view.
+                    final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
+                    final SearchRequest searchRequest = analyticRuleSearchRequestHelper
+                            .create(analyticRuleDoc);
+                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
+
+                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                        tracker.getAnalyticTrackerData()
+                                .setMessage("Error: Rule needs to reference a view");
+
                     } else {
-                        analyticProcessorTrackerData = new StreamingAnalyticProcessTrackerData();
-                        tracker.setAnalyticProcessTrackerData(analyticProcessorTrackerData);
+                        // Load view.
+                        viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
                     }
 
+                    if (!(analyticRuleDoc.getAnalyticProcessConfig()
+                            instanceof StreamingAnalyticProcessConfig)) {
+                        LOGGER.debug("Error: Invalid process config {}",
+                                AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
+                        tracker.getAnalyticTrackerData()
+                                .setMessage("Error: Invalid process config.");
+
+                    } else {
+                        analyticList.add(new StreamingAnalytic(
+                                ruleIdentity,
+                                analyticRuleDoc,
+                                (StreamingAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
+                                tracker,
+                                analyticProcessorTrackerData,
+                                searchRequest,
+                                viewDoc));
+                    }
+
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e.getMessage(), e);
                     try {
-                        ViewDoc viewDoc = null;
-
-                        // Try and get view.
-                        final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
-                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper
-                                .create(analyticRuleDoc);
-                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
-
-                        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                            tracker.getAnalyticProcessTrackerData()
-                                    .setMessage("Error: Rule needs to reference a view");
-
-                        } else {
-                            // Load view.
-                            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
-                        }
-
-                        if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                                instanceof StreamingAnalyticProcessConfig)) {
-                            LOGGER.debug("Error: Invalid process config {}",
-                                    AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
-                            tracker.getAnalyticProcessTrackerData()
-                                    .setMessage("Error: Invalid process config.");
-
-                        } else {
-                            analyticList.add(new StreamingAnalytic(
-                                    ruleIdentity,
-                                    analyticRuleDoc,
-                                    process,
-                                    (StreamingAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                                    tracker,
-                                    analyticProcessorTrackerData,
-                                    searchRequest,
-                                    viewDoc));
-                        }
-
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                        try {
-                            tracker.getAnalyticProcessTrackerData().setMessage(e.getMessage());
-                            analyticHelper.updateTracker(tracker);
-                        } catch (final RuntimeException e2) {
-                            LOGGER.error(e2::getMessage, e2);
-                        }
+                        tracker.getAnalyticTrackerData().setMessage(e.getMessage());
+                        analyticHelper.updateTracker(tracker);
+                    } catch (final RuntimeException e2) {
+                        LOGGER.error(e2::getMessage, e2);
                     }
                 }
-            });
+            }
         }
         analyticHelper.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
         return analyticList;
@@ -507,10 +505,9 @@ public class StreamingAnalyticsExecutor {
 
     private record StreamingAnalytic(String ruleIdentity,
                                      AnalyticRuleDoc analyticRuleDoc,
-                                     AnalyticProcess analyticProcess,
                                      StreamingAnalyticProcessConfig streamingAnalyticProcessConfig,
-                                     AnalyticProcessTracker tracker,
-                                     StreamingAnalyticProcessTrackerData trackerData,
+                                     AnalyticTracker tracker,
+                                     StreamingAnalyticTrackerData trackerData,
                                      SearchRequest searchRequest,
                                      ViewDoc viewDoc) {
 

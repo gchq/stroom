@@ -53,13 +53,25 @@ public class AnalyticProcessingViewImpl
     @UiField
     CustomCheckBox enabled;
     @UiField
-    MyDateBox minMetaCreateTimeMs;
-    @UiField
-    MyDateBox maxMetaCreateTimeMs;
-    @UiField
     SelectionBox<String> node;
     @UiField
     SelectionBox<AnalyticProcessType> processingType;
+    @UiField
+    FormGroup analyticProcessingMinMetaCreateTimeMs;
+    @UiField
+    MyDateBox minMetaCreateTimeMs;
+    @UiField
+    FormGroup analyticProcessingMaxMetaCreateTimeMs;
+    @UiField
+    MyDateBox maxMetaCreateTimeMs;
+    @UiField
+    FormGroup analyticProcessingMinEventTimeMs;
+    @UiField
+    MyDateBox minEventTimeMs;
+    @UiField
+    FormGroup analyticProcessingMaxEventTimeMs;
+    @UiField
+    MyDateBox maxEventTimeMs;
     @UiField
     FormGroup queryFrequencyFormGroup;
     @UiField
@@ -110,26 +122,6 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
-    public Long getMinMetaCreateTimeMs() {
-        return minMetaCreateTimeMs.getMilliseconds();
-    }
-
-    @Override
-    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
-    }
-
-    @Override
-    public Long getMaxMetaCreateTimeMs() {
-        return maxMetaCreateTimeMs.getMilliseconds();
-    }
-
-    @Override
-    public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
-        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
-    }
-
-    @Override
     public void setNodes(final List<String> nodes) {
         this.node.clear();
         this.node.addItems(nodes);
@@ -165,6 +157,46 @@ public class AnalyticProcessingViewImpl
     public void setProcessingType(final AnalyticProcessType analyticProcessType) {
         this.processingType.setValue(analyticProcessType);
         updateProcessingType(processingType.getValue());
+    }
+
+    @Override
+    public Long getMinMetaCreateTimeMs() {
+        return minMetaCreateTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
+    }
+
+    @Override
+    public Long getMaxMetaCreateTimeMs() {
+        return maxMetaCreateTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+    }
+
+    @Override
+    public Long getMinEventTimeMs() {
+        return minEventTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMinEventTimeMs(final Long minEventTimeMs) {
+        this.minEventTimeMs.setMilliseconds(minEventTimeMs);
+    }
+
+    @Override
+    public Long getMaxEventTimeMs() {
+        return maxEventTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMaxEventTimeMs(final Long maxEventTimeMs) {
+        this.maxEventTimeMs.setMilliseconds(maxEventTimeMs);
     }
 
     @Override
@@ -208,18 +240,41 @@ public class AnalyticProcessingViewImpl
         this.info.setWidget(new HTML(info));
     }
 
+    private void updateProcessingType(final AnalyticProcessType analyticProcessType) {
+        analyticProcessingMinMetaCreateTimeMs.setVisible(false);
+        analyticProcessingMaxMetaCreateTimeMs.setVisible(false);
+        analyticProcessingMinEventTimeMs.setVisible(false);
+        analyticProcessingMaxEventTimeMs.setVisible(false);
+        queryFrequencyFormGroup.setVisible(false);
+        timeToWaitForDataFormGroup.setVisible(false);
+        dataRetentionFormGroup.setVisible(false);
+
+        if (analyticProcessType != null) {
+            switch (analyticProcessType) {
+                case STREAMING:
+                    analyticProcessingMinMetaCreateTimeMs.setVisible(true);
+                    analyticProcessingMaxMetaCreateTimeMs.setVisible(true);
+                    break;
+                case TABLE_BUILDER:
+                    analyticProcessingMinMetaCreateTimeMs.setVisible(true);
+                    analyticProcessingMaxMetaCreateTimeMs.setVisible(true);
+                    timeToWaitForDataFormGroup.setVisible(true);
+                    dataRetentionFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setLabel("Aggregation Period");
+                    break;
+                case SCHEDULED_QUERY:
+                    analyticProcessingMinEventTimeMs.setVisible(true);
+                    analyticProcessingMaxEventTimeMs.setVisible(true);
+                    queryFrequencyFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setLabel("Time To Wait For Data To Be Indexed");
+                    break;
+            }
+        }
+    }
+
     @UiHandler("enabled")
     public void onEnabled(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
-    }
-
-    @UiHandler("minMetaCreateTimeMs")
-    public void onMinMetaCreateTimeMs(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
-    }
-
-    @UiHandler("maxMetaCreateTimeMs")
-    public void onMaxMetaCreateTimeMs(final ValueChangeEvent<String> event) {
         getUiHandlers().onDirty();
     }
 
@@ -234,32 +289,24 @@ public class AnalyticProcessingViewImpl
         getUiHandlers().onProcessingTypeChange();
     }
 
-    private void updateProcessingType(final AnalyticProcessType analyticProcessType) {
-        if (analyticProcessType == null) {
-            queryFrequencyFormGroup.setVisible(false);
-            timeToWaitForDataFormGroup.setVisible(false);
-            dataRetentionFormGroup.setVisible(false);
-        } else {
-            switch (analyticProcessType) {
-                case STREAMING:
-                    queryFrequencyFormGroup.setVisible(false);
-                    timeToWaitForDataFormGroup.setVisible(false);
-                    dataRetentionFormGroup.setVisible(false);
-                    break;
-                case TABLE_BUILDER:
-                    queryFrequencyFormGroup.setVisible(false);
-                    timeToWaitForDataFormGroup.setVisible(true);
-                    dataRetentionFormGroup.setVisible(true);
-                    timeToWaitForDataFormGroup.setLabel("Aggregation Period");
-                    break;
-                case SCHEDULED_QUERY:
-                    queryFrequencyFormGroup.setVisible(true);
-                    timeToWaitForDataFormGroup.setVisible(true);
-                    dataRetentionFormGroup.setVisible(false);
-                    timeToWaitForDataFormGroup.setLabel("Time To Wait For Data To Be Indexed");
-                    break;
-            }
-        }
+    @UiHandler("minMetaCreateTimeMs")
+    public void onMinMetaCreateTimeMs(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("maxMetaCreateTimeMs")
+    public void onMaxMetaCreateTimeMs(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("minEventTimeMs")
+    public void onMinEventTimeMs(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("maxEventTimeMs")
+    public void onMaxEventTimeMs(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
     }
 
     @UiHandler("queryFrequency")

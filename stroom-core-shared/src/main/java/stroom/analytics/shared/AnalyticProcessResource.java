@@ -18,7 +18,6 @@ package stroom.analytics.shared;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,11 +25,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -42,45 +38,10 @@ public interface AnalyticProcessResource
         extends RestResource, DirectRestService {
 
     @POST
-    @Path("/find")
-    @Operation(
-            summary = "Find the analytic process for the specified analytic",
-            operationId = "findAnalyticProcess")
-    ResultPage<AnalyticProcess> find(@Parameter(description = "criteria", required = true)
-                                     FindAnalyticProcessCriteria criteria);
-
-    @POST
-    @Operation(
-            summary = "Create an analytic process",
-            operationId = "createAnalyticProcess")
-    AnalyticProcess create(@Parameter(description = "process", required = true)
-                                   final AnalyticProcess analyticProcess);
-
-    @PUT
-    @Path("/{uuid}")
-    @Operation(
-            summary = "Update an analytic process",
-            operationId = "updateAnalyticProcess")
-    AnalyticProcess update(@PathParam("uuid")
-                                   String uuid,
-                           @Parameter(description = "process", required = true)
-                           AnalyticProcess analyticProcess);
-
-    @DELETE
-    @Path("/{uuid}")
-    @Operation(
-            summary = "Delete an analytic process",
-            operationId = "updateAnalyticProcess")
-    Boolean delete(@PathParam("uuid")
-                   String uuid,
-                   @Parameter(description = "process", required = true)
-                   AnalyticProcess analyticProcess);
-
-    @POST
     @Path("/tracker")
     @Operation(
             summary = "Find the analytic process tracker for the specified process",
             operationId = "findAnalyticProcessTracker")
-    AnalyticProcessTracker getTracker(@Parameter(description = "processUuid", required = true)
-                                              String processUuid);
+    AnalyticTracker getTracker(@Parameter(description = "processUuid", required = true)
+                               String processUuid);
 }

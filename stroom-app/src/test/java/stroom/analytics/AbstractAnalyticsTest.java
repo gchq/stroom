@@ -16,9 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.analytics.impl.AnalyticProcessDao;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AnalyticProcess;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
@@ -34,7 +32,6 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
@@ -67,6 +64,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
 class AbstractAnalyticsTest extends StroomIntegrationTest {
+
     static final SimpleDuration INSTANT = SimpleDuration
             .builder()
             .time(0)
@@ -80,13 +78,9 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private NodeInfo nodeInfo;
-    @Inject
     private AnalyticRuleStore analyticRuleStore;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
-    @Inject
-    private AnalyticProcessDao analyticProcessDao;
     protected static DocRef detections;
 
     @BeforeEach
@@ -122,8 +116,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
                 .analyticNotificationConfig(sample.getAnalyticNotificationConfig())
                 .build();
-        analyticRuleDoc = analyticRuleStore.writeDocument(analyticRuleDoc);
-        createProcessorFilters(analyticRuleDoc);
+        analyticRuleStore.writeDocument(analyticRuleDoc);
     }
 
     protected void testDetectionsStream(final int expectedStreams,
@@ -139,22 +132,5 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    void createProcessorFilters(final AnalyticRuleDoc analyticRuleDoc) {
-        final AnalyticProcess filter = AnalyticProcess.builder()
-                .version(1)
-                .createTimeMs(System.currentTimeMillis())
-                .updateTimeMs(System.currentTimeMillis())
-                .createUser("test")
-                .updateUser("test")
-                .analyticUuid(analyticRuleDoc.getUuid())
-                .enabled(true)
-//                .expression(ExpressionOperator.builder().addTerm(MetaFields.FIELD_TYPE,
-//                        Condition.EQUALS,
-//                        StreamTypeNames.EVENTS).build())
-                .node(nodeInfo.getThisNodeName())
-                .build();
-        analyticProcessDao.create(filter);
     }
 }
