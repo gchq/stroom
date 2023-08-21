@@ -35,6 +35,7 @@ import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.node.client.NodeManager;
 import stroom.pipeline.client.event.ChangeDataEvent;
@@ -54,6 +55,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
 
@@ -64,6 +66,7 @@ public class AnalyticProcessingPresenter
     private static final AnalyticProcessResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
 
+    private final EditorPresenter editorPresenter;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
 
@@ -71,12 +74,17 @@ public class AnalyticProcessingPresenter
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
                                        final RestFactory restFactory,
+                                       final EditorPresenter editorPresenter,
                                        final DateTimeFormatter dateTimeFormatter,
                                        final NodeManager nodeManager) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.editorPresenter = editorPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
         view.setUiHandlers(this);
+        view.setQueryEditorView(editorPresenter.getView());
+
+        this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
 
         nodeManager.listAllNodes(
                 list -> {
@@ -89,6 +97,14 @@ public class AnalyticProcessingPresenter
                                 "Error",
                                 throwable.getMessage(),
                                 null));
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(editorPresenter.addValueChangeHandler(event -> {
+            setDirty(true);
+        }));
     }
 
     @Override
@@ -185,6 +201,7 @@ public class AnalyticProcessingPresenter
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
         final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
         if (analyticProcessConfig != null) {
+            editorPresenter.setText(analyticRuleDoc.getQuery());
             getView().setEnabled(analyticProcessConfig.isEnabled());
             getView().setNode(analyticProcessConfig.getNode());
 
@@ -255,6 +272,7 @@ public class AnalyticProcessingPresenter
         }
 
         return analyticRuleDoc.copy()
+                .query(editorPresenter.getText())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .analyticProcessType(getView().getProcessingType())
                 .analyticProcessConfig(analyticProcessConfig)
@@ -267,6 +285,8 @@ public class AnalyticProcessingPresenter
     }
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
+
+        void setQueryEditorView(View view);
 
         boolean isEnabled();
 

@@ -8,6 +8,10 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="analyticProcessingQuery"
+                        label="Query">
+            <g:SimplePanel ui:field="queryEditorContainer" styleName="stroom-control__no-padding default-min-sizes"/>
+        </form:FormGroup>
         <form:FormGroup identity="analyticProcessingEnabled"
                         label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabled"/>
@@ -22,12 +26,12 @@
         </form:FormGroup>
         <form:FormGroup ui:field="analyticProcessingMinMetaCreateTimeMs"
                         identity="analyticProcessingMinMetaCreateTimeMs"
-                        label="Min Data Create Time">
+                        label="Min Stream Create Time">
             <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
         </form:FormGroup>
         <form:FormGroup ui:field="analyticProcessingMaxMetaCreateTimeMs"
                         identity="analyticProcessingMaxMetaCreateTimeMs"
-                        label="Max Data Create Time">
+                        label="Max Stream Create Time">
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
         <form:FormGroup ui:field="analyticProcessingMinEventTimeMs"

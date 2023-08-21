@@ -40,6 +40,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
@@ -50,6 +51,8 @@ public class AnalyticProcessingViewImpl
 
     private final Widget widget;
 
+    @UiField
+    SimplePanel queryEditorContainer;
     @UiField
     CustomCheckBox enabled;
     @UiField
@@ -109,6 +112,11 @@ public class AnalyticProcessingViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setQueryEditorView(final View view) {
+        queryEditorContainer.setWidget(view.asWidget());
     }
 
     @Override

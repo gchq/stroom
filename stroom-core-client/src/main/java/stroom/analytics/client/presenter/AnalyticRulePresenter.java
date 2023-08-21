@@ -35,27 +35,19 @@ import javax.inject.Provider;
 
 public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
-    private static final TabData QUERY = new TabDataImpl("Query");
     private static final TabData NOTIFICATION = new TabDataImpl("Notification");
     private static final TabData PROCESSING = new TabDataImpl("Processing");
     private static final TabData SHARDS = new TabDataImpl("Shards");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
-    private AnalyticQueryEditPresenter queryEditPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final Provider<AnalyticQueryEditPresenter> queryEditPresenterProvider,
                                  final Provider<AnalyticNotificationEditPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
-
-        addTab(QUERY, new DocumentEditTabProvider<>(() -> {
-            queryEditPresenter = queryEditPresenterProvider.get();
-            return queryEditPresenter;
-        }));
 
         final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.addChangeDataHandler(e ->
@@ -80,7 +72,7 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
                 return document.copy().description(presenter.getText()).build();
             }
         });
-        selectTab(QUERY);
+        selectTab(PROCESSING);
     }
 
     @Override
@@ -91,13 +83,6 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
 
     private void setRuleType(final AnalyticProcessType analyticProcessType) {
         setTabHidden(SHARDS, analyticProcessType != AnalyticProcessType.TABLE_BUILDER);
-    }
-
-    @Override
-    public void onClose() {
-        if (queryEditPresenter != null) {
-            queryEditPresenter.onClose();
-        }
     }
 
     @Override
