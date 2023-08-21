@@ -43,6 +43,8 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.TableBuilder;
 
+import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -65,8 +67,10 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -97,6 +101,7 @@ public class QueryHelpPresenter
     private static final String STRUCTURE_META = "Structure";
     private static final String FIELDS_META = "Field";
     private static final String FUNCTIONS_META = "Function";
+    private static final RegExp FIELD_NAME_SPLIT_PATTERN = RegExp.compile("[.:]");
 
     // These control the priority of the items in the code completion menu.
     // Higher value appear further up for the same matching chars.
@@ -119,6 +124,7 @@ public class QueryHelpPresenter
     private QueryHelpItem lastSelection;
     private List<DocRef> lastFetchedViews = null;
     private DataSourceFieldsMap lastFetchedDataSourceFieldsMap = null;
+    final Map<String, QueryHelpItem> branchMap = new HashMap<>();
 
     private QueryHelpItem dataSourceHeading;
     private QueryHelpItemHeading fieldsHeading;
@@ -523,6 +529,7 @@ public class QueryHelpPresenter
                 if (!Objects.equals(lastFetchedDataSourceFieldsMap, dataSourceFieldsMap) || hasThemeChanged()) {
                     lastFetchedDataSourceFieldsMap = dataSourceFieldsMap;
                     fieldsHeading.clear();
+                    branchMap.clear();
                     keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
 
                     if (GwtNullSafe.hasEntries(dataSourceFieldsMap)) {
@@ -601,22 +608,62 @@ public class QueryHelpPresenter
                         new SimpleEntry<>("Is queryable:", asDisplayValue(field.queryable())),
                         new SimpleEntry<>("Is numeric:", asDisplayValue(field.isNumeric()))));
 
-        // ctor adds item to its parent
-        final FieldHelpItem fieldHelpItem = new FieldHelpItem(
-                fieldsHeading,
-                fieldName,
-                queryHelpDataSupplier::decorateFieldName,
-                htmlBuilder.toSafeHtml(),
-                helpUrl);
+        QueryHelpItem parent = fieldsHeading;
+        FieldHelpItem fieldHelpItem = null;
+        // With dynamic indexing we can have field names like 'Events.Event.EventTime.TimeCreated', so
+        // split them on the dot and create branches if they don't already exist. Also nest the annotation:XXX
+        // fields.
+        if (FIELD_NAME_SPLIT_PATTERN.test(fieldName)) {
+            final SplitResult splitResult = FIELD_NAME_SPLIT_PATTERN.split(fieldName);
+            int len = 0;
+            for (int i = 0; i < splitResult.length(); i++) {
+                final String part = splitResult.get(i);
+                if (i != 0) {
+                    // Account for the dot/colon in the key
+                    len += 1;
+                }
+                len += part.length();
+                if (i < splitResult.length() - 1) {
+                    // a branch
+                    final String key = fieldName.substring(0, len);
+                    QueryHelpItem branch = branchMap.get(key);
+                    if (branch == null) {
+                        branch = new FunctionCategoryItem(parent, part);
+                        branchMap.put(key, branch);
+                    }
+                    parent = branch;
+                } else {
+                    // a leaf
+                    fieldHelpItem = new FieldHelpItem(
+                            parent,
+                            part,
+                            fieldName2 ->
+                                    queryHelpDataSupplier.decorateFieldName(fieldName), // use full name, not part
+                            htmlBuilder.toSafeHtml(),
+                            helpUrl);
+                }
+            }
+        } else {
+            // Non-delimited field name
+            fieldHelpItem = new FieldHelpItem(
+                    fieldsHeading,
+                    fieldName,
+                    queryHelpDataSupplier::decorateFieldName,
+                    htmlBuilder.toSafeHtml(),
+                    helpUrl);
+        }
 
-        keyedAceCompletionProvider.addCompletion(
-                FIELDS_COMPLETION_KEY,
-                new AceCompletionValue(
-                        fieldName,
-                        fieldHelpItem.getInsertText(),
-                        FIELDS_META,
-                        fieldHelpItem.getDetail().asString(),
-                        FIELDS_COMPLETION_SCORE));
+        // Now add the ace completion for this field (no nesting)
+        if (fieldHelpItem != null) {
+            keyedAceCompletionProvider.addCompletion(
+                    FIELDS_COMPLETION_KEY,
+                    new AceCompletionValue(
+                            fieldName,
+                            fieldHelpItem.getInsertText(),
+                            FIELDS_META,
+                            fieldHelpItem.getDetail().asString(),
+                            FIELDS_COMPLETION_SCORE));
+        }
     }
 
     private void appendKeyValueTable(final HtmlBuilder htmlBuilder,
