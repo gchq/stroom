@@ -61,9 +61,9 @@ public class QueryEditViewImpl
     }
 
     @Override
-    public void setTable(final View view) {
-        view.asWidget().addStyleName("dashboard-panel overflow-hidden");
-        tableContainer.setWidget(view.asWidget());
+    public void setTable(final Widget widget) {
+        widget.addStyleName("dashboard-panel overflow-hidden");
+        tableContainer.setWidget(widget);
     }
 
 

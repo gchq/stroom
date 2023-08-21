@@ -25,6 +25,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
@@ -37,6 +38,7 @@ import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -67,11 +69,13 @@ public class QueryEditPresenter
     private final EditorPresenter editorPresenter;
     private final QueryResultTablePresenter tablePresenter;
     private final IndexLoader indexLoader;
+    private final TextPresenter textPresenter;
     private final Views views;
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
     private final QueryModel queryModel;
+    private final ThinSplitLayoutPanel splitLayoutPanel;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
@@ -82,6 +86,7 @@ public class QueryEditPresenter
                               final QueryResultTablePresenter tablePresenter,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,
+                              final TextPresenter textPresenter,
                               final Views views,
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
                               final ResultStoreModel resultStoreModel) {
@@ -90,6 +95,7 @@ public class QueryEditPresenter
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.tablePresenter = tablePresenter;
         this.indexLoader = indexLoader;
+        this.textPresenter = textPresenter;
         this.views = views;
 
         queryModel = new QueryModel(
@@ -107,13 +113,15 @@ public class QueryEditPresenter
         // This glues the editor code completion to the QueryHelpPresenter's completion provider
         // Need to do this via addAttachHandler so the editor is fully loaded
         // else it moans about the id not being a thing on the AceEditor
-        this.editorPresenter.getWidget().addAttachHandler(event -> {
-            this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider());
-        });
+        this.editorPresenter.getWidget().addAttachHandler(event ->
+                this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider()));
+
+        splitLayoutPanel = new ThinSplitLayoutPanel();
+        splitLayoutPanel.addStyleName("max");
 
         view.setQueryHelp(queryHelpPresenter.getView());
         view.setQueryEditor(this.editorPresenter.getView());
-        view.setTable(tablePresenter.getView());
+        view.setTable(tablePresenter.getWidget());
     }
 
     @Override
@@ -137,6 +145,8 @@ public class QueryEditPresenter
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
         registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
+        registerHandler(tablePresenter.getSelectionModel().addSelectionHandler(event ->
+                onSelection(tablePresenter.getSelectionModel().getSelected())));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
         queryHelpPresenter.linkToEditor(editorPresenter);
@@ -147,6 +157,36 @@ public class QueryEditPresenter
         }));
 
         setupQueryHelpDataSupplier();
+    }
+
+    private void onSelection(final TableRow tableRow) {
+        if (tableRow == null) {
+            getView().setTable(tablePresenter.getWidget());
+        } else {
+            final String streamId = tableRow.getText("StreamId");
+            final String eventId = tableRow.getText("EventId");
+            if (streamId != null && eventId != null && streamId.length() > 0 && eventId.length() > 0) {
+                try {
+                    final long strmId = Long.valueOf(streamId);
+                    final long evtId = Long.valueOf(eventId);
+                    final SourceLocation sourceLocation = SourceLocation
+                            .builder(strmId)
+                            .withPartIndex(0L)
+                            .withRecordIndex(evtId - 1)
+                            .build();
+                    textPresenter.show(sourceLocation);
+                    final double size = Math.max(100, getWidget().getElement().getOffsetWidth() / 2D);
+                    splitLayoutPanel.addEast(textPresenter.getWidget(), size);
+                    splitLayoutPanel.add(tablePresenter.getWidget());
+                    getView().setTable(splitLayoutPanel);
+
+                } catch (final RuntimeException e) {
+                    getView().setTable(tablePresenter.getWidget());
+                }
+            } else {
+                getView().setTable(tablePresenter.getWidget());
+            }
+        }
     }
 
     private void setupQueryHelpDataSupplier() {
@@ -277,6 +317,6 @@ public class QueryEditPresenter
 
         void setQueryEditor(View view);
 
-        void setTable(View view);
+        void setTable(Widget widget);
     }
 }

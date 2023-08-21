@@ -136,7 +136,7 @@ public class AnalyticProcessingPresenter
             final Rest<AnalyticProcessTracker> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
-                        final SafeHtml safeHtml = getInfo(result.getAnalyticProcessTrackerData());
+                        final SafeHtml safeHtml = getInfo(result);
                         getView().setInfo(safeHtml);
                     })
                     .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
@@ -144,41 +144,44 @@ public class AnalyticProcessingPresenter
         }
     }
 
-    public SafeHtml getInfo(final AnalyticProcessTrackerData trackerData) {
+    public SafeHtml getInfo(final AnalyticProcessTracker tracker) {
         final TableBuilder tb = new TableBuilder();
 
-        if (trackerData instanceof TableBuilderAnalyticProcessTrackerData) {
-            final TableBuilderAnalyticProcessTrackerData td =
-                    (TableBuilderAnalyticProcessTrackerData) trackerData;
+        if (tracker != null) {
+            final AnalyticProcessTrackerData trackerData = tracker.getAnalyticProcessTrackerData();
+            if (trackerData instanceof TableBuilderAnalyticProcessTrackerData) {
+                final TableBuilderAnalyticProcessTrackerData td =
+                        (TableBuilderAnalyticProcessTrackerData) trackerData;
 
-            addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
-            tb.row(SafeHtmlUtil.from("Last Stream Count"), SafeHtmlUtil.from(td.getLastStreamCount()));
-            tb.row(SafeHtmlUtil.from("Last Stream Id"), SafeHtmlUtil.from(td.getLastStreamId()));
-            tb.row(SafeHtmlUtil.from("Last Event Id"), SafeHtmlUtil.from(td.getLastEventId()));
-            addRowDateString(tb, "Last Event Time", td.getLastEventTime());
-            tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
-            tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
-            tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
+                tb.row(SafeHtmlUtil.from("Last Stream Count"), SafeHtmlUtil.from(td.getLastStreamCount()));
+                tb.row(SafeHtmlUtil.from("Last Stream Id"), SafeHtmlUtil.from(td.getLastStreamId()));
+                tb.row(SafeHtmlUtil.from("Last Event Id"), SafeHtmlUtil.from(td.getLastEventId()));
+                addRowDateString(tb, "Last Event Time", td.getLastEventTime());
+                tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
+                tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
+                tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
 
-        } else if (trackerData instanceof ScheduledQueryAnalyticProcessTrackerData) {
-            final ScheduledQueryAnalyticProcessTrackerData td =
-                    (ScheduledQueryAnalyticProcessTrackerData) trackerData;
+            } else if (trackerData instanceof ScheduledQueryAnalyticProcessTrackerData) {
+                final ScheduledQueryAnalyticProcessTrackerData td =
+                        (ScheduledQueryAnalyticProcessTrackerData) trackerData;
 
-            addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
-            addRowDateString(tb, "Last Window Start Time", td.getLastWindowStartTimeMs());
-            addRowDateString(tb, "Last Window End Time", td.getLastWindowEndTimeMs());
-            tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
+                addRowDateString(tb, "Last Window Start Time", td.getLastWindowStartTimeMs());
+                addRowDateString(tb, "Last Window End Time", td.getLastWindowEndTimeMs());
+                tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
 
-        } else if (trackerData instanceof StreamingAnalyticProcessTrackerData) {
-            final StreamingAnalyticProcessTrackerData td =
-                    (StreamingAnalyticProcessTrackerData) trackerData;
+            } else if (trackerData instanceof StreamingAnalyticProcessTrackerData) {
+                final StreamingAnalyticProcessTrackerData td =
+                        (StreamingAnalyticProcessTrackerData) trackerData;
 
-            addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
-            tb.row(SafeHtmlUtil.from("Last Stream Count"), SafeHtmlUtil.from(td.getLastStreamCount()));
-            tb.row(SafeHtmlUtil.from("Last Steam Id"), SafeHtmlUtil.from(td.getLastStreamId()));
-            tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
-            tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
-            tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
+                tb.row(SafeHtmlUtil.from("Last Stream Count"), SafeHtmlUtil.from(td.getLastStreamCount()));
+                tb.row(SafeHtmlUtil.from("Last Steam Id"), SafeHtmlUtil.from(td.getLastStreamId()));
+                tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
+                tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
+                tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+            }
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();

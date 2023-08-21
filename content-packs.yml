@@ -6,7 +6,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name : "event-logging-xml-schema",
@@ -15,7 +15,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "example-index",
@@ -24,7 +24,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "internal-dashboards",
@@ -33,7 +33,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "internal-statistics-sql",
@@ -42,7 +42,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "internal-statistics-stroom-stats",
@@ -51,7 +51,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "standard-pipelines",
@@ -60,7 +60,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "stroom-101",
@@ -69,7 +69,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "stroom-logs",
@@ -78,7 +78,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "template-pipelines",
@@ -87,16 +87,16 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "8b5f629bb1363a339101248414db875e9fbc453a"
+      commit: "856ab20c53c7f0ae8e28316298b6bf5165c84ffa"
     }
   }, {
     name: "stroom-visualisations",
-    path: "war/stroomContent",
+    path: "war/stroom-content",
     repo: {
       name: "stroom-visualisations-dev",
       uri : "https://github.com/gchq/stroom-visualisations-dev.git",
       branch: "7.2",
-      commit: "6d126907edc8d0d4d46d54e25367f3031692042d"
+      commit: "04425fcc11d334c5861aa84b5fed6c174343808a"
     }
   } ]
 }

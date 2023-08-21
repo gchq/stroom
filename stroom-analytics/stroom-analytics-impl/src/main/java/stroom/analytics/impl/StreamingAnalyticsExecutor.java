@@ -442,7 +442,6 @@ public class StreamingAnalyticsExecutor {
                         AnalyticProcessType.STREAMING.equals(analyticRuleDoc.getAnalyticProcessType())) {
                     final AnalyticProcessTracker tracker = analyticHelper.getTracker(process);
 
-
                     StreamingAnalyticProcessTrackerData analyticProcessorTrackerData;
                     if (tracker.getAnalyticProcessTrackerData() instanceof
                             StreamingAnalyticProcessTrackerData) {

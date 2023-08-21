@@ -188,7 +188,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                           final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final AnalyticProcess newFilter = AnalyticProcess.builder()
                 .analyticUuid(ruleDocRef.getUuid())
-                .enabled(true)
+                .enabled(false)
                 .node(analyticUiDefaultConfig.getDefaultNode())
                 .build();
         final Rest<AnalyticProcess> rest = restFactory.create();
