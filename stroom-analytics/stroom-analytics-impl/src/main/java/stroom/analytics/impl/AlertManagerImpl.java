@@ -42,7 +42,7 @@ import stroom.search.impl.SearchConfig;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.view.impl.ViewStore;
+import stroom.view.api.ViewStore;
 
 import java.time.Duration;
 import java.time.Instant;

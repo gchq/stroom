@@ -34,7 +34,7 @@ import stroom.test.common.ProjectPathUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
-import stroom.view.impl.ViewStore;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import org.assertj.core.api.Assertions;

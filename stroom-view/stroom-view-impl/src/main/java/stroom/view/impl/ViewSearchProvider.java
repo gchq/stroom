@@ -17,6 +17,7 @@ import stroom.query.common.v2.StoreFactoryRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import java.util.ArrayList;

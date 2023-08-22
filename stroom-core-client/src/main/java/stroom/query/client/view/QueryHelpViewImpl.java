@@ -16,12 +16,17 @@
 
 package stroom.query.client.view;
 
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.client.presenter.QueryHelpUiHandlers;
 import stroom.svg.shared.SvgImage;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -36,6 +41,8 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     private final Widget widget;
 
     @UiField
+    QuickFilter nameFilter;
+    @UiField
     SimplePanel elementChooser;
     @UiField
     SimplePanel details;
@@ -45,11 +52,20 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     InlineSvgButton insertButton;
 
     @Inject
-    public QueryHelpViewImpl(final Binder binder) {
+    public QueryHelpViewImpl(final Binder binder,
+                             final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
 
         copyButton.setSvg(SvgImage.COPY);
         insertButton.setSvg(SvgImage.INSERT);
+
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        nameFilter.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip(
+                                        "Query Item Quick Filter",
+                                        ExplorerTreeFilter.FIELD_DEFINITIONS,
+                                        uiConfig.getHelpUrl())));
     }
 
     @Override
@@ -74,6 +90,11 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     public void enableButtons(final boolean enable) {
         copyButton.setEnabled(enable);
         insertButton.setEnabled(enable);
+    }
+
+    @UiHandler("nameFilter")
+    void onFilterChange(final ValueChangeEvent<String> event) {
+        getUiHandlers().changeQuickFilter(nameFilter.getText());
     }
 
     @UiHandler("copyButton")

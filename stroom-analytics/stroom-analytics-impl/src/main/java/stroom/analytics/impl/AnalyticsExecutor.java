@@ -69,7 +69,7 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
-import stroom.view.impl.ViewStore;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import java.time.Instant;

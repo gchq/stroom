@@ -282,3 +282,4 @@ include 'stroom-util-shared'
 include 'stroom-view:stroom-view-impl'
 
 include 'stroom-ssl-test'
+include 'stroom-view:stroom-view-api'

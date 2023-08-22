@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
 

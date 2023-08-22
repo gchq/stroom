@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -28,8 +29,11 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Field;
 import stroom.query.client.presenter.QueryHelpPresenter;
-import stroom.query.client.presenter.QueryHelpPresenter.HelpItemType;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpDataSupplier;
+import stroom.query.shared.QueryHelpItemsRequest;
+import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
+import stroom.query.shared.QueryHelpItemsResult;
+import stroom.query.shared.QueryResource;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.view.client.presenter.DataSourceFieldsMap;
@@ -68,6 +72,8 @@ public class ColumnFunctionEditorPresenter
     private static final Set<HelpItemType> SUPPORTED_HELP_TYPES = EnumSet.of(
             HelpItemType.FIELD,
             HelpItemType.FUNCTION);
+
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
@@ -197,11 +203,6 @@ public class ColumnFunctionEditorPresenter
         return new QueryHelpDataSupplier() {
 
             @Override
-            public DataSourceFieldsMap getDataSourceFieldsMap() {
-                return tablePresenter.getIndexFieldsMap();
-            }
-
-            @Override
             public String decorateFieldName(final String fieldName) {
                 return GwtNullSafe.get(fieldName, str ->
                         "${" + str + "}");
@@ -218,8 +219,23 @@ public class ColumnFunctionEditorPresenter
             }
 
             @Override
-            public void fetchDataSources(final Consumer<List<DocRef>> dataSourceConsumer) {
-                // Do nothing as there is no means to change the data source on this screen
+            public void fetchQueryHelpItems(final String filterInput,
+                                            final Consumer<QueryHelpItemsResult> resultConsumer) {
+                final QueryHelpItemsRequest queryHelpItemsRequest = QueryHelpItemsRequest.fromDataSource(
+                        GwtNullSafe.get(tablePresenter.getTableSettings(), TableComponentSettings::getDataSourceRef),
+                        filterInput,SUPPORTED_HELP_TYPES);
+
+                final Rest<QueryHelpItemsResult> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            GwtNullSafe.consume(result, resultConsumer);
+                        })
+                        .onFailure(throwable -> AlertEvent.fireError(
+                                ColumnFunctionEditorPresenter.this,
+                                throwable.getMessage(),
+                                null))
+                        .call(QUERY_RESOURCE)
+                        .fetchQueryHelpItems(queryHelpItemsRequest);
             }
         };
     }

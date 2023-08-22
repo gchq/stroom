@@ -17,7 +17,9 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.OverloadType;
+import stroom.dashboard.shared.StructureElement;
 import stroom.data.table.client.MyCellTable;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
@@ -32,6 +34,8 @@ import stroom.query.client.presenter.QueryHelpItem.OverloadedFunctionHeadingItem
 import stroom.query.client.presenter.QueryHelpItem.QueryHelpItemHeading;
 import stroom.query.client.presenter.QueryHelpItem.TopLevelHeadingItem;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
+import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
+import stroom.query.shared.QueryHelpItemsResult;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -67,6 +71,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -123,7 +128,9 @@ public class QueryHelpPresenter
     private final Set<QueryHelpItem> openItems = new HashSet<>();
     private QueryHelpItem lastSelection;
     private List<DocRef> lastFetchedViews = null;
-    private DataSourceFieldsMap lastFetchedDataSourceFieldsMap = null;
+    private List<StructureElement> lastFetchedStructureElements = null;
+    private List<AbstractField> lastFetchedDataSourceFields = null;
+    private List<FunctionSignature> lastFetchedFunctions = null;
     final Map<String, QueryHelpItem> branchMap = new HashMap<>();
 
     private QueryHelpItem dataSourceHeading;
@@ -135,6 +142,11 @@ public class QueryHelpPresenter
     private String currentQuery;
     private ThemeType themeType = null;
     private Function<String, String> fieldDecorator;
+    private String quickFilterInput = null;
+    private String lastFetchedQuickFilterInput = null;
+    private long lastFetchEpochMs = 0;
+    private QueryHelpItemsResult lastFetchedResult;
+    private boolean haveCreateFunctionCompletions = false;
 
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
@@ -169,22 +181,18 @@ public class QueryHelpPresenter
         // Markdown styling has the light/dark theme baked in so have to rebuild it on theme change
         registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
             // Rebuild the structure menu items as they contain markdown
-            buildStructureMenuItems(() -> {
-                elementSelectionModel.clear();
-                getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
-            });
+            updateAllMenus(true);
         }));
     }
 
-    private void initMenu(final FunctionSignatures functionSignatures,
-                          final QueryHelpDataSupplier queryHelpDataSupplier) {
+    private void initMenu(final QueryHelpDataSupplier queryHelpDataSupplier) {
+
         if (queryHelpDataSupplier.isSupported(HelpItemType.DATA_SOURCE)) {
             dataSourceHeading = createTopLevelHelpItem(
                     queryHelpItems,
                     "Data Sources",
                     DATA_SOURCES_HELP_TEXT,
                     false);
-            buildDataSourcesMenuItems();
         }
         if (queryHelpDataSupplier.isSupported(HelpItemType.STRUCTURE)) {
             structureHeading = createTopLevelHelpItem(
@@ -192,7 +200,6 @@ public class QueryHelpPresenter
                     "Structure",
                     STRUCTURE_HELP_TEXT,
                     false);
-            buildStructureMenuItems();
         }
         if (queryHelpDataSupplier.isSupported(HelpItemType.FIELD)) {
             fieldsHeading = createTopLevelHelpItem(
@@ -200,7 +207,6 @@ public class QueryHelpPresenter
                     "Fields",
                     FIELDS_HELP_TEXT,
                     false);
-            buildFieldsMenuItems();
         }
         if (queryHelpDataSupplier.isSupported(HelpItemType.FUNCTION)) {
             functionsHeading = createTopLevelHelpItem(
@@ -208,105 +214,184 @@ public class QueryHelpPresenter
                     "Functions",
                     FUNCTIONS_HELP_TEXT,
                     false);
-            buildFunctionsMenuItems(functionSignatures);
+        }
+
+        updateAllMenus(true);
+    }
+
+    private void buildAllMenuItems(final QueryHelpItemsResult queryHelpItemsResult) {
+        functionSignatures.fetchHelpUrl(helpUrl -> {
+            if (queryHelpDataSupplier.isSupported(HelpItemType.DATA_SOURCE)) {
+                buildDataSourcesMenuItems(queryHelpItemsResult.getDataSources());
+            }
+            if (queryHelpDataSupplier.isSupported(HelpItemType.STRUCTURE)) {
+                buildStructureMenuItems(queryHelpItemsResult.getStructureElements());
+            }
+            if (queryHelpDataSupplier.isSupported(HelpItemType.FIELD)) {
+                buildFieldsMenuItems(queryHelpItemsResult.getDataSourceFields(), helpUrl);
+            }
+            if (queryHelpDataSupplier.isSupported(HelpItemType.FUNCTION)) {
+                buildFunctionsMenuItems(queryHelpItemsResult.getFunctionSignatures(), helpUrl);
+            }
+            refresh();
+        });
+    }
+
+    private void expandAll() {
+        queryHelpItems.forEach(this::expandAll);
+        refresh();
+    }
+
+    private void collapseAll() {
+        openItems.clear();
+        refresh();
+    }
+
+    private void expandAll(final QueryHelpItem item) {
+        if (item.hasChildren()) {
+            openItems.add(item);
+            item.getChildren().forEach(this::expandAll);
         }
     }
 
-    private void buildFunctionsMenuItems(final FunctionSignatures functionSignatures) {
-        // Add functions (ignoring the short form ones like + - * / as the help text can't cope with them
-        functionSignatures.fetchHelpUrl(helpUrl ->
-                functionSignatures.fetchFunctions(functions -> {
-                    keyedAceCompletionProvider.clear(FUNCTIONS_COMPLETION_KEY);
-                    functions.stream()
-                            .flatMap(funcSig -> funcSig.asAliases().stream()) // One item for each alias
-                            .forEach(functionSignature -> {
-                                // Initial parent is the top level heading
-                                QueryHelpItem parent = functionsHeading;
-
-                                // Add the category path to the function. Functions can be multiple levels deep.
-                                final List<String> categories = functionSignature.getCategoryPath();
-                                for (final String category : categories) {
-                                    // We need to get the correct child instance of this parent, which may not be
-                                    // the one just created, as it may have been created for a previous funtion.
-                                    parent = parent.addOrGetChild(new FunctionCategoryItem(parent, category));
-                                }
-
-                                final boolean isOverloadedInCategory = OverloadType.OVERLOADED_IN_CATEGORY.equals(
-                                        functionSignature.getOverloadType());
-                                if (isOverloadedInCategory) {
-                                    // If a function has overloads then we need to create an extra category for
-                                    // the overloads
-                                    parent = parent.addOrGetChild(new OverloadedFunctionHeadingItem(
-                                            parent,
-                                            functionSignature.getName()));
-                                }
-
-                                // Create and register the completion snippet for this function
-                                final AceCompletion aceCompletion =
-                                        FunctionSignatureUtil.convertFunctionDefinitionToCompletion(
-                                                functionSignature, helpUrl, FUNCTIONS_COMPLETION_SCORE);
-                                keyedAceCompletionProvider.addCompletion(
-                                        FUNCTIONS_COMPLETION_KEY,
-                                        aceCompletion);
-
-                                final String title = isOverloadedInCategory
-                                        ? FunctionSignatureUtil.buildSignatureStr(functionSignature)
-                                        .replaceAll("^" + functionSignature.getName(), "...")
-                                        : functionSignature.getName();
-                                // Add the actual function.
-                                parent.addOrGetChild(new FunctionItem(
-                                        parent,
-                                        title,
-                                        functionSignature,
-                                        helpUrl));
-                            });
-                    refresh();
-                }));
+    private void updateAllMenus() {
+        updateAllMenus(false);
     }
 
-    private void buildDataSourcesMenuItems() {
+    private void updateAllMenus(final boolean forceUpdate) {
+        final String currentQuickFilterInput = quickFilterInput;
+        if (queryHelpDataSupplier != null) {
+            // Even if we think nothing has changed do a re-fetch after 10s in case source data has been
+            // changed that we are not aware of
+            if (forceUpdate
+                    || lastFetchedResult == null
+                    || !Objects.equals(lastFetchedQuickFilterInput, currentQuickFilterInput)
+                    || System.currentTimeMillis() - lastFetchEpochMs > 10_000L) {
+
+                queryHelpDataSupplier.fetchQueryHelpItems(
+                        currentQuickFilterInput,
+                        queryHelpItemsResult -> {
+                            buildAllMenuItems(queryHelpItemsResult);
+
+                            if (!Objects.equals(lastFetchedQuickFilterInput, currentQuickFilterInput)) {
+                                if (GwtNullSafe.isBlankString(currentQuickFilterInput)) {
+                                    // Going from filter to no filter so collapse all the expanded stuff
+                                    collapseAll();
+                                } else {
+                                    // Going to a new filtered set so expand all we have
+                                    expandAll();
+                                }
+                            }
+
+                            lastFetchEpochMs = System.currentTimeMillis();
+                            lastFetchedQuickFilterInput = currentQuickFilterInput;
+                            lastFetchedResult = queryHelpItemsResult;
+                        });
+            } else {
+                buildAllMenuItems(lastFetchedResult);
+            }
+        }
+    }
+
+    private void buildFunctionsMenuItems(final List<FunctionSignature> functions, final String helpUrl) {
+        // Add functions (ignoring the short form ones like + - * / as the help text can't cope with them
+        if (!Objects.equals(lastFetchedFunctions, functions) || hasThemeChanged()) {
+            lastFetchedFunctions = functions;
+            functionsHeading.clear();
+
+            functions.stream()
+                    .flatMap(funcSig -> funcSig.asAliases().stream()) // One item for each alias
+                    .forEach(functionSignature -> {
+                        // Initial parent is the top level heading
+                        QueryHelpItem parent = functionsHeading;
+
+                        // Add the category path to the function. Functions can be multiple levels deep.
+                        final List<String> categories = functionSignature.getCategoryPath();
+                        for (final String category : categories) {
+                            // We need to get the correct child instance of this parent, which may not be
+                            // the one just created, as it may have been created for a previous funtion.
+                            parent = parent.addOrGetChild(new FunctionCategoryItem(parent, category));
+                        }
+
+                        final boolean isOverloadedInCategory = OverloadType.OVERLOADED_IN_CATEGORY.equals(
+                                functionSignature.getOverloadType());
+                        if (isOverloadedInCategory) {
+                            // If a function has overloads then we need to create an extra category for
+                            // the overloads
+                            parent = parent.addOrGetChild(new OverloadedFunctionHeadingItem(
+                                    parent,
+                                    functionSignature.getName()));
+                        }
+
+                        // Functions are hard coded so won't change, so no need to redo completions
+                        if (!haveCreateFunctionCompletions) {
+                            // Create and register the completion snippet for this function
+                            final AceCompletion aceCompletion =
+                                    FunctionSignatureUtil.convertFunctionDefinitionToCompletion(
+                                            functionSignature, helpUrl, FUNCTIONS_COMPLETION_SCORE);
+                            keyedAceCompletionProvider.addCompletion(
+                                    FUNCTIONS_COMPLETION_KEY,
+                                    aceCompletion);
+                        }
+
+                        final String title = isOverloadedInCategory
+                                ? FunctionSignatureUtil.buildSignatureStr(functionSignature)
+                                .replaceAll("^" + functionSignature.getName(), "...")
+                                : functionSignature.getName();
+                        // Add the actual function.
+                        parent.addOrGetChild(new FunctionItem(
+                                parent,
+                                title,
+                                functionSignature,
+                                helpUrl));
+//                        refresh();
+                    });
+
+            if (!haveCreateFunctionCompletions) {
+                haveCreateFunctionCompletions = true;
+            }
+        }
+    }
+
+    private void buildDataSourcesMenuItems(final List<DocRef> viewDocRefs) {
         // Add views.
-        if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.DATA_SOURCE))) {
-            queryHelpDataSupplier.fetchDataSources(viewDocRefs -> {
-                // Only need to re-build this part of the menu if the list of data sources has actually changed
-                if (!Objects.equals(lastFetchedViews, viewDocRefs) || hasThemeChanged()) {
-                    lastFetchedViews = viewDocRefs;
-                    dataSourceHeading.clear();
-                    if (!viewDocRefs.isEmpty()) {
-                        viewDocRefs.stream()
-                                .sorted()
-                                .forEach(viewDocRef -> {
-                                    keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
-                                    final String name = viewDocRef.getName();
-                                    final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
-                                    appendKeyValueTable(htmlBuilder,
-                                            Arrays.asList(
-                                                    new SimpleEntry<>("Name:", name),
-                                                    new SimpleEntry<>("Type:", viewDocRef.getType()),
-                                                    new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
+        // Only need to re-build this part of the menu if the list of data sources has actually changed
+        if (!Objects.equals(lastFetchedViews, viewDocRefs) || hasThemeChanged()) {
+            lastFetchedViews = viewDocRefs;
+            dataSourceHeading.clear();
+            if (!viewDocRefs.isEmpty()) {
+                viewDocRefs.stream()
+                        .sorted()
+                        .forEach(viewDocRef -> {
+                            keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
+                            final String name = viewDocRef.getName();
+                            final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                            appendKeyValueTable(htmlBuilder,
+                                    Arrays.asList(
+                                            new SimpleEntry<>("Name:", name),
+                                            new SimpleEntry<>("Type:", viewDocRef.getType()),
+                                            new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
 
-                                    // ctor add the item to its parent
-                                    final DataSourceHelpItem dataSourceHelpItem = new DataSourceHelpItem(
-                                            dataSourceHeading,
-                                            name,
-                                            htmlBuilder.toSafeHtml(),
-                                            null);
+                            // ctor add the item to its parent
+                            final DataSourceHelpItem dataSourceHelpItem = new DataSourceHelpItem(
+                                    dataSourceHeading,
+                                    name,
+                                    htmlBuilder.toSafeHtml(),
+                                    null);
 
-                                    keyedAceCompletionProvider.addCompletion(
-                                            DATA_SOURCES_COMPLETION_KEY,
-                                            new AceCompletionValue(
-                                                    dataSourceHelpItem.title,
-                                                    dataSourceHelpItem.getInsertText(),
-                                                    DATA_SOURCES_META,
-                                                    dataSourceHelpItem.getDetail().asString(),
-                                                    DATA_SOURCES_COMPLETION_SCORE));
-                                });
-                    } else {
-                        createEmptyDataSourcesMenuItem(dataSourceHeading);
-                    }
-                    refresh();
-                }
-            });
+                            keyedAceCompletionProvider.addCompletion(
+                                    DATA_SOURCES_COMPLETION_KEY,
+                                    new AceCompletionValue(
+                                            dataSourceHelpItem.title,
+                                            dataSourceHelpItem.getInsertText(),
+                                            DATA_SOURCES_META,
+                                            dataSourceHelpItem.getDetail().asString(),
+                                            DATA_SOURCES_COMPLETION_SCORE));
+                        });
+            } else if (GwtNullSafe.isBlankString(quickFilterInput)) {
+                // Only show the EMPTY item if we are not filtering as an empty state is likely when filtering
+                createEmptyDataSourcesMenuItem(dataSourceHeading);
+            }
         }
     }
 
@@ -317,9 +402,11 @@ public class QueryHelpPresenter
     public void setQueryHelpDataSupplier(final QueryHelpDataSupplier queryHelpDataSupplier) {
         this.queryHelpDataSupplier = queryHelpDataSupplier;
         if (queryHelpDataSupplier != null) {
-            initMenu(functionSignatures, queryHelpDataSupplier);
+
+            initMenu(queryHelpDataSupplier);
+
             queryHelpDataSupplier.registerChangeHandler(dataSourceFieldsMap -> {
-                buildFieldsMenuItems();
+                updateAllMenus(true);
             });
         }
     }
@@ -352,15 +439,17 @@ public class QueryHelpPresenter
         return topLevelHeadingItem;
     }
 
-    private void buildStructureMenuItems() {
-        buildStructureMenuItems(null);
+    private void buildStructureMenuItems(final List<StructureElement> structureElements) {
+        buildStructureMenuItems(structureElements, null);
     }
 
-    private void buildStructureMenuItems(final Runnable afterBuildAction) {
-        if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.STRUCTURE))) {
+    private void buildStructureMenuItems(final List<StructureElement> structureElements,
+                                         final Runnable afterBuildAction) {
+        if (!Objects.equals(lastFetchedStructureElements, structureElements) || hasThemeChanged()) {
+            lastFetchedStructureElements = structureElements;
             structureHeading.clear();
             // Add structure.
-            queryStructure.fetchStructureElements(structureHeading, list -> {
+            queryStructure.fetchStructureElements(structureHeading, structureElements, list -> {
                 keyedAceCompletionProvider.clear(STRUCTURE_COMPLETION_KEY);
                 list.forEach(structureQueryHelpItem -> {
                     structureQueryHelpItem.getSnippets()
@@ -377,7 +466,6 @@ public class QueryHelpPresenter
                                 keyedAceCompletionProvider.addCompletion(STRUCTURE_COMPLETION_KEY, aceCompletion);
                             });
                 });
-                refresh();
                 GwtNullSafe.run(afterBuildAction);
             });
         }
@@ -475,10 +563,7 @@ public class QueryHelpPresenter
     }
 
     private void updateMenu(final QueryHelpItem queryHelpItem) {
-        // The data sources may be changed externally so keep their list up to date
-        buildDataSourcesMenuItems();
-        // Fields may also have changed, due to data source removal, or if fields have been changed on a DS.
-        buildFieldsMenuItems();
+        updateAllMenus();
     }
 
     private void updateDetails(final QueryHelpItem queryHelpItem) {
@@ -521,34 +606,27 @@ public class QueryHelpPresenter
 //        }));
     }
 
-    private void buildFieldsMenuItems() {
+    private void buildFieldsMenuItems(final List<AbstractField> fields, final String helpUrl) {
         if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.FIELD))) {
-            functionSignatures.fetchHelpUrl(helpUrl -> {
-                final DataSourceFieldsMap dataSourceFieldsMap = queryHelpDataSupplier.getDataSourceFieldsMap();
+            if (!Objects.equals(lastFetchedDataSourceFields, fields) || hasThemeChanged()) {
+                lastFetchedDataSourceFields = fields;
+                fieldsHeading.clear();
+                branchMap.clear();
+                keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
 
-                if (!Objects.equals(lastFetchedDataSourceFieldsMap, dataSourceFieldsMap) || hasThemeChanged()) {
-                    lastFetchedDataSourceFieldsMap = dataSourceFieldsMap;
-                    fieldsHeading.clear();
-                    branchMap.clear();
-                    keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
-
-                    if (GwtNullSafe.hasEntries(dataSourceFieldsMap)) {
+                if (GwtNullSafe.hasItems(fields)) {
 //                        GWT.log("Adding " + dataSourceFieldsMap.size() + " fields");
-                        dataSourceFieldsMap
-                                .entrySet()
-                                .stream()
-                                .sorted(Entry.comparingByKey())
-                                .forEach(entry -> {
-                                    final String fieldName = entry.getKey();
-                                    final AbstractField field = entry.getValue();
-                                    addFieldToMenu(helpUrl, fieldName, field);
-                                });
-                    } else {
-                        createEmptyFieldsMenuItem(fieldsHeading);
-                    }
-                    refresh();
+                    fields.stream()
+                            .sorted(Comparator.comparing(AbstractField::getName))
+                            .forEach(field -> {
+                                addFieldToMenu(helpUrl, field.getName(), field);
+                            });
+                } else if (GwtNullSafe.isBlankString(quickFilterInput)) {
+                    // Only show the EMPTY item if we are not filtering as an empty state is likely when filtering
+                    createEmptyFieldsMenuItem(fieldsHeading);
                 }
-            });
+                refresh();
+            }
         }
     }
 
@@ -715,6 +793,12 @@ public class QueryHelpPresenter
                 }
             }
         }
+    }
+
+    @Override
+    public void changeQuickFilter(final String filterInput) {
+        this.quickFilterInput = filterInput;
+        updateAllMenus();
     }
 
     @Override
@@ -987,8 +1071,6 @@ public class QueryHelpPresenter
 
     public interface QueryHelpDataSupplier {
 
-        DataSourceFieldsMap getDataSourceFieldsMap();
-
         /**
          * Decorates a field name for insertion into the editor
          */
@@ -1001,17 +1083,6 @@ public class QueryHelpPresenter
 
         boolean isSupported(final HelpItemType helpItemType);
 
-        void fetchDataSources(final Consumer<List<DocRef>> dataSourceConsumer);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum HelpItemType {
-        DATA_SOURCE,
-        STRUCTURE,
-        FIELD,
-        FUNCTION
+        void fetchQueryHelpItems(final String filterInput, final Consumer<QueryHelpItemsResult> resultConsumer);
     }
 }

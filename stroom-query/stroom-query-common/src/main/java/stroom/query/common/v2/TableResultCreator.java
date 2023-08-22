@@ -183,19 +183,23 @@ public class TableResultCreator implements ResultCreator {
         @Override
         public Row create(final List<Field> fields,
                           final Item item) {
+//            final List<String> stringValues = new ArrayList<>(NullSafe.size(fields));
             final List<String> stringValues = new ArrayList<>(fields.size());
             int i = 0;
-            for (final Field field : fields) {
-                try {
-                    final Val val = item.getValue(i);
-                    final String string = fieldFormatter.format(field, val);
-                    stringValues.add(string);
-                } catch (final RuntimeException e) {
-                    LOGGER.error(LogUtil.message("Error getting field value for field {} at index {}", field, i), e);
-                    throw e;
+//            if (fields != null) {
+                for (final Field field : fields) {
+                    try {
+                        final Val val = item.getValue(i);
+                        final String string = fieldFormatter.format(field, val);
+                        stringValues.add(string);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(LogUtil.message("Error getting field value for field {} at index {}", field, i), e);
+                        throw e;
+                    }
+                    i++;
                 }
-                i++;
-            }
+
+//            }
 
             return Row.builder()
                     .groupKey(keyFactory.encode(item.getKey(), errorConsumer))

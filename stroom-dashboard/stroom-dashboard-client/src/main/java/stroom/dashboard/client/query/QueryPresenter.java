@@ -958,6 +958,10 @@ public class QueryPresenter
                 : 0);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface QueryView extends View, SearchStateListener {
 
         ButtonView addButtonLeft(Preset preset);
