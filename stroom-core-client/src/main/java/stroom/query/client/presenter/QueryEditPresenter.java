@@ -137,7 +137,8 @@ public class QueryEditPresenter
             setDirty(true);
         }));
         registerHandler(editorPresenter.getView().asWidget().addDomHandler(e -> {
-            if (e.isShiftKeyDown() && KeyCodes.KEY_ENTER == e.getNativeKeyCode()) {
+            if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
+                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
                 e.preventDefault();
                 run(true, true);
             }
