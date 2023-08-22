@@ -7447,6 +7447,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Result'
+        tokenError:
+          $ref: '#/components/schemas/TokenError'
     DataInfoSection:
       type: object
       properties:
@@ -7628,8 +7630,13 @@ components:
       - localZoneId
     DefaultLocation:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/Location'
+      properties:
+        colNo:
+          type: integer
+          format: int32
+        lineNo:
+          type: integer
+          format: int32
     Dependency:
       type: object
       properties:
@@ -13273,6 +13280,15 @@ components:
           - Offset
       required:
       - use
+    TokenError:
+      type: object
+      properties:
+        from:
+          $ref: '#/components/schemas/DefaultLocation'
+        text:
+          type: string
+        to:
+          $ref: '#/components/schemas/DefaultLocation'
     TokenResponse:
       type: object
       properties:
