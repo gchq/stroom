@@ -1,14 +1,18 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
 
     <g:ThinSplitLayoutPanel styleName="QueryHelpViewImpl max">
         <g:west size="270">
             <g:SimplePanel styleName="QueryHelpViewImpl max dashboard-panel">
-                <g:MaxScrollPanel styleName="max queryHelpTree">
-                    <g:SimplePanel ui:field="elementChooser"/>
-                </g:MaxScrollPanel>
+                <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical">
+                    <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
+                    <g:MaxScrollPanel styleName="max queryHelpTree">
+                        <g:SimplePanel ui:field="elementChooser"/>
+                    </g:MaxScrollPanel>
+                </g:FlowPanel>
             </g:SimplePanel>
         </g:west>
         <g:center>

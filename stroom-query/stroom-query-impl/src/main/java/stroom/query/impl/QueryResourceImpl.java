@@ -22,21 +22,36 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.StructureElement;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QueryHelpItemsRequest;
+import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
+import stroom.query.shared.QueryHelpItemsResult;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.util.NullSafe;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.filter.FilterFieldDefinition;
+import stroom.view.api.ViewStore;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
@@ -46,20 +61,34 @@ class QueryResourceImpl implements QueryResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryResourceImpl.class);
 
+    public static final String FIELD_NAME = "Name";
+    public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
+    public static final FilterFieldMappers<DocRef> DOC_REF_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FIELD_DEF_NAME, DocRef::getName));
+    public static final FilterFieldMappers<StructureElement> STRUCTURE_ELEMENTS_FILTER_FIELD_MAPPERS =
+            FilterFieldMappers.of(FilterFieldMapper.of(FIELD_DEF_NAME, StructureElement::getTitle));
+    public static final FilterFieldMappers<FunctionSignature> FUNC_SIG_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FIELD_DEF_NAME, FunctionSignature::getName));
+    public static final FilterFieldMappers<AbstractField> FIELD_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FIELD_DEF_NAME, AbstractField::getName));
+
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<QueryService> queryServiceProvider;
     private final Provider<FunctionService> functionServiceProvider;
     private final Provider<StructureElementService> structureElementServiceProvider;
+    private final Provider<ViewStore> viewStoreProvider;
 
     @Inject
     QueryResourceImpl(final Provider<NodeService> nodeServiceProvider,
                       final Provider<QueryService> dashboardServiceProvider,
                       final Provider<FunctionService> functionServiceProvider,
-                      final Provider<StructureElementService> structureElementServiceProvider) {
+                      final Provider<StructureElementService> structureElementServiceProvider,
+                      final Provider<ViewStore> viewStoreProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.queryServiceProvider = dashboardServiceProvider;
         this.functionServiceProvider = functionServiceProvider;
         this.structureElementServiceProvider = structureElementServiceProvider;
+        this.viewStoreProvider = viewStoreProvider;
     }
 
     @Override
@@ -154,5 +183,70 @@ class QueryResourceImpl implements QueryResource {
     @AutoLogged(OperationType.UNLOGGED)
     public List<StructureElement> fetchStructureElements() {
         return structureElementServiceProvider.get().getStructureElements();
+    }
+
+    @AutoLogged(OperationType.UNLOGGED) // Called on each keystroke and has little audit value
+    @Override
+    public QueryHelpItemsResult fetchQueryHelpItems(final QueryHelpItemsRequest request) {
+
+        final List<DocRef> dataSources = getData(
+                request,
+                HelpItemType.DATA_SOURCE,
+                DOC_REF_FILTER_FIELD_MAPPERS,
+                () -> viewStoreProvider.get().list());
+
+        final List<StructureElement> structureElements = getData(
+                request,
+                HelpItemType.STRUCTURE,
+                STRUCTURE_ELEMENTS_FILTER_FIELD_MAPPERS,
+                () -> structureElementServiceProvider.get().getStructureElements());
+
+        final List<FunctionSignature> functionSignatures = getData(
+                request,
+                HelpItemType.FUNCTION,
+                FUNC_SIG_FILTER_FIELD_MAPPERS,
+                () -> functionServiceProvider.get()
+                        .getSignatures()
+                        .stream()
+                        .flatMap(sig -> sig.asAliases().stream())
+                        .collect(Collectors.toList()));
+
+        final DataSource dataSource = request.getDataSourceRef() != null
+                ? queryServiceProvider.get().getDataSource(request.getDataSourceRef())
+                : queryServiceProvider.get().getDataSource(request.getQuery());
+
+        final List<AbstractField> dataSourceFields = dataSource != null
+                ? getData(request, HelpItemType.FIELD, FIELD_FILTER_FIELD_MAPPERS, dataSource::getFields)
+                : Collections.emptyList();
+
+        final QueryHelpItemsResult queryHelpItemsResult = new QueryHelpItemsResult(
+                dataSources,
+                structureElements,
+                functionSignatures,
+                dataSourceFields);
+
+        return queryHelpItemsResult;
+    }
+
+    private <T> List<T> getData(final QueryHelpItemsRequest request,
+                                final HelpItemType helpItemType,
+                                final FilterFieldMappers<T> filterFieldMappers,
+                                final Supplier<List<T>> dataSupplier) {
+        final String filterInput = request.getFilterInput();
+        final Set<HelpItemType> requestedTypes = request.getRequestedTypes();
+
+        if (requestedTypes.contains(helpItemType)) {
+            if (NullSafe.isBlankString(filterInput)) {
+                return dataSupplier.get();
+            } else {
+                return QuickFilterPredicateFactory.filterStream(
+                                filterInput,
+                                filterFieldMappers,
+                                NullSafe.stream(dataSupplier.get()))
+                        .toList();
+            }
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

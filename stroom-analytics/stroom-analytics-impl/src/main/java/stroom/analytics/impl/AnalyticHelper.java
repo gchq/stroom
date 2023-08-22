@@ -17,7 +17,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.view.impl.ViewStore;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import java.util.ArrayList;

@@ -31,6 +31,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import java.util.List;

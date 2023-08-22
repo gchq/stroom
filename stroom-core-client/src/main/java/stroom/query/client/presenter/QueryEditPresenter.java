@@ -17,9 +17,13 @@
 
 package stroom.query.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.event.WindowCloseEvent;
+import stroom.datasource.shared.DataSourceResource;
+import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.Documentation;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -30,14 +34,19 @@ import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.query.client.presenter.QueryHelpPresenter.HelpItemType;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpDataSupplier;
+import stroom.query.shared.QueryHelpItemsRequest;
+import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
+import stroom.query.shared.QueryHelpItemsResult;
+import stroom.query.shared.QueryResource;
 import stroom.util.shared.GwtNullSafe;
 import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -56,13 +65,16 @@ import java.util.function.Function;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
-        implements HasDirtyHandlers, HasToolbar {
+        implements HasDirtyHandlers, HasToolbar, HasHandlers {
 
     private static final Set<HelpItemType> SUPPORTED_HELP_TYPES = EnumSet.of(
             HelpItemType.DATA_SOURCE,
             HelpItemType.STRUCTURE,
             HelpItemType.FIELD,
             HelpItemType.FUNCTION);
+
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
 
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
@@ -76,6 +88,7 @@ public class QueryEditPresenter
     private boolean readOnly = true;
     private final QueryModel queryModel;
     private final ThinSplitLayoutPanel splitLayoutPanel;
+    private final RestFactory restFactory;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
@@ -97,6 +110,7 @@ public class QueryEditPresenter
         this.indexLoader = indexLoader;
         this.textPresenter = textPresenter;
         this.views = views;
+        this.restFactory = restFactory;
 
         queryModel = new QueryModel(
                 restFactory,
@@ -193,11 +207,6 @@ public class QueryEditPresenter
         queryHelpPresenter.setQueryHelpDataSupplier(new QueryHelpDataSupplier() {
 
             @Override
-            public DataSourceFieldsMap getDataSourceFieldsMap() {
-                return indexLoader.getDataSourceFieldsMap();
-            }
-
-            @Override
             public String decorateFieldName(final String fieldName) {
                 return GwtNullSafe.get(fieldName, str ->
                         str.contains(" ")
@@ -218,8 +227,47 @@ public class QueryEditPresenter
             }
 
             @Override
-            public void fetchDataSources(final Consumer<List<DocRef>> dataSourceConsumer) {
-                views.fetchViews(dataSourceConsumer);
+            public void fetchQueryHelpItems(final String filterInput,
+                                            final Consumer<QueryHelpItemsResult> resultConsumer) {
+                final QueryHelpItemsRequest queryHelpItemsRequest = QueryHelpItemsRequest.fromQuery(
+                        getQuery(),
+                        filterInput,
+                        SUPPORTED_HELP_TYPES);
+
+                final Rest<QueryHelpItemsResult> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            GwtNullSafe.consume(result, resultConsumer);
+                        })
+                        .onFailure(throwable -> AlertEvent.fireError(
+                                QueryEditPresenter.this,
+                                throwable.getMessage(),
+                                null))
+                        .call(QUERY_RESOURCE)
+                        .fetchQueryHelpItems(queryHelpItemsRequest);
+            }
+
+            @Override
+            public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
+                                                   final Consumer<String> descriptionConsumer) {
+
+                if (dataSourceDocRef != null) {
+                    final Rest<Documentation> rest = restFactory.create();
+                    rest
+                            .onSuccess(documentation -> {
+                                GWT.log("Description:\n" + documentation);
+                                GwtNullSafe.consume(
+                                        documentation,
+                                        Documentation::getMarkdown,
+                                        descriptionConsumer);
+                            })
+                            .onFailure(throwable -> AlertEvent.fireError(
+                                    QueryEditPresenter.this,
+                                    throwable.getMessage(),
+                                    null))
+                            .call(DATA_SOURCE_RESOURCE)
+                            .fetchDocumentation(dataSourceDocRef);
+                }
             }
         });
     }

@@ -2,7 +2,6 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.StructureElement;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
@@ -20,7 +19,9 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -38,8 +39,9 @@ public class QueryStructure implements HasHandlers {
     private final UiConfigCache uiConfigCache;
     private final MarkdownConverter markdownConverter;
 
-
     private List<StructureQueryHelpItem> orphanedItems;
+    // StructureElement.title => StructureQueryHelpItem
+    private Map<String, StructureQueryHelpItem> orphanedItemsMap = new HashMap<>();
     private ThemeType themeType = null;
 
 
@@ -56,50 +58,87 @@ public class QueryStructure implements HasHandlers {
 
     public void fetchStructureElements(
             final QueryHelpItem parent,
+            final List<StructureElement> structureElements,
             final Consumer<List<StructureQueryHelpItem>> consumer) {
         // Theme is baked into the html due to the way prism works, so we need to rebuild
         // if the theme has changed
-        if (GwtNullSafe.hasItems(orphanedItems) && !hasThemeChanged()) {
-            // Build a new list of items attaching each to the new parent
-            consumer.accept(cloneWithNewParent(parent, orphanedItems));
-        } else {
-            fetchHelpUrl(helpUrl -> {
-                final Rest<List<StructureElement>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            orphanedItems = result
-                                    .stream()
-                                    .map(structureElement -> {
-                                        final SafeHtml detailHtml = buildDescriptionHtml(
-                                                structureElement.getDescription());
+        fetchHelpUrl(helpUrl -> {
+            if (hasThemeChanged()) {
+                orphanedItemsMap.clear();
+                themeType = markdownConverter.geCurrentThemeType();
+            }
 
-                                        // No parent at this point as we want to hold these
-                                        // items for other many callers to re-use
-                                        return new StructureQueryHelpItem(
-                                                null,
-                                                structureElement.getTitle(),
-                                                detailHtml,
-                                                structureElement.getSnippets(),
-                                                helpUrl);
-                                    })
-                                    .collect(Collectors.toList());
-                            // Not the theme type in use when we built, so we can see if a rebuild is needed
-                            // in future
-                            themeType = markdownConverter.geCurrentThemeType();
-                            consumer.accept(cloneWithNewParent(parent, orphanedItems));
-                        })
-                        .onFailure(throwable -> AlertEvent.fireError(
-                                this,
-                                throwable.getMessage(),
-                                null))
-                        .call(QUERY_RESOURCE)
-                        .fetchStructureElements();
-            });
+            final List<StructureQueryHelpItem> items = GwtNullSafe.stream(structureElements)
+                    .map(structureElement -> buildItem(parent, structureElement, helpUrl))
+                    .collect(Collectors.toList());
+
+            consumer.accept(items);
+        });
+//        if (GwtNullSafe.hasItems(orphanedItems) && !hasThemeChanged()) {
+//            // Build a new list of items attaching each to the new parent
+//            consumer.accept(cloneWithNewParent(parent, orphanedItems));
+//        } else {
+//            fetchHelpUrl(helpUrl -> {
+//                final Rest<List<StructureElement>> rest = restFactory.create();
+//                rest
+//                        .onSuccess(result -> {
+//                            orphanedItems = result
+//                                    .stream()
+//                                    .map(structureElement -> {
+//                                        final SafeHtml detailHtml = buildDescriptionHtml(
+//                                                structureElement.getDescription());
+//
+//                                        // No parent at this point as we want to hold these
+//                                        // items for other callers to re-use
+//                                        return new StructureQueryHelpItem(
+//                                                null,
+//                                                structureElement.getTitle(),
+//                                                detailHtml,
+//                                                structureElement.getSnippets(),
+//                                                helpUrl);
+//                                    })
+//                                    .collect(Collectors.toList());
+//                            // Not the theme type in use when we built, so we can see if a rebuild is needed
+//                            // in future
+//                            themeType = markdownConverter.geCurrentThemeType();
+//                            consumer.accept(cloneWithNewParent(parent, orphanedItems));
+//                        })
+//                        .onFailure(throwable -> AlertEvent.fireError(
+//                                this,
+//                                throwable.getMessage(),
+//                                null))
+//                        .call(QUERY_RESOURCE)
+//                        .fetchStructureElements();
+//            });
+//        }
+    }
+
+    private StructureQueryHelpItem buildItem(final QueryHelpItem parent,
+                                             final StructureElement structureElement,
+                                             final String helpUrl) {
+
+        final String title = structureElement.getTitle();
+        StructureQueryHelpItem orphanedItem = orphanedItemsMap.get(title);
+        if (orphanedItem == null) {
+            final SafeHtml detailHtml = buildDescriptionHtml(
+                    structureElement.getDescription());
+
+            // No parent at this point as we want to hold these
+            // items for other callers to re-use
+            orphanedItem = new StructureQueryHelpItem(
+                    null,
+                    structureElement.getTitle(),
+                    detailHtml,
+                    structureElement.getSnippets(),
+                    helpUrl);
+            orphanedItemsMap.put(title, orphanedItem);
         }
+
+        return orphanedItem.withNewParent(parent);
     }
 
     private List<StructureQueryHelpItem> cloneWithNewParent(final QueryHelpItem parent,
-                                                      final List<StructureQueryHelpItem> items) {
+                                                            final List<StructureQueryHelpItem> items) {
         return GwtNullSafe.stream(items)
                 .map(item -> item.withNewParent(parent))
                 .collect(Collectors.toList());
@@ -158,9 +197,9 @@ public class QueryStructure implements HasHandlers {
         }
 
         private StructureQueryHelpItem(final QueryHelpItem parent,
-                                      final String title,
-                                      final SafeHtml detail,
-                                      final List<String> snippets) {
+                                       final String title,
+                                       final SafeHtml detail,
+                                       final List<String> snippets) {
             super(parent, title, false);
             this.detail = detail;
             this.snippets = snippets;

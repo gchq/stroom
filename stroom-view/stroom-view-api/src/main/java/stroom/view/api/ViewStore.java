@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.view.impl;
+package stroom.view.api;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;

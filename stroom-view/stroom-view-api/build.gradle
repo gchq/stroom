@@ -1,0 +1,10 @@
+ext.moduleName = 'stroom.view.api'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+}
