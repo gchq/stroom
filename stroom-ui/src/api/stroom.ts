@@ -3790,9 +3790,8 @@ export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
   sourceType?:
-    | "ANALYTIC_RULE"
-    | "BATCH_ANALYTIC_RULE"
-    | "ANALYTIC_RULE_UI"
+    | "TABLE_BUILDER_ANALYTIC"
+    | "SCHEDULED_QUERY_ANALYTIC"
     | "DASHBOARD_UI"
     | "QUERY_UI"
     | "API"
