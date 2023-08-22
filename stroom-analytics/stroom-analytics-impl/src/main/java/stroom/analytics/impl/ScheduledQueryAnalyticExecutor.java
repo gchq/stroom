@@ -201,7 +201,7 @@ public class ScheduledQueryAnalyticExecutor {
 
             final SearchRequestSource searchRequestSource = SearchRequestSource
                     .builder()
-                    .sourceType(SourceType.BATCH_ANALYTIC_RULE)
+                    .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
                     .componentId(SearchRequestBuilder.COMPONENT_ID)
                     .build();
 

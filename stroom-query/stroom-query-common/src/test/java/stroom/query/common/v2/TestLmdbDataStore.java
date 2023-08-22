@@ -192,7 +192,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
-                .sourceType(SourceType.ANALYTIC_RULE)
+                .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .build();
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(

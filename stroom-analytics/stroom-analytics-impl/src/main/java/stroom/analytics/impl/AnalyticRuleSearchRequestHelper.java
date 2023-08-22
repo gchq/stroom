@@ -27,7 +27,7 @@ public class AnalyticRuleSearchRequestHelper {
                 " - " +
                 alertRule.getName());
         SearchRequest sampleRequest = new SearchRequest(
-                SearchRequestSource.builder().sourceType(SourceType.ANALYTIC_RULE).build(),
+                SearchRequestSource.builder().sourceType(SourceType.TABLE_BUILDER_ANALYTIC).build(),
                 queryKey,
                 sampleQuery,
                 null,
