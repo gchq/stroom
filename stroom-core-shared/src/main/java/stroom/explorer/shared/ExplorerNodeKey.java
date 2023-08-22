@@ -1,6 +1,7 @@
 package stroom.explorer.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,6 +17,9 @@ public class ExplorerNodeKey {
     private final String uuid;
     @JsonProperty
     private final String rootNodeUuid;
+
+    @JsonIgnore
+    private volatile int hashcode;
 
     @JsonCreator
     public ExplorerNodeKey(@JsonProperty("type") final String type,
@@ -40,7 +44,10 @@ public class ExplorerNodeKey {
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, uuid, rootNodeUuid);
+        if (hashcode == 0) {
+            hashcode = Objects.hash(type, uuid, rootNodeUuid);
+        }
+        return hashcode;
     }
 
     @Override
@@ -55,5 +62,14 @@ public class ExplorerNodeKey {
         return Objects.equals(type, that.type) &&
                 Objects.equals(uuid, that.uuid) &&
                 Objects.equals(rootNodeUuid, that.rootNodeUuid);
+    }
+
+    @Override
+    public String toString() {
+        return "ExplorerNodeKey{" +
+                "type='" + type + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", rootNodeUuid='" + rootNodeUuid + '\'' +
+                '}';
     }
 }

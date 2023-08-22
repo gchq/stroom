@@ -115,6 +115,10 @@ public class ExplorerNode implements HasDisplayValue {
         return children;
     }
 
+    public boolean hasChildren() {
+        return children != null && !children.isEmpty();
+    }
+
     public String getRootNodeUuid() {
         return rootNodeUuid;
     }
@@ -160,11 +164,6 @@ public class ExplorerNode implements HasDisplayValue {
         return getDisplayValue();
     }
 
-    public enum NodeState {
-        OPEN,
-        CLOSED,
-        LEAF
-    }
 
     public static Builder builder() {
         return new Builder();
@@ -173,6 +172,10 @@ public class ExplorerNode implements HasDisplayValue {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 
@@ -267,9 +270,9 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder rootNodeUuid(final ExplorerNode rootNodeUuid) {
-            this.rootNodeUuid = rootNodeUuid != null
-                    ? rootNodeUuid.getUuid()
+        public Builder rootNodeUuid(final ExplorerNode node) {
+            this.rootNodeUuid = node != null
+                    ? node.getUuid()
                     : null;
             return this;
         }
@@ -293,5 +296,15 @@ public class ExplorerNode implements HasDisplayValue {
                     isFavourite,
                     new ExplorerNodeKey(type, uuid, rootNodeUuid));
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum NodeState {
+        OPEN,
+        CLOSED,
+        LEAF
     }
 }
