@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"queryKey", "highlights", "errors", "complete", "results"})
+@JsonPropertyOrder({"queryKey", "highlights", "errors", "tokenError", "complete", "results"})
 @JsonInclude(Include.NON_NULL)
 public class DashboardSearchResponse {
 
@@ -57,6 +58,8 @@ public class DashboardSearchResponse {
      */
     @JsonProperty
     private final List<String> errors;
+    @JsonProperty
+    private final TokenError tokenError;
 
     /**
      * Complete means that all index shards have been searched across the
@@ -73,12 +76,14 @@ public class DashboardSearchResponse {
                                    @JsonProperty("queryKey") final QueryKey queryKey,
                                    @JsonProperty("highlights") final Set<String> highlights,
                                    @JsonProperty("errors") final List<String> errors,
+                                   @JsonProperty("tokenError") final TokenError tokenError,
                                    @JsonProperty("complete") final boolean complete,
                                    @JsonProperty("results") final List<Result> results) {
         this.node = node;
         this.queryKey = queryKey;
         this.highlights = highlights;
         this.errors = errors;
+        this.tokenError = tokenError;
         this.complete = complete;
         this.results = results;
     }
@@ -99,6 +104,10 @@ public class DashboardSearchResponse {
         return errors;
     }
 
+    public TokenError getTokenError() {
+        return tokenError;
+    }
+
     public boolean isComplete() {
         return complete;
     }
@@ -116,15 +125,17 @@ public class DashboardSearchResponse {
             return false;
         }
         final DashboardSearchResponse that = (DashboardSearchResponse) o;
-        return complete == that.complete && Objects.equals(queryKey, that.queryKey) && Objects.equals(
-                highlights,
-                that.highlights) && Objects.equals(errors, that.errors) && Objects.equals(results,
-                that.results);
+        return complete == that.complete &&
+                Objects.equals(queryKey, that.queryKey) &&
+                Objects.equals(highlights, that.highlights) &&
+                Objects.equals(errors, that.errors) &&
+                Objects.equals(tokenError, that.tokenError) &&
+                Objects.equals(results, that.results);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryKey, highlights, errors, complete, results);
+        return Objects.hash(queryKey, highlights, errors, tokenError, complete, results);
     }
 
     @Override
@@ -133,6 +144,7 @@ public class DashboardSearchResponse {
                 "queryKey=" + queryKey +
                 ", highlights=" + highlights +
                 ", errors=" + errors +
+                ", tokenError=" + tokenError +
                 ", complete=" + complete +
                 ", results=" + results +
                 '}';

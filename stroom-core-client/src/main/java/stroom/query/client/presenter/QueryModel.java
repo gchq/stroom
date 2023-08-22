@@ -17,6 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.util.shared.TokenError;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.DestroyReason;
@@ -61,6 +62,7 @@ public class QueryModel {
 
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
+    private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
 
     public QueryModel(final RestFactory restFactory,
                       final IndexLoader indexLoader,
@@ -424,6 +426,9 @@ public class QueryModel {
         }
 
         setErrors(response.getErrors());
+        if (response.getTokenError() != null) {
+            setTokenErrors(response.getTokenError());
+        }
 
         if (response.isComplete()) {
             // Let the query presenter know search is inactive.
@@ -436,6 +441,10 @@ public class QueryModel {
 
     private void setErrors(final List<String> errors) {
         errorListeners.forEach(listener -> listener.onError(errors));
+    }
+
+    private void setTokenErrors(final TokenError tokenError) {
+        tokenErrorListeners.forEach(listener -> listener.onError(tokenError));
     }
 
     public boolean isSearching() {
@@ -497,6 +506,14 @@ public class QueryModel {
 
     public void removeSearchErrorListener(final SearchErrorListener listener) {
         errorListeners.remove(listener);
+    }
+
+    public void addTokenErrorListener(final TokenErrorListener listener) {
+        tokenErrorListeners.add(listener);
+    }
+
+    public void removeTokenErrorListener(final TokenErrorListener listener) {
+        tokenErrorListeners.remove(listener);
     }
 
     public void setSourceType(final SourceType sourceType) {

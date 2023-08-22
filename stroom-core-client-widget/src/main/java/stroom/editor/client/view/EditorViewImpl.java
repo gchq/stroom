@@ -348,6 +348,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public void setMarkers(final List<Marker> markers) {
+        editor.setMarkers(markers);
+    }
+
+    @Override
     public void setErrorText(final String title, final String errorText) {
 
         final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()

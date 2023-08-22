@@ -81,6 +81,7 @@ public class SearchResponseMapper {
                 searchResponse.getKey(),
                 highlights,
                 errors,
+                null,
                 searchResponse.complete(),
                 results);
     }
