@@ -19,7 +19,6 @@ package stroom.query.impl;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.util.shared.TokenError;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -46,7 +45,6 @@ import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
-import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.string.ExceptionStringUtil;
 

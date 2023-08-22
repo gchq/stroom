@@ -17,7 +17,6 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.util.shared.TokenError;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.DestroyReason;
@@ -30,6 +29,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.util.shared.TokenError;
 import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.core.client.GWT;
