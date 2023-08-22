@@ -222,7 +222,7 @@ public class ColumnFunctionEditorPresenter
                                             final Consumer<QueryHelpItemsResult> resultConsumer) {
                 final QueryHelpItemsRequest queryHelpItemsRequest = QueryHelpItemsRequest.fromDataSource(
                         GwtNullSafe.get(tablePresenter.getTableSettings(), TableComponentSettings::getDataSourceRef),
-                        filterInput,SUPPORTED_HELP_TYPES);
+                        filterInput, SUPPORTED_HELP_TYPES);
 
                 final Rest<QueryHelpItemsResult> rest = restFactory.create();
                 rest

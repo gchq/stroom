@@ -63,13 +63,13 @@ class QueryResourceImpl implements QueryResource {
 
     public static final String FIELD_NAME = "Name";
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
-    FilterFieldMappers<DocRef> DOC_REF_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+    public static final FilterFieldMappers<DocRef> DOC_REF_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FIELD_DEF_NAME, DocRef::getName));
-    FilterFieldMappers<StructureElement> STRUCTURE_ELEMENTS_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FIELD_DEF_NAME, StructureElement::getTitle));
-    FilterFieldMappers<FunctionSignature> FUNC_SIG_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+    public static final FilterFieldMappers<StructureElement> STRUCTURE_ELEMENTS_FILTER_FIELD_MAPPERS =
+            FilterFieldMappers.of(FilterFieldMapper.of(FIELD_DEF_NAME, StructureElement::getTitle));
+    public static final FilterFieldMappers<FunctionSignature> FUNC_SIG_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FIELD_DEF_NAME, FunctionSignature::getName));
-    FilterFieldMappers<AbstractField> FIELD_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+    public static final FilterFieldMappers<AbstractField> FIELD_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FIELD_DEF_NAME, AbstractField::getName));
 
     private final Provider<NodeService> nodeServiceProvider;
