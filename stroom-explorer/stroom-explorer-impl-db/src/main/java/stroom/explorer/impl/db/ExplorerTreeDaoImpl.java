@@ -7,6 +7,7 @@ import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.svg.shared.SvgImage;
 
@@ -180,21 +181,29 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .selectFrom(n)
                                     .fetch())
                     .stream()
-                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, r ->
-                            ExplorerNode
-                                    .builder()
-                                    .type(r.getType())
-                                    .uuid(r.getUuid())
-                                    .name(r.getName())
-                                    .tags(r.getTags())
-                                    .icon(iconProvider.apply(r.getType()))
+                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, rec ->
+                            ExplorerNode.builder()
+                                    .type(rec.getType())
+                                    .uuid(rec.getUuid())
+                                    .name(rec.getName())
+                                    .tags(rec.getTags())
+                                    .icon(iconProvider.apply(rec.getType()))
                                     .build()));
 
             // Add the roots.
             roots.forEach(rootId -> {
                 final ExplorerNode root = nodeMap.get(rootId);
                 if (root != null) {
-                    treeModel.add(null, root);
+                    // The nodes as pulled from the DB don't have the rootNodeUuid set so any equality
+                    // test on the system or favourite nodes will fail. Thus use the ones from constants
+                    // so, we are comparing like with like.
+                    if (Objects.equals(ExplorerConstants.SYSTEM_NODE.getType(), root.getType())) {
+                        treeModel.add(null, ExplorerConstants.SYSTEM_NODE);
+                    } else if (Objects.equals(ExplorerConstants.FAVOURITES_NODE.getType(), root.getType())) {
+                        treeModel.add(null, ExplorerConstants.FAVOURITES_NODE);
+                    } else {
+                        treeModel.add(null, root);
+                    }
                 }
             });
 

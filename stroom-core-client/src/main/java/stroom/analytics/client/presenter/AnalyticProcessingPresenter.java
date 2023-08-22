@@ -19,20 +19,29 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
-import stroom.analytics.shared.AnalyticProcessorFilter;
-import stroom.analytics.shared.AnalyticProcessorFilterResource;
-import stroom.analytics.shared.AnalyticProcessorFilterTracker;
+import stroom.analytics.shared.AnalyticProcessConfig;
+import stroom.analytics.shared.AnalyticProcessResource;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.AnalyticRuleType;
-import stroom.analytics.shared.FindAnalyticProcessorFilterCriteria;
+import stroom.analytics.shared.AnalyticTracker;
+import stroom.analytics.shared.AnalyticTrackerData;
 import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
+import stroom.analytics.shared.ScheduledQueryAnalyticTrackerData;
+import stroom.analytics.shared.StreamingAnalyticProcessConfig;
+import stroom.analytics.shared.StreamingAnalyticTrackerData;
+import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.node.client.NodeManager;
+import stroom.pipeline.client.event.ChangeDataEvent;
+import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -43,34 +52,39 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
 
 public class AnalyticProcessingPresenter
         extends DocumentEditPresenter<AnalyticProcessingView, AnalyticRuleDoc>
-        implements AnalyticProcessingUiHandlers {
+        implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
-    private static final AnalyticProcessorFilterResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
-            GWT.create(AnalyticProcessorFilterResource.class);
+    private static final AnalyticProcessResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
+            GWT.create(AnalyticProcessResource.class);
 
+    private final EditorPresenter editorPresenter;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private AnalyticProcessorFilter loadedFilter;
-
-    private String analyticRuleUuid;
 
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
                                        final RestFactory restFactory,
+                                       final EditorPresenter editorPresenter,
                                        final DateTimeFormatter dateTimeFormatter,
                                        final NodeManager nodeManager) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.editorPresenter = editorPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
         view.setUiHandlers(this);
+        view.setQueryEditorView(editorPresenter.getView());
+
+        this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
 
         nodeManager.listAllNodes(
                 list -> {
@@ -85,28 +99,12 @@ public class AnalyticProcessingPresenter
                                 null));
     }
 
-    private void read(final AnalyticProcessorFilter filter) {
-        if (filter == null) {
-            AnalyticProcessorFilter newFilter = AnalyticProcessorFilter
-                    .builder()
-                    .analyticUuid(analyticRuleUuid)
-                    .minMetaCreateTimeMs(System.currentTimeMillis())
-                    .build();
-            read(
-                    newFilter.isEnabled(),
-                    newFilter.getMinMetaCreateTimeMs(),
-                    newFilter.getMaxMetaCreateTimeMs(),
-                    newFilter.getNode());
-
-        } else {
-            loadedFilter = filter;
-            read(
-                    filter.isEnabled(),
-                    filter.getMinMetaCreateTimeMs(),
-                    filter.getMaxMetaCreateTimeMs(),
-                    filter.getNode());
-            refreshTracker();
-        }
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(editorPresenter.addValueChangeHandler(event -> {
+            setDirty(true);
+        }));
     }
 
     @Override
@@ -114,31 +112,73 @@ public class AnalyticProcessingPresenter
         refreshTracker();
     }
 
+    @Override
+    public void onProcessingTypeChange() {
+        ChangeDataEvent.fire(this, getView().getProcessingType());
+    }
+
+    @Override
+    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<AnalyticProcessType> handler) {
+        return addHandlerToSource(ChangeDataEvent.getType(), handler);
+    }
+
     private void refreshTracker() {
-        if (loadedFilter != null && loadedFilter.getUuid() != null) {
-            final Rest<AnalyticProcessorFilterTracker> rest = restFactory.create();
+        if (getEntity() != null && getEntity().getUuid() != null) {
+            final Rest<AnalyticTracker> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
                         final SafeHtml safeHtml = getInfo(result);
                         getView().setInfo(safeHtml);
                     })
                     .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
-                    .getTracker(loadedFilter.getUuid());
+                    .getTracker(getEntity().getUuid());
         }
     }
 
-    public SafeHtml getInfo(final AnalyticProcessorFilterTracker tracker) {
+    public SafeHtml getInfo(final AnalyticTracker tracker) {
         final TableBuilder tb = new TableBuilder();
 
         if (tracker != null) {
-            addRowDateString(tb, "Last Poll Time", tracker.getLastPollMs());
-            tb.row(SafeHtmlUtil.from("Last Poll Task Count"), SafeHtmlUtil.from(tracker.getLastPollTaskCount()));
-            tb.row(SafeHtmlUtil.from("Last Meta Id"), SafeHtmlUtil.from(tracker.getLastMetaId()));
-            tb.row(SafeHtmlUtil.from("Last Event Id"), SafeHtmlUtil.from(tracker.getLastEventId()));
-            addRowDateString(tb, "Last Event Time", tracker.getLastEventTime());
-            tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(tracker.getMetaCount()));
-            tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(tracker.getEventCount()));
-            tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(tracker.getMessage()));
+            final AnalyticTrackerData trackerData = tracker.getAnalyticTrackerData();
+            if (trackerData instanceof TableBuilderAnalyticTrackerData) {
+                final TableBuilderAnalyticTrackerData td =
+                        (TableBuilderAnalyticTrackerData) trackerData;
+
+                addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
+                tb.row(SafeHtmlUtil.from("Last Stream Count"), SafeHtmlUtil.from(td.getLastStreamCount()));
+                tb.row(SafeHtmlUtil.from("Last Stream Id"), SafeHtmlUtil.from(td.getLastStreamId()));
+                tb.row(SafeHtmlUtil.from("Last Event Id"), SafeHtmlUtil.from(td.getLastEventId()));
+                addRowDateString(tb, "Last Event Time", td.getLastEventTime());
+                tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
+                tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
+                if (td.getMessage() != null && td.getMessage().length() > 0) {
+                    tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                }
+
+            } else if (trackerData instanceof ScheduledQueryAnalyticTrackerData) {
+                final ScheduledQueryAnalyticTrackerData td =
+                        (ScheduledQueryAnalyticTrackerData) trackerData;
+
+                addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
+                addRowDateString(tb, "Last Window Start Time", td.getLastWindowStartTimeMs());
+                addRowDateString(tb, "Last Window End Time", td.getLastWindowEndTimeMs());
+                if (td.getMessage() != null && td.getMessage().length() > 0) {
+                    tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                }
+
+            } else if (trackerData instanceof StreamingAnalyticTrackerData) {
+                final StreamingAnalyticTrackerData td =
+                        (StreamingAnalyticTrackerData) trackerData;
+
+                addRowDateString(tb, "Last Execution Time", td.getLastExecutionTimeMs());
+                tb.row(SafeHtmlUtil.from("Last Stream Count"), SafeHtmlUtil.from(td.getLastStreamCount()));
+                tb.row(SafeHtmlUtil.from("Last Steam Id"), SafeHtmlUtil.from(td.getLastStreamId()));
+                tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
+                tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
+                if (td.getMessage() != null && td.getMessage().length() > 0) {
+                    tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
+                }
+            }
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
@@ -148,73 +188,94 @@ public class AnalyticProcessingPresenter
 
     private void addRowDateString(final TableBuilder tb, final String label, final Long ms) {
         if (ms != null) {
-            tb.row(label, dateTimeFormatter.formatWithDuration(ms));
+            if (ms == 0) {
+                tb.row(label, "---");
+            } else {
+                tb.row(label, dateTimeFormatter.formatWithDuration(ms));
+            }
         }
     }
 
-    private void read(final boolean enabled,
-                      final Long minMetaCreateTimeMs,
-                      final Long maxMetaCreateTimeMs,
-                      final String node) {
-        getView().setEnabled(enabled);
-        getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
-        getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
-        getView().setNode(node);
-    }
-
-    private AnalyticProcessorFilter write(final AnalyticProcessorFilter filter) {
-        return filter.copy()
-                .enabled(getView().isEnabled())
-                .minMetaCreateTimeMs(getView().getMinMetaCreateTimeMs())
-                .maxMetaCreateTimeMs(getView().getMaxMetaCreateTimeMs())
-                .node(getView().getNode())
-                .build();
-    }
 
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
-        analyticRuleUuid = analyticRuleDoc.getUuid();
-        refresh(analyticRuleUuid);
+        final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+        if (analyticProcessConfig != null) {
+            editorPresenter.setText(analyticRuleDoc.getQuery());
+            getView().setEnabled(analyticProcessConfig.isEnabled());
+            getView().setNode(analyticProcessConfig.getNode());
 
-        getView().setProcessingType(analyticRuleDoc.getAnalyticRuleType());
-        getView().setDataRetention(analyticRuleDoc.getDataRetention());
-    }
+            getView().setProcessingType(analyticRuleDoc.getAnalyticProcessType() == null
+                    ? AnalyticProcessType.SCHEDULED_QUERY
+                    : analyticRuleDoc.getAnalyticProcessType());
 
-    private void refresh(final String analyticDocUuid) {
-        final FindAnalyticProcessorFilterCriteria criteria = new FindAnalyticProcessorFilterCriteria();
-        criteria.setAnalyticDocUuid(analyticDocUuid);
-        final Rest<ResultPage<AnalyticProcessorFilter>> rest = restFactory.create();
-        rest
-                .onSuccess(result -> read(result.getFirst()))
-                .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
-                .find(criteria);
+            if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
+                final TableBuilderAnalyticProcessConfig ac =
+                        (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
+                getView().setDataRetention(ac.getDataRetention());
+                getView().setTimeToWaitForData(ac.getTimeToWaitForData());
+                getView().setMinMetaCreateTimeMs(ac.getMinMetaCreateTimeMs());
+                getView().setMaxMetaCreateTimeMs(ac.getMaxMetaCreateTimeMs());
+
+            } else if (analyticProcessConfig instanceof ScheduledQueryAnalyticProcessConfig) {
+                final ScheduledQueryAnalyticProcessConfig ac =
+                        (ScheduledQueryAnalyticProcessConfig) analyticProcessConfig;
+
+                getView().setQueryFrequency(ac.getQueryFrequency());
+                getView().setTimeToWaitForData(ac.getTimeToWaitForData());
+                getView().setMinEventTimeMs(ac.getMinEventTimeMs());
+                getView().setMaxEventTimeMs(ac.getMaxEventTimeMs());
+
+            } else if (analyticProcessConfig instanceof StreamingAnalyticProcessConfig) {
+                final StreamingAnalyticProcessConfig ac =
+                        (StreamingAnalyticProcessConfig) analyticProcessConfig;
+
+                getView().setMinMetaCreateTimeMs(ac.getMinMetaCreateTimeMs());
+                getView().setMaxMetaCreateTimeMs(ac.getMaxMetaCreateTimeMs());
+            }
+        }
+
+        refreshTracker();
     }
 
     @Override
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc analyticRuleDoc) {
-        if (loadedFilter != null) {
-            loadedFilter = write(loadedFilter);
-            final Rest<AnalyticProcessorFilter> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> refresh(analyticRuleUuid))
-                    .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
-                    .update(loadedFilter.getUuid(), loadedFilter);
-        } else {
-            final AnalyticProcessorFilter newFilter = write(AnalyticProcessorFilter
-                    .builder()
-                    .analyticUuid(analyticRuleUuid)
-                    .build());
-            final Rest<AnalyticProcessorFilter> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> refresh(analyticRuleUuid))
-                    .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
-                    .create(newFilter);
+        AnalyticProcessConfig<?> analyticProcessConfig = null;
+        switch (getView().getProcessingType()) {
+            case STREAMING:
+                analyticProcessConfig = new StreamingAnalyticProcessConfig(
+                        getView().isEnabled(),
+                        getView().getNode(),
+                        getView().getMinMetaCreateTimeMs(),
+                        getView().getMaxMetaCreateTimeMs());
+                break;
+            case TABLE_BUILDER:
+                analyticProcessConfig =
+                        new TableBuilderAnalyticProcessConfig(
+                                getView().isEnabled(),
+                                getView().getNode(),
+                                getView().getMinMetaCreateTimeMs(),
+                                getView().getMaxMetaCreateTimeMs(),
+                                getView().getTimeToWaitForData(),
+                                getView().getDataRetention());
+                break;
+            case SCHEDULED_QUERY:
+                analyticProcessConfig =
+                        new ScheduledQueryAnalyticProcessConfig(
+                                getView().isEnabled(),
+                                getView().getNode(),
+                                getView().getMinEventTimeMs(),
+                                getView().getMaxEventTimeMs(),
+                                getView().getTimeToWaitForData(),
+                                getView().getQueryFrequency());
+                break;
         }
 
         return analyticRuleDoc.copy()
+                .query(editorPresenter.getText())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .analyticRuleType(getView().getProcessingType())
-                .dataRetention(getView().getDataRetention())
+                .analyticProcessType(getView().getProcessingType())
+                .analyticProcessConfig(analyticProcessConfig)
                 .build();
     }
 
@@ -224,6 +285,8 @@ public class AnalyticProcessingPresenter
     }
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
+
+        void setQueryEditorView(View view);
 
         boolean isEnabled();
 
@@ -237,15 +300,31 @@ public class AnalyticProcessingPresenter
 
         void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
 
+        Long getMinEventTimeMs();
+
+        void setMinEventTimeMs(Long minEventTimeMs);
+
+        Long getMaxEventTimeMs();
+
+        void setMaxEventTimeMs(Long maxEventTimeMs);
+
         void setNodes(final List<String> nodes);
 
         String getNode();
 
         void setNode(final String node);
 
-        AnalyticRuleType getProcessingType();
+        AnalyticProcessType getProcessingType();
 
-        void setProcessingType(AnalyticRuleType analyticRuleType);
+        void setProcessingType(AnalyticProcessType analyticProcessType);
+
+        SimpleDuration getQueryFrequency();
+
+        void setQueryFrequency(SimpleDuration queryFrequency);
+
+        SimpleDuration getTimeToWaitForData();
+
+        void setTimeToWaitForData(SimpleDuration timeToWaitForData);
 
         SimpleDuration getDataRetention();
 

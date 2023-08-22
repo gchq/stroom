@@ -66,7 +66,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     }
 
     private String createToken() {
-        final Instant timeToExpiryInSeconds = LocalDateTime.now().plusYears(1).toInstant(ZoneOffset.UTC);
+        final Instant timeToExpiryInSeconds = LocalDateTime.now(ZoneOffset.UTC).plusYears(1).toInstant(ZoneOffset.UTC);
         final TokenBuilder tokenBuilder = tokenBuilderFactory
                 .builder()
                 .expirationTime(timeToExpiryInSeconds)

@@ -270,7 +270,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .withSubDirectory(subDirectory);
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
-                .sourceType(SourceType.ANALYTIC_RULE)
+                .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .componentId(componentId)
                 .build();
 
@@ -303,7 +303,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                     if (securityContext.isAdmin() ||
                             analyticRuleDoc.getCreateUser().equals(securityContext.getUserId())) {
                         list.add(new ResultStoreInfo(
-                                new SearchRequestSource(SourceType.ANALYTIC_RULE,
+                                new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
                                         analyticRuleDoc.getUuid(),
                                         null),
                                 searchRequest.getKey(),

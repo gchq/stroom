@@ -23,9 +23,10 @@ public class DateTimeFormatter {
             return null;
         }
 
+        final long now = System.currentTimeMillis();
         return format(ms) +
                 " (" +
-                ClientDurationUtil.humanise(-(System.currentTimeMillis() - ms), true) +
+                ClientDurationUtil.humanise(ms - now, true) +
                 ")";
     }
 

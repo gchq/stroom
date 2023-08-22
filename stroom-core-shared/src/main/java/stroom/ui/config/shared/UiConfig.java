@@ -52,8 +52,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private final String maintenanceMessage;
 
     @JsonProperty
-    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the " +
-            "user requests lower values.")
+    @JsonPropertyDescription("The default maximum number of search results that new dashboard tables will request.")
     private final String defaultMaxResults;
 
     @JsonProperty

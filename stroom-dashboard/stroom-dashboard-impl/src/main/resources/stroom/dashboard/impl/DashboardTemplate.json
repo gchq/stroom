@@ -5,9 +5,7 @@
     "name" : "Table",
     "settings" : {
       "type" : "table",
-      "queryId" : "query-JT8D7",
-      "fields" : [ ],
-      "maxResults" : [ 1000000 ]
+      "queryId" : "query-JT8D7"
     }
   }, {
     "type" : "query",

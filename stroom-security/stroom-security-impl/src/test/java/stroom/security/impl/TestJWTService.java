@@ -80,7 +80,9 @@ class TestJWTService {
                     ZoneOffset.UTC);
 
             // Can't be sure when the token was created so just ensure there is a year left on it.
-            assertThat(Period.between(LocalDateTime.now().toLocalDate(), expiryTime.toLocalDate()).getYears())
+            assertThat(Period.between(
+                    LocalDateTime.now(ZoneOffset.UTC).toLocalDate(),
+                    expiryTime.toLocalDate()).getYears())
                     .isGreaterThan(1);
         } catch (MalformedClaimException e) {
             e.printStackTrace();

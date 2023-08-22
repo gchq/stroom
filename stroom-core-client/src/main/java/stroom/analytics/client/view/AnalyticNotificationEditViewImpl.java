@@ -17,8 +17,6 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
-import stroom.util.shared.time.SimpleDuration;
-import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -36,10 +34,6 @@ public class AnalyticNotificationEditViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox enabled;
-    @UiField
-    DurationPicker timeToWaitForData;
-    @UiField
     SimplePanel destinationFeed;
     @UiField
     CustomCheckBox useSourceFeedIfPossible;
@@ -52,32 +46,6 @@ public class AnalyticNotificationEditViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void focus() {
-        enabled.setFocus(true);
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return this.enabled.getValue();
-    }
-
-    @Override
-    public void setEnabled(final boolean enabled) {
-        this.enabled.setValue(enabled);
-    }
-
-
-    @Override
-    public SimpleDuration getTimeToWaitForData() {
-        return timeToWaitForData.getValue();
-    }
-
-    @Override
-    public void setTimeToWaitForData(final SimpleDuration timeToWaitForData) {
-        this.timeToWaitForData.setValue(timeToWaitForData);
     }
 
     @Override

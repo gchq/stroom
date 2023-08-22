@@ -37,8 +37,6 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
     private final FieldFormatter fieldFormatter;
     private final Provider<DetectionsWriter> detectionsWriterProvider;
     private DocRef destinationFeed;
-//    private final String additionalFieldsPrefix;
-//    private final boolean outputIndexFields;
 
     private FieldIndex fieldIndex;
     private DetectionConsumer detectionConsumer;
@@ -49,19 +47,19 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
 
     @Inject
     public DetectionWriterProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                final AlertConfig alertConfig,
+                                final AnalyticsConfig analyticsConfig,
                                 final Provider<DetectionsWriter> detectionsWriterProvider) {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.detectionsWriterProvider = detectionsWriterProvider;
 
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
-                .localZoneId(alertConfig.getTimezone())
+                .localZoneId(analyticsConfig.getTimezone())
                 .build();
         fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeSettings));
     }
 
-    private DetectionConsumer getDetectionConsumer() {
+    public DetectionConsumer getDetectionConsumer() {
         if (detectionConsumer == null) {
             final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
             detectionsWriter.setFeed(destinationFeed);
@@ -123,26 +121,18 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
             final Generator generator = compiledField.getGenerator();
 
             if (generator != null) {
-                if (compiledField.hasAggregate()) {
-                    LOGGER.error("Rules error: Query " +
-                            analyticRuleDoc.getUuid() +
-                            " contains aggregate functions." +
-                            " This is not supported for Event Type Rules.");
-                    return null;
-                } else {
-                    generator.set(vals, storedValues);
-                    final Val value = generator.eval(storedValues, null);
-                    output[index] = new CompiledFieldValue(compiledField, value);
+                generator.set(vals, storedValues);
+                final Val value = generator.eval(storedValues, null);
+                output[index] = new CompiledFieldValue(compiledField, value);
 
-                    if (compiledField.getCompiledFilter() != null) {
-                        // If we are filtering then we need to evaluate this field
-                        // now so that we can filter the resultant value.
+                if (compiledField.getCompiledFilter() != null) {
+                    // If we are filtering then we need to evaluate this field
+                    // now so that we can filter the resultant value.
 
-                        if (compiledField.getCompiledFilter() != null && value != null
-                                && !compiledField.getCompiledFilter().match(value.toString())) {
-                            // We want to exclude this item.
-                            return null;
-                        }
+                    if (compiledField.getCompiledFilter() != null && value != null
+                            && !compiledField.getCompiledFilter().match(value.toString())) {
+                        // We want to exclude this item.
+                        return null;
                     }
                 }
             }
@@ -198,17 +188,9 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
             final CompiledFieldValue compiledFieldValue = fieldVals[idx];
             if (compiledFieldValue != null && compiledFieldValue.getVal() != null) {
                 if (fieldIndex.getStreamIdFieldIndex() == idx) {
-                    try {
-                        streamId.set(compiledFieldValue.getVal().toLong());
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
+                    streamId.set(getSafeLong(compiledFieldValue.getVal()));
                 } else if (fieldIndex.getEventIdFieldIndex() == idx) {
-                    try {
-                        eventId.set(compiledFieldValue.getVal().toLong());
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
+                    eventId.set(getSafeLong(compiledFieldValue.getVal()));
                 } else {
                     final String fieldValStr =
                             fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
@@ -237,6 +219,24 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();
         detectionConsumer.accept(detection);
+    }
+
+    public static Long getSafeLong(final String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public static Long getSafeLong(final Val value) {
+        try {
+            return value.toLong();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return null;
     }
 
     private static class CompiledFieldValue {

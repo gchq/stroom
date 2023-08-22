@@ -1917,7 +1917,6 @@ button.main-menu svg {
 }
 
 .queryHelpItemCell-text {
-	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 	white-space: nowrap;
 }
 

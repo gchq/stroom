@@ -51,9 +51,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Singleton
 public class AnalyticsDataSetup {
 
     private final ContentImportService contentImportService;
@@ -230,7 +232,11 @@ public class AnalyticsDataSetup {
 
     public void checkStreamCount(final int expectedStreamCount) {
         // Check we have the expected number of streams.
-        assertThat(metaService.find(FindMetaCriteria.unlocked()).size()).isEqualTo(expectedStreamCount);
+        assertThat(getStreamCount()).isEqualTo(expectedStreamCount);
+    }
+
+    public int getStreamCount() {
+        return metaService.find(FindMetaCriteria.unlocked()).size();
     }
 
     public Meta getNewestMeta() {

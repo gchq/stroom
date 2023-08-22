@@ -9,7 +9,7 @@
         </g:FlowPanel>
         <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
         <g:FlowPanel ui:field="buttonContainer" styleName="dock-min navigation-header-buttons"/>
-        <g:SimplePanel styleName="explorerTree-container" ui:field="explorerTreeContainer"/>
+        <g:MaxScrollPanel addStyleNames="dock-max explorerTree-container" ui:field="explorerTreeContainer"/>
         <g:SimplePanel ui:field="activityPanel" styleName="dock-min"/>
     </g:FlowPanel>
 </ui:UiBinder> 

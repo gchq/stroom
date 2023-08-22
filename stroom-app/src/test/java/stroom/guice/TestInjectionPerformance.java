@@ -18,7 +18,7 @@ package stroom.guice;
 
 
 import stroom.analytics.AnalyticsDataSetup;
-import stroom.analytics.impl.AnalyticsExecutor;
+import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
@@ -121,7 +121,7 @@ class TestInjectionPerformance {
                 MetaService.class,
                 Store.class,
                 AnalyticRuleStore.class,
-                AnalyticsExecutor.class,
+                TableBuilderAnalyticExecutor.class,
                 AnalyticsDataSetup.class,
         };
 

@@ -92,7 +92,7 @@ public class CopyDocumentPresenter
         }
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
-        final PopupSize popupSize = PopupSize.resizable(400, 550);
+        final PopupSize popupSize = PopupSize.resizable(400, 600, 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

@@ -2,10 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:FlowPanel styleName="quickFilter-container">
+    <g:FlowPanel styleName="max dock-container-vertical quickFilter-container">
         <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min"/>
-        <g:SimplePanel styleName="stroom-control explorerTree-container">
-            <g:SimplePanel styleName="max" ui:field="explorerTreeContainer"/>
-        </g:SimplePanel>
+        <g:MaxScrollPanel ui:field="explorerTreeContainer" styleName="dock-max stroom-control__no-padding"/>
     </g:FlowPanel>
 </ui:UiBinder> 

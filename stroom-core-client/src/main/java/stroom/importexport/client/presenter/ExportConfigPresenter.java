@@ -117,7 +117,7 @@ public class ExportConfigPresenter
         treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         treePresenter.refresh();
 
-        final PopupSize popupSize = PopupSize.resizable(500, 600);
+        final PopupSize popupSize = PopupSize.resizable(400, 600, 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

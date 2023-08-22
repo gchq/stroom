@@ -482,6 +482,10 @@ public class QueryResultTablePresenter
         return addHandler(ExpanderEvent.getType(), handler);
     }
 
+    public MultiSelectionModelImpl<TableRow> getSelectionModel() {
+        return selectionModel;
+    }
+
     public interface QueryResultTableView extends View, HasUiHandlers<TableUiHandlers> {
 
         void setTableView(View view);
