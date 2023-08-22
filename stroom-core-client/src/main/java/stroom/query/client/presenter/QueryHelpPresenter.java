@@ -50,6 +50,7 @@ import stroom.widget.util.client.TableBuilder;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -377,7 +378,8 @@ public class QueryHelpPresenter
                                     dataSourceHeading,
                                     name,
                                     htmlBuilder.toSafeHtml(),
-                                    null);
+                                    null,
+                                    viewDocRef);
 
                             keyedAceCompletionProvider.addCompletion(
                                     DATA_SOURCES_COMPLETION_KEY,
@@ -567,10 +569,29 @@ public class QueryHelpPresenter
     }
 
     private void updateDetails(final QueryHelpItem queryHelpItem) {
-//        final QueryHelpItem selectedItem = elementSelectionModel.getSelectedObject();
         final QueryHelpItem selectedItem = queryHelpItem;
         if (selectedItem == null) {
             getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
+        } else if (queryHelpItem instanceof DataSourceHelpItem) {
+            // Special case for dataSource items to lazily load the markdown documentation.
+            // This is the name/type/uuid of the docref as a minimum
+            final SafeHtml detailSafeHtml = queryHelpItem.getDetail();
+
+            queryHelpDataSupplier.fetchDataSourceDescription(
+                    ((DataSourceHelpItem) queryHelpItem).getDocRef(),
+                    markdown -> {
+                        if (GwtNullSafe.isBlankString(markdown)) {
+                            getView().setDetails(detailSafeHtml);
+                        } else {
+                            final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(markdown);
+                            final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
+                            final SafeHtml safeHtml = safeHtmlBuilder.append(detailSafeHtml)
+                                    .append(markDownSafeHtml)
+                                    .toSafeHtml();
+
+                            getView().setDetails(safeHtml);
+                        }
+                    });
         } else {
             getView().setDetails(GwtNullSafe.requireNonNullElse(
                     selectedItem.getDetail(),
@@ -893,12 +914,15 @@ public class QueryHelpPresenter
     public static class DataSourceHelpItem extends QueryHelpItem {
 
         private final SafeHtml detail;
+        private final DocRef docRef;
 
         public DataSourceHelpItem(final QueryHelpItem parent,
                                   final String title,
                                   final SafeHtml detail,
-                                  final String helpUrlBase) {
+                                  final String helpUrlBase,
+                                  final DocRef docRef) {
             super(parent, title, false);
+            this.docRef = docRef;
 
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(htmlBuilder2 -> {
@@ -941,6 +965,10 @@ public class QueryHelpPresenter
         @Override
         public SafeHtml getDetail() {
             return detail;
+        }
+
+        public DocRef getDocRef() {
+            return docRef;
         }
 
         @Override
@@ -1084,5 +1112,7 @@ public class QueryHelpPresenter
         boolean isSupported(final HelpItemType helpItemType);
 
         void fetchQueryHelpItems(final String filterInput, final Consumer<QueryHelpItemsResult> resultConsumer);
+
+        void fetchDataSourceDescription(final DocRef dataSourceDocRef, final Consumer<String> descriptionConsumer);
     }
 }

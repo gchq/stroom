@@ -19,9 +19,11 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.event.WindowCloseEvent;
+import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.Documentation;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -42,9 +44,9 @@ import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -72,6 +74,7 @@ public class QueryEditPresenter
             HelpItemType.FUNCTION);
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
 
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
@@ -242,6 +245,29 @@ public class QueryEditPresenter
                                 null))
                         .call(QUERY_RESOURCE)
                         .fetchQueryHelpItems(queryHelpItemsRequest);
+            }
+
+            @Override
+            public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
+                                                   final Consumer<String> descriptionConsumer) {
+
+                if (dataSourceDocRef != null) {
+                    final Rest<Documentation> rest = restFactory.create();
+                    rest
+                            .onSuccess(documentation -> {
+                                GWT.log("Description:\n" + documentation);
+                                GwtNullSafe.consume(
+                                        documentation,
+                                        Documentation::getMarkdown,
+                                        descriptionConsumer);
+                            })
+                            .onFailure(throwable -> AlertEvent.fireError(
+                                    QueryEditPresenter.this,
+                                    throwable.getMessage(),
+                                    null))
+                            .call(DATA_SOURCE_RESOURCE)
+                            .fetchDocumentation(dataSourceDocRef);
+                }
             }
         });
     }

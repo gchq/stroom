@@ -53,7 +53,6 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -236,6 +235,12 @@ public class ColumnFunctionEditorPresenter
                                 null))
                         .call(QUERY_RESOURCE)
                         .fetchQueryHelpItems(queryHelpItemsRequest);
+            }
+
+            @Override
+            public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
+                                                   final Consumer<String> descriptionConsumer) {
+                // DataSources not pickable here, so no-op
             }
         };
     }
