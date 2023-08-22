@@ -263,6 +263,7 @@ public class QueryEditPresenter
 //            final ExpressionOperator decorated = expressionDecorator.apply(root);
 
         // Start search.
+        tablePresenter.getSelectionModel().clear();
         queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
         queryModel.startNewSearch(
                 editorPresenter.getText(),
