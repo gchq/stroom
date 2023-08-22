@@ -57,6 +57,8 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
     @Inject
     private StreamingAnalyticExecutor analyticsExecutor;
     @Inject
+    private AnalyticsDataSetup analyticsDataSetup;
+    @Inject
     private NodeInfo nodeInfo;
 
     @Test
@@ -108,7 +110,7 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                         null,
                         null))
                 .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(detections)
+                        .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
                         .build())
                 .build();

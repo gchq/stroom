@@ -57,6 +57,8 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
     @Inject
     private ScheduledQueryAnalyticExecutor analyticsExecutor;
     @Inject
+    private AnalyticsDataSetup analyticsDataSetup;
+    @Inject
     private NodeInfo nodeInfo;
 
     @Test
@@ -83,7 +85,7 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                         INSTANT,
                         INSTANT))
                 .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(detections)
+                        .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
                         .build())
                 .build();

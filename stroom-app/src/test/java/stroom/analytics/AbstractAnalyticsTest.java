@@ -71,8 +71,6 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
             .timeUnit(TimeUnit.MILLISECONDS)
             .build();
 
-    private static boolean doneSetup;
-
     @Inject
     private MetaService metaService;
     @Inject
@@ -81,24 +79,31 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
     private AnalyticRuleStore analyticRuleStore;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
-    protected static DocRef detections;
 
     @BeforeEach
     final void setup() {
-        if (!doneSetup) {
-            analyticsDataSetup.setup();
+        // Delete existing rules.
+        analyticRuleStore.list().forEach(docRef -> analyticRuleStore.deleteDocument(docRef.getUuid()));
 
-            // Create somewhere to put the alerts.
-            detections = analyticsDataSetup.getDetections();
-
-            doneSetup = true;
-        }
         // Delete existing detections.
         final ResultPage<Meta> metaList = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.DETECTIONS));
         for (final Meta meta : metaList.getValues()) {
             metaService.delete(meta.getId());
         }
-        analyticRuleStore.list().forEach(docRef -> analyticRuleStore.deleteDocument(docRef.getUuid()));
+
+        // Find out how many streams are left.
+        final int streamCount = analyticsDataSetup.getStreamCount();
+        if (streamCount == 0) {
+            // Do setup if we don't have any streams.
+            analyticsDataSetup.setup();
+        }
+        // Make sure we now have 8 streams.
+        analyticsDataSetup.checkStreamCount(8);
+
+        // Make sure there is a detections feed.
+        if (analyticsDataSetup.getDetections() == null) {
+            throw new NullPointerException("Detections missing");
+        }
     }
 
     @Override

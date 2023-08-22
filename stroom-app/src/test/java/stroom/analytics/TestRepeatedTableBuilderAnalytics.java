@@ -87,7 +87,7 @@ class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
                         INSTANT,
                         null))
                 .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(detections)
+                        .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
                         .build())
                 .build();

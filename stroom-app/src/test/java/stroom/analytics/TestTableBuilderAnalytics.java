@@ -57,6 +57,8 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
     @Inject
     private TableBuilderAnalyticExecutor analyticsExecutor;
     @Inject
+    private AnalyticsDataSetup analyticsDataSetup;
+    @Inject
     private NodeInfo nodeInfo;
 
     @Test
@@ -111,7 +113,7 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                         INSTANT,
                         null))
                 .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(detections)
+                        .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
                         .build())
                 .build();
