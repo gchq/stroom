@@ -45,7 +45,8 @@ public class AnalyticNotificationConfig {
     public AnalyticNotificationConfig(@JsonProperty("limitNotifications") final boolean limitNotifications,
                                       @JsonProperty("maxNotifications") final int maxNotifications,
                                       @JsonProperty("resumeAfter") final SimpleDuration resumeAfter,
-                                      @JsonProperty("destinationType") final AnalyticNotificationDestinationType destinationType,
+                                      @JsonProperty("destinationType")
+                                          final AnalyticNotificationDestinationType destinationType,
                                       @JsonProperty("destination") final AnalyticNotificationDestination destination) {
         this.limitNotifications = limitNotifications;
         this.maxNotifications = maxNotifications;

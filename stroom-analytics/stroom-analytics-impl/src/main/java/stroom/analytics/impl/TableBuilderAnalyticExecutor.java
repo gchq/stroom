@@ -503,7 +503,8 @@ public class TableBuilderAnalyticExecutor {
                                          final AnalyticDataStore dataStore,
                                          final CurrentDbState currentDbState,
                                          final TaskContext parentTaskContext) {
-        final AnalyticNotificationConfig analyticNotificationConfig = analytic.analyticRuleDoc.getAnalyticNotificationConfig();
+        final AnalyticNotificationConfig analyticNotificationConfig =
+                analytic.analyticRuleDoc.getAnalyticNotificationConfig();
         final AnalyticNotificationDestination destination = analyticNotificationConfig.getDestination();
         if (destination instanceof final AnalyticNotificationStreamDestination streamDestination) {
             final DocRef feedDocRef = streamDestination.getDestinationFeed();

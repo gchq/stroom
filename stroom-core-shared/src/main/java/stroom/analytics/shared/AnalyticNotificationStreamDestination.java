@@ -21,7 +21,8 @@ public class AnalyticNotificationStreamDestination extends AnalyticNotificationD
 
     @JsonCreator
     public AnalyticNotificationStreamDestination(@JsonProperty("destinationFeed") final DocRef destinationFeed,
-                                                 @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
+                                                 @JsonProperty("useSourceFeedIfPossible")
+                                                 final boolean useSourceFeedIfPossible) {
         this.destinationFeed = destinationFeed;
         this.useSourceFeedIfPossible = useSourceFeedIfPossible;
     }

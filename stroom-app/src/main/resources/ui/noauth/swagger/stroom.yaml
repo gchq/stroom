@@ -6615,6 +6615,23 @@ components:
           format: int64
     AnalyticNotificationConfig:
       type: object
+      properties:
+        destination:
+          $ref: '#/components/schemas/AnalyticNotificationDestination'
+        destinationType:
+          type: string
+          enum:
+          - STREAM
+          - EMAIL
+        limitNotifications:
+          type: boolean
+        maxNotifications:
+          type: integer
+          format: int32
+        resumeAfter:
+          $ref: '#/components/schemas/SimpleDuration'
+    AnalyticNotificationDestination:
+      type: object
       discriminator:
         propertyName: type
       properties:
@@ -6622,27 +6639,25 @@ components:
           type: string
       required:
       - type
-    AnalyticNotificationEmailConfig:
+    AnalyticNotificationEmailDestination:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
           emailAddress:
             type: string
-          timeToWaitForData:
-            $ref: '#/components/schemas/SimpleDuration'
-    AnalyticNotificationStreamConfig:
+    AnalyticNotificationStreamDestination:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
           destinationFeed:
             $ref: '#/components/schemas/DocRef'
           useSourceFeedIfPossible:
             type: boolean
-    AnalyticProcessConfig:
+    AnalyticProcessConfigObject:
       type: object
       discriminator:
         propertyName: type
@@ -6661,7 +6676,7 @@ components:
         analyticNotificationConfig:
           $ref: '#/components/schemas/AnalyticNotificationConfig'
         analyticProcessConfig:
-          $ref: '#/components/schemas/AnalyticProcessConfig'
+          $ref: '#/components/schemas/AnalyticProcessConfigObject'
         analyticProcessType:
           type: string
           enum:
@@ -11858,7 +11873,7 @@ components:
     ScheduledQueryAnalyticProcessConfig:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - $ref: '#/components/schemas/AnalyticProcessConfigObject'
       - type: object
         properties:
           maxEventTimeMs:
@@ -12699,7 +12714,7 @@ components:
     StreamingAnalyticProcessConfig:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - $ref: '#/components/schemas/AnalyticProcessConfigObject'
       - type: object
         properties:
           maxMetaCreateTimeMs:
@@ -12895,7 +12910,7 @@ components:
     TableBuilderAnalyticProcessConfig:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - $ref: '#/components/schemas/AnalyticProcessConfigObject'
       - type: object
         properties:
           dataRetention:

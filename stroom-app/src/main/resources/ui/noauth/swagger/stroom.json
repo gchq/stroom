@@ -9582,6 +9582,28 @@
       },
       "AnalyticNotificationConfig" : {
         "type" : "object",
+        "properties" : {
+          "destination" : {
+            "$ref" : "#/components/schemas/AnalyticNotificationDestination"
+          },
+          "destinationType" : {
+            "type" : "string",
+            "enum" : [ "STREAM", "EMAIL" ]
+          },
+          "limitNotifications" : {
+            "type" : "boolean"
+          },
+          "maxNotifications" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "resumeAfter" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          }
+        }
+      },
+      "AnalyticNotificationDestination" : {
+        "type" : "object",
         "discriminator" : {
           "propertyName" : "type"
         },
@@ -9592,26 +9614,23 @@
         },
         "required" : [ "type" ]
       },
-      "AnalyticNotificationEmailConfig" : {
+      "AnalyticNotificationEmailDestination" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+          "$ref" : "#/components/schemas/AnalyticNotificationDestination"
         }, {
           "type" : "object",
           "properties" : {
             "emailAddress" : {
               "type" : "string"
-            },
-            "timeToWaitForData" : {
-              "$ref" : "#/components/schemas/SimpleDuration"
             }
           }
         } ]
       },
-      "AnalyticNotificationStreamConfig" : {
+      "AnalyticNotificationStreamDestination" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+          "$ref" : "#/components/schemas/AnalyticNotificationDestination"
         }, {
           "type" : "object",
           "properties" : {
@@ -9624,7 +9643,7 @@
           }
         } ]
       },
-      "AnalyticProcessConfig" : {
+      "AnalyticProcessConfigObject" : {
         "type" : "object",
         "discriminator" : {
           "propertyName" : "type"
@@ -9649,7 +9668,7 @@
             "$ref" : "#/components/schemas/AnalyticNotificationConfig"
           },
           "analyticProcessConfig" : {
-            "$ref" : "#/components/schemas/AnalyticProcessConfig"
+            "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
           },
           "analyticProcessType" : {
             "type" : "string",
@@ -15797,7 +15816,7 @@
       "ScheduledQueryAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticProcessConfig"
+          "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
         }, {
           "type" : "object",
           "properties" : {
@@ -16900,7 +16919,7 @@
       "StreamingAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticProcessConfig"
+          "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
         }, {
           "type" : "object",
           "properties" : {
@@ -17171,7 +17190,7 @@
       "TableBuilderAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticProcessConfig"
+          "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
         }, {
           "type" : "object",
           "properties" : {
