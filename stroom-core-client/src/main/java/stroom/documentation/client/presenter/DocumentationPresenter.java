@@ -71,7 +71,6 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
                                final DocumentationDoc document,
                                final boolean readOnly) {
                 presenter.setText(document.getDocumentation());
-                GWT.log("setting readOnly: " + readOnly);
                 presenter.setReadOnly(readOnly);
                 // Select the tab here to ensure the markdown editor toolbar display state (based
                 // on the readOnly value) is updated.
