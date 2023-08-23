@@ -3,11 +3,11 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
-    <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="notificationDestinationFeed" label="Destination Feed For Detections">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="analyticStreamDestinationFeed" label="Destination Feed For Detections">
             <g:SimplePanel ui:field="destinationFeed"/>
         </form:FormGroup>
-        <form:FormGroup identity="notificationUseSourceFeedIfPossible" label="Use Source Feed If Possible">
+        <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible">
             <tickbox:CustomCheckBox ui:field="useSourceFeedIfPossible"/>
         </form:FormGroup>
     </g:FlowPanel>

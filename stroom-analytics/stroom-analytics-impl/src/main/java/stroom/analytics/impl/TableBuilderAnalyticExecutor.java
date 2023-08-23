@@ -5,7 +5,8 @@ import stroom.analytics.impl.DetectionConsumer.Detection;
 import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
 import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
+import stroom.analytics.shared.AnalyticNotificationDestination;
+import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -502,9 +503,10 @@ public class TableBuilderAnalyticExecutor {
                                          final AnalyticDataStore dataStore,
                                          final CurrentDbState currentDbState,
                                          final TaskContext parentTaskContext) {
-        final AnalyticNotificationConfig config = analytic.analyticRuleDoc.getAnalyticNotificationConfig();
-        if (config instanceof final AnalyticNotificationStreamConfig streamConfig) {
-            final DocRef feedDocRef = streamConfig.getDestinationFeed();
+        final AnalyticNotificationConfig analyticNotificationConfig = analytic.analyticRuleDoc.getAnalyticNotificationConfig();
+        final AnalyticNotificationDestination destination = analyticNotificationConfig.getDestination();
+        if (destination instanceof final AnalyticNotificationStreamDestination streamDestination) {
+            final DocRef feedDocRef = streamDestination.getDestinationFeed();
             if (feedDocRef == null) {
                 throw new RuntimeException("Destination feed not specified for notification in: " +
                         analytic.ruleIdentity());

@@ -17,7 +17,6 @@
 package stroom.analytics;
 
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -86,10 +85,7 @@ class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
                         null,
                         INSTANT,
                         null))
-                .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(analyticsDataSetup.getDetections())
-                        .useSourceFeedIfPossible(false)
-                        .build())
+                .analyticNotificationConfig(createNotificationConfig())
                 .build();
         writeRule(analyticRuleDoc);
 

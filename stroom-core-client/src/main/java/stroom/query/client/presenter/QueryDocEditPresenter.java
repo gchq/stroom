@@ -18,7 +18,9 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
+import stroom.analytics.shared.AnalyticNotificationConfig;
+import stroom.analytics.shared.AnalyticNotificationDestinationType;
+import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
@@ -152,11 +154,19 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                     .queryFrequency(oneHour)
                                     .timeToWaitForData(oneHour)
                                     .build();
-                    final AnalyticNotificationStreamConfig analyticNotificationConfig =
-                            AnalyticNotificationStreamConfig.builder()
+                    final AnalyticNotificationStreamDestination destination =
+                            AnalyticNotificationStreamDestination.builder()
                                     .useSourceFeedIfPossible(false)
                                     .destinationFeed(analyticUiDefaultConfig.getDefaultFeed())
                                     .build();
+                    final AnalyticNotificationConfig analyticNotificationConfig = AnalyticNotificationConfig
+                            .builder()
+                            .limitNotifications(false)
+                            .maxNotifications(100)
+                            .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
+                            .destinationType(AnalyticNotificationDestinationType.STREAM)
+                            .destination(destination)
+                            .build();
                     AnalyticRuleDoc updated = doc
                             .copy()
                             .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)

@@ -17,6 +17,9 @@
 package stroom.analytics;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AnalyticNotificationConfig;
+import stroom.analytics.shared.AnalyticNotificationDestinationType;
+import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
@@ -137,5 +140,16 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    protected AnalyticNotificationConfig createNotificationConfig() {
+        return AnalyticNotificationConfig
+                .builder()
+                .destinationType(AnalyticNotificationDestinationType.STREAM)
+                .destination(AnalyticNotificationStreamDestination.builder()
+                        .destinationFeed(analyticsDataSetup.getDetections())
+                        .useSourceFeedIfPossible(false)
+                        .build())
+                .build();
     }
 }

@@ -3,7 +3,9 @@ package stroom.analytics.impl;
 import stroom.analytics.impl.DetectionConsumer.Detection;
 import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
 import stroom.analytics.impl.DetectionConsumer.Value;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
+import stroom.analytics.shared.AnalyticNotificationConfig;
+import stroom.analytics.shared.AnalyticNotificationDestination;
+import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -156,9 +158,11 @@ public class ScheduledQueryAnalyticExecutor {
                 }
 
                 if (to.isAfter(from)) {
-                    if (analytic.analyticRuleDoc.getAnalyticNotificationConfig() instanceof
-                            final AnalyticNotificationStreamConfig analyticNotificationStreamConfig) {
-                        final String errorFeedName = analyticNotificationStreamConfig.getDestinationFeed().getName();
+                    final AnalyticNotificationConfig analyticNotificationConfig = analytic
+                            .analyticRuleDoc().getAnalyticNotificationConfig();
+                    final AnalyticNotificationDestination destination = analyticNotificationConfig.getDestination();
+                    if (destination instanceof final AnalyticNotificationStreamDestination streamDestination) {
+                        final String errorFeedName = streamDestination.getDestinationFeed().getName();
                         final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
                         final Runnable runnable = analyticErrorWritingExecutor.wrap(
                                 "Scheduled Query Analytic: " + analytic.ruleIdentity(),
@@ -167,7 +171,7 @@ public class ScheduledQueryAnalyticExecutor {
                                 parentTaskContext,
                                 taskContext -> processScheduledQueryAnalytic(
                                         analytic,
-                                        analyticNotificationStreamConfig,
+                                        streamDestination,
                                         timeFilter));
 
                         try {
@@ -189,7 +193,7 @@ public class ScheduledQueryAnalyticExecutor {
     }
 
     private void processScheduledQueryAnalytic(final ScheduledQueryAnalytic analytic,
-                                               final AnalyticNotificationStreamConfig streamConfig,
+                                               final AnalyticNotificationStreamDestination streamConfig,
                                                final TimeFilter timeFilter) {
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 

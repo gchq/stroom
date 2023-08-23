@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class AnalyticNotificationStreamConfig extends AnalyticNotificationConfig {
+public class AnalyticNotificationStreamDestination extends AnalyticNotificationDestination {
 
     @JsonProperty
     private final DocRef destinationFeed;
@@ -20,9 +20,8 @@ public class AnalyticNotificationStreamConfig extends AnalyticNotificationConfig
     private final boolean useSourceFeedIfPossible;
 
     @JsonCreator
-    public AnalyticNotificationStreamConfig(@JsonProperty("destinationFeed") final DocRef destinationFeed,
-                                            @JsonProperty("useSourceFeedIfPossible")
-                                            final boolean useSourceFeedIfPossible) {
+    public AnalyticNotificationStreamDestination(@JsonProperty("destinationFeed") final DocRef destinationFeed,
+                                                 @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
         this.destinationFeed = destinationFeed;
         this.useSourceFeedIfPossible = useSourceFeedIfPossible;
     }
@@ -43,7 +42,7 @@ public class AnalyticNotificationStreamConfig extends AnalyticNotificationConfig
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AnalyticNotificationStreamConfig that = (AnalyticNotificationStreamConfig) o;
+        final AnalyticNotificationStreamDestination that = (AnalyticNotificationStreamDestination) o;
         return Objects.equals(destinationFeed, that.destinationFeed) &&
                 useSourceFeedIfPossible == that.useSourceFeedIfPossible;
     }
@@ -55,7 +54,7 @@ public class AnalyticNotificationStreamConfig extends AnalyticNotificationConfig
 
     @Override
     public String toString() {
-        return "AnalyticNotification{" +
+        return "AnalyticNotificationStreamDestination{" +
                 ", destinationFeed=" + destinationFeed +
                 ", useSourceFeedIfPossible=" + useSourceFeedIfPossible +
                 '}';
@@ -77,7 +76,7 @@ public class AnalyticNotificationStreamConfig extends AnalyticNotificationConfig
         private Builder() {
         }
 
-        private Builder(final AnalyticNotificationStreamConfig config) {
+        private Builder(final AnalyticNotificationStreamDestination config) {
             this.destinationFeed = config.destinationFeed;
             this.useSourceFeedIfPossible = config.useSourceFeedIfPossible;
         }
@@ -92,8 +91,8 @@ public class AnalyticNotificationStreamConfig extends AnalyticNotificationConfig
             return this;
         }
 
-        public AnalyticNotificationStreamConfig build() {
-            return new AnalyticNotificationStreamConfig(
+        public AnalyticNotificationStreamDestination build() {
+            return new AnalyticNotificationStreamDestination(
                     destinationFeed,
                     useSourceFeedIfPossible);
         }

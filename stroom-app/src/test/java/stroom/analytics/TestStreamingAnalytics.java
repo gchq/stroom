@@ -17,7 +17,6 @@
 package stroom.analytics;
 
 import stroom.analytics.impl.StreamingAnalyticExecutor;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -109,10 +108,7 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                         nodeInfo.getThisNodeName(),
                         null,
                         null))
-                .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(analyticsDataSetup.getDetections())
-                        .useSourceFeedIfPossible(false)
-                        .build())
+                .analyticNotificationConfig(createNotificationConfig())
                 .build();
         writeRule(analyticRuleDoc);
 

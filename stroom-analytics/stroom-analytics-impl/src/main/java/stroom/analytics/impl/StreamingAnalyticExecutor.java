@@ -1,7 +1,8 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
+import stroom.analytics.shared.AnalyticNotificationDestination;
+import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -363,14 +364,15 @@ public class StreamingAnalyticExecutor {
 
         final AnalyticNotificationConfig analyticNotificationConfig = analytic
                 .analyticRuleDoc().getAnalyticNotificationConfig();
-        if (analyticNotificationConfig instanceof final AnalyticNotificationStreamConfig streamConfig) {
+        final AnalyticNotificationDestination destination = analyticNotificationConfig.getDestination();
+        if (destination instanceof final AnalyticNotificationStreamDestination streamDestination) {
             try {
                 final DetectionWriterProxy detectionWriter = detectionWriterProxyProvider.get();
                 detectionWriter.setAnalyticRuleDoc(analytic.analyticRuleDoc());
                 detectionWriter.setCompiledFields(compiledFields);
                 detectionWriter.setFieldIndex(fieldIndex);
-                if (!streamConfig.isUseSourceFeedIfPossible()) {
-                    detectionWriter.setDestinationFeed(streamConfig.getDestinationFeed());
+                if (!streamDestination.isUseSourceFeedIfPossible()) {
+                    detectionWriter.setDestinationFeed(streamDestination.getDestinationFeed());
                 }
 
                 final AnalyticFieldListConsumer analyticFieldListConsumer =
