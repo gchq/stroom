@@ -36,7 +36,6 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.Size;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -152,8 +151,8 @@ public class FlexLayout extends Composite {
 
     @Override
     public void onBrowserEvent(final Event event) {
+        final int eventType = event.getTypeInt();
         if (designMode) {
-            final int eventType = event.getTypeInt();
             if (Event.ONMOUSEMOVE == eventType) {
                 onMouseMove(event);
             } else if (MouseUtil.isPrimary(event)) {
@@ -163,6 +162,8 @@ public class FlexLayout extends Composite {
                     onMouseUp(event);
                 }
             }
+        } else if (MouseUtil.isPrimary(event) && Event.ONMOUSEUP == eventType) {
+            showMenu(event);
         }
     }
 
@@ -277,6 +278,29 @@ public class FlexLayout extends Composite {
         }
     }
 
+    private void showMenu(final Event event) {
+        final double x = event.getClientX();
+        final double y = event.getClientY();
+
+        // Find the selection target.
+        final MouseTarget mouseTarget = getMouseTarget(x, y, true, true);
+        if (mouseTarget != null) {
+            // If the event target was not a splitter then see if it was a tab.
+//            final TabData tab = mouseTarget.getFirstTab();
+//            if (Objects.equals(selection.getFirstTab(), tab)) {
+//                final TabLayout tabLayout = mouseTarget.tabLayout;
+            if (tabManager != null && mouseTarget.tabLayout != null && mouseTarget.tabWidget != null) {
+                final TabConfig tabConfig = mouseTarget.tabLayout.getTabLayoutConfig().get(mouseTarget.tabIndex);
+                tabManager.showMenu(
+                        mouseTarget.tabWidget.getElement(),
+                        this,
+                        mouseTarget.tabLayout,
+                        tabConfig);
+            }
+//            }
+        }
+    }
+
     private void finishSelection(final Event event) {
         final double x = event.getClientX();
         final double y = event.getClientY();
@@ -347,11 +371,12 @@ public class FlexLayout extends Composite {
                             changeHandler.onDirty();
 
                         } else if (tabManager != null) {
-                            tabManager.onMouseUp(event,
-                                    mouseTarget.tabWidget,
+                            final TabConfig tabConfig = mouseTarget.tabLayout.getTabLayoutConfig().get(mouseTarget.tabIndex);
+                            tabManager.showMenu(
+                                    mouseTarget.tabWidget.getElement(),
                                     this,
                                     tabLayout,
-                                    mouseTarget.tabIndex);
+                                    tabConfig);
                         }
                     }
                 }
@@ -1326,6 +1351,18 @@ public class FlexLayout extends Composite {
 
     public void setLayoutConstraints(final LayoutConstraints layoutConstraints) {
         this.layoutConstraints = layoutConstraints;
+
+        if (layoutConstraints.isFitWidth()) {
+            scrollPanel.removeStyleName("dashboard-scrollPanel--horizontal-scroll");
+        } else {
+            scrollPanel.addStyleName("dashboard-scrollPanel--horizontal-scroll");
+        }
+        if (layoutConstraints.isFitHeight()) {
+            scrollPanel.removeStyleName("dashboard-scrollPanel--vertical-scroll");
+        } else {
+            scrollPanel.addStyleName("dashboard-scrollPanel--vertical-scroll");
+        }
+
         clear();
         onResize();
     }
@@ -1334,10 +1371,8 @@ public class FlexLayout extends Composite {
                           final LayoutConstraints layoutConstraints,
                           final stroom.dashboard.shared.Size preferredSize) {
         this.layoutConfig = layoutConfig;
-        this.layoutConstraints = layoutConstraints;
         this.preferredSize = preferredSize;
-        clear();
-        onResize();
+        setLayoutConstraints(layoutConstraints);
     }
 
     private void showMarker(final double left, final double top, final double width, final double height) {
@@ -1713,7 +1748,7 @@ public class FlexLayout extends Composite {
                 final TabLayoutConfig tabLayoutConfig = (TabLayoutConfig) key;
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutConfig);
                 if (tabLayout == null) {
-                    tabLayout = new TabLayout(eventBus, tabLayoutConfig, changeHandler);
+                    tabLayout = new TabLayout(eventBus, this, tabManager, tabLayoutConfig, changeHandler);
                     if (tabLayoutConfig.getAllTabCount() > 0) {
                         for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
                             if (tabConfig.visible()) {
