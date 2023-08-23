@@ -35,6 +35,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -106,6 +107,7 @@ public class MarkdownEditPresenter
 
     @Override
     public List<Widget> getToolbars() {
+        GWT.log("getToolbars called");
         if (readOnly) {
             return Collections.emptyList();
         }

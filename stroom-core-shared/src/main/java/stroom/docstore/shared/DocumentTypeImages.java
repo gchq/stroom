@@ -16,6 +16,8 @@ public class DocumentTypeImages {
                 return SvgImage.DOCUMENT_DASHBOARD;
             case "Dictionary":
                 return SvgImage.DOCUMENT_DICTIONARY;
+            case "Documentation":
+                return SvgImage.DOCUMENT_DOCUMENTATION;
             case "ElasticCluster":
                 return SvgImage.DOCUMENT_ELASTIC_CLUSTER;
             case "ElasticIndex":
