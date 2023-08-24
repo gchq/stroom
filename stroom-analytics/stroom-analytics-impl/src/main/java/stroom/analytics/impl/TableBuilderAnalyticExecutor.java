@@ -1,9 +1,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
-import stroom.analytics.impl.DetectionConsumer.Detection;
-import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
-import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -52,6 +49,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -689,7 +687,7 @@ public class TableBuilderAnalyticExecutor {
         public TableResultConsumer addRow(final Row row) {
             if (notificationState.isEnabled()) {
                 try {
-                    final List<Value> values = new ArrayList<>();
+                    final List<DetectionValue> values = new ArrayList<>();
 
                     int index = 0;
                     Long streamId = null;
@@ -712,7 +710,7 @@ public class TableBuilderAnalyticExecutor {
                                     LOGGER.debug(e.getMessage(), e);
                                 }
                             } else {
-                                values.add(new Value(fieldName, fieldValue));
+                                values.add(new DetectionValue(fieldName, fieldValue));
                             }
                         }
 
@@ -720,7 +718,7 @@ public class TableBuilderAnalyticExecutor {
                     }
 
                     final Detection detection = new Detection(
-                            Instant.now(),
+                            DateUtil.createNormalDateTimeString(),
                             analyticRuleDoc.getName(),
                             analyticRuleDoc.getUuid(),
                             analyticRuleDoc.getVersion(),
@@ -732,7 +730,7 @@ public class TableBuilderAnalyticExecutor {
                             0,
                             false,
                             values,
-                            List.of(new LinkedEvent(null, streamId, eventId))
+                            List.of(new DetectionLinkedEvent(null, streamId, eventId))
                     );
 
                     detectionConsumer.accept(detection);

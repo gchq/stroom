@@ -18,8 +18,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.impl.DetectionConsumer.Detection;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -80,7 +78,7 @@ class EmailSender {
         email.setFromAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
         email.setReplyToAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
         email.addRecipient(name, emailAddress, Message.RecipientType.TO);
-        email.setSubject(detection.detectorName());
+        email.setSubject(detection.getDetectorName());
 
         try {
             final String text = objectMapper.writeValueAsString(detection);

@@ -1,8 +1,5 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.impl.DetectionConsumer.Detection;
-import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
-import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
@@ -15,6 +12,7 @@ import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -153,7 +151,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
             return;
         }
 
-        final List<Value> values = new ArrayList<>();
+        final List<DetectionValue> values = new ArrayList<>();
 //        final List<LinkedEvent> linkedEvents = new ArrayList<>();
 //
 //        // Output all the dashboard fields
@@ -193,14 +191,14 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                     final String fieldValStr =
                             fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
                                     compiledFieldValue.getVal());
-                    values.add(new Value(fieldName, fieldValStr));
+                    values.add(new DetectionValue(fieldName, fieldValStr));
                 }
             }
 //            }
         });
 
         final Detection detection = new Detection(
-                Instant.now(),
+                DateUtil.createNormalDateTimeString(),
                 analyticRuleDoc.getName(),
                 analyticRuleDoc.getUuid(),
                 analyticRuleDoc.getVersion(),
@@ -212,7 +210,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 0,
                 false,
                 values,
-                List.of(new LinkedEvent(null, streamId.get(), eventId.get()))
+                List.of(new DetectionLinkedEvent(null, streamId.get(), eventId.get()))
         );
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();

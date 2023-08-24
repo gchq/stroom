@@ -1,8 +1,5 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.impl.DetectionConsumer.Detection;
-import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
-import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -264,7 +261,7 @@ public class ScheduledQueryAnalyticExecutor {
 
                                     Long streamId = null;
                                     Long eventId = null;
-                                    final List<Value> values = new ArrayList<>();
+                                    final List<DetectionValue> values = new ArrayList<>();
                                     for (int i = 0; i < dataStore.getFields().size(); i++) {
                                         if (i < row.getValues().size()) {
                                             final String fieldName = dataStore.getFields().get(i).getName();
@@ -275,18 +272,18 @@ public class ScheduledQueryAnalyticExecutor {
                                                 } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
                                                     eventId = DetectionConsumerProxy.getSafeLong(value);
                                                 }
-                                                values.add(new Value(fieldName, value));
+                                                values.add(new DetectionValue(fieldName, value));
                                             }
                                         }
                                     }
 
-                                    List<LinkedEvent> linkedEvents = null;
+                                    List<DetectionLinkedEvent> linkedEvents = null;
                                     if (streamId != null || eventId != null) {
-                                        linkedEvents = List.of(new LinkedEvent(null, streamId, eventId));
+                                        linkedEvents = List.of(new DetectionLinkedEvent(null, streamId, eventId));
                                     }
 
                                     final Detection detection = new Detection(
-                                            Instant.now(),
+                                            DateUtil.createNormalDateTimeString(),
                                             analyticRuleDoc.getName(),
                                             analyticRuleDoc.getUuid(),
                                             analyticRuleDoc.getVersion(),
