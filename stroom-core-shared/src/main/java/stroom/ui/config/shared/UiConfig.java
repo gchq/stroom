@@ -136,8 +136,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "helper. This is useful when dealing with large numbers of dynamic fields. e.g. if every element is made " +
             "into a field with its name being something similar to its xpath. For example, if the delimiter is '.', " +
             "then the field 'Events.Event.EventTime.TimeCreated' would be displayed as 'TimeCreated' within three " +
-            "nested categories. The default pattern is '[:.]' to also categorise the special 'annotation:XXX' fields. " +
-            "Set it to null or an empty string prevent nesting.")
+            "nested categories. The default pattern is '[:.]' to also categorise the special " +
+            "'annotation:XXX' fields. Set it to null or an empty string prevent nesting.")
     private final String nestedIndexFieldsDelimiterPattern;
 
     public UiConfig() {
