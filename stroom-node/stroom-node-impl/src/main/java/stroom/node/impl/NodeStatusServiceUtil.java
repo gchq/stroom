@@ -18,12 +18,16 @@ package stroom.node.impl;
 
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.refdata.store.offheapstore.DelegatingRefDataOffHeapStore;
+import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.pipeline.state.RecordCountService;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreFactory.StoreSizeSummary;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
+import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.collect.ImmutableSortedMap;
 
@@ -33,6 +37,7 @@ import java.lang.management.MemoryUsage;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -46,6 +51,12 @@ import javax.inject.Singleton;
  */
 @Singleton
 class NodeStatusServiceUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeStatusServiceUtil.class);
+
+    public static final String TAG_TYPE = "Type";
+    public static final String TAG_NODE = "Node";
+    public static final String TAG_FEED = "Feed";
 
     private final NodeInfo nodeInfo;
     private final RecordCountService recordCountService;
@@ -118,7 +129,7 @@ class NodeStatusServiceUtil {
         // These stat events are being generated every minute so use a precision
         // of 60s
         final SortedMap<String, String> newTags = new TreeMap<>(tags);
-        newTags.put("Type", typeTagValue);
+        newTags.put(TAG_TYPE, typeTagValue);
         return InternalStatisticEvent.createValueStat(key, timeMs, newTags, value);
     }
 
@@ -126,7 +137,7 @@ class NodeStatusServiceUtil {
         List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
 
         final SortedMap<String, String> tags = ImmutableSortedMap.of(
-                "Node", nodeInfo.getThisNodeName());
+                TAG_NODE, nodeInfo.getThisNodeName());
         final long nowEpochMs = System.currentTimeMillis();
 
         buildJavaMemoryStats(statisticEventList, tags, nowEpochMs);
@@ -199,11 +210,36 @@ class NodeStatusServiceUtil {
                                    final SortedMap<String, String> tags,
                                    final long nowEpochMs) {
 
+        final Map<String, RefDataOffHeapStore> feedNameToStoreMap = delegatingRefDataOffHeapStore
+                .getFeedNameToStoreMap();
+
+        if (NullSafe.hasEntries(feedNameToStoreMap)) {
+            feedNameToStoreMap.forEach((feedName, feedSpecificStore) -> {
+                final SortedMap<String, String> allTags = new TreeMap<>(tags);
+                allTags.put(TAG_FEED, feedName);
+
+                try {
+                    LOGGER.debug("Capturing ref store stats for feed: {}", feedName);
+                    buildRefDataStats(feedSpecificStore, statisticEventList, allTags, nowEpochMs);
+                } catch (Exception e) {
+                    LOGGER.error("Error getting stats from ref store with feedName: {}", feedName, e);
+                }
+            });
+        } else {
+            LOGGER.debug("No feed specific stores");
+        }
+    }
+
+    private void buildRefDataStats(final RefDataOffHeapStore feedSpecificStore,
+                                   final List<InternalStatisticEvent> statisticEventList,
+                                   final SortedMap<String, String> tags,
+                                   final long nowEpochMs) {
+
         // No point in holding a load of zeros, e.g. nodes not running processing
-        final long sizeOnDisk = delegatingRefDataOffHeapStore.getSizeOnDisk();
-        final long combinedEntryCount = delegatingRefDataOffHeapStore.getKeyValueEntryCount()
-                + delegatingRefDataOffHeapStore.getRangeValueEntryCount();
-        final long processingInfoEntryCount = delegatingRefDataOffHeapStore.getProcessingInfoEntryCount();
+        final long sizeOnDisk = feedSpecificStore.getSizeOnDisk();
+        final long combinedEntryCount = feedSpecificStore.getKeyValueEntryCount()
+                                        + feedSpecificStore.getRangeValueEntryCount();
+        final long processingInfoEntryCount = feedSpecificStore.getProcessingInfoEntryCount();
 
         if (sizeOnDisk > 0) {
             statisticEventList.add(InternalStatisticEvent.createValueStat(

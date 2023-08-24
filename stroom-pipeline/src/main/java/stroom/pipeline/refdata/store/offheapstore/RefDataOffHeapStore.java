@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.lmdb.LmdbDb;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
@@ -45,7 +44,6 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSe
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.HasHealthCheck;
 import stroom.util.NullSafe;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -118,8 +116,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final Provider<ReferenceDataConfig> referenceDataConfigProvider;
 
     private final RefDataValueConverter refDataValueConverter;
-
-    private final Map<String, LmdbDb> databaseMap = new HashMap<>();
 
     // For synchronising access to the data belonging to a MapDefinition
     private final Striped<Lock> refStreamDefStripedReentrantLock;
@@ -1672,11 +1668,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .addDetail("Total reference entries", getKeyValueEntryCount() + getRangeValueEntryCount());
 
             lmdbEnvironment.doWithReadTxn(txn -> {
-                builder.addDetail("Database entry counts", databaseMap.entrySet().stream()
-                        .collect(HasHealthCheck.buildTreeMapCollector(
-                                Map.Entry::getKey,
-                                entry ->
-                                        entry.getValue().getEntryCount(txn))));
+                builder.addDetail("Entry counts", Map.of(
+                        "keyValueStoreDb", keyValueStoreDb.getEntryCount(txn),
+                                "rangeStoreDb", rangeStoreDb.getEntryCount(txn),
+                                "processingInfoDb", processingInfoDb.getEntryCount(txn),
+                                "valueStore", valueStore.getEntryCount(),
+                                "mapDefinitionUIDStore", mapDefinitionUIDStore.getEntryCount()));
             });
             return builder.build();
         } catch (RuntimeException e) {
