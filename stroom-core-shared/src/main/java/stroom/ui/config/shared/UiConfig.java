@@ -131,6 +131,14 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private final NodeMonitoringConfig nodeMonitoring;
     @JsonProperty
     private final AnalyticUiDefaultConfig analyticUiDefaultConfig;
+    @JsonProperty
+    @JsonPropertyDescription("This regex pattern defines the delimiter to use for nesting index fields in the query " +
+            "helper. This is useful when dealing with large numbers of dynamic fields. e.g. if every element is made " +
+            "into a field with its name being something similar to its xpath. For example, if the delimiter is '.', " +
+            "then the field 'Events.Event.EventTime.TimeCreated' would be displayed as 'TimeCreated' within three " +
+            "nested categories. The default pattern is '[:.]' to also categorise the special " +
+            "'annotation:XXX' fields. Set it to null or an empty string prevent nesting.")
+    private final String nestedIndexFieldsDelimiterPattern;
 
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -156,6 +164,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         requireReactWrapper = true;
         nodeMonitoring = new NodeMonitoringConfig();
         analyticUiDefaultConfig = new AnalyticUiDefaultConfig();
+        nestedIndexFieldsDelimiterPattern = "[.:]"; // : is to split the special annotation:XXX fields
     }
 
     @JsonCreator
@@ -182,7 +191,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("source") final SourceConfig source,
                     @JsonProperty("requireReactWrapper") Boolean requireReactWrapper,
                     @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring,
-                    @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+                    @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                    @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -206,6 +216,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.requireReactWrapper = requireReactWrapper;
         this.nodeMonitoring = nodeMonitoring;
         this.analyticUiDefaultConfig = analyticUiDefaultConfig;
+        this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
     }
 
     public String getWelcomeHtml() {
@@ -364,6 +375,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return analyticUiDefaultConfig;
     }
 
+    public String getNestedIndexFieldsDelimiterPattern() {
+        return nestedIndexFieldsDelimiterPattern;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -394,7 +409,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(source, uiConfig.source)
                 && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper)
                 && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
-                && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring);
+                && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
+                && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern);
     }
 
     @Override
@@ -420,7 +436,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 source,
                 requireReactWrapper,
                 nodeMonitoring,
-                analyticUiDefaultConfig);
+                analyticUiDefaultConfig,
+                nestedIndexFieldsDelimiterPattern);
     }
 
     @Override
@@ -448,6 +465,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", requireReactWrapper=" + requireReactWrapper +
                 ", nodeMonitoring=" + nodeMonitoring +
                 ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
+                ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
                 '}';
     }
 }

@@ -36,7 +36,9 @@ import stroom.query.client.presenter.QueryHelpItem.TopLevelHeadingItem;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
 import stroom.query.shared.QueryHelpItemsResult;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.Themes.ThemeType;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.view.client.presenter.DataSourceFieldsMap;
@@ -107,7 +109,6 @@ public class QueryHelpPresenter
     private static final String STRUCTURE_META = "Structure";
     private static final String FIELDS_META = "Field";
     private static final String FUNCTIONS_META = "Function";
-    private static final RegExp FIELD_NAME_SPLIT_PATTERN = RegExp.compile("[.:]");
 
     // These control the priority of the items in the code completion menu.
     // Higher value appear further up for the same matching chars.
@@ -123,6 +124,7 @@ public class QueryHelpPresenter
     private final MarkdownConverter markdownConverter;
     private final QueryStructure queryStructure;
     private final KeyedAceCompletionProvider keyedAceCompletionProvider;
+    private final UiConfigCache uiConfigCache;
     private QueryHelpDataSupplier queryHelpDataSupplier;
 
     private final List<QueryHelpItem> queryHelpItems = new ArrayList<>();
@@ -155,12 +157,14 @@ public class QueryHelpPresenter
                               final FunctionSignatures functionSignatures,
                               final QueryStructure queryStructure,
                               final MarkdownConverter markdownConverter,
-                              final KeyedAceCompletionProvider keyedAceCompletionProvider) {
+                              final KeyedAceCompletionProvider keyedAceCompletionProvider,
+                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.functionSignatures = functionSignatures;
         this.markdownConverter = markdownConverter;
         this.queryStructure = queryStructure;
         this.keyedAceCompletionProvider = keyedAceCompletionProvider;
+        this.uiConfigCache = uiConfigCache;
         elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
         view.setUiHandlers(this);
 
@@ -222,19 +226,21 @@ public class QueryHelpPresenter
 
     private void buildAllMenuItems(final QueryHelpItemsResult queryHelpItemsResult) {
         functionSignatures.fetchHelpUrl(helpUrl -> {
-            if (queryHelpDataSupplier.isSupported(HelpItemType.DATA_SOURCE)) {
-                buildDataSourcesMenuItems(queryHelpItemsResult.getDataSources());
-            }
-            if (queryHelpDataSupplier.isSupported(HelpItemType.STRUCTURE)) {
-                buildStructureMenuItems(queryHelpItemsResult.getStructureElements());
-            }
-            if (queryHelpDataSupplier.isSupported(HelpItemType.FIELD)) {
-                buildFieldsMenuItems(queryHelpItemsResult.getDataSourceFields(), helpUrl);
-            }
-            if (queryHelpDataSupplier.isSupported(HelpItemType.FUNCTION)) {
-                buildFunctionsMenuItems(queryHelpItemsResult.getFunctionSignatures(), helpUrl);
-            }
-            refresh();
+            uiConfigCache.get().onSuccess(uiConfig -> {
+                if (queryHelpDataSupplier.isSupported(HelpItemType.DATA_SOURCE)) {
+                    buildDataSourcesMenuItems(queryHelpItemsResult.getDataSources());
+                }
+                if (queryHelpDataSupplier.isSupported(HelpItemType.STRUCTURE)) {
+                    buildStructureMenuItems(queryHelpItemsResult.getStructureElements());
+                }
+                if (queryHelpDataSupplier.isSupported(HelpItemType.FIELD)) {
+                    buildFieldsMenuItems(queryHelpItemsResult.getDataSourceFields(), helpUrl, uiConfig);
+                }
+                if (queryHelpDataSupplier.isSupported(HelpItemType.FUNCTION)) {
+                    buildFunctionsMenuItems(queryHelpItemsResult.getFunctionSignatures(), helpUrl);
+                }
+                refresh();
+            });
         });
     }
 
@@ -627,7 +633,9 @@ public class QueryHelpPresenter
 //        }));
     }
 
-    private void buildFieldsMenuItems(final List<AbstractField> fields, final String helpUrl) {
+    private void buildFieldsMenuItems(final List<AbstractField> fields,
+                                      final String helpUrl,
+                                      final UiConfig uiConfig) {
         if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.FIELD))) {
             if (!Objects.equals(lastFetchedDataSourceFields, fields) || hasThemeChanged()) {
                 lastFetchedDataSourceFields = fields;
@@ -637,10 +645,14 @@ public class QueryHelpPresenter
 
                 if (GwtNullSafe.hasItems(fields)) {
 //                        GWT.log("Adding " + dataSourceFieldsMap.size() + " fields");
+                    final RegExp nestedFieldDelimiterPattern = GwtNullSafe.isEmptyString(
+                            uiConfig.getNestedIndexFieldsDelimiterPattern())
+                            ? null
+                            : RegExp.compile(uiConfig.getNestedIndexFieldsDelimiterPattern());
                     fields.stream()
                             .sorted(Comparator.comparing(AbstractField::getName))
                             .forEach(field -> {
-                                addFieldToMenu(helpUrl, field.getName(), field);
+                                addFieldToMenu(helpUrl, field.getName(), field, nestedFieldDelimiterPattern);
                             });
                 } else if (GwtNullSafe.isBlankString(quickFilterInput)) {
                     // Only show the EMPTY item if we are not filtering as an empty state is likely when filtering
@@ -690,7 +702,10 @@ public class QueryHelpPresenter
         };
     }
 
-    private void addFieldToMenu(final String helpUrl, final String fieldName, final AbstractField field) {
+    private void addFieldToMenu(final String helpUrl,
+                                final String fieldName,
+                                final AbstractField field,
+                                final RegExp nestedFieldDelimiterPattern) {
         final String fieldType = field.getFieldType().getDisplayValue();
         final String supportedConditions = field.getConditions()
                 .stream()
@@ -712,8 +727,8 @@ public class QueryHelpPresenter
         // With dynamic indexing we can have field names like 'Events.Event.EventTime.TimeCreated', so
         // split them on the dot and create branches if they don't already exist. Also nest the annotation:XXX
         // fields.
-        if (FIELD_NAME_SPLIT_PATTERN.test(fieldName)) {
-            final SplitResult splitResult = FIELD_NAME_SPLIT_PATTERN.split(fieldName);
+        if (nestedFieldDelimiterPattern != null && nestedFieldDelimiterPattern.test(fieldName)) {
+            final SplitResult splitResult = nestedFieldDelimiterPattern.split(fieldName);
             int len = 0;
             for (int i = 0; i < splitResult.length(); i++) {
                 final String part = splitResult.get(i);
@@ -743,7 +758,7 @@ public class QueryHelpPresenter
                 }
             }
         } else {
-            // Non-delimited field name
+            // Non-delimited field name, or no delimiter
             fieldHelpItem = new FieldHelpItem(
                     fieldsHeading,
                     fieldName,
