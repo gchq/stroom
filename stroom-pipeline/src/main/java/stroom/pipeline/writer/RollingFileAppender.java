@@ -52,6 +52,7 @@ import javax.inject.Inject;
                 This is distinct from the FileAppender in that when the `rollSize` is reached it will move the \
                 current file to the path specified in `rolledFileName` and resume writing to the original path.
                 This allows other processes to follow the changes to a single file path, e.g. when using `tail`.
+                On system shutdown all active files will be rolled.
                 """,
         category = Category.DESTINATION,
         roles = {
