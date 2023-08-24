@@ -7,7 +7,7 @@
         <form:FormGroup identity="analyticStreamDestinationFeed" label="Destination Feed For Detections">
             <g:SimplePanel ui:field="destinationFeed"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible">
+        <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)">
             <tickbox:CustomCheckBox ui:field="useSourceFeedIfPossible"/>
         </form:FormGroup>
     </g:FlowPanel>

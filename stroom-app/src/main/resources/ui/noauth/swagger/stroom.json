@@ -9643,7 +9643,7 @@
           }
         } ]
       },
-      "AnalyticProcessConfigObject" : {
+      "AnalyticProcessConfig" : {
         "type" : "object",
         "discriminator" : {
           "propertyName" : "type"
@@ -9651,6 +9651,9 @@
         "properties" : {
           "enabled" : {
             "type" : "boolean"
+          },
+          "errorFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "node" : {
             "type" : "string"
@@ -9668,7 +9671,7 @@
             "$ref" : "#/components/schemas/AnalyticNotificationConfig"
           },
           "analyticProcessConfig" : {
-            "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
+            "$ref" : "#/components/schemas/AnalyticProcessConfig"
           },
           "analyticProcessType" : {
             "type" : "string",
@@ -9741,7 +9744,10 @@
       "AnalyticUiDefaultConfig" : {
         "type" : "object",
         "properties" : {
-          "defaultFeed" : {
+          "defaultDestinationFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "defaultErrorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
           "defaultNode" : {
@@ -15816,7 +15822,7 @@
       "ScheduledQueryAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
+          "$ref" : "#/components/schemas/AnalyticProcessConfig"
         }, {
           "type" : "object",
           "properties" : {
@@ -16919,7 +16925,7 @@
       "StreamingAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
+          "$ref" : "#/components/schemas/AnalyticProcessConfig"
         }, {
           "type" : "object",
           "properties" : {
@@ -17190,7 +17196,7 @@
       "TableBuilderAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticProcessConfigObject"
+          "$ref" : "#/components/schemas/AnalyticProcessConfig"
         }, {
           "type" : "object",
           "properties" : {

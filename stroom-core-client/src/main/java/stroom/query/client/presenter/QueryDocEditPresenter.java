@@ -107,7 +107,9 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void createRule() {
         uiConfigCache.get().onSuccess(uiConfig -> {
             final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
-            if (analyticUiDefaultConfig.getDefaultFeed() == null) {
+            if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
+                AlertEvent.fireError(this, "No default error feed configured", null);
+            } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
                 AlertEvent.fireError(this, "No default destination feed configured", null);
             } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
                 AlertEvent.fireError(this, "No default processing node configured", null);
@@ -149,6 +151,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                     final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
                             ScheduledQueryAnalyticProcessConfig.builder()
                                     .node(analyticUiDefaultConfig.getDefaultNode())
+                                    .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                                     .minEventTimeMs(System.currentTimeMillis())
                                     .maxEventTimeMs(null)
                                     .queryFrequency(oneHour)
@@ -157,7 +160,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                     final AnalyticNotificationStreamDestination destination =
                             AnalyticNotificationStreamDestination.builder()
                                     .useSourceFeedIfPossible(false)
-                                    .destinationFeed(analyticUiDefaultConfig.getDefaultFeed())
+                                    .destinationFeed(analyticUiDefaultConfig.getDefaultDestinationFeed())
                                     .build();
                     final AnalyticNotificationConfig analyticNotificationConfig = AnalyticNotificationConfig
                             .builder()

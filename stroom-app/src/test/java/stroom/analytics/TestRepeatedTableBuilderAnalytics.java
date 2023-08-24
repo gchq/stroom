@@ -78,13 +78,12 @@ class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)
-                .analyticProcessConfig(new TableBuilderAnalyticProcessConfig(
-                        true,
-                        nodeInfo.getThisNodeName(),
-                        null,
-                        null,
-                        INSTANT,
-                        null))
+                .analyticProcessConfig(TableBuilderAnalyticProcessConfig.builder()
+                        .enabled(true)
+                        .node(nodeInfo.getThisNodeName())
+                        .errorFeed(analyticsDataSetup.getDetections())
+                        .timeToWaitForData(INSTANT)
+                        .build())
                 .analyticNotificationConfig(createNotificationConfig())
                 .build();
         writeRule(analyticRuleDoc);

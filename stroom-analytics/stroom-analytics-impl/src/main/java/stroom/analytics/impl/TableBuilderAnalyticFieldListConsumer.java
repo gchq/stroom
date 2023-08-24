@@ -8,10 +8,11 @@ public class TableBuilderAnalyticFieldListConsumer extends AbstractAnalyticField
 
     public TableBuilderAnalyticFieldListConsumer(final SearchRequest searchRequest,
                                                  final FieldIndex fieldIndex,
+                                                 final NotificationState notificationState,
                                                  final ValuesConsumer valuesConsumer,
                                                  final SearchExpressionQueryCache searchExpressionQueryCache,
                                                  final Long minEventId) {
-        super(searchRequest, fieldIndex, valuesConsumer, searchExpressionQueryCache, minEventId);
+        super(searchRequest, fieldIndex, notificationState, valuesConsumer, searchExpressionQueryCache, minEventId);
     }
 
     @Override

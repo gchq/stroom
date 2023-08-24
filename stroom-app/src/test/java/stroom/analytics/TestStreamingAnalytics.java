@@ -106,6 +106,7 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                 .analyticProcessConfig(new StreamingAnalyticProcessConfig(
                         true,
                         nodeInfo.getThisNodeName(),
+                        analyticsDataSetup.getDetections(),
                         null,
                         null))
                 .analyticNotificationConfig(createNotificationConfig())

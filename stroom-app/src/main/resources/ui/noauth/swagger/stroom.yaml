@@ -6657,13 +6657,15 @@ components:
             $ref: '#/components/schemas/DocRef'
           useSourceFeedIfPossible:
             type: boolean
-    AnalyticProcessConfigObject:
+    AnalyticProcessConfig:
       type: object
       discriminator:
         propertyName: type
       properties:
         enabled:
           type: boolean
+        errorFeed:
+          $ref: '#/components/schemas/DocRef'
         node:
           type: string
         type:
@@ -6676,7 +6678,7 @@ components:
         analyticNotificationConfig:
           $ref: '#/components/schemas/AnalyticNotificationConfig'
         analyticProcessConfig:
-          $ref: '#/components/schemas/AnalyticProcessConfigObject'
+          $ref: '#/components/schemas/AnalyticProcessConfig'
         analyticProcessType:
           type: string
           enum:
@@ -6731,7 +6733,9 @@ components:
     AnalyticUiDefaultConfig:
       type: object
       properties:
-        defaultFeed:
+        defaultDestinationFeed:
+          $ref: '#/components/schemas/DocRef'
+        defaultErrorFeed:
           $ref: '#/components/schemas/DocRef'
         defaultNode:
           type: string
@@ -11873,7 +11877,7 @@ components:
     ScheduledQueryAnalyticProcessConfig:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessConfigObject'
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
       - type: object
         properties:
           maxEventTimeMs:
@@ -12714,7 +12718,7 @@ components:
     StreamingAnalyticProcessConfig:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessConfigObject'
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
       - type: object
         properties:
           maxMetaCreateTimeMs:
@@ -12910,7 +12914,7 @@ components:
     TableBuilderAnalyticProcessConfig:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticProcessConfigObject'
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
       - type: object
         properties:
           dataRetention:

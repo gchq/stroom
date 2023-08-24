@@ -371,7 +371,10 @@ public class FlexLayout extends Composite {
                             changeHandler.onDirty();
 
                         } else if (tabManager != null) {
-                            final TabConfig tabConfig = mouseTarget.tabLayout.getTabLayoutConfig().get(mouseTarget.tabIndex);
+                            final TabConfig tabConfig = mouseTarget
+                                    .tabLayout
+                                    .getTabLayoutConfig()
+                                    .get(mouseTarget.tabIndex);
                             tabManager.showMenu(
                                     mouseTarget.tabWidget.getElement(),
                                     this,

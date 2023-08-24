@@ -628,7 +628,7 @@ public class DashboardPresenter
     @Override
     public void onDirty() {
 //        if (designMode) {
-            setDirty(true);
+        setDirty(true);
 //        }
     }
 

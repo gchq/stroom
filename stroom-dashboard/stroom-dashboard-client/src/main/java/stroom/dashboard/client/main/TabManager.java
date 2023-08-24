@@ -33,7 +33,6 @@ import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
 
 import java.util.ArrayList;
@@ -82,25 +81,25 @@ public class TabManager {
 //                new Timer() {
 //                    @Override
 //                    public void run() {
-                        Rect relativeRect = new Rect(target);
-                        relativeRect = relativeRect.grow(3);
-                        final PopupPosition popupPosition = new PopupPosition(
-                                relativeRect,
-                                PopupLocation.BELOW);
-                        final List<Item> menuItems = updateMenuItems(tabLayout.getTabLayoutConfig(),
-                                tabConfig,
-                                componentConfig,
-                                nameChangeConsumer);
-                        currentTabConfig = tabConfig;
-                        ShowMenuEvent
-                                .builder()
-                                .items(menuItems)
-                                .addAutoHidePartner(target)
-                                .popupPosition(popupPosition)
-                                .onHide(e -> {
-                                    currentTabConfig = null;
-                                })
-                                .fire(dashboardPresenter);
+                Rect relativeRect = new Rect(target);
+                relativeRect = relativeRect.grow(3);
+                final PopupPosition popupPosition = new PopupPosition(
+                        relativeRect,
+                        PopupLocation.BELOW);
+                final List<Item> menuItems = updateMenuItems(tabLayout.getTabLayoutConfig(),
+                        tabConfig,
+                        componentConfig,
+                        nameChangeConsumer);
+                currentTabConfig = tabConfig;
+                ShowMenuEvent
+                        .builder()
+                        .items(menuItems)
+                        .addAutoHidePartner(target)
+                        .popupPosition(popupPosition)
+                        .onHide(e -> {
+                            currentTabConfig = null;
+                        })
+                        .fire(dashboardPresenter);
 //                    }
 //                }.schedule(0);
             }

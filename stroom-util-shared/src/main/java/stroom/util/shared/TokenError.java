@@ -1,10 +1,15 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonPropertyOrder(alphabetic = true)
+@JsonInclude(Include.NON_NULL)
 public class TokenError {
 
     @JsonProperty

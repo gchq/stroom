@@ -58,6 +58,8 @@ public class AnalyticProcessingViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
+    SimplePanel errorFeed;
+    @UiField
     SelectionBox<AnalyticProcessType> processingType;
     @UiField
     FormGroup analyticProcessingMinMetaCreateTimeMs;
@@ -154,6 +156,11 @@ public class AnalyticProcessingViewImpl
             selectedNode = node;
             this.node.setValue(node);
         }
+    }
+
+    @Override
+    public void setErrorFeedView(final View view) {
+        this.errorFeed.setWidget(view.asWidget());
     }
 
     @Override

@@ -3,9 +3,6 @@ package stroom.analytics.impl;
 import stroom.analytics.impl.DetectionConsumer.Detection;
 import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
 import stroom.analytics.impl.DetectionConsumer.Value;
-import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationDestination;
-import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -80,34 +77,40 @@ public class ScheduledQueryAnalyticExecutor {
     private final DataSourceResolver dataSourceResolver;
     private final ExecutorProvider executorProvider;
     private final ResultStoreManager searchResponseCreatorManager;
-    private final Provider<DetectionWriterProxy> detectionWriterProxyProvider;
+    private final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider;
     private final AnalyticErrorWritingExecutor analyticErrorWritingExecutor;
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
+    private final NotificationStateService notificationStateService;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
+    private final DetectionConsumerFactory detectionConsumerFactory;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
                                    final DataSourceResolver dataSourceResolver,
                                    final ExecutorProvider executorProvider,
                                    final ResultStoreManager searchResponseCreatorManager,
-                                   final Provider<DetectionWriterProxy> detectionWriterProxyProvider,
+                                   final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
                                    final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
                                    final TaskContextFactory taskContextFactory,
                                    final NodeInfo nodeInfo,
                                    final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
-                                   final Provider<ErrorReceiverProxy> errorReceiverProxyProvider) {
+                                   final NotificationStateService notificationStateService,
+                                   final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                                   final DetectionConsumerFactory detectionConsumerFactory) {
         this.analyticHelper = analyticHelper;
         this.dataSourceResolver = dataSourceResolver;
         this.executorProvider = executorProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.detectionWriterProxyProvider = detectionWriterProxyProvider;
+        this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
+        this.notificationStateService = notificationStateService;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
+        this.detectionConsumerFactory = detectionConsumerFactory;
     }
 
     public void exec() {
@@ -158,34 +161,26 @@ public class ScheduledQueryAnalyticExecutor {
                 }
 
                 if (to.isAfter(from)) {
-                    final AnalyticNotificationConfig analyticNotificationConfig = analytic
-                            .analyticRuleDoc().getAnalyticNotificationConfig();
-                    final AnalyticNotificationDestination destination = analyticNotificationConfig.getDestination();
-                    if (destination instanceof final AnalyticNotificationStreamDestination streamDestination) {
-                        final String errorFeedName = streamDestination.getDestinationFeed().getName();
-                        final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
-                        final Runnable runnable = analyticErrorWritingExecutor.wrap(
-                                "Scheduled Query Analytic: " + analytic.ruleIdentity(),
-                                errorFeedName,
-                                null,
-                                parentTaskContext,
-                                taskContext -> processScheduledQueryAnalytic(
-                                        analytic,
-                                        streamDestination,
-                                        timeFilter));
+                    final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
+                    final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
+                    final Runnable runnable = analyticErrorWritingExecutor.wrap(
+                            "Scheduled Query Analytic: " + analytic.ruleIdentity(),
+                            errorFeedName,
+                            null,
+                            parentTaskContext,
+                            taskContext -> processScheduledQueryAnalytic(analytic, timeFilter));
 
-                        try {
-                            completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
-                        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                            LOGGER.debug(e::getMessage, e);
-                            throw e;
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e::getMessage, e);
-                            analytic.trackerData().setMessage(e.getMessage());
-                            LOGGER.info("Disabling: " + analytic.ruleIdentity());
-                            analyticHelper.updateTracker(analytic.tracker);
-                            analyticHelper.disableProcess(analytic.analyticRuleDoc());
-                        }
+                    try {
+                        completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
+                    } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        throw e;
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                        analytic.trackerData().setMessage(e.getMessage());
+                        LOGGER.info("Disabling: " + analytic.ruleIdentity());
+                        analyticHelper.updateTracker(analytic.tracker);
+                        analyticHelper.disableProcess(analytic.analyticRuleDoc());
                     }
                 }
             }
@@ -193,155 +188,166 @@ public class ScheduledQueryAnalyticExecutor {
     }
 
     private void processScheduledQueryAnalytic(final ScheduledQueryAnalytic analytic,
-                                               final AnalyticNotificationStreamDestination streamConfig,
                                                final TimeFilter timeFilter) {
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
         try {
-            final TimeRange timeRange = new TimeRange("Custom",
-                    Condition.BETWEEN,
-                    DateUtil.createNormalDateTimeString(timeFilter.getFrom()),
-                    DateUtil.createNormalDateTimeString(timeFilter.getTo()));
+            final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
+            // Only execute if the state is enabled.
+            notificationState.enableIfPossible();
+            if (notificationState.isEnabled()) {
+                final TimeRange timeRange = new TimeRange("Custom",
+                        Condition.BETWEEN,
+                        DateUtil.createNormalDateTimeString(timeFilter.getFrom()),
+                        DateUtil.createNormalDateTimeString(timeFilter.getTo()));
 
-            final SearchRequestSource searchRequestSource = SearchRequestSource
-                    .builder()
-                    .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                    .componentId(SearchRequestBuilder.COMPONENT_ID)
-                    .build();
-
-            final String query = analytic.analyticRuleDoc().getQuery();
-            final Query sampleQuery = Query
-                    .builder()
-                    .params(null)
-                    .timeRange(timeRange)
-                    .build();
-            final SearchRequest sampleRequest = new SearchRequest(
-                    searchRequestSource,
-                    null,
-                    sampleQuery,
-                    null,
-                    null,
-                    false);
-            SearchRequest mappedRequest = SearchRequestBuilder.create(query, sampleRequest);
-            mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
-
-            // Fix table result requests.
-            final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
-            if (resultRequests != null && resultRequests.size() == 1) {
-                final ResultRequest resultRequest = resultRequests.get(0).copy()
-                        .openGroups(null)
-                        .requestedRange(OffsetRange.UNBOUNDED)
+                final SearchRequestSource searchRequestSource = SearchRequestSource
+                        .builder()
+                        .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
+                        .componentId(SearchRequestBuilder.COMPONENT_ID)
                         .build();
 
-                final RequestAndStore requestAndStore = searchResponseCreatorManager
-                        .getResultStore(mappedRequest);
-                final SearchRequest modifiedRequest = requestAndStore.searchRequest();
-                try {
-                    final DataStore dataStore = requestAndStore
-                            .resultStore().getData(SearchRequestBuilder.COMPONENT_ID);
-                    dataStore.getCompletionState().awaitCompletion();
+                final String query = analytic.analyticRuleDoc().getQuery();
+                final Query sampleQuery = Query
+                        .builder()
+                        .params(null)
+                        .timeRange(timeRange)
+                        .build();
+                final SearchRequest sampleRequest = new SearchRequest(
+                        searchRequestSource,
+                        null,
+                        sampleQuery,
+                        null,
+                        null,
+                        false);
+                SearchRequest mappedRequest = SearchRequestBuilder.create(query, sampleRequest);
+                mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
-                    final TableSettings tableSettings = resultRequest.getMappings().get(0);
-                    final Map<String, String> paramMap = ParamUtil
-                            .createParamMap(mappedRequest.getQuery().getParams());
-                    final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(),
-                            paramMap);
-                    final FieldIndex fieldIndex = compiledFields.getFieldIndex();
+                // Fix table result requests.
+                final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
+                if (resultRequests != null && resultRequests.size() == 1) {
+                    final ResultRequest resultRequest = resultRequests.get(0).copy()
+                            .openGroups(null)
+                            .requestedRange(OffsetRange.UNBOUNDED)
+                            .build();
 
-                    final DetectionWriterProxy detectionWriter = detectionWriterProxyProvider.get();
-                    detectionWriter.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                    detectionWriter.setCompiledFields(compiledFields);
-                    detectionWriter.setFieldIndex(fieldIndex);
-                    detectionWriter.setDestinationFeed(streamConfig.getDestinationFeed());
-
+                    final RequestAndStore requestAndStore = searchResponseCreatorManager
+                            .getResultStore(mappedRequest);
+                    final SearchRequest modifiedRequest = requestAndStore.searchRequest();
                     try {
-                        detectionWriter.start();
-                        final AnalyticRuleDoc analyticRuleDoc = analytic.analyticRuleDoc;
-                        final Consumer<Row> itemConsumer = row -> {
-                            Long streamId = null;
-                            Long eventId = null;
-                            final List<Value> values = new ArrayList<>();
-                            for (int i = 0; i < dataStore.getFields().size(); i++) {
-                                if (i < row.getValues().size()) {
-                                    final String fieldName = dataStore.getFields().get(i).getName();
-                                    final String value = row.getValues().get(i);
-                                    if (value != null) {
-                                        if (IndexConstants.STREAM_ID.equals(fieldName)) {
-                                            streamId = DetectionWriterProxy.getSafeLong(value);
-                                        } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
-                                            eventId = DetectionWriterProxy.getSafeLong(value);
+                        final DataStore dataStore = requestAndStore
+                                .resultStore().getData(SearchRequestBuilder.COMPONENT_ID);
+                        dataStore.getCompletionState().awaitCompletion();
+
+                        final TableSettings tableSettings = resultRequest.getMappings().get(0);
+                        final Map<String, String> paramMap = ParamUtil
+                                .createParamMap(mappedRequest.getQuery().getParams());
+                        final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(),
+                                paramMap);
+                        final FieldIndex fieldIndex = compiledFields.getFieldIndex();
+
+                        final Provider<DetectionConsumer> detectionConsumerProvider =
+                                detectionConsumerFactory.create(analytic.analyticRuleDoc);
+                        final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
+                        detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
+                        detectionConsumerProxy.setCompiledFields(compiledFields);
+                        detectionConsumerProxy.setFieldIndex(fieldIndex);
+                        detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
+
+                        try {
+                            detectionConsumerProxy.start();
+                            final AnalyticRuleDoc analyticRuleDoc = analytic.analyticRuleDoc;
+                            final Consumer<Row> itemConsumer = row -> {
+                                // Only notify if the state is enabled.
+                                notificationState.enableIfPossible();
+                                if (notificationState.incrementAndCheckEnabled()) {
+
+                                    Long streamId = null;
+                                    Long eventId = null;
+                                    final List<Value> values = new ArrayList<>();
+                                    for (int i = 0; i < dataStore.getFields().size(); i++) {
+                                        if (i < row.getValues().size()) {
+                                            final String fieldName = dataStore.getFields().get(i).getName();
+                                            final String value = row.getValues().get(i);
+                                            if (value != null) {
+                                                if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                                                    streamId = DetectionConsumerProxy.getSafeLong(value);
+                                                } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                                                    eventId = DetectionConsumerProxy.getSafeLong(value);
+                                                }
+                                                values.add(new Value(fieldName, value));
+                                            }
                                         }
-                                        values.add(new Value(fieldName, value));
                                     }
+
+                                    List<LinkedEvent> linkedEvents = null;
+                                    if (streamId != null || eventId != null) {
+                                        linkedEvents = List.of(new LinkedEvent(null, streamId, eventId));
+                                    }
+
+                                    final Detection detection = new Detection(
+                                            Instant.now(),
+                                            analyticRuleDoc.getName(),
+                                            analyticRuleDoc.getUuid(),
+                                            analyticRuleDoc.getVersion(),
+                                            null,
+                                            null,
+                                            analyticRuleDoc.getDescription(),
+                                            null,
+                                            UUID.randomUUID().toString(),
+                                            0,
+                                            false,
+                                            values,
+                                            linkedEvents);
+                                    detectionConsumerProxy.getDetectionConsumer().accept(detection);
+                                }
+                            };
+                            final Consumer<Long> countConsumer = count -> {
+
+                            };
+
+                            final KeyFactory keyFactory = dataStore.getKeyFactory();
+                            final FieldFormatter fieldFormatter =
+                                    new FieldFormatter(
+                                            new FormatterFactory(sampleRequest.getDateTimeSettings()));
+
+                            // Create the row creator.
+                            Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
+                                    fieldFormatter,
+                                    keyFactory,
+                                    tableSettings.getAggregateFilter(),
+                                    dataStore.getFields(),
+                                    errorConsumer);
+
+                            if (optionalRowCreator.isEmpty()) {
+                                optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
+                            }
+
+                            final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
+
+                            dataStore.fetch(
+                                    OffsetRange.UNBOUNDED,
+                                    OpenGroups.NONE,
+                                    resultRequest.getTimeFilter(),
+                                    rowCreator,
+                                    itemConsumer,
+                                    countConsumer);
+
+                        } finally {
+                            final List<String> errors = errorConsumer.getErrors();
+                            if (errors != null && errors.size() > 0) {
+                                for (final String error : errors) {
+                                    errorReceiverProxyProvider.get()
+                                            .getErrorReceiver()
+                                            .log(Severity.ERROR, null, null, error, null);
                                 }
                             }
 
-                            List<LinkedEvent> linkedEvents = null;
-                            if (streamId != null || eventId != null) {
-                                linkedEvents = List.of(new LinkedEvent(null, streamId, eventId));
-                            }
-
-                            final Detection detection = new Detection(
-                                    Instant.now(),
-                                    analyticRuleDoc.getName(),
-                                    analyticRuleDoc.getUuid(),
-                                    analyticRuleDoc.getVersion(),
-                                    null,
-                                    null,
-                                    analyticRuleDoc.getDescription(),
-                                    null,
-                                    UUID.randomUUID().toString(),
-                                    0,
-                                    false,
-                                    values,
-                                    linkedEvents);
-                            detectionWriter.getDetectionConsumer().accept(detection);
-                        };
-                        final Consumer<Long> countConsumer = count -> {
-
-                        };
-
-                        final KeyFactory keyFactory = dataStore.getKeyFactory();
-                        final FieldFormatter fieldFormatter =
-                                new FieldFormatter(
-                                        new FormatterFactory(sampleRequest.getDateTimeSettings()));
-
-                        // Create the row creator.
-                        Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
-                                fieldFormatter,
-                                keyFactory,
-                                tableSettings.getAggregateFilter(),
-                                dataStore.getFields(),
-                                errorConsumer);
-
-                        if (optionalRowCreator.isEmpty()) {
-                            optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
+                            detectionConsumerProxy.end();
                         }
-
-                        final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
-
-                        dataStore.fetch(
-                                OffsetRange.UNBOUNDED,
-                                OpenGroups.NONE,
-                                resultRequest.getTimeFilter(),
-                                rowCreator,
-                                itemConsumer,
-                                countConsumer);
-
                     } finally {
-                        final List<String> errors = errorConsumer.getErrors();
-                        if (errors != null && errors.size() > 0) {
-                            for (final String error : errors) {
-                                errorReceiverProxyProvider.get()
-                                        .getErrorReceiver()
-                                        .log(Severity.ERROR, null, null, error, null);
-                            }
-                        }
-
-                        detectionWriter.end();
+                        searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
                     }
-                } finally {
-                    searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
                 }
             }
 
@@ -353,7 +359,14 @@ public class ScheduledQueryAnalyticExecutor {
             analyticHelper.updateTracker(analytic.tracker);
 
         } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
+            try {
+                LOGGER.debug(e::getMessage, e);
+                errorReceiverProxyProvider.get()
+                        .getErrorReceiver()
+                        .log(Severity.ERROR, null, null, e.getMessage(), e);
+            } catch (final RuntimeException e2) {
+                LOGGER.error(e2::getMessage, e2);
+            }
         }
     }
 
@@ -363,7 +376,7 @@ public class ScheduledQueryAnalyticExecutor {
         final List<ScheduledQueryAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
-            final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+            final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
             if (analyticProcessConfig != null &&
                     analyticProcessConfig.isEnabled() &&
                     nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
@@ -385,7 +398,7 @@ public class ScheduledQueryAnalyticExecutor {
                     ViewDoc viewDoc = null;
 
                     // Try and get view.
-                    final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
+                    final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
                     final SearchRequest searchRequest = analyticRuleSearchRequestHelper
                             .create(analyticRuleDoc);
                     final DocRef dataSource = searchRequest.getQuery().getDataSource();
@@ -401,8 +414,7 @@ public class ScheduledQueryAnalyticExecutor {
 
                     if (!(analyticRuleDoc.getAnalyticProcessConfig()
                             instanceof ScheduledQueryAnalyticProcessConfig)) {
-                        LOGGER.debug("Error: Invalid process config {}",
-                                AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
+                        LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
                         tracker.getAnalyticTrackerData()
                                 .setMessage("Error: Invalid process config.");
 

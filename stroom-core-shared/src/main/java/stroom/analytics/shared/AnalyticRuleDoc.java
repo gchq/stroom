@@ -118,7 +118,7 @@ public class AnalyticRuleDoc extends Doc {
         return analyticProcessType;
     }
 
-    public AnalyticProcessConfig<?> getAnalyticProcessConfig() {
+    public AnalyticProcessConfig getAnalyticProcessConfig() {
         return analyticProcessConfig;
     }
 

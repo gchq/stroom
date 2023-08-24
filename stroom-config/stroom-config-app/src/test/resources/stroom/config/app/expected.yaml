@@ -33,6 +33,15 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    emailConfig:
+      fromAddress: "noreply@stroom"
+      fromName: "Stroom Analytics"
+      smtp:
+        host: "localhost"
+        password: null
+        port: 2525
+        transport: "plain"
+        username: null
     resultStore:
       lmdb:
         localDir: "analytic_store"

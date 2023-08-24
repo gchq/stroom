@@ -1,6 +1,6 @@
 package stroom.analytics.shared;
 
-import stroom.analytics.shared.StreamingAnalyticProcessConfig.AnalyticProcessConfigBuilder;
+import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig<AnalyticProcessConfigBuilder> {
+public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
     private final Long minMetaCreateTimeMs;
@@ -22,9 +22,10 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig<Analyt
     @JsonCreator
     public StreamingAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
                                           @JsonProperty("node") final String node,
+                                          @JsonProperty("errorFeed") final DocRef errorFeed,
                                           @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                           @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
-        super(enabled, node);
+        super(enabled, node, errorFeed);
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
     }
@@ -68,43 +69,42 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig<Analyt
                 '}';
     }
 
-    @Override
-    public AnalyticProcessConfigBuilder copy() {
-        return new AnalyticProcessConfigBuilder(this);
+    public Builder copy() {
+        return new Builder(this);
     }
 
-    public static AnalyticProcessConfigBuilder builder() {
-        return new AnalyticProcessConfigBuilder();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public static class AnalyticProcessConfigBuilder
-            extends AbstractAnalyticProcessConfigBuilder<StreamingAnalyticProcessConfig, AnalyticProcessConfigBuilder> {
+    public static class Builder
+            extends AbstractAnalyticProcessConfigBuilder<StreamingAnalyticProcessConfig, Builder> {
 
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
 
-        private AnalyticProcessConfigBuilder() {
+        private Builder() {
             super();
         }
 
-        private AnalyticProcessConfigBuilder(final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+        private Builder(final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
             super(streamingAnalyticProcessConfig);
             this.minMetaCreateTimeMs = streamingAnalyticProcessConfig.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = streamingAnalyticProcessConfig.maxMetaCreateTimeMs;
         }
 
-        public AnalyticProcessConfigBuilder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
             return self();
         }
 
-        public AnalyticProcessConfigBuilder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
             return self();
         }
 
         @Override
-        protected AnalyticProcessConfigBuilder self() {
+        protected Builder self() {
             return this;
         }
 
@@ -113,6 +113,7 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig<Analyt
             return new StreamingAnalyticProcessConfig(
                     enabled,
                     node,
+                    errorFeed,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs);
         }

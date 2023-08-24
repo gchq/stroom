@@ -79,6 +79,7 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .analyticProcessConfig(new ScheduledQueryAnalyticProcessConfig(
                         true,
                         nodeInfo.getThisNodeName(),
+                        analyticsDataSetup.getDetections(),
                         null,
                         null,
                         INSTANT,

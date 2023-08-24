@@ -24,21 +24,26 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
     private final String timezone;
     @JsonPropertyDescription("Configuration for the data store used for analytics.")
     private final AnalyticResultStoreConfig resultStoreConfig;
+    @JsonPropertyDescription("Email service configuration.")
+    private final EmailConfig emailConfig;
 
     public AnalyticsConfig() {
         dbConfig = new AnalyticsDbConfig();
         timezone = "UTC";
         resultStoreConfig = new AnalyticResultStoreConfig();
+        emailConfig = new EmailConfig();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public AnalyticsConfig(@JsonProperty("db") final AnalyticsDbConfig dbConfig,
                            @JsonProperty("timezone") final String timezone,
-                           @JsonProperty("resultStore") final AnalyticResultStoreConfig resultStoreConfig) {
+                           @JsonProperty("resultStore") final AnalyticResultStoreConfig resultStoreConfig,
+                           @JsonProperty("emailConfig") final EmailConfig emailConfig) {
         this.dbConfig = dbConfig;
         this.timezone = timezone;
         this.resultStoreConfig = resultStoreConfig;
+        this.emailConfig = emailConfig;
     }
 
     @Override
@@ -55,6 +60,11 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
     @JsonProperty("resultStore")
     public AnalyticResultStoreConfig getResultStoreConfig() {
         return resultStoreConfig;
+    }
+
+    @JsonProperty("emailConfig")
+    public EmailConfig getEmailConfig() {
+        return emailConfig;
     }
 
     @BootStrapConfig

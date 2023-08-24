@@ -104,14 +104,10 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                             .createUser(createUser)
                             .updateUser(updateUser);
 
-                    final AnalyticProcessConfig<?> analyticProcessConfig = document.getAnalyticProcessConfig();
+                    final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
                     if (analyticProcessConfig != null) {
-                        builder
-                                .analyticProcessConfig(
-                                        analyticProcessConfig
-                                                .copy()
-                                                .enabled(false)
-                                                .build());
+                        analyticProcessConfig.setEnabled(false);
+                        builder.analyticProcessConfig(analyticProcessConfig);
                     }
 
                     return builder.build();

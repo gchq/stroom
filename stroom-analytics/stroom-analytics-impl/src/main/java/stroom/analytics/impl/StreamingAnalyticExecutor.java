@@ -1,8 +1,5 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationDestination;
-import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -73,12 +70,14 @@ public class StreamingAnalyticExecutor {
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final Provider<ExtractionState> extractionStateProvider;
-    private final Provider<DetectionWriterProxy> detectionWriterProxyProvider;
+    private final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider;
     private final TaskContextFactory taskContextFactory;
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
     private final ExpressionMatcher metaExpressionMatcher;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
+    private final NotificationStateService notificationStateService;
+    private final DetectionConsumerFactory detectionConsumerFactory;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
 
@@ -95,12 +94,14 @@ public class StreamingAnalyticExecutor {
                                      final Provider<ExtractionState> extractionStateProvider,
                                      final TaskContextFactory taskContextFactory,
                                      final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
-                                     final Provider<DetectionWriterProxy> detectionWriterProxyProvider,
+                                     final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
                                      final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
                                      final ExpressionMatcherFactory expressionMatcherFactory,
                                      final AnalyticHelper analyticHelper,
                                      final NodeInfo nodeInfo,
-                                     final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
+                                     final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
+                                     final NotificationStateService notificationStateService,
+                                     final DetectionConsumerFactory detectionConsumerFactory) {
         this.executorProvider = executorProvider;
         this.securityContext = securityContext;
         this.pipelineStore = pipelineStore;
@@ -110,12 +111,14 @@ public class StreamingAnalyticExecutor {
         this.extractionStateProvider = extractionStateProvider;
         this.taskContextFactory = taskContextFactory;
         this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
-        this.detectionWriterProxyProvider = detectionWriterProxyProvider;
+        this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
         this.metaExpressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
         this.analyticHelper = analyticHelper;
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
+        this.notificationStateService = notificationStateService;
+        this.detectionConsumerFactory = detectionConsumerFactory;
     }
 
     public void exec() {
@@ -258,10 +261,10 @@ public class StreamingAnalyticExecutor {
 
                 // Start at the next meta.
                 Long lastMetaId = trackerData.getLastStreamId();
-                minMetaId = AnalyticHelper.getMin(minMetaId, lastMetaId);
-                minCreateTime = AnalyticHelper.getMin(minCreateTime,
+                minMetaId = AnalyticUtil.getMin(minMetaId, lastMetaId);
+                minCreateTime = AnalyticUtil.getMin(minCreateTime,
                         streamingAnalytic.streamingAnalyticProcessConfig().getMinMetaCreateTimeMs());
-                maxCreateTime = AnalyticHelper.getMax(maxCreateTime,
+                maxCreateTime = AnalyticUtil.getMax(maxCreateTime,
                         streamingAnalytic.streamingAnalyticProcessConfig().getMaxMetaCreateTimeMs());
             }
 
@@ -350,6 +353,7 @@ public class StreamingAnalyticExecutor {
         }
     }
 
+
     private Optional<AnalyticFieldListConsumer> createEventConsumer(final StreamingAnalytic analytic) {
         // Create field index.
         final SearchRequest searchRequest = analytic.searchRequest();
@@ -362,27 +366,29 @@ public class StreamingAnalyticExecutor {
         final SearchExpressionQueryCache searchExpressionQueryCache =
                 new SearchExpressionQueryCache(searchExpressionQueryBuilderFactory, searchRequest);
 
-        final AnalyticNotificationConfig analyticNotificationConfig = analytic
-                .analyticRuleDoc().getAnalyticNotificationConfig();
-        final AnalyticNotificationDestination destination = analyticNotificationConfig.getDestination();
-        if (destination instanceof final AnalyticNotificationStreamDestination streamDestination) {
+        // Determine if notifications have been disabled.
+        final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
+        // Only execute if the state is enabled.
+        notificationState.enableIfPossible();
+        if (notificationState.isEnabled()) {
             try {
-                final DetectionWriterProxy detectionWriter = detectionWriterProxyProvider.get();
-                detectionWriter.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                detectionWriter.setCompiledFields(compiledFields);
-                detectionWriter.setFieldIndex(fieldIndex);
-                if (!streamDestination.isUseSourceFeedIfPossible()) {
-                    detectionWriter.setDestinationFeed(streamDestination.getDestinationFeed());
-                }
+                final Provider<DetectionConsumer> detectionConsumerProvider =
+                        detectionConsumerFactory.create(analytic.analyticRuleDoc);
+                final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
+                detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
+                detectionConsumerProxy.setCompiledFields(compiledFields);
+                detectionConsumerProxy.setFieldIndex(fieldIndex);
+                detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
                 final AnalyticFieldListConsumer analyticFieldListConsumer =
-                        new EventAnalyticFieldListConsumer(
+                        new StreamingAnalyticFieldListConsumer(
                                 searchRequest,
                                 fieldIndex,
-                                detectionWriter,
+                                notificationState,
+                                detectionConsumerProxy,
                                 searchExpressionQueryCache,
                                 null,
-                                detectionWriter);
+                                detectionConsumerProxy);
                 return Optional.of(analyticFieldListConsumer);
 
             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -404,13 +410,13 @@ public class StreamingAnalyticExecutor {
                                  final Meta meta,
                                  final Map<String, Object> metaAttributeMap) {
         final Long lastStreamId = analytic.trackerData().getLastStreamId();
-        final long minStreamId = AnalyticHelper.getMin(null, lastStreamId) + 1;
+        final long minStreamId = AnalyticUtil.getMin(null, lastStreamId) + 1;
 
         final long minCreateTime =
-                AnalyticHelper.getMin(null,
+                AnalyticUtil.getMin(null,
                         analytic.streamingAnalyticProcessConfig().getMinMetaCreateTimeMs());
         final long maxCreateTime =
-                AnalyticHelper.getMax(null,
+                AnalyticUtil.getMax(null,
                         analytic.streamingAnalyticProcessConfig().getMaxMetaCreateTimeMs());
 
         // Check this analytic should process this meta.
@@ -437,7 +443,7 @@ public class StreamingAnalyticExecutor {
         final List<StreamingAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
-            final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+            final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
             if (analyticProcessConfig != null &&
                     analyticProcessConfig.isEnabled() &&
                     nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
@@ -458,7 +464,7 @@ public class StreamingAnalyticExecutor {
                     ViewDoc viewDoc = null;
 
                     // Try and get view.
-                    final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
+                    final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
                     final SearchRequest searchRequest = analyticRuleSearchRequestHelper
                             .create(analyticRuleDoc);
                     final DocRef dataSource = searchRequest.getQuery().getDataSource();
@@ -474,8 +480,7 @@ public class StreamingAnalyticExecutor {
 
                     if (!(analyticRuleDoc.getAnalyticProcessConfig()
                             instanceof StreamingAnalyticProcessConfig)) {
-                        LOGGER.debug("Error: Invalid process config {}",
-                                AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
+                        LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
                         tracker.getAnalyticTrackerData()
                                 .setMessage("Error: Invalid process config.");
 

@@ -23,6 +23,6 @@
                         label="Destination Type">
             <l:SelectionBox ui:field="destinationType"/>
         </form:FormGroup>
-        <g:SimplePanel ui:field="destinationContainer"/>
+        <g:SimplePanel ui:field="destinationContainer" styleName="form-group"/>
     </g:FlowPanel>
 </ui:UiBinder> 

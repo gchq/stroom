@@ -14,6 +14,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.task.api.TaskContextFactory;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class AnalyticHelper {
 
@@ -35,18 +37,21 @@ public class AnalyticHelper {
     private final TaskContextFactory taskContextFactory;
     private final ViewStore viewStore;
     private final MetaService metaService;
+    private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
 
     @Inject
     public AnalyticHelper(final AnalyticRuleStore analyticRuleStore,
                           final AnalyticTrackerDao analyticTrackerDao,
                           final TaskContextFactory taskContextFactory,
                           final ViewStore viewStore,
-                          final MetaService metaService) {
+                          final MetaService metaService,
+                          final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider) {
         this.analyticRuleStore = analyticRuleStore;
         this.analyticTrackerDao = analyticTrackerDao;
         this.taskContextFactory = taskContextFactory;
         this.viewStore = viewStore;
         this.metaService = metaService;
+        this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
     }
 
     public ViewDoc loadViewDoc(final String ruleIdentity,
@@ -65,23 +70,13 @@ public class AnalyticHelper {
         return viewDoc;
     }
 
-    public static String getAnalyticRuleIdentity(final AnalyticRuleDoc analyticRuleDoc) {
-        return analyticRuleDoc.getName() +
-                " (" +
-                analyticRuleDoc.getUuid() +
-                ")";
-    }
-
     public void disableProcess(final AnalyticRuleDoc analyticRuleDoc) {
-        final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+        final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
         if (analyticProcessConfig != null) {
+            analyticProcessConfig.setEnabled(false);
             final AnalyticRuleDoc modified = analyticRuleDoc
                     .copy()
-                    .analyticProcessConfig(
-                            analyticProcessConfig
-                                    .copy()
-                                    .enabled(false)
-                                    .build())
+                    .analyticProcessConfig(analyticProcessConfig)
                     .build();
             analyticRuleStore.writeDocument(modified);
         }
@@ -159,21 +154,22 @@ public class AnalyticHelper {
         return metaService.find(findMetaCriteria).getValues();
     }
 
-    public static long getMin(Long currentValue, Long newValue) {
-        if (newValue == null) {
-            return 0L;
-        } else if (currentValue == null) {
-            return newValue;
+    public String getErrorFeedName(final AnalyticRuleDoc analyticRuleDoc) {
+        String errorFeedName = null;
+        if (analyticRuleDoc.getAnalyticProcessConfig() != null &&
+                analyticRuleDoc.getAnalyticProcessConfig().getErrorFeed() != null) {
+            errorFeedName = analyticRuleDoc.getAnalyticProcessConfig().getErrorFeed().getName();
         }
-        return Math.min(currentValue, newValue);
-    }
+        if (errorFeedName == null) {
+            LOGGER.debug(() -> "Error feed not defined: " +
+                    AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
 
-    public static long getMax(Long currentValue, Long newValue) {
-        if (newValue == null) {
-            return Long.MAX_VALUE;
-        } else if (currentValue == null) {
-            return newValue;
+            final DocRef defaultErrorFeed = analyticUiDefaultConfigProvider.get().getDefaultErrorFeed();
+            if (defaultErrorFeed == null) {
+                throw new RuntimeException("Default error feed not defined");
+            }
+            errorFeedName = defaultErrorFeed.getName();
         }
-        return Math.max(currentValue, newValue);
+        return errorFeedName;
     }
 }
