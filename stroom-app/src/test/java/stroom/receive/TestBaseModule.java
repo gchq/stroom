@@ -7,6 +7,7 @@ import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
+import stroom.documentation.impl.DocumentationModule;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.feed.impl.FeedModule;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
@@ -31,6 +32,7 @@ public class TestBaseModule extends AbstractModule {
     protected void configure() {
         install(new CacheModule());
         install(new DictionaryModule());
+        install(new DocumentationModule());
         install(new DocStoreModule());
         install(new FeedModule());
         install(new LegacyImpexModule());

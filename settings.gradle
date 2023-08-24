@@ -109,6 +109,9 @@ include 'stroom-docstore:stroom-docstore-impl-db'
 include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
 
+// Documentation
+include 'stroom-documentation:stroom-documentation-impl'
+
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'
 

@@ -42,6 +42,8 @@ import stroom.data.store.impl.fs.client.gin.FSVolumeModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
+import stroom.documentation.client.gin.DocumentationGinjector;
+import stroom.documentation.client.gin.DocumentationModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
@@ -110,6 +112,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
+        DocumentationModule.class,
         EntityModule.class,
         FSVolumeModule.class,
         FeedModule.class,
@@ -146,6 +149,7 @@ public interface AppGinjectorUser extends
         CacheGinjector,
         DashboardGinjector,
         DictionaryGinjector,
+        DocumentationGinjector,
         EntityGinjector,
         FSVolumeGinjector,
         FeedGinjector,

@@ -117,6 +117,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-docstore:stroom-docstore-impl-fs')
     implementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    implementation project(':stroom-documentation:stroom-documentation-impl')
     implementation project(':stroom-dropwizard-common')
 //    implementation project(':stroom-elastic:stroom-elastic-impl')
 //    implementation project(':stroom-elastic:stroom-elastic-impl-http')

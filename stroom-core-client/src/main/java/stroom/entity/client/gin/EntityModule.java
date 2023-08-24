@@ -28,6 +28,8 @@ import stroom.entity.client.presenter.InfoDocumentPresenter.InfoDocumentProxy;
 import stroom.entity.client.presenter.InfoDocumentPresenter.InfoDocumentView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
+import stroom.entity.client.presenter.MarkdownPreviewPresenter;
+import stroom.entity.client.presenter.MarkdownPreviewPresenter.MarkdownPreviewView;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentProxy;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
@@ -38,6 +40,7 @@ import stroom.entity.client.view.CopyDocumentViewImpl;
 import stroom.entity.client.view.CreateDocumentViewImpl;
 import stroom.entity.client.view.InfoDocumentViewImpl;
 import stroom.entity.client.view.MarkdownEditViewImpl;
+import stroom.entity.client.view.MarkdownPreviewViewImpl;
 import stroom.entity.client.view.MoveDocumentViewImpl;
 import stroom.entity.client.view.NameDocumentViewImpl;
 
@@ -47,7 +50,9 @@ public class EntityModule extends AbstractPresenterModule {
 
     @Override
     protected void configure() {
-        bindPresenter(CreateDocumentPresenter.class, CreateDocumentView.class, CreateDocumentViewImpl.class,
+        bindPresenter(CreateDocumentPresenter.class,
+                CreateDocumentView.class,
+                CreateDocumentViewImpl.class,
                 CreateDocumentProxy.class);
         bindPresenter(CopyDocumentPresenter.class,
                 CopyDocumentView.class,
@@ -64,6 +69,10 @@ public class EntityModule extends AbstractPresenterModule {
         bindPresenterWidget(MarkdownEditPresenter.class,
                 MarkdownEditView.class,
                 MarkdownEditViewImpl.class);
+        bindPresenterWidget(MarkdownPreviewPresenter.class,
+                MarkdownPreviewView.class,
+                MarkdownPreviewViewImpl.class);
+
         bindSharedView(NameDocumentView.class, NameDocumentViewImpl.class);
         bindPresenter(NameDocumentPresenter.class, NameDocumentProxy.class);
     }
