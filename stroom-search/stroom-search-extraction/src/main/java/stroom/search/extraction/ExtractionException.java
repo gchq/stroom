@@ -18,8 +18,6 @@ package stroom.search.extraction;
 
 public class ExtractionException extends RuntimeException {
 
-    private static final long serialVersionUID = -482925256715483280L;
-
     public ExtractionException(final String message) {
         super(message);
     }

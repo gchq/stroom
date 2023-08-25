@@ -164,6 +164,10 @@ public class QueryEditPresenter
                     (e.isShiftKeyDown() || e.isControlKeyDown())) {
                 e.preventDefault();
                 run(true, true);
+            } else if (KeyCodes.KEY_ESCAPE == e.getNativeKeyCode() &&
+                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
+                e.preventDefault();
+                stop();
             }
         }, KeyDownEvent.getType()));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
@@ -171,7 +175,7 @@ public class QueryEditPresenter
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.getSelectionModel().addSelectionHandler(event ->
                 onSelection(tablePresenter.getSelectionModel().getSelected())));
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> startStop()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
         queryHelpPresenter.linkToEditor(editorPresenter);
 
@@ -261,6 +265,18 @@ public class QueryEditPresenter
 
     public void onClose() {
         queryModel.reset(DestroyReason.TAB_CLOSE);
+    }
+
+    private void startStop() {
+        if (queryModel.isSearching()) {
+            queryModel.stop();
+        } else {
+            run(true, true);
+        }
+    }
+
+    private void stop() {
+        queryModel.stop();
     }
 
     private void run(final boolean incremental,

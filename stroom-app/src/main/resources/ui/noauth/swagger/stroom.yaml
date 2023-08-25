@@ -8670,8 +8670,12 @@ components:
     ExplorerServiceCopyRequest:
       type: object
       properties:
+        allowRename:
+          type: boolean
         destinationFolder:
           $ref: '#/components/schemas/ExplorerNode'
+        docName:
+          type: string
         explorerNodes:
           type: array
           items:
