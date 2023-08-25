@@ -664,6 +664,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     @Override
     public BulkActionResult copy(final List<ExplorerNode> explorerNodes,
                                  final ExplorerNode destinationFolder,
+                                 final boolean allowRename,
+                                 final String docName,
                                  final PermissionInheritance permissionInheritance) {
         final StringBuilder resultMessage = new StringBuilder();
 
@@ -678,6 +680,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         explorerNodes.forEach(sourceNode -> copy(
                 sourceNode,
                 destinationFolder,
+                allowRename,
+                docName,
                 permissionInheritance,
                 resultMessage,
                 remappings));
@@ -719,6 +723,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
      */
     private void copy(final ExplorerNode sourceNode,
                       final ExplorerNode destinationFolder,
+                      final boolean allowRename,
+                      final String docName,
                       final PermissionInheritance permissionInheritance,
                       final StringBuilder resultMessage,
                       final Map<ExplorerNode, ExplorerNode> remappings) {
@@ -743,7 +749,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         .collect(Collectors.toSet());
 
                 // Copy the item to the destination folder.
-                final DocRef destinationDocRef = handler.copyDocument(sourceNode.getDocRef(),
+                String name = sourceNode.getDocRef().getName();
+                if (allowRename && docName != null && docName.trim().length() > 0) {
+                    name = docName;
+                }
+                final DocRef destinationDocRef = handler.copyDocument(
+                        sourceNode.getDocRef(),
+                        name,
+                        !allowRename,
                         otherDestinationChildrenNames);
                 explorerEventLog.copy(sourceNode.getDocRef(), destinationFolderRef, permissionInheritance,
                         null);
@@ -795,7 +808,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             final List<ExplorerNode> children = childMap.get(sourceFolder);
             if (children != null && children.size() > 0) {
                 children.forEach(child -> {
-                    copy(child, destinationFolder, permissionInheritance, resultMessage, remappings);
+                    copy(child, destinationFolder, false, null, permissionInheritance, resultMessage, remappings);
                     recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
                 });
             }

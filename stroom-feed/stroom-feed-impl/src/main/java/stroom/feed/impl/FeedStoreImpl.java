@@ -87,8 +87,16 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = createUniqueName(docRef.getName());
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        // Check a feed doesn't already exist with this name.
+        if (!makeNameUnique && checkDuplicateName(name, null)) {
+            throw new EntityServiceException("A feed named '" + name + "' already exists");
+        }
+
+        final String newName = createUniqueName(name);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 

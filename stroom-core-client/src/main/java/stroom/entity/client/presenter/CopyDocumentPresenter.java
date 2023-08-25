@@ -17,6 +17,7 @@
 
 package stroom.entity.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
@@ -47,6 +48,8 @@ public class CopyDocumentPresenter
 
     private final EntityTreePresenter entityTreePresenter;
     private List<ExplorerNode> explorerNodeList;
+    private boolean singleItemMode;
+    private ExplorerNode firstChild;
 
     @Inject
     public CopyDocumentPresenter(final EventBus eventBus,
@@ -68,7 +71,8 @@ public class CopyDocumentPresenter
 
         entityTreePresenter.setSelectedItem(null);
 
-        ExplorerNode firstChild = event.getExplorerNodeList().get(0);
+        singleItemMode = event.getExplorerNodeList().size() == 1;
+        firstChild = event.getExplorerNodeList().get(0);
         // Make sure we reference the main node rather than the favourites' node.
         if (firstChild != null) {
             firstChild = firstChild
@@ -76,6 +80,15 @@ public class CopyDocumentPresenter
                     .rootNodeUuid(ExplorerConstants.SYSTEM_DOC_REF.getUuid())
                     .build();
         }
+
+        if (singleItemMode) {
+            getView().setNameVisible(true);
+            getView().setName(firstChild.getName());
+        } else {
+            getView().setNameVisible(false);
+            getView().setName("");
+        }
+
         entityTreePresenter.setSelectedItem(firstChild);
         entityTreePresenter.getModel().reset();
         entityTreePresenter.getModel().setEnsureVisible(firstChild);
@@ -87,8 +100,8 @@ public class CopyDocumentPresenter
     @Override
     protected void revealInParent() {
         String caption = "Copy Multiple Items";
-        if (explorerNodeList.size() == 1) {
-            caption = "Copy " + explorerNodeList.get(0).getDisplayValue();
+        if (singleItemMode) {
+            caption = "Copy " + firstChild.getDisplayValue();
         }
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
@@ -100,13 +113,20 @@ public class CopyDocumentPresenter
                 .onShow(e -> entityTreePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-                        CopyDocumentEvent.fire(
-                                CopyDocumentPresenter.this,
-                                CopyDocumentPresenter.this,
-                                explorerNodeList,
-                                folder,
-                                getView().getPermissionInheritance());
+                        if (singleItemMode &&
+                                (getView().getName() == null || getView().getName().trim().length() == 0)) {
+                            AlertEvent.fireError(CopyDocumentPresenter.this, "No name specified", null);
+                        } else {
+                            final ExplorerNode folder = entityTreePresenter.getSelectedItem();
+                            CopyDocumentEvent.fire(
+                                    CopyDocumentPresenter.this,
+                                    CopyDocumentPresenter.this,
+                                    explorerNodeList,
+                                    folder,
+                                    singleItemMode,
+                                    getView().getName(),
+                                    getView().getPermissionInheritance());
+                        }
                     } else {
                         e.hide();
                     }
@@ -115,6 +135,12 @@ public class CopyDocumentPresenter
     }
 
     public interface CopyDocumentView extends View {
+
+        String getName();
+
+        void setName(String name);
+
+        void setNameVisible(boolean visible);
 
         void setFolderView(View view);
 

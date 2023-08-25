@@ -75,11 +75,6 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHand
     }
 
     @Override
-    public void setFoldersVisible(final boolean visible) {
-        foldersInner.setVisible(visible);
-    }
-
-    @Override
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance.getValue();
     }

@@ -42,7 +42,10 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to copy");
@@ -53,7 +56,12 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
                     "You do not have permission to read (" + FOLDER + ")");
         }
 
-        final String newName = UniqueNameUtil.getCopyName(explorerTreeNode.getName(), existingNames);
+        String folderName = name;
+        if (folderName == null || folderName.trim().length() == 0) {
+            folderName = explorerTreeNode.getName();
+        }
+
+        final String newName = UniqueNameUtil.getCopyName(folderName, makeNameUnique, existingNames);
         return new DocRef(FOLDER, UUID.randomUUID().toString(), newName);
     }
 

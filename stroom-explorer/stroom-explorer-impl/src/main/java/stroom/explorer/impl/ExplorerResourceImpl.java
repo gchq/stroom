@@ -100,6 +100,8 @@ class ExplorerResourceImpl implements ExplorerResource {
     public BulkActionResult copy(final ExplorerServiceCopyRequest request) {
         return explorerServiceProvider.get().copy(request.getExplorerNodes(),
                 request.getDestinationFolder(),
+                request.isAllowRename(),
+                request.getDocName(),
                 request.getPermissionInheritance());
     }
 

@@ -50,6 +50,8 @@ class MockExplorerService implements ExplorerService {
     @Override
     public BulkActionResult copy(final List<ExplorerNode> explorerNodes,
                                  final ExplorerNode destinationFolder,
+                                 final boolean allowRename,
+                                 final String docName,
                                  final PermissionInheritance permissionInheritance) {
         return null;
     }
