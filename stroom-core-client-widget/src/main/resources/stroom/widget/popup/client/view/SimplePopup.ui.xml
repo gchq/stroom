@@ -3,9 +3,10 @@
         xmlns:ui="urn:ui:com.google.gwt.uibinder"
         xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-    <g:SimplePanel styleName="simplePopup-container">
+    <g:FlowPanel styleName="simplePopup-container">
+        <g:SimplePanel styleName="simplePopup-background-behind" />
         <g:SimplePanel styleName="simplePopup-background">
             <g:SimplePanel ui:field="content" styleName="simplePopup-content"/>
         </g:SimplePanel>
-    </g:SimplePanel>
+    </g:FlowPanel>
 </ui:UiBinder> 

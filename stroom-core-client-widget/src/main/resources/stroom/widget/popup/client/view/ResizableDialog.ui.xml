@@ -3,6 +3,7 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
 	<g:FlowPanel styleName="dialog-container">
+		<g:SimplePanel styleName="dialog-background-behind" />
 		<g:FlowPanel styleName="dialog-background">
 			<g:SimplePanel styleName="dialog-titleBar">
 				<g:Label ui:field="titleText" styleName="dialog-titleText">Caption</g:Label>
