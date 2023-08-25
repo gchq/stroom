@@ -47,7 +47,8 @@ public class ManageFSVolumesPlugin extends NodeToolsContentPlugin<ManageFSVolume
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_VOLUMES_PERMISSION)) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
+            MenuKeys.addAdministrationMenu(event.getMenuItems());
+            event.getMenuItems().addMenuItem(MenuKeys.ADMINISTRATION_MENU,
                     new IconMenuItem.Builder()
                             .priority(2)
                             .icon(SvgImage.VOLUMES)

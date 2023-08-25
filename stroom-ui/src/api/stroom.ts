@@ -1626,7 +1626,9 @@ export interface ExplorerNodePermissions {
 }
 
 export interface ExplorerServiceCopyRequest {
+  allowRename?: boolean;
   destinationFolder?: ExplorerNode;
+  docName?: string;
   explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
