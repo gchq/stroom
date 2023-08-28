@@ -360,208 +360,26 @@ paths:
       summary: Get the data for the shard
       tags:
       - AnalyticNotifications
-  /analyticNotification/v1:
+  /analyticProcess/v1/tracker:
     post:
-      operationId: createAnalyticNotification
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticNotification'
-        description: notification
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticNotification'
-          description: default response
-      summary: Create an analytic notification
-      tags:
-      - AnalyticNotifications
-  /analyticNotification/v1/find:
-    post:
-      operationId: findAnalyticNotifications
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FindAnalyticNotificationCriteria'
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageAnalyticNotificationRow'
-          description: default response
-      summary: Find the analytic notifications for the specified analytic
-      tags:
-      - AnalyticNotifications
-  /analyticNotification/v1/{uuid}:
-    delete:
-      operationId: updateAnalyticNotification
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticNotification'
-        description: notification
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Delete an analytic notification
-      tags:
-      - AnalyticNotifications
-    put:
-      operationId: updateAnalyticNotification_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticNotification'
-        description: notification
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticNotification'
-          description: default response
-      summary: Update an analytic notification
-      tags:
-      - AnalyticNotifications
-  /analyticProcessorFilter/v1:
-    post:
-      operationId: createAnalyticProcessorFilter
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcessorFilter'
-        description: processor filter
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticProcessorFilter'
-          description: default response
-      summary: Create an analytic processor filter
-      tags:
-      - AnalyticProcessorFilters
-  /analyticProcessorFilter/v1/find:
-    post:
-      operationId: findAnalyticProcessorFilters
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FindAnalyticProcessorFilterCriteria'
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageAnalyticProcessorFilter'
-          description: default response
-      summary: Find the analytic processor filters for the specified analytic
-      tags:
-      - AnalyticProcessorFilters
-  /analyticProcessorFilter/v1/tracker:
-    post:
-      operationId: findAnalyticProcessorFilterTracker
+      operationId: findAnalyticProcessTracker
       requestBody:
         content:
           application/json:
             schema:
               type: string
-        description: filterUuid
+        description: processUuid
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AnalyticProcessorFilterTracker'
+                $ref: '#/components/schemas/AnalyticTracker'
           description: default response
-      summary: Find the analytic processor filter tracker for the specified filter
+      summary: Find the analytic process tracker for the specified process
       tags:
-      - AnalyticProcessorFilters
-  /analyticProcessorFilter/v1/{uuid}:
-    delete:
-      operationId: updateAnalyticProcessorFilter
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcessorFilter'
-        description: processor filter
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Delete an analytic processor filter
-      tags:
-      - AnalyticProcessorFilters
-    put:
-      operationId: updateAnalyticProcessorFilter_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcessorFilter'
-        description: processor filter
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticProcessorFilter'
-          description: default response
-      summary: Update an analytic processor filter
-      tags:
-      - AnalyticProcessorFilters
+      - AnalyticProcess
   /analyticRule/v1/{uuid}:
     get:
       operationId: fetchAnalyticRule
@@ -1813,6 +1631,26 @@ paths:
       summary: Stop a running query
       tags:
       - Data Retention Rules
+  /dataSource/v1/fetchDocumentation:
+    post:
+      operationId: fetchDocumentation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Documentation'
+          description: default response
+      summary: Fetch documentation for a data source
+      tags:
+      - Data Sources
   /dataSource/v1/fetchFields:
     post:
       operationId: fetchDataSourceFields
@@ -1947,6 +1785,68 @@ paths:
       summary: Update a dictionary doc
       tags:
       - Dictionaries (v1)
+  /documentation/v1/download:
+    post:
+      operationId: downloadDocumentation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download a documentation doc
+      tags:
+      - Documentation (v1)
+  /documentation/v1/{uuid}:
+    get:
+      operationId: fetchDocumentation_1
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationDoc'
+          description: default response
+      summary: Fetch a documentation doc by its UUID
+      tags:
+      - Documentation (v1)
+    put:
+      operationId: updateDocumentation
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentationDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationDoc'
+          description: default response
+      summary: Update a documentation doc
+      tags:
+      - Documentation (v1)
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -4407,6 +4307,26 @@ paths:
       summary: Fetch all expression functions
       tags:
       - Queries
+  /query/v1/helpItems:
+    post:
+      operationId: fetchHelpItems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryHelpItemsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryHelpItemsResult'
+          description: default response
+      summary: Fetch all (optionally filtered) query help items
+      tags:
+      - Queries
   /query/v1/search/{nodeName}:
     post:
       operationId: querySearch
@@ -6795,31 +6715,24 @@ components:
         size:
           type: integer
           format: int64
-    AnalyticNotification:
+    AnalyticNotificationConfig:
       type: object
       properties:
-        analyticUuid:
+        destination:
+          $ref: '#/components/schemas/AnalyticNotificationDestination'
+        destinationType:
           type: string
-        config:
-          $ref: '#/components/schemas/AnalyticNotificationConfig'
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        enabled:
+          enum:
+          - STREAM
+          - EMAIL
+        limitNotifications:
           type: boolean
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
+        maxNotifications:
           type: integer
           format: int32
-    AnalyticNotificationConfig:
+        resumeAfter:
+          $ref: '#/components/schemas/SimpleDuration'
+    AnalyticNotificationDestination:
       type: object
       discriminator:
         propertyName: type
@@ -6828,119 +6741,57 @@ components:
           type: string
       required:
       - type
-    AnalyticNotificationEmailConfig:
+    AnalyticNotificationEmailDestination:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
           emailAddress:
             type: string
-          timeToWaitForData:
-            $ref: '#/components/schemas/SimpleDuration'
-    AnalyticNotificationRow:
-      type: object
-      properties:
-        analyticNotification:
-          $ref: '#/components/schemas/AnalyticNotification'
-        analyticNotificationState:
-          $ref: '#/components/schemas/AnalyticNotificationState'
-    AnalyticNotificationState:
-      type: object
-      properties:
-        lastExecutionTime:
-          type: integer
-          format: int64
-        message:
-          type: string
-        notificationUuid:
-          type: string
-    AnalyticNotificationStreamConfig:
+    AnalyticNotificationStreamDestination:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
           destinationFeed:
             $ref: '#/components/schemas/DocRef'
-          timeToWaitForData:
-            $ref: '#/components/schemas/SimpleDuration'
           useSourceFeedIfPossible:
             type: boolean
-    AnalyticProcessorFilter:
+    AnalyticProcessConfig:
       type: object
+      discriminator:
+        propertyName: type
       properties:
-        analyticUuid:
-          type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
         enabled:
           type: boolean
-        maxMetaCreateTimeMs:
-          type: integer
-          format: int64
-        minMetaCreateTimeMs:
-          type: integer
-          format: int64
+        errorFeed:
+          $ref: '#/components/schemas/DocRef'
         node:
           type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
+        type:
           type: string
-        uuid:
-          type: string
-        version:
-          type: integer
-          format: int32
-    AnalyticProcessorFilterTracker:
-      type: object
-      properties:
-        eventCount:
-          type: integer
-          format: int64
-        filterUuid:
-          type: string
-        lastEventId:
-          type: integer
-          format: int64
-        lastEventTime:
-          type: integer
-          format: int64
-        lastMetaId:
-          type: integer
-          format: int64
-        lastPollMs:
-          type: integer
-          format: int64
-        lastPollTaskCount:
-          type: integer
-          format: int32
-        message:
-          type: string
-        metaCount:
-          type: integer
-          format: int64
+      required:
+      - type
     AnalyticRuleDoc:
       type: object
       properties:
-        analyticRuleType:
+        analyticNotificationConfig:
+          $ref: '#/components/schemas/AnalyticNotificationConfig'
+        analyticProcessConfig:
+          $ref: '#/components/schemas/AnalyticProcessConfig'
+        analyticProcessType:
           type: string
           enum:
-          - EVENT
-          - AGGREGATE
-          - BATCH_QUERY
+          - STREAMING
+          - TABLE_BUILDER
+          - SCHEDULED_QUERY
         createTimeMs:
           type: integer
           format: int64
         createUser:
           type: string
-        dataRetention:
-          $ref: '#/components/schemas/SimpleDuration'
         description:
           type: string
         languageVersion:
@@ -6963,10 +6814,30 @@ components:
           type: string
         version:
           type: string
+    AnalyticTracker:
+      type: object
+      properties:
+        analyticTrackerData:
+          $ref: '#/components/schemas/AnalyticTrackerData'
+        analyticUuid:
+          type: string
+    AnalyticTrackerData:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+      required:
+      - type
     AnalyticUiDefaultConfig:
       type: object
       properties:
-        defaultFeed:
+        defaultDestinationFeed:
+          $ref: '#/components/schemas/DocRef'
+        defaultErrorFeed:
           $ref: '#/components/schemas/DocRef'
         defaultNode:
           type: string
@@ -7697,6 +7568,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Result'
+        tokenError:
+          $ref: '#/components/schemas/TokenError'
     DataInfoSection:
       type: object
       properties:
@@ -7878,8 +7751,13 @@ components:
       - localZoneId
     DefaultLocation:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/Location'
+      properties:
+        colNo:
+          type: integer
+          format: int32
+        lineNo:
+          type: integer
+          format: int32
     Dependency:
       type: object
       properties:
@@ -8077,6 +7955,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -8233,6 +8112,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentType'
+    Documentation:
+      type: object
+      properties:
+        markdown:
+          type: string
+    DocumentationDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        data:
+          type: string
+        documentation:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     DoubleField:
       type: object
       allOf:
@@ -8516,6 +8425,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -8702,6 +8612,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -8894,8 +8805,12 @@ components:
     ExplorerServiceCopyRequest:
       type: object
       properties:
+        allowRename:
+          type: boolean
         destinationFolder:
           $ref: '#/components/schemas/ExplorerNode'
+        docName:
+          type: string
         explorerNodes:
           type: array
           items:
@@ -9303,38 +9218,6 @@ components:
           items:
             $ref: '#/components/schemas/SimpleUser'
     FindAnalyticDataShardCriteria:
-      type: object
-      properties:
-        analyticDocUuid:
-          type: string
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        quickFilterInput:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
-    FindAnalyticNotificationCriteria:
-      type: object
-      properties:
-        analyticDocUuid:
-          type: string
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        quickFilterInput:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
-    FindAnalyticProcessorFilterCriteria:
       type: object
       properties:
         analyticDocUuid:
@@ -10826,6 +10709,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -11546,6 +11430,44 @@ components:
           type: string
         version:
           type: string
+    QueryHelpItemsRequest:
+      type: object
+      properties:
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
+        filterInput:
+          type: string
+        query:
+          type: string
+        requestedTypes:
+          type: array
+          items:
+            type: string
+            enum:
+            - DATA_SOURCE
+            - STRUCTURE
+            - FIELD
+            - FUNCTION
+          uniqueItems: true
+    QueryHelpItemsResult:
+      type: object
+      properties:
+        dataSourceFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbstractField'
+        dataSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocRef'
+        functionSignatures:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunctionSignature'
+        structureElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/StructureElement'
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -11841,26 +11763,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AnalyticDataShard'
-    ResultPageAnalyticNotificationRow:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnalyticNotificationRow'
-    ResultPageAnalyticProcessorFilter:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnalyticProcessorFilter'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -12150,6 +12052,37 @@ components:
           $ref: '#/components/schemas/DocRef'
         xml:
           type: string
+    ScheduledQueryAnalyticProcessConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - type: object
+        properties:
+          maxEventTimeMs:
+            type: integer
+            format: int64
+          minEventTimeMs:
+            type: integer
+            format: int64
+          queryFrequency:
+            $ref: '#/components/schemas/SimpleDuration'
+          timeToWaitForData:
+            $ref: '#/components/schemas/SimpleDuration'
+    ScheduledQueryAnalyticTrackerData:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticTrackerData'
+      - type: object
+        properties:
+          lastExecutionTimeMs:
+            type: integer
+            format: int64
+          lastWindowEndTimeMs:
+            type: integer
+            format: int64
+          lastWindowStartTimeMs:
+            type: integer
+            format: int64
     ScheduledTimes:
       type: object
       properties:
@@ -12293,9 +12226,8 @@ components:
         sourceType:
           type: string
           enum:
-          - ANALYTIC_RULE
-          - BATCH_ANALYTIC_RULE
-          - ANALYTIC_RULE_UI
+          - TABLE_BUILDER_ANALYTIC
+          - SCHEDULED_QUERY_ANALYTIC
           - DASHBOARD_UI
           - QUERY_UI
           - API
@@ -12961,6 +12893,39 @@ components:
           partIndex:
             type: integer
             format: int64
+    StreamingAnalyticProcessConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - type: object
+        properties:
+          maxMetaCreateTimeMs:
+            type: integer
+            format: int64
+          minMetaCreateTimeMs:
+            type: integer
+            format: int64
+    StreamingAnalyticTrackerData:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticTrackerData'
+      - type: object
+        properties:
+          lastExecutionTimeMs:
+            type: integer
+            format: int64
+          lastStreamCount:
+            type: integer
+            format: int32
+          lastStreamId:
+            type: integer
+            format: int64
+          totalEventCount:
+            type: integer
+            format: int64
+          totalStreamCount:
+            type: integer
+            format: int64
     StringCriteria:
       type: object
       properties:
@@ -13124,6 +13089,55 @@ components:
               wrapped: true
       xml:
         name: tabLayout
+    TableBuilderAnalyticProcessConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - type: object
+        properties:
+          dataRetention:
+            $ref: '#/components/schemas/SimpleDuration'
+          maxMetaCreateTimeMs:
+            type: integer
+            format: int64
+          minMetaCreateTimeMs:
+            type: integer
+            format: int64
+          timeToWaitForData:
+            $ref: '#/components/schemas/SimpleDuration'
+    TableBuilderAnalyticTrackerData:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticTrackerData'
+      - type: object
+        properties:
+          lastEventId:
+            type: integer
+            format: int64
+          lastEventTime:
+            type: integer
+            format: int64
+          lastExecutionTimeMs:
+            type: integer
+            format: int64
+          lastStreamCount:
+            type: integer
+            format: int32
+          lastStreamId:
+            type: integer
+            format: int64
+          lastWindowEndTimeMs:
+            type: integer
+            format: int64
+          lastWindowStartTimeMs:
+            type: integer
+            format: int64
+          totalEventCount:
+            type: integer
+            format: int64
+          totalStreamCount:
+            type: integer
+            format: int64
     TableComponentSettings:
       type: object
       properties:
@@ -13463,6 +13477,15 @@ components:
           - Offset
       required:
       - use
+    TokenError:
+      type: object
+      properties:
+        from:
+          $ref: '#/components/schemas/DefaultLocation'
+        text:
+          type: string
+        to:
+          $ref: '#/components/schemas/DefaultLocation'
     TokenResponse:
       type: object
       properties:
@@ -13510,6 +13533,8 @@ components:
         maintenanceMessage:
           type: string
         namePattern:
+          type: string
+        nestedIndexFieldsDelimiterPattern:
           type: string
         nodeMonitoring:
           $ref: '#/components/schemas/NodeMonitoringConfig'
@@ -13642,6 +13667,8 @@ components:
           - "OFF"
         editorTheme:
           type: string
+        enableTransparency:
+          type: boolean
         font:
           type: string
         fontSize:
