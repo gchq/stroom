@@ -23,6 +23,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -32,13 +33,11 @@ import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class TabManager {
@@ -49,6 +48,7 @@ public class TabManager {
 
     private FlexLayout flexLayout;
     private TabLayout tabLayout;
+    private TabConfig currentTabConfig;
 
     public TabManager(final Components components,
                       final Provider<RenameTabPresenter> renameTabPresenterProvider,
@@ -58,40 +58,51 @@ public class TabManager {
         this.dashboardPresenter = dashboardPresenter;
     }
 
-    public void onMouseUp(final Event event,
-                          final Widget tabWidget,
-                          final FlexLayout flexLayout,
-                          final TabLayout tabLayout,
-                          final int index) {
+    public void showMenu(final Element target,
+                         final FlexLayout flexLayout,
+                         final TabLayout tabLayout,
+                         final TabConfig tabConfig) {
         this.flexLayout = flexLayout;
         this.tabLayout = tabLayout;
 
-        final TabConfig tabConfig = tabLayout.getTabLayoutConfig().get(index);
         final Component component = components.get(tabConfig.getId());
         if (component != null) {
             final ComponentConfig componentConfig = component.getComponentConfig();
             final Consumer<String> nameChangeConsumer = component::setComponentName;
 
-            new Timer() {
-                @Override
-                public void run() {
-                    final Element target = tabWidget.getElement();
-                    Rect relativeRect = new Rect(target);
-                    relativeRect = relativeRect.grow(3);
-                    final PopupPosition popupPosition = new PopupPosition(
-                            relativeRect,
-                            PopupLocation.BELOW);
-                    final List<Item> menuItems = updateMenuItems(tabLayout.getTabLayoutConfig(),
-                            tabConfig,
-                            componentConfig,
-                            nameChangeConsumer);
-                    ShowMenuEvent
-                            .builder()
-                            .items(menuItems)
-                            .popupPosition(popupPosition)
-                            .fire(dashboardPresenter);
-                }
-            }.schedule(0);
+            if (Objects.equals(currentTabConfig, tabConfig)) {
+                HideMenuEvent.builder().fire(dashboardPresenter);
+            } else {
+//                if (currentTabConfig != null) {
+//                    HideMenuEvent.builder().fire(dashboardPresenter);
+//                }
+//
+                currentTabConfig = tabConfig;
+//                new Timer() {
+//                    @Override
+//                    public void run() {
+                Rect relativeRect = new Rect(target);
+                relativeRect = relativeRect.grow(3);
+                final PopupPosition popupPosition = new PopupPosition(
+                        relativeRect,
+                        PopupLocation.BELOW);
+                final List<Item> menuItems = updateMenuItems(tabLayout.getTabLayoutConfig(),
+                        tabConfig,
+                        componentConfig,
+                        nameChangeConsumer);
+                currentTabConfig = tabConfig;
+                ShowMenuEvent
+                        .builder()
+                        .items(menuItems)
+                        .addAutoHidePartner(target)
+                        .popupPosition(popupPosition)
+                        .onHide(e -> {
+                            currentTabConfig = null;
+                        })
+                        .fire(dashboardPresenter);
+//                    }
+//                }.schedule(0);
+            }
         }
     }
 

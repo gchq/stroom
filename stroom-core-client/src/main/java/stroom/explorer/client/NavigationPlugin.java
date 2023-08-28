@@ -22,7 +22,6 @@ import stroom.explorer.client.event.ShowFindEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -40,15 +39,7 @@ public class NavigationPlugin extends Plugin {
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        event.getMenuItems().addMenuItem(
-                MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem.Builder()
-                        .priority(6)
-                        .text("Navigation")
-                        .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.NAVIGATION_MENU)
-                        .build());
-
+        MenuKeys.addNavigationMenu(event.getMenuItems());
         event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
                 new IconMenuItem.Builder()
                         .priority(201)

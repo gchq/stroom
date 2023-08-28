@@ -55,7 +55,7 @@ import stroom.util.shared.StoredError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.channels.ClosedByInterruptException;
+import java.util.Optional;
 import javax.inject.Inject;
 
 public class ExtractionTaskHandler {
@@ -169,10 +169,9 @@ public class ExtractionTaskHandler {
                              final Pipeline pipeline,
                              final ErrorConsumer errorConsumer) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
-            if (e instanceof TaskTerminatedException) {
-                throw (TaskTerminatedException) e;
-            } else if (e instanceof InterruptedException || e instanceof ClosedByInterruptException) {
-                throw new TaskTerminatedException();
+            final Optional<TaskTerminatedException> optional = TaskTerminatedException.unwrap(e);
+            if (optional.isPresent()) {
+                throw optional.get();
             }
 
             final StoredError storedError = new StoredError(severity, location, elementId, message);
@@ -200,14 +199,17 @@ public class ExtractionTaskHandler {
                 // Now try and extract the data.
                 extract(queryKey, pipelineRef, pipeline, source, segmentInputStream, count);
             }
-        } catch (final TaskTerminatedException | ClosedByInterruptException e) {
-            LOGGER.debug(e::getMessage, e);
         } catch (final ExtractionException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {
-            // Something went wrong extracting data from this stream.
-            throw new ExtractionException("Unable to extract data from stream source with id: " +
-                    source.getMeta().getId() + " - " + e.getMessage(), e);
+            final Optional<TaskTerminatedException> optional = TaskTerminatedException.unwrap(e);
+            if (optional.isPresent()) {
+                LOGGER.debug(e::getMessage, e);
+            } else {
+                // Something went wrong extracting data from this stream.
+                throw new ExtractionException("Unable to extract data from stream source with id: " +
+                        source.getMeta().getId() + " - " + e.getMessage(), e);
+            }
         }
     }
 

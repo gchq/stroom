@@ -17,6 +17,7 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.TabManager;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.svg.shared.SvgImage;
@@ -38,17 +39,23 @@ import com.gwtplatform.mvp.client.LayerContainer;
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
 
     private final EventBus eventBus;
+    private final FlexLayout flexLayout;
+    private final TabManager tabManager;
     private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
     private final InlineSvgButton settings;
-    private final InlineSvgButton close;
+    //    private final InlineSvgButton close;
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
 
     public TabLayout(final EventBus eventBus,
+                     final FlexLayout flexLayout,
+                     final TabManager tabManager,
                      final TabLayoutConfig tabLayoutConfig,
                      final FlexLayoutChangeHandler changeHandler) {
+        this.flexLayout = flexLayout;
+        this.tabManager = tabManager;
         this.eventBus = eventBus;
 
         this.tabLayoutConfig = tabLayoutConfig;
@@ -84,15 +91,15 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
         settings = new InlineSvgButton();
         settings.addStyleName("tabLayout-settingsButton");
-        settings.setSvg(SvgImage.SETTINGS);
+        settings.setSvg(SvgImage.ELLIPSES_VERTICAL);
         settings.setTitle("Settings");
         buttons.add(settings);
 
-        close = new InlineSvgButton();
-        close.addStyleName("tabLayout-closeButton");
-        close.setSvg(SvgImage.CLOSE);
-        close.setTitle("Close");
-        buttons.add(close);
+//        close = new InlineSvgButton();
+//        close.addStyleName("tabLayout-closeButton");
+//        close.setSvg(SvgImage.CLOSE);
+//        close.setTitle("Close");
+//        buttons.add(close);
 
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
         layerContainerImpl.setFade(true);
@@ -118,20 +125,21 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 final TabData selectedTab = tabBar.getSelectedTab();
                 if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
-                    component.showSettings();
+//                    component.showSettings();
+                    tabManager.showMenu(settings.getElement(), flexLayout, this, component.getTabConfig());
                 }
             }
         }, ClickEvent.getType()));
 
-        handlerRegistrations.add(close.addDomHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                final TabData selectedTab = tabBar.getSelectedTab();
-                if (selectedTab instanceof Component) {
-                    final Component component = (Component) selectedTab;
-                    changeHandler.removeTab(tabLayoutConfig, component.getTabConfig());
-                }
-            }
-        }, ClickEvent.getType()));
+//        handlerRegistrations.add(close.addDomHandler(event -> {
+//            if (MouseUtil.isPrimary(event)) {
+//                final TabData selectedTab = tabBar.getSelectedTab();
+//                if (selectedTab instanceof Component) {
+//                    final Component component = (Component) selectedTab;
+//                    changeHandler.removeTab(tabLayoutConfig, component.getTabConfig());
+//                }
+//            }
+//        }, ClickEvent.getType()));
     }
 
     public void unbind() {

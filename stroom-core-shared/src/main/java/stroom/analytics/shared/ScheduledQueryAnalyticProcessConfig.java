@@ -1,6 +1,6 @@
 package stroom.analytics.shared;
 
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig.AnalyticProcessConfigBuilder;
+import stroom.docref.DocRef;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -13,7 +13,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig<AnalyticProcessConfigBuilder> {
+public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
     private final Long minEventTimeMs;
@@ -27,12 +27,13 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig<A
     @JsonCreator
     public ScheduledQueryAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
                                                @JsonProperty("node") final String node,
+                                               @JsonProperty("errorFeed") final DocRef errorFeed,
                                                @JsonProperty("minEventTimeMs") final Long minEventTimeMs,
                                                @JsonProperty("maxEventTimeMs") final Long maxEventTimeMs,
                                                @JsonProperty("timeToWaitForData")
                                                    final SimpleDuration timeToWaitForData,
                                                @JsonProperty("queryFrequency") final SimpleDuration queryFrequency) {
-        super(enabled, node);
+        super(enabled, node, errorFeed);
         this.minEventTimeMs = minEventTimeMs;
         this.maxEventTimeMs = maxEventTimeMs;
         this.timeToWaitForData = timeToWaitForData;
@@ -90,27 +91,26 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig<A
                 '}';
     }
 
-    @Override
-    public AnalyticProcessConfigBuilder copy() {
-        return new AnalyticProcessConfigBuilder(this);
+    public Builder copy() {
+        return new Builder(this);
     }
 
-    public static AnalyticProcessConfigBuilder builder() {
-        return new AnalyticProcessConfigBuilder();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public static class AnalyticProcessConfigBuilder extends
-            AbstractAnalyticProcessConfigBuilder<ScheduledQueryAnalyticProcessConfig, AnalyticProcessConfigBuilder> {
+    public static class Builder extends
+            AbstractAnalyticProcessConfigBuilder<ScheduledQueryAnalyticProcessConfig, Builder> {
 
         private Long minEventTimeMs;
         private Long maxEventTimeMs;
         private SimpleDuration timeToWaitForData;
         private SimpleDuration queryFrequency;
 
-        private AnalyticProcessConfigBuilder() {
+        private Builder() {
         }
 
-        private AnalyticProcessConfigBuilder(
+        private Builder(
                 final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
             super(scheduledQueryAnalyticProcessConfig);
             this.minEventTimeMs = scheduledQueryAnalyticProcessConfig.minEventTimeMs;
@@ -119,28 +119,28 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig<A
             this.queryFrequency = scheduledQueryAnalyticProcessConfig.queryFrequency;
         }
 
-        public AnalyticProcessConfigBuilder minEventTimeMs(final Long minEventTimeMs) {
+        public Builder minEventTimeMs(final Long minEventTimeMs) {
             this.minEventTimeMs = minEventTimeMs;
             return self();
         }
 
-        public AnalyticProcessConfigBuilder maxEventTimeMs(final Long maxEventTimeMs) {
+        public Builder maxEventTimeMs(final Long maxEventTimeMs) {
             this.maxEventTimeMs = maxEventTimeMs;
             return self();
         }
 
-        public AnalyticProcessConfigBuilder timeToWaitForData(final SimpleDuration timeToWaitForData) {
+        public Builder timeToWaitForData(final SimpleDuration timeToWaitForData) {
             this.timeToWaitForData = timeToWaitForData;
             return self();
         }
 
-        public AnalyticProcessConfigBuilder queryFrequency(final SimpleDuration queryFrequency) {
+        public Builder queryFrequency(final SimpleDuration queryFrequency) {
             this.queryFrequency = queryFrequency;
             return self();
         }
 
         @Override
-        protected AnalyticProcessConfigBuilder self() {
+        protected Builder self() {
             return this;
         }
 
@@ -148,6 +148,7 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig<A
             return new ScheduledQueryAnalyticProcessConfig(
                     enabled,
                     node,
+                    errorFeed,
                     minEventTimeMs,
                     maxEventTimeMs,
                     timeToWaitForData,

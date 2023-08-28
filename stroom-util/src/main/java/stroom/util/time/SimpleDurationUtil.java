@@ -69,7 +69,7 @@ public class SimpleDurationUtil {
     }
 
     public static Instant plus(final Instant dateTime,
-                                final SimpleDuration simpleDuration) {
+                               final SimpleDuration simpleDuration) {
         LocalDateTime localDateTime = LocalDateTime.ofInstant(dateTime, ZoneOffset.UTC);
         localDateTime = plus(localDateTime, simpleDuration);
         return localDateTime.toInstant(ZoneOffset.UTC);

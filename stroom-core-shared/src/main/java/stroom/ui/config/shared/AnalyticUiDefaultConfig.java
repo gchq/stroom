@@ -21,27 +21,37 @@ public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomC
     @JsonPropertyDescription("The default node to execute the analytic on.")
     private final String defaultNode;
     @JsonProperty
+    @JsonPropertyDescription("The default feed to send analytic errors to.")
+    private final DocRef defaultErrorFeed;
+    @JsonProperty
     @JsonPropertyDescription("The default feed to send analytic results to.")
-    private final DocRef defaultFeed;
+    private final DocRef defaultDestinationFeed;
 
     public AnalyticUiDefaultConfig() {
         defaultNode = null;
-        defaultFeed = null;
+        defaultErrorFeed = null;
+        defaultDestinationFeed = null;
     }
 
     @JsonCreator
     public AnalyticUiDefaultConfig(@JsonProperty("defaultNode") final String defaultNode,
-                                   @JsonProperty("defaultFeed") final DocRef defaultFeed) {
+                                   @JsonProperty("defaultErrorFeed") final DocRef defaultErrorFeed,
+                                   @JsonProperty("defaultDestinationFeed") final DocRef defaultDestinationFeed) {
         this.defaultNode = defaultNode;
-        this.defaultFeed = defaultFeed;
+        this.defaultErrorFeed = defaultErrorFeed;
+        this.defaultDestinationFeed = defaultDestinationFeed;
     }
 
     public String getDefaultNode() {
         return defaultNode;
     }
 
-    public DocRef getDefaultFeed() {
-        return defaultFeed;
+    public DocRef getDefaultErrorFeed() {
+        return defaultErrorFeed;
+    }
+
+    public DocRef getDefaultDestinationFeed() {
+        return defaultDestinationFeed;
     }
 
     @Override
@@ -53,20 +63,22 @@ public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomC
             return false;
         }
         final AnalyticUiDefaultConfig that = (AnalyticUiDefaultConfig) o;
-        return Objects.equals(defaultNode, that.defaultNode) && Objects.equals(defaultFeed,
-                that.defaultFeed);
+        return Objects.equals(defaultNode, that.defaultNode) &&
+                Objects.equals(defaultErrorFeed, that.defaultErrorFeed) &&
+                Objects.equals(defaultDestinationFeed, that.defaultDestinationFeed);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(defaultNode, defaultFeed);
+        return Objects.hash(defaultNode, defaultErrorFeed, defaultDestinationFeed);
     }
 
     @Override
     public String toString() {
         return "AnalyticConfig{" +
                 "defaultNode='" + defaultNode + '\'' +
-                ", defaultFeed=" + defaultFeed +
+                ", defaultErrorFeed=" + defaultErrorFeed +
+                ", defaultDestinationFeed=" + defaultDestinationFeed +
                 '}';
     }
 }

@@ -33,7 +33,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
+public class AnalyticRulePresenter
+        extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
     private static final TabData NOTIFICATION = new TabDataImpl("Notification");
     private static final TabData PROCESSING = new TabDataImpl("Processing");
@@ -43,7 +44,7 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final Provider<AnalyticNotificationEditPresenter> notificationPresenterProvider,
+                                 final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {

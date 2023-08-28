@@ -456,6 +456,7 @@ class DashboardServiceImpl implements DashboardService {
                         queryKey,
                         null,
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         true,
                         null);
             }

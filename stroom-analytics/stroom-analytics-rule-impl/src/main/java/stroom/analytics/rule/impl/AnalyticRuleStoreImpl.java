@@ -88,8 +88,11 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         final AnalyticRuleDoc document = store.readDocument(docRef);
         return store.createDocument(newName,
                 (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
@@ -104,14 +107,10 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                             .createUser(createUser)
                             .updateUser(updateUser);
 
-                    final AnalyticProcessConfig<?> analyticProcessConfig = document.getAnalyticProcessConfig();
+                    final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
                     if (analyticProcessConfig != null) {
-                        builder
-                                .analyticProcessConfig(
-                                        analyticProcessConfig
-                                                .copy()
-                                                .enabled(false)
-                                                .build());
+                        analyticProcessConfig.setEnabled(false);
+                        builder.analyticProcessConfig(analyticProcessConfig);
                     }
 
                     return builder.build();

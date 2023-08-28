@@ -36,6 +36,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.analytics.impl.EmailConfig getEmailConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.analytics.impl.EmailConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.annotation.impl.AnnotationConfig getAnnotationConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -558,7 +567,7 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.identity.config.EmailConfig getEmailConfig(
+    stroom.security.identity.config.EmailConfig getEmailConfig2(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.identity.config.EmailConfig.class);
@@ -803,7 +812,17 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.identity.config.SmtpConfig getSmtpConfigButThrow(
+    stroom.analytics.impl.SmtpConfig getSmtpConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.analytics.impl.SmtpConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.identity.config.SmtpConfig getSmtpConfig2ButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.security.identity.config.SmtpConfig cannot be injected directly. "

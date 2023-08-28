@@ -1,11 +1,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
-import stroom.analytics.impl.DetectionConsumer.Detection;
-import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
-import stroom.analytics.impl.DetectionConsumer.Value;
-import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -54,6 +49,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -89,7 +85,7 @@ public class TableBuilderAnalyticExecutor {
 
     private final ExecutorProvider executorProvider;
     private final SecurityContext securityContext;
-    private final Provider<DetectionsWriter> detectionsWriterProvider;
+    private final DetectionConsumerFactory detectionConsumerFactory;
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
@@ -102,6 +98,7 @@ public class TableBuilderAnalyticExecutor {
     private final ExpressionMatcher metaExpressionMatcher;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
+    private final NotificationStateService notificationStateService;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
 
@@ -112,7 +109,7 @@ public class TableBuilderAnalyticExecutor {
     @Inject
     public TableBuilderAnalyticExecutor(final ExecutorProvider executorProvider,
                                         final SecurityContext securityContext,
-                                        final Provider<DetectionsWriter> detectionsWriterProvider,
+                                        final DetectionConsumerFactory detectionConsumerFactory,
                                         final PipelineStore pipelineStore,
                                         final PipelineDataCache pipelineDataCache,
                                         final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
@@ -126,9 +123,10 @@ public class TableBuilderAnalyticExecutor {
                                         final ExpressionMatcherFactory expressionMatcherFactory,
                                         final AnalyticHelper analyticHelper,
                                         final NodeInfo nodeInfo,
-                                        final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper) {
+                                        final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
+                                        final NotificationStateService notificationStateService) {
         this.executorProvider = executorProvider;
-        this.detectionsWriterProvider = detectionsWriterProvider;
+        this.detectionConsumerFactory = detectionConsumerFactory;
         this.securityContext = securityContext;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
@@ -144,6 +142,7 @@ public class TableBuilderAnalyticExecutor {
         this.analyticHelper = analyticHelper;
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
+        this.notificationStateService = notificationStateService;
     }
 
     private void info(final Supplier<String> messageSupplier) {
@@ -296,10 +295,10 @@ public class TableBuilderAnalyticExecutor {
 
                 // Start at the next meta.
                 Long lastMetaId = trackerData.getLastStreamId();
-                minMetaId = AnalyticHelper.getMin(minMetaId, lastMetaId);
-                minCreateTime = AnalyticHelper.getMin(minCreateTime,
+                minMetaId = AnalyticUtil.getMin(minMetaId, lastMetaId);
+                minCreateTime = AnalyticUtil.getMin(minCreateTime,
                         analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
-                maxCreateTime = AnalyticHelper.getMax(maxCreateTime,
+                maxCreateTime = AnalyticUtil.getMax(maxCreateTime,
                         analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
             }
 
@@ -412,6 +411,7 @@ public class TableBuilderAnalyticExecutor {
         return new TableBuilderAnalyticFieldListConsumer(
                 searchRequest,
                 fieldIndex,
+                NotificationState.NO_OP,
                 lmdbDataStore,
                 searchExpressionQueryCache,
                 minEventId);
@@ -427,15 +427,15 @@ public class TableBuilderAnalyticExecutor {
         long minMetaId;
         if (lastEventId == null) {
             // Start at the next meta.
-            minMetaId = AnalyticHelper.getMin(null, lastMetaId) + 1;
+            minMetaId = AnalyticUtil.getMin(null, lastMetaId) + 1;
         } else {
-            minMetaId = AnalyticHelper.getMin(null, lastMetaId);
+            minMetaId = AnalyticUtil.getMin(null, lastMetaId);
         }
 
         final long minCreateTime =
-                AnalyticHelper.getMin(null, analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
+                AnalyticUtil.getMin(null, analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
         final long maxCreateTime =
-                AnalyticHelper.getMax(null, analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
+                AnalyticUtil.getMax(null, analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
 
         // Check this analytic should process this meta.
         return meta.getId() < minMetaId ||
@@ -502,27 +502,26 @@ public class TableBuilderAnalyticExecutor {
                                          final AnalyticDataStore dataStore,
                                          final CurrentDbState currentDbState,
                                          final TaskContext parentTaskContext) {
-        final AnalyticNotificationConfig config = analytic.analyticRuleDoc.getAnalyticNotificationConfig();
-        if (config instanceof final AnalyticNotificationStreamConfig streamConfig) {
-            final DocRef feedDocRef = streamConfig.getDestinationFeed();
-            if (feedDocRef == null) {
-                throw new RuntimeException("Destination feed not specified for notification in: " +
-                        analytic.ruleIdentity());
-            }
-
+        final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
+        // Only execute if the state is enabled.
+        notificationState.enableIfPossible();
+        if (notificationState.isEnabled()) {
+            final Provider<DetectionConsumer> detectionConsumerProvider = detectionConsumerFactory
+                    .create(analytic.analyticRuleDoc());
+            final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
             analyticErrorWritingExecutor.wrap(
                     "Analytics Aggregate Rule Executor",
-                    feedDocRef.getName(),
+                    errorFeedName,
                     null,
                     parentTaskContext,
                     taskContext -> {
-                        final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
-                        detectionsWriter.setFeed(feedDocRef);
-                        detectionsWriter.start();
+                        final DetectionConsumer detectionConsumer = detectionConsumerProvider.get();
+                        detectionConsumer.start();
                         try {
                             try {
                                 runNotification(analytic,
-                                        detectionsWriter,
+                                        notificationState,
+                                        detectionConsumer,
                                         dataStore,
                                         currentDbState);
                             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -533,15 +532,14 @@ public class TableBuilderAnalyticExecutor {
                                 throw e;
                             }
                         } finally {
-                            detectionsWriter.end();
+                            detectionConsumer.end();
                         }
                     }).run();
-
         }
-
     }
 
     private void runNotification(final TableBuilderAnalytic analytic,
+                                 final NotificationState notificationState,
                                  final DetectionConsumer detectionConsumer,
                                  final AnalyticDataStore dataStore,
                                  final CurrentDbState currentDbState) {
@@ -581,7 +579,7 @@ public class TableBuilderAnalyticExecutor {
             ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
             resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
             final TableResultConsumer tableResultConsumer =
-                    new TableResultConsumer(analytic.analyticRuleDoc(), detectionConsumer);
+                    new TableResultConsumer(analytic.analyticRuleDoc(), notificationState, detectionConsumer);
 
             final FieldFormatter fieldFormatter =
                     new FieldFormatter(new FormatterFactory(null));
@@ -653,13 +651,16 @@ public class TableBuilderAnalyticExecutor {
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultConsumer.class);
 
         private final AnalyticRuleDoc analyticRuleDoc;
+        private final NotificationState notificationState;
         private final DetectionConsumer detectionConsumer;
 
         private List<Field> fields;
 
         public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
+                                   final NotificationState notificationState,
                                    final DetectionConsumer detectionConsumer) {
             this.analyticRuleDoc = analyticRuleDoc;
+            this.notificationState = notificationState;
             this.detectionConsumer = detectionConsumer;
         }
 
@@ -684,61 +685,63 @@ public class TableBuilderAnalyticExecutor {
 
         @Override
         public TableResultConsumer addRow(final Row row) {
-            try {
-                final List<Value> values = new ArrayList<>();
+            if (notificationState.isEnabled()) {
+                try {
+                    final List<DetectionValue> values = new ArrayList<>();
 
-                int index = 0;
-                Long streamId = null;
-                Long eventId = null;
-                for (final Field field : fields) {
-                    final String fieldValue = row.getValues().get(index);
-                    if (fieldValue != null) {
-                        final String fieldName = field.getDisplayValue();
+                    int index = 0;
+                    Long streamId = null;
+                    Long eventId = null;
+                    for (final Field field : fields) {
+                        final String fieldValue = row.getValues().get(index);
+                        if (fieldValue != null) {
+                            final String fieldName = field.getDisplayValue();
 
-                        if (IndexConstants.STREAM_ID.equals(fieldName)) {
-                            try {
-                                streamId = Long.parseLong(fieldValue);
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug(e.getMessage(), e);
+                            if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                                try {
+                                    streamId = Long.parseLong(fieldValue);
+                                } catch (final RuntimeException e) {
+                                    LOGGER.debug(e.getMessage(), e);
+                                }
+                            } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                                try {
+                                    eventId = Long.parseLong(fieldValue);
+                                } catch (final RuntimeException e) {
+                                    LOGGER.debug(e.getMessage(), e);
+                                }
+                            } else {
+                                values.add(new DetectionValue(fieldName, fieldValue));
                             }
-                        } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
-                            try {
-                                eventId = Long.parseLong(fieldValue);
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug(e.getMessage(), e);
-                            }
-                        } else {
-                            values.add(new Value(fieldName, fieldValue));
                         }
+
+                        index++;
                     }
 
-                    index++;
+                    final Detection detection = new Detection(
+                            DateUtil.createNormalDateTimeString(),
+                            analyticRuleDoc.getName(),
+                            analyticRuleDoc.getUuid(),
+                            analyticRuleDoc.getVersion(),
+                            null,
+                            null,
+                            analyticRuleDoc.getDescription(),
+                            null,
+                            UUID.randomUUID().toString(),
+                            0,
+                            false,
+                            values,
+                            List.of(new DetectionLinkedEvent(null, streamId, eventId))
+                    );
+
+                    detectionConsumer.accept(detection);
+
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                    throw e;
                 }
-
-                final Detection detection = new Detection(
-                        Instant.now(),
-                        analyticRuleDoc.getName(),
-                        analyticRuleDoc.getUuid(),
-                        analyticRuleDoc.getVersion(),
-                        null,
-                        null,
-                        analyticRuleDoc.getDescription(),
-                        null,
-                        UUID.randomUUID().toString(),
-                        0,
-                        false,
-                        values,
-                        List.of(new LinkedEvent(null, streamId, eventId))
-                );
-
-                detectionConsumer.accept(detection);
-
-            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                LOGGER.debug(e::getMessage, e);
-                throw e;
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
             }
 
             return this;
@@ -766,7 +769,7 @@ public class TableBuilderAnalyticExecutor {
         final List<TableBuilderAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
-            final AnalyticProcessConfig<?> analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+            final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
             if (analyticProcessConfig != null &&
                     analyticProcessConfig.isEnabled() &&
                     nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
@@ -787,7 +790,7 @@ public class TableBuilderAnalyticExecutor {
                     ViewDoc viewDoc = null;
 
                     // Try and get view.
-                    final String ruleIdentity = AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc);
+                    final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
                     final SearchRequest searchRequest = analyticRuleSearchRequestHelper
                             .create(analyticRuleDoc);
                     final DocRef dataSource = searchRequest.getQuery().getDataSource();
@@ -803,8 +806,7 @@ public class TableBuilderAnalyticExecutor {
 
                     if (!(analyticRuleDoc.getAnalyticProcessConfig()
                             instanceof TableBuilderAnalyticProcessConfig)) {
-                        LOGGER.debug("Error: Invalid process config {}",
-                                AnalyticHelper.getAnalyticRuleIdentity(analyticRuleDoc));
+                        LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
                         tracker.getAnalyticTrackerData()
                                 .setMessage("Error: Invalid process config.");
 

@@ -16,30 +16,29 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
+import stroom.document.client.event.DirtyUiHandlers;
 
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class AnalyticNotificationEditViewImpl
-        extends ViewImpl
-        implements AnalyticNotificationEditView {
+public class AnalyticEmailDestinationViewImpl
+        extends ViewWithUiHandlers<DirtyUiHandlers>
+        implements AnalyticEmailDestinationView {
 
     private final Widget widget;
 
     @UiField
-    SimplePanel destinationFeed;
-    @UiField
-    CustomCheckBox useSourceFeedIfPossible;
+    TextBox emailAddress;
 
     @Inject
-    public AnalyticNotificationEditViewImpl(final Binder binder) {
+    public AnalyticEmailDestinationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -49,21 +48,22 @@ public class AnalyticNotificationEditViewImpl
     }
 
     @Override
-    public void setDestinationFeedView(final View view) {
-        this.destinationFeed.setWidget(view.asWidget());
+    public String getEmailAddress() {
+        return this.emailAddress.getValue();
     }
 
     @Override
-    public boolean isUseSourceFeedIfPossible() {
-        return this.useSourceFeedIfPossible.getValue();
+    public void setEmailAddress(final String emailAddress) {
+        this.emailAddress.setValue(emailAddress);
     }
 
-    @Override
-    public void setUseSourceFeedIfPossible(final boolean useSourceFeedIfPossible) {
-        this.useSourceFeedIfPossible.setValue(useSourceFeedIfPossible);
+
+    @UiHandler("emailAddress")
+    public void onEmailAddress(final KeyUpEvent event) {
+        getUiHandlers().onDirty();
     }
 
-    public interface Binder extends UiBinder<Widget, AnalyticNotificationEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, AnalyticEmailDestinationViewImpl> {
 
     }
 }

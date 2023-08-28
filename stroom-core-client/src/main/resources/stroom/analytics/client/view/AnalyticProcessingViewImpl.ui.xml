@@ -20,6 +20,9 @@
                         label="Processing Node">
             <l:SelectionBox ui:field="node"/>
         </form:FormGroup>
+        <form:FormGroup identity="analyticProcessingErrorFeed" label="Feed For Errors">
+            <g:SimplePanel ui:field="errorFeed"/>
+        </form:FormGroup>
         <form:FormGroup identity="analyticProcessingType"
                         label="Processing Type">
             <l:SelectionBox ui:field="processingType"/>

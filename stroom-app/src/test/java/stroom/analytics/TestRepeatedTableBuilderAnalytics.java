@@ -17,7 +17,6 @@
 package stroom.analytics;
 
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -79,17 +78,13 @@ class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)
-                .analyticProcessConfig(new TableBuilderAnalyticProcessConfig(
-                        true,
-                        nodeInfo.getThisNodeName(),
-                        null,
-                        null,
-                        INSTANT,
-                        null))
-                .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(analyticsDataSetup.getDetections())
-                        .useSourceFeedIfPossible(false)
+                .analyticProcessConfig(TableBuilderAnalyticProcessConfig.builder()
+                        .enabled(true)
+                        .node(nodeInfo.getThisNodeName())
+                        .errorFeed(analyticsDataSetup.getDetections())
+                        .timeToWaitForData(INSTANT)
                         .build())
+                .analyticNotificationConfig(createNotificationConfig())
                 .build();
         writeRule(analyticRuleDoc);
 

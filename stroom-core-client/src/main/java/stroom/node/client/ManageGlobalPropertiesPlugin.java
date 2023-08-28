@@ -29,8 +29,9 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
+            MenuKeys.addAdministrationMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(
-                    MenuKeys.TOOLS_MENU,
+                    MenuKeys.ADMINISTRATION_MENU,
                     new IconMenuItem.Builder()
                             .priority(90)
                             .icon(SvgImage.PROPERTIES)

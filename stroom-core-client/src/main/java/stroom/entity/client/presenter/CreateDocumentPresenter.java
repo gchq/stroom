@@ -153,8 +153,6 @@ public class CreateDocumentPresenter
 
         void setFolderView(View view);
 
-        void setFoldersVisible(final boolean visible);
-
         PermissionInheritance getPermissionInheritance();
 
         void setPermissionInheritance(PermissionInheritance permissionInheritance);

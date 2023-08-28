@@ -8,6 +8,12 @@
                         addStyleNames="dock-max overflow-hidden">
             <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden"/>
         </form:FormGroup>
+        <form:FormGroup ui:field="nameFormGroup"
+                        identity="copyDocumentName"
+                        label="Name"
+                        addStyleNames="dock-min">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
         <form:FormGroup identity="copyDocumentPermissions" label="Permissions" addStyleNames="dock-min">
             <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
         </form:FormGroup>

@@ -75,8 +75,11 @@ class ViewStoreImpl implements ViewStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 

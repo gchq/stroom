@@ -34,6 +34,14 @@
 }
 
 .DashboardViewImpl .linkTab {
+    opacity: 0.8 !important;
+    color: var(--link-tab__text-color) !important;
+    transition: none;
+    -webkit-transition: none;
+}
+
+/*
+.DashboardViewImpl .linkTab {
     cursor: default;
     text-decoration: none;
 }
@@ -49,6 +57,7 @@
 .DashboardViewImpl.dashboard__designMode .linkTab:hover {
     text-decoration: underline;
 }
+*/
 
 .QueryToolbarViewImpl-outer {
     display: flex;
@@ -104,10 +113,24 @@
 .dashboard-scrollPanel {
     display: flex;
     flex-grow: 1;
-    overflow: auto;
+    overflow: hidden;
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
+}
+
+.dashboard-scrollPanel--horizontal-scroll {
+    overflow-x: auto;
+}
+
+.dashboard-scrollPanel--vertical-scroll {
+    overflow-y: auto;
+}
+
+.TableViewImpl .pager,
+.QueryViewImpl--buttons,
+.QueryToolbarViewImpl-outer {
+    padding: 0 5px;
 }
 
 .dashboard-layout {
@@ -284,7 +307,7 @@
     flex-grow: 0;
     flex-shrink: 0;
     gap: 5px;
-    padding: 5px 0 0 5px;
+    padding: 5px 5px 0 5px;
     cursor: default;
     z-index: 5;
     min-height: 31px;
@@ -305,21 +328,22 @@
 .tabLayout .tabLayout-content {
     display: flex;
     flex-grow: 1;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .tabLayout .tabLayout-buttons {
 	z-index: 5;
-    display: none;
+	opacity: 0;
+	transition: opacity 0.3s;
+    -webkit-transition: opacity 0.3s;
 }
 
+.tabLayout:hover .tabLayout-buttons {
+	opacity: 0.6;
+}
 
 .tabLayout-buttons button {
     color: var(--button__image-color);
-}
-
-.dashboard__designMode .tabLayout .tabLayout-buttons {
-    display: flex;
 }
 
 .tabLayout .tabLayout-button svg {
@@ -510,7 +534,6 @@
     left: 0;
     width: 100%;
     height: 100%;
-    border: solid var(--split__size) transparent;
 }
 
 .dashboardVis-innerLayout {

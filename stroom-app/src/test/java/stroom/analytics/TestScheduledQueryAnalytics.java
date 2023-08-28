@@ -17,7 +17,6 @@
 package stroom.analytics;
 
 import stroom.analytics.impl.ScheduledQueryAnalyticExecutor;
-import stroom.analytics.shared.AnalyticNotificationStreamConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -80,14 +79,12 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .analyticProcessConfig(new ScheduledQueryAnalyticProcessConfig(
                         true,
                         nodeInfo.getThisNodeName(),
+                        analyticsDataSetup.getDetections(),
                         null,
                         null,
                         INSTANT,
                         INSTANT))
-                .analyticNotificationConfig(AnalyticNotificationStreamConfig.builder()
-                        .destinationFeed(analyticsDataSetup.getDetections())
-                        .useSourceFeedIfPossible(false)
-                        .build())
+                .analyticNotificationConfig(createNotificationConfig())
                 .build();
         writeRule(analyticRuleDoc);
 

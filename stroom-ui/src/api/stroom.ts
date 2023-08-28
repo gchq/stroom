@@ -164,21 +164,31 @@ export interface AnalyticDataShard {
 }
 
 export interface AnalyticNotificationConfig {
+  destination?: AnalyticNotificationDestination;
+  destinationType?: "STREAM" | "EMAIL";
+  limitNotifications?: boolean;
+
+  /** @format int32 */
+  maxNotifications?: number;
+  resumeAfter?: SimpleDuration;
+}
+
+export interface AnalyticNotificationDestination {
   type: string;
 }
 
-export type AnalyticNotificationEmailConfig = AnalyticNotificationConfig & {
-  emailAddress?: string;
-  timeToWaitForData?: SimpleDuration;
-};
+export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & { emailAddress?: string };
 
-export type AnalyticNotificationStreamConfig = AnalyticNotificationConfig & {
+export type AnalyticNotificationStreamDestination = AnalyticNotificationDestination & {
   destinationFeed?: DocRef;
   useSourceFeedIfPossible?: boolean;
 };
 
 export interface AnalyticProcessConfig {
   enabled?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  errorFeed?: DocRef;
   node?: string;
   type: string;
 }
@@ -216,7 +226,10 @@ export interface AnalyticTrackerData {
 
 export interface AnalyticUiDefaultConfig {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  defaultFeed?: DocRef;
+  defaultDestinationFeed?: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultErrorFeed?: DocRef;
   defaultNode?: string;
 }
 
@@ -668,6 +681,7 @@ export interface DashboardSearchResponse {
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   queryKey?: QueryKey;
   results?: Result[];
+  tokenError?: TokenError;
 }
 
 export interface DataInfoSection {
@@ -785,7 +799,13 @@ export interface DateTimeSettings {
   timeZone?: TimeZone;
 }
 
-export type DefaultLocation = Location;
+export interface DefaultLocation {
+  /** @format int32 */
+  colNo?: number;
+
+  /** @format int32 */
+  lineNo?: number;
+}
 
 export interface Dependency {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -1606,7 +1626,9 @@ export interface ExplorerNodePermissions {
 }
 
 export interface ExplorerServiceCopyRequest {
+  allowRename?: boolean;
   destinationFolder?: ExplorerNode;
+  docName?: string;
   explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
@@ -4509,6 +4531,12 @@ export interface TimeZone {
   use: "Local" | "UTC" | "Id" | "Offset";
 }
 
+export interface TokenError {
+  from?: DefaultLocation;
+  text?: string;
+  to?: DefaultLocation;
+}
+
 export interface TokenResponse {
   access_token?: string;
 
@@ -4614,6 +4642,7 @@ export interface UserPreferences {
   editorKeyBindings?: "STANDARD" | "VIM";
   editorLiveAutoCompletion?: "ON" | "OFF";
   editorTheme?: string;
+  enableTransparency?: boolean;
   font?: string;
   fontSize?: string;
   theme?: string;

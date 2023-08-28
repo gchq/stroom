@@ -43,7 +43,6 @@ public class UserPreferencesManager {
         this.restFactory = restFactory;
         this.currentPreferences = currentPreferences;
 
-        densityMap.put("Default", "stroom-density-comfortable");
         densityMap.put("Comfortable", "stroom-density-comfortable");
         densityMap.put("Compact", "stroom-density-compact");
 
@@ -123,6 +122,10 @@ public class UserPreferencesManager {
         if (currentUserPreferences != null) {
             GwtNullSafe.consume(currentUserPreferences.getTheme(), theme ->
                     classJoiner.add(Themes.getClassName(theme)));
+
+            if (GwtNullSafe.requireNonNullElse(currentUserPreferences.getEnableTransparency(), true)) {
+                classJoiner.add("transparency");
+            }
 
             Optional.ofNullable(currentUserPreferences.getDensity())
                     .map(densityMap::get)

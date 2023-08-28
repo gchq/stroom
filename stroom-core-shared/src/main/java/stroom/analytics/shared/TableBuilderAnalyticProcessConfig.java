@@ -1,6 +1,6 @@
 package stroom.analytics.shared;
 
-import stroom.analytics.shared.TableBuilderAnalyticProcessConfig.AnalyticProcessConfigBuilder;
+import stroom.docref.DocRef;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -13,7 +13,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig<AnalyticProcessConfigBuilder> {
+public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
     private final Long minMetaCreateTimeMs;
@@ -27,11 +27,12 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig<Ana
     @JsonCreator
     public TableBuilderAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
                                              @JsonProperty("node") final String node,
+                                             @JsonProperty("errorFeed") final DocRef errorFeed,
                                              @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                              @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
                                              @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                              @JsonProperty("dataRetention") final SimpleDuration dataRetention) {
-        super(enabled, node);
+        super(enabled, node, errorFeed);
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.dataRetention = dataRetention;
@@ -93,27 +94,26 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig<Ana
                 '}';
     }
 
-    @Override
-    public AnalyticProcessConfigBuilder copy() {
-        return new AnalyticProcessConfigBuilder(this);
+    public Builder copy() {
+        return new Builder(this);
     }
 
-    public static AnalyticProcessConfigBuilder builder() {
-        return new AnalyticProcessConfigBuilder();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public static class AnalyticProcessConfigBuilder extends
-            AbstractAnalyticProcessConfigBuilder<TableBuilderAnalyticProcessConfig, AnalyticProcessConfigBuilder> {
+    public static class Builder extends
+            AbstractAnalyticProcessConfigBuilder<TableBuilderAnalyticProcessConfig, Builder> {
 
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private SimpleDuration timeToWaitForData;
         private SimpleDuration dataRetention;
 
-        private AnalyticProcessConfigBuilder() {
+        private Builder() {
         }
 
-        private AnalyticProcessConfigBuilder(
+        private Builder(
                 final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
             super(tableBuilderAnalyticProcessConfig);
             this.minMetaCreateTimeMs = tableBuilderAnalyticProcessConfig.minMetaCreateTimeMs;
@@ -122,27 +122,27 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig<Ana
             this.dataRetention = tableBuilderAnalyticProcessConfig.dataRetention;
         }
 
-        public AnalyticProcessConfigBuilder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
             return self();
         }
 
-        public AnalyticProcessConfigBuilder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
             return self();
         }
 
-        public AnalyticProcessConfigBuilder timeToWaitForData(final SimpleDuration timeToWaitForData) {
+        public Builder timeToWaitForData(final SimpleDuration timeToWaitForData) {
             this.timeToWaitForData = timeToWaitForData;
             return self();
         }
 
-        public AnalyticProcessConfigBuilder dataRetention(final SimpleDuration dataRetention) {
+        public Builder dataRetention(final SimpleDuration dataRetention) {
             this.dataRetention = dataRetention;
             return self();
         }
 
-        protected AnalyticProcessConfigBuilder self() {
+        protected Builder self() {
             return this;
         }
 
@@ -150,6 +150,7 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig<Ana
             return new TableBuilderAnalyticProcessConfig(
                     enabled,
                     node,
+                    errorFeed,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
                     timeToWaitForData,

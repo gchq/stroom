@@ -1,5 +1,7 @@
 package stroom.query.language;
 
+import stroom.util.shared.Location;
+
 import java.util.Objects;
 
 public abstract class AbstractToken {

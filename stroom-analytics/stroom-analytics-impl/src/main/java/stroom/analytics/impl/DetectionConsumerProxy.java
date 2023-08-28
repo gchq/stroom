@@ -1,21 +1,18 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.impl.DetectionConsumer.Detection;
-import stroom.analytics.impl.DetectionConsumer.LinkedEvent;
-import stroom.analytics.impl.DetectionConsumer.Value;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -29,14 +26,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAware {
+public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleAware {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DetectionWriterProxy.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DetectionConsumerProxy.class);
 
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final FieldFormatter fieldFormatter;
-    private final Provider<DetectionsWriter> detectionsWriterProvider;
-    private DocRef destinationFeed;
+    private Provider<DetectionConsumer> detectionsConsumerProvider;
 
     private FieldIndex fieldIndex;
     private DetectionConsumer detectionConsumer;
@@ -46,12 +42,9 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
     private CompiledFields compiledFields;
 
     @Inject
-    public DetectionWriterProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                final AnalyticsConfig analyticsConfig,
-                                final Provider<DetectionsWriter> detectionsWriterProvider) {
+    public DetectionConsumerProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                                  final AnalyticsConfig analyticsConfig) {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
-        this.detectionsWriterProvider = detectionsWriterProvider;
-
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
                 .localZoneId(analyticsConfig.getTimezone())
@@ -59,11 +52,17 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
         fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeSettings));
     }
 
+    public void setDetectionsConsumerProvider(final Provider<DetectionConsumer> detectionsConsumerProvider) {
+        this.detectionsConsumerProvider = detectionsConsumerProvider;
+    }
+
     public DetectionConsumer getDetectionConsumer() {
         if (detectionConsumer == null) {
-            final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
-            detectionsWriter.setFeed(destinationFeed);
-            detectionConsumer = detectionsWriter;
+            if (detectionsConsumerProvider == null) {
+                LOGGER.error("Detection consumer is null");
+                throw new NullPointerException();
+            }
+            detectionConsumer = detectionsConsumerProvider.get();
         }
         return detectionConsumer;
     }
@@ -76,8 +75,9 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
 
     @Override
     public void end() {
-        final DetectionConsumer detectionConsumer = getDetectionConsumer();
-        detectionConsumer.end();
+        if (detectionConsumer != null) {
+            detectionConsumer.end();
+        }
     }
 
     public void setAnalyticRuleDoc(final AnalyticRuleDoc analyticRuleDoc) {
@@ -92,10 +92,6 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
         this.fieldIndex = fieldIndex;
     }
 
-    public void setDestinationFeed(final DocRef destinationFeed) {
-        this.destinationFeed = destinationFeed;
-    }
-
     @Override
     public void accept(final Val[] values) {
         // Analytics generation search extraction - create records when filters match
@@ -105,13 +101,13 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
                     ". No values to extract from ", null);
             return;
         }
-        final CompiledFieldValue[] outputFields = extractAlert(values);
-        if (outputFields != null) {
-            writeRecord(outputFields);
+        final CompiledFieldValue[] outputValues = extractValues(values);
+        if (outputValues != null) {
+            writeRecord(outputValues);
         }
     }
 
-    private CompiledFieldValue[] extractAlert(final Val[] vals) {
+    private CompiledFieldValue[] extractValues(final Val[] vals) {
         final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
         final StoredValues storedValues = compiledFields.getValueReferenceIndex().createStoredValues();
         final CompiledFieldValue[] output = new CompiledFieldValue[compiledFieldArray.length];
@@ -155,7 +151,7 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
             return;
         }
 
-        final List<Value> values = new ArrayList<>();
+        final List<DetectionValue> values = new ArrayList<>();
 //        final List<LinkedEvent> linkedEvents = new ArrayList<>();
 //
 //        // Output all the dashboard fields
@@ -195,14 +191,14 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
                     final String fieldValStr =
                             fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
                                     compiledFieldValue.getVal());
-                    values.add(new Value(fieldName, fieldValStr));
+                    values.add(new DetectionValue(fieldName, fieldValStr));
                 }
             }
 //            }
         });
 
         final Detection detection = new Detection(
-                Instant.now(),
+                DateUtil.createNormalDateTimeString(),
                 analyticRuleDoc.getName(),
                 analyticRuleDoc.getUuid(),
                 analyticRuleDoc.getVersion(),
@@ -214,7 +210,7 @@ public class DetectionWriterProxy implements ValuesConsumer, ProcessLifecycleAwa
                 0,
                 false,
                 values,
-                List.of(new LinkedEvent(null, streamId.get(), eventId.get()))
+                List.of(new DetectionLinkedEvent(null, streamId.get(), eventId.get()))
         );
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();

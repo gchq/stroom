@@ -28,6 +28,8 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.view.IndicatorLines;
+import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.DestroyReason;
@@ -39,7 +41,11 @@ import stroom.query.shared.QueryHelpItemsRequest;
 import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
 import stroom.query.shared.QueryHelpItemsResult;
 import stroom.query.shared.QueryResource;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.Indicators;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
 
@@ -55,6 +61,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
+import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -119,6 +127,21 @@ public class QueryEditPresenter
                 resultStoreModel,
                 tablePresenter);
         queryModel.addSearchErrorListener(queryToolbarPresenter);
+        queryModel.addTokenErrorListener(e -> {
+            final Indicators indicators = new Indicators();
+            final DefaultLocation from = e.getFrom();
+            final DefaultLocation to = e.getTo();
+            indicators.add(new StoredError(Severity.ERROR, from, null, e.getText()));
+            final IndicatorLines indicatorLines = new IndicatorLines(indicators);
+            final AceRange range = AceRange.create(
+                    from.getLineNo() - 1,
+                    from.getColNo(),
+                    to.getLineNo() - 1,
+                    to.getColNo());
+            final Marker marker = new Marker(range, "err", AceMarkerType.TEXT, true);
+            editorPresenter.setIndicators(indicatorLines);
+            editorPresenter.setMarkers(Collections.singletonList(marker));
+        });
         queryModel.addSearchStateListener(queryToolbarPresenter);
 
         this.editorPresenter = editorPresenter;
@@ -151,9 +174,14 @@ public class QueryEditPresenter
             setDirty(true);
         }));
         registerHandler(editorPresenter.getView().asWidget().addDomHandler(e -> {
-            if (e.isShiftKeyDown() && KeyCodes.KEY_ENTER == e.getNativeKeyCode()) {
+            if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
+                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
                 e.preventDefault();
                 run(true, true);
+            } else if (KeyCodes.KEY_ESCAPE == e.getNativeKeyCode() &&
+                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
+                e.preventDefault();
+                stop();
             }
         }, KeyDownEvent.getType()));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
@@ -161,7 +189,7 @@ public class QueryEditPresenter
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.getSelectionModel().addSelectionHandler(event ->
                 onSelection(tablePresenter.getSelectionModel().getSelected())));
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> run(true, true)));
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> startStop()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
         queryHelpPresenter.linkToEditor(editorPresenter);
 
@@ -287,6 +315,18 @@ public class QueryEditPresenter
         queryModel.reset(DestroyReason.TAB_CLOSE);
     }
 
+    private void startStop() {
+        if (queryModel.isSearching()) {
+            queryModel.stop();
+        } else {
+            run(true, true);
+        }
+    }
+
+    private void stop() {
+        queryModel.stop();
+    }
+
     private void run(final boolean incremental,
                      final boolean storeHistory) {
         run(incremental, storeHistory, Function.identity());
@@ -309,8 +349,16 @@ public class QueryEditPresenter
 //            final ExpressionOperator root = expressionPresenter.write();
 //            final ExpressionOperator decorated = expressionDecorator.apply(root);
 
-        // Start search.
+
+        // Clear the table selection and any markers.
+        tablePresenter.getSelectionModel().clear();
+        editorPresenter.setMarkers(Collections.emptyList());
+        editorPresenter.setIndicators(new IndicatorLines(new Indicators()));
+
+        // Destroy any previous query.
         queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
+
+        // Start search.
         queryModel.startNewSearch(
                 editorPresenter.getText(),
                 null, //getDashboardContext().getCombinedParams(),

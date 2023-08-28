@@ -53,13 +53,7 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem.Builder()
-                        .priority(100)
-                        .text("Help")
-                        .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.HELP_MENU)
-                        .build());
+        MenuKeys.addHelpMenu(event.getMenuItems());
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
                 new IconMenuItem.Builder()

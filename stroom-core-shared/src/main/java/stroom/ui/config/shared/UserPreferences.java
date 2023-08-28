@@ -81,6 +81,9 @@ public class UserPreferences {
     @JsonProperty
     private final TimeZone timeZone;
 
+    @JsonProperty
+    private final Boolean enableTransparency;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -90,7 +93,8 @@ public class UserPreferences {
                            @JsonProperty("font") final String font,
                            @JsonProperty("fontSize") final String fontSize,
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
-                           @JsonProperty("timeZone") final TimeZone timeZone) {
+                           @JsonProperty("timeZone") final TimeZone timeZone,
+                           @JsonProperty("enableTransparency") final Boolean enableTransparency) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = GwtNullSafe.requireNonNullElse(
@@ -102,6 +106,7 @@ public class UserPreferences {
         this.fontSize = fontSize;
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
+        this.enableTransparency = GwtNullSafe.requireNonNullElse(enableTransparency, true);
     }
 
     public String getTheme() {
@@ -140,6 +145,10 @@ public class UserPreferences {
         return timeZone;
     }
 
+    public Boolean getEnableTransparency() {
+        return enableTransparency;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -157,7 +166,8 @@ public class UserPreferences {
                 && Objects.equals(font, that.font)
                 && Objects.equals(fontSize, that.fontSize)
                 && Objects.equals(dateTimePattern, that.dateTimePattern)
-                && Objects.equals(timeZone, that.timeZone);
+                && Objects.equals(timeZone, that.timeZone)
+                && Objects.equals(enableTransparency, that.enableTransparency);
     }
 
     @Override
@@ -170,7 +180,8 @@ public class UserPreferences {
                 font,
                 fontSize,
                 dateTimePattern,
-                timeZone);
+                timeZone,
+                enableTransparency);
     }
 
     @Override
@@ -185,6 +196,7 @@ public class UserPreferences {
                 ", fontSize='" + fontSize + '\'' +
                 ", dateTimePattern='" + dateTimePattern + '\'' +
                 ", timeZone=" + timeZone +
+                ", enableTransparency=" + enableTransparency +
                 '}';
     }
 
@@ -250,17 +262,19 @@ public class UserPreferences {
         private String fontSize;
         private String dateTimePattern;
         private TimeZone timeZone;
+        private Boolean enableTransparency;
 
         private Builder() {
             theme = DEFAULT_THEME;
             editorTheme = getDefaultEditorTheme(DEFAULT_THEME);
             editorKeyBindings = DEFAULT_EDITOR_KEY_BINDINGS;
             editorLiveAutoCompletion = DEFAULT_EDITOR_LIVE_AUTO_COMPLETION;
-            density = "Default";
+            density = "Compact";
             font = "Roboto";
             fontSize = "Medium";
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
             timeZone = TimeZone.builder().use(Use.UTC).build();
+            enableTransparency = true;
         }
 
         private Builder(final UserPreferences userPreferences) {
@@ -273,6 +287,7 @@ public class UserPreferences {
             this.fontSize = userPreferences.fontSize;
             this.dateTimePattern = userPreferences.dateTimePattern;
             this.timeZone = userPreferences.timeZone;
+            this.enableTransparency = userPreferences.enableTransparency;
         }
 
         public Builder theme(final String theme) {
@@ -320,6 +335,11 @@ public class UserPreferences {
             return this;
         }
 
+        public Builder enableTransparency(final Boolean enableTransparency) {
+            this.enableTransparency = enableTransparency;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -330,7 +350,8 @@ public class UserPreferences {
                     font,
                     fontSize,
                     dateTimePattern,
-                    timeZone);
+                    timeZone,
+                    enableTransparency);
         }
     }
 

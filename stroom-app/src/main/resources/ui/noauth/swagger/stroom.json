@@ -9582,6 +9582,28 @@
       },
       "AnalyticNotificationConfig" : {
         "type" : "object",
+        "properties" : {
+          "destination" : {
+            "$ref" : "#/components/schemas/AnalyticNotificationDestination"
+          },
+          "destinationType" : {
+            "type" : "string",
+            "enum" : [ "STREAM", "EMAIL" ]
+          },
+          "limitNotifications" : {
+            "type" : "boolean"
+          },
+          "maxNotifications" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "resumeAfter" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          }
+        }
+      },
+      "AnalyticNotificationDestination" : {
+        "type" : "object",
         "discriminator" : {
           "propertyName" : "type"
         },
@@ -9592,26 +9614,23 @@
         },
         "required" : [ "type" ]
       },
-      "AnalyticNotificationEmailConfig" : {
+      "AnalyticNotificationEmailDestination" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+          "$ref" : "#/components/schemas/AnalyticNotificationDestination"
         }, {
           "type" : "object",
           "properties" : {
             "emailAddress" : {
               "type" : "string"
-            },
-            "timeToWaitForData" : {
-              "$ref" : "#/components/schemas/SimpleDuration"
             }
           }
         } ]
       },
-      "AnalyticNotificationStreamConfig" : {
+      "AnalyticNotificationStreamDestination" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+          "$ref" : "#/components/schemas/AnalyticNotificationDestination"
         }, {
           "type" : "object",
           "properties" : {
@@ -9632,6 +9651,9 @@
         "properties" : {
           "enabled" : {
             "type" : "boolean"
+          },
+          "errorFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "node" : {
             "type" : "string"
@@ -9722,7 +9744,10 @@
       "AnalyticUiDefaultConfig" : {
         "type" : "object",
         "properties" : {
-          "defaultFeed" : {
+          "defaultDestinationFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "defaultErrorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
           "defaultNode" : {
@@ -10766,6 +10791,9 @@
             "items" : {
               "$ref" : "#/components/schemas/Result"
             }
+          },
+          "tokenError" : {
+            "$ref" : "#/components/schemas/TokenError"
           }
         }
       },
@@ -11009,9 +11037,16 @@
       },
       "DefaultLocation" : {
         "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/Location"
-        } ]
+        "properties" : {
+          "colNo" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lineNo" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
       },
       "Dependency" : {
         "type" : "object",
@@ -11707,8 +11742,14 @@
       "ExplorerServiceCopyRequest" : {
         "type" : "object",
         "properties" : {
+          "allowRename" : {
+            "type" : "boolean"
+          },
           "destinationFolder" : {
             "$ref" : "#/components/schemas/ExplorerNode"
+          },
+          "docName" : {
+            "type" : "string"
           },
           "explorerNodes" : {
             "type" : "array",
@@ -17641,6 +17682,20 @@
         },
         "required" : [ "use" ]
       },
+      "TokenError" : {
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "$ref" : "#/components/schemas/DefaultLocation"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "to" : {
+            "$ref" : "#/components/schemas/DefaultLocation"
+          }
+        }
+      },
       "TokenResponse" : {
         "type" : "object",
         "properties" : {
@@ -17888,6 +17943,9 @@
           },
           "editorTheme" : {
             "type" : "string"
+          },
+          "enableTransparency" : {
+            "type" : "boolean"
           },
           "font" : {
             "type" : "string"

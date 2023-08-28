@@ -21,37 +21,41 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
-import stroom.query.api.v2.TimeZone;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
-import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme.AceThemeType;
 
-import java.util.List;
 import java.util.Objects;
 
 public final class UserPreferencesPresenter
         extends MyPresenterWidget<UserPreferencesView>
         implements UserPreferencesUiHandlers {
 
+    private static final TabData THEME = new TabDataImpl("Theme");
+    private static final TabData EDITOR = new TabDataImpl("Editor");
+    private static final TabData DATE_AND_TIME = new TabDataImpl("Date and Time");
+
     private final UserPreferencesManager userPreferencesManager;
+    private final ThemePreferencesPresenter themePreferencesPresenter;
+    private final EditorPreferencesPresenter editorPreferencesPresenter;
+    private final TimePreferencesPresenter timePreferencesPresenter;
     private UserPreferences originalPreferences;
 
     @Inject
@@ -59,15 +63,52 @@ public final class UserPreferencesPresenter
             final EventBus eventBus,
             final UserPreferencesView view,
             final UserPreferencesManager userPreferencesManager,
+            final ThemePreferencesPresenter themePreferencesPresenter,
+            final EditorPreferencesPresenter editorPreferencesPresenter,
+            final TimePreferencesPresenter timePreferencesPresenter,
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.userPreferencesManager = userPreferencesManager;
+        this.themePreferencesPresenter = themePreferencesPresenter;
+        this.editorPreferencesPresenter = editorPreferencesPresenter;
+        this.timePreferencesPresenter = timePreferencesPresenter;
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext.hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION));
+
+        addTab(THEME, themePreferencesPresenter);
+        addTab(EDITOR, editorPreferencesPresenter);
+        addTab(DATE_AND_TIME, timePreferencesPresenter);
+        view.getTabBar().selectTab(THEME);
+        switchTab(THEME);
+    }
+
+    private void addTab(final TabData tabData, final MyPresenterWidget<?> presenterWidget) {
+        getView().getTabBar().addTab(tabData);
+//        getView().getLayerContainer().add(presenterWidget.getWidget());
     }
 
     @Override
     protected void onBind() {
+        registerHandler(getView().getTabBar().addSelectionHandler(e ->
+                switchTab(e.getSelectedItem())));
+        registerHandler(themePreferencesPresenter.addDirtyHandler(e -> onChange()));
+        registerHandler(editorPreferencesPresenter.addDirtyHandler(e -> onChange()));
+        registerHandler(timePreferencesPresenter.addDirtyHandler(e -> onChange()));
+    }
+
+    private void switchTab(final TabData tabData) {
+        getView().getTabBar().selectTab(tabData);
+        if (Objects.equals(THEME, tabData)) {
+            setLayer(themePreferencesPresenter);
+        } else if (Objects.equals(EDITOR, tabData)) {
+            setLayer(editorPreferencesPresenter);
+        } else if (Objects.equals(DATE_AND_TIME, tabData)) {
+            setLayer(timePreferencesPresenter);
+        }
+    }
+
+    private void setLayer(final MyPresenterWidget<?> presenterWidget) {
+        getView().getLayerContainer().show(presenterWidget);
     }
 
     @Override
@@ -79,14 +120,8 @@ public final class UserPreferencesPresenter
             // Theme changed
             final ThemeType themeTypeBefore = Themes.getThemeType(before.getTheme());
             final ThemeType themeTypeAfter = Themes.getThemeType(after.getTheme());
-            if (!Objects.equals(themeTypeBefore, themeTypeAfter)) {
-                // Different theme type so change the list of editor themes
-                final List<String> editorThemes = userPreferencesManager.getEditorThemes(themeTypeAfter);
-                getView().setEditorThemes(editorThemes);
-                // As we have changed theme type, we need to set an editor theme for that new type
-                final String defaultEditorTheme = userPreferencesManager.getDefaultEditorTheme(themeTypeAfter);
-//                GWT.log("defaultEditorTheme: " + defaultEditorTheme);
-                getView().setEditorTheme(defaultEditorTheme);
+            final boolean change = editorPreferencesPresenter.updateTheme(themeTypeBefore, themeTypeAfter);
+            if (change) {
                 // Update the prefs with the change
                 after = write();
             }
@@ -138,9 +173,9 @@ public final class UserPreferencesPresenter
             read(userPreferences);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(PopupSize.resizableX())
+                    .popupSize(PopupSize.resizable(533, 551, 533, 551))
                     .caption(caption)
-                    .onShow(e -> getView().focus())
+                    .onShow(e -> themePreferencesPresenter.getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
                             final UserPreferences newUserPreferences = write();
@@ -162,130 +197,24 @@ public final class UserPreferencesPresenter
     }
 
     private void read(final UserPreferences userPreferences) {
-        final String themeName = userPreferences.getTheme();
-        final ThemeType themeType = Themes.getThemeType(themeName);
-        final AceThemeType aceThemeType = ThemeType.LIGHT.equals(themeType)
-                ? AceThemeType.LIGHT
-                : AceThemeType.DARK;
-
-        String editorThemeName = userPreferences.getEditorTheme();
-        if (AceEditorTheme.isValidThemeName(editorThemeName)) {
-            if (!AceEditorTheme.matchesThemeType(themeName, aceThemeType)) {
-                // e.g. light editor theme with a dark stroom theme, so use an appropriate one
-                editorThemeName = getDefaultEditorTheme(aceThemeType).getName();
-            }
-        } else {
-            editorThemeName = getDefaultEditorTheme(aceThemeType).getName();
-        }
-
-        getView().setThemes(userPreferencesManager.getThemes());
-        getView().setTheme(themeName);
-        // Get applicable editor themes for the stroom theme type
-        getView().setEditorThemes(userPreferencesManager.getEditorThemes(themeType));
-        getView().setEditorTheme(editorThemeName);
-        getView().setEditorKeyBindings(userPreferences.getEditorKeyBindings());
-        getView().setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
-        getView().setDensity(userPreferences.getDensity());
-        getView().setFonts(userPreferencesManager.getFonts());
-        getView().setFont(userPreferences.getFont());
-        getView().setFontSize(userPreferences.getFontSize());
-        getView().setPattern(userPreferences.getDateTimePattern());
-
-        final TimeZone timeZone = userPreferences.getTimeZone();
-        if (timeZone != null) {
-            getView().setTimeZoneUse(timeZone.getUse());
-            getView().setTimeZoneId(timeZone.getId());
-            getView().setTimeZoneOffsetHours(timeZone.getOffsetHours());
-            getView().setTimeZoneOffsetMinutes(timeZone.getOffsetMinutes());
-        }
-    }
-
-    private static AceEditorTheme getDefaultEditorTheme(final AceThemeType aceThemeType) {
-        return aceThemeType.isLight()
-                ? AceEditorTheme.DEFAULT_LIGHT_THEME
-                : AceEditorTheme.DEFAULT_DARK_THEME;
+        themePreferencesPresenter.read(userPreferences);
+        editorPreferencesPresenter.read(userPreferences);
+        timePreferencesPresenter.read(userPreferences);
     }
 
     private UserPreferences write() {
-        final TimeZone timeZone = TimeZone.builder()
-                .use(getView().getTimeZoneUse())
-                .id(getView().getTimeZoneId())
-                .offsetHours(getView().getTimeZoneOffsetHours())
-                .offsetMinutes(getView().getTimeZoneOffsetMinutes())
-                .build();
-
-        return UserPreferences.builder()
-                .theme(getView().getTheme())
-                .editorTheme(getView().getEditorTheme())
-                .editorKeyBindings(getView().getEditorKeyBindings())
-                .editorLiveAutoCompletion(getView().getEditorLiveAutoCompletion())
-                .density(getView().getDensity())
-                .font(getView().getFont())
-                .fontSize(getView().getFontSize())
-                .dateTimePattern(getView().getPattern())
-                .timeZone(timeZone)
-                .build();
+        final UserPreferences.Builder builder = UserPreferences.builder();
+        themePreferencesPresenter.write(builder);
+        editorPreferencesPresenter.write(builder);
+        timePreferencesPresenter.write(builder);
+        return builder.build();
     }
 
+    public interface UserPreferencesView extends View, HasUiHandlers<UserPreferencesUiHandlers> {
 
-    // --------------------------------------------------------------------------------
+        TabBar getTabBar();
 
-
-    public interface UserPreferencesView extends View, Focus, HasUiHandlers<UserPreferencesUiHandlers> {
-
-        String getTheme();
-
-        void setTheme(String theme);
-
-        void setThemes(List<String> themes);
-
-        String getEditorTheme();
-
-        void setEditorTheme(String editorTheme);
-
-        void setEditorThemes(List<String> editorThemes);
-
-        EditorKeyBindings getEditorKeyBindings();
-
-        void setEditorKeyBindings(EditorKeyBindings editorKeyBindings);
-
-        Toggle getEditorLiveAutoCompletion();
-
-        void setEditorLiveAutoCompletion(Toggle editorLiveAutoCompletion);
-
-        String getDensity();
-
-        void setDensity(String density);
-
-        String getFont();
-
-        void setFont(String font);
-
-        void setFonts(List<String> themes);
-
-        String getFontSize();
-
-        void setFontSize(String fontSize);
-
-        String getPattern();
-
-        void setPattern(String pattern);
-
-        TimeZone.Use getTimeZoneUse();
-
-        void setTimeZoneUse(TimeZone.Use use);
-
-        String getTimeZoneId();
-
-        void setTimeZoneId(String timeZoneId);
-
-        Integer getTimeZoneOffsetHours();
-
-        void setTimeZoneOffsetHours(Integer timeZoneOffsetHours);
-
-        Integer getTimeZoneOffsetMinutes();
-
-        void setTimeZoneOffsetMinutes(Integer timeZoneOffsetMinutes);
+        LayerContainer getLayerContainer();
 
         void setAsDefaultVisible(boolean visible);
     }
