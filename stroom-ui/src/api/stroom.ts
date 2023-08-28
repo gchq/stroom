@@ -4642,6 +4642,7 @@ export interface UserPreferences {
   editorKeyBindings?: "STANDARD" | "VIM";
   editorLiveAutoCompletion?: "ON" | "OFF";
   editorTheme?: string;
+  enableTransparency?: boolean;
   font?: string;
   fontSize?: string;
   theme?: string;
