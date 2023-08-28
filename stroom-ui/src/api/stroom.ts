@@ -939,6 +939,7 @@ export interface DocumentType {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -1088,6 +1089,26 @@ export interface DocumentType {
 export interface DocumentTypes {
   types?: DocumentType[];
   visibleTypes?: DocumentType[];
+}
+
+export interface Documentation {
+  markdown?: string;
+}
+
+export interface DocumentationDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  data?: string;
+  documentation?: string;
+  name?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
 }
 
 export type DoubleField = AbstractField;
@@ -1280,6 +1301,7 @@ export interface ExplorerDocContentMatch {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -1459,6 +1481,7 @@ export interface ExplorerNode {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -2787,6 +2810,7 @@ export interface PipelineElementType {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -3284,6 +3308,21 @@ export interface QueryDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface QueryHelpItemsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+  filterInput?: string;
+  query?: string;
+  requestedTypes?: ("DATA_SOURCE" | "STRUCTURE" | "FIELD" | "FUNCTION")[];
+}
+
+export interface QueryHelpItemsResult {
+  dataSourceFields?: AbstractField[];
+  dataSources?: DocRef[];
+  functionSignatures?: FunctionSignature[];
+  structureElements?: StructureElement[];
 }
 
 /**
@@ -4565,6 +4604,7 @@ export interface UiConfig {
   htmlTitle?: string;
   maintenanceMessage?: string;
   namePattern?: string;
+  nestedIndexFieldsDelimiterPattern?: string;
   nodeMonitoring?: NodeMonitoringConfig;
 
   /** @pattern ^return (true|false);$ */
@@ -6466,6 +6506,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Sources
+     * @name FetchDocumentation
+     * @summary Fetch documentation for a data source
+     * @request POST:/dataSource/v1/fetchDocumentation
+     * @secure
+     */
+    fetchDocumentation: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, Documentation>({
+        path: `/dataSource/v1/fetchDocumentation`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Sources
      * @name FetchDataSourceFields
      * @summary Fetch data source fields
      * @request POST:/dataSource/v1/fetchFields
@@ -6586,6 +6645,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateDictionary: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
       this.request<any, DictionaryDoc>({
         path: `/dictionary/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  documentation = {
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name DownloadDocumentation
+     * @summary Download a documentation doc
+     * @request POST:/documentation/v1/download
+     * @secure
+     */
+    downloadDocumentation: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/documentation/v1/download`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name FetchDocumentation1
+     * @summary Fetch a documentation doc by its UUID
+     * @request GET:/documentation/v1/{uuid}
+     * @secure
+     */
+    fetchDocumentation1: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, DocumentationDoc>({
+        path: `/documentation/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name UpdateDocumentation
+     * @summary Update a documentation doc
+     * @request PUT:/documentation/v1/{uuid}
+     * @secure
+     */
+    updateDocumentation: (uuid: string, data: DocumentationDoc, params: RequestParams = {}) =>
+      this.request<any, DocumentationDoc>({
+        path: `/documentation/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -8822,6 +8937,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/query/v1/functions`,
         method: "GET",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchHelpItems
+     * @summary Fetch all (optionally filtered) query help items
+     * @request POST:/query/v1/helpItems
+     * @secure
+     */
+    fetchHelpItems: (data: QueryHelpItemsRequest, params: RequestParams = {}) =>
+      this.request<any, QueryHelpItemsResult>({
+        path: `/query/v1/helpItems`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 

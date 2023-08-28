@@ -1631,6 +1631,26 @@ paths:
       summary: Stop a running query
       tags:
       - Data Retention Rules
+  /dataSource/v1/fetchDocumentation:
+    post:
+      operationId: fetchDocumentation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Documentation'
+          description: default response
+      summary: Fetch documentation for a data source
+      tags:
+      - Data Sources
   /dataSource/v1/fetchFields:
     post:
       operationId: fetchDataSourceFields
@@ -1765,6 +1785,68 @@ paths:
       summary: Update a dictionary doc
       tags:
       - Dictionaries (v1)
+  /documentation/v1/download:
+    post:
+      operationId: downloadDocumentation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download a documentation doc
+      tags:
+      - Documentation (v1)
+  /documentation/v1/{uuid}:
+    get:
+      operationId: fetchDocumentation_1
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationDoc'
+          description: default response
+      summary: Fetch a documentation doc by its UUID
+      tags:
+      - Documentation (v1)
+    put:
+      operationId: updateDocumentation
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentationDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationDoc'
+          description: default response
+      summary: Update a documentation doc
+      tags:
+      - Documentation (v1)
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -4223,6 +4305,26 @@ paths:
                   $ref: '#/components/schemas/FunctionSignature'
           description: default response
       summary: Fetch all expression functions
+      tags:
+      - Queries
+  /query/v1/helpItems:
+    post:
+      operationId: fetchHelpItems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryHelpItemsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryHelpItemsResult'
+          description: default response
+      summary: Fetch all (optionally filtered) query help items
       tags:
       - Queries
   /query/v1/search/{nodeName}:
@@ -7853,6 +7955,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -8009,6 +8112,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentType'
+    Documentation:
+      type: object
+      properties:
+        markdown:
+          type: string
+    DocumentationDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        data:
+          type: string
+        documentation:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     DoubleField:
       type: object
       allOf:
@@ -8292,6 +8425,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -8478,6 +8612,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -10574,6 +10709,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -11294,6 +11430,44 @@ components:
           type: string
         version:
           type: string
+    QueryHelpItemsRequest:
+      type: object
+      properties:
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
+        filterInput:
+          type: string
+        query:
+          type: string
+        requestedTypes:
+          type: array
+          items:
+            type: string
+            enum:
+            - DATA_SOURCE
+            - STRUCTURE
+            - FIELD
+            - FUNCTION
+          uniqueItems: true
+    QueryHelpItemsResult:
+      type: object
+      properties:
+        dataSourceFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbstractField'
+        dataSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocRef'
+        functionSignatures:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunctionSignature'
+        structureElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/StructureElement'
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -13359,6 +13533,8 @@ components:
         maintenanceMessage:
           type: string
         namePattern:
+          type: string
+        nestedIndexFieldsDelimiterPattern:
           type: string
         nodeMonitoring:
           $ref: '#/components/schemas/NodeMonitoringConfig'
