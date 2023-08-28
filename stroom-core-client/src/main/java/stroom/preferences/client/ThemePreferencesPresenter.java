@@ -23,6 +23,7 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -77,6 +78,8 @@ public final class ThemePreferencesPresenter
         getView().setFonts(userPreferencesManager.getFonts());
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
+        getView().setEnableTransparency(
+                GwtNullSafe.requireNonNullElse(userPreferences.getEnableTransparency(), true));
     }
 
     public void write(final UserPreferences.Builder builder) {
@@ -84,7 +87,8 @@ public final class ThemePreferencesPresenter
                 .theme(getView().getTheme())
                 .density(getView().getDensity())
                 .font(getView().getFont())
-                .fontSize(getView().getFontSize());
+                .fontSize(getView().getFontSize())
+                .enableTransparency(getView().isEnableTransparency());
     }
 
     @Override
@@ -113,5 +117,9 @@ public final class ThemePreferencesPresenter
         String getFontSize();
 
         void setFontSize(String fontSize);
+
+        boolean isEnableTransparency();
+
+        void setEnableTransparency(boolean enableTransparency);
     }
 }

@@ -2,23 +2,32 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:item="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form">
         <!-- Theme -->
-        <form:FormGroup identity="userPreferencesTheme" label="Theme">
+        <form:FormGroup identity="userPreferencesTheme"
+                        label="Theme">
             <item:SelectionBox ui:field="theme" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Layout Density -->
-        <form:FormGroup identity="userPreferencesLayoutDensity" label="Layout Density">
+        <form:FormGroup identity="userPreferencesLayoutDensity"
+                        label="Layout Density">
             <item:SelectionBox ui:field="density" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Font -->
-        <form:FormGroup identity="userPreferencesFont" label="Font">
+        <form:FormGroup identity="userPreferencesFont"
+                        label="Font">
             <item:SelectionBox ui:field="font" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Font Size -->
-        <form:FormGroup identity="userPreferencesFontSize" label="Font Size">
+        <form:FormGroup identity="userPreferencesFontSize"
+                        label="Font Size">
             <item:SelectionBox ui:field="fontSize" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesEnableTransparency"
+                        label="Enable Transparency">
+            <tickbox:CustomCheckBox ui:field="enableTransparency"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

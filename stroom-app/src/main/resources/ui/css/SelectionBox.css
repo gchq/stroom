@@ -18,7 +18,8 @@
     cursor: pointer;
 }
 
-.SelectionPopup{
+.SelectionPopup {
+    z-index: 100;
 }
 
 .SelectionPopup-layout .svgIconBox {

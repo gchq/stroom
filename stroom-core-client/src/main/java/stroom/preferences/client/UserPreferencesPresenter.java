@@ -173,7 +173,7 @@ public final class UserPreferencesPresenter
             read(userPreferences);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(PopupSize.resizable(533, 400, 533, 400))
+                    .popupSize(PopupSize.resizable(533, 551, 533, 551))
                     .caption(caption)
                     .onShow(e -> themePreferencesPresenter.getView().focus())
                     .onHideRequest(e -> {

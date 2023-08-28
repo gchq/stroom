@@ -31,6 +31,7 @@
 	box-shadow: var(--popup__shadow);
 	overflow: hidden;
 	background-color: var(--dialog__background-color);
+	z-index: -1;
 }
 
 .transparency .simplePopup-background-behind {

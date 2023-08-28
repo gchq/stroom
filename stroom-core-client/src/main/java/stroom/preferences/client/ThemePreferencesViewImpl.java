@@ -19,6 +19,7 @@ package stroom.preferences.client;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,12 +45,13 @@ public final class ThemePreferencesViewImpl
     SelectionBox<String> font;
     @UiField
     SelectionBox<String> fontSize;
+    @UiField
+    CustomCheckBox enableTransparency;
 
     @Inject
     public ThemePreferencesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        density.addItem("Default");
         density.addItem("Comfortable");
         density.addItem("Compact");
 
@@ -124,6 +126,16 @@ public final class ThemePreferencesViewImpl
         this.fontSize.setValue(fontSize);
     }
 
+    @Override
+    public boolean isEnableTransparency() {
+        return this.enableTransparency.getValue();
+    }
+
+    @Override
+    public void setEnableTransparency(final boolean enableTransparency) {
+        this.enableTransparency.setValue(enableTransparency);
+    }
+
     @UiHandler("theme")
     public void onThemeValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
@@ -147,6 +159,13 @@ public final class ThemePreferencesViewImpl
 
     @UiHandler("fontSize")
     public void onFontSizeValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDirty();
+        }
+    }
+
+    @UiHandler("enableTransparency")
+    public void onEnableTransparency(final ValueChangeEvent<Boolean> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
         }
