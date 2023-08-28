@@ -13,6 +13,37 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.52] - 2023-08-28
+
+* Issue **#3618** : Fix explorer tree filtering when filtering for a Searchable, i.e. `dual`.
+
+* Issue **#3696** : Add keyboard shortcut for Shift+Enter to execute queries.
+
+* Issue **#3602** : Nest query field names using [.:] as the delimiter to support dynamic indexing with 000's of fields that are named based on the xpath of the element, e.g. `Events.Event.EventDetail.Authenticate.Action`. Add quick filtering of the query help tree.
+
+* Issue **#3697** : Fix bad parent time key creation.
+
+* Issue **#3700** : Highlight Stroom QL errors.
+
+* Issue **#3632** : Add View documentation to the query helper description.
+
+* Issue **#3702** : Add limits to analytic notifications.
+
+* Issue **#3699** : Add a _Documentation_ entity to the explorer tree for storing markdown documentation. Improve the snippets for markdown. Add a preview pane to the markdown editor.
+
+* Issue **#3704** : Add prop `nestedIndexFieldsDelimiterPattern` for configuring the delimiter used for nesting index fields in the query helper.
+
+* Issue **#3679** : Add Feed tag to internal ref data stats now that ref stores are feed specific.
+
+* Issue **#3707** : Allow a name to be specified when copying a single item.
+
+* Issue **#3696** : Add keyboard shortcut for Shift+Esc to stop queries.
+
+* Issue **#3548** : Reorganised some menu items.
+
+* Issue **#3708** : Add sections to user preferences.
+
+
 ## [v7.2-beta.51] - 2023-08-16
 
 * Fix build.
@@ -5740,7 +5771,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.51...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.52...HEAD
+[v7.2-beta.52]: https://github.com/gchq/stroom/compare/v7.2-beta.51...v7.2-beta.52
 [v7.2-beta.51]: https://github.com/gchq/stroom/compare/v7.2-beta.50...v7.2-beta.51
 [v7.2-beta.50]: https://github.com/gchq/stroom/compare/v7.2-beta.49...v7.2-beta.50
 [v7.2-beta.49]: https://github.com/gchq/stroom/compare/v7.2-beta.48...v7.2-beta.49
