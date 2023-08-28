@@ -13491,6 +13491,8 @@ components:
           - "OFF"
         editorTheme:
           type: string
+        enableTransparency:
+          type: boolean
         font:
           type: string
         fontSize:
