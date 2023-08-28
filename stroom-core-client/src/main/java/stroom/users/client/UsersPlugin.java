@@ -10,6 +10,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -32,6 +33,7 @@ public class UsersPlugin extends NodeToolsPlugin {
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            MenuKeys.addSecurityMenu(event.getMenuItems());
             clientPropertyCache.get()
                     .onSuccess(uiConfig -> {
                         addManageUsers(event, uiConfig);
@@ -47,9 +49,9 @@ public class UsersPlugin extends NodeToolsPlugin {
         final IconMenuItem usersMenuItem;
         final SvgImage icon = SvgImage.USERS;
         usersMenuItem = new IconMenuItem.Builder()
-                .priority(5)
+                .priority(2)
                 .icon(icon)
-                .text("Users")
+                .text("Manage Accounts")
                 .command(() -> {
                     postMessage("manageUsers");
 
@@ -62,7 +64,7 @@ public class UsersPlugin extends NodeToolsPlugin {
 //                HyperlinkEvent.fire(this, hyperlink);
                 })
                 .build();
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
+        event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, usersMenuItem);
     }
 //    private void addManageUserAuthorisations(final BeforeRevealMenubarEvent event,
 //                                             final UiConfig uiConfig) {

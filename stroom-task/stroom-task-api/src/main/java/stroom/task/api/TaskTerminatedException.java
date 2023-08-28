@@ -38,8 +38,8 @@ public class TaskTerminatedException extends EntityServiceException {
             return Optional.of(taskTerminatedException);
         } else if (e instanceof InterruptedException || e instanceof ClosedByInterruptException) {
             return Optional.of(new TaskTerminatedException());
-        } else if (e instanceof final TransformerException TransformerException) {
-            if (TransformerException.getException() instanceof final TaskTerminatedException taskTerminatedException) {
+        } else if (e instanceof final TransformerException transformerException) {
+            if (transformerException.getException() instanceof final TaskTerminatedException taskTerminatedException) {
                 return Optional.of(taskTerminatedException);
             }
         }

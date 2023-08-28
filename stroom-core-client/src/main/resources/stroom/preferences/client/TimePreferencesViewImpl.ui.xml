@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:item="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+
+    <g:FlowPanel styleName="max form">
+        <!-- Date time settings -->
+        <form:FormGroup identity="userPreferencesDateFormat" label="Date and Time Format">
+            <item:SelectionBox ui:field="format" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="custom" identity="userPreferencesCustom" label="Custom"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format">
+            <g:TextBox ui:field="text" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone">
+            <item:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="userPreferencesTimeZoneId" identity="userPreferencesTimeZoneId"
+                        label="Time Zone Id">
+            <item:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="userPreferencesTimeZoneOffset" identity="userPreferencesTimeZoneOffset"
+                        label="Time Zone Offset">
+            <g:FlowPanel>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

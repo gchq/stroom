@@ -9,6 +9,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -31,14 +32,16 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            MenuKeys.addSecurityMenu(event.getMenuItems());
+
             clientPropertyCache.get()
                     .onSuccess(result -> {
                         final IconMenuItem apiKeysMenuItem;
                         final SvgImage icon = SvgImage.KEY;
                         apiKeysMenuItem = new IconMenuItem.Builder()
-                                .priority(5)
+                                .priority(3)
                                 .icon(icon)
-                                .text("API Keys")
+                                .text("Manage API Keys")
                                 .command(() -> {
                                     postMessage("manageTokens");
 
@@ -51,7 +54,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
 //                                HyperlinkEvent.fire(this, hyperlink);
                                 })
                                 .build();
-                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
+                        event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
                     })
                     .onFailure(caught ->
                             AlertEvent.fireError(

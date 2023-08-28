@@ -43,13 +43,7 @@ public class LogoutPlugin extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem.Builder()
-                        .priority(4)
-                        .text("User")
-                        .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.USER_MENU)
-                        .build());
+        MenuKeys.addUserMenu(event.getMenuItems());
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()
