@@ -17,12 +17,38 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-UPDATE
-  annotation_entry ae,
-  stroom_user s
-SET ae.data = s.uuid
-WHERE ae.data = s.name
-AND ae.type = 'Assigned';
+DROP PROCEDURE IF EXISTS V07_02_00_010;
+
+DELIMITER $$
+
+CREATE PROCEDURE V07_02_00_010 ()
+BEGIN
+    DECLARE object_count integer;
+
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.tables
+    WHERE table_schema = database()
+    AND table_name = 'stroom_user';
+
+    IF object_count = 1 THEN
+        SET @sql_str = CONCAT(
+            'UPDATE ',
+            '  annotation_entry ae, ',
+            '  stroom_user s ',
+            'SET ae.data = s.uuid ',
+            'WHERE ae.data = s.name ',
+            'AND ae.type = \'Assigned\'');
+        PREPARE stmt FROM @sql_str;
+        EXECUTE stmt;
+    END IF;
+END $$
+
+DELIMITER ;
+
+CALL V07_02_00_010;
+
+DROP PROCEDURE IF EXISTS V07_02_00_010;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

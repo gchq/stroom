@@ -44,9 +44,12 @@ BEGIN
         AND table_name = 'stroom_user';
 
         IF object_count = 1 THEN
-            UPDATE annotation a, stroom_user s
-            SET a.assigned_to_uuid = s.uuid
-            WHERE a.assigned_to_uuid = s.name;
+            SET @sql_str = CONCAT(
+                'UPDATE annotation a, stroom_user s ',
+                'SET a.assigned_to_uuid = s.uuid ',
+                'WHERE a.assigned_to_uuid = s.name');
+            PREPARE stmt FROM @sql_str;
+            EXECUTE stmt;
         END IF;
 
     END IF;

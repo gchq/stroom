@@ -41,9 +41,12 @@ BEGIN
         AND table_name = 'stroom_user';
 
         IF object_count = 1 THEN
-            UPDATE preferences p, stroom_user s
-            SET p.user_id = s.uuid
-            WHERE p.user_id = s.name;
+            SET @sql_str = CONCAT(
+                'UPDATE preferences p, stroom_user s ',
+                'SET p.user_id = s.uuid ',
+                'WHERE p.user_id = s.name');
+            PREPARE stmt FROM @sql_str;
+            EXECUTE stmt;
         END IF;
 
         ALTER TABLE preferences
