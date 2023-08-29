@@ -231,7 +231,10 @@
     --dialog__background-color: rgb(var(--dialog__background-color-rgb));
     --dialog__border-color: #2c2f35;
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .8);
+    --dialog__border-radius: 8px;
     --popup__shadow: 0 0 10px 1px rgb(0, 0, 0, .9);
+    --transparency__background-color: rgba(var(--dialog__background-color-rgb), .8);
+    --transparency__backdrop-filter: saturate(2) blur(20px);
 
     /* Status */
     --ok: var(--blue-500);

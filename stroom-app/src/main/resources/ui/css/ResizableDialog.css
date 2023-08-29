@@ -26,6 +26,7 @@
     width: 32px;
     height: 32px;
     cursor: nw-resize;
+    opacity: .4;
 }
 
 .resizableDialog-resizeHandle svg {

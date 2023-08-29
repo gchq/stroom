@@ -28,15 +28,15 @@
 	width: 100%;
 	height: 100%;
 	border: thin solid var(--dialog__border-color);
-	border-radius: 6px;
+	border-radius: var(--dialog__border-radius);
 	box-shadow: var(--dialog__shadow);
 	overflow: hidden;
 	background-color: var(--dialog__background-color);
 }
 
 .transparency .dialog-background-behind {
-	background-color: rgba(var(--dialog__background-color-rgb), .85);
-	backdrop-filter: blur(5px);
+	background-color: var(--transparency__background-color);
+	backdrop-filter: var(--transparency__backdrop-filter);
 }
 
 .dialog-background {

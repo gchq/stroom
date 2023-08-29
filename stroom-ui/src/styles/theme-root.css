@@ -7,6 +7,12 @@
  * --<object>-<inner_object>__<attribute>--<modifier>--<modifier>
  */
 
+/**************************************************
+*  NOTE: This file gets copied into stroom-docs by 
+*  stroom-docs/update_stroom_icons.sh
+*  so any significant changes may break the docs.
+***************************************************/
+
 :root {
     --focus-border: var(--blue-500);
     --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
@@ -75,7 +81,7 @@
     --pipeline-element-box__background-color--selected: #bbdefb;
     --pipeline-element-box__background-color--selected--hover: #bbdefb;
     --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.3);
-    --pipeline-element-box__text-color: #888;
+    --pipeline-element-box__text-color: #666;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
     --pipeline-element-box__border-color--info: #378cff;
@@ -123,13 +129,14 @@
      */
 
     /* Page */
-    --app__background-color: #fff;/*#d50101;*/
+    --app__background-color-rgb: 255, 255, 255;
+    --app__background-color: rgb(var(--app__background-color-rgb));
     --page__background-color: var(--app__background-color);
     --page__text-color: rgba(0, 0, 0, 0.8);
 
     /* Splitter */
     --splitter__background-color: var(--border-color);
-    --splitter__background-color--highlight: rgba(24, 94, 144, 0.9);
+    --splitter__background-color--highlight: var(--blue-300);
 
     /* Main curve tabs */
     --curve-tab__svg-color: #555;
@@ -150,7 +157,7 @@
     --control__text-color--disabled: #666;
 
     /* Form Group */
-    --form-group__label-color: #000;
+    --form-group__label-color: #444;
 
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
@@ -204,7 +211,7 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
-    --navigation__splitter__background-color: #002a59;
+    --navigation__splitter__background-color: #2862a3;
     --navigation__background-color: #004c98;
     --navigation__background-color--hovered: rgba(10,36,65,.4);
     --navigation__background-color--selected: rgba(10,36,65,.6);
@@ -221,10 +228,14 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
-    --dialog__background-color: var(--app__background-color);
-    --dialog__border-color: rgba(var(--black-rgb), .5);
-    --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .4);
+    --dialog__background-color-rgb: var(--app__background-color-rgb);
+    --dialog__background-color: rgb(var(--dialog__background-color-rgb));
+    --dialog__border-color: rgba(var(--black-rgb), .3);
+    --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
+    --dialog__border-radius: 8px;
     --popup__shadow: 0 0 10px 1px rgba(0, 0, 0, .4);
+    --transparency__background-color: rgba(var(--dialog__background-color-rgb), .8);
+    --transparency__backdrop-filter: saturate(2) blur(20px);
 
     /* Status */
     --ok: var(--blue-500);

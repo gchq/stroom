@@ -157,7 +157,7 @@
     --control__text-color--disabled: #666;
 
     /* Form Group */
-    --form-group__label-color: #000;
+    --form-group__label-color: #444;
 
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
@@ -230,9 +230,12 @@
     /* Dialog */
     --dialog__background-color-rgb: var(--app__background-color-rgb);
     --dialog__background-color: rgb(var(--dialog__background-color-rgb));
-    --dialog__border-color: rgba(var(--black-rgb), .5);
+    --dialog__border-color: rgba(var(--black-rgb), .3);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
+    --dialog__border-radius: 8px;
     --popup__shadow: 0 0 10px 1px rgba(0, 0, 0, .4);
+    --transparency__background-color: rgba(var(--dialog__background-color-rgb), .8);
+    --transparency__backdrop-filter: saturate(2) blur(20px);
 
     /* Status */
     --ok: var(--blue-500);

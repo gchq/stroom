@@ -1,20 +1,8 @@
 .SelectionBox {
-	/*border: solid 1px var(--control__border-color);
-	background-color: var(--control__background-color);
-	color: var(--control__text-color);
-	border-radius: .25rem;
-	height: calc(1.5em + .75rem + 2px);*/
 	width: 200px;
 }
 
 .SelectionBox-textBox {
-/*
-    border: none !important;
-    border-radius: 0 !important;
-    background: none !important;
-    width: 100%;
-    height: 100%;
-    */
     cursor: pointer;
 }
 
