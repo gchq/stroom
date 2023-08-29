@@ -39,7 +39,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private final StroomDuration disownDeadTasksAfter;
 
     private final StroomDuration waitToQueueTasksDuration;
-    private final StroomDuration skipNonProducingFiltersDuration;
+    private StroomDuration skipNonProducingFiltersDuration;
 
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
@@ -187,6 +187,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
             "filters.")
     public StroomDuration getSkipNonProducingFiltersDuration() {
         return skipNonProducingFiltersDuration;
+    }
+
+    public void setSkipNonProducingFiltersDuration(final StroomDuration skipNonProducingFiltersDuration) {
+        this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
     }
 
     @Override

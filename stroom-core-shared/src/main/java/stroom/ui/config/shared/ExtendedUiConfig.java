@@ -179,6 +179,21 @@ public class ExtendedUiConfig {
         return externalIdentityProvider;
     }
 
+    @JsonIgnore
+    public NodeMonitoringConfig getNodeMonitoring() {
+        return uiConfig.getNodeMonitoring();
+    }
+
+    @JsonIgnore
+    public AnalyticUiDefaultConfig getAnalyticUiDefaultConfig() {
+        return uiConfig.getAnalyticUiDefaultConfig();
+    }
+
+    @JsonIgnore
+    public String getNestedIndexFieldsDelimiterPattern() {
+        return uiConfig.getNestedIndexFieldsDelimiterPattern();
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

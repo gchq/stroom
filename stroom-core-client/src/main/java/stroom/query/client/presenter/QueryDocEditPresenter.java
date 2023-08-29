@@ -17,32 +17,80 @@
 
 package stroom.query.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.analytics.shared.AnalyticNotificationConfig;
+import stroom.analytics.shared.AnalyticNotificationDestinationType;
+import stroom.analytics.shared.AnalyticNotificationStreamDestination;
+import stroom.analytics.shared.AnalyticProcessType;
+import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleResource;
+import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
+import stroom.svg.shared.SvgImage;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.InlineSvgButton;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, QueryDoc> implements HasToolbar {
 
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+    private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
+
     private final QueryEditPresenter queryEditPresenter;
+    private final RestFactory restFactory;
+    private final UiConfigCache uiConfigCache;
+    private final InlineSvgButton createRuleButton;
+    private final ButtonPanel toolbar;
+    private DocRef docRef;
 
     @Inject
     public QueryDocEditPresenter(final EventBus eventBus,
-                                 final QueryEditPresenter queryEditPresenter) {
+                                 final QueryEditPresenter queryEditPresenter,
+                                 final RestFactory restFactory,
+                                 final UiConfigCache uiConfigCache) {
         super(eventBus, queryEditPresenter.getView());
         this.queryEditPresenter = queryEditPresenter;
+        this.restFactory = restFactory;
+        this.uiConfigCache = uiConfigCache;
+
+        createRuleButton = new InlineSvgButton();
+        createRuleButton.setSvg(SvgImage.DOCUMENT_ANALYTIC_RULE);
+        createRuleButton.setTitle("Create Rule");
+        createRuleButton.setVisible(true);
+
+        toolbar = new ButtonPanel();
+        toolbar.addButton(createRuleButton);
     }
 
     @Override
     public List<Widget> getToolbars() {
-        return queryEditPresenter.getToolbars();
+        final List<Widget> list = new ArrayList<>();
+        list.add(toolbar);
+        list.addAll(queryEditPresenter.getToolbars());
+        return list;
     }
 
     @Override
@@ -53,10 +101,105 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 setDirty(true);
             }
         }));
+        registerHandler(createRuleButton.addClickHandler(event -> createRule()));
+    }
+
+    private void createRule() {
+        uiConfigCache.get().onSuccess(uiConfig -> {
+            final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
+            if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
+                AlertEvent.fireError(this, "No default error feed configured", null);
+            } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
+                AlertEvent.fireError(this, "No default destination feed configured", null);
+            } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
+                AlertEvent.fireError(this, "No default processing node configured", null);
+            } else {
+                createRule(analyticUiDefaultConfig);
+            }
+        });
+    }
+
+    private void createRule(final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+        final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
+            final DocRef ruleDoc = newNode.getDocRef();
+            loadNewRule(ruleDoc, analyticUiDefaultConfig);
+        };
+
+        // First get the explorer node for the docref.
+        final Rest<ExplorerNode> rest = restFactory.create();
+        rest
+                .onSuccess(explorerNode -> {
+                    // Ask the user to create a new document.
+                    ShowCreateDocumentDialogEvent.fire(
+                            this,
+                            "Create New Analytic Rule",
+                            explorerNode,
+                            AnalyticRuleDoc.DOCUMENT_TYPE,
+                            docRef.getName(),
+                            true,
+                            newDocumentConsumer);
+                })
+                .call(EXPLORER_RESOURCE)
+                .getFromDocRef(docRef);
+    }
+
+    private void loadNewRule(final DocRef ruleDocRef, final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+        final Rest<AnalyticRuleDoc> rest = restFactory.create();
+        rest
+                .onSuccess(doc -> {
+                    final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
+                    final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
+                            ScheduledQueryAnalyticProcessConfig.builder()
+                                    .node(analyticUiDefaultConfig.getDefaultNode())
+                                    .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
+                                    .minEventTimeMs(System.currentTimeMillis())
+                                    .maxEventTimeMs(null)
+                                    .queryFrequency(oneHour)
+                                    .timeToWaitForData(oneHour)
+                                    .build();
+                    final AnalyticNotificationStreamDestination destination =
+                            AnalyticNotificationStreamDestination.builder()
+                                    .useSourceFeedIfPossible(false)
+                                    .destinationFeed(analyticUiDefaultConfig.getDefaultDestinationFeed())
+                                    .build();
+                    final AnalyticNotificationConfig analyticNotificationConfig = AnalyticNotificationConfig
+                            .builder()
+                            .limitNotifications(false)
+                            .maxNotifications(100)
+                            .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
+                            .destinationType(AnalyticNotificationDestinationType.STREAM)
+                            .destination(destination)
+                            .build();
+                    AnalyticRuleDoc updated = doc
+                            .copy()
+                            .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                            .query(queryEditPresenter.getQuery())
+                            .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                            .analyticProcessConfig(analyticProcessConfig)
+                            .analyticNotificationConfig(analyticNotificationConfig)
+                            .build();
+                    updateRule(ruleDocRef, updated);
+                })
+                .call(ANALYTIC_RULE_RESOURCE)
+                .fetch(ruleDocRef.getUuid());
+    }
+
+    private void updateRule(final DocRef ruleDocRef,
+                            final AnalyticRuleDoc ruleDoc) {
+        final Rest<AnalyticRuleDoc> rest = restFactory.create();
+        rest
+                .onSuccess(doc -> OpenDocumentEvent.fire(
+                        QueryDocEditPresenter.this,
+                        ruleDocRef,
+                        true,
+                        false))
+                .call(ANALYTIC_RULE_RESOURCE)
+                .update(ruleDocRef.getUuid(), ruleDoc);
     }
 
     @Override
     public void onRead(final DocRef docRef, final QueryDoc entity, final boolean readOnly) {
+        this.docRef = docRef;
         queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
     }
 

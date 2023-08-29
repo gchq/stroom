@@ -468,7 +468,7 @@ public class SearchRequestMapper {
                     }
 
                     List<stroom.query.api.v2.Field> fields = new ArrayList<>();
-                    List<Integer> limits = new ArrayList<>();
+                    List<Long> limits = new ArrayList<>();
 
                     VisNest nest = mapNest(structure.getNest(), settingResolver);
                     VisValues values = mapVisValues(structure.getValues(), settingResolver);
@@ -481,7 +481,7 @@ public class SearchRequestMapper {
                         fields.add(builder.build());
 
                         // Get limit from nest.
-                        Integer limit = null;
+                        Long limit = null;
                         if (nest.getLimit() != null) {
                             limit = nest.getLimit().getSize();
                         }
@@ -493,7 +493,7 @@ public class SearchRequestMapper {
 
                     if (values != null) {
                         // Get limit from values.
-                        Integer limit = Integer.MAX_VALUE;
+                        Long limit = Long.MAX_VALUE;
                         if (values.getLimit() != null) {
                             limit = values.getLimit().getSize();
                         }
@@ -637,7 +637,7 @@ public class SearchRequestMapper {
             Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
             if (enabled == null || enabled) {
                 final VisLimit copy = new VisLimit();
-                copy.setSize(settingResolver.resolveInteger(limit.getSize()));
+                copy.setSize(settingResolver.resolveLong(limit.getSize()));
                 return copy;
             }
         }

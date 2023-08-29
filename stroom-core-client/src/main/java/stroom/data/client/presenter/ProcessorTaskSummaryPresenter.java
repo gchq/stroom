@@ -35,6 +35,7 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -107,7 +108,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         // Info column.
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
-            protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
+            protected void showInfo(final ProcessorTaskSummary row, final PopupPosition popupPosition) {
                 final TableBuilder tb = new TableBuilder();
                 tb.row(TableCell.header("Key Data", 2));
                 final DocRef pipeline = row.getPipeline();
@@ -123,7 +124,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 htmlBuilder.div(tb::write, Attribute.className("infoTable"));
 
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

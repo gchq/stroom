@@ -20,9 +20,11 @@ import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.util.LambdaLogger;
@@ -36,7 +38,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -50,20 +51,21 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MapDataStore implements DataStore, Data {
+public class MapDataStore implements DataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
+    private final String componentId;
     private final Serialisers serialisers;
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
     private final ValueReferenceIndex valueReferenceIndex;
+    private final List<Field> fields;
     private final CompiledFields compiledFields;
     private final CompiledField[] compiledFieldsArray;
     private final CompiledSorter<ItemImpl>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
-    private final Sizes storeSize;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
 
@@ -71,16 +73,21 @@ public class MapDataStore implements DataStore, Data {
     private final boolean hasSort;
     private final CompletionState completionState = new CompletionStateImpl();
     private final KeyFactory keyFactory;
+    private final ErrorConsumer errorConsumer;
 
     private volatile boolean hasEnoughData;
 
     public MapDataStore(final Serialisers serialisers,
+                        final String componentId,
                         final TableSettings tableSettings,
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
-                        final DataStoreSettings dataStoreSettings) {
+                        final DataStoreSettings dataStoreSettings,
+                        final ErrorConsumer errorConsumer) {
+        this.componentId = componentId;
         this.serialisers = serialisers;
-        this.compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
+        fields = tableSettings.getFields();
+        this.compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
         this.compiledFieldsArray = compiledFields.getCompiledFields();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFieldsArray, tableSettings.showDetail());
@@ -89,7 +96,7 @@ public class MapDataStore implements DataStore, Data {
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         this.maxResults = dataStoreSettings.getMaxResults();
-        this.storeSize = dataStoreSettings.getStoreSize();
+        this.errorConsumer = errorConsumer;
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
@@ -113,7 +120,7 @@ public class MapDataStore implements DataStore, Data {
      * @param values The values to add to the store.
      */
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
@@ -209,7 +216,8 @@ public class MapDataStore implements DataStore, Data {
 
             if (result == null) {
                 result = new ItemsImpl(
-                        storeSize.size(depth),
+                        depth,
+                        maxResults.size(depth),
                         this,
                         groupingFunction,
                         sortingFunction,
@@ -242,8 +250,8 @@ public class MapDataStore implements DataStore, Data {
             CompletableFuture.runAsync(() -> {
                 final ItemsImpl items = childMap.remove(parentKey);
                 if (items != null) {
-                    resultCount.addAndGet(-items.size());
-                    items.getIterable().forEach(item -> remove(item.getKey()));
+                    resultCount.addAndGet(-items.list.size());
+                    items.list.forEach(item -> remove(item.getKey()));
                 }
             });
         }
@@ -255,54 +263,86 @@ public class MapDataStore implements DataStore, Data {
     }
 
     @Override
-    public void getData(final Consumer<Data> consumer) {
-        consumer.accept(this);
-    }
+    public <R> void fetch(final OffsetRange range,
+                          final OpenGroups openGroups,
+                          final TimeFilter timeFilter,
+                          final ItemMapper<R> mapper,
+                          final Consumer<R> resultConsumer,
+                          final Consumer<Long> totalRowCountConsumer) {
+        final OffsetRange enforcedRange = Optional
+                .ofNullable(range)
+                .orElse(OffsetRange.UNBOUNDED);
 
-    /**
-     * Get child items from the data for the provided parent key and time filter.
-     *
-     * @param key        The parent key to get child items for.
-     * @param timeFilter The time filter to use to limit the data returned.
-     * @return The filtered child items for the parent key.
-     */
-    @Override
-    public Optional<Items> get(final Key key, final TimeFilter timeFilter) {
-        return Optional.ofNullable(getInternal(key, timeFilter));
-    }
+        final FetchState fetchState = new FetchState();
+        fetchState.countRows = totalRowCountConsumer != null;
+        fetchState.reachedRowLimit = fetchState.length >= enforcedRange.getLength();
+        fetchState.keepGoing = fetchState.justCount || !fetchState.reachedRowLimit;
 
-    public ItemsImpl getInternal(final Key key, final TimeFilter timeFilter) {
-        if (timeFilter != null) {
-            throw new RuntimeException("Time filtering is not supported by the map data store");
+        getChildren(
+                Key.ROOT_KEY,
+                openGroups,
+                mapper,
+                enforcedRange,
+                fetchState,
+                resultConsumer);
+
+        if (totalRowCountConsumer != null) {
+            totalRowCountConsumer.accept(fetchState.totalRowCount);
         }
-
-        final ItemsImpl result;
-        if (key == null) {
-            result = childMap.get(Key.ROOT_KEY);
-        } else {
-            result = childMap.get(key);
-        }
-        return result;
     }
 
-    private List<ItemImpl> getChildren(final Key parentKey,
-                                       final TimeFilter timeFilter,
-                                       final int childDepth,
-                                       final int trimmedSize,
-                                       final boolean trimTop) {
-        ItemsImpl items = getInternal(parentKey, timeFilter);
+    private <R> void getChildren(final Key parentKey,
+                                 final OpenGroups openGroups,
+                                 final ItemMapper<R> mapper,
+                                 final OffsetRange range,
+                                 final FetchState fetchState,
+                                 final Consumer<R> resultConsumer) {
+        final ItemsImpl items = childMap.get(parentKey);
         if (items == null) {
-            return null;
+            return;
         }
-        List<ItemImpl> list = items.copy();
-        if (list.size() <= trimmedSize) {
-            return list;
+        final List<ItemImpl> list = items.copy();
+
+        // Transfer the sorted items to the result.
+        for (final Item item : list) {
+            fetchState.totalRowCount++;
+            if (!fetchState.reachedRowLimit) {
+                if (range.getOffset() <= fetchState.offset) {
+                    final R row = mapper.create(fields, item);
+                    resultConsumer.accept(row);
+                    fetchState.length++;
+                    fetchState.reachedRowLimit = fetchState.length >= range.getLength();
+                    if (fetchState.reachedRowLimit) {
+                        if (fetchState.countRows) {
+                            fetchState.justCount = true;
+                        } else {
+                            fetchState.keepGoing = false;
+                        }
+                    }
+                    fetchState.offset++;
+                }
+            }
+
+            // Add children if the group is open.
+            if (fetchState.keepGoing && openGroups.isOpen(item.getKey())) {
+                getChildren(item.getKey(),
+                        openGroups,
+                        mapper,
+                        range,
+                        fetchState,
+                        resultConsumer);
+            }
         }
-        if (trimTop) {
-            return list.subList(list.size() - trimmedSize, list.size());
-        } else {
-            return list.subList(0, trimmedSize);
+    }
+
+    private long countChildren(final Key parentKey) {
+        final ItemsImpl items = childMap.get(parentKey);
+        if (items == null) {
+            return 0;
         }
+        final List<ItemImpl> list = items.copy();
+        // FIXME : NOTE THIS COUNT IS NOT FILTERED BY THE MAPPER.
+        return list.size();
     }
 
     /**
@@ -330,7 +370,6 @@ public class MapDataStore implements DataStore, Data {
      * Read items from the supplied input and transfer them to the data store.
      *
      * @param input The input to read.
-     * @return True if we still happy to keep on receiving data, false otherwise.
      */
     @Override
     public void readPayload(final Input input) {
@@ -435,8 +474,41 @@ public class MapDataStore implements DataStore, Data {
         }
     }
 
-    public static class ItemsImpl implements Items {
+    private static class FetchState {
 
+        /**
+         * The current result offset.
+         */
+        long offset;
+        /**
+         * The current result length.
+         */
+        long length;
+        /**
+         * Determine if we are going to look through the whole store to count rows even when we have a result page
+         */
+        boolean countRows;
+        /**
+         * Once we have enough results we can just count results after
+         */
+        boolean justCount;
+        /**
+         * Track the total row count.
+         */
+        long totalRowCount;
+        /**
+         * Set to true once we no longer need any more results.
+         */
+        boolean reachedRowLimit;
+        /**
+         * Set to false if we don't want to keep looking through the store.
+         */
+        boolean keepGoing;
+    }
+
+    public static class ItemsImpl {
+
+        private final int depth;
         private final int trimmedSize;
         private final int maxSize;
         private final MapDataStore dataStore;
@@ -447,19 +519,23 @@ public class MapDataStore implements DataStore, Data {
         private volatile List<ItemImpl> list;
 
         private volatile boolean trimmed = true;
-        private volatile boolean full;
 
-        ItemsImpl(final int trimmedSize,
+        ItemsImpl(final int depth,
+                  final long limit,
                   final MapDataStore dataStore,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction,
                   final Consumer<Key> removeHandler) {
-            this.trimmedSize = trimmedSize;
-            if (trimmedSize < Integer.MAX_VALUE / 2) {
-                this.maxSize = trimmedSize * 2;
-            } else {
-                this.maxSize = Integer.MAX_VALUE;
-            }
+            this.depth = depth;
+
+            // FIXME : THIS IS HARD CODED AND WILL LIMIT RESULTS
+            trimmedSize = (int) Math.max(Math.min(limit, 500_000), 0);
+
+            // FIXME : HARD CODED.
+            int maxSize = this.trimmedSize * 2;
+            maxSize = Math.min(maxSize, 200_000);
+            this.maxSize = Math.max(maxSize, 1_000);
+
             this.dataStore = dataStore;
             this.groupingFunction = groupingFunction;
             this.sortingFunction = sortingFunction;
@@ -477,7 +553,7 @@ public class MapDataStore implements DataStore, Data {
             } else if (list.size() < trimmedSize) {
                 list.add(new ItemImpl(dataStore, groupKey, storedValues));
             } else {
-                full = true;
+                logTruncation();
                 removeHandler.accept(groupKey);
             }
         }
@@ -504,42 +580,33 @@ public class MapDataStore implements DataStore, Data {
                                 .collect(Collectors.toList());
                     }
 
-                    while (list.size() > trimmedSize) {
-                        final ItemImpl lastItem = list.remove(list.size() - 1);
+                    if (list.size() > trimmedSize) {
+                        logTruncation();
+                        while (list.size() > trimmedSize) {
+                            final ItemImpl lastItem = list.remove(list.size() - 1);
 
-                        // Tell the remove handler that we have removed an item.
-                        removeHandler.accept(lastItem.getKey());
+                            // Tell the remove handler that we have removed an item.
+                            removeHandler.accept(lastItem.getKey());
+                        }
                     }
                 }
                 trimmed = true;
             }
         }
 
+        private void logTruncation() {
+            dataStore.errorConsumer.add(() ->
+                    "Truncating data for vis '" +
+                            dataStore.componentId +
+                            "' to " +
+                            trimmedSize +
+                            " data points at depth " +
+                            depth);
+        }
+
         private synchronized List<ItemImpl> copy() {
             sortAndTrim();
             return new ArrayList<>(list);
-        }
-
-        @Override
-        public Item get(final int index) {
-            return copy().get(index);
-        }
-
-        @Override
-        public int size() {
-            return list.size();
-        }
-
-        @Override
-        public Iterable<StoredValues> getStoredValueIterable() {
-            final List<ItemImpl> items = copy();
-            return () -> items.stream().map(item -> item.storedValues).iterator();
-        }
-
-        @Override
-        public Iterable<Item> getIterable() {
-            final List<ItemImpl> items = copy();
-            return () -> items.stream().map(item -> (Item) item).iterator();
         }
     }
 
@@ -548,7 +615,6 @@ public class MapDataStore implements DataStore, Data {
         private final MapDataStore dataStore;
         private final Key key;
         private final StoredValues storedValues;
-        private final Val[] cachedValues;
 
         public ItemImpl(final MapDataStore dataStore,
                         final Key key,
@@ -556,7 +622,6 @@ public class MapDataStore implements DataStore, Data {
             this.dataStore = dataStore;
             this.key = key;
             this.storedValues = storedValues;
-            this.cachedValues = new Val[dataStore.compiledFieldsArray.length];
         }
 
         @Override
@@ -566,15 +631,13 @@ public class MapDataStore implements DataStore, Data {
 
         @Override
         public Val getValue(final int index) {
-            Val val = cachedValues[index];
-            if (val == null) {
-                val = createValue(index);
-                cachedValues[index] = val;
-            }
-            return val;
+            return createValue(dataStore, key, storedValues, index);
         }
 
-        private Val createValue(final int index) {
+        private static Val createValue(final MapDataStore dataStore,
+                                       final Key key,
+                                       final StoredValues storedValues,
+                                       final int index) {
             Val val;
             final Generator generator = dataStore.compiledFieldsArray[index].getGenerator();
             if (key.isGrouped()) {
@@ -606,8 +669,7 @@ public class MapDataStore implements DataStore, Data {
 
                     @Override
                     public long count() {
-                        final Optional<Items> optional = dataStore.get(key, null);
-                        return optional.map(Items::size).orElse(0);
+                        return dataStore.countChildren(key);
                     }
 
                     private StoredValues singleValue(final int trimmedSize, final boolean trimTop) {
@@ -621,16 +683,27 @@ public class MapDataStore implements DataStore, Data {
 
                     private Iterable<StoredValues> getStoredValueIterable(final int limit,
                                                                           final boolean trimTop) {
-                        final List<ItemImpl> items = dataStore.getChildren(
+                        final List<StoredValues> result = new ArrayList<>();
+                        final FetchState fetchState = new FetchState();
+                        fetchState.countRows = false;
+                        fetchState.reachedRowLimit = false;
+                        fetchState.keepGoing = true;
+
+                        dataStore.getChildren(
                                 key,
-                                null,
-                                key.getChildDepth(),
-                                limit,
-                                trimTop);
-                        if (items != null && items.size() > 0) {
-                            return () -> items.stream().map(item -> item.storedValues).iterator();
+                                OpenGroups.NONE, // Don't traverse any child rows.
+                                IdentityItemMapper.INSTANCE,
+                                OffsetRange.ZERO_1000, // Max 1000 child items.
+                                fetchState,
+                                item -> result.add(((ItemImpl) item).storedValues));
+                        if (result.size() > limit) {
+                            if (trimTop) {
+                                return result.subList(result.size() - limit, result.size());
+                            } else {
+                                return result.subList(0, limit);
+                            }
                         }
-                        return Collections::emptyIterator;
+                        return result;
                     }
                 };
                 val = generator.eval(storedValues, childDataSupplier);
@@ -664,8 +737,8 @@ public class MapDataStore implements DataStore, Data {
                         result = storedValues;
                     } else {
                         // Combine the new item into the original item.
-                        for (int i = 0; i < compiledFields.length; i++) {
-                            final Generator generator = compiledFields[i].getGenerator();
+                        for (final CompiledField compiledField : compiledFields) {
+                            final Generator generator = compiledField.getGenerator();
                             generator.merge(result, storedValues);
                         }
                     }
@@ -673,6 +746,7 @@ public class MapDataStore implements DataStore, Data {
                     return result;
                 });
             });
+
             return groupingMap
                     .entrySet()
                     .parallelStream()

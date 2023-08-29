@@ -3,6 +3,7 @@ package stroom.item.client;
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.view.SimplePopupLayout;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -58,9 +59,12 @@ public class SelectionPopup extends Composite {
         layout.add(svgIconBox);
         layout.add(listBox);
 
-        popupPanel.add(layout);
+        final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
+        simplePopupLayout.setContent(layout);
+
+        popupPanel.add(simplePopupLayout);
         popupPanel.setAutoHideEnabled(true);
-        popupPanel.setStyleName("simplePopup-background SelectionPopup");
+        popupPanel.setStyleName("SelectionPopup");
 
         listBox.setVisibleItemCount(DEFAULT_VISIBLE_ITEM_COUNT);
     }
@@ -100,8 +104,8 @@ public class SelectionPopup extends Composite {
             eventBinder.bind();
             popupPanel.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
                 popupPanel.setPopupPosition(
-                        position.getLeft(),
-                        position.getTop());
+                        (int) position.getRelativeRect().getLeft(),
+                        (int) position.getRelativeRect().getTop());
                 afterShow();
             });
         }
@@ -125,11 +129,12 @@ public class SelectionPopup extends Composite {
                 if (!textBox.getText().isEmpty()) {
                     // If the user has entered filter text, clear it
                     textBox.setText("");
+                    updateListBox();
                 } else {
                     // Otherwise close the popup
                     hide();
                 }
-                return;
+                break;
             // Allow the user to navigate from the filter box to the options list using the arrow keys
             case KeyCodes.KEY_DOWN:
                 if (listBox.getItemCount() > 0) {
@@ -141,7 +146,7 @@ public class SelectionPopup extends Composite {
                     }
                     listBox.setFocus(true);
                 }
-                return;
+                break;
             case KeyCodes.KEY_UP:
                 if (listBox.getItemCount() > 0) {
                     final int index = listBox.getSelectedIndex();
@@ -152,10 +157,10 @@ public class SelectionPopup extends Composite {
                     }
                     listBox.setFocus(true);
                 }
-                return;
+                break;
+            default:
+                updateListBox();
         }
-
-        updateListBox();
     }
 
     private void updateListBox() {

@@ -47,8 +47,10 @@ public class TestLmdbRowKeyFactoryFactory {
                 new ValHasher(new OutputFactoryImpl(new SearchResultStoreConfig()), new ErrorConsumerImpl()));
         testUnique(keyFactory);
 
+        final ByteBuffer parentKey = keyFactory
+                .create(0, null, 100L, 100L);
         final ByteBuffer key = keyFactory
-                .create(1, 0, 100L, 100L);
+                .create(1, parentKey, 100L, 100L);
         final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
         keyFactory.makeUnique(lmdbKV);
@@ -63,8 +65,10 @@ public class TestLmdbRowKeyFactoryFactory {
                 new ValHasher(new OutputFactoryImpl(new SearchResultStoreConfig()), new ErrorConsumerImpl()));
         testUnique(keyFactory);
 
+        final ByteBuffer parentKey = keyFactory
+                .create(0, null, 100L, 100L);
         final ByteBuffer key = keyFactory
-                .create(1, 0, 100L, 100L);
+                .create(1, parentKey, 100L, 100L);
         final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
         keyFactory.makeUnique(lmdbKV);
@@ -73,7 +77,7 @@ public class TestLmdbRowKeyFactoryFactory {
 
     private void testUnique(final LmdbRowKeyFactory keyFactory) {
         final ByteBuffer key = keyFactory
-                .create(0, 0, 100L, 100L);
+                .create(0, null, 100L, 100L);
         final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
         keyFactory.makeUnique(lmdbKV);
@@ -97,7 +101,6 @@ public class TestLmdbRowKeyFactoryFactory {
         final FieldIndex fieldIndex = new FieldIndex();
         final CompiledFields compiledFields = CompiledFields.create(fields, fieldIndex, Collections.emptyMap());
         final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
-        final CompiledDepths compiledDepths = new CompiledDepths(compiledFieldArray, false);
-        return compiledDepths;
+        return new CompiledDepths(compiledFieldArray, false);
     }
 }

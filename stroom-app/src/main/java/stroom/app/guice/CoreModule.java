@@ -11,7 +11,7 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.ActivityModule());
         install(new stroom.activity.impl.db.ActivityDaoModule());
-        install(new stroom.analytics.impl.AlertModule());
+//        install(new stroom.analytics.impl.AlertModule());
         install(new stroom.analytics.impl.AnalyticsModule());
         install(new stroom.analytics.impl.db.AnalyticsDaoModule());
         install(new stroom.annotation.impl.AnnotationModule());
@@ -44,6 +44,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
         install(new stroom.dictionary.impl.DictionaryHandlerModule());
         install(new stroom.dictionary.impl.DictionaryModule());
+        install(new stroom.documentation.impl.DocumentationHandlerModule());
+        install(new stroom.documentation.impl.DocumentationModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.db.DocStoreDbPersistenceModule());
         install(new stroom.dropwizard.common.DropwizardModule());

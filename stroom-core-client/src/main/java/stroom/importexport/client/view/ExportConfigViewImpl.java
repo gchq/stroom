@@ -27,7 +27,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -41,7 +41,7 @@ public class ExportConfigViewImpl
     @UiField
     QuickFilter nameFilter;
     @UiField
-    SimplePanel tree;
+    MaxScrollPanel tree;
     @UiField(provided = true)
     SvgButton typeFilter;
 
@@ -63,8 +63,6 @@ public class ExportConfigViewImpl
 
     @Override
     public void setTreeView(final View view) {
-        view.asWidget().setWidth("100%");
-        view.asWidget().setHeight("100%");
         tree.setWidget(view.asWidget());
     }
 

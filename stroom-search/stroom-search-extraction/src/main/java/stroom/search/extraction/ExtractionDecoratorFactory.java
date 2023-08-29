@@ -24,7 +24,8 @@ public class ExtractionDecoratorFactory {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
+    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
+    private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
 
     @Inject
     ExtractionDecoratorFactory(final ExtractionConfig extractionConfig,
@@ -37,7 +38,8 @@ public class ExtractionDecoratorFactory {
                                final PipelineStore pipelineStore,
                                final PipelineDataCache pipelineDataCache,
                                final Provider<ExtractionTaskHandler> handlerProvider,
-                               final Provider<ExtractionStateHolder> extractionStateHolderProvider) {
+                               final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
+                               final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider) {
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
@@ -48,7 +50,8 @@ public class ExtractionDecoratorFactory {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
-        this.extractionStateHolderProvider = extractionStateHolderProvider;
+        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
+        this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
     }
 
     public ExtractionDecorator create(final QueryKey queryKey) {
@@ -63,7 +66,8 @@ public class ExtractionDecoratorFactory {
                 pipelineStore,
                 pipelineDataCache,
                 handlerProvider,
-                extractionStateHolderProvider,
+                valueConsumerHolderProvider,
+                fieldListConsumerHolderProvider,
                 queryKey);
     }
 }

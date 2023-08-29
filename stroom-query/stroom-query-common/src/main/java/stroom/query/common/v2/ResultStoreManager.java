@@ -16,7 +16,6 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -144,6 +143,35 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     public SearchResponse search(final SearchRequest searchRequest) {
+        final RequestAndStore requestAndStore = getResultStore(searchRequest);
+        final Map<String, ResultCreator> defaultResultCreators =
+                requestAndStore.resultStore.makeDefaultResultCreators(requestAndStore.searchRequest);
+        return search(requestAndStore, defaultResultCreators);
+    }
+
+    public SearchResponse search(final RequestAndStore requestAndStore,
+                                 final Map<String, ResultCreator> resultCreatorMap) {
+        // Perform search.
+        final Supplier<SearchResponse> supplier =
+                taskContextFactory.contextResult("Getting search results", taskContext -> {
+                    taskContext.info(() -> "Creating search result");
+                    return securityContext.useAsReadResult(() ->
+                            doSearch(requestAndStore.resultStore, requestAndStore.searchRequest, resultCreatorMap));
+                });
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<SearchResponse> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public record RequestAndStore(SearchRequest searchRequest, ResultStore resultStore) {
+
+    }
+
+    public RequestAndStore getResultStore(final SearchRequest searchRequest) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(searchRequest);
             LOGGER.debug("/search called with searchRequest:\n{}", json);
@@ -169,92 +197,6 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 throw new RuntimeException(
                         "You do not have permission to get the search results associated with this key");
             }
-        } else {
-            // If the query doesn't have a key then this is new.
-            LOGGER.debug(() -> "New query");
-
-            // Get the data source.
-            Objects.requireNonNull(modifiedRequest.getQuery(),
-                    "Query is null");
-            final DocRef dataSourceRef = modifiedRequest.getQuery().getDataSource();
-            if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
-                throw new RuntimeException("No search data source has been specified");
-            }
-
-            // Get a store factory to perform this new search.
-            final Optional<SearchProvider> optionalStoreFactory =
-                    storeFactoryRegistry.getStoreFactory(modifiedRequest.getQuery().getDataSource());
-            final SearchProvider storeFactory = optionalStoreFactory
-                    .orElseThrow(() ->
-                            new RuntimeException("No store factory found for " +
-                                    searchRequest.getQuery().getDataSource().getType()));
-
-
-            // Create a new search UUID.
-            modifiedRequest = addQueryKey(modifiedRequest);
-
-            // Add a param for `currentUser()`
-            modifiedRequest = addCurrentUserParam(modifiedRequest);
-
-            // Add partition time constraints to the query.
-            modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
-
-            final SearchRequest finalModifiedRequest = modifiedRequest;
-            final QueryKey queryKey = finalModifiedRequest.getKey();
-            LOGGER.trace(() -> "get() " + queryKey);
-            try {
-                LOGGER.trace(() -> "create() " + queryKey);
-                LOGGER.debug(() -> "Creating new store for key: " + queryKey);
-                resultStore = storeFactory.createResultStore(finalModifiedRequest);
-                resultStoreMap.put(queryKey, resultStore);
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e.getMessage(), e);
-                throw e;
-            }
-        }
-
-        // Perform search.
-        final SearchRequest finalSearchRequest = modifiedRequest;
-        final Supplier<SearchResponse> supplier =
-                taskContextFactory.contextResult("Getting search results", taskContext -> {
-                    taskContext.info(() -> "Creating search result");
-                    return securityContext.useAsReadResult(() -> doSearch(resultStore, finalSearchRequest));
-                });
-        final Executor executor = executorProvider.get();
-        final CompletableFuture<SearchResponse> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
-        try {
-            return completableFuture.get();
-        } catch (final InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    public boolean search(final SearchRequest searchRequest,
-                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(searchRequest);
-            LOGGER.debug("/search called with searchRequest:\n{}", json);
-        }
-
-        SearchRequest modifiedRequest = searchRequest;
-
-        final String userUuid = securityContext.getUserUuid();
-        Objects.requireNonNull(userUuid, "No user is logged in");
-
-        final ResultStore resultStore;
-        if (modifiedRequest.getKey() != null) {
-            final QueryKey queryKey = modifiedRequest.getKey();
-            final Optional<ResultStore> optionalResultStore =
-                    getIfPresent(queryKey);
-
-            resultStore = optionalResultStore.orElseThrow(() ->
-                    new RuntimeException("No active search found for key = " + queryKey));
-
-            // Check user identity.
-            if (!Objects.equals(resultStore.getUserUuid(), userUuid)) {
-                throw new RuntimeException(
-                        "You do not have permission to get the search results associated with this key");
-            }
 
         } else {
             // If the query doesn't have a key then this is new.
@@ -300,21 +242,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             }
         }
 
-        // Perform search.
-        final SearchRequest finalSearchRequest = modifiedRequest;
-        final Supplier<Boolean> supplier =
-                taskContextFactory.contextResult("Getting search results", taskContext -> {
-                    taskContext.info(() -> "Creating search result");
-                    return securityContext.useAsReadResult(() ->
-                            doSearch(resultStore, finalSearchRequest, resultBuilderMap));
-                });
-        final Executor executor = executorProvider.get();
-        final CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
-        try {
-            return completableFuture.get();
-        } catch (final InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return new RequestAndStore(modifiedRequest, resultStore);
     }
 
     private SearchRequest addQueryKey(final SearchRequest searchRequest) {
@@ -381,20 +309,14 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         return result;
     }
 
-    private boolean doSearch(final ResultStore resultStore,
-                             final SearchRequest request,
-                             final Map<String, ResultBuilder<?>> resultBuilderMap) {
-        Preconditions.checkNotNull(request);
-        // Create a response from the data found so far, this could be complete/incomplete
-        return resultStore.search(request, resultBuilderMap);
-    }
-
-    private SearchResponse doSearch(final ResultStore resultStore, final SearchRequest request) {
+    private SearchResponse doSearch(final ResultStore resultStore,
+                                    final SearchRequest request,
+                                    final Map<String, ResultCreator> resultCreatorMap) {
         Preconditions.checkNotNull(request);
 
         try {
             // Create a response from the data found so far, this could be complete/incomplete
-            final SearchResponse response = resultStore.search(request);
+            final SearchResponse response = resultStore.search(request, resultCreatorMap);
 
             LOGGER.trace(() -> getResponseInfoForLogging(request, response));
 
@@ -410,7 +332,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                                 Collections.emptyList(),
                                 Collections.emptyList(),
                                 new OffsetRange(0, 0),
-                                0,
+                                0L,
                                 null))
                         .collect(Collectors.toList());
             } else {
@@ -432,14 +354,12 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         if (searchResponse.getResults() != null) {
             resultInfo = "\n" + searchResponse.getResults().stream()
                     .map(result -> {
-                        if (result instanceof FlatResult) {
-                            FlatResult flatResult = (FlatResult) result;
+                        if (result instanceof final FlatResult flatResult) {
                             return LogUtil.message(
                                     "  FlatResult - componentId: {}, size: {}, ",
                                     flatResult.getComponentId(),
                                     flatResult.getSize());
-                        } else if (result instanceof TableResult) {
-                            TableResult tableResult = (TableResult) result;
+                        } else if (result instanceof final TableResult tableResult) {
                             return LogUtil.message(
                                     "  TableResult - componentId: {}, rows: {}, totalResults: {}, " +
                                             "resultRange: {}",

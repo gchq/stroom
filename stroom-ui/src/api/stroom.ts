@@ -163,110 +163,44 @@ export interface AnalyticDataShard {
   size?: number;
 }
 
-export interface AnalyticNotification {
-  analyticUuid?: string;
-  config?: AnalyticNotificationConfig;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-  enabled?: boolean;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
+export interface AnalyticNotificationConfig {
+  destination?: AnalyticNotificationDestination;
+  destinationType?: "STREAM" | "EMAIL";
+  limitNotifications?: boolean;
 
   /** @format int32 */
-  version?: number;
+  maxNotifications?: number;
+  resumeAfter?: SimpleDuration;
 }
 
-export interface AnalyticNotificationConfig {
+export interface AnalyticNotificationDestination {
   type: string;
 }
 
-export type AnalyticNotificationEmailConfig = AnalyticNotificationConfig & {
-  emailAddress?: string;
-  timeToWaitForData?: SimpleDuration;
-};
+export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & { emailAddress?: string };
 
-export interface AnalyticNotificationRow {
-  analyticNotification?: AnalyticNotification;
-  analyticNotificationState?: AnalyticNotificationState;
-}
-
-export interface AnalyticNotificationState {
-  /** @format int64 */
-  lastExecutionTime?: number;
-  message?: string;
-  notificationUuid?: string;
-}
-
-export type AnalyticNotificationStreamConfig = AnalyticNotificationConfig & {
+export type AnalyticNotificationStreamDestination = AnalyticNotificationDestination & {
   destinationFeed?: DocRef;
-  timeToWaitForData?: SimpleDuration;
   useSourceFeedIfPossible?: boolean;
 };
 
-export interface AnalyticProcessorFilter {
-  analyticUuid?: string;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
+export interface AnalyticProcessConfig {
   enabled?: boolean;
 
-  /** A logical addOperator term in a query expression tree */
-  expression?: ExpressionOperator;
-
-  /** @format int64 */
-  maxMetaCreateTimeMs?: number;
-
-  /** @format int64 */
-  minMetaCreateTimeMs?: number;
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  errorFeed?: DocRef;
   node?: string;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-
-  /** @format int32 */
-  version?: number;
-}
-
-export interface AnalyticProcessorFilterTracker {
-  /** @format int64 */
-  eventCount?: number;
-  filterUuid?: string;
-
-  /** @format int64 */
-  lastEventId?: number;
-
-  /** @format int64 */
-  lastEventTime?: number;
-
-  /** @format int64 */
-  lastMetaId?: number;
-
-  /** @format int64 */
-  lastPollMs?: number;
-
-  /** @format int32 */
-  lastPollTaskCount?: number;
-  message?: string;
-
-  /** @format int64 */
-  metaCount?: number;
+  type: string;
 }
 
 export interface AnalyticRuleDoc {
-  analyticRuleType?: "EVENT" | "AGGREGATE";
+  analyticNotificationConfig?: AnalyticNotificationConfig;
+  analyticProcessConfig?: AnalyticProcessConfig;
+  analyticProcessType?: "STREAMING" | "TABLE_BUILDER" | "SCHEDULED_QUERY";
 
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  dataRetention?: SimpleDuration;
   description?: string;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
@@ -278,6 +212,25 @@ export interface AnalyticRuleDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface AnalyticTracker {
+  analyticTrackerData?: AnalyticTrackerData;
+  analyticUuid?: string;
+}
+
+export interface AnalyticTrackerData {
+  message?: string;
+  type: string;
+}
+
+export interface AnalyticUiDefaultConfig {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultDestinationFeed?: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultErrorFeed?: DocRef;
+  defaultNode?: string;
 }
 
 export interface Annotation {
@@ -728,6 +681,7 @@ export interface DashboardSearchResponse {
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   queryKey?: QueryKey;
   results?: Result[];
+  tokenError?: TokenError;
 }
 
 export interface DataInfoSection {
@@ -845,7 +799,13 @@ export interface DateTimeSettings {
   timeZone?: TimeZone;
 }
 
-export type DefaultLocation = Location;
+export interface DefaultLocation {
+  /** @format int32 */
+  colNo?: number;
+
+  /** @format int32 */
+  lineNo?: number;
+}
 
 export interface Dependency {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -960,6 +920,7 @@ export interface DocumentType {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -978,6 +939,7 @@ export interface DocumentType {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -1127,6 +1089,26 @@ export interface DocumentType {
 export interface DocumentTypes {
   types?: DocumentType[];
   visibleTypes?: DocumentType[];
+}
+
+export interface Documentation {
+  markdown?: string;
+}
+
+export interface DocumentationDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  data?: string;
+  documentation?: string;
+  name?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
 }
 
 export type DoubleField = AbstractField;
@@ -1304,6 +1286,7 @@ export interface ExplorerDocContentMatch {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -1322,6 +1305,7 @@ export interface ExplorerDocContentMatch {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -1482,6 +1466,7 @@ export interface ExplorerNode {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -1500,6 +1485,7 @@ export interface ExplorerNode {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -1667,7 +1653,9 @@ export interface ExplorerNodePermissions {
 }
 
 export interface ExplorerServiceCopyRequest {
+  allowRename?: boolean;
   destinationFolder?: ExplorerNode;
+  docName?: string;
   explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
@@ -1919,22 +1907,6 @@ export interface FilterUsersRequest {
 }
 
 export interface FindAnalyticDataShardCriteria {
-  analyticDocUuid?: string;
-  pageRequest?: PageRequest;
-  quickFilterInput?: string;
-  sort?: string;
-  sortList?: CriteriaFieldSort[];
-}
-
-export interface FindAnalyticNotificationCriteria {
-  analyticDocUuid?: string;
-  pageRequest?: PageRequest;
-  quickFilterInput?: string;
-  sort?: string;
-  sortList?: CriteriaFieldSort[];
-}
-
-export interface FindAnalyticProcessorFilterCriteria {
   analyticDocUuid?: string;
   pageRequest?: PageRequest;
   quickFilterInput?: string;
@@ -2636,6 +2608,20 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeMonitoringConfig {
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingMaxThreshold?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingWarnThreshold?: number;
+}
+
 export interface NodeSearchTask {
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
@@ -2816,6 +2802,7 @@ export interface PipelineElementType {
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
     | "CANCEL"
     | "CASE_SENSITIVE"
@@ -2834,6 +2821,7 @@ export interface PipelineElementType {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -3333,6 +3321,21 @@ export interface QueryDoc {
   version?: string;
 }
 
+export interface QueryHelpItemsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+  filterInput?: string;
+  query?: string;
+  requestedTypes?: ("DATA_SOURCE" | "STRUCTURE" | "FIELD" | "FUNCTION")[];
+}
+
+export interface QueryHelpItemsResult {
+  dataSourceFields?: AbstractField[];
+  dataSources?: DocRef[];
+  functionSignatures?: FunctionSignature[];
+  structureElements?: StructureElement[];
+}
+
 /**
  * A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.
  */
@@ -3534,24 +3537,6 @@ export interface ResultPageAnalyticDataShard {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: AnalyticDataShard[];
-}
-
-/**
- * A page of results.
- */
-export interface ResultPageAnalyticNotificationRow {
-  /** Details of the page of results being returned. */
-  pageResponse?: PageResponse;
-  values?: AnalyticNotificationRow[];
-}
-
-/**
- * A page of results.
- */
-export interface ResultPageAnalyticProcessorFilter {
-  /** Details of the page of results being returned. */
-  pageResponse?: PageResponse;
-  values?: AnalyticProcessorFilter[];
 }
 
 /**
@@ -3783,6 +3768,19 @@ export interface SavePipelineXmlRequest {
   xml?: string;
 }
 
+export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
+  maxEventTimeMs?: number;
+  minEventTimeMs?: number;
+  queryFrequency?: SimpleDuration;
+  timeToWaitForData?: SimpleDuration;
+};
+
+export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
+  lastExecutionTimeMs?: number;
+  lastWindowEndTimeMs?: number;
+  lastWindowStartTimeMs?: number;
+};
+
 export interface ScheduledTimes {
   lastExecutedTime?: string;
   nextScheduledTime?: string;
@@ -3863,7 +3861,13 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ANALYTIC_RULE" | "ANALYTIC_RULE_UI" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?:
+    | "TABLE_BUILDER_ANALYTIC"
+    | "SCHEDULED_QUERY_ANALYTIC"
+    | "DASHBOARD_UI"
+    | "QUERY_UI"
+    | "API"
+    | "BATCH_SEARCH";
 }
 
 /**
@@ -4271,6 +4275,19 @@ export interface StoredQuery {
 
 export type StreamLocation = Location & { partIndex?: number };
 
+export type StreamingAnalyticProcessConfig = AnalyticProcessConfig & {
+  maxMetaCreateTimeMs?: number;
+  minMetaCreateTimeMs?: number;
+};
+
+export type StreamingAnalyticTrackerData = AnalyticTrackerData & {
+  lastExecutionTimeMs?: number;
+  lastStreamCount?: number;
+  lastStreamId?: number;
+  totalEventCount?: number;
+  totalStreamCount?: number;
+};
+
 export interface StringCriteria {
   caseInsensitive?: boolean;
   matchNull?: boolean;
@@ -4342,6 +4359,25 @@ export interface TabConfig {
 
 export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConfig[] };
 
+export type TableBuilderAnalyticProcessConfig = AnalyticProcessConfig & {
+  dataRetention?: SimpleDuration;
+  maxMetaCreateTimeMs?: number;
+  minMetaCreateTimeMs?: number;
+  timeToWaitForData?: SimpleDuration;
+};
+
+export type TableBuilderAnalyticTrackerData = AnalyticTrackerData & {
+  lastEventId?: number;
+  lastEventTime?: number;
+  lastExecutionTimeMs?: number;
+  lastStreamCount?: number;
+  lastStreamId?: number;
+  lastWindowEndTimeMs?: number;
+  lastWindowStartTimeMs?: number;
+  totalEventCount?: number;
+  totalStreamCount?: number;
+};
+
 export interface TableComponentSettings {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
@@ -4358,6 +4394,13 @@ export interface TableComponentSettings {
    * @example 1000,10,1
    */
   maxResults?: number[];
+
+  /**
+   * Defines the maximum number of rows to display in the table at once (default 100).
+   * @format int32
+   * @example 100
+   */
+  pageSize?: number;
 
   /** TODO */
   queryId: string;
@@ -4542,6 +4585,12 @@ export interface TimeZone {
   use: "Local" | "UTC" | "Id" | "Offset";
 }
 
+export interface TokenError {
+  from?: DefaultLocation;
+  text?: string;
+  to?: DefaultLocation;
+}
+
 export interface TokenResponse {
   access_token?: string;
 
@@ -4558,6 +4607,7 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
+  analyticUiDefaultConfig?: AnalyticUiDefaultConfig;
   defaultMaxResults?: string;
   helpSubPathDocumentation?: string;
   helpSubPathExpressions?: string;
@@ -4569,6 +4619,8 @@ export interface UiConfig {
   htmlTitle?: string;
   maintenanceMessage?: string;
   namePattern?: string;
+  nestedIndexFieldsDelimiterPattern?: string;
+  nodeMonitoring?: NodeMonitoringConfig;
 
   /** @pattern ^return (true|false);$ */
   oncontextmenu?: string;
@@ -4655,7 +4707,9 @@ export interface UserPreferences {
   dateTimePattern?: string;
   density?: string;
   editorKeyBindings?: "STANDARD" | "VIM";
+  editorLiveAutoCompletion?: "ON" | "OFF";
   editorTheme?: string;
+  enableTransparency?: boolean;
   font?: string;
   fontSize?: string;
   theme?: string;
@@ -4688,6 +4742,9 @@ export interface ViewDoc {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
   description?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  filter?: ExpressionOperator;
   name?: string;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -5322,173 +5379,20 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
-  analyticNotification = {
+  analyticProcess = {
     /**
      * No description
      *
-     * @tags AnalyticNotifications
-     * @name CreateAnalyticNotification
-     * @summary Create an analytic notification
-     * @request POST:/analyticNotification/v1
+     * @tags AnalyticProcess
+     * @name FindAnalyticProcessTracker
+     * @summary Find the analytic process tracker for the specified process
+     * @request POST:/analyticProcess/v1/tracker
      * @secure
      */
-    createAnalyticNotification: (data: AnalyticNotification, params: RequestParams = {}) =>
-      this.request<any, AnalyticNotification>({
-        path: `/analyticNotification/v1`,
+    findAnalyticProcessTracker: (data: string, params: RequestParams = {}) =>
+      this.request<any, AnalyticTracker>({
+        path: `/analyticProcess/v1/tracker`,
         method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticNotifications
-     * @name FindAnalyticNotifications
-     * @summary Find the analytic notifications for the specified analytic
-     * @request POST:/analyticNotification/v1/find
-     * @secure
-     */
-    findAnalyticNotifications: (data: FindAnalyticNotificationCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageAnalyticNotificationRow>({
-        path: `/analyticNotification/v1/find`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticNotifications
-     * @name UpdateAnalyticNotification
-     * @summary Delete an analytic notification
-     * @request DELETE:/analyticNotification/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticNotification: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/analyticNotification/v1/${uuid}`,
-        method: "DELETE",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticNotifications
-     * @name UpdateAnalyticNotification1
-     * @summary Update an analytic notification
-     * @request PUT:/analyticNotification/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticNotification1: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
-      this.request<any, AnalyticNotification>({
-        path: `/analyticNotification/v1/${uuid}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  analyticProcessorFilter = {
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name CreateAnalyticProcessorFilter
-     * @summary Create an analytic processor filter
-     * @request POST:/analyticProcessorFilter/v1
-     * @secure
-     */
-    createAnalyticProcessorFilter: (data: AnalyticProcessorFilter, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcessorFilter>({
-        path: `/analyticProcessorFilter/v1`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name FindAnalyticProcessorFilters
-     * @summary Find the analytic processor filters for the specified analytic
-     * @request POST:/analyticProcessorFilter/v1/find
-     * @secure
-     */
-    findAnalyticProcessorFilters: (data: FindAnalyticProcessorFilterCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageAnalyticProcessorFilter>({
-        path: `/analyticProcessorFilter/v1/find`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name FindAnalyticProcessorFilterTracker
-     * @summary Find the analytic processor filter tracker for the specified filter
-     * @request POST:/analyticProcessorFilter/v1/tracker
-     * @secure
-     */
-    findAnalyticProcessorFilterTracker: (data: string, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcessorFilterTracker>({
-        path: `/analyticProcessorFilter/v1/tracker`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name UpdateAnalyticProcessorFilter
-     * @summary Delete an analytic processor filter
-     * @request DELETE:/analyticProcessorFilter/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticProcessorFilter: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/analyticProcessorFilter/v1/${uuid}`,
-        method: "DELETE",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name UpdateAnalyticProcessorFilter1
-     * @summary Update an analytic processor filter
-     * @request PUT:/analyticProcessorFilter/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticProcessorFilter1: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcessorFilter>({
-        path: `/analyticProcessorFilter/v1/${uuid}`,
-        method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -6646,6 +6550,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Sources
+     * @name FetchDocumentation
+     * @summary Fetch documentation for a data source
+     * @request POST:/dataSource/v1/fetchDocumentation
+     * @secure
+     */
+    fetchDocumentation: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, Documentation>({
+        path: `/dataSource/v1/fetchDocumentation`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Sources
      * @name FetchDataSourceFields
      * @summary Fetch data source fields
      * @request POST:/dataSource/v1/fetchFields
@@ -6766,6 +6689,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateDictionary: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
       this.request<any, DictionaryDoc>({
         path: `/dictionary/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  documentation = {
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name DownloadDocumentation
+     * @summary Download a documentation doc
+     * @request POST:/documentation/v1/download
+     * @secure
+     */
+    downloadDocumentation: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/documentation/v1/download`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name FetchDocumentation1
+     * @summary Fetch a documentation doc by its UUID
+     * @request GET:/documentation/v1/{uuid}
+     * @secure
+     */
+    fetchDocumentation1: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, DocumentationDoc>({
+        path: `/documentation/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name UpdateDocumentation
+     * @summary Update a documentation doc
+     * @request PUT:/documentation/v1/{uuid}
+     * @secure
+     */
+    updateDocumentation: (uuid: string, data: DocumentationDoc, params: RequestParams = {}) =>
+      this.request<any, DocumentationDoc>({
+        path: `/documentation/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -9002,6 +8981,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/query/v1/functions`,
         method: "GET",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchHelpItems
+     * @summary Fetch all (optionally filtered) query help items
+     * @request POST:/query/v1/helpItems
+     * @secure
+     */
+    fetchHelpItems: (data: QueryHelpItemsRequest, params: RequestParams = {}) =>
+      this.request<any, QueryHelpItemsResult>({
+        path: `/query/v1/helpItems`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 

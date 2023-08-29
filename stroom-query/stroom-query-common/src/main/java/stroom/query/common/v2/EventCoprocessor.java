@@ -62,7 +62,7 @@ public class EventCoprocessor implements Coprocessor, HasCompletionState {
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         final Long longStreamId = getLong(values, streamIdIndex);
         final Long longEventId = getLong(values, eventIdIndex);
 

@@ -295,7 +295,11 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
-                event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
+                event.getExplorerNodes(),
+                event.getDestinationFolder(),
+                event.isAllowRename(),
+                event.getDocName(),
+                event.getPermissionInheritance(), result -> {
                     // Hide the copy document presenter.
                     HidePopupEvent.builder(event.getPresenter()).fire();
 
@@ -554,13 +558,20 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void copy(final List<ExplorerNode> explorerNodes,
                       final ExplorerNode destinationFolder,
+                      final boolean allowRename,
+                      final String newName,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .copy(new ExplorerServiceCopyRequest(explorerNodes, destinationFolder, permissionInheritance));
+                .copy(new ExplorerServiceCopyRequest(
+                        explorerNodes,
+                        destinationFolder,
+                        allowRename,
+                        newName,
+                        permissionInheritance));
     }
 
     private void move(final List<ExplorerNode> explorerNodes,
@@ -881,15 +892,16 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean allowDelete = deletableItems.size() > 0;
         final boolean isInfoEnabled = singleSelection & allowRead;
 
+        // Feeds are a special case so can't be copied or renamed, see https://github.com/gchq/stroom/issues/3048
+        final boolean hasFeed = readableItems.stream().anyMatch(item -> FeedDoc.DOCUMENT_TYPE.equals(item.getType()));
+
         // Feeds are a special case so can't be renamed, see https://github.com/gchq/stroom/issues/2912
         final boolean isRenameEnabled = singleSelection
                 && allowUpdate
-                && !FeedDoc.DOCUMENT_TYPE.equals(updatableItems.get(0).getType());
+                && !hasFeed;
 
         // Feeds are a special case so can't be copied, see https://github.com/gchq/stroom/issues/3048
-        final boolean isCopyEnabled = singleSelection
-                && allowRead
-                && !FeedDoc.DOCUMENT_TYPE.equals(readableItems.get(0).getType());
+        final boolean isCopyEnabled = allowRead && !hasFeed;
 
         addFavouritesMenuItem(menuItems, singleSelection, 10);
         if (singleSelection && getPrimarySelection() != null &&

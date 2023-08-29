@@ -18,6 +18,6 @@
             </g:FlowPanel>
         </g:FlowPanel>
         <g:SimplePanel ui:field="progressBarPanel" styleName="dock-min dataViewImpl-progressBarPanel"/>
-        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
+        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dataViewImpl-layerContainer dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -18,6 +18,7 @@ package stroom.editor.client.presenter;
 
 import stroom.editor.client.event.HasFormatHandlers;
 import stroom.editor.client.view.IndicatorLines;
+import stroom.editor.client.view.Marker;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 
@@ -47,19 +48,21 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
 
     void markClean();
 
-    void insertTextAtCursor(final String text);
+    void insertTextAtCursor(String text);
 
-    void replaceSelectedText(final String text);
+    void replaceSelectedText(String text);
 
-    void insertSnippet(final String snippet);
+    void insertSnippet(String snippet);
 
     void setFirstLineNumber(int firstLineNumber);
 
-    void setIndicators(final IndicatorLines indicators);
+    void setIndicators(IndicatorLines indicators);
 
-    void setHighlights(final List<TextRange> highlights);
+    void setMarkers(List<Marker> markers);
 
-    public void setErrorText(final String title, final String errorText);
+    void setHighlights(List<TextRange> highlights);
+
+    public void setErrorText(String title, String errorText);
 
     /**
      * If the text is being formatted by this view then you can provide a function to generate
@@ -77,6 +80,8 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
     void setTheme(final AceEditorTheme theme);
 
     void setUserKeyBindingsPreference(final boolean useVimBindings);
+
+    void setUserLiveAutoCompletePreference(final boolean isOn);
 
     Action getFormatAction();
 

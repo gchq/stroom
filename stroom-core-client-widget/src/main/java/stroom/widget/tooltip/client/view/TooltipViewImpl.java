@@ -29,7 +29,7 @@ public class TooltipViewImpl extends ViewImpl implements TooltipView {
 
     public TooltipViewImpl() {
         content = new HTML();
-        content.setStyleName("tooltip");
+        content.setStyleName("info-tooltip");
     }
 
     @Override

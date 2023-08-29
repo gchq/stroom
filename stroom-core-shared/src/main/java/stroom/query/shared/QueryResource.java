@@ -121,4 +121,12 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Fetch all structure element descriptions",
             operationId = "fetchStructureElements")
     List<StructureElement> fetchStructureElements();
+
+    @POST
+    @Path("/helpItems")
+    @Operation(
+            summary = "Fetch all (optionally filtered) query help items",
+            operationId = "fetchHelpItems")
+    QueryHelpItemsResult fetchQueryHelpItems(
+            @Parameter(description = "request", required = true) final QueryHelpItemsRequest request);
 }

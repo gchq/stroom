@@ -194,6 +194,10 @@ public class ValueStore {
         return valueStoreMetaDb.getEntryCount();
     }
 
+    public long getEntryCount(final Txn<ByteBuffer> txn) {
+        return valueStoreMetaDb.getEntryCount(txn);
+    }
+
 
     // --------------------------------------------------------------------------------
 

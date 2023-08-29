@@ -277,12 +277,14 @@ public class DashboardPresenter
         setConstraintsButton.setVisible(designMode);
         layoutPresenter.setDesignMode(designMode);
         getView().setDesignMode(designMode);
-        components.forEach(component -> component.setDesignMode(designMode));
+//        components.forEach(component -> component.setDesignMode(designMode));
 
         if (designMode) {
             editModeButton.setTitle("Exit Design Mode");
+            editModeButton.setState(true);
         } else {
             editModeButton.setTitle("Enter Design Mode");
+            editModeButton.setState(false);
         }
     }
 
@@ -519,6 +521,9 @@ public class DashboardPresenter
                 editModeButton.setState(true);
                 setDesignMode(true);
             }
+        } else {
+            // Turn on design mode if this is a read after a save or save as.
+            setDesignMode(true);
         }
 
         addComponentButton.setEnabled(!readOnly && !embedded);
@@ -529,7 +534,7 @@ public class DashboardPresenter
         final Component component = components.add(type, componentConfig.getId());
         if (component != null) {
             component.setDashboardContext(this);
-            component.setDesignMode(designMode);
+//            component.setDesignMode(designMode);
 
             if (component instanceof HasDirtyHandlers) {
                 ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
@@ -550,16 +555,16 @@ public class DashboardPresenter
         return component;
     }
 
-    @Override
-    public void setDirty(final boolean dirty) {
-        if (dirty) {
-            if (designMode) {
-                super.setDirty(dirty);
-            }
-        } else {
-            super.setDirty(dirty);
-        }
-    }
+//    @Override
+//    public void setDirty(final boolean dirty) {
+//        if (dirty) {
+//            if (designMode) {
+//                super.setDirty(dirty);
+//            }
+//        } else {
+//            super.setDirty(dirty);
+//        }
+//    }
 
     private void enableQueryButtons() {
         queryToolbarPresenter.setEnabled(getQueryableComponents().size() > 0);
@@ -590,23 +595,21 @@ public class DashboardPresenter
 
     @Override
     protected DashboardDoc onWrite(final DashboardDoc dashboard) {
-        if (isDirty()) {
-            final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
-            for (final Component component : components) {
-                final ComponentConfig componentConfig = component.write();
-                componentDataList.add(componentConfig);
-            }
-
-            final DashboardConfig dashboardConfig = new DashboardConfig();
-            dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
-            dashboardConfig.setComponents(componentDataList);
-            dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
-            dashboardConfig.setLayoutConstraints(layoutConstraints);
-            dashboardConfig.setPreferredSize(preferredSize);
-            dashboardConfig.setDesignMode(false);
-            dashboardConfig.setModelVersion(VERSION_7_2_0);
-            dashboard.setDashboardConfig(dashboardConfig);
+        final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
+        for (final Component component : components) {
+            final ComponentConfig componentConfig = component.write();
+            componentDataList.add(componentConfig);
         }
+
+        final DashboardConfig dashboardConfig = new DashboardConfig();
+        dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
+        dashboardConfig.setComponents(componentDataList);
+        dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
+        dashboardConfig.setLayoutConstraints(layoutConstraints);
+        dashboardConfig.setPreferredSize(preferredSize);
+        dashboardConfig.setDesignMode(false);
+        dashboardConfig.setModelVersion(VERSION_7_2_0);
+        dashboard.setDashboardConfig(dashboardConfig);
         return dashboard;
     }
 
@@ -624,9 +627,9 @@ public class DashboardPresenter
 
     @Override
     public void onDirty() {
-        if (designMode) {
-            setDirty(true);
-        }
+//        if (designMode) {
+        setDirty(true);
+//        }
     }
 
     public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {

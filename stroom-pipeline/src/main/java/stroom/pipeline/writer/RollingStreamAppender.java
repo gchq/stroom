@@ -52,6 +52,7 @@ import javax.inject.Inject;
                 A destination used to write one or more output streams to a new stream which is then rolled \
                 when it reaches a certain size or age.
                 A new stream will be created after the size or age criteria has been met.
+                On system shutdown all active streams will be rolled.
                 """,
         category = Category.DESTINATION,
         roles = {

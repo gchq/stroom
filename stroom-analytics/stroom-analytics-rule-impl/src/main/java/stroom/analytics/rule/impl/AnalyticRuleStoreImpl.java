@@ -17,7 +17,9 @@
 
 package stroom.analytics.rule.impl;
 
+import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc.Builder;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
@@ -86,9 +88,33 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
+        final AnalyticRuleDoc document = store.readDocument(docRef);
+        return store.createDocument(newName,
+                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                    final Builder builder = document
+                            .copy()
+                            .type(type)
+                            .uuid(uuid)
+                            .name(docName)
+                            .version(version)
+                            .createTimeMs(createTime)
+                            .updateTimeMs(updateTime)
+                            .createUser(createUser)
+                            .updateUser(updateUser);
+
+                    final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
+                    if (analyticProcessConfig != null) {
+                        analyticProcessConfig.setEnabled(false);
+                        builder.analyticProcessConfig(analyticProcessConfig);
+                    }
+
+                    return builder.build();
+                });
     }
 
     @Override

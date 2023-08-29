@@ -41,6 +41,7 @@ import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -188,29 +189,75 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     rootNodes,
                     fuzzyMatchPredicate);
 
-            // Ensure root nodes are open if they have items
-            for (final ExplorerNode rootNode : rootNodes) {
-                if (rootNode.getChildren() != null
-                        && !rootNode.getChildren().isEmpty()
-                        && NodeState.CLOSED.equals(rootNode.getNodeState())) {
+            rootNodes = openRootNodesWithChildren(rootNodes, openedItems);
 
-                    rootNodes = rootNodes
-                            .stream()
-                            .map(node -> {
-                                if (node == rootNode) {
-                                    return node.copy().nodeState(NodeState.OPEN).build();
-                                }
-                                return node;
-                            })
-                            .collect(Collectors.toList());
-                }
-            }
-
-            return new FetchExplorerNodeResult(rootNodes, openedItems, temporaryOpenItems, qualifiedFilterInput);
+            return new FetchExplorerNodeResult(
+                    rootNodes, openedItems, temporaryOpenItems, qualifiedFilterInput);
         } catch (Exception e) {
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
+    }
+
+    private static List<ExplorerNode> openRootNodesWithChildren(final List<ExplorerNode> rootNodes,
+                                                                final List<ExplorerNodeKey> openedItems) {
+        // Ensure root nodes are open if they have items
+        final List<ExplorerNode> nodes = NullSafe.stream(rootNodes)
+                .map(rootNode -> {
+                    if (rootNode.hasChildren()
+                            && (rootNode.getNodeState() == null || NodeState.CLOSED.equals(rootNode.getNodeState()))) {
+                        final ExplorerNode nodeCopy = rootNode.copy()
+                                .nodeState(NodeState.OPEN)
+                                .build();
+                        // Expand the node
+                        if (!openedItems.contains(nodeCopy.getUniqueKey())) {
+                            openedItems.add(nodeCopy.getUniqueKey());
+                        }
+                        return nodeCopy;
+
+                    } else if (!rootNode.hasChildren()) {
+                        // No children so make it a leaf
+                        return rootNode.copy()
+                                .nodeState(NodeState.LEAF)
+                                .build();
+                    } else {
+                        return rootNode;
+                    }
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        // Now ensure we always have favourite system root nodes
+        final List<ExplorerNode> result = new ArrayList<>();
+        final Optional<ExplorerNode> optFavouriteNode = removeMatchingNode(nodes, ExplorerConstants.FAVOURITES_NODE);
+        final Optional<ExplorerNode> optSystemNode = removeMatchingNode(nodes, ExplorerConstants.SYSTEM_NODE);
+        result.add(optFavouriteNode.orElseGet(() ->
+                ExplorerConstants.FAVOURITES_NODE.copy()
+                        .nodeState(NodeState.LEAF)
+                        .build()));
+        result.add(optSystemNode.orElseGet(() ->
+                ExplorerConstants.SYSTEM_NODE.copy()
+                        .nodeState(NodeState.LEAF)
+                        .build()));
+        // Add any remaining nodes, e.g. searchables
+        result.addAll(nodes);
+        return result;
+    }
+
+    private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
+                                                             final ExplorerNode targetNode) {
+        List<ExplorerNode> list = NullSafe.list(nodes);
+
+        for (int i = 0; i < list.size(); i++) {
+            final ExplorerNode node = list.get(i);
+            if (Objects.equals(node, targetNode)) {
+                nodes.remove(i);
+                return Optional.of(node);
+            }
+        }
+        return Optional.empty();
+//                .r
+//                .filter(node -> Objects.equals(targetNode, node))
+//                .findFirst();
     }
 
     private int getPriority(final ExplorerNode node) {
@@ -223,9 +270,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private void buildFavouritesNode(final TreeModel masterTreeModel) {
-        final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
-                .icon(SvgImage.FAVOURITES);
-        final ExplorerNode favNode = favNodeBuilder.build();
+//        final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
+//                .icon(SvgImage.FAVOURITES);
+//        final ExplorerNode favNode = favNodeBuilder.build();
+        final ExplorerNode favNode = ExplorerConstants.FAVOURITES_NODE;
 
         final Map<String, SvgImage> iconMap = getTypes()
                 .stream()
@@ -294,10 +342,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         .filter(fuzzyMatchPredicate)
                         .toList();
 
-                if (!additionalDocRefs.isEmpty()) {
-                    if (rootNode == null) {
-                        throw new RuntimeException("Missing root node");
-                    }
+                if (NullSafe.hasItems(additionalDocRefs)) {
+//                    if (rootNode == null) {
+//                        throw new RuntimeException("Missing root node");
+//                    }
                     additionalDocRefs.forEach(docRef -> builder.addChild(createSearchableNode(docRef)));
                 }
             }
@@ -658,12 +706,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final ExplorerNode rootNode = explorerNodeService.getNodeWithRoot().orElse(null);
         return rootNode != null
                 ? rootNode.getDocRef()
+
                 : null;
     }
 
     @Override
     public BulkActionResult copy(final List<ExplorerNode> explorerNodes,
                                  final ExplorerNode destinationFolder,
+                                 final boolean allowRename,
+                                 final String docName,
                                  final PermissionInheritance permissionInheritance) {
         final StringBuilder resultMessage = new StringBuilder();
 
@@ -678,6 +729,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         explorerNodes.forEach(sourceNode -> copy(
                 sourceNode,
                 destinationFolder,
+                allowRename,
+                docName,
                 permissionInheritance,
                 resultMessage,
                 remappings));
@@ -719,6 +772,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
      */
     private void copy(final ExplorerNode sourceNode,
                       final ExplorerNode destinationFolder,
+                      final boolean allowRename,
+                      final String docName,
                       final PermissionInheritance permissionInheritance,
                       final StringBuilder resultMessage,
                       final Map<ExplorerNode, ExplorerNode> remappings) {
@@ -743,7 +798,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         .collect(Collectors.toSet());
 
                 // Copy the item to the destination folder.
-                final DocRef destinationDocRef = handler.copyDocument(sourceNode.getDocRef(),
+                String name = sourceNode.getDocRef().getName();
+                if (allowRename && docName != null && docName.trim().length() > 0) {
+                    name = docName;
+                }
+                final DocRef destinationDocRef = handler.copyDocument(
+                        sourceNode.getDocRef(),
+                        name,
+                        !allowRename,
                         otherDestinationChildrenNames);
                 explorerEventLog.copy(sourceNode.getDocRef(), destinationFolderRef, permissionInheritance,
                         null);
@@ -795,7 +857,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             final List<ExplorerNode> children = childMap.get(sourceFolder);
             if (children != null && children.size() > 0) {
                 children.forEach(child -> {
-                    copy(child, destinationFolder, permissionInheritance, resultMessage, remappings);
+                    copy(child, destinationFolder, false, null, permissionInheritance, resultMessage, remappings);
                     recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
                 });
             }

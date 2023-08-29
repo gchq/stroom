@@ -4,6 +4,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.popup.client.view.OkCancelContent;
+import stroom.widget.popup.client.view.SimplePopupLayout;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -44,13 +45,12 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         final OkCancelContent okCancelContent = new OkCancelContent(hideRequestUiHandlers);
         okCancelContent.setContent(timeRangePopup.asWidget());
 
+        final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
+        simplePopupLayout.setContent(okCancelContent);
+
         popup.addAutoHidePartner(label.getElement());
-        popup.setWidget(okCancelContent);
-        popup.setStyleName("simplePopup-background timeRange-popup");
-//        popup.addCloseHandler(event -> {
-//            setValue(timeRangePopup.getValue(), true);
-//        });
-//        timeRangePopup.addValueChangeHandler(timeRange -> popup.hide(false));
+        popup.setWidget(simplePopupLayout);
+        popup.setStyleName("timeRange-popup");
 
         label.addClickHandler(event -> {
             timeRangePopup.setValue(value, false);

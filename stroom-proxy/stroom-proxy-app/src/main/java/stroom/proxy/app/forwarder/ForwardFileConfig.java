@@ -22,9 +22,9 @@ public class ForwardFileConfig extends AbstractConfig implements ForwardConfig, 
     private final String path;
 
     public ForwardFileConfig() {
-        this.enabled = true;
-        this.name = null;
-        this.path = null;
+        enabled = true;
+        name = null;
+        path = null;
     }
 
     @SuppressWarnings("unused")

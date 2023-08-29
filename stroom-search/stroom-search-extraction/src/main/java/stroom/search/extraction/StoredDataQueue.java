@@ -18,7 +18,7 @@ public class StoredDataQueue extends CompletableObjectQueue<Val[]> implements Va
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         SearchProgressLog.increment(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_PUT);
         put(values);
     }

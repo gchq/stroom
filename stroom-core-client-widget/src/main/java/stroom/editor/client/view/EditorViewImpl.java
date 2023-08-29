@@ -83,10 +83,10 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private final Option showInvisiblesOption;
     private final Option basicAutoCompletionOption;
     private final Option snippetsOption;
-    private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
     private final Option viewAsHexOption;
     private Option useVimBindingsOption;
+    private Option liveAutoCompletionOption;
 
     private final Widget widget;
 
@@ -101,6 +101,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private int firstLineNumber = 1;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
     private boolean isVimPreferredKeyBinding = false;
+    private boolean liveAutoCompletePreference = false;
 
     @Inject
     public EditorViewImpl(final Binder binder) {
@@ -141,8 +142,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         useVimBindingsOption = buildVimBindingsOption(false);
         basicAutoCompletionOption = new Option(
                 "Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
-        liveAutoCompletionOption = new Option(
-                "Live Auto Completion", false, true, (on) -> editor.setUseLiveAutoCompletion(on));
+        liveAutoCompletionOption = buildLiveAutoCompleteOption(false);
         snippetsOption = new Option(
                 "Snippets", true, true, (on) -> editor.setUseSnippets(on));
         highlightActiveLineOption = new Option(
@@ -348,6 +348,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public void setMarkers(final List<Marker> markers) {
+        editor.setMarkers(markers);
+    }
+
+    @Override
     public void setErrorText(final String title, final String errorText) {
 
         final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
@@ -413,12 +418,29 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         editor.setUseVimBindings(getUseVimBindingsOption().isOn());
     }
 
+    @Override
+    public void setUserLiveAutoCompletePreference(final boolean isOn) {
+        this.liveAutoCompletePreference = isOn;
+        this.liveAutoCompletionOption = buildLiveAutoCompleteOption(isOn);
+        // Option overrides user preference so even if the user prefers vim (why wouldn't he/she?)
+        // they can temporarily disable it
+        editor.setUseLiveAutoCompletion(getLiveAutoCompletionOption().isOn());
+    }
+
     private Option buildVimBindingsOption(final boolean useVimBindings) {
         return new Option(
                 "Vim Key Bindings",
                 useVimBindings,
                 true,
                 (on) -> editor.setUseVimBindings(on));
+    }
+
+    private Option buildLiveAutoCompleteOption(final boolean isOn) {
+        return new Option(
+                "Live Auto Completion",
+                isOn,
+                true,
+                (on) -> editor.setUseLiveAutoCompletion(on));
     }
 
     private String formatAsIfXml(final String text) {

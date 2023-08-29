@@ -109,7 +109,7 @@ public abstract class RollingDestination implements Destination {
 
         // If we haven't written yet then create the output stream and
         // write a header if we have one.
-        if (header != null && header.length > 0 && outputStream != null && outputStream.getCount() == 0) {
+        if (header != null && header.length > 0 && outputStream != null && !outputStream.getHasBytesWritten()) {
             // Write the header.
             write(header);
         }

@@ -55,7 +55,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestLmdbDataStore extends AbstractDataStoreTest {
 
-    private final Sizes defaultMaxResultsSizes = Sizes.create(50);
     private Path tempDir;
     private ExecutorService executorService;
 
@@ -132,7 +131,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         Metrics.measure("Added data", () -> {
             for (int i = 0; i < 300_000; i++) {
                 final Val val = ValString.create("Text " + i + "test".repeat(1000));
-                dataStore.add(Val.of(val, val));
+                dataStore.accept(Val.of(val, val));
             }
 
             // Wait for all items to be added.
@@ -152,12 +151,11 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    fieldFormatter,
-                    defaultMaxResultsSizes);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
+            assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
             assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
         });
         Metrics.report();
@@ -194,7 +192,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
-                .sourceType(SourceType.ANALYTIC_RULE)
+                .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .build();
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(
@@ -210,7 +208,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 final Val streamId = ValLong.create(i);
                 final Val eventId = ValLong.create(j);
                 final Val eventTime = ValLong.create(System.currentTimeMillis());
-                dataStore.add(Val.of(streamId, eventId, eventTime));
+                dataStore.accept(Val.of(streamId, eventId, eventTime));
             }
         }
 
@@ -223,15 +221,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("0")
                 .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
+                .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(10000);
 
         // Close the db.
         dataStore.getCompletionState().signalComplete();
@@ -256,7 +253,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore2,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(10000);
 
         // Load some more data.
         for (int i = 101; i <= 200; i++) {
@@ -264,7 +262,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 final Val streamId = ValLong.create(i);
                 final Val eventId = ValLong.create(j);
                 final Val eventTime = ValLong.create(System.currentTimeMillis());
-                dataStore2.add(Val.of(streamId, eventId, eventTime));
+                dataStore2.accept(Val.of(streamId, eventId, eventTime));
             }
         }
 
@@ -277,12 +275,18 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore2,
                 tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(20000);
     }
 
     @Test
     void basicTest() {
         super.basicTest();
+    }
+
+    @Test
+    void nestedTest() {
+        super.nestedTest();
     }
 
     @Test

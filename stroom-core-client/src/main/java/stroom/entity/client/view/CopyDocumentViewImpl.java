@@ -20,11 +20,13 @@ package stroom.entity.client.view;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -35,6 +37,10 @@ public class CopyDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandle
     private final Widget widget;
     @UiField
     SimplePanel foldersInner;
+    @UiField
+    FormGroup nameFormGroup;
+    @UiField
+    TextBox name;
     @UiField
     SelectionBox<PermissionInheritance> permissionInheritance;
 
@@ -52,6 +58,21 @@ public class CopyDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandle
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public String getName() {
+        return this.name.getValue();
+    }
+
+    @Override
+    public void setName(final String name) {
+        this.name.setValue(name);
+    }
+
+    @Override
+    public void setNameVisible(final boolean visible) {
+        this.nameFormGroup.setVisible(visible);
     }
 
     @Override

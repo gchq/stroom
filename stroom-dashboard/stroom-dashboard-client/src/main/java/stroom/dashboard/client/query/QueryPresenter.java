@@ -41,8 +41,6 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.pipeline.client.event.CreateProcessorEvent;
@@ -94,7 +92,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -130,6 +127,7 @@ public class QueryPresenter
     private final SearchModel searchModel;
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
+    private final ButtonView copyButton;
     private final ButtonView disableItemButton;
     private final ButtonView deleteItemButton;
     private final ButtonView historyButton;
@@ -204,6 +202,8 @@ public class QueryPresenter
         addTermButton = view.addButtonLeft(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
         addOperatorButton = view.addButtonLeft(SvgPresets.OPERATOR);
+        addOperatorButton.setTitle("Add Operator");
+        copyButton = view.addButtonLeft(SvgPresets.COPY.enabled(false));
         disableItemButton = view.addButtonLeft(SvgPresets.DISABLE);
         deleteItemButton = view.addButtonLeft(SvgPresets.DELETE);
         historyButton = view.addButtonLeft(SvgPresets.HISTORY.enabled(true));
@@ -244,14 +244,19 @@ public class QueryPresenter
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
+        registerHandler(addTermButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                addTerm();
+            }
+        }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 addOperator();
             }
         }));
-        registerHandler(addTermButton.addClickHandler(event -> {
+        registerHandler(copyButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                addTerm();
+                copy();
             }
         }));
         registerHandler(disableItemButton.addClickHandler(event -> {
@@ -432,17 +437,19 @@ public class QueryPresenter
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
             disableItemButton.setTitle("");
+
+            deleteItemButton.setEnabled(false);
+            deleteItemButton.setTitle("");
+
+            copyButton.setEnabled(false);
         } else {
             disableItemButton.setEnabled(true);
             disableItemButton.setTitle(getEnableDisableText());
-        }
 
-        if (selectedItem == null) {
-            deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("");
-        } else {
             deleteItemButton.setEnabled(true);
             deleteItemButton.setTitle("Delete");
+
+            copyButton.setEnabled(true);
         }
 
         final DocRef dataSourceRef = getQuerySettings().getDataSource();
@@ -499,6 +506,10 @@ public class QueryPresenter
 
     private void addOperator() {
         expressionPresenter.addOperator();
+    }
+
+    private void copy() {
+        expressionPresenter.copy();
     }
 
     private void addTerm() {
@@ -799,11 +810,6 @@ public class QueryPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
-
-    @Override
     public ComponentType getType() {
         return TYPE;
     }
@@ -881,13 +887,20 @@ public class QueryPresenter
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(3)
+                .icon(SvgImage.COPY)
+                .text("Copy")
+                .command(this::copy)
+                .enabled(hasSelection)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(4)
                 .icon(SvgImage.DISABLE)
                 .text(getEnableDisableText())
                 .enabled(hasSelection)
                 .command(this::disable)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
-                .priority(4)
+                .priority(5)
                 .icon(SvgImage.DELETE)
                 .text("Delete")
                 .enabled(hasSelection)
@@ -944,6 +957,10 @@ public class QueryPresenter
                 ? 1
                 : 0);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface QueryView extends View, SearchStateListener {
 

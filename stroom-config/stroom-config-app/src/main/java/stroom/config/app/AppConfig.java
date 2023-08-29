@@ -1,7 +1,6 @@
 package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
-import stroom.analytics.impl.AlertConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.bytebuffer.ByteBufferPoolConfig;
@@ -59,7 +58,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
-    public static final String PROP_NAME_ALERTING = "alerting";
     public static final String PROP_NAME_ANALYTICS = "analytics";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
@@ -105,7 +103,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final boolean haltBootOnConfigValidationFailure;
 
     private final ActivityConfig activityConfig;
-    private final AlertConfig alertConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
@@ -151,7 +148,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public AppConfig() {
         this(true,
                 new ActivityConfig(),
-                new AlertConfig(),
                 new AnalyticsConfig(),
                 new AnnotationConfig(),
                 new ByteBufferPoolConfig(),
@@ -196,7 +192,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonCreator
     public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
-                     @JsonProperty(PROP_NAME_ALERTING) final AlertConfig alertConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
                      @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
@@ -237,7 +232,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
         this.activityConfig = activityConfig;
-        this.alertConfig = alertConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
@@ -292,11 +286,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_ACTIVITY)
     public ActivityConfig getActivityConfig() {
         return activityConfig;
-    }
-
-    @JsonProperty(PROP_NAME_ALERTING)
-    public AlertConfig getAlertConfig() {
-        return alertConfig;
     }
 
     @JsonProperty(PROP_NAME_ANALYTICS)

@@ -31,6 +31,8 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            MenuKeys.addSecurityMenu(event.getMenuItems());
+
             clientPropertyCache.get()
                     .onSuccess(extendedUiConfig -> {
                         if (!extendedUiConfig.isExternalIdentityProvider()) {
@@ -49,9 +51,9 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
         final IconMenuItem apiKeysMenuItem;
         final SvgImage icon = SvgImage.KEY;
         apiKeysMenuItem = new IconMenuItem.Builder()
-                .priority(5)
+                .priority(3)
                 .icon(icon)
-                .text("API Keys")
+                .text("Manage API Keys")
                 .command(() -> {
                     postMessage("manageTokens");
 
@@ -64,6 +66,6 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
 //                                HyperlinkEvent.fire(this, hyperlink);
                 })
                 .build();
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
+        event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
     }
 }

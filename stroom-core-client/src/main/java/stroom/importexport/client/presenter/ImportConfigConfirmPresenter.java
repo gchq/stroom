@@ -49,6 +49,7 @@ import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -165,7 +166,7 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
+        final PopupSize popupSize = PopupSize.resizable(800, 800, 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -370,7 +371,7 @@ public class ImportConfigConfirmPresenter extends
             }
 
             @Override
-            protected void showInfo(final ImportState action, final int x, final int y) {
+            protected void showInfo(final ImportState action, final PopupPosition popupPosition) {
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 if (action.getMessageList().size() > 0) {
 
@@ -392,7 +393,7 @@ public class ImportConfigConfirmPresenter extends
                     action.getUpdatedFieldList().forEach(tb::row);
                     htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

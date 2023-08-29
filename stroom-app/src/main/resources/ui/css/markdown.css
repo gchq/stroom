@@ -44,7 +44,9 @@
   margin-bottom: 4px;
 }
 
-.markdown h4 {
+.markdown h4,
+.markdown h5,
+.markdown h6 {
   font-weight: 400;
   font-size: 1.1em;
   margin-bottom: 3px;

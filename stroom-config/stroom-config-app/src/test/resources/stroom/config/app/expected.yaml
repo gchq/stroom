@@ -16,24 +16,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  alerting:
-    additionalFieldsPrefix: "_"
-    reportAllExtractedFieldsEnabled: false
-    resultStore:
-      lmdb:
-        localDir: "analytic_store"
-        maxReaders: 10
-        maxStoreSize: "10G"
-        readAheadEnabled: true
-      maxPayloadSize: "1G"
-      maxPutsBeforeCommit: 10000
-      maxStringFieldLength: 1000
-      minPayloadSize: "1M"
-      offHeapResults: true
-      storeSize: "1000000,100,10,1"
-      valueQueueSize: 10000
-    rulesFolderList: []
-    timezone: "UTC"
   analytics:
     db:
       connection:
@@ -51,6 +33,28 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    emailConfig:
+      fromAddress: "noreply@stroom"
+      fromName: "Stroom Analytics"
+      smtp:
+        host: "localhost"
+        password: null
+        port: 2525
+        transport: "plain"
+        username: null
+    resultStore:
+      lmdb:
+        localDir: "analytic_store"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+      maxPayloadSize: "1G"
+      maxPutsBeforeCommit: 10000
+      maxStringFieldLength: 1000
+      minPayloadSize: "1M"
+      offHeapResults: true
+      valueQueueSize: 10000
+    timezone: "UTC"
   annotation:
     createText: "Create Annotation"
     db:
@@ -622,7 +626,6 @@ appConfig:
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
-      storeSize: "1000000,100,10,1"
       valueQueueSize: 10000
     shard:
       indexShardSearcherCache:
@@ -969,6 +972,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
+    analyticUiDefaultConfig: {}
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
@@ -979,6 +983,10 @@ appConfig:
     helpUrl: "https://gchq.github.io/stroom-docs/7.2/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    nestedIndexFieldsDelimiterPattern: "[.:]"
+    nodeMonitoring:
+      pingMaxThreshold: 500
+      pingWarnThreshold: 100
     oncontextmenu: "return false;"
     process:
       defaultRecordLimit: 1000000

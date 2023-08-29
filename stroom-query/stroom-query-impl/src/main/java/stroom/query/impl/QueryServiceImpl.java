@@ -33,6 +33,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.TokenException;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
@@ -379,6 +380,24 @@ class QueryServiceImpl implements QueryService {
                             searchRequest.getQueryContext().getParams());
                 }
 
+            } catch (final TokenException e) {
+                LOGGER.debug(() -> "Error processing search " + searchRequest, e);
+
+                if (queryKey == null) {
+                    // FIXME : FIX
+                    // searchEventLog
+                    // .search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                }
+
+                result = new DashboardSearchResponse(
+                        nodeInfo.getThisNodeName(),
+                        queryKey,
+                        null,
+                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        e.toTokenError(),
+                        true,
+                        null);
+
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
 
@@ -393,6 +412,7 @@ class QueryServiceImpl implements QueryService {
                         queryKey,
                         null,
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         true,
                         null);
             }

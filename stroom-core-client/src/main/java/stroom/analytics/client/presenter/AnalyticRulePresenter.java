@@ -17,6 +17,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -32,34 +33,29 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
+public class AnalyticRulePresenter
+        extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
-    private static final TabData QUERY = new TabDataImpl("Query");
-    private static final TabData SETTINGS = new TabDataImpl("Settings");
-    private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
+    private static final TabData NOTIFICATION = new TabDataImpl("Notification");
     private static final TabData PROCESSING = new TabDataImpl("Processing");
     private static final TabData SHARDS = new TabDataImpl("Shards");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
-    private AnalyticQueryEditPresenter queryEditPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final Provider<AnalyticQueryEditPresenter> queryEditPresenterProvider,
-                                 final Provider<AnalyticRuleSettingsPresenter> settingsPresenterProvider,
-                                 final Provider<AnalyticNotificationsPresenter> notificationsPresenterProvider,
+                                 final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
 
-        addTab(QUERY, new DocumentEditTabProvider<>(() -> {
-            queryEditPresenter = queryEditPresenterProvider.get();
-            return queryEditPresenter;
-        }));
-        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
-        addTab(PROCESSING, new DocumentEditTabProvider<>(processPresenterProvider::get));
-        addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationsPresenterProvider::get));
+        final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
+        analyticProcessingPresenter.addChangeDataHandler(e ->
+                setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
+
+        addTab(PROCESSING, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
+        addTab(NOTIFICATION, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
         addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
@@ -77,14 +73,17 @@ public class AnalyticRulePresenter extends DocumentEditTabPresenter<LinkTabPanel
                 return document.copy().description(presenter.getText()).build();
             }
         });
-        selectTab(QUERY);
+        selectTab(PROCESSING);
     }
 
     @Override
-    public void onClose() {
-        if (queryEditPresenter != null) {
-            queryEditPresenter.onClose();
-        }
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
+        super.onRead(docRef, document, readOnly);
+        setRuleType(document.getAnalyticProcessType());
+    }
+
+    private void setRuleType(final AnalyticProcessType analyticProcessType) {
+        setTabHidden(SHARDS, analyticProcessType != AnalyticProcessType.TABLE_BUILDER);
     }
 
     @Override

@@ -129,7 +129,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     @Override
     public void downloadResults(final DownloadSearchResultsRequest request,
-                                final Integer resultCount,
+                                final Long resultCount,
                                 final Exception e) {
         securityContext.insecure(() -> {
             try {

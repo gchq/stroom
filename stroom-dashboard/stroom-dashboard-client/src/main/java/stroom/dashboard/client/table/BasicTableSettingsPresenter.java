@@ -100,6 +100,14 @@ public class BasicTableSettingsPresenter
         getView().setMaxResults(maxResults);
     }
 
+    private int getPageSize() {
+        return getView().getPageSize();
+    }
+
+    private void setPageSize(final int pageSize) {
+        getView().setPageSize(pageSize);
+    }
+
     private boolean showDetail() {
         return getView().isShowDetail();
     }
@@ -120,6 +128,10 @@ public class BasicTableSettingsPresenter
         setExtractValues(settings.extractValues());
         setPipeline(settings.getExtractionPipeline());
         setMaxResults(fromList(settings.getMaxResults()));
+        setPageSize(settings.getPageSize() != null
+                ? settings.getPageSize()
+                : 100);
+
         setShowDetail(settings.showDetail());
     }
 
@@ -138,6 +150,7 @@ public class BasicTableSettingsPresenter
                 .extractValues(extractValues())
                 .extractionPipeline(getPipeline())
                 .maxResults(toList(getMaxResults()))
+                .pageSize(getPageSize())
                 .showDetail(showDetail())
                 .build();
     }
@@ -155,12 +168,13 @@ public class BasicTableSettingsPresenter
                 Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
                 Objects.equals(oldSettings.getExtractionPipeline(), newSettings.getExtractionPipeline()) &&
                 Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
+                Objects.equals(oldSettings.getPageSize(), newSettings.getPageSize()) &&
                 Objects.equals(oldSettings.getShowDetail(), newSettings.getShowDetail());
 
         return !equal;
     }
 
-    private String fromList(final List<Integer> maxResults) {
+    private String fromList(final List<Long> maxResults) {
         if (maxResults == null || maxResults.size() == 0) {
             return "";
         }
@@ -175,16 +189,16 @@ public class BasicTableSettingsPresenter
         return sb.toString();
     }
 
-    private List<Integer> toList(final String string) {
+    private List<Long> toList(final String string) {
         if (string == null || string.length() == 0) {
             return null;
         }
 
         final String[] parts = string.split(",");
-        final List<Integer> list = new ArrayList<>();
+        final List<Long> list = new ArrayList<>();
         for (final String part : parts) {
             try {
-                list.add(Integer.parseInt(part.trim()));
+                list.add(Long.parseLong(part.trim()));
             } catch (final RuntimeException e) {
                 // Ignore.
             }
@@ -210,6 +224,10 @@ public class BasicTableSettingsPresenter
         String getMaxResults();
 
         void setMaxResults(String maxResults);
+
+        int getPageSize();
+
+        void setPageSize(int pageSize);
 
         boolean isShowDetail();
 

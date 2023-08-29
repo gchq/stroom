@@ -20,12 +20,12 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -184,25 +184,31 @@ public class PopupSupportImpl implements PopupSupport {
      * Positions the popup, called after the offset width and height of the
      * popup are known.
      */
-    private void positionPopup(final Popup popup, final PopupType popupType, final PopupPosition popupPosition,
+    private void positionPopup(final Popup popup,
+                               final PopupType popupType,
+                               final PopupPosition popupPosition,
                                int offsetWidth, int offsetHeight) {
         int shadowWidth = 0;
         if (popupType != PopupType.POPUP) {
             shadowWidth = POPUP_SHADOW_WIDTH;
         }
 
-        offsetWidth = offsetWidth - (2 * shadowWidth);
-        offsetHeight = offsetHeight - (2 * shadowWidth);
+        final Rect relativeRect = popupPosition.getRelativeRect();
+        final Rect reference = relativeRect.grow(shadowWidth);
 
-        int left = -shadowWidth;
-        if (HorizontalLocation.LEFT.equals(popupPosition.getHorizontalLocation())) {
+        double left;
+        if (PopupLocation.LEFT.equals(popupPosition.getPopupLocation())) {
             // Positioned to the left but aligned with the right edge of the
             // relative box.
-            left = popupPosition.getRight() - offsetWidth + shadowWidth;
+            left = reference.getLeft() - offsetWidth;
+        } else if (PopupLocation.RIGHT.equals(popupPosition.getPopupLocation())) {
+            // Positioned to the left but aligned with the right edge of the
+            // relative box.
+            left = reference.getRight();
         } else {
             // Positioned to the right but aligned with the left edge of the
             // relative box.
-            left = popupPosition.getLeft() - shadowWidth;
+            left = reference.getLeft();
         }
 
         // Make sure scrolling is taken into account, since
@@ -212,11 +218,11 @@ public class PopupSupportImpl implements PopupSupport {
 
         // Distance from the left edge of the text box to the right edge of the
         // window
-        final int distanceToWindowRight = windowRight - left;
+        final double distanceToWindowRight = windowRight - left;
 
         // Distance from the left edge of the text box to the left edge of the
         // window
-        final int distanceFromWindowLeft = left - windowLeft;
+        final double distanceFromWindowLeft = left - windowLeft;
 
         // If there is not enough space for the overflow of the popup's width to
         // the right, and there IS enough space
@@ -227,20 +233,23 @@ public class PopupSupportImpl implements PopupSupport {
             if (distanceFromWindowLeft >= offsetWidth) {
                 // Positioned to the left but aligned with the right edge of the
                 // relative box.
-                left = popupPosition.getRight() - offsetWidth + shadowWidth;
+                left = reference.getRight() - offsetWidth;
             } else {
                 left = -shadowWidth;
             }
         }
 
         // Calculate top position for the popup
-        int top = -shadowWidth;
-        if (VerticalLocation.ABOVE.equals(popupPosition.getVerticalLocation())) {
+        double top;
+        if (PopupLocation.ABOVE.equals(popupPosition.getPopupLocation())) {
             // Positioned above.
-            top = popupPosition.getTop() - offsetHeight + shadowWidth;
+            top = reference.getTop() - offsetHeight;
+        } else if (PopupLocation.BELOW.equals(popupPosition.getPopupLocation())) {
+            // Positioned below.
+            top = reference.getBottom();
         } else {
-            // Default position is below.
-            top = popupPosition.getBottom() - shadowWidth;
+            // Default position is to the side.
+            top = reference.getTop();
         }
 
         // Make sure scrolling is taken into account, since box.getAbsoluteTop()
@@ -250,20 +259,20 @@ public class PopupSupportImpl implements PopupSupport {
 
         // Distance from the top edge of the window to the top edge of the text
         // box.
-        final int distanceFromWindowTop = top - windowTop;
+        final double distanceFromWindowTop = top - windowTop;
 
         // Distance from the bottom edge of the window to the relative object.
-        final int distanceToWindowBottom = windowBottom - top;
+        final double distanceToWindowBottom = windowBottom - top;
 
         // If there is not enough space for the popup's height below the text
         // box and there IS enough space for the
-        // popup's height above the text box, then then position the popup above
+        // popup's height above the text box, then position the popup above
         // the text box. If there is not enough
         // space above or below, then position at the very top.
         if (distanceToWindowBottom < offsetHeight) {
             if (distanceFromWindowTop >= offsetHeight) {
                 // Positioned above.
-                top = popupPosition.getTop() - offsetHeight + shadowWidth;
+                top = reference.getTop() - offsetHeight;
             } else {
                 top = -shadowWidth;
             }
@@ -285,7 +294,7 @@ public class PopupSupportImpl implements PopupSupport {
             top = 0;
         }
 
-        popup.setPopupPosition(left, top);
+        popup.setPopupPosition((int) left, (int) top);
     }
 
     @Override

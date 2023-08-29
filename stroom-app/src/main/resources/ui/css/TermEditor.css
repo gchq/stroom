@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-.termEditor-layout {
-	white-space: nowrap;
+.termEditor-outer {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
+	gap: 5px;
+}
+
+.termEditor-inner {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
 }
 
 .termEditor-item {
@@ -30,10 +36,11 @@
 	background-position: right;
 	background-origin: border-box;
 	min-width: 50px;
-	max-height: 23px;
+	max-height: 21px;
+	flex-shrink: 0;
 }
 
-.termEditor-layout input {
+.termEditor-inner input {
     border: none !important;
     border-radius: 0 !important;
     background: none !important;
@@ -56,11 +63,9 @@
 }
 
 .termEditor-item.dropdown {
-	/*text-overflow: ellipsis;*/
 }
 
 .termEditor-item.field {
-	width: auto;
 }
 
 .termEditor-item.condition {
@@ -83,30 +88,14 @@
 .termEditor-label {
 	display: inline-block;
 	margin: 0px;
-	overflow: hidden;
 	padding: 2px 5px;
 	background-color: transparent;
 	border: none;
 	vertical-align: top;
+	flex-shrink: 0;
 }
 
 .termEditor-label.fieldType {
-	padding: 2px 8px;
-	position: absolute;
-	top: 0;
-	right: -5px;
-	transform: translateX(100%);
-	background-color: rgb(32 148 243 / 60%);
-	border-radius: 10px;
-	font-weight: bold;
-	border: solid 1px rgb(33 150 243);
-}
-
-.termEditor-label.fieldType {
-	padding: 2px 8px;
-	position: absolute;
-	right: -5px;
-	transform: translateX(100%);
 	background-color: rgb(32 148 243 / 60%);
 	border-radius: 10px;
 	font-weight: bold;

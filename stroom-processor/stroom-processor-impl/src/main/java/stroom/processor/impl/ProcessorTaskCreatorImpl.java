@@ -513,11 +513,11 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     "createTasksFromEventRefs() called for {} eventRefs, filter {}", eventRefs.size(), filter));
             try {
                 if (throwable != null) {
-                    final String message = "" +
+                    final String message =
                             "Error creating tasks for filter (id=" +
-                            filter.getId() +
-                            "). " +
-                            throwable.getMessage();
+                                    filter.getId() +
+                                    "). " +
+                                    throwable.getMessage();
                     LOGGER.error(message);
                     LOGGER.debug(message, throwable);
                     tracker.setStatus(ProcessorFilterTrackerStatus.ERROR);

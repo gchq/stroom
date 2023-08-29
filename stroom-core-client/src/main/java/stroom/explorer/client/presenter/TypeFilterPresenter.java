@@ -30,11 +30,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
@@ -104,13 +104,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     public void show(final Element element) {
-        final PopupPosition popupPosition = new PopupPosition(
-                element.getAbsoluteRight() + 5,
-                element.getAbsoluteRight() + 5,
-                element.getAbsoluteTop() - 5,
-                element.getAbsoluteTop() - 5,
-                HorizontalLocation.RIGHT,
-                VerticalLocation.BELOW);
+        Rect relativeRect = new Rect(element);
+        relativeRect = relativeRect.grow(3);
+        final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.RIGHT);
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)

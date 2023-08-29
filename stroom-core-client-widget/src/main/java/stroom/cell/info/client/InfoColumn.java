@@ -18,6 +18,9 @@ package stroom.cell.info.client;
 
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
@@ -35,12 +38,22 @@ public abstract class InfoColumn<T> extends Column<T, Preset> {
         return SvgPresets.INFO;
     }
 
-    protected abstract void showInfo(final T row, int x, int y);
+    protected abstract void showInfo(T row, PopupPosition popupPosition);
 
     @Override
     public void onBrowserEvent(final Context context, final Element elem, final T row, final NativeEvent event) {
         super.onBrowserEvent(context, elem, row, event);
-        final Element target = event.getEventTarget().cast();
-        showInfo(row, target.getAbsoluteRight(), target.getAbsoluteTop());
+        Element target = event.getEventTarget().cast();
+
+        // Find the parent TD.
+        while (target.getParentElement() != null &&
+                !target.getTagName().equalsIgnoreCase("td") &&
+                !target.getParentElement().getTagName().equalsIgnoreCase("td")) {
+            target = target.getParentElement();
+        }
+
+        Rect relativeRect = new Rect(target);
+        final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
+        showInfo(row, position);
     }
 }

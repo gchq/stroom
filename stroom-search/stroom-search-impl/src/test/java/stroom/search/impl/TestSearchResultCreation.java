@@ -32,10 +32,9 @@ import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.Item;
-import stroom.query.common.v2.Items;
-import stroom.query.common.v2.Key;
+import stroom.query.common.v2.IdentityItemMapper;
 import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
@@ -66,13 +65,14 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -120,9 +120,7 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                sizesProvider,
-                dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -156,11 +154,13 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.search(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest,
+                resultStore.makeDefaultResultCreators(searchRequest));
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
     }
+
 //
 //    @Test
 //    void testSinglePayloadTransfer() throws Exception {
@@ -229,9 +229,7 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                sizesProvider,
-                dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -287,7 +285,8 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.search(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest,
+                resultStore.makeDefaultResultCreators(searchRequest));
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -305,9 +304,7 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                sizesProvider,
-                dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -365,7 +362,8 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.search(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest,
+                resultStore.makeDefaultResultCreators(searchRequest));
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -392,12 +390,9 @@ class TestSearchResultCreation {
         // Validate the search request.
         validateSearchRequest(searchRequest);
 
-        // Get sizes.
-        final SizesProvider sizesProvider = createSizesProvider();
-
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -475,21 +470,26 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final DataStore dataStore = resultStore.getData("table-78LF4");
-        dataStore.getData(data -> {
-            final Optional<Items> optional = data.get(Key.ROOT_KEY, null);
-            assertThat(optional).isPresent();
-            optional.ifPresent(items -> {
-                final Item dataItem = items.getIterable().iterator().next();
-                final Val val = dataItem.getValue(2);
-                assertThat(val.toLong())
-                        .isEqualTo(count);
-            });
-        });
+        final AtomicBoolean found = new AtomicBoolean();
+        final AtomicLong totalRowCount = new AtomicLong();
 
-//        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
-//        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
-//        searchResponse.getResults().
+        final DataStore dataStore = resultStore.getData("table-78LF4");
+        dataStore.fetch(
+                OffsetRange.ZERO_1000,
+                OpenGroupsImpl.root(),
+                null,
+                IdentityItemMapper.INSTANCE,
+                item -> {
+                    final Val val = item.getValue(2);
+                    assertThat(val.toLong())
+                            .isEqualTo(count);
+                    found.set(true);
+                },
+                totalRowCount::set);
+
+
+        assertThat(totalRowCount.get()).isNotZero();
+        assertThat(found.get()).isTrue();
     }
 
     private void supplyValues(final String[] values, final int[] mappings, final ValuesConsumer consumer) {
@@ -499,7 +499,7 @@ class TestSearchResultCreation {
             final int target = mappings[j];
             vals[target] = ValString.create(value);
         }
-        consumer.add(Val.of(vals));
+        consumer.accept(Val.of(vals));
     }
 
     private void transferPayloads(final Coprocessors source, final Coprocessors target) {
@@ -532,18 +532,7 @@ class TestSearchResultCreation {
 
     private SizesProvider createSizesProvider() throws ParseException {
         final Sizes defaultMaxResultsSizes = Sizes.parse(null);
-        final Sizes storeSize = Sizes.parse("1000000,100,10,1");
-        return new SizesProvider() {
-            @Override
-            public Sizes getDefaultMaxResultsSizes() {
-                return defaultMaxResultsSizes;
-            }
-
-            @Override
-            public Sizes getStoreSizes() {
-                return storeSize;
-            }
-        };
+        return () -> defaultMaxResultsSizes;
     }
 
     private ValuesConsumer createExtractionReceiver(final Coprocessors coprocessors) {
@@ -556,7 +545,7 @@ class TestSearchResultCreation {
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
+                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.accept(values));
             }
             receivers.put(docRef, receiver);
         });
@@ -641,7 +630,7 @@ class TestSearchResultCreation {
         return ResultRequest.builder()
                 .componentId("table-BKJT6")
                 .addMappings(createGroupedUserTableSettings())
-                .requestedRange(OffsetRange.builder().offset(0L).length(100L).build())
+                .requestedRange(OffsetRange.ZERO_100)
                 .resultStyle(ResultStyle.TABLE)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -682,7 +671,7 @@ class TestSearchResultCreation {
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
                         "Example Extraction"))
-                .addMaxResults(1000000)
+                .addMaxResults(1000000L)
                 .build();
     }
 
@@ -692,6 +681,7 @@ class TestSearchResultCreation {
                 .componentId("vis-QYG7H")
                 .addMappings(createGroupedUserTableSettings())
                 .addMappings(createDonutVisSettings())
+                .requestedRange(OffsetRange.ZERO_1000)
                 .resultStyle(ResultStyle.FLAT)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -715,7 +705,7 @@ class TestSearchResultCreation {
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addMaxResults(20, 20)
+                .addMaxResults(20L, 20L)
                 .showDetail(true)
                 .build();
     }
@@ -725,7 +715,7 @@ class TestSearchResultCreation {
         return ResultRequest.builder()
                 .componentId("table-78LF4")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
-                .requestedRange(OffsetRange.builder().offset(0L).length(100L).build())
+                .requestedRange(OffsetRange.ZERO_100)
                 .resultStyle(ResultStyle.TABLE)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -775,7 +765,7 @@ class TestSearchResultCreation {
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
                         "Example Extraction"))
-                .addMaxResults(1000000)
+                .addMaxResults(1000000L)
                 .build();
     }
 
@@ -785,6 +775,7 @@ class TestSearchResultCreation {
                 .componentId("vis-L1AL1")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
                 .addMappings(createBubbleVisSettings())
+                .requestedRange(OffsetRange.ZERO_1000)
                 .resultStyle(ResultStyle.FLAT)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -817,7 +808,7 @@ class TestSearchResultCreation {
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addMaxResults(20, 10, 500)
+                .addMaxResults(20L, 10L, 500L)
                 .showDetail(true)
                 .build();
     }
@@ -828,6 +819,7 @@ class TestSearchResultCreation {
                 .componentId("vis-SPSCW")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
                 .addMappings(createLineVisSettings())
+                .requestedRange(OffsetRange.ZERO_1000)
                 .resultStyle(ResultStyle.FLAT)
                 .fetch(Fetch.CHANGES)
                 .build();
@@ -861,7 +853,7 @@ class TestSearchResultCreation {
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addMaxResults(20, 100, 1000)
+                .addMaxResults(20L, 100L, 1000L)
                 .showDetail(true)
                 .build();
     }

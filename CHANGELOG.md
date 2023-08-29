@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
-
 * DB Migration : stroom-annotation - `V07_02_00_005__annotation_assigned_migration_to_uuid.sql`
 
 * DB Migration : stroom-annotation - `V07_02_00_010__annotation_entry_assigned_migration_to_uuid.sql`
@@ -31,31 +30,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3613** : Fix error un-marshalling TimeRange.
 
-* Issue **#3612** : Change default for `forwardChunkSize` from null to 1048576 bytes so chunked transport is used to avoid out of memory errors.
-
 * Issue **#3620** : Fix `currentUser()` not returning display name in OIDC version.
-
-* Fix Data screen fetching data twice and consequently logging the fetch audit event twice.
-
-* Issue **#3358** : Fix audit events for user preferences screen.
 
 * Issue **#3475** : Change proxy error handling to return 401 for token authentication failures.
 
 * Change internode comms to authenticate as the processing user then run as a user supplied in headers.
 
 * Uplift packaged send_to_stroom.sh version to v3.2.2.
-
-* Fix check style errors.
-
-* Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
-
-* Issue **#3395** : Fix nested use of selectors such as first() and last() in dashboard tables.
-
-* Issue **#3411** : Fix sorting or search results in LMDB.
-
-* Ensure the same request/response logging feature is used for all jersey clients and server in stroom and proxy.
-
-* Issue **#3449** : Ensure jersey client responses are closed properly.
 
 * Issue **#3117** : Fix problems with user display name not showing on welcome screen.
 
@@ -67,9 +48,148 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3118** : Hide the Tools => (API Keys|Users) menu items when using an external IDP.
 
-* Add editor key bindings to user preferences.
 
-* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+## [v7.2-beta.52] - 2023-08-28
+
+* Issue **#3618** : Fix explorer tree filtering when filtering for a Searchable, i.e. `dual`.
+
+* Issue **#3696** : Add keyboard shortcut for Shift+Enter to execute queries.
+
+* Issue **#3602** : Nest query field names using [.:] as the delimiter to support dynamic indexing with 000's of fields that are named based on the xpath of the element, e.g. `Events.Event.EventDetail.Authenticate.Action`. Add quick filtering of the query help tree.
+
+* Issue **#3697** : Fix bad parent time key creation.
+
+* Issue **#3700** : Highlight Stroom QL errors.
+
+* Issue **#3632** : Add View documentation to the query helper description.
+
+* Issue **#3702** : Add limits to analytic notifications.
+
+* Issue **#3699** : Add a _Documentation_ entity to the explorer tree for storing markdown documentation. Improve the snippets for markdown. Add a preview pane to the markdown editor.
+
+* Issue **#3704** : Add prop `nestedIndexFieldsDelimiterPattern` for configuring the delimiter used for nesting index fields in the query helper.
+
+* Issue **#3679** : Add Feed tag to internal ref data stats now that ref stores are feed specific.
+
+* Issue **#3707** : Allow a name to be specified when copying a single item.
+
+* Issue **#3696** : Add keyboard shortcut for Shift+Esc to stop queries.
+
+* Issue **#3548** : Reorganised some menu items.
+
+* Issue **#3708** : Add sections to user preferences.
+
+
+## [v7.2-beta.51] - 2023-08-16
+
+* Fix build.
+
+
+## [v7.2-beta.50] - 2023-08-15
+
+* Add quick rule creation UI.
+
+
+## [v7.2-beta.49] - 2023-08-15
+
+* Add quick rule creation UI.
+
+
+## [v7.2-beta.48] - 2023-08-15
+
+* Issue **#3694** : Fix dashboard table maximum results.
+
+
+## [v7.2-beta.47] - 2023-08-14
+
+* Issue **#3304** : Improve analytic processing.
+
+* Issue **#3691** : Fix vis data point truncation.
+
+
+## [v7.2-beta.46] - 2023-08-09
+
+* Issue **#3683** : Fix XML header being written multiple times with RolledFileAppender and compression enabled.
+
+
+## [v7.2-beta.45] - 2023-08-09
+
+* Issue **#3636** : Remove OIDC redirect URI parameters.
+
+* Issue **#3649** : Change the node monitoring ping bars to have a consistent and configurable (`pingWarnThreshold` and `pingMaxThreshold`) scale. Change the ping bar to use a three colour scheme.
+
+* Issue **#3660** : Fix high search memory usage.
+
+* Issue **#3664** : Make editor Live Auto Completion a user preference.
+
+* Change user preferences to set the list of available editor themes based on the stroom theme, i.e. light editor themes for a light stroom theme.
+
+* Change editor theme names in user preferences to be more human friendly.
+
+* Issue **#3631** : Fix missing structure heading items in query helper.
+
+* Issue **#3667** : Fix data viewer info pane not being scrollable.
+
+* Issue **#3659** : Fix the display of `Part`/`Record` on the source screen depending on whether data is segmented or not.
+
+* Issue **#3665** : Fix nested group keys.
+
+* Issue **#3677** : Fix `indexOf()` docs.
+
+* Issue **#3680** : Fix dashboard save as behaviour.
+
+* Issue **#3637** : Add copy expression term/operator button.
+
+
+## [v7.2-beta.44] - 2023-08-01
+
+* Issue **#3248** : Add ability to download multiple dashboard tables as Excel worksheets in a single file.
+
+* Issue **#3453** : Support Elasticsearch index name variable substitution.
+
+* Issue **#3613** : Fix error un-marshalling TimeRange.
+
+* Issue **#3612** : Change default for `forwardChunkSize` from null to 1048576 bytes so chunked transport is used to avoid out of memory errors.
+
+* Issue **#3619** : Fix index tab pane order.
+
+* Issue **#3621** : Changes to index time field now mark settings as dirty.
+
+* Issue **#3604** : Treat missing fields in expressions as false matches.
+
+* Issue **#3625** : Fix dashboard tab move behaviour.
+
+* Issue **#3622** : Fix _Dual_ data source not returning rows when the _Dummy_ column is not present in the table.
+
+* Issue **#3623** : Fix code completion for no-args functions, e.g. `currentUser()`.
+
+* Issue **#3617** : Prevent `GROUP BY` after `SELECT`.
+
+* Issue **#3418** : Add dependencies for views, queries and analytic rules.
+
+* Issue **#3641** : Change processor filter layout.
+
+* Issue **#3647** : Add auto refresh toggle button to server tasks page.
+
+* Issue **#3464** : Persist table page size setting per dashboard table.
+
+* Issue **#3645** : Increase contrast by lightening text colour.
+
+* Issue **#3644** : Clearing selection list filter with ESC now updates list.
+
+* Issue **#3635** : Fix error handling when initialising feed specific ref data stores.
+
+* Issue **#3639** : Improve layout on processor filter popup.
+
+* Issue **#3640** : Fix tooltip position.
+
+* Issue **#3638** : Change the proxy defaults yaml file to include a single default items for list based properties. Also fix the HTTP forward config prop name in the distribution/docker config file.
+
+* Issue **#3232** : Change the severity from WARNING to ERROR when there are no reference loaders configured on a ReferenceDataFilter.
+
+* Issue **#3657** : Fix expander col width.
+
+* Issue **#3648** : Simplify of pipeline property list and editor.
 
 
 ## [v7.2-beta.43] - 2023-07-14
@@ -5687,7 +5807,16 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.43...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.52...HEAD
+[v7.2-beta.52]: https://github.com/gchq/stroom/compare/v7.2-beta.51...v7.2-beta.52
+[v7.2-beta.51]: https://github.com/gchq/stroom/compare/v7.2-beta.50...v7.2-beta.51
+[v7.2-beta.50]: https://github.com/gchq/stroom/compare/v7.2-beta.49...v7.2-beta.50
+[v7.2-beta.49]: https://github.com/gchq/stroom/compare/v7.2-beta.48...v7.2-beta.49
+[v7.2-beta.48]: https://github.com/gchq/stroom/compare/v7.2-beta.47...v7.2-beta.48
+[v7.2-beta.47]: https://github.com/gchq/stroom/compare/v7.2-beta.46...v7.2-beta.47
+[v7.2-beta.46]: https://github.com/gchq/stroom/compare/v7.2-beta.45...v7.2-beta.46
+[v7.2-beta.45]: https://github.com/gchq/stroom/compare/v7.2-beta.44...v7.2-beta.45
+[v7.2-beta.44]: https://github.com/gchq/stroom/compare/v7.2-beta.43...v7.2-beta.44
 [v7.2-beta.43]: https://github.com/gchq/stroom/compare/v7.2-beta.42...v7.2-beta.43
 [v7.2-beta.42]: https://github.com/gchq/stroom/compare/v7.2-beta.41...v7.2-beta.42
 [v7.2-beta.41]: https://github.com/gchq/stroom/compare/v7.2-beta.40...v7.2-beta.41

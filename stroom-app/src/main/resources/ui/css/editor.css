@@ -17,6 +17,12 @@
 	background-color: var(--code-editor__background-color--highlight);
 }
 
+.editor .err {
+    position: absolute;
+    border-bottom: 1px solid red;
+    border-radius: 0;
+}
+
 .editor .ace_tooltip {
     background-color: var(--tooltip__background-color);
     color: var(--tooltip__text-color);

@@ -16,8 +16,6 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -38,38 +36,18 @@ import javax.inject.Inject;
         icon = SvgImage.PIPELINE_SEARCH_OUTPUT)
 public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
 
-    private final ExtractionStateHolder extractionStateHolder;
-    private FieldIndex fieldIndex;
+    private final FieldListConsumerHolder fieldListConsumerHolder;
 
     @Inject
     public DynamicSearchResultOutputFilter(final LocationFactoryProxy locationFactory,
                                            final ErrorReceiverProxy errorReceiverProxy,
-                                           final ExtractionStateHolder extractionStateHolder) {
+                                           final FieldListConsumerHolder fieldListConsumerHolder) {
         super(locationFactory, errorReceiverProxy);
-        this.extractionStateHolder = extractionStateHolder;
-    }
-
-    @Override
-    public void startProcessing() {
-        super.startProcessing();
-        this.fieldIndex = extractionStateHolder.getFieldIndex();
+        this.fieldListConsumerHolder = fieldListConsumerHolder;
     }
 
     @Override
     protected void processFields(final List<FieldValue> fieldValues) {
-        if (extractionStateHolder.getReceiver() != null) {
-            final Val[] values = new Val[fieldIndex.size()];
-            for (final FieldValue fieldValue : fieldValues) {
-                final Integer pos = fieldIndex.getPos(fieldValue.field().getFieldName());
-                if (pos != null) {
-                    values[pos] = fieldValue.value();
-                }
-            }
-            extractionStateHolder.getReceiver().add(Val.of(values));
-        }
-        if (extractionStateHolder.getFieldListConsumer() != null) {
-            extractionStateHolder.getFieldListConsumer().accept(fieldValues);
-        }
-        extractionStateHolder.incrementCount();
+        fieldListConsumerHolder.accept(fieldValues);
     }
 }

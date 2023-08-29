@@ -18,6 +18,7 @@ package stroom.datasource.shared;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.Documentation;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -51,4 +52,12 @@ public interface DataSourceResource extends RestResource, DirectRestService {
             summary = "Fetch data source fields",
             operationId = "fetchDataSourceFieldsFromQuery")
     DataSource fetchFromQuery(@Parameter(description = "query", required = true) String query);
+
+    @POST
+    @Path("/fetchDocumentation")
+    @Operation(
+            summary = "Fetch documentation for a data source",
+            operationId = "fetchDocumentation")
+    Documentation fetchDocumentation(@Parameter(description = "docRef", required = true) DocRef docRef);
+
 }

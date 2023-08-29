@@ -8,7 +8,6 @@ import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.state.RecordCount;
-import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -17,7 +16,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 @PipelineScoped
@@ -45,7 +43,6 @@ public class AnalyticErrorWriter {
     }
 
     void exec(final String errorFeedName,
-              final String analyticUuid,
               final String pipelineUuid,
               final Runnable runnable) {
         // Setup the error handler and receiver.
@@ -55,7 +52,6 @@ public class AnalyticErrorWriter {
                 new AnalyticRuleProcessInfoOutputStreamProvider(
                         store,
                         errorFeedName,
-                        analyticUuid,
                         pipelineUuid,
                         recordCount,
                         errorReceiverProxy)) {

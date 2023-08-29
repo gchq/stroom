@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -401,11 +402,19 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return ExplorerNode.builder()
-                .type(explorerTreeNode.getType())
-                .uuid(explorerTreeNode.getUuid())
-                .name(explorerTreeNode.getName())
-                .tags(explorerTreeNode.getTags())
-                .build();
+        if (Objects.equals(ExplorerConstants.SYSTEM_NODE.getType(), explorerTreeNode.getType())
+                && Objects.equals(ExplorerConstants.SYSTEM_NODE.getUuid(), explorerTreeNode.getUuid())) {
+            return ExplorerConstants.SYSTEM_NODE;
+        } else if (Objects.equals(ExplorerConstants.FAVOURITES_NODE.getType(), explorerTreeNode.getType())
+                && Objects.equals(ExplorerConstants.FAVOURITES_NODE.getUuid(), explorerTreeNode.getUuid())) {
+            return ExplorerConstants.FAVOURITES_NODE;
+        } else {
+            return ExplorerNode.builder()
+                    .type(explorerTreeNode.getType())
+                    .uuid(explorerTreeNode.getUuid())
+                    .name(explorerTreeNode.getName())
+                    .tags(explorerTreeNode.getTags())
+                    .build();
+        }
     }
 }

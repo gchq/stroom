@@ -33,7 +33,6 @@ import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.Serialisers;
-import stroom.query.common.v2.SizesProvider;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
@@ -81,7 +80,6 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final Map<AnalyticRuleDoc, AnalyticDataStore> dataStoreCache;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
-    private final SizesProvider sizesProvider;
 
     @Inject
     public AnalyticDataStores(final LmdbEnvFactory lmdbEnvFactory,
@@ -91,8 +89,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                               final Provider<Executor> executorProvider,
                               final NodeInfo nodeInfo,
-                              final SecurityContext securityContext,
-                              final SizesProvider sizesProvider) {
+                              final SecurityContext securityContext) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -100,7 +97,6 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.executorProvider = executorProvider;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
-        this.sizesProvider = sizesProvider;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -275,7 +271,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .withSubDirectory(subDirectory);
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
-                .sourceType(SourceType.ANALYTIC_RULE)
+                .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .componentId(componentId)
                 .build();
 
@@ -309,7 +305,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                             analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
 
                         list.add(new ResultStoreInfo(
-                                new SearchRequestSource(SourceType.ANALYTIC_RULE,
+                                new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
                                         analyticRuleDoc.getUuid(),
                                         null),
                                 searchRequest.getKey(),
@@ -405,15 +401,13 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final FieldFormatter fieldFormatter =
                         new FieldFormatter(
                                 new FormatterFactory(searchRequest.getDateTimeSettings()));
-                final TableResultCreator resultCreator = new TableResultCreator(
-                        fieldFormatter,
-                        sizesProvider.getDefaultMaxResultsSizes());
+                final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
                 ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
                 TableSettings tableSettings = resultRequest.getMappings().get(0);
                 tableSettings = tableSettings
                         .copy()
                         .aggregateFilter(null)
-                        .maxResults(List.of(1000000))
+                        .maxResults(List.of(1000000L))
                         .build();
                 final List<TableSettings> mappings = List.of(tableSettings);
                 final TimeFilter timeFilter = DateExpressionParser
@@ -459,6 +453,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     }
 
     public record AnalyticDataStore(SearchRequest searchRequest, LmdbDataStore lmdbDataStore) {
+
         public SearchRequest getSearchRequest() {
             return searchRequest;
         }

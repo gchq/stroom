@@ -117,6 +117,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-docstore:stroom-docstore-impl-fs')
     implementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    implementation project(':stroom-documentation:stroom-documentation-impl')
     implementation project(':stroom-dropwizard-common')
 //    implementation project(':stroom-elastic:stroom-elastic-impl')
 //    implementation project(':stroom-elastic:stroom-elastic-impl-http')
@@ -202,6 +203,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-view:stroom-view-impl')
+    implementation project(':stroom-view:stroom-view-api')
 
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_client

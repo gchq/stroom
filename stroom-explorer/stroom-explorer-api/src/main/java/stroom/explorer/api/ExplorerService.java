@@ -29,6 +29,8 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +45,8 @@ public interface ExplorerService extends Clearable {
 
     BulkActionResult copy(List<ExplorerNode> explorerNodes,
                           ExplorerNode destinationFolder,
+                          boolean allowRename,
+                          String docName,
                           PermissionInheritance permissionInheritance);
 
     BulkActionResult move(List<ExplorerNode> explorerNodes,

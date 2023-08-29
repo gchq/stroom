@@ -5,8 +5,8 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="createDocumentSelectParentGroup" label="Select the parent group"
-                        addStyleNames="dock-max">
-            <g:SimplePanel ui:field="foldersInner" styleName="dock-max"/>
+                        addStyleNames="dock-max overflow-hidden">
+            <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden default-min-sizes"/>
         </form:FormGroup>
         <form:FormGroup identity="createDocumentName" label="Name" addStyleNames="dock-min">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>

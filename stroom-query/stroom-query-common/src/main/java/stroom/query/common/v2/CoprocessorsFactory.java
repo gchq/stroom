@@ -23,13 +23,10 @@ import javax.inject.Inject;
 
 public class CoprocessorsFactory {
 
-    private final SizesProvider sizesProvider;
     private final DataStoreFactory dataStoreFactory;
 
     @Inject
-    public CoprocessorsFactory(final SizesProvider sizesProvider,
-                               final DataStoreFactory dataStoreFactory) {
-        this.sizesProvider = sizesProvider;
+    public CoprocessorsFactory(final DataStoreFactory dataStoreFactory) {
         this.dataStoreFactory = dataStoreFactory;
     }
 
@@ -168,16 +165,14 @@ public class CoprocessorsFactory {
                              final Map<String, String> paramMap,
                              final DataStoreSettings dataStoreSettings,
                              final ErrorConsumer errorConsumer) {
-        final Sizes storeSizes = sizesProvider.getStoreSizes();
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
-        final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
-        final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
+        final Sizes maxResults = Sizes.create(tableSettings.getMaxResults());
         final DataStoreSettings modifiedSettings =
                 dataStoreSettings.copy()
                         .maxResults(maxResults)
-                        .storeSize(storeSizes).build();
+                        .build();
 
         return dataStoreFactory.create(
                 searchRequestSource,

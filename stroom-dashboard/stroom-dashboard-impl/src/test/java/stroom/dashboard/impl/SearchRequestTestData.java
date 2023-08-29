@@ -100,7 +100,7 @@ public class SearchRequestTestData {
                 .extractValues(false)
                 .extractionPipeline(
                         new DocRef("docRefType2", "docRefUuid2", "docRefName2"))
-                .maxResults(List.of(1, 2))
+                .maxResults(List.of(1L, 2L))
                 .showDetail(false)
                 .build();
 

@@ -35,12 +35,15 @@ import stroom.query.client.presenter.ResultStorePresenter;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
+import stroom.query.client.presenter.TextPresenter;
+import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.query.client.view.QueryEditViewImpl;
 import stroom.query.client.view.QueryHelpViewImpl;
 import stroom.query.client.view.QueryResultTableViewImpl;
 import stroom.query.client.view.QueryToolbarViewImpl;
 import stroom.query.client.view.ResultStoreSettingsViewImpl;
 import stroom.query.client.view.ResultStoreViewImpl;
+import stroom.query.client.view.TextViewImpl;
 
 public class QueryModule extends PluginModule {
 
@@ -67,6 +70,10 @@ public class QueryModule extends PluginModule {
                 QueryResultTablePresenter.class,
                 QueryResultTableView.class,
                 QueryResultTableViewImpl.class);
+        bindPresenterWidget(
+                TextPresenter.class,
+                TextView.class,
+                TextViewImpl.class);
 
         bindPresenterWidget(
                 ExpressionTreePresenter.class,

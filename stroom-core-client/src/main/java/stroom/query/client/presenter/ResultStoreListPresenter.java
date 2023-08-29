@@ -194,7 +194,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             final ResultStoreInfo selected = getSelectionModel().getSelected();
             if (selected == null ||
-                    SourceType.ANALYTIC_RULE.equals(selected.getSearchRequestSource().getSourceType())) {
+                    SourceType.TABLE_BUILDER_ANALYTIC.equals(selected.getSearchRequestSource().getSourceType())) {
                 terminateButton.setEnabled(false);
                 deleteButton.setEnabled(false);
                 settingsButton.setEnabled(false);

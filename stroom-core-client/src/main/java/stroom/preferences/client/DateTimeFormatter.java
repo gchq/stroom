@@ -23,9 +23,10 @@ public class DateTimeFormatter {
             return null;
         }
 
+        final long now = System.currentTimeMillis();
         return format(ms) +
                 " (" +
-                ClientDurationUtil.humanise(-(System.currentTimeMillis() - ms), true) +
+                ClientDurationUtil.humanise(ms - now, true) +
                 ")";
     }
 
@@ -39,7 +40,7 @@ public class DateTimeFormatter {
         int offsetMinutes = 0;
         String zoneId = "UTC";
 
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         if (userPreferences != null) {
             if (userPreferences.getDateTimePattern() != null
                     && userPreferences.getDateTimePattern().trim().length() > 0) {

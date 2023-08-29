@@ -4,16 +4,16 @@
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="exportConfigSelect" label="Select the items to export" addStyleNames="max">
-            <g:FlowPanel styleName="max default-min-sizes quickFilter-container">
+    <g:FlowPanel styleName="max form overflow-hidden">
+        <form:FormGroup identity="exportConfigSelect" label="Select the items to export" addStyleNames="max overflow-hidden">
+            <g:FlowPanel styleName="dock-container-vertical dock-max quickFilter-container overflow-hidden">
                 <g:FlowPanel styleName="dock-min dock-container-horizontal exportConfigViewImpl-filter">
                     <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
                     <g:FlowPanel addStyleNames="dock-min button-container">
                         <p:SvgButton ui:field="typeFilter"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
-                <g:SimplePanel ui:field="tree" styleName="dock-max stroom-control"/>
+                <g:MaxScrollPanel ui:field="tree" styleName="dock-max stroom-control__no-padding"/>
             </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>

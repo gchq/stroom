@@ -18,10 +18,15 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
+import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.MouseUtil;
 
@@ -47,15 +52,43 @@ public class AnalyticProcessingViewImpl
     private final Widget widget;
 
     @UiField
+    SimplePanel queryEditorContainer;
+    @UiField
     CustomCheckBox enabled;
     @UiField
-    SimplePanel expression;
+    SelectionBox<String> node;
+    @UiField
+    SimplePanel errorFeed;
+    @UiField
+    SelectionBox<AnalyticProcessType> processingType;
+    @UiField
+    FormGroup analyticProcessingMinMetaCreateTimeMs;
     @UiField
     MyDateBox minMetaCreateTimeMs;
     @UiField
+    FormGroup analyticProcessingMaxMetaCreateTimeMs;
+    @UiField
     MyDateBox maxMetaCreateTimeMs;
     @UiField
-    SelectionBox<String> node;
+    FormGroup analyticProcessingMinEventTimeMs;
+    @UiField
+    MyDateBox minEventTimeMs;
+    @UiField
+    FormGroup analyticProcessingMaxEventTimeMs;
+    @UiField
+    MyDateBox maxEventTimeMs;
+    @UiField
+    FormGroup queryFrequencyFormGroup;
+    @UiField
+    DurationPicker queryFrequency;
+    @UiField
+    FormGroup timeToWaitForDataFormGroup;
+    @UiField
+    DurationPicker timeToWaitForData;
+    @UiField
+    FormGroup dataRetentionFormGroup;
+    @UiField
+    DurationPicker dataRetention;
     @UiField
     SimplePanel info;
     @UiField
@@ -67,11 +100,25 @@ public class AnalyticProcessingViewImpl
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         refresh.setIcon(SvgImage.REFRESH);
+
+        processingType.addItem(AnalyticProcessType.STREAMING);
+        processingType.addItem(AnalyticProcessType.TABLE_BUILDER);
+        processingType.addItem(AnalyticProcessType.SCHEDULED_QUERY);
+
+        updateProcessingType(null);
+        queryFrequency.setValue(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build());
+        timeToWaitForData.setValue(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build());
+        dataRetention.setValue(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build());
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setQueryEditorView(final View view) {
+        queryEditorContainer.setWidget(view.asWidget());
     }
 
     @Override
@@ -82,31 +129,6 @@ public class AnalyticProcessingViewImpl
     @Override
     public void setEnabled(final boolean enabled) {
         this.enabled.setValue(enabled);
-    }
-
-    @Override
-    public void setExpressionView(final View view) {
-        expression.setWidget(view.asWidget());
-    }
-
-    @Override
-    public Long getMinMetaCreateTimeMs() {
-        return minMetaCreateTimeMs.getMilliseconds();
-    }
-
-    @Override
-    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
-    }
-
-    @Override
-    public Long getMaxMetaCreateTimeMs() {
-        return maxMetaCreateTimeMs.getMilliseconds();
-    }
-
-    @Override
-    public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
-        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
     }
 
     @Override
@@ -137,13 +159,149 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
+    public void setErrorFeedView(final View view) {
+        this.errorFeed.setWidget(view.asWidget());
+    }
+
+    @Override
+    public AnalyticProcessType getProcessingType() {
+        return this.processingType.getValue();
+    }
+
+    @Override
+    public void setProcessingType(final AnalyticProcessType analyticProcessType) {
+        this.processingType.setValue(analyticProcessType);
+        updateProcessingType(processingType.getValue());
+    }
+
+    @Override
+    public Long getMinMetaCreateTimeMs() {
+        return minMetaCreateTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
+    }
+
+    @Override
+    public Long getMaxMetaCreateTimeMs() {
+        return maxMetaCreateTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+    }
+
+    @Override
+    public Long getMinEventTimeMs() {
+        return minEventTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMinEventTimeMs(final Long minEventTimeMs) {
+        this.minEventTimeMs.setMilliseconds(minEventTimeMs);
+    }
+
+    @Override
+    public Long getMaxEventTimeMs() {
+        return maxEventTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMaxEventTimeMs(final Long maxEventTimeMs) {
+        this.maxEventTimeMs.setMilliseconds(maxEventTimeMs);
+    }
+
+    @Override
+    public SimpleDuration getQueryFrequency() {
+        return this.queryFrequency.getValue();
+    }
+
+    @Override
+    public void setQueryFrequency(final SimpleDuration queryFrequency) {
+        if (queryFrequency != null) {
+            this.queryFrequency.setValue(queryFrequency);
+        }
+    }
+
+    @Override
+    public SimpleDuration getTimeToWaitForData() {
+        return this.timeToWaitForData.getValue();
+    }
+
+    @Override
+    public void setTimeToWaitForData(final SimpleDuration timeToWaitForData) {
+        if (timeToWaitForData != null) {
+            this.timeToWaitForData.setValue(timeToWaitForData);
+        }
+    }
+
+    @Override
+    public SimpleDuration getDataRetention() {
+        return dataRetention.getValue();
+    }
+
+    @Override
+    public void setDataRetention(final SimpleDuration dataRetention) {
+        if (dataRetention != null) {
+            this.dataRetention.setValue(dataRetention);
+        }
+    }
+
+    @Override
     public void setInfo(final SafeHtml info) {
         this.info.setWidget(new HTML(info));
+    }
+
+    private void updateProcessingType(final AnalyticProcessType analyticProcessType) {
+        analyticProcessingMinMetaCreateTimeMs.setVisible(false);
+        analyticProcessingMaxMetaCreateTimeMs.setVisible(false);
+        analyticProcessingMinEventTimeMs.setVisible(false);
+        analyticProcessingMaxEventTimeMs.setVisible(false);
+        queryFrequencyFormGroup.setVisible(false);
+        timeToWaitForDataFormGroup.setVisible(false);
+        dataRetentionFormGroup.setVisible(false);
+
+        if (analyticProcessType != null) {
+            switch (analyticProcessType) {
+                case STREAMING:
+                    analyticProcessingMinMetaCreateTimeMs.setVisible(true);
+                    analyticProcessingMaxMetaCreateTimeMs.setVisible(true);
+                    break;
+                case TABLE_BUILDER:
+                    analyticProcessingMinMetaCreateTimeMs.setVisible(true);
+                    analyticProcessingMaxMetaCreateTimeMs.setVisible(true);
+                    timeToWaitForDataFormGroup.setVisible(true);
+                    dataRetentionFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setLabel("Aggregation Period");
+                    break;
+                case SCHEDULED_QUERY:
+                    analyticProcessingMinEventTimeMs.setVisible(true);
+                    analyticProcessingMaxEventTimeMs.setVisible(true);
+                    queryFrequencyFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setVisible(true);
+                    timeToWaitForDataFormGroup.setLabel("Time To Wait For Data To Be Indexed");
+                    break;
+            }
+        }
     }
 
     @UiHandler("enabled")
     public void onEnabled(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onDirty();
+    }
+
+    @UiHandler("node")
+    public void onNode(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("processingType")
+    public void onProcessingType(final ValueChangeEvent<AnalyticProcessType> event) {
+        updateProcessingType(processingType.getValue());
+        getUiHandlers().onProcessingTypeChange();
     }
 
     @UiHandler("minMetaCreateTimeMs")
@@ -156,8 +314,28 @@ public class AnalyticProcessingViewImpl
         getUiHandlers().onDirty();
     }
 
-    @UiHandler("node")
-    public void onNode(final ValueChangeEvent<String> event) {
+    @UiHandler("minEventTimeMs")
+    public void onMinEventTimeMs(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("maxEventTimeMs")
+    public void onMaxEventTimeMs(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("queryFrequency")
+    public void onQueryFrequency(final ValueChangeEvent<SimpleDuration> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("timeToWaitForData")
+    public void onTimeToWaitForData(final ValueChangeEvent<SimpleDuration> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("dataRetention")
+    public void onDataRetention(final ValueChangeEvent<SimpleDuration> event) {
         getUiHandlers().onDirty();
     }
 

@@ -27,6 +27,7 @@ import stroom.security.client.presenter.UsersAndGroupsPresenter;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -69,6 +70,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             // Menu item for the user/group permissions dialog
+            MenuKeys.addSecurityMenu(event.getMenuItems());
             final Command command = () ->
                     usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
                         @Override
@@ -77,7 +79,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                             ShowPopupEvent.builder(presenter)
                                     .popupType(PopupType.CLOSE_DIALOG)
                                     .popupSize(popupSize)
-                                    .caption("User and Group Permissions")
+                                    .caption("Application Permissions")
                                     .onShow(e -> presenter.focus())
                                     .fire();
                         }
@@ -86,11 +88,11 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                         public void onFailure(final Throwable caught) {
                         }
                     });
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
+            event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new IconMenuItem.Builder()
                             .priority(1)
                             .icon(SvgImage.USER)
-                            .text("User and Group Permissions")
+                            .text("Application Permissions")
                             .command(command)
                             .build());
         }

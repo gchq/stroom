@@ -5,7 +5,6 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
@@ -42,7 +41,10 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to copy");
@@ -53,7 +55,12 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
                     "You do not have permission to read (" + FOLDER + ")");
         }
 
-        final String newName = UniqueNameUtil.getCopyName(explorerTreeNode.getName(), existingNames);
+        String folderName = name;
+        if (folderName == null || folderName.trim().length() == 0) {
+            folderName = explorerTreeNode.getName();
+        }
+
+        final String newName = UniqueNameUtil.getCopyName(folderName, makeNameUnique, existingNames);
         return new DocRef(FOLDER, UUID.randomUUID().toString(), newName);
     }
 

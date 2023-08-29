@@ -21,7 +21,6 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 
@@ -42,7 +41,6 @@ public class AnalyticQueryEditPresenter
                                       final QueryEditPresenter queryEditPresenter) {
         super(eventBus, queryEditPresenter.getView());
         this.queryEditPresenter = queryEditPresenter;
-        queryEditPresenter.setSourceType(SourceType.ANALYTIC_RULE_UI);
     }
 
     @Override

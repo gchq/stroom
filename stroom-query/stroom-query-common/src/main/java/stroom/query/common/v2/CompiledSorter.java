@@ -34,6 +34,10 @@ public class CompiledSorter<E extends Item> implements Comparator<E>, Function<S
     private CompiledSorter() {
     }
 
+    public List<CompiledSort> getCompiledSorts() {
+        return compiledSorts;
+    }
+
     @SuppressWarnings("unchecked")
     public static <E extends Item> CompiledSorter<E>[] create(final int maxDepth,
                                                               final CompiledField[] compiledFields) {

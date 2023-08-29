@@ -32,16 +32,23 @@ public class ExplorerServiceCopyRequest {
     @JsonProperty
     private final ExplorerNode destinationFolder;
     @JsonProperty
+    private final boolean allowRename;
+    @JsonProperty
+    private final String docName;
+    @JsonProperty
     private final PermissionInheritance permissionInheritance;
 
     @JsonCreator
     public ExplorerServiceCopyRequest(
             @JsonProperty("explorerNodes") final List<ExplorerNode> explorerNodes,
             @JsonProperty("destinationFolder") final ExplorerNode destinationFolder,
+            @JsonProperty("allowRename") final boolean allowRename,
+            @JsonProperty("docName") final String docName,
             @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
-
         this.explorerNodes = explorerNodes;
         this.destinationFolder = destinationFolder;
+        this.allowRename = allowRename;
+        this.docName = docName;
         this.permissionInheritance = permissionInheritance;
     }
 
@@ -51,6 +58,14 @@ public class ExplorerServiceCopyRequest {
 
     public ExplorerNode getDestinationFolder() {
         return destinationFolder;
+    }
+
+    public boolean isAllowRename() {
+        return allowRename;
+    }
+
+    public String getDocName() {
+        return docName;
     }
 
     public PermissionInheritance getPermissionInheritance() {

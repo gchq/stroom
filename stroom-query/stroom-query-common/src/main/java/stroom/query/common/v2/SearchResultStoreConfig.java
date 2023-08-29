@@ -17,8 +17,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
-                "1000000,100,10,1");
+                ResultStoreLmdbConfig.builder().localDir("search_results").build());
     }
 
     @JsonCreator
@@ -28,15 +27,13 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                                    @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
                                    @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
                                    @JsonProperty("valueQueueSize") final int valueQueueSize,
-                                   @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
-                                   @JsonProperty("storeSize") final String storeSize) {
+                                   @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
         super(maxPutsBeforeCommit,
                 offHeapResults,
                 minPayloadSize,
                 maxPayloadSize,
                 maxStringFieldLength,
                 valueQueueSize,
-                lmdbConfig,
-                storeSize);
+                lmdbConfig);
     }
 }

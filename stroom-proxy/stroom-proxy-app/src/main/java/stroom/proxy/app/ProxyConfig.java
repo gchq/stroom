@@ -30,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.validation.constraints.AssertTrue;
@@ -95,10 +94,10 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         receiveDataConfig = new ReceiveDataConfig();
         proxyRepoConfig = new ProxyRepoConfig();
         eventStoreConfig = new EventStoreConfig();
-        fileScanners = Collections.emptyList();
+        fileScanners = new ArrayList<>();
         aggregatorConfig = new AggregatorConfig();
-        forwardFileDestinations = Collections.emptyList();
-        forwardHttpDestinations = Collections.emptyList();
+        forwardFileDestinations = new ArrayList<>();
+        forwardHttpDestinations = new ArrayList<>();
         logStreamConfig = new LogStreamConfig();
         contentSyncConfig = new ContentSyncConfig();
         feedStatusConfig = new FeedStatusConfig();

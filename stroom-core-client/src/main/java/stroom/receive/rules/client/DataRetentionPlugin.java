@@ -48,7 +48,8 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_POLICIES_PERMISSION)) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createDataRetentionMenuItem());
+            MenuKeys.addAdministrationMenu(event.getMenuItems());
+            event.getMenuItems().addMenuItem(MenuKeys.ADMINISTRATION_MENU, createDataRetentionMenuItem());
         }
     }
 

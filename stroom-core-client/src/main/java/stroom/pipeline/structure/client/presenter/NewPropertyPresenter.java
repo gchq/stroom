@@ -27,6 +27,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
+import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -38,12 +39,15 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView> {
+public class NewPropertyPresenter
+        extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView>
+        implements NewPropertyUiHandlers {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
@@ -82,23 +86,25 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         super(eventBus, view);
         this.entityDropDownPresenter = entityDropDownPresenter;
         this.restFactory = restFactory;
+        view.setUiHandlers(this);
     }
 
     @Override
-    protected void onBind() {
-        registerHandler(getView().getSource().addValueChangeHandler(event -> {
-            final Source selected = event.getValue();
-            if (!source.equals(selected)) {
-                NewPropertyPresenter.this.source = selected;
-                setDirty(true, false);
-                startEdit(selected);
-            }
-        }));
-
+    public void onSourceChange(final Source source) {
+        if (!this.source.equals(source)) {
+            NewPropertyPresenter.this.source = source;
+            setDirty(true, false);
+            startEdit(source);
+        }
     }
 
-    public void edit(final PipelineProperty defaultProperty, final PipelineProperty inheritedProperty,
-                     final PipelineProperty localProperty, final Source source) {
+    public void edit(final PipelineProperty defaultProperty,
+                     final PipelineProperty inheritedProperty,
+                     final PipelineProperty localProperty,
+                     final Source source,
+                     final String defaultValue,
+                     final String inheritedValue,
+                     final String inheritedFrom) {
         this.defaultProperty = defaultProperty;
         this.inheritedProperty = inheritedProperty;
         this.localProperty = localProperty;
@@ -106,7 +112,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
         getView().setElement(defaultProperty.getElement());
         getView().setName(defaultProperty.getName());
-        getView().getSource().setValue(source);
+        getView().setDescription(defaultProperty.getPropertyType().getDescription());
+        getView().setDefaultValue(defaultValue);
+        getView().setInherited(inheritedFrom, inheritedValue);
+        getView().setSource(source);
 
         startEdit(source);
     }
@@ -146,7 +155,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     }
 
     public Source getSource() {
-        return getView().getSource().getValue();
+        return getView().getSource();
     }
 
     public void write(final PipelineProperty property) {
@@ -202,6 +211,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentBoolean = property.getValue().getBoolean();
         }
 
+        listBox.setEnabled(Source.LOCAL.equals(source));
         listBox.setValue(currentBoolean.toString().toLowerCase());
     }
 
@@ -239,6 +249,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         }
 
         currentNumber = number;
+        valueSpinner.setEnabled(Source.LOCAL.equals(source));
         valueSpinner.setValue(currentNumber);
     }
 
@@ -264,6 +275,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentText = property.getValue().getString();
         }
 
+        textBox.setEnabled(Source.LOCAL.equals(source));
         textBox.setText(currentText);
     }
 
@@ -308,6 +320,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentDataType = property.getValue().toString();
         }
 
+        dataTypeWidget.setEnabled(Source.LOCAL.equals(source));
         dataTypeWidget.setValue(currentDataType);
     }
 
@@ -333,6 +346,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentEntity = property.getValue().getEntity();
         }
 
+        entityDropDownPresenter.setEnabled(Source.LOCAL.equals(source));
         entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
         entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         try {
@@ -346,7 +360,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     private void setDirty(final boolean dirty, final boolean changeSource) {
         this.dirty = dirty;
         if (changeSource) {
-            getView().getSource().setValue(Source.LOCAL);
+            getView().setSource(Source.LOCAL);
         }
     }
 
@@ -358,13 +372,21 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         setDirty(dirty, true);
     }
 
-    public interface NewPropertyView extends View, Focus {
+    public interface NewPropertyView extends View, Focus, HasUiHandlers<NewPropertyUiHandlers> {
 
         void setElement(String element);
 
         void setName(String name);
 
-        SelectionBox<Source> getSource();
+        void setDescription(String description);
+
+        void setDefaultValue(String defaultValue);
+
+        void setInherited(String inheritedFrom, String inheritedValue);
+
+        Source getSource();
+
+        void setSource(Source source);
 
         void setValueWidget(Widget widget);
     }
