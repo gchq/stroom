@@ -67,6 +67,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -277,17 +278,18 @@ public class QueryEditPresenter
 
             @Override
             public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
-                                                   final Consumer<String> descriptionConsumer) {
+                                                   final Consumer<Optional<String>> descriptionConsumer) {
 
                 if (dataSourceDocRef != null) {
                     final Rest<Documentation> rest = restFactory.create();
                     rest
                             .onSuccess(documentation -> {
                                 GWT.log("Description:\n" + documentation);
-                                GwtNullSafe.consume(
-                                        documentation,
-                                        Documentation::getMarkdown,
-                                        descriptionConsumer);
+                                final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
+                                        Documentation::getMarkdown);
+                                if (descriptionConsumer != null) {
+                                    descriptionConsumer.accept(optMarkDown);
+                                }
                             })
                             .onFailure(throwable -> AlertEvent.fireError(
                                     QueryEditPresenter.this,
