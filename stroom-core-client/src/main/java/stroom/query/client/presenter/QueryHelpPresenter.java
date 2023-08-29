@@ -39,7 +39,6 @@ import stroom.query.shared.QueryHelpItemsResult;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.Themes.ThemeType;
-import stroom.ui.config.shared.UiConfig;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.view.client.presenter.DataSourceFieldsMap;
@@ -82,6 +81,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -586,18 +586,19 @@ public class QueryHelpPresenter
 
             queryHelpDataSupplier.fetchDataSourceDescription(
                     ((DataSourceHelpItem) queryHelpItem).getDocRef(),
-                    markdown -> {
-                        if (GwtNullSafe.isBlankString(markdown)) {
-                            getView().setDetails(detailSafeHtml);
-                        } else {
-                            final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(markdown);
-                            final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
-                            final SafeHtml safeHtml = safeHtmlBuilder.append(detailSafeHtml)
-                                    .append(markDownSafeHtml)
-                                    .toSafeHtml();
+                    optMarkdown -> {
+                        final SafeHtml combinedSafeHtml = optMarkdown.filter(markdown -> !GwtNullSafe.isBlankString(markdown))
+                                .map(markdown -> {
+                                    final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
+                                            markdown);
+                                    final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
+                                    return safeHtmlBuilder.append(detailSafeHtml)
+                                            .append(markDownSafeHtml)
+                                            .toSafeHtml();
+                                })
+                                .orElse(detailSafeHtml);
 
-                            getView().setDetails(safeHtml);
-                        }
+                        getView().setDetails(combinedSafeHtml);
                     });
         } else {
             getView().setDetails(GwtNullSafe.requireNonNullElse(
@@ -1129,6 +1130,7 @@ public class QueryHelpPresenter
 
         void fetchQueryHelpItems(final String filterInput, final Consumer<QueryHelpItemsResult> resultConsumer);
 
-        void fetchDataSourceDescription(final DocRef dataSourceDocRef, final Consumer<String> descriptionConsumer);
+        void fetchDataSourceDescription(final DocRef dataSourceDocRef,
+                                        final Consumer<Optional<String>> descriptionConsumer);
     }
 }

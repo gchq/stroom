@@ -53,6 +53,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -239,7 +240,7 @@ public class ColumnFunctionEditorPresenter
 
             @Override
             public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
-                                                   final Consumer<String> descriptionConsumer) {
+                                                   final Consumer<Optional<String>> descriptionConsumer) {
                 // DataSources not pickable here, so no-op
             }
         };
