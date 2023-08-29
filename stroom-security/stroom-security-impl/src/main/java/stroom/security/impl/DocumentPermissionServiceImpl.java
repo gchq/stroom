@@ -17,7 +17,6 @@
 
 package stroom.security.impl;
 
-import stroom.docref.HasUuid;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -27,10 +26,12 @@ import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.impl.event.RemovePermissionEvent;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
+import stroom.security.shared.HasStroomUserIdentity;
 import stroom.security.shared.User;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +44,7 @@ import javax.inject.Singleton;
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserDao userDao;
@@ -118,6 +119,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     @Override
     public void clearDocumentPermissions(final String docUuid) {
+        LOGGER.debug("clearDocumentPermissions() - docUuid: {}", docUuid);
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
 
@@ -132,19 +134,22 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     @Override
-    public void addDocumentPermissions(final String sourceUuid, final String documentUuid, final boolean owner) {
+    public void addDocumentPermissions(final String sourceUuid,
+                                       final String documentUuid,
+                                       final boolean owner) {
+        LOGGER.debug("addDocumentPermissions() - sourceUuid: {}, documentUuid: {}, owner: {}",
+                sourceUuid, documentUuid, owner);
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
 
         // If no user is present or doesn't have a UUID then don't create permissions.
-        if (userIdentity instanceof HasUuid) {
-            final String userUuid = ((HasUuid) userIdentity).getUuid();
+        if (userIdentity instanceof final HasStroomUserIdentity stroomUserIdentity) {
             if (owner || securityContext.hasDocumentPermission(documentUuid, DocumentPermissionNames.OWNER)) {
                 if (owner) {
                     // Make the current user the owner of the new document.
                     try {
                         addPermission(documentUuid,
-                                userUuid,
+                                stroomUserIdentity.getUuid(),
                                 DocumentPermissionNames.OWNER);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
@@ -155,10 +160,15 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 // TODO : This should be part of the explorer service.
                 copyPermissions(sourceUuid, documentUuid);
             }
+        } else {
+            LOGGER.debug(() -> LogUtil.message(
+                    "User {} of type {} does not have a stroom user identity",
+                    userIdentity, NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName)));
         }
     }
 
     private void copyPermissions(final String sourceUuid, final String destUuid) {
+        LOGGER.debug("copyPermissions() - sourceUuid: {}, destUuid: {}", sourceUuid, destUuid);
         if (sourceUuid != null) {
             final stroom.security.shared.DocumentPermissions documentPermissions =
                     getPermissionsForDocument(sourceUuid);

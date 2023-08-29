@@ -3,6 +3,8 @@ package stroom.proxy.app;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DbRecordCountAssertion.DbRecordCounts;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.security.openid.api.IdpType;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
@@ -25,7 +27,10 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
     @Override
     protected ProxyConfig getProxyConfigOverride() {
         return ProxyConfig.builder()
-                .useDefaultOpenIdCredentials(true)
+                .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
+                        .openIdConfig(new ProxyOpenIdConfig()
+                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
+                        .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
                 .proxyRepoConfig(ProxyRepoConfig.builder()
@@ -33,6 +38,9 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
                         .build())
                 .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .receiveDataConfig(ReceiveDataConfig.builder()
+                        .withAuthenticationRequired(false)
+                        .build())
                 .build();
     }
 

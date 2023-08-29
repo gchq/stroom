@@ -16,13 +16,14 @@
 
 package stroom.task.impl;
 
-import stroom.security.api.HasSessionId;
+import stroom.security.api.HasSession;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
 import stroom.util.NullSafe;
+import stroom.util.shared.HasAuditableUserIdentity;
 
 import org.slf4j.Logger;
 
@@ -34,7 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class TaskContextImpl implements TaskContext {
+public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
 
     private final TaskId taskId;
     private final String name;
@@ -76,7 +77,7 @@ public class TaskContextImpl implements TaskContext {
         if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
             logger.debug("Task stack: {}, user: {}, task: {}, info: {}",
                     getTaskHierarchy(),
-                    NullSafe.get(userIdentity, UserIdentity::getId),
+                    NullSafe.get(userIdentity, UserIdentity::getSubjectId),
                     name,
                     messageSupplier.get());
         }
@@ -140,13 +141,14 @@ public class TaskContextImpl implements TaskContext {
         return useAsRead;
     }
 
-    String getUserId() {
-        return userIdentity.getId();
+    @Override
+    public String getUserIdentityForAudit() {
+        return NullSafe.get(userIdentity, UserIdentity::getUserIdentityForAudit);
     }
 
     String getSessionId() {
-        if (userIdentity instanceof HasSessionId) {
-            return ((HasSessionId) userIdentity).getSessionId();
+        if (userIdentity instanceof HasSession) {
+            return ((HasSession) userIdentity).getSessionId();
         }
         return null;
     }

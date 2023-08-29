@@ -9,7 +9,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,15 +34,28 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
             MenuKeys.addSecurityMenu(event.getMenuItems());
 
             clientPropertyCache.get()
-                    .onSuccess(result -> {
-                        final IconMenuItem apiKeysMenuItem;
-                        final SvgImage icon = SvgImage.KEY;
-                        apiKeysMenuItem = new IconMenuItem.Builder()
-                                .priority(3)
-                                .icon(icon)
-                                .text("Manage API Keys")
-                                .command(() -> {
-                                    postMessage("manageTokens");
+                    .onSuccess(extendedUiConfig -> {
+                        if (!extendedUiConfig.isExternalIdentityProvider()) {
+                            addMenuItem(event);
+                        }
+                    })
+                    .onFailure(caught ->
+                            AlertEvent.fireError(
+                                    ApiKeysPlugin.this,
+                                    caught.getMessage(),
+                                    null));
+        }
+    }
+
+    private static void addMenuItem(final BeforeRevealMenubarEvent event) {
+        final IconMenuItem apiKeysMenuItem;
+        final SvgImage icon = SvgImage.KEY;
+        apiKeysMenuItem = new IconMenuItem.Builder()
+                .priority(3)
+                .icon(icon)
+                .text("Manage API Keys")
+                .command(() -> {
+                    postMessage("manageTokens");
 
 //                                final Hyperlink hyperlink = new Builder()
 //                                        .text("API Keys")
@@ -52,15 +64,8 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
 //                                        .icon(icon)
 //                                        .build();
 //                                HyperlinkEvent.fire(this, hyperlink);
-                                })
-                                .build();
-                        event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
-                    })
-                    .onFailure(caught ->
-                            AlertEvent.fireError(
-                                    ApiKeysPlugin.this,
-                                    caught.getMessage(),
-                                    null));
-        }
+                })
+                .build();
+        event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
     }
 }

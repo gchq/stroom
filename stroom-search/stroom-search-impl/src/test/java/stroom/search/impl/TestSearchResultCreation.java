@@ -1,6 +1,7 @@
 package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ParamKeys;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
@@ -40,6 +41,7 @@ import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
+import stroom.security.api.UserIdentity;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -144,6 +146,7 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
+                null,
                 null,
                 coprocessors,
                 "node",
@@ -274,6 +277,7 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
+                UUID.randomUUID().toString(),
                 "test_user_id",
                 coprocessors2,
                 "node",
@@ -350,6 +354,7 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
+                UUID.randomUUID().toString(),
                 "test_user_id",
                 coprocessors2,
                 "node",
@@ -456,6 +461,7 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
+                null,
                 null,
                 null,
                 coprocessors2,
@@ -575,7 +581,7 @@ class TestSearchResultCreation {
         final Query query = Query.builder()
                 .dataSource(dataSource)
                 .expression(expression)
-                .addParam("currentUser()", "admin")
+                .addParam(ParamKeys.CURRENT_USER, "admin")
                 .build();
 
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId("Europe/London").build();
@@ -603,7 +609,7 @@ class TestSearchResultCreation {
         final Query query = Query.builder()
                 .dataSource(dataSource)
                 .expression(expression)
-                .addParam("currentUser()", "admin")
+                .addParam(ParamKeys.CURRENT_USER, "admin")
                 .build();
 
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId("Europe/London").build();
@@ -850,5 +856,19 @@ class TestSearchResultCreation {
                 .addMaxResults(20L, 100L, 1000L)
                 .showDetail(true)
                 .build();
+    }
+
+    private static final class TestUserIdentity implements UserIdentity {
+
+        private final String subjectId;
+
+        private TestUserIdentity(final String subjectId) {
+            this.subjectId = subjectId;
+        }
+
+        @Override
+        public String getSubjectId() {
+            return null;
+        }
     }
 }

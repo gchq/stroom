@@ -1,6 +1,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.state.CurrentUserHolder;
+import stroom.security.api.UserIdentity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -30,7 +31,12 @@ class TestCurrentUser extends AbstractXsltFunctionTest<CurrentUser> {
     void call() {
 
         Mockito.when(mockCurrentUserHolder.getCurrentUser())
-                .thenReturn("user1");
+                .thenReturn(new UserIdentity() {
+                    @Override
+                    public String getSubjectId() {
+                        return "user1";
+                    }
+                });
 
         final Sequence sequence1 = callFunctionWithSimpleArgs();
 

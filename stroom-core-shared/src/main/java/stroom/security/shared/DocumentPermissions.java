@@ -20,6 +20,8 @@ public class DocumentPermissions {
 
     @JsonProperty
     private final String docUuid;
+    // TODO: 27/07/2023 We could change both of these to hold UserName instead of User as
+    //  we only need the the userUuid/displayName/subjectId
     @JsonProperty
     private final List<User> users;
     @JsonProperty

@@ -4,14 +4,14 @@
 package stroom.storedquery.impl.db.jooq;
 
 
-import stroom.storedquery.impl.db.jooq.tables.Query;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.storedquery.impl.db.jooq.tables.Query;
 
 
 /**

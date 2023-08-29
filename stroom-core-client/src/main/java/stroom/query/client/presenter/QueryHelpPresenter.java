@@ -37,6 +37,7 @@ import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
 import stroom.query.shared.QueryHelpItemsResult;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.client.ClipboardUtil;
@@ -635,7 +636,7 @@ public class QueryHelpPresenter
 
     private void buildFieldsMenuItems(final List<AbstractField> fields,
                                       final String helpUrl,
-                                      final UiConfig uiConfig) {
+                                      final ExtendedUiConfig uiConfig) {
         if (GwtNullSafe.test(queryHelpDataSupplier, supplier -> supplier.isSupported(HelpItemType.FIELD))) {
             if (!Objects.equals(lastFetchedDataSourceFields, fields) || hasThemeChanged()) {
                 lastFetchedDataSourceFields = fields;

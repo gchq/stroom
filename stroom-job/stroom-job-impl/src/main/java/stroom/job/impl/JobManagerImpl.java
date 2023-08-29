@@ -126,7 +126,7 @@ public class JobManagerImpl implements JobManager {
         final Job job = jobs.getFirst();
         if (job != null) {
             job.setEnabled(enabled);
-            AuditUtil.stamp(securityContext.getUserId(), job);
+            AuditUtil.stamp(securityContext, job);
             jobDao.update(job);
         }
     }
@@ -145,7 +145,7 @@ public class JobManagerImpl implements JobManager {
         final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes.getValues()) {
             jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext.getUserId(), jobNode);
+            AuditUtil.stamp(securityContext, jobNode);
             jobNodeDao.update(jobNode);
         }
     }
@@ -163,7 +163,7 @@ public class JobManagerImpl implements JobManager {
         final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes.getValues()) {
             jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext.getUserId(), jobNode);
+            AuditUtil.stamp(securityContext, jobNode);
             jobNodeDao.update(jobNode);
         }
     }

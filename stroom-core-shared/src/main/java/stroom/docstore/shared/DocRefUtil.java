@@ -17,6 +17,7 @@
 package stroom.docstore.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.StringUtil;
 
 import java.util.Objects;
 
@@ -54,13 +55,40 @@ public final class DocRefUtil {
     }
 
     public static String createSimpleDocRefString(final DocRef docRef) {
-        if (docRef.getName() != null && docRef.getUuid() != null) {
-            return docRef.getName() + " {" + docRef.getUuid() + "}";
-        } else if (docRef.getName() != null) {
-            return docRef.getName();
-        } else if (docRef.getUuid() != null) {
-            return docRef.getUuid();
+        if (docRef == null) {
+            return "";
+        } else {
+            if (docRef.getName() != null && docRef.getUuid() != null) {
+                return docRef.getName() + " {" + docRef.getUuid() + "}";
+            } else if (docRef.getName() != null) {
+                return docRef.getName();
+            } else if (docRef.getUuid() != null) {
+                return docRef.getUuid();
+            } else {
+                return "";
+            }
         }
-        return "";
+    }
+
+    public static String createTypedDocRefString(final DocRef docRef) {
+        if (docRef == null) {
+            return "";
+        } else {
+            if (docRef.getName() != null && docRef.getUuid() != null) {
+                return String.join(" ",
+                        docRef.getType(),
+                        StringUtil.singleQuote(docRef.getName()) + " {" + docRef.getUuid() + "}");
+            } else if (docRef.getName() != null) {
+                return String.join(" ",
+                        docRef.getType(),
+                        StringUtil.singleQuote(docRef.getName()));
+            } else if (docRef.getUuid() != null) {
+                return String.join(" ",
+                        docRef.getType(),
+                        docRef.getUuid());
+            } else {
+                return "";
+            }
+        }
     }
 }

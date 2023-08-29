@@ -23,6 +23,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
+import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -45,15 +46,15 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         implements ChangeAssignedToUiHandlers {
 
     private final RestFactory restFactory;
-    private final ChooserPresenter assignedToPresenter;
+    private final ChooserPresenter<UserName> assignedToPresenter;
     private final ClientSecurityContext clientSecurityContext;
-    private String currentAssignedTo;
+    private UserName currentAssignedTo;
 
     @Inject
     public ChangeAssignedToPresenter(final EventBus eventBus,
                                      final ChangeAssignedToView view,
                                      final RestFactory restFactory,
-                                     final ChooserPresenter assignedToPresenter,
+                                     final ChooserPresenter<UserName> assignedToPresenter,
                                      final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
@@ -67,7 +68,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         super.onBind();
 
         registerHandler(assignedToPresenter.addDataSelectionHandler(e -> {
-            final String selected = assignedToPresenter.getSelected();
+            final UserName selected = assignedToPresenter.getSelected();
             changeAssignedTo(selected);
         }));
     }
@@ -94,11 +95,12 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                 .fire();
     }
 
-    private void changeAssignedTo(final String selected) {
+    private void changeAssignedTo(final UserName selected) {
         if (!Objects.equals(currentAssignedTo, selected)) {
             currentAssignedTo = selected;
-            getView().setAssignedTo(selected);
-            HidePopupEvent.builder(assignedToPresenter).fire();
+            getView().setAssignedTo(selected.getUserIdentityForAudit());
+            HidePopupEvent.builder(assignedToPresenter)
+                    .fire();
         }
     }
 
@@ -111,8 +113,11 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         }
         assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(consumer).call(userResource).getAssociates(filter);
+            final Rest<List<UserName>> rest = restFactory.create();
+            rest
+                    .onSuccess(consumer)
+                    .call(userResource)
+                    .getAssociates(filter);
         });
         assignedToPresenter.clearFilter();
         assignedToPresenter.setSelected(currentAssignedTo);
@@ -128,7 +133,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
 
     @Override
     public void assignYourself() {
-        changeAssignedTo(clientSecurityContext.getUserId());
+        changeAssignedTo(clientSecurityContext.getUserName());
     }
 
     public interface ChangeAssignedToView extends View, Focus, HasUiHandlers<ChangeAssignedToUiHandlers> {

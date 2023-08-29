@@ -47,6 +47,7 @@ public class EditorPresenter
         HasText,
         HasValueChangeHandlers<String> {
 
+    protected static final String VIM_KEY_BINDS_NAME = "VIM";
     private final EditorMenuPresenter contextMenu;
     private final DelegatingAceCompleter delegatingAceCompleter;
 
@@ -60,7 +61,7 @@ public class EditorPresenter
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setTheme(getTheme(currentPreferences));
-        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentPreferences.getEditorKeyBindings()));
+        setEditorKeyBindings(view, currentPreferences.getEditorKeyBindings());
         view.setUserLiveAutoCompletePreference(currentPreferences.getEditorLiveAutoCompletion().isOn());
 
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
@@ -88,9 +89,16 @@ public class EditorPresenter
         view.setUserLiveAutoCompletePreference(event.getEditorLiveAutoCompletion().isOn());
     }
 
+    private void setEditorKeyBindings(final EditorView view, final String editorKeyBindingsName) {
+        // For the moment only standard and vim bindings are supported given the boolean
+        // nature of the context menu
+        view.setUserKeyBindingsPreference(VIM_KEY_BINDS_NAME.equalsIgnoreCase(editorKeyBindingsName));
+    }
+
     private AceEditorTheme getTheme(final CurrentPreferences currentPreferences) {
         return getTheme(currentPreferences.getTheme(), currentPreferences.getEditorTheme());
     }
+
 
     private AceEditorTheme getTheme(final String theme, final String editorTheme) {
         // Just in case it is null

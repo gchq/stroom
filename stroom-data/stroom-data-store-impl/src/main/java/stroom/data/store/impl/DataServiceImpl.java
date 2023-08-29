@@ -181,7 +181,7 @@ class DataServiceImpl implements DataService {
                         new RuntimeException("Unable to find feed document with name " + request.getFeedName()));
 
         if (!securityContext.hasDocumentPermission(feedDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to update feed " + request.getFeedName());
         }
 

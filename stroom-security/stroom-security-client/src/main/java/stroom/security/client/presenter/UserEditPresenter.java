@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.security.client.presenter.UserEditPresenter.UserEditView;
 import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -60,8 +61,8 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
-                        .initial(500)
-                        .min(500)
+                        .initial(1_000)
+                        .min(1_000)
                         .resizable(true)
                         .build())
                 .height(Size
@@ -71,7 +72,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .resizable(true)
                         .build())
                 .build();
-        final String caption = "User - " + userRef.getName();
+        final String caption = "User - " + UserName.buildCombinedName(userRef);
         ShowPopupEvent.builder(UserEditPresenter.this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)

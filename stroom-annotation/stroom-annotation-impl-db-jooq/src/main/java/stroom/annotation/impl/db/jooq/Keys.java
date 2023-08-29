@@ -4,18 +4,18 @@
 package stroom.annotation.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.annotation.impl.db.jooq.tables.Annotation;
 import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**

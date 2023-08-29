@@ -164,8 +164,8 @@ public class DocumentPermissionsPresenter
                             popupSize = PopupSize.builder()
                                     .width(Size
                                             .builder()
-                                            .initial(400)
-                                            .min(400)
+                                            .initial(1000)
+                                            .min(1000)
                                             .resizable(true)
                                             .build())
                                     .height(Size
@@ -179,8 +179,8 @@ public class DocumentPermissionsPresenter
                             popupSize = PopupSize.builder()
                                     .width(Size
                                             .builder()
-                                            .initial(400)
-                                            .min(400)
+                                            .initial(1000)
+                                            .min(1000)
                                             .resizable(true)
                                             .build())
                                     .height(Size

@@ -84,9 +84,9 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
             @Override
             public String getValue(final ResultStoreInfo resultStoreInfo) {
-                return resultStoreInfo.getUserId();
+                return resultStoreInfo.getCreateUser();
             }
-        }, "User Id", ColumnSizeConstants.MEDIUM_COL);
+        }, "User Display Name", 300);
 
         // Store size
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {

@@ -19,15 +19,15 @@ package stroom.security.impl;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.shared.UserNameProvider;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.shared.ResultPage;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +39,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-class UserServiceImpl implements UserService, UserNameProvider {
+class UserServiceImpl implements UserService {
 
     private final SecurityContext securityContext;
     private final UserDao userDao;
@@ -55,22 +55,26 @@ class UserServiceImpl implements UserService, UserNameProvider {
     }
 
     @Override
-    public User getOrCreateUser(final String name, final Consumer<User> onCreateAction) {
-        return getOrCreate(name, false, onCreateAction);
+    public User getOrCreateUser(final UserName userName, final Consumer<User> onCreateAction) {
+        return getOrCreate(userName, false, onCreateAction);
     }
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
-        return getOrCreate(name, true, onCreateAction);
+        return getOrCreate(SimpleUserName.fromGroupName(name), true, onCreateAction);
     }
 
-    private User getOrCreate(final String name, final boolean isGroup, final Consumer<User> onCreateAction) {
-        final Optional<User> optional = userDao.getByName(name, isGroup);
+    private User getOrCreate(final UserName userName,
+                             final boolean isGroup,
+                             final Consumer<User> onCreateAction) {
+        final Optional<User> optional = userDao.getBySubjectId(userName.getSubjectId(), isGroup);
         return optional.orElseGet(() -> {
-            User user = new User();
-            AuditUtil.stamp(securityContext.getUserId(), user);
+            final User user = new User();
+            AuditUtil.stamp(securityContext, user);
             user.setUuid(UUID.randomUUID().toString());
-            user.setName(name);
+            user.setSubjectId(userName.getSubjectId());
+            user.setDisplayName(userName.getDisplayName());
+            user.setFullName(userName.getFullName());
             user.setGroup(isGroup);
 
             return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
@@ -86,16 +90,26 @@ class UserServiceImpl implements UserService, UserNameProvider {
     }
 
     @Override
-    public Optional<User> getUserByName(final String name) {
-        if (name != null && name.trim().length() > 0) {
-            return userDao.getByName(name)
+    public Optional<User> getUserBySubjectId(final String subjectId) {
+        if (!NullSafe.isBlankString(subjectId)) {
+            return userDao.getBySubjectId(subjectId)
                     .filter(user -> {
-                        if (!user.getName().equals(name)) {
+                        // TODO: 23/03/2023 Why is this here?
+                        if (!user.getSubjectId().equals(subjectId)) {
                             throw new RuntimeException(
                                     "Unexpected: returned user name does not match requested user name");
                         }
                         return true;
                     });
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<User> getUserByDisplayName(final String displayName) {
+        if (!NullSafe.isBlankString(displayName)) {
+            return userDao.getByDisplayName(displayName);
         } else {
             return Optional.empty();
         }
@@ -108,7 +122,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
 
     @Override
     public User update(User user) {
-        AuditUtil.stamp(securityContext.getUserId(), user);
+        AuditUtil.stamp(securityContext, user);
         return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final User updatedUser = userDao.update(user);
             fireEntityChangeEvent(updatedUser, EntityAction.UPDATE);
@@ -124,19 +138,6 @@ class UserServiceImpl implements UserService, UserNameProvider {
             fireEntityChangeEvent(userUuid, EntityAction.DELETE);
         });
         return true;
-    }
-
-    @Override
-    public ResultPage<String> findUserNames(final FindUserNameCriteria criteria) {
-        final FindUserCriteria findUserCriteria = new FindUserCriteria(
-                criteria.getPageRequest(),
-                criteria.getSortList(),
-                criteria.getQuickFilterInput(),
-                false,
-                null);
-        final List<User> users = find(findUserCriteria);
-        final List<String> list = users.stream().map(User::getName).collect(Collectors.toList());
-        return new ResultPage<>(list);
     }
 
     @Override
@@ -184,7 +185,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
     }
 
     @Override
-    public List<String> getAssociates(final String filter) {
+    public List<UserName> getAssociates(final String filter) {
         final Set<User> userSet;
 
         final Predicate<User> userPredicate = user -> user.getUuid().length() > 5 && !user.isGroup();
@@ -198,7 +199,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
 
         } else {
             userSet = new HashSet<>();
-            getUserByName(securityContext.getUserId())
+            getUserBySubjectId(securityContext.getSubjectId())
                     .ifPresent(user -> {
                         userSet.add(user);
 
@@ -215,8 +216,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
         return userSet
                 .stream()
                 .filter(userPredicate)
-                .map(User::getName)
-                .sorted()
+                .map(User::asUserName)
                 .collect(Collectors.toList());
     }
 
@@ -224,7 +224,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
         EntityEvent.fire(
                 eventBus,
                 DocRef.builder()
-                        .name(user.getName())
+                        .name(user.getSubjectId())
                         .uuid(user.getUuid())
                         .type(UserDocRefUtil.USER)
                         .build(),

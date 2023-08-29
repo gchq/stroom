@@ -1240,9 +1240,19 @@
 }
 
 .welcomeViewImpl-buildInfo {
+    display: flex;
+    justify-content: flex-end;
     position: absolute;
     right: 5px;
     bottom: 5px;
+}
+
+.welcomeViewImpl-buildInfo > tbody > tr > td:first-child {
+    font-weight: bold;
+}
+
+.welcomeViewImpl-buildInfo > tbody > tr > td:last-child {
+    user-select: text;
 }
 
 .splashViewImpl-content {
@@ -1270,9 +1280,11 @@
 .chooserViewImpl-bottom {
     flex-grow: 1;
     max-height: 400px;
-    max-width: 390px;
+    max-width: 420px;
     overflow-x: hidden;
     overflow-y: auto;
+    padding: 0px 2px;
+    scrollbar-gutter: stable;
 }
 
 .chooserViewImpl-clearSelection {

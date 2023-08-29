@@ -11,6 +11,7 @@ import stroom.security.identity.token.KeyType;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.util.AuditUtil;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.Injector;
@@ -32,6 +33,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -46,8 +48,10 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
     private static final String USER_ID_ARG_NAME = "user";
     private static final String EXPIRY_DAYS_ARG_NAME = "expiresDays";
     private static final String OUTPUT_FILE_PATH_ARG_NAME = "outFile";
-
-    private static final String CLI_USER = "Stroom CLI";
+    private static final Set<String> ARGUMENT_NAMES = Set.of(
+            USER_ID_ARG_NAME,
+            EXPIRY_DAYS_ARG_NAME,
+            OUTPUT_FILE_PATH_ARG_NAME);
 
     private final Path configFile;
 
@@ -93,6 +97,11 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
     }
 
     @Override
+    public Set<String> getArgumentNames() {
+        return ARGUMENT_NAMES;
+    }
+
+    @Override
     protected void runCommand(final Bootstrap<Config> bootstrap,
                               final Namespace namespace,
                               final Config config,
@@ -103,38 +112,28 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
         final String userId = namespace.getString(USER_ID_ARG_NAME);
         final String outputPath = namespace.getString(OUTPUT_FILE_PATH_ARG_NAME);
 
-        try {
-            securityContext.asProcessingUser(() -> {
-                accountService.read(userId)
-                        .ifPresentOrElse(
-                                account -> {
-                                    final ApiKey apiKey = createApiKey(namespace, account);
-                                    if (outputApiKey(apiKey, outputPath)) {
-                                        final String msg = LogUtil.message("API key successfully created for user '{}'",
-                                                userId);
-                                        LOGGER.info(msg);
-                                        System.exit(0);
-                                    } else {
-                                        final String msg = LogUtil.message("API key for user '{}' could not be output",
-                                                userId);
-                                        logEvent(userId, true, msg);
-                                        System.exit(1);
-                                    }
-                                },
-                                () -> {
-                                    final String msg = LogUtil.message("Cannot issue API key as user account '{}' " +
-                                            "does not exist", userId);
-                                    LOGGER.info(msg);
-                                    logEvent(userId, false, msg);
-                                    System.exit(1);
-                                });
-            });
-            System.exit(0);
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-            logEvent(userId, false, e.getMessage());
-            System.exit(1);
-        }
+        accountService.read(userId)
+                .ifPresentOrElse(
+                        account -> {
+                            final ApiKey apiKey = createApiKey(namespace, account);
+                            if (outputApiKey(apiKey, outputPath)) {
+                                final String msg = LogUtil.message("API key successfully created for user '{}'",
+                                        userId);
+                                LOGGER.info(msg);
+                                System.exit(0);
+                            } else {
+                                final String msg = LogUtil.message("API key for user '{}' could not be output",
+                                        userId);
+                                logEvent(userId, true, msg);
+                                System.exit(1);
+                            }
+                        },
+                        () -> {
+                            final String msg = LogUtil.message("Cannot issue API key as user account '{}' " +
+                                    "does not exist", userId);
+                            logEvent(userId, false, msg);
+                            throw new RuntimeException(msg);
+                        });
     }
 
     private ApiKey createApiKey(final Namespace namespace, final Account account) {
@@ -157,17 +156,13 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
                 .subject(account.getUserId());
 
         final ApiKey apiKey = new ApiKey();
-        final long nowMillis = now.toInstant(ZoneOffset.UTC).toEpochMilli();
-        apiKey.setCreateTimeMs(nowMillis);
-        apiKey.setCreateUser(CLI_USER);
-        apiKey.setUpdateTimeMs(nowMillis);
-        apiKey.setUpdateUser(CLI_USER);
         apiKey.setUserId(account.getUserId());
         apiKey.setUserEmail(account.getUserId());
         apiKey.setType(KeyType.API.getText());
         apiKey.setData(tokenBuilder.build());
         apiKey.setExpiresOnMs(tokenBuilder.getExpirationTime().toEpochMilli());
         apiKey.setEnabled(true);
+        AuditUtil.stamp(securityContext, apiKey);
 
         // Register the API keu
         return apiKeyDao.create(account.getId(), apiKey);

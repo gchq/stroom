@@ -52,7 +52,8 @@ proxyConfig:
     name: null
     path: null
   forwardHttpDestinations:
-  - enabled: true
+  - addOpenIdAccessToken: false
+    enabled: true
     forwardChunkSize: "1M"
     forwardDelay: "PT0S"
     forwardTimeout: "PT30S"
@@ -80,8 +81,9 @@ proxyConfig:
     home: null
     temp: null
   proxyId: null
-  receiveDataConfig:
-    clientId: null
+  receive:
+    authenticationRequired: true
+    certificateAuthenticationEnabled: true
     metaTypes:
     - "Context"
     - "Raw Reference"
@@ -94,12 +96,35 @@ proxyConfig:
     - "Detections"
     - "Meta Data"
     - "Records"
-    publicKey: null
     receiptPolicyUuid: null
-    requireTokenAuthentication: false
+    tokenAuthenticationEnabled: false
   repository:
     repoDir: "repo"
     storingEnabled: true
+  security:
+    authentication:
+      authenticationRequired: true
+      openId:
+        authEndpoint: null
+        clientCredentialsScopes:
+        - "openid"
+        clientId: null
+        clientSecret: null
+        formTokenRequest: true
+        identityProviderType: "NO_IDP"
+        issuer: null
+        jwksUri: null
+        logoutEndpoint: null
+        logoutRedirectParamName: "post_logout_redirect_uri"
+        openIdConfigurationEndpoint: null
+        requestScopes:
+        - "openid"
+        - "email"
+        tokenEndpoint: null
+        uniqueIdentityClaim: "sub"
+        userDisplayNameClaim: "preferred_username"
+        validIssuers: []
+        validateAudience: true
   sqsConnectors:
   - awsProfileName: null
     awsRegionName: null
@@ -110,4 +135,3 @@ proxyConfig:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2
     forwardThreadCount: 10
-  useDefaultOpenIdCredentials: false

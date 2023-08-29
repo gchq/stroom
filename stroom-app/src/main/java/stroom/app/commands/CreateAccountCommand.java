@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -39,6 +40,15 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
     private static final String LAST_NAME_ARG_NAME = "lastName";
     private static final String NO_PASSWORD_CHANGE = "noPasswordChange";
     private static final String NEVER_EXPIRES_CHANGE_ARG_NAME = "neverExpires";
+
+    private static final Set<String> ARGUMENT_NAMES = Set.of(
+            USERNAME_ARG_NAME,
+            PASSWORD_ARG_NAME,
+            EMAIL_ARG_NAME,
+            FIRST_NAME_ARG_NAME,
+            LAST_NAME_ARG_NAME,
+            NO_PASSWORD_CHANGE,
+            NEVER_EXPIRES_CHANGE_ARG_NAME);
 
     private final Path configFile;
 
@@ -105,6 +115,11 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
     }
 
     @Override
+    public Set<String> getArgumentNames() {
+        return ARGUMENT_NAMES;
+    }
+
+    @Override
     protected void runCommand(final Bootstrap<Config> bootstrap,
                               final Namespace namespace,
                               final Config config,
@@ -114,32 +129,21 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
 
         final String username = namespace.getString(USERNAME_ARG_NAME);
 
-        securityContext.asProcessingUser(() -> {
-            try {
-                accountService.read(username)
-                        .ifPresentOrElse(
-                                account -> {
-                                    final String msg = LogUtil.message("An account for user '{}' already exists",
-                                            username);
-                                    LOGGER.error(msg);
-                                    logEvent(username, false, msg);
-                                    System.exit(1);
-                                },
-                                () -> {
-                                    createAccount(namespace, username);
-                                    final String msg = LogUtil.message("Account creation complete for user '{}'",
-                                            username);
-                                    LOGGER.info(msg);
-                                    logEvent(username, true, msg);
-                                    System.exit(0);
-                                });
-                System.exit(0);
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage());
-                logEvent(username, false, e.getMessage());
-                System.exit(1);
-            }
-        });
+        accountService.read(username)
+                .ifPresentOrElse(
+                        account -> {
+                            final String msg = LogUtil.message("An account for user '{}' already exists",
+                                    username);
+                            logEvent(username, false, msg);
+                            throw new RuntimeException(msg);
+                        },
+                        () -> {
+                            createAccount(namespace, username);
+                            final String msg = LogUtil.message("Account creation complete for user '{}'",
+                                    username);
+                            info(LOGGER, msg);
+                            logEvent(username, true, msg);
+                        });
     }
 
     private void createAccount(final Namespace namespace, final String username) {

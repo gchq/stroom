@@ -35,7 +35,7 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_TIME = "Time";
 
     @JsonProperty
-    private String userId;
+    private String ownerUuid;
     @JsonProperty
     private String dashboardUuid;
     @JsonProperty
@@ -55,23 +55,23 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
                                    @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                    @JsonProperty("name") final StringCriteria name,
                                    @JsonProperty("requiredPermission") final String requiredPermission,
-                                   @JsonProperty("userId") final String userId,
+                                   @JsonProperty("ownerUuid") final String ownerUuid,
                                    @JsonProperty("dashboardUuid") final String dashboardUuid,
                                    @JsonProperty("componentId") final String componentId,
                                    @JsonProperty("favourite") final Boolean favourite) {
         super(pageRequest, sortList, name, requiredPermission);
-        this.userId = userId;
+        this.ownerUuid = ownerUuid;
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
         this.favourite = favourite;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getOwnerUuid() {
+        return ownerUuid;
     }
 
-    public void setUserId(final String userId) {
-        this.userId = userId;
+    public void setOwnerUuid(final String ownerUuid) {
+        this.ownerUuid = ownerUuid;
     }
 
     public String getDashboardUuid() {
@@ -96,5 +96,15 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
 
     public void setFavourite(final Boolean favourite) {
         this.favourite = favourite;
+    }
+
+    @Override
+    public String toString() {
+        return "FindStoredQueryCriteria{" +
+                "userUuid='" + ownerUuid + '\'' +
+                ", dashboardUuid='" + dashboardUuid + '\'' +
+                ", componentId='" + componentId + '\'' +
+                ", favourite=" + favourite +
+                '}';
     }
 }

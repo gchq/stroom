@@ -6,9 +6,11 @@ import java.util.Optional;
 
 public interface UserPreferencesDao {
 
-    Optional<UserPreferences> fetch(String userId);
+    Optional<UserPreferences> fetch(final String userUuid);
 
-    int update(String userId, UserPreferences userPreferences);
+    int update(final String userUuid,
+               final String userIdentityForAudit,
+               final UserPreferences userPreferences);
 
-    int delete(String userId);
+    int delete(final String userUuid);
 }

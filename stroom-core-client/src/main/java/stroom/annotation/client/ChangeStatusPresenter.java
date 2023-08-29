@@ -43,14 +43,14 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         implements ChangeStatusUiHandlers {
 
     private final RestFactory restFactory;
-    private final ChooserPresenter statusPresenter;
+    private final ChooserPresenter<String> statusPresenter;
     private String currentStatus;
 
     @Inject
     public ChangeStatusPresenter(final EventBus eventBus,
                                  final ChangeStatusView view,
                                  final RestFactory restFactory,
-                                 final ChooserPresenter statusPresenter) {
+                                 final ChooserPresenter<String> statusPresenter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;

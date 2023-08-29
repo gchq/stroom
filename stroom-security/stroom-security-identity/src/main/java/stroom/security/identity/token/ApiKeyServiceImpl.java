@@ -7,6 +7,7 @@ import stroom.security.identity.account.AccountService;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.shared.PermissionNames;
+import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 
 import java.time.Instant;
@@ -53,8 +54,6 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     public ApiKey create(final CreateApiKeyRequest createApiKeyRequest) {
         checkPermission();
 
-        final String userId = securityContext.getUserId();
-
         final Optional<Integer> optionalAccountId = accountDao.getId(createApiKeyRequest.getUserId());
         final Integer accountId = optionalAccountId.orElseThrow(() ->
                 new NoSuchUserException("Cannot find user to associate with this API key!"));
@@ -62,8 +61,6 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         final Instant expiryInstant = createApiKeyRequest.getExpiresOnMs() == null
                 ? null
                 : Instant.ofEpochMilli(createApiKeyRequest.getExpiresOnMs());
-
-        final long now = System.currentTimeMillis();
 
         // TODO This assumes we have only one clientId. In theory we may have multiple
         //   and then the UI would need to manage the client IDs in use
@@ -79,10 +76,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         final String data = tokenBuilder.build();
 
         final ApiKey apiKey = new ApiKey();
-        apiKey.setCreateTimeMs(now);
-        apiKey.setCreateUser(userId);
-        apiKey.setUpdateTimeMs(now);
-        apiKey.setUpdateUser(userId);
+        AuditUtil.stamp(securityContext, apiKey);
         apiKey.setUserId(createApiKeyRequest.getUserId());
         apiKey.setType(createApiKeyRequest.getTokenType());
         apiKey.setData(data);
@@ -131,7 +125,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     @Override
     public int toggleEnabled(int id, boolean isEnabled) {
         checkPermission();
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
 
         Optional<Account> updatingUser = accountService.read(userId);
 
@@ -142,7 +136,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "You do not have permission to manage users");
         }
     }
 }

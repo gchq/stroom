@@ -22,7 +22,9 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.UserNameResource;
+import stroom.security.user.api.UserNameService;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -38,8 +40,29 @@ class UserNameResourceImpl implements UserNameResource {
     }
 
     @Override
-    public ResultPage<String> find(final FindUserNameCriteria criteria) {
+    public ResultPage<UserName> find(final FindUserNameCriteria criteria) {
         return userNameServiceProvider.get().find(criteria);
+    }
+
+    @Override
+    public UserName getByDisplayName(final String displayName) {
+        return userNameServiceProvider.get()
+                .getByDisplayName(displayName)
+                .orElse(null);
+    }
+
+    @Override
+    public UserName getBySubjectId(final String subjectId) {
+        return userNameServiceProvider.get()
+                .getBySubjectId(subjectId)
+                .orElse(null);
+    }
+
+    @Override
+    public UserName getByUuid(final String userUuid) {
+        return userNameServiceProvider.get()
+                .getByUuid(userUuid)
+                .orElse(null);
     }
 }
 

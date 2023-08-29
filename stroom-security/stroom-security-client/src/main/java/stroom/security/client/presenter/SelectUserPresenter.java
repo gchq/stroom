@@ -27,6 +27,9 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -45,28 +48,43 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class SelectUserPresenter extends MyPresenterWidget<UserListView> implements UserListUiHandlers {
+/**
+ * For selecting a username to add a user to a permissions set or selecting a user to add to a group.
+ * For internal IDP this will list users from account and stroom_user combined.
+ * For external IDP this will list users from stroom_user only and users on the IDP but not in
+ * stroom_user will have to be manually added to the list.
+ */
+public class SelectUserPresenter
+        extends MyPresenterWidget<UserListView>
+        implements UserListUiHandlers {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final MyDataGrid<String> dataGrid;
-    private final MultiSelectionModelImpl<String> selectionModel;
+    private final MyDataGrid<UserName> dataGrid;
+    private final MultiSelectionModelImpl<UserName> selectionModel;
     private final RestFactory restFactory;
-    private final ButtonView newButton;
-    private final ManageNewEntityPresenter newPresenter;
+    private ButtonView newButton = null;
+    private ButtonView addMultipleButton = null;
+    private final CreateNewUserPresenter newPresenter;
+    private final CreateMultipleUsersPresenter createMultipleUsersPresenter;
+    private final UiConfigCache uiConfigCache;
     private UserNameDataProvider dataProvider;
     private FindUserNameCriteria findUserCriteria;
-    private String selected;
+    private UserName selected;
 
     @Inject
     public SelectUserPresenter(final EventBus eventBus,
                                final UserListView userListView,
                                final PagerView pagerView,
                                final RestFactory restFactory,
-                               final ManageNewEntityPresenter newPresenter) {
+                               final CreateNewUserPresenter newPresenter,
+                               final CreateMultipleUsersPresenter createMultipleUsersPresenter,
+                               final UiConfigCache uiConfigCache) {
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.newPresenter = newPresenter;
+        this.createMultipleUsersPresenter = createMultipleUsersPresenter;
+        this.uiConfigCache = uiConfigCache;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -76,37 +94,74 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         userListView.setUiHandlers(this);
 
         // Icon
-        dataGrid.addColumn(new Column<String, Preset>(new SvgCell()) {
+        dataGrid.addColumn(new Column<UserName, Preset>(new SvgCell()) {
             @Override
-            public Preset getValue(final String userRef) {
+            public Preset getValue(final UserName userRef) {
                 return SvgPresets.USER;
             }
         }, "</br>", 20);
 
-        // Name.
-        dataGrid.addResizableColumn(new Column<String, String>(new TextCell()) {
+        // Display Name
+        final Column<UserName, String> displayNameCol = new Column<UserName, String>(new TextCell()) {
             @Override
-            public String getValue(final String userRef) {
-                return userRef;
+            public String getValue(final UserName userRef) {
+                return GwtNullSafe.requireNonNullElse(userRef.getDisplayName(), userRef.getSubjectId());
             }
-        }, "Name", 350);
+        };
+        dataGrid.addResizableColumn(displayNameCol, "Display Name", 200);
+
+        // Full name
+        final Column<UserName, String> fullNameCol = new Column<UserName, String>(new TextCell()) {
+            @Override
+            public String getValue(final UserName userRef) {
+                return userRef.getFullName();
+            }
+        };
+        dataGrid.addResizableColumn(fullNameCol, "Full Name", 350);
+
+        // Subject ID (aka the unique ID for the user)
+        dataGrid.addResizableColumn(new Column<UserName, String>(new TextCell()) {
+            @Override
+            public String getValue(final UserName userRef) {
+                return userRef.getSubjectId();
+            }
+        }, "Unique User Identity", 300);
+
 
         dataGrid.addEndColumn(new EndColumn<>());
-        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
+        // Only want to let user create a stroom user if they are using an external IDP.
+        // If internal then all users are available to be picked from the account tbl.
+        uiConfigCache.get()
+                .onSuccess(config -> {
+                    if (config.isExternalIdentityProvider()) {
+                        newButton = pagerView.addButton(
+                                SvgPresets.ADD.title("Add Identity Provider User"));
+                        addMultipleButton = pagerView.addButton(
+                                SvgPresets.ADD_MULTIPLE.title("Add Multiple Identity Provider Users"));
+                    }
+                });
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(newButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onNew();
-            }
-        }));
+        GwtNullSafe.consume(newButton, button ->
+                registerHandler(newButton.addClickHandler(event -> {
+                    if (MouseUtil.isPrimary(event)) {
+                        onNew();
+                    }
+                })));
+        // addMultipleButton not always present
+        GwtNullSafe.consume(addMultipleButton, button ->
+                registerHandler(addMultipleButton.addClickHandler(event -> {
+                    if (MouseUtil.isPrimary(event)) {
+                        onAddMultiple();
+                    }
+                })));
         registerHandler(selectionModel.addSelectionHandler(event -> {
+            selected = selectionModel.getSelected();
             if (event.getSelectionType().isDoubleSelect()) {
-                selected = selectionModel.getSelected();
-                if (selected != null && selected.length() > 0) {
+                if (selected != null) {
                     HidePopupEvent.builder(SelectUserPresenter.this).fire();
                 }
             }
@@ -116,13 +171,34 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
     private void onNew() {
         newPresenter.show(e -> {
             if (e.isOk()) {
-                selected = newPresenter.getName();
-                if (selected != null && selected.length() > 0) {
+                selected = newPresenter.getUserName();
+                if (selected != null) {
                     HidePopupEvent.builder(this).fire();
                 }
             }
             e.hide();
         });
+    }
+
+    private void onAddMultiple() {
+        createMultipleUsersPresenter.show(e -> {
+            if (e.isOk()) {
+                HidePopupEvent.builder(this).fire();
+            }
+            e.hide();
+        });
+//        final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers() {
+//            @Override
+//            public void onHideRequest(final boolean autoClose, final boolean ok) {
+//                if (ok) {
+//                    // Added multiple so don't select anything
+//                    hide(false, true, null);
+//                }
+//                createMultipleUsersPresenter.hide();
+//            }
+//        };
+//
+//        createMultipleUsersPresenter.show(hidePopupUiHandlers);
     }
 
     @Override
@@ -151,7 +227,7 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         final FindUserNameCriteria findUserCriteria = new FindUserNameCriteria();
         setup(findUserCriteria);
 
-        final PopupSize popupSize = PopupSize.resizable(400, 400);
+        final PopupSize popupSize = PopupSize.resizable(1_000, 400);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -159,13 +235,13 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
                 .onShow(e -> getView().focus())
                 .onHide(e -> {
                     if (e.isOk()) {
-                        final String selected = getSelected();
+                        final UserName selected = getSelected();
                         if (selected != null) {
                             final Rest<User> rest = restFactory.create();
                             rest
                                     .onSuccess(userConsumer)
                                     .call(USER_RESOURCE)
-                                    .create(selected, false);
+                                    .createUser(selected);
                         }
                     }
                 })
@@ -183,11 +259,11 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         dataProvider.refresh();
     }
 
-    public String getSelected() {
+    public UserName getSelected() {
         return selected;
     }
 
-    public DataGrid<String> getDataGrid() {
+    public DataGrid<UserName> getDataGrid() {
         return dataGrid;
     }
 }

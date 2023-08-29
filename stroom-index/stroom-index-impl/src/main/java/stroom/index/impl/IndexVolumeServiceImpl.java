@@ -306,7 +306,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public IndexVolume create(IndexVolume indexVolume) {
-        AuditUtil.stamp(securityContext.getUserId(), indexVolume);
+        AuditUtil.stamp(securityContext, indexVolume);
 
         final List<String> names = indexVolumeDao.getAll().stream().map(i -> Strings.isNullOrEmpty(i.getNodeName())
                         ? ""
@@ -343,7 +343,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         loadedIndexVolume.setBytesLimit(indexVolume.getBytesLimit());
         loadedIndexVolume.setState(indexVolume.getState());
 
-        AuditUtil.stamp(securityContext.getUserId(), loadedIndexVolume);
+        AuditUtil.stamp(securityContext, loadedIndexVolume);
 
         final IndexVolume result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.update(loadedIndexVolume));

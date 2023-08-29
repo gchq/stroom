@@ -91,9 +91,9 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     public final TableField<AnnotationRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation.assigned_to</code>.
+     * The column <code>stroom.annotation.assigned_to_uuid</code>.
      */
-    public final TableField<AnnotationRecord, String> ASSIGNED_TO = createField(DSL.name("assigned_to"), SQLDataType.VARCHAR(255), this, "");
+    public final TableField<AnnotationRecord, String> ASSIGNED_TO_UUID = createField(DSL.name("assigned_to_uuid"), SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.annotation.comment</code>.

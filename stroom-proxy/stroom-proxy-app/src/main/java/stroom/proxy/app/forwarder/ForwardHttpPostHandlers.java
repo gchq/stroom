@@ -7,9 +7,11 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
+import stroom.security.api.UserIdentityFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Map;
 import java.util.function.Consumer;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -19,15 +21,18 @@ public class ForwardHttpPostHandlers implements StreamHandlers {
     private final String userAgentString;
     private final ForwardHttpPostConfig config;
     private final SSLSocketFactory sslSocketFactory;
+    private final UserIdentityFactory userIdentityFactory;
 
     public ForwardHttpPostHandlers(final LogStream logStream,
                                    final ForwardHttpPostConfig config,
                                    final String userAgentString,
-                                   final SSLSocketFactory sslSocketFactory) {
+                                   final SSLSocketFactory sslSocketFactory,
+                                   final UserIdentityFactory userIdentityFactory) {
         this.logStream = logStream;
         this.userAgentString = userAgentString;
         this.sslSocketFactory = sslSocketFactory;
         this.config = config;
+        this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
@@ -40,6 +45,10 @@ public class ForwardHttpPostHandlers implements StreamHandlers {
         }
         AttributeMapUtil.addFeedAndType(attributeMap, feedName, typeName);
 
+        // We need to add the authentication token to our headers
+        final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
+        attributeMap.putAll(authHeaders);
+
         ForwardStreamHandler streamHandler = null;
         try {
             streamHandler = new ForwardStreamHandler(
@@ -47,7 +56,9 @@ public class ForwardHttpPostHandlers implements StreamHandlers {
                     config,
                     sslSocketFactory,
                     userAgentString,
-                    attributeMap);
+                    attributeMap,
+                    userIdentityFactory);
+
             consumer.accept(streamHandler);
             streamHandler.close();
         } catch (final RuntimeException e) {

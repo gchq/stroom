@@ -209,7 +209,8 @@ public class SampleDataGenerator {
                             "emotionalState"))
                     .addFieldDefinition(DataGenerator.fakerField(
                             "address",
-                            faker -> faker.address().fullAddress()))
+                            faker ->
+                                    faker.address().fullAddress()))
                     .addFieldDefinition(DataGenerator.fakerField(
                             "company",
                             faker -> faker.company().name()))

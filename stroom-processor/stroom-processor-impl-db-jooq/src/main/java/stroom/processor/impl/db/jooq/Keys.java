@@ -4,6 +4,12 @@
 package stroom.processor.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.impl.db.jooq.tables.ProcessorFeed;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
@@ -16,12 +22,6 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord
 import stroom.processor.impl.db.jooq.tables.records.ProcessorNodeRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**

@@ -13,12 +13,18 @@ dependencies {
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-common-impl')
     implementation project(':stroom-security:stroom-security-openid-api')
+    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.caffeine
+    implementation libs.commons_csv
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_lifecycle
+    implementation libs.dropwizard_validation
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice5
@@ -37,6 +43,7 @@ dependencies {
     implementation libs.ws_rs_api
 
     testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation libs.assertj_core
     testImplementation libs.dropwizard_testing
     testImplementation libs.junit_jupiter_api

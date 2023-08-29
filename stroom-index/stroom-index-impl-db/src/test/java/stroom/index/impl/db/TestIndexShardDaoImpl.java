@@ -144,14 +144,14 @@ class TestIndexShardDaoImpl {
         indexVolume.setNodeName(nodeName);
         indexVolume.setPath(path);
         indexVolume.setIndexVolumeGroupId(indexVolumeGroup.getId());
-        AuditUtil.stamp("test", indexVolume);
+        AuditUtil.stamp(() -> "test", indexVolume);
         return indexVolumeDao.create(indexVolume);
     }
 
     private IndexVolumeGroup createGroup(final String name) {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
-        AuditUtil.stamp("test", indexVolumeGroup);
+        AuditUtil.stamp(() -> "test", indexVolumeGroup);
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }

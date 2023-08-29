@@ -104,7 +104,7 @@ public class AuthenticateLogImpl implements AuthenticateLog {
                 "The user has logged out.",
                 AuthenticateEventAction.builder()
                         .withUser(User.builder()
-                                .withId(securityContext.getUserId())
+                                .withId(securityContext.getUserIdentityForAudit())
                                 .build())
                         .withAction(AuthenticateAction.LOGOFF)
                         .build());
@@ -130,7 +130,7 @@ public class AuthenticateLogImpl implements AuthenticateLog {
                 "User reset their password",
                 AuthenticateEventAction.builder()
                         .withUser(User.builder()
-                                .withId(securityContext.getUserId())
+                                .withId(securityContext.getUserIdentityForAudit())
                                 .build())
                         .withAction(AuthenticateAction.RESET_PASSWORD)
                         .build());

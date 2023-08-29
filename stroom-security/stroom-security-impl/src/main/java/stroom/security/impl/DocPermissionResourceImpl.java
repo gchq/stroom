@@ -22,7 +22,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
 import stroom.security.shared.FilterUsersRequest;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.SimpleUser;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
@@ -31,6 +30,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserName;
 
 import event.logging.AuthorisationActionType;
 import event.logging.AuthoriseEventAction;
@@ -67,8 +67,10 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
 
-    private static final FilterFieldMappers<SimpleUser> SIMPLE_USERS_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getName));
+    private static final FilterFieldMappers<UserName> USER_NAMES_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, UserName::getSubjectId),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_DISPLAY_NAME, UserName::getDisplayName),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, UserName::getFullName));
 
     private final Provider<UserService> userServiceProvider;
     private final Provider<DocumentPermissionServiceImpl> documentPermissionServiceProvider;
@@ -134,7 +136,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
         logPermissionChangeError("DocPermissionResourceImpl.changeDocumentPermissions",
                 request.getDocRef(), errorMessage);
-        throw new PermissionException(getCurrentUserId(), errorMessage);
+        throw new PermissionException(getCurrentUserIdForDisplay(), errorMessage);
 
     }
 
@@ -150,7 +152,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
             logPermissionChangeError("DocPermissionResourceImpl.copyPermissionFromParent",
                     request.getDocRef(), errorMessage);
-            throw new PermissionException(getCurrentUserId(), errorMessage);
+            throw new PermissionException(getCurrentUserIdForDisplay(), errorMessage);
         }
 
         Optional<ExplorerNode> parent = explorerNodeServiceProvider.get().getParent(docRef);
@@ -169,8 +171,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             return documentPermissionServiceProvider.get().getPermissionsForDocument(request.getDocRef().getUuid());
         }
 
-        throw new PermissionException(getCurrentUserId(), "Insufficient privileges to fetch " +
-                "permissions for this document");
+        throw new PermissionException(
+                getCurrentUserIdForDisplay(),
+                "Insufficient privileges to fetch permissions for this document");
     }
 
     @Override
@@ -240,7 +243,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Limited benefit in logging the filtering of a list of user names
-    public List<SimpleUser> filterUsers(final FilterUsersRequest filterUsersRequest) {
+    public List<UserName> filterUsers(final FilterUsersRequest filterUsersRequest) {
         if (filterUsersRequest.getUsers() == null) {
             return null;
         } else {
@@ -248,8 +251,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             // consistently across the app.
             return QuickFilterPredicateFactory.filterStream(
                             filterUsersRequest.getQuickFilterInput(),
-                            SIMPLE_USERS_FILTER_FIELD_MAPPERS,
-                            filterUsersRequest.getUsers().stream())
+                            USER_NAMES_FILTER_FIELD_MAPPERS,
+                            NullSafe.stream(filterUsersRequest.getUsers()))
                     .collect(Collectors.toList());
         }
     }
@@ -358,11 +361,11 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                             .build());
                 } else if (user.get().isGroup()) {
                     permissionBuilder.withGroup(Group.builder()
-                            .withId(user.get().getName())
+                            .withId(user.get().getSubjectId())
                             .build());
                 } else {
                     permissionBuilder.withUser(event.logging.User.builder()
-                            .withId(user.get().getName())
+                            .withId(user.get().getSubjectId())
                             .build());
                 }
 
@@ -370,7 +373,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 // for custom perms. Waiting for https://github.com/gchq/event-logging-schema/issues/76
                 user.ifPresent(userOrGroup -> {
                     final Data userData = Data.builder()
-                            .withName(userOrGroup.getName())
+                            .withName(userOrGroup.getSubjectId())
                             .withValue(userOrGroup.isGroup()
                                     ? "group"
                                     : "user")
@@ -616,8 +619,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         }
     }
 
-    private String getCurrentUserId() {
-        return securityContextProvider.get().getUserId();
+    private String getCurrentUserIdForDisplay() {
+        return securityContextProvider.get().getUserIdentityForAudit();
     }
 
     private void logPermissionChangeError(final String typeId,

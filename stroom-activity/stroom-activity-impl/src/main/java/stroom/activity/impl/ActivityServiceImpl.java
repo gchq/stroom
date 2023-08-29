@@ -60,12 +60,12 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity create() {
         return securityContext.secureResult(() -> {
-            final String userId = securityContext.getUserId();
+            final String userId = securityContext.getSubjectId();
 
             final Activity activity = Activity.create();
             activity.setUserId(userId);
 
-            AuditUtil.stamp(userId, activity);
+            AuditUtil.stamp(securityContext, activity);
 
             return dao.create(activity);
         });
@@ -76,7 +76,7 @@ public class ActivityServiceImpl implements ActivityService {
         return securityContext.secureResult(() -> {
             final Activity result = dao.fetch(id).orElseThrow(() ->
                     new EntityServiceException("Activity not found with id=" + id));
-            if (!securityContext.isProcessingUser() && !result.getUserId().equals(securityContext.getUserId())) {
+            if (!securityContext.isProcessingUser() && !result.getUserId().equals(securityContext.getSubjectId())) {
                 throw new EntityServiceException("Attempt to read another persons activity");
             }
 
@@ -88,11 +88,11 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity update(final Activity activity) {
         return securityContext.secureResult(() -> {
-            if (!securityContext.getUserId().equals(activity.getUserId())) {
+            if (!securityContext.getSubjectId().equals(activity.getUserId())) {
                 throw new EntityServiceException("Attempt to update another persons activity");
             }
 
-            AuditUtil.stamp(securityContext.getUserId(), activity);
+            AuditUtil.stamp(securityContext, activity);
             return dao.update(activity);
         });
     }
@@ -179,7 +179,7 @@ public class ActivityServiceImpl implements ActivityService {
         FindActivityCriteria criteria = new FindActivityCriteria();
 
         // Only find activities for this user
-        criteria.setUserId(securityContext.getUserId());
+        criteria.setUserId(securityContext.getSubjectId());
 
         LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserId()));
 

@@ -16,7 +16,7 @@
 
 package stroom.ui.config.client;
 
-import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -25,9 +25,9 @@ import com.google.gwt.event.shared.HasHandlers;
 public class PropertyChangeEvent extends GwtEvent<PropertyChangeEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final UiConfig clientProperties;
+    private final ExtendedUiConfig clientProperties;
 
-    private PropertyChangeEvent(final UiConfig clientProperties) {
+    private PropertyChangeEvent(final ExtendedUiConfig clientProperties) {
         this.clientProperties = clientProperties;
     }
 
@@ -35,7 +35,7 @@ public class PropertyChangeEvent extends GwtEvent<PropertyChangeEvent.Handler> {
         fire(handlers, null);
     }
 
-    public static void fire(final HasHandlers handlers, final UiConfig clientProperties) {
+    public static void fire(final HasHandlers handlers, final ExtendedUiConfig clientProperties) {
         handlers.fireEvent(new PropertyChangeEvent(clientProperties));
     }
 
@@ -56,7 +56,7 @@ public class PropertyChangeEvent extends GwtEvent<PropertyChangeEvent.Handler> {
         handler.onChange(this);
     }
 
-    public UiConfig getProperties() {
+    public ExtendedUiConfig getProperties() {
         return clientProperties;
     }
 

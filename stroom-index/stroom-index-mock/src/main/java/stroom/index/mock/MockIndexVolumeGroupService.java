@@ -29,7 +29,7 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     public IndexVolumeGroup create() {
         final IndexVolumeGroup group = new IndexVolumeGroup();
         group.setName("New name");
-        AuditUtil.stamp(TEST_USER, group);
+        AuditUtil.stamp(() -> TEST_USER, group);
         groups.add(group);
         return group;
     }
@@ -38,7 +38,7 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     public IndexVolumeGroup getOrCreate(final String name) {
         final IndexVolumeGroup group = new IndexVolumeGroup();
         group.setName(name);
-        AuditUtil.stamp(TEST_USER, group);
+        AuditUtil.stamp(() -> TEST_USER, group);
         groups.add(group);
         return group;
     }

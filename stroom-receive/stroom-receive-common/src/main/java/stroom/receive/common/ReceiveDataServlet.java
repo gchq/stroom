@@ -17,6 +17,7 @@
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMapUtil;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
@@ -56,10 +57,13 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
             DATA_FEED_PATH_PART + "/*");
 
     private final Provider<RequestHandler> requestHandlerProvider;
+    private final CertificateExtractor certificateExtractor;
 
     @Inject
-    ReceiveDataServlet(final Provider<RequestHandler> requestHandlerProvider) {
+    ReceiveDataServlet(final Provider<RequestHandler> requestHandlerProvider,
+                       final CertificateExtractor certificateExtractor) {
         this.requestHandlerProvider = requestHandlerProvider;
+        this.certificateExtractor = certificateExtractor;
     }
 
     /**
@@ -98,7 +102,7 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
         } catch (final RuntimeException e) {
             final StroomStreamException stroomStreamException =
                     StroomStreamException.create(e,
-                            AttributeMapUtil.create(request));
+                            AttributeMapUtil.create(request, certificateExtractor));
             stroomStreamException.sendErrorResponse(response);
         }
     }

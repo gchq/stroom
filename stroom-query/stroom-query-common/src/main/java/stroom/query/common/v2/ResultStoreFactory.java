@@ -30,13 +30,15 @@ public final class ResultStoreFactory {
      */
     public ResultStore create(final SearchRequestSource searchRequestSource,
                               final CoprocessorsImpl coprocessors) {
-        final String userId = securityContext.getUserId();
-        Objects.requireNonNull(userId, "No user is logged in");
+        final String userUuid = securityContext.getUserUuid();
+        final String createUser = securityContext.getUserIdentityForAudit();
+        Objects.requireNonNull(userUuid, "No user is logged in");
 
         return new ResultStore(
                 searchRequestSource,
                 sizesProvider,
-                userId,
+                userUuid,
+                createUser,
                 coprocessors,
                 nodeInfo.getThisNodeName(),
                 resultStoreSettingsFactory.get());
