@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.54] - 2023-08-29
+
+* Change DB migrations to use dynamic SQL to stop them failing during the build of a new DB.
+
+
 ## [v7.2-beta.53] - 2023-08-29
 
 * Issue **#3624** : Add display name and full name to session list servlet.
@@ -5824,7 +5829,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.53...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.54...HEAD
+[v7.2-beta.54]: https://github.com/gchq/stroom/compare/v7.2-beta.53...v7.2-beta.54
 [v7.2-beta.53]: https://github.com/gchq/stroom/compare/v7.2-beta.52...v7.2-beta.53
 [v7.2-beta.52]: https://github.com/gchq/stroom/compare/v7.2-beta.51...v7.2-beta.52
 [v7.2-beta.51]: https://github.com/gchq/stroom/compare/v7.2-beta.50...v7.2-beta.51
