@@ -12,6 +12,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.2-beta.53] - 2023-08-29
+
+* Issue **#3624** : Add display name and full name to session list servlet.
+
+* Change document permission errors to include the document name.
+
+* Change processor filters to use a dedicated owner_uuid column instead of using create_user.
+
+* Change `currentUser()` and `current-user()` functions to take an arg for the name type `(display|subject|full)`.
+
+* Issue **#3117** : Change `annotation:CreatedOn` and `annotation:UpdatedOn` to return dates rather then millis since epoch.
+
+* Fix dashboard column `annotation:UpdatedBy` returning a date. Now returns the user display name.
+
+* Issue **#3709** : Fix data source info not appearing in the query helper if the data source has no description.
+
 * DB Migration : stroom-annotation - `V07_02_00_005__annotation_assigned_migration_to_uuid.sql`
 
 * DB Migration : stroom-annotation - `V07_02_00_010__annotation_entry_assigned_migration_to_uuid.sql`
@@ -5807,7 +5824,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.52...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.53...HEAD
+[v7.2-beta.53]: https://github.com/gchq/stroom/compare/v7.2-beta.52...v7.2-beta.53
 [v7.2-beta.52]: https://github.com/gchq/stroom/compare/v7.2-beta.51...v7.2-beta.52
 [v7.2-beta.51]: https://github.com/gchq/stroom/compare/v7.2-beta.50...v7.2-beta.51
 [v7.2-beta.50]: https://github.com/gchq/stroom/compare/v7.2-beta.49...v7.2-beta.50
