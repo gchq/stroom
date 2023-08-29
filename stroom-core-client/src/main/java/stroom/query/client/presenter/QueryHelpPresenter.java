@@ -587,7 +587,8 @@ public class QueryHelpPresenter
             queryHelpDataSupplier.fetchDataSourceDescription(
                     ((DataSourceHelpItem) queryHelpItem).getDocRef(),
                     optMarkdown -> {
-                        final SafeHtml combinedSafeHtml = optMarkdown.filter(markdown -> !GwtNullSafe.isBlankString(markdown))
+                        final SafeHtml combinedSafeHtml = optMarkdown.filter(markdown ->
+                                        !GwtNullSafe.isBlankString(markdown))
                                 .map(markdown -> {
                                     final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
                                             markdown);
