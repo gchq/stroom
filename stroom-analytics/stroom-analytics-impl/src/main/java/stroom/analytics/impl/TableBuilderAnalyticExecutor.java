@@ -461,18 +461,21 @@ public class TableBuilderAnalyticExecutor {
             final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
             CurrentDbState currentDbState = lmdbDataStore.sync();
 
-            // Remember meta load state.
-            updateTrackerWithLmdbState(analytic.trackerData, currentDbState);
+            // If we don't have any data in LMDB then the current DB state will be null.
+            if (currentDbState != null) {
+                // Remember meta load state.
+                updateTrackerWithLmdbState(analytic.trackerData, currentDbState);
 
-            // Now execute notifications.
-            executeLmdbNotifications(
-                    analytic,
-                    dataStore,
-                    currentDbState,
-                    parentTaskContext);
+                // Now execute notifications.
+                executeLmdbNotifications(
+                        analytic,
+                        dataStore,
+                        currentDbState,
+                        parentTaskContext);
 
-            // Delete old data from the DB.
-            applyDataRetentionRules(lmdbDataStore, analytic.analyticProcessConfig);
+                // Delete old data from the DB.
+                applyDataRetentionRules(lmdbDataStore, analytic.analyticProcessConfig);
+            }
         }
     }
 
