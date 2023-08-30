@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -368,6 +369,8 @@ public class ExplorerNode implements HasDisplayValue {
     // --------------------------------------------------------------------------------
 
 
+    @JsonInclude(Include.NON_NULL)
+    @JsonPropertyOrder(alphabetic = true)
     @SuppressWarnings("ClassCanBeRecord") // Cos GWT
     public static class NodeInfo implements Comparable<NodeInfo> {
 
