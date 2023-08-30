@@ -309,6 +309,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     void selectAll() {
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<ExplorerNode> {
 
         public ExplorerTreeSelectionEventManager(final AbstractHasData<ExplorerNode> cellTable) {

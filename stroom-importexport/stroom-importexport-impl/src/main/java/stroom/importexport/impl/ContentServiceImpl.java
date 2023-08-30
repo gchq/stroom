@@ -16,6 +16,7 @@
 
 package stroom.importexport.impl;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.api.ExportSummary;
@@ -44,6 +45,7 @@ import io.vavr.Tuple3;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -145,6 +147,11 @@ class ContentServiceImpl implements ContentService {
     @Override
     public QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> fetchBrokenDependencies() {
+        return dependencyService.getBrokenDependencies();
     }
 
     @Override

@@ -30,6 +30,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -38,6 +39,7 @@ import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
+import stroom.importexport.api.ContentService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
@@ -45,10 +47,12 @@ import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +80,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerServiceImpl.class);
 
+
+    private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
     private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
@@ -88,6 +94,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final ExplorerEventLog explorerEventLog;
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
     private final Provider<ExplorerFavService> explorerFavService;
+    private final Provider<ContentService> contentServiceProvider;
+
+    private volatile Map<DocRef, Set<DocRef>> brokenDependenciesMap = Collections.emptyMap();
+    private volatile long brokenDepsNextUpdateEpochMs = 0L;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -96,7 +106,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog,
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
-                        final Provider<ExplorerFavService> explorerFavService) {
+                        final Provider<ExplorerFavService> explorerFavService,
+                        final Provider<ContentService> contentServiceProvider) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -104,6 +115,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
         this.explorerFavService = explorerFavService;
+        this.contentServiceProvider = contentServiceProvider;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -143,6 +155,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             // Create the predicate for the current filter value
             final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                     filter.getNameFilter(), FIELD_MAPPERS);
+            final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
 
             addDescendants(
                     null,
@@ -154,7 +167,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     false,
                     allOpenItems,
                     userFavourites,
-                    0);
+                    0,
+                    brokenDepsMap);
 
             // Sort the tree model
             filteredModel.sort(this::getPriority);
@@ -197,6 +211,19 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
+    }
+
+    private Map<DocRef, Set<DocRef>> getBrokenDependenciesMap() {
+        if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
+            synchronized (this) {
+                if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
+                    LOGGER.debug("Updating broken dependencies map");
+                    brokenDependenciesMap = contentServiceProvider.get().fetchBrokenDependencies();
+                    brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
+                }
+            }
+        }
+        return brokenDependenciesMap;
     }
 
     private static List<ExplorerNode> openRootNodesWithChildren(final List<ExplorerNode> rootNodes,
@@ -481,17 +508,43 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
     }
 
-    private boolean addDescendants(final ExplorerNode rootNode,
-                                   final ExplorerNode parent,
-                                   final TreeModel treeModelIn,
-                                   final FilteredTreeModel treeModelOut,
-                                   final ExplorerTreeFilter filter,
-                                   final Predicate<DocRef> filterPredicate,
-                                   final boolean ignoreNameFilter,
-                                   final Set<ExplorerNodeKey> allOpenItems,
-                                   final Set<String> userFavourites,
-                                   final int currentDepth) {
+    private Optional<Severity> getMaxSeverity(final TreeModel treeModelIn,
+                                              final ExplorerNode node,
+                                              final Map<DocRef, Set<DocRef>> brokenDepsMap) {
+        final List<ExplorerNode> children = treeModelIn.getChildren(node);
+
+        Severity maxSeverity = null;
+        if (NullSafe.hasItems(children)) {
+            for (final ExplorerNode child : children) {
+                // Recurse
+                final Severity childMaxSeverity = getMaxSeverity(treeModelIn, child, brokenDepsMap)
+                        .orElse(null);
+                maxSeverity = Severity.getMaxSeverity(maxSeverity, childMaxSeverity).orElse(null);
+            }
+        } else {
+            if (NullSafe.test(node, ExplorerNode::getDocRef, brokenDepsMap::containsKey)) {
+                // Missing dep is an ERROR
+                maxSeverity = Severity.getMaxSeverity(maxSeverity, Severity.ERROR)
+                        .orElse(null);
+            }
+        }
+
+        return Optional.ofNullable(maxSeverity);
+    }
+
+    private AddDescendantsResult addDescendants(final ExplorerNode rootNode,
+                                                final ExplorerNode parent,
+                                                final TreeModel treeModelIn,
+                                                final FilteredTreeModel treeModelOut,
+                                                final ExplorerTreeFilter filter,
+                                                final Predicate<DocRef> filterPredicate,
+                                                final boolean ignoreNameFilter,
+                                                final Set<ExplorerNodeKey> allOpenItems,
+                                                final Set<String> userFavourites,
+                                                final int currentDepth,
+                                                final Map<DocRef, Set<DocRef>> brokenDepsMap) {
         int added = 0;
+        Severity maxSeverity = null;
 
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
@@ -504,11 +557,16 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             while (iterator.hasNext() && (addAllChildren || added == 0)) {
                 final ExplorerNode child = iterator.next();
 
+                final Severity childMaxSeverity = getMaxSeverity(treeModelIn, child, brokenDepsMap)
+                        .orElse(null);
+
                 // Decorate the child with the root parent node, so the same child can be referenced in multiple
                 // parent roots (e.g. System or Favourites)
-                final ExplorerNode childWithParent = child.copy()
+                ExplorerNode childWithParent = child.copy()
                         .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
                         .isFavourite(userFavourites.contains(child.getUuid()))
+                        .clearNodeInfo()
+                        .addNodeInfo(buildNodeInfo(child.getDocRef(), brokenDepsMap))
                         .build();
 
                 // We don't want to filter child items if the parent folder matches the name filter.
@@ -516,7 +574,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to
                 // include this as an ancestor.
-                final boolean hasChildren = addDescendants(
+                final AddDescendantsResult result = addDescendants(
                         Objects.requireNonNullElse(rootNode, childWithParent),
                         childWithParent,
                         treeModelIn,
@@ -526,8 +584,21 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         ignoreChildNameFilter,
                         allOpenItems,
                         userFavourites,
-                        currentDepth + 1);
-                if (hasChildren) {
+                        currentDepth + 1,
+                        brokenDepsMap);
+
+                if (result.maxSeverity != null && NullSafe.isEmptyCollection(childWithParent.getNodeInfoList())) {
+                    childWithParent = childWithParent.copy()
+                            .addNodeInfo(new NodeInfo(result.maxSeverity, "Descendants have issues"))
+                            .build();
+                }
+
+                maxSeverity = Severity.getMaxSeverity(
+                                maxSeverity,
+                                childWithParent.getMaxSeverity().orElse(null))
+                        .orElse(null);
+
+                if (result.hasChildren) {
                     treeModelOut.add(parent, childWithParent);
                     added++;
                 } else if (checkType(childWithParent, filter.getIncludedTypes())
@@ -538,9 +609,36 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     added++;
                 }
             }
+
+            // The above loop may not look at all children so recurse into any remaining
+            // children to establish their max severity
+            while (iterator.hasNext()) {
+                final ExplorerNode child = iterator.next();
+                final Severity childMaxSeverity = getMaxSeverity(treeModelIn, child, brokenDepsMap).orElse(null);
+                maxSeverity = Severity.getMaxSeverity(maxSeverity, childMaxSeverity).orElse(null);
+            }
         }
 
-        return added > 0;
+        return new AddDescendantsResult(added > 0, maxSeverity);
+    }
+
+    private Set<NodeInfo> buildNodeInfo(final DocRef docRef,
+                                        final Map<DocRef, Set<DocRef>> brokenDepsMap) {
+        final Set<DocRef> brokenDeps = brokenDepsMap.get(docRef);
+        if (brokenDeps == null) {
+            return null;
+        } else {
+            return brokenDeps.stream()
+                    .map(missingDocRef -> {
+                        final String msg = LogUtil.message(
+                                "Missing dependency to {} '{}' ({})",
+                                missingDocRef.getType(),
+                                missingDocRef.getName(),
+                                missingDocRef.getUuid());
+                        return new NodeInfo(Severity.ERROR, msg);
+                    })
+                    .collect(Collectors.toSet());
+        }
     }
 
     private boolean checkSecurity(final ExplorerNode explorerNode, final Set<String> requiredPermissions) {
@@ -649,7 +747,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             builder.nodeState(NodeState.OPEN);
             builder.children(newChildren);
             builder.rootNodeUuid(rootNode);
-
         } else {
             builder.nodeState(NodeState.CLOSED);
         }
@@ -1030,6 +1127,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     @Override
     public void rebuildTree() {
+        brokenDepsNextUpdateEpochMs = 0;
         explorerTreeModel.rebuild();
     }
 
@@ -1157,5 +1255,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             return ResultPage.createUnboundedList(Collections.emptyList());
         }
         return ResultPage.createPageLimitedList(list, pageRequest);
+    }
+
+    private record AddDescendantsResult(boolean hasChildren, Severity maxSeverity) {
+
     }
 }

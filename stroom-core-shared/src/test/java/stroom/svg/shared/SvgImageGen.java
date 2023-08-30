@@ -60,6 +60,7 @@ public class SvgImageGen {
             Map.entry("#ff6f00", "var(--icon-colour__dirty-amber)"),
             Map.entry("#ff8f00", "var(--icon-colour__orange)"),
             Map.entry("#ffeb3b", "var(--icon-colour__yellow)"),
+            Map.entry("#eed202", "var(--icon-colour__safety-yellow)"),
             Map.entry("#ffde81", "var(--icon-colour__pale-yellow)"),
             Map.entry("#4caf50", "var(--icon-colour__green)"),
             Map.entry("#388e3c", "var(--icon-colour__dark-green)"),

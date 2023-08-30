@@ -19,6 +19,8 @@ package stroom.explorer.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,8 +29,11 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerNode implements HasDisplayValue {
@@ -57,6 +62,8 @@ public class ExplorerNode implements HasDisplayValue {
     private final boolean isFavourite;
     @JsonProperty
     private final ExplorerNodeKey uniqueKey;
+    @JsonProperty
+    private final List<NodeInfo> nodeInfoList;
 
     @JsonCreator
     public ExplorerNode(@JsonProperty("type") final String type,
@@ -69,7 +76,8 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("children") final List<ExplorerNode> children,
                         @JsonProperty("rootNodeUuid") final String rootNodeUuid,
                         @JsonProperty("isFavourite") final boolean isFavourite,
-                        @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey) {
+                        @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey,
+                        @JsonProperty("nodeInfoList") final List<NodeInfo> nodeInfoList) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
@@ -81,6 +89,7 @@ public class ExplorerNode implements HasDisplayValue {
         this.rootNodeUuid = rootNodeUuid;
         this.isFavourite = isFavourite;
         this.uniqueKey = uniqueKey;
+        this.nodeInfoList = nodeInfoList;
     }
 
     public String getType() {
@@ -142,6 +151,18 @@ public class ExplorerNode implements HasDisplayValue {
         return uniqueKey;
     }
 
+    public List<NodeInfo> getNodeInfoList() {
+        return nodeInfoList;
+    }
+
+    @JsonIgnore
+    public Optional<Severity> getMaxSeverity() {
+        return Optional.ofNullable(nodeInfoList)
+                .flatMap(nodeInfoList2 -> nodeInfoList2.stream()
+                        .map(NodeInfo::getSeverity)
+                        .max(Severity.HIGH_TO_LOW_COMPARATOR));
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -189,6 +210,7 @@ public class ExplorerNode implements HasDisplayValue {
         private List<ExplorerNode> children;
         private String rootNodeUuid;
         private boolean isFavourite;
+        private List<NodeInfo> nodeInfoList;
 
         private Builder() {
         }
@@ -204,6 +226,7 @@ public class ExplorerNode implements HasDisplayValue {
             this.children = explorerNode.children;
             this.rootNodeUuid = explorerNode.rootNodeUuid;
             this.isFavourite = explorerNode.isFavourite;
+            this.nodeInfoList = explorerNode.nodeInfoList;
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -282,6 +305,38 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
+        public Builder nodeInfoList(final List<NodeInfo> nodeInfoList) {
+            this.nodeInfoList = nodeInfoList;
+            return this;
+        }
+
+        public Builder addNodeInfo(final NodeInfo nodeInfo) {
+            if (nodeInfo != null) {
+                if (this.nodeInfoList == null) {
+                    this.nodeInfoList = new ArrayList<>();
+                }
+                this.nodeInfoList.add(nodeInfo);
+            }
+            return this;
+        }
+
+        public Builder addNodeInfo(final Collection<NodeInfo> nodeInfoList) {
+            if (GwtNullSafe.hasItems(nodeInfoList)) {
+                if (this.nodeInfoList == null) {
+                    this.nodeInfoList = new ArrayList<>();
+                }
+                this.nodeInfoList.addAll(nodeInfoList);
+            }
+            return this;
+        }
+
+        public Builder clearNodeInfo() {
+            if (this.nodeInfoList != null) {
+                this.nodeInfoList.clear();
+            }
+            return this;
+        }
+
         public ExplorerNode build() {
             return new ExplorerNode(
                     type,
@@ -294,7 +349,8 @@ public class ExplorerNode implements HasDisplayValue {
                     children,
                     rootNodeUuid,
                     isFavourite,
-                    new ExplorerNodeKey(type, uuid, rootNodeUuid));
+                    new ExplorerNodeKey(type, uuid, rootNodeUuid),
+                    nodeInfoList);
         }
     }
 
@@ -306,5 +362,65 @@ public class ExplorerNode implements HasDisplayValue {
         OPEN,
         CLOSED,
         LEAF
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @SuppressWarnings("ClassCanBeRecord") // Cos GWT
+    public static class NodeInfo implements Comparable<NodeInfo> {
+
+        private static final Comparator<NodeInfo> COMPARATOR = Comparator.comparing(
+                NodeInfo::getSeverity,
+                Severity.HIGH_TO_LOW_COMPARATOR);
+
+        @JsonProperty
+        private final Severity severity;
+        @JsonProperty
+        private final String description;
+
+        @JsonCreator
+        public NodeInfo(@JsonProperty("severity") final Severity severity,
+                        @JsonProperty("description") final String description) {
+            this.severity = Objects.requireNonNull(severity);
+            this.description = Objects.requireNonNull(description);
+        }
+
+        public Severity getSeverity() {
+            return severity;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String toString() {
+            return severity + ": " + description;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final NodeInfo nodeInfo = (NodeInfo) o;
+            return severity == nodeInfo.severity
+                    && Objects.equals(description, nodeInfo.description);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(severity, description);
+        }
+
+        @Override
+        public int compareTo(final NodeInfo other) {
+            return COMPARATOR.compare(this, other);
+        }
     }
 }

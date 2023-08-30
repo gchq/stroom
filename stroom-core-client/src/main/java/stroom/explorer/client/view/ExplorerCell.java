@@ -5,7 +5,10 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.Severity;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -17,6 +20,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.SelectionModel;
+
+import java.util.stream.Collectors;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
@@ -101,10 +106,25 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (item.getIcon() != null) {
                 // Add icon
-                content.append(SvgImageUtil.toSafeHtml(
+                final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
                         item.getType(),
                         item.getIcon(),
-                        getCellClassName() + "-icon"));
+                        getCellClassName() + "-icon");
+                final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
+
+                item.getMaxSeverity().ifPresent(maxSeverity -> {
+                    final SvgImage svgImage = maxSeverity.greaterThanOrEqual(Severity.WARNING)
+                            ? SvgImage.ALERT_SIMPLE
+                            : SvgImage.INFO;
+                    builder.append(SvgImageUtil.toSafeHtml(
+                            buildAlertText(item),
+                            svgImage,
+                            "svgIcon", "small", getCellClassName() + "-alert-icon"));
+                });
+
+                content.append(template.div(
+                        getCellClassName() + "-icon-wrapper",
+                        builder.toSafeHtml()));
             }
 
             if (item.getDisplayValue() != null) {
@@ -122,8 +142,25 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         "svgIcon", "small"));
             }
 
+//            item.getMaxSeverity().ifPresent(maxSeverity -> {
+//                content.append(SvgImageUtil.toSafeHtml(
+//                        buildAlertText(item),
+//                        SvgImage.ALERT,
+//                        "svgIcon", "small"));
+//            });
+
             sb.append(template.outer(content.toSafeHtml()));
         }
+    }
+
+    private String buildAlertText(final ExplorerNode explorerNode) {
+        return GwtNullSafe.get(
+                explorerNode,
+                ExplorerNode::getNodeInfoList,
+                nodeInfoList -> GwtNullSafe.stream(nodeInfoList)
+                        .sorted()
+                        .map(NodeInfo::toString)
+                        .collect(Collectors.joining("\n")));
     }
 
     private TickBoxState getValue(final ExplorerNode item) {
@@ -140,6 +177,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     interface Template extends SafeHtmlTemplates {
 

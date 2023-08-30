@@ -20,6 +20,7 @@ import stroom.docref.HasDisplayValue;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
 
 
 public enum Severity implements HasDisplayValue {
@@ -124,6 +125,22 @@ public enum Severity implements HasDisplayValue {
                             : defaultValue)
                     .max(LOW_TO_HIGH_COMPARATOR)
                     .orElse(defaultValue);
+        }
+    }
+
+    public Optional<Severity> getMaxSeverity(final Severity other) {
+        return getMaxSeverity(this, other);
+    }
+
+    public static Optional<Severity> getMaxSeverity(final Severity severity1, final Severity severity2) {
+        if (severity1 == null) {
+            return Optional.ofNullable(severity2);
+        } else if (severity2 == null) {
+            return Optional.of(severity1);
+        } else if (severity1.greaterThanOrEqual(severity2)) {
+            return Optional.of(severity1);
+        } else {
+            return Optional.of(severity2);
         }
     }
 

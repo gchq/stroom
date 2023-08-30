@@ -255,12 +255,20 @@ public class ExplorerTreePresenter
         return false;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ExplorerTreeView extends View, HasUiHandlers<ExplorerTreeUiHandlers> {
 
         void setCellTree(Widget widget);
 
         void setDeleteEnabled(boolean enable);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface ExplorerTreeProxy extends Proxy<ExplorerTreePresenter> {

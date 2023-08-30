@@ -226,5 +226,35 @@ class TestSeverity {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testGetMaxSeverity() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Severity.class, Severity.class)
+                .withOutputType(Severity.class)
+                .withTestFunction(testCase -> Severity.getMaxSeverity(testCase.getInput()._1, testCase.getInput()._2)
+                        .orElse(null))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), null)
+                .addCase(Tuple.of(null, Severity.ERROR), Severity.ERROR)
+                .addCase(Tuple.of(Severity.ERROR, null), Severity.ERROR)
+                .addCase(Tuple.of(Severity.ERROR, Severity.ERROR), Severity.ERROR)
+                .addCase(Tuple.of(Severity.WARNING, Severity.ERROR), Severity.ERROR)
+                .addCase(Tuple.of(Severity.ERROR, Severity.WARNING), Severity.ERROR)
+                .build();
+    }
 
+    @TestFactory
+    Stream<DynamicTest> testGetMaxSeverity2() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Severity.class, Severity.class)
+                .withOutputType(Severity.class)
+                .withTestFunction(testCase -> testCase.getInput()._1.getMaxSeverity(testCase.getInput()._2)
+                        .orElse(null))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(Severity.ERROR, null), Severity.ERROR)
+                .addCase(Tuple.of(Severity.ERROR, Severity.ERROR), Severity.ERROR)
+                .addCase(Tuple.of(Severity.WARNING, Severity.ERROR), Severity.ERROR)
+                .addCase(Tuple.of(Severity.ERROR, Severity.WARNING), Severity.ERROR)
+                .build();
+    }
 }
