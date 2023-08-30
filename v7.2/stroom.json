@@ -8901,15 +8901,14 @@
     "/userNames/v1/getByUuid/{userUuid}" : {
       "get" : {
         "operationId" : "getByUuid",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "string"
-              }
-            }
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
           }
-        },
+        } ],
         "responses" : {
           "default" : {
             "content" : {
@@ -8929,15 +8928,14 @@
     "/userNames/v1/{subjectId}" : {
       "get" : {
         "operationId" : "getByUserId",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "string"
-              }
-            }
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
           }
-        },
+        } ],
         "responses" : {
           "default" : {
             "content" : {
