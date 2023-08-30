@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.55] - 2023-08-30
+
+* Issue **#3711** : Fix NPE.
+
+* Add missing resource annotations causing `should not consume any entity` errors.
+
+
 ## [v7.2-beta.54] - 2023-08-29
 
 * Change DB migrations to use dynamic SQL to stop them failing during the build of a new DB.
@@ -5829,7 +5836,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.54...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.55...HEAD
+[v7.2-beta.55]: https://github.com/gchq/stroom/compare/v7.2-beta.54...v7.2-beta.55
 [v7.2-beta.54]: https://github.com/gchq/stroom/compare/v7.2-beta.53...v7.2-beta.54
 [v7.2-beta.53]: https://github.com/gchq/stroom/compare/v7.2-beta.52...v7.2-beta.53
 [v7.2-beta.52]: https://github.com/gchq/stroom/compare/v7.2-beta.51...v7.2-beta.52
