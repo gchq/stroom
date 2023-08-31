@@ -146,6 +146,9 @@ public class ExplorerTreeModel {
                     explorerTreeFilter,
                     minDepth,
                     ensureVisible);
+//            GWT.log("fetchData - openItems: " + openItems.getOpenItems().size()
+//                    + " minDepth: " + minDepth
+//                    + " ensureVisible: " + ensureVisible);
 
             if (!fetching) {
                 fetching = true;

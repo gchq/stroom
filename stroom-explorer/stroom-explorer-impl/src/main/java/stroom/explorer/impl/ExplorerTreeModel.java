@@ -16,19 +16,31 @@
 
 package stroom.explorer.impl;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeInfo;
+import stroom.importexport.api.ContentService;
 import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Severity;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -36,31 +48,46 @@ class ExplorerTreeModel {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerTreeModel.class);
 
+    static final String BRANCH_NODE_INFO = "Descendants have issues";
+
     private static final long ONE_HOUR = 60 * 60 * 1000;
     private static final long TEN_MINUTES = 10 * 60 * 1000;
+    private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
 
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerSession explorerSession;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final ExplorerActionHandlers explorerActionHandlers;
+    private final Provider<ContentService> contentServiceProvider;
 
     private volatile TreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
     private final AtomicLong currentId = new AtomicLong();
     private final AtomicInteger performingRebuild = new AtomicInteger();
 
+    private volatile Map<DocRef, Set<DocRef>> brokenDependenciesMap = Collections.emptyMap();
+    private volatile long brokenDepsNextUpdateEpochMs = 0L;
+
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
                       final ExplorerSession explorerSession,
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
-                      final ExplorerActionHandlers explorerActionHandlers) {
+                      final ExplorerActionHandlers explorerActionHandlers,
+                      final Provider<ContentService> contentServiceProvider) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.explorerActionHandlers = explorerActionHandlers;
+        this.contentServiceProvider = contentServiceProvider;
+    }
+
+    private boolean isSynchronousUpdateRequired(final long minId, final long now) {
+        return true || currentModel == null ||
+                currentModel.getId() < minId ||
+                currentModel.getCreationTime() < now - ONE_HOUR;
     }
 
     TreeModel getModel() {
@@ -69,22 +96,27 @@ class ExplorerTreeModel {
 
         // Force synchronous rebuild of the tree model if it is older than the minimum build time for the current
         // session.
-        final long minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
-        final long oneHourAgo = now - ONE_HOUR;
+        long minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
 
         LOGGER.debug("currentId: {}, minId: {}", currentId, minId);
 
-        final TreeModel model;
+        TreeModel model = null;
 
         // Create a model synchronously if it is currently null or hasn't been rebuilt for an hour or is old for the
         // current session.
-        if (currentModel == null ||
-                currentModel.getId() < minId ||
-                currentModel.getCreationTime() < oneHourAgo) {
-            LOGGER.debug("Synchronous model build");
-            model = updateModel(currentId, now);
+        if (isSynchronousUpdateRequired(minId, now)) {
+            synchronized (this) {
+                minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
+                if (isSynchronousUpdateRequired(minId, now)) {
+                    LOGGER.debug("Synchronous model build");
+                    model = updateModel(currentId, now);
+                } else {
+                    LOGGER.debug("Another thread beat us, we can use their model");
+                }
+            }
+        }
 
-        } else {
+        if (model == null) {
             // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
             // Find out what the oldest tree model is that we will allow before performing an asynchronous rebuild.
             final long oldestAllowed = Math.max(minExplorerTreeModelBuildTime.get(), now - TEN_MINUTES);
@@ -124,12 +156,103 @@ class ExplorerTreeModel {
         TreeModel newModel;
         performingRebuild.incrementAndGet();
         try {
+            LOGGER.debug("Updating model for id {}", id);
             newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
+
+            decorateModelWithBrokenDeps(newModel);
+
             setCurrentModel(newModel);
         } finally {
             performingRebuild.decrementAndGet();
         }
         return newModel;
+    }
+
+    private void decorateModelWithBrokenDeps(final TreeModel treeModel) {
+        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+
+        treeModel.decorate((nodeKey, node) -> {
+            LOGGER.debug(() -> "decorate called on node: " + node.getName());
+
+            return cloneWithNodeInfo(treeModel, brokenDepsMap, node);
+        });
+    }
+
+    ExplorerNode cloneWithNodeInfo(final TreeModel treeModel,
+                                   final ExplorerNode node) {
+        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+        return cloneWithNodeInfo(treeModel, brokenDepsMap, node);
+    }
+
+    private ExplorerNode cloneWithNodeInfo(final TreeModel treeModel,
+                                           final Map<DocRef, Set<DocRef>> brokenDepsMap,
+                                           final ExplorerNode node) {
+        final DocRef docRef = node.getDocRef();
+        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
+        final List<ExplorerNode> children = treeModel.getChildren(node);
+
+        if (NullSafe.isEmptyCollection(children) && NullSafe.hasItems(nodeInfos)) {
+            LOGGER.debug(() -> LogUtil.message("Leaf '{}' has issues", node.getName()));
+            return node.copy()
+                    .addNodeInfo(nodeInfos)
+                    .build();
+        } else {
+            final Severity maxSeverity = Severity.getMaxSeverity(
+                    NullSafe.stream(children)
+                            .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
+                                    .map(NodeInfo::getSeverity))
+                            .max(Severity.HIGH_TO_LOW_COMPARATOR)
+                            .orElse(null),
+                    null)
+                    .orElse(null);
+
+            if (maxSeverity != null) {
+                // At least one descendant has an issue, so mark this branch too
+                LOGGER.debug(() -> LogUtil.message("Branch '{}' has issues, maxSeverity: {}",
+                        node.getName(), maxSeverity));
+                return node.copy()
+                        .addNodeInfo(new NodeInfo(
+                                maxSeverity,
+                                BRANCH_NODE_INFO))
+                        .build();
+            } else {
+                // No issues, return the node as is
+                return node;
+            }
+        }
+    }
+
+    private Set<NodeInfo> buildNodeInfo(final DocRef docRef,
+                                        final Map<DocRef, Set<DocRef>> brokenDepsMap) {
+        final Set<DocRef> brokenDeps = brokenDepsMap.get(docRef);
+        if (brokenDeps == null) {
+            return null;
+        } else {
+            return brokenDeps.stream()
+                    .map(missingDocRef -> {
+                        final String msg = LogUtil.message(
+                                "Missing dependency to {} '{}' ({})",
+                                missingDocRef.getType(),
+                                missingDocRef.getName(),
+                                missingDocRef.getUuid());
+                        return new NodeInfo(Severity.ERROR, msg);
+                    })
+                    .collect(Collectors.toSet());
+        }
+    }
+
+    private Map<DocRef, Set<DocRef>> getBrokenDependenciesMap() {
+        // Not sure we need to bother caching this
+        if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
+            synchronized (this) {
+                if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
+                    LOGGER.debug("Updating broken dependencies map");
+                    brokenDependenciesMap = contentServiceProvider.get().fetchBrokenDependencies();
+                    brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
+                }
+            }
+        }
+        return brokenDependenciesMap;
     }
 
     private SvgImage getIcon(final String type) {

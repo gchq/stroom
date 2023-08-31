@@ -66,6 +66,11 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final List<NodeInfo> nodeInfoList;
 
+    @JsonIgnore
+    private volatile DocRef docRef;
+    @JsonIgnore
+    private volatile int hashcode;
+
     @JsonCreator
     public ExplorerNode(@JsonProperty("type") final String type,
                         @JsonProperty("uuid") final String uuid,
@@ -139,7 +144,11 @@ public class ExplorerNode implements HasDisplayValue {
 
     @JsonIgnore
     public DocRef getDocRef() {
-        return new DocRef(type, uuid, name);
+        // Cache the docRef
+        if (docRef == null) {
+            docRef = new DocRef(type, uuid, name);
+        }
+        return docRef;
     }
 
     @JsonIgnore
@@ -178,14 +187,16 @@ public class ExplorerNode implements HasDisplayValue {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(uniqueKey);
+        if (hashcode == 0) {
+            hashcode = Objects.hashCode(uniqueKey);
+        }
+        return hashcode;
     }
 
     @Override
     public String toString() {
         return getDisplayValue();
     }
-
 
     public static Builder builder() {
         return new Builder();

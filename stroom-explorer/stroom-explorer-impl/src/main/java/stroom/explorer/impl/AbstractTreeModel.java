@@ -1,13 +1,18 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
@@ -15,8 +20,12 @@ public abstract class AbstractTreeModel<K> {
 
     protected final long id;
     protected final long creationTime;
+    // Child key => parent
     protected Map<K, ExplorerNode> parentMap = new HashMap<>();
+    // Parent key => Set<child>
     protected Map<K, Set<ExplorerNode>> childMap = new HashMap<>();
+    // Node key => node
+    protected Map<K, ExplorerNode> nodeMap = new HashMap<>();
 
     public AbstractTreeModel(final long id, final long creationTime) {
         this.id = id;
@@ -36,10 +45,73 @@ public abstract class AbstractTreeModel<K> {
     }
 
     public ExplorerNode getParent(final K childKey) {
-        if (childKey == null) {
-            return null;
+        return NullSafe.get(childKey, parentMap::get);
+    }
+
+    public ExplorerNode getNode(final K nodeKey) {
+        return NullSafe.get(nodeKey, nodeMap::get);
+    }
+
+    public void addRoot(final ExplorerNode rootNode) {
+        add(null, rootNode);
+    }
+
+    public void add(final ExplorerNode parent, final ExplorerNode child) {
+        final K childKey = getNodeKey(child);
+        final K parentKey = getNodeKey(parent);
+
+        parentMap.putIfAbsent(childKey, parent);
+        childMap.computeIfAbsent(parentKey, k -> new LinkedHashSet<>()).add(child);
+        nodeMap.putIfAbsent(childKey, child);
+        nodeMap.putIfAbsent(parentKey, parent);
+//        if (parent == null) {
+//            roots.add(childUuid);
+//        }
+    }
+
+    /**
+     * Replaces an existing node with the supplied one. The new node will
+     * be linked to the previous node's parent and children. If the key is
+     * not found an exception will be thrown. Intended for changing other properties
+     * of a node, e.g. the alerts on it.
+     */
+    public void replaceNode(final K key, final ExplorerNode newNode) {
+        if (!nodeMap.containsKey(key)) {
+            throw new RuntimeException(LogUtil.message("Key {} not found in tree model for newNode: {}", key, newNode));
         }
-        return parentMap.get(childKey);
+        final ExplorerNode parent = parentMap.get(key);
+        final K parentKey = getNodeKey(parent);
+
+        // Get the children or newNode's parent, i.e. siblings
+        final Set<ExplorerNode> siblingNodes = childMap.get(parentKey);
+
+        if (siblingNodes != null) {
+            final Set<ExplorerNode> newSiblingNodes = siblingNodes.stream()
+                    .map(node -> {
+                        final K nodeKey = getNodeKey(node);
+                        if (Objects.equals(nodeKey, key)) {
+                            return newNode;
+                        } else {
+                            return node;
+                        }
+                    })
+                    .collect(Collectors.toSet());
+            childMap.put(parentKey, newSiblingNodes);
+        }
+
+        nodeMap.put(key, newNode);
+    }
+
+    public ExplorerNode getParent(final ExplorerNode child) {
+        return NullSafe.get(child, child2 -> parentMap.get(getNodeKey(child2)));
+    }
+
+    public List<ExplorerNode> getChildren(final ExplorerNode parent) {
+        final K parentKey = getNodeKey(parent);
+        final Set<ExplorerNode> children = childMap.get(parentKey);
+        return NullSafe.get(
+                children,
+                children2 -> children2.stream().toList());
     }
 
     public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
@@ -55,9 +127,64 @@ public abstract class AbstractTreeModel<K> {
         childMap = newChildMap;
     }
 
-    public abstract void add(final ExplorerNode parent, final ExplorerNode child);
+    /**
+     * @param nodeDecorator Returns a decorated copy of the node passed to it. It MUST have the
+     *                      same node key as the node passed in. Will be called for each node in
+     *                      a depth first way, with siblings processed in no specific order.
+     */
+    public void decorate(final BiFunction<K, ExplorerNode, ExplorerNode> nodeDecorator) {
+        final Set<ExplorerNode> childNodes = childMap.get(null);
 
-    public abstract ExplorerNode getParent(final ExplorerNode child);
+        // All the root nodes
+        for (final ExplorerNode childNode : childNodes) {
+            final K childNodeKey = getNodeKey(childNode);
+            decorate(childNodeKey, childNode, nodeDecorator);
+        }
+    }
 
-    public abstract List<ExplorerNode> getChildren(final ExplorerNode parent);
+    private ExplorerNode decorate(final K nodeKey,
+                                  final ExplorerNode node,
+                                  final BiFunction<K, ExplorerNode, ExplorerNode> nodeDecorator) {
+        Objects.requireNonNull(node);
+
+        final Set<ExplorerNode> childNodes = childMap.get(nodeKey);
+        final Set<ExplorerNode> newChildNodes = NullSafe.getOrElseGet(
+                childNodes,
+                childNodes2 -> new LinkedHashSet<>(childNodes2.size()),
+                Collections::emptySet);
+
+        if (NullSafe.hasItems(childNodes)) {
+            // Branch, so recurse into each to decorate it
+            for (final ExplorerNode childNode : childNodes) {
+                if (childNode != null) {
+                    final K childNodeKey = getNodeKey(childNode);
+                    final ExplorerNode newChildNode = decorate(childNodeKey, childNode, nodeDecorator);
+                    newChildNodes.add(newChildNode);
+                    nodeMap.put(childNodeKey, newChildNode);
+                } else {
+                    // Not sure we want this else block
+                    newChildNodes.add(null);
+                    nodeMap.put(null, null);
+                }
+            }
+            childMap.put(nodeKey, newChildNodes);
+        }
+
+        // Decorate this node
+        final ExplorerNode newNode = nodeDecorator.apply(nodeKey, node);
+        nodeMap.put(nodeKey, newNode);
+
+        // Now link the new children (if any) to the new node (their parent)
+        for (final ExplorerNode newChildNode : newChildNodes) {
+            final K newChildNodeKey = getNodeKey(newChildNode);
+            parentMap.put(newChildNodeKey, newNode);
+        }
+
+        return newNode;
+    }
+
+    /**
+     * @return The unique key for node, or null if node is null
+     */
+    abstract K getNodeKey(final ExplorerNode node);
 }
