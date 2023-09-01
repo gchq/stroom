@@ -736,5 +736,4 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         return mapper;
     }
-
 }

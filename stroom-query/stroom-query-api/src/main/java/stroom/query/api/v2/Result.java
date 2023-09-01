@@ -34,12 +34,13 @@ import java.util.Objects;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = TableResult.class, name = "table"),
         @JsonSubTypes.Type(value = FlatResult.class, name = "flat"),
-        @JsonSubTypes.Type(value = VisResult.class, name = "vis")
+        @JsonSubTypes.Type(value = VisResult.class, name = "vis"),
+        @JsonSubTypes.Type(value = QLVisResult.class, name = "ql_vis"),
 })
 @JsonInclude(Include.NON_NULL)
 @Schema(
         description = "Base object for describing a set of result data",
-        subTypes = {TableResult.class, FlatResult.class, VisResult.class})
+        subTypes = {TableResult.class, FlatResult.class, VisResult.class, QLVisResult.class})
 public abstract class Result {
 
     //TODO add an example value

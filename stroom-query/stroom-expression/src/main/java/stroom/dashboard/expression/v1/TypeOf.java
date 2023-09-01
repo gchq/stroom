@@ -86,6 +86,11 @@ class TypeOf extends AbstractFunction {
         return super.requiresChildData();
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.STRING;
+    }
+
     private static final class Gen extends AbstractSingleChildGenerator {
 
 

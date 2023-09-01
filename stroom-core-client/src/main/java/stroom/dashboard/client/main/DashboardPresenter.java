@@ -289,7 +289,7 @@ public class DashboardPresenter
     }
 
     private void onAdd(final ClickEvent event) {
-        final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
+        final Element target = event.getNativeEvent().getEventTarget().cast();
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
                 target.getAbsoluteTop() + target.getClientHeight() + 1);

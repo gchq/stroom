@@ -11,13 +11,9 @@ import stroom.security.identity.openid.OpenIdService.AuthResult;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.security.openid.api.TokenResponse;
+import stroom.util.json.JsonUtil;
 
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import event.logging.AuthenticateAction;
 import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateLogonType;
@@ -222,12 +218,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                     .subjectTypesSupported(new String[]{"public"})
                     .tokenEndpoint(uriFactoryProvider.get().publicUri("/oauth2/v1/noauth/token").toString())
                     .build();
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-            mapper.setSerializationInclusion(Include.NON_NULL);
-            return mapper.writeValueAsString(response);
-        } catch (final JsonProcessingException e) {
+            return JsonUtil.writeValueAsString(response);
+        } catch (final RuntimeException e) {
             throw new WebApplicationException(e.getMessage(), e);
         }
     }

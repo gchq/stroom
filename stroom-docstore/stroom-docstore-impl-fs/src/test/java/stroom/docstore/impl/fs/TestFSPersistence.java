@@ -3,8 +3,8 @@ package stroom.docstore.impl.fs;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.Doc;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +41,7 @@ class TestFSPersistence {
         doc.setType(docRef.getType());
         doc.setUuid(docRef.getUuid());
         doc.setName(docRef.getName());
-        ObjectMapper mapper = createMapper();
+        ObjectMapper mapper = JsonUtil.getNoIndentMapper();
         byte[] bytes = mapper.writeValueAsBytes(doc);
 
         // Create
@@ -85,12 +85,6 @@ class TestFSPersistence {
 
         // Delete
         persistence.delete(docRef);
-    }
-
-    private ObjectMapper createMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
     }
 
     private static class GenericDoc extends Doc {

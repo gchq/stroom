@@ -36,6 +36,7 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -47,12 +48,9 @@ import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 import stroom.util.xml.SAXParserSettings;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -263,7 +261,7 @@ public class ConfigMapper {
 //        throwAwayPropertyMap.clear();
 
         buildObjectInfoMap(
-                createObjectMapper(),
+                JsonUtil.getMapper(),
                 defaultAppConfig,
                 PropertyPath.fromParts("stroom"),
                 objectInfoMap);
@@ -1374,7 +1372,7 @@ public class ConfigMapper {
             objectInfoMap = new HashMap<>();
 
             buildObjectInfoMap(
-                    createObjectMapper(),
+                    JsonUtil.getMapper(),
                     new AppConfig(),
                     PropertyPath.fromParts("stroom"),
                     objectInfoMap);
@@ -1441,15 +1439,6 @@ public class ConfigMapper {
 //                                AbstractConfig.class.getSimpleName()));
                     }
                 });
-    }
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
 // TODO Created these with a view to improving the ser/deser of the values but it needs

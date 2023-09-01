@@ -114,6 +114,11 @@ class SubstringAfter extends AbstractFunction {
         return requiresChildData;
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.STRING;
+    }
+
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final Generator stringGenerator;

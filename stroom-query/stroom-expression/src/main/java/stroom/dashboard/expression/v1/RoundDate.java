@@ -65,6 +65,11 @@ abstract class RoundDate extends AbstractFunction {
 
     protected abstract RoundCalculator getCalculator();
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.DATE;
+    }
+
     public abstract static class RoundDateCalculator implements RoundCalculator {
 
 

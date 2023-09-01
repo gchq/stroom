@@ -337,18 +337,4 @@ class TestVisComponentResultCreator {
 //    private Field createField(final String fieldName, final Format.Type type) {
 //        return Field.builder().name(fieldName).expression(ParamUtil.makeParam(fieldName)).format(type).build();
 //    }
-//
-//    private ObjectMapper createMapper(final boolean indent) {
-//        final SimpleModule module = new SimpleModule();
-//        module.addSerializer(Double.class, new MyDoubleSerialiser());
-//
-//        final ObjectMapper mapper = new ObjectMapper();
-//        mapper.registerModule(module);
-//        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-//        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-//        mapper.setSerializationInclusion(Include.NON_NULL);
-//
-//        return mapper;
-//    }
 }

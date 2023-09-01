@@ -451,12 +451,10 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                         possibleSettings = null;
                         try {
                             if (result.getSettings() != null) {
-                                if (result.getSettings() != null) {
-                                    possibleSettings = JSONUtil.getObject(JSONUtil.parse(result.getSettings()));
-                                }
+                                possibleSettings = JSONUtil.getObject(JSONUtil.parse(result.getSettings()));
                             }
                         } catch (final RuntimeException e) {
-                            failure(function, "Unable to parse settings for visualisaton: "
+                            failure(function, "Unable to parse settings for visualisation: "
                                     + getVisSettings().getVisualisation());
                         }
 

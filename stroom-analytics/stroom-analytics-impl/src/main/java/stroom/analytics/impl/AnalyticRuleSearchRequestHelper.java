@@ -14,10 +14,13 @@ import javax.inject.Inject;
 public class AnalyticRuleSearchRequestHelper {
 
     private final DataSourceResolver dataSourceResolver;
+    private final SearchRequestBuilder searchRequestBuilder;
 
     @Inject
-    public AnalyticRuleSearchRequestHelper(final DataSourceResolver dataSourceResolver) {
+    public AnalyticRuleSearchRequestHelper(final DataSourceResolver dataSourceResolver,
+                                           final SearchRequestBuilder searchRequestBuilder) {
         this.dataSourceResolver = dataSourceResolver;
+        this.searchRequestBuilder = searchRequestBuilder;
     }
 
     public SearchRequest create(final AnalyticRuleDoc alertRule) {
@@ -33,7 +36,8 @@ public class AnalyticRuleSearchRequestHelper {
                 null,
                 null,
                 false);
-        final SearchRequest searchRequest = SearchRequestBuilder.create(alertRule.getQuery(), sampleRequest);
+        final SearchRequest searchRequest = searchRequestBuilder
+                .create(alertRule.getQuery(), sampleRequest);
         return dataSourceResolver.resolveDataSource(searchRequest);
     }
 }

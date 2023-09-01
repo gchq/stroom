@@ -2,12 +2,10 @@ package stroom.data.impl.fs.shared;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 public class TestFsVolume {
 
@@ -37,9 +35,8 @@ public class TestFsVolume {
      * Use this method to diagnose why your JSON-to-POJO bindings are failing.
      */
     @Test
-    public void testJsonBindings() throws IOException {
-        var objectMapper = new ObjectMapper();
-        var fsVolume = objectMapper.readValue(TEST_JSON, FsVolume.class);
+    public void testJsonBindings() {
+        var fsVolume = JsonUtil.readValue(TEST_JSON, FsVolume.class);
         Assertions.assertThat(fsVolume)
                 .isNotNull();
         Assertions.assertThat(fsVolume.getVolumeState())

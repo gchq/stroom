@@ -10,12 +10,11 @@ import stroom.security.shared.User;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.NumericDate;
@@ -117,7 +116,6 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                                                           final AuthenticationState state) {
         final HttpSession session = request.getSession(false);
 
-        final ObjectMapper mapper = getMapper();
         final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
 
         final TokenResponse tokenResponse;
@@ -130,7 +128,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                     OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret(),
                     OpenId.REDIRECT_URI, state.getRedirectUri());
 
-            tokenResponse = getTokenResponse(mapper, tokenEndpoint, formParams);
+            tokenResponse = getTokenResponse(tokenEndpoint, formParams);
         } else {
             try {
                 final TokenRequest tokenRequest = TokenRequest.builder()
@@ -140,7 +138,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                         .clientSecret(resolvedOpenIdConfig.getClientSecret())
                         .redirectUri(state.getRedirectUri())
                         .build();
-                tokenResponse = getTokenResponse(mapper, tokenEndpoint, tokenRequest);
+                tokenResponse = getTokenResponse(tokenEndpoint, tokenRequest);
             } catch (final Exception e) {
                 throw new AuthenticationException(e.getMessage(), e);
             }
@@ -194,7 +192,6 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                 throw new NullPointerException("Unable to refresh token as no refresh token is available");
             }
 
-            final ObjectMapper mapper = getMapper();
             final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
 
             // AWS requires form content and not a JSON object.
@@ -204,7 +201,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                         OpenId.REFRESH_TOKEN, identity.getTokenResponse().getRefreshToken(),
                         OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId(),
                         OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret());
-                tokenResponse = getTokenResponse(mapper, tokenEndpoint, formParams);
+                tokenResponse = getTokenResponse(tokenEndpoint, formParams);
             } else {
                 throw new UnsupportedOperationException("JSON not supported for token refresh");
             }
@@ -264,8 +261,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         return client.target(endpoint);
     }
 
-    private TokenResponse getTokenResponse(final ObjectMapper mapper,
-                                           final String tokenEndpoint,
+    private TokenResponse getTokenResponse(final String tokenEndpoint,
                                            final Map<String, String> formParams) {
         TokenResponse tokenResponse = null;
 
@@ -283,7 +279,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         try (Response response = request.post(Entity.form(form), Response.class)) {
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 final String msg = getMessage(response);
-                tokenResponse = mapper.readValue(msg, TokenResponse.class);
+                tokenResponse = JsonUtil.readValue(msg, TokenResponse.class);
             } else {
                 throw new AuthenticationException(LogUtil.message("Received status {} from {}",
                         response.getStatus(), tokenEndpoint));
@@ -300,8 +296,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         return tokenResponse;
     }
 
-    private TokenResponse getTokenResponse(final ObjectMapper mapper,
-                                           final String tokenEndpoint,
+    private TokenResponse getTokenResponse(final String tokenEndpoint,
                                            final TokenRequest tokenRequest) {
         TokenResponse tokenResponse = null;
 
@@ -311,7 +306,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         try (Response response = request.post(Entity.json(tokenRequest), Response.class)) {
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 final String msg = getMessage(response);
-                tokenResponse = mapper.readValue(msg, TokenResponse.class);
+                tokenResponse = JsonUtil.readValue(msg, TokenResponse.class);
             } else {
                 throw new AuthenticationException(LogUtil.message("Received status {} from {}",
                         response.getStatus(), tokenEndpoint));
@@ -337,12 +332,6 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
             LOGGER.error(e.getMessage(), e);
         }
         return msg;
-    }
-
-    private ObjectMapper getMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
     }
 
     private Optional<UserIdentity> getUserIdentity(final HttpServletRequest request,

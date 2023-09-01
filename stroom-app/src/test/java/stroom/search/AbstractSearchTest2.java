@@ -33,11 +33,8 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +58,8 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     @Inject
     private ResultStoreManager searchResponseCreatorManager;
     @Inject
+    private SearchRequestBuilder searchRequestBuilder;
+    @Inject
     private DataSourceResolver dataSourceResolver;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
@@ -72,15 +71,6 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         searchResponseCreatorManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
 
         return response;
-    }
-
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
     public void testInteractive(
@@ -120,7 +110,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 null,
                 DateTimeSettings.builder().build(),
                 false);
-        searchRequest = SearchRequestBuilder.create(queryString, searchRequest);
+        searchRequest = searchRequestBuilder.create(queryString, searchRequest);
         searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
 
         // Add extraction pipeline.
@@ -133,8 +123,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         searchRequest = searchRequest.copy().resultRequests(Collections.singletonList(resultRequest)).build();
 
         try {
-            final ObjectMapper mapper = createMapper(true);
-            final String json = mapper.writeValueAsString(searchRequest);
+            final String json = JsonUtil.writeValueAsString(searchRequest);
             LOGGER.info(json);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);

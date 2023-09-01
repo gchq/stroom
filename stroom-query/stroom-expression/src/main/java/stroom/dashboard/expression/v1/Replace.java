@@ -116,6 +116,11 @@ class Replace extends AbstractManyChildFunction {
         return super.hasAggregate();
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.STRING;
+    }
+
     private static final class Gen extends AbstractManyChildGenerator {
 
         Gen(final Generator[] childGenerators) {

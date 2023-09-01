@@ -7,6 +7,7 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.exception.ThrowingSupplier;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -14,10 +15,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PropertyPath;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -234,7 +232,7 @@ public class ProxyConfigProvider {
                 newProxyConfig,
                 null,
                 newInstanceMap,
-                createObjectMapper(),
+                JsonUtil.getMapper(),
                 ProxyConfig.ROOT_PROPERTY_PATH,
                 changeCounter,
                 logChanges);
@@ -260,13 +258,5 @@ public class ProxyConfigProvider {
         }
 
         LOGGER.debug("Completed rebuild of object instance map");
-    }
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        return mapper;
     }
 }

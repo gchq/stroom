@@ -7,10 +7,9 @@ import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
 import stroom.util.io.StreamUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourcePaths;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -92,9 +91,7 @@ public class ResolvedOpenIdConfig {
                                 msg = StreamUtil.streamToString(is);
                             }
 
-                            final ObjectMapper mapper = new ObjectMapper();
-                            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                            openIdConfiguration = mapper.readValue(msg, OpenIdConfigurationResponse.class);
+                            openIdConfiguration = JsonUtil.readValue(msg, OpenIdConfigurationResponse.class);
 
                             // Overwrite configuration with any values we might have manually configured.
                             Builder builder = openIdConfiguration.copy();

@@ -38,6 +38,8 @@ public class QueryEditViewImpl
     SimplePanel queryEditorContainer;
     @UiField
     SimplePanel tableContainer;
+    @UiField
+    SimplePanel visContainer;
 
     @Inject
     public QueryEditViewImpl(final Binder binder) {
@@ -66,6 +68,10 @@ public class QueryEditViewImpl
         tableContainer.setWidget(widget);
     }
 
+    @Override
+    public void setVis(final Widget widget) {
+        visContainer.setWidget(widget);
+    }
 
     // --------------------------------------------------------------------------------
 

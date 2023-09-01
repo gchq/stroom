@@ -1,28 +1,20 @@
 package stroom.query.common.v2;
 
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 class TestResultStoreLmdbConfig {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestResultStoreLmdbConfig.class);
 
     @Test
-    void testJsonSerialisation() throws JsonProcessingException {
-
-        ObjectMapper objectMapper = new ObjectMapper();
+    void testJsonSerialisation() {
         ResultStoreLmdbConfig lmdbConfig = new ResultStoreLmdbConfig();
-
-        final String json = objectMapper.writeValueAsString(lmdbConfig);
-
+        final String json = JsonUtil.writeValueAsString(lmdbConfig);
         LOGGER.info("json:\n{}", json);
 
         Assertions.assertThat(json)
@@ -32,11 +24,7 @@ class TestResultStoreLmdbConfig {
     }
 
     @Test
-    void testJsonDeserialisation() throws IOException {
-
-        ObjectMapper objectMapper = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-
+    void testJsonDeserialisation() {
         final String json = """
                 {
                     "localDir":"my_dir",
@@ -47,7 +35,7 @@ class TestResultStoreLmdbConfig {
                 }
                  """;
 
-        final ResultStoreLmdbConfig lmdbConfig = objectMapper.readValue(json, ResultStoreLmdbConfig.class);
+        final ResultStoreLmdbConfig lmdbConfig = JsonUtil.readValue(json, ResultStoreLmdbConfig.class);
 
         // Not a json prop so value above is ignored, but jackson doesn't seem to throw an
         // exception for the prop that should be an ignored one.

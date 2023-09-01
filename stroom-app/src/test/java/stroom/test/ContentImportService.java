@@ -58,6 +58,12 @@ public class ContentImportService {
         ));
     }
 
+    public void importVisualisations() {
+        importContentPacks(List.of(
+                ContentPacks.VISUALISATIONS
+        ));
+    }
+
     private void importContentPacks(final List<ContentPack> packs) {
         packs.forEach(this::importContentPack);
     }

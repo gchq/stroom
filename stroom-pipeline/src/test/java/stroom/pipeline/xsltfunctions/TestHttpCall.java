@@ -6,11 +6,10 @@ import stroom.pipeline.PipelineConfig;
 import stroom.util.cert.SSLConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
+import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import okhttp3.Response;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -33,10 +32,7 @@ class TestHttpCall {
                 .withHostnameVerificationEnabled(false)
                 .build();
 
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-
+        final ObjectMapper mapper = JsonUtil.getMapper();
         final String clientConfig = mapper.writeValueAsString(sslConfig);
 
         final PathCreator pathCreator = new SimplePathCreator(

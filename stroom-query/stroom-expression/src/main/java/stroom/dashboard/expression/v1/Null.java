@@ -34,4 +34,9 @@ public class Null extends AbstractStaticFunction {
     public Null(final String name) {
         super(name, GEN);
     }
+
+    @Override
+    public Type getCommonReturnType() {
+        return Type.NULL;
+    }
 }

@@ -294,6 +294,34 @@ public class SearchResponseCreator {
                             new FieldFormatter(
                                     new FormatterFactory(searchRequest.getDateTimeSettings()));
                     resultCreator = new TableResultCreator(fieldFormatter, cacheLastResult);
+
+                } else if (ResultStyle.VIS.equals(resultRequest.getResultStyle())) {
+                    final FlatResultCreator flatResultCreator = new FlatResultCreator(
+                            new MapDataStoreFactory(() -> serialisers),
+                            searchRequest,
+                            componentId,
+                            resultRequest,
+                            null,
+                            null,
+                            sizesProvider.getDefaultMaxResultsSizes(),
+                            cacheLastResult);
+                    resultCreator = new VisResultCreator(flatResultCreator);
+
+                } else if (ResultStyle.QL_VIS.equals(resultRequest.getResultStyle())) {
+                    final FlatResultCreator flatResultCreator = new FlatResultCreator(
+                            new MapDataStoreFactory(() -> serialisers),
+                            searchRequest,
+                            componentId,
+                            resultRequest,
+                            null,
+                            null,
+                            sizesProvider.getDefaultMaxResultsSizes(),
+                            cacheLastResult);
+                    resultCreator = new QLVisResultCreator(flatResultCreator, resultRequest
+                            .getMappings()
+                            .get(resultRequest.getMappings().size() - 1)
+                            .getVisSettings());
+
                 } else {
                     resultCreator = new FlatResultCreator(
                             new MapDataStoreFactory(() -> serialisers),

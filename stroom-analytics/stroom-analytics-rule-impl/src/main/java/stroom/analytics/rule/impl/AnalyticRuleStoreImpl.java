@@ -57,15 +57,18 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataSourceResolver> dataSourceResolverProvider;
+    private final SearchRequestBuilder searchRequestBuilder;
 
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
                           final AnalyticRuleSerialiser serialiser,
                           final SecurityContext securityContext,
-                          final Provider<DataSourceResolver> dataSourceResolverProvider) {
+                          final Provider<DataSourceResolver> dataSourceResolverProvider,
+                          final SearchRequestBuilder searchRequestBuilder) {
         this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
         this.securityContext = securityContext;
         this.dataSourceResolverProvider = dataSourceResolverProvider;
+        this.searchRequestBuilder = searchRequestBuilder;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -174,7 +177,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         return (doc, dependencyRemapper) -> {
             try {
                 if (doc.getQuery() != null) {
-                    SearchRequestBuilder.extractDataSourceNameOnly(doc.getQuery(), dataSourceName -> {
+                    searchRequestBuilder.extractDataSourceNameOnly(doc.getQuery(), dataSourceName -> {
                         try {
                             if (dataSourceName != null) {
                                 final DataSource dataSource = dataSourceResolverProvider

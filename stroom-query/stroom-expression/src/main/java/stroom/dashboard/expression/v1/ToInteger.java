@@ -45,6 +45,11 @@ class ToInteger extends AbstractCast {
         return CAST;
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.INTEGER;
+    }
+
     private static class Cast extends AbstractCaster {
 
         @Override

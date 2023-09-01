@@ -114,6 +114,11 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
         return super.requiresChildData();
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.INTEGER;
+    }
+
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final ValListReference valListReference;

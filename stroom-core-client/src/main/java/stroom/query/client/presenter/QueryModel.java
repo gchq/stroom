@@ -36,11 +36,17 @@ import com.google.gwt.core.client.GWT;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class QueryModel {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+
+    private static final String TABLE_COMPONENT_ID = "table";
+    private static final String VIS_COMPONENT_ID = "vis";
+
 
     private final RestFactory restFactory;
     private final IndexLoader indexLoader;
@@ -50,6 +56,7 @@ public class QueryModel {
     private final ResultStoreModel resultStoreModel;
 
     private final ResultConsumer tablePresenter;
+    private final ResultConsumer visPresenter;
 
     private DashboardSearchResponse currentResponse;
     private String currentNode;
@@ -63,17 +70,22 @@ public class QueryModel {
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
+    private final Map<String, ResultConsumer> resultConsumers = new HashMap<>();
 
     public QueryModel(final RestFactory restFactory,
                       final IndexLoader indexLoader,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
                       final ResultStoreModel resultStoreModel,
-                      final QueryResultTablePresenter tablePresenter) {
+                      final QueryResultTablePresenter tablePresenter,
+                      final QueryResultVisPresenter visPresenter) {
         this.restFactory = restFactory;
         this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
         this.tablePresenter = tablePresenter;
+        this.visPresenter = visPresenter;
+        resultConsumers.put(TABLE_COMPONENT_ID, tablePresenter);
+        resultConsumers.put(VIS_COMPONENT_ID, visPresenter);
     }
 
     public void init(final String queryUuid,
@@ -94,7 +106,7 @@ public class QueryModel {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        tablePresenter.endSearch();
+        resultConsumers.values().forEach(ResultConsumer::endSearch);
 
         // Stop polling.
         polling = false;
@@ -116,7 +128,7 @@ public class QueryModel {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        tablePresenter.endSearch();
+        resultConsumers.values().forEach(ResultConsumer::endSearch);
 
         // Stop polling.
         polling = false;
@@ -206,8 +218,8 @@ public class QueryModel {
 
             // Reset all result components and tell them that search is
             // starting.
-            tablePresenter.reset();
-            tablePresenter.startSearch();
+            resultConsumers.values().forEach(ResultConsumer::reset);
+            resultConsumers.values().forEach(ResultConsumer::startSearch);
 
             // Start polling.
             polling = true;
@@ -227,7 +239,8 @@ public class QueryModel {
 //                final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
 //                if (dataSourceRef != null) {
             // Tell the refreshing component that it should want data.
-            tablePresenter.startSearch();
+            resultConsumers.values().forEach(ResultConsumer::startSearch);
+
 
 //                    final QuerySearchRequest search = Search
 //                            .builder()
@@ -259,11 +272,12 @@ public class QueryModel {
 
                             if (response != null && response.getResults() != null) {
                                 for (final Result componentResult : response.getResults()) {
-                                    tablePresenter.setData(componentResult);
-                                    tablePresenter.endSearch();
-//                                    if (componentId.equals(componentResult.getComponentId())) {
-//                                        result = componentResult;
-//                                    }
+                                    final ResultConsumer resultConsumer =
+                                            resultConsumers.get(componentResult.getComponentId());
+                                    if (resultConsumer != null) {
+                                        resultConsumer.setData(componentResult);
+                                        resultConsumer.endSearch();
+                                    }
                                 }
                             }
                         } catch (final RuntimeException e) {
@@ -279,7 +293,7 @@ public class QueryModel {
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
-                        tablePresenter.setData(null);
+                        resultConsumers.values().forEach(rc -> rc.setData(null));
                     })
                     .call(QUERY_RESOURCE)
                     .search(currentNode, request);
@@ -409,12 +423,11 @@ public class QueryModel {
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                tablePresenter.setData(componentResult);
-
-//                final ResultConsumer resultComponent = componentMap.get(componentResult.getComponentId());
-//                if (resultComponent != null) {
-//                    resultComponent.setData(componentResult);
-//                }
+                final ResultConsumer resultConsumer =
+                        resultConsumers.get(componentResult.getComponentId());
+                if (resultConsumer != null) {
+                    resultConsumer.setData(componentResult);
+                }
             }
         }
 
@@ -422,7 +435,7 @@ public class QueryModel {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            tablePresenter.endSearch();
+            resultConsumers.values().forEach(ResultConsumer::endSearch);
         }
 
         setErrors(response.getErrors());

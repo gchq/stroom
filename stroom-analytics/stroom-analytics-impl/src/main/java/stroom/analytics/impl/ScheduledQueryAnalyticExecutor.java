@@ -82,6 +82,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final NotificationStateService notificationStateService;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final DetectionConsumerFactory detectionConsumerFactory;
+    private final SearchRequestBuilder searchRequestBuilder;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -95,7 +96,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                                    final NotificationStateService notificationStateService,
                                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                   final DetectionConsumerFactory detectionConsumerFactory) {
+                                   final DetectionConsumerFactory detectionConsumerFactory,
+                                   final SearchRequestBuilder searchRequestBuilder) {
         this.analyticHelper = analyticHelper;
         this.dataSourceResolver = dataSourceResolver;
         this.executorProvider = executorProvider;
@@ -108,6 +110,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.notificationStateService = notificationStateService;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
+        this.searchRequestBuilder = searchRequestBuilder;
     }
 
     public void exec() {
@@ -201,7 +204,7 @@ public class ScheduledQueryAnalyticExecutor {
                 final SearchRequestSource searchRequestSource = SearchRequestSource
                         .builder()
                         .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                        .componentId(SearchRequestBuilder.COMPONENT_ID)
+                        .componentId(SearchRequestBuilder.TABLE_COMPONENT_ID)
                         .build();
 
                 final String query = analytic.analyticRuleDoc().getQuery();
@@ -217,7 +220,7 @@ public class ScheduledQueryAnalyticExecutor {
                         null,
                         null,
                         false);
-                SearchRequest mappedRequest = SearchRequestBuilder.create(query, sampleRequest);
+                SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest);
                 mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
                 // Fix table result requests.
@@ -233,7 +236,7 @@ public class ScheduledQueryAnalyticExecutor {
                     final SearchRequest modifiedRequest = requestAndStore.searchRequest();
                     try {
                         final DataStore dataStore = requestAndStore
-                                .resultStore().getData(SearchRequestBuilder.COMPONENT_ID);
+                                .resultStore().getData(SearchRequestBuilder.TABLE_COMPONENT_ID);
                         dataStore.getCompletionState().awaitCompletion();
 
                         final TableSettings tableSettings = resultRequest.getMappings().get(0);

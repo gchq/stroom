@@ -34,12 +34,23 @@ public final class JsonUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtil.class);
 
+    private static final ObjectMapper OBJECT_MAPPER = createMapper(true);
+    private static final ObjectMapper NO_INDENT_MAPPER = createMapper(false);
+
     public static String writeValueAsString(final Object object) {
+        return writeValueAsString(object, true);
+    }
+
+    public static String writeValueAsString(final Object object, final boolean indent) {
         String json = null;
 
         if (object != null) {
             try {
-                json = getMapper().writeValueAsString(object);
+                if (indent) {
+                    json = getMapper().writeValueAsString(object);
+                } else {
+                    json = getNoIndentMapper().writeValueAsString(object);
+                }
             } catch (final JsonProcessingException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -65,14 +76,34 @@ public final class JsonUtil {
         }
     }
 
+    public static <T> T readValue(String content, Class<T> valueType) {
+        Preconditions.checkNotNull(content);
+        Preconditions.checkNotNull(valueType);
+        try {
+            return getMapper().readValue(content, valueType);
+        } catch (final JsonProcessingException e) {
+            throw new RuntimeException(String.format("Error deserialising object %s",
+                    content), e);
+        }
+    }
+
     public static ObjectMapper getMapper() {
+        return OBJECT_MAPPER;
+    }
+
+    public static ObjectMapper getNoIndentMapper() {
+        return NO_INDENT_MAPPER;
+    }
+
+    private static ObjectMapper createMapper(final boolean indent) {
         final SimpleModule module = new SimpleModule();
         module.addSerializer(Double.class, new MyDoubleSerialiser());
 
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(module);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(Include.NON_NULL);
         return mapper;
     }

@@ -48,6 +48,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
+import stroom.widget.tab.client.view.LayerContainerImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -88,6 +89,7 @@ public class QueryEditPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultTablePresenter tablePresenter;
+    private final QueryResultVisPresenter visPresenter;
     private final IndexLoader indexLoader;
     private final TextPresenter textPresenter;
     private final Views views;
@@ -105,6 +107,8 @@ public class QueryEditPresenter
                               final QueryToolbarPresenter queryToolbarPresenter,
                               final EditorPresenter editorPresenter,
                               final QueryResultTablePresenter tablePresenter,
+                              final QueryResultVisPresenter visPresenter,
+//                              final LayerContainerImpl layerContainer,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,
                               final TextPresenter textPresenter,
@@ -115,6 +119,7 @@ public class QueryEditPresenter
         this.queryHelpPresenter = queryHelpPresenter;
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.tablePresenter = tablePresenter;
+        this.visPresenter = visPresenter;
         this.indexLoader = indexLoader;
         this.textPresenter = textPresenter;
         this.views = views;
@@ -125,7 +130,8 @@ public class QueryEditPresenter
                 indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel,
-                tablePresenter);
+                tablePresenter,
+                visPresenter);
         queryModel.addSearchErrorListener(queryToolbarPresenter);
         queryModel.addTokenErrorListener(e -> {
             final Indicators indicators = new Indicators();
@@ -159,6 +165,11 @@ public class QueryEditPresenter
         view.setQueryHelp(queryHelpPresenter.getView());
         view.setQueryEditor(this.editorPresenter.getView());
         view.setTable(tablePresenter.getWidget());
+        view.setVis(visPresenter.getWidget());
+//        view.setVis(layerContainer);
+//
+//        visPresenter.addLayer(layerContainer);
+//        visPresenter.setLayerVisible(false, true);
     }
 
     @Override
@@ -414,5 +425,7 @@ public class QueryEditPresenter
         void setQueryEditor(View view);
 
         void setTable(Widget widget);
+
+        void setVis(Widget widget);
     }
 }

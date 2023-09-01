@@ -19,13 +19,11 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.Format.Type;
-import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -114,10 +112,10 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
         format.addItems(STANDARD_FORMATS);
 
-        timeZoneUse.addItem(TimeZone.Use.LOCAL);
-        timeZoneUse.addItem(TimeZone.Use.UTC);
-        timeZoneUse.addItem(TimeZone.Use.ID);
-        timeZoneUse.addItem(TimeZone.Use.OFFSET);
+        timeZoneUse.addItem(Use.LOCAL);
+        timeZoneUse.addItem(Use.UTC);
+        timeZoneUse.addItem(Use.ID);
+        timeZoneUse.addItem(Use.OFFSET);
 
         timeZoneOffsetHours.setMin(-12);
         timeZoneOffsetHours.setMax(12);
@@ -160,9 +158,9 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
         formatCustomFormat.setVisible(Type.DATE_TIME.equals(type));
         formatTimeZone.setVisible(Type.DATE_TIME.equals(type));
         formatTimeZoneId.setVisible(Type.DATE_TIME.equals(type) &&
-                TimeZone.Use.ID.equals(this.timeZoneUse.getValue()));
+                Use.ID.equals(this.timeZoneUse.getValue()));
         formatTimeZoneOffset.setVisible(Type.DATE_TIME.equals(type) &&
-                TimeZone.Use.OFFSET.equals(this.timeZoneUse.getValue()));
+                Use.OFFSET.equals(this.timeZoneUse.getValue()));
     }
 
     @Override
@@ -308,7 +306,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     }
 
     @UiHandler("timeZoneUse")
-    public void onTimeZoneUseValueChange(final ValueChangeEvent<TimeZone.Use> event) {
+    public void onTimeZoneUseValueChange(final ValueChangeEvent<Use> event) {
         setType(this.type.getValue());
     }
 

@@ -60,6 +60,7 @@ public enum TokenType {
     WINDOW,
     LIMIT,
     HAVING,
+    VIS,
 
     // Additional tokens
     BY,
@@ -85,7 +86,8 @@ public enum TokenType {
             GROUP,
             WINDOW,
             LIMIT,
-            HAVING);
+            HAVING,
+            VIS);
 //
 //    public static Set<TokenType> QUERY = Set.of(WHERE, AND, OR, NOT);
 //

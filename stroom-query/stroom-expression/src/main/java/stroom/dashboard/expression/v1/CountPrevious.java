@@ -70,6 +70,11 @@ public class CountPrevious extends AbstractFunction implements AggregateFunction
         return isAggregate();
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.LONG;
+    }
+
     public static final class Gen extends AbstractNoChildGenerator {
 
         private final int iteration;

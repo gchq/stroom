@@ -34,11 +34,8 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,15 +66,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         }
 
         return response;
-    }
-
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
     public static void testInteractive(
@@ -119,8 +107,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 false);
 
         try {
-            final ObjectMapper mapper = createMapper(true);
-            final String json = mapper.writeValueAsString(searchRequest);
+            final String json = JsonUtil.writeValueAsString(searchRequest);
             LOGGER.info(json);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);

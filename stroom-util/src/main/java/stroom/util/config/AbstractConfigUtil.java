@@ -1,6 +1,7 @@
 package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.ObjectInfo;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -39,7 +40,7 @@ public class AbstractConfigUtil {
             final Map<PropertyPath, Object> replacementValueMap) {
 
         final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap = new HashMap<>();
-        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = JsonUtil.getMapper();;
 
         // Walk the tree to get the object info for each branch
         buildObjectInfoMap(objectMapper, config, basePath, objectInfoMap);

@@ -1,7 +1,7 @@
 package stroom.util.sysinfo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import stroom.util.json.JsonUtil;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -38,18 +38,14 @@ class TestSystemInfoResult {
                         "subKey2", "subVal2"))
                 .build();
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        final String json = objectMapper.writeValueAsString(systemInfoResult);
-
-
+        final String json = JsonUtil.writeValueAsString(systemInfoResult);
         LOGGER.info("json:\n{}", json);
 
 //        final String json2 = objectMapper.writeValueAsString(systemInfoResult.getInfoMap());
 //
 //        LOGGER.info("json:\n{}", json2);
 
-        SystemInfoResult systemInfoResult2 = objectMapper.readValue(json, SystemInfoResult.class);
+        SystemInfoResult systemInfoResult2 = JsonUtil.readValue(json, SystemInfoResult.class);
 
         Assertions.assertThat(systemInfoResult2)
                 .isEqualTo(systemInfoResult);
@@ -78,9 +74,7 @@ class TestSystemInfoResult {
         final SystemInfoResultList systemInfoResultList = new SystemInfoResultList(List.of(
                 systemInfoResult1, systemInfoResult2));
 
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        final String json = objectMapper.writeValueAsString(systemInfoResultList);
+        final String json = JsonUtil.writeValueAsString(systemInfoResultList);
 
         LOGGER.info("json:\n{}", json);
 
@@ -88,7 +82,7 @@ class TestSystemInfoResult {
 //
 //        LOGGER.info("json:\n{}", json2);
 
-        SystemInfoResultList systemInfoResultList2 = objectMapper.readValue(json, SystemInfoResultList.class);
+        SystemInfoResultList systemInfoResultList2 = JsonUtil.readValue(json, SystemInfoResultList.class);
 
         Assertions.assertThat(systemInfoResultList2)
                 .isEqualTo(systemInfoResultList);
@@ -115,8 +109,7 @@ class TestSystemInfoResult {
 //        final SystemInfoResult mergedSystemInfoResult = SystemInfoResult.merge("all", List.of(
 //                systemInfoResult1, systemInfoResult2));
 //
-//        final ObjectMapper objectMapper = new ObjectMapper();
-//        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+//        final ObjectMapper objectMapper = JsonUtil.getMapper();
 //        final String json = objectMapper.writeValueAsString(mergedSystemInfoResult);
 //
 //        LOGGER.info("json:\n{}", json);

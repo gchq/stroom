@@ -1,11 +1,9 @@
 package stroom.proxy.app.event;
 
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.ModelStringUtil;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import event.logging.CreateEventAction;
 import event.logging.Event;
 import event.logging.EventDetail;
@@ -112,13 +110,8 @@ public class TestSchemaEventResource {
             event.setEventSource(eventSource);
             event.setEventDetail(eventDetail);
 
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-            final String json = mapper.writeValueAsString(event);
-
-            final Event event2 = mapper.readValue(json, Event.class);
+            final String json = JsonUtil.writeValueAsString(event);
+            final Event event2 = JsonUtil.readValue(json, Event.class);
             System.out.println(event2);
 
             final Client client = ClientBuilder.newClient();

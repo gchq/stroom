@@ -258,7 +258,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             getComponents().fireComponentChangeEvent(this);
         }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
-            final com.google.gwt.view.client.Range range = event.getNewRange();
+            final Range range = event.getNewRange();
             tableResultRequest = tableResultRequest
                     .copy()
                     .requestedRange(new OffsetRange(range.getStart(), range.getLength()))
