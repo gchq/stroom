@@ -10,40 +10,14 @@ public class FilteredTreeModel extends AbstractTreeModel<ExplorerNodeKey> {
         super(id, creationTime);
     }
 
-//    @Override
-//    public void add(final ExplorerNode parent, final ExplorerNode child) {
-//        final ExplorerNodeKey childKey = child != null
-//                ? child.getUniqueKey()
-//                : null;
-//        final ExplorerNodeKey parentKey = parent != null
-//                ? parent.getUniqueKey()
-//                : null;
-//
-//        parentMap.put(childKey, parent);
-//        childMap.computeIfAbsent(parentKey, k -> new LinkedHashSet<>()).add(child);
-////        if (parent == null) {
-////            roots.add(childKey);
-////        }
-//    }
-
-//    public ExplorerNode getParent(final ExplorerNode child) {
-//        if (child == null) {
-//            return null;
-//        }
-//        return parentMap.get(child.getUniqueKey());
-//    }
-
-//    public List<ExplorerNode> getChildren(final ExplorerNode parent) {
-//        final Set<ExplorerNode> children = childMap.get(NullSafe.get(
-//                parent,
-//                ExplorerNode::getUniqueKey));
-//        return NullSafe.get(
-//                children,
-//                children2 -> children2.stream().toList());
-//    }
-
     @Override
     ExplorerNodeKey getNodeKey(final ExplorerNode node) {
         return NullSafe.get(node, ExplorerNode::getUniqueKey);
+    }
+
+    @Override
+    public FilteredTreeModel clone() {
+        final AbstractTreeModel<ExplorerNodeKey> clone = super.clone();
+        return (FilteredTreeModel) clone;
     }
 }

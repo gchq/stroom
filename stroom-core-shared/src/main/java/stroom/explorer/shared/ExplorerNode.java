@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -91,11 +92,11 @@ public class ExplorerNode implements HasDisplayValue {
         this.depth = depth;
         this.icon = icon;
         this.nodeState = nodeState;
-        this.children = children;
+        this.children = GwtNullSafe.get(children, Collections::unmodifiableList);;
         this.rootNodeUuid = rootNodeUuid;
         this.isFavourite = isFavourite;
         this.uniqueKey = uniqueKey;
-        this.nodeInfoList = nodeInfoList;
+        this.nodeInfoList = GwtNullSafe.get(nodeInfoList, Collections::unmodifiableList);
     }
 
     public String getType() {
@@ -235,10 +236,10 @@ public class ExplorerNode implements HasDisplayValue {
             this.depth = explorerNode.depth;
             this.icon = explorerNode.icon;
             this.nodeState = explorerNode.nodeState;
-            this.children = explorerNode.children;
+            this.children = GwtNullSafe.get(explorerNode.children, ArrayList::new);
             this.rootNodeUuid = explorerNode.rootNodeUuid;
             this.isFavourite = explorerNode.isFavourite;
-            this.nodeInfoList = explorerNode.nodeInfoList;
+            this.nodeInfoList = GwtNullSafe.get(explorerNode.nodeInfoList, ArrayList::new);
         }
 
         public Builder docRef(final DocRef docRef) {

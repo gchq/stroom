@@ -130,7 +130,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     filter.getNameFilter(), FIELD_MAPPERS);
 
             // Get the master tree model.
-            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().clone();
+            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
 
             // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
             final Set<String> userFavourites = explorerFavService.get().getUserFavourites()
@@ -309,7 +309,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             treeModel.add(favRootNode, childNode);
         }
 
-        final ExplorerNode newFavRootNode = explorerTreeModel.cloneWithNodeInfo(treeModel, favRootNode);
+        // We need to set the
+        final ExplorerNode newFavRootNode = explorerTreeModel.cloneWithBranchNodeInfo(treeModel, favRootNode);
         if (newFavRootNode != favRootNode) {
             // root object has changed so update tree model
             treeModel.replaceNode(favRootNode.getUuid(), newFavRootNode);
@@ -416,7 +417,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private Set<DocRef> getDescendants(final DocRef folder, final String type, final int maxDepth) {
-        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+        final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
         if (masterTreeModel != null) {
             final Set<DocRef> refs = new HashSet<>();
             addChildren(folder, type, 0, maxDepth, masterTreeModel, refs);
@@ -430,7 +431,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                              final String type,
                              final int depth,
                              final int maxDepth,
-                             final TreeModel treeModel,
+                             final UnmodifiableTreeModel treeModel,
                              final Set<DocRef> refs) {
         final List<DocRef> children = treeModel.getChildren(parent);
         if (children != null) {
@@ -540,20 +541,19 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                                 final Map<DocRef, Set<DocRef>> brokenDepsMap) {
         int added = 0;
 //        Severity maxSeverity = null;
+        boolean foundChildNodeInfo = false;
 
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
             final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
-                    || parent == null || allOpenItems.contains(parent.getUniqueKey());
+                    || parent == null
+                    || allOpenItems.contains(parent.getUniqueKey());
 
             // We need to add at least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerNode> iterator = children.iterator();
             while (iterator.hasNext() && (addAllChildren || added == 0)) {
                 final ExplorerNode child = iterator.next();
-
-//                final Severity childMaxSeverity = getMaxSeverity(treeModelIn, child, brokenDepsMap)
-//                        .orElse(null);
 
                 // Decorate the child with the root parent node, so the same child can be referenced in multiple
                 // parent roots (e.g. System or Favourites)
@@ -580,59 +580,93 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         currentDepth + 1,
                         brokenDepsMap);
 
-//                if (result.maxSeverity != null && NullSafe.isEmptyCollection(childWithParent.getNodeInfoList())) {
-//                    childWithParent = childWithParent.copy()
-//                            .addNodeInfo(new NodeInfo(result.maxSeverity, "Descendants have issues"))
-//                            .build();
-//                }
+                if (!result.hasIssues) {
+                    // If the child has no included nodes with issues then clear its node info.
+                    // It may have non-included children with issues, but we don't show an alert
+                    // for them
+                    childWithParent = childWithParent.copy()
+                            .clearNodeInfo()
+                            .build();
+                }
 
-//                maxSeverity = Severity.getMaxSeverity(
-//                                maxSeverity,
-//                                childWithParent.getMaxSeverity().orElse(null))
-//                        .orElse(null);
-
-                if (result.hasChildren) {
+                if (isNodeIncluded(result.hasChildren, filter, filterPredicate, ignoreNameFilter, childWithParent)) {
                     treeModelOut.add(parent, childWithParent);
                     added++;
-                } else if (checkType(childWithParent, filter.getIncludedTypes())
-                        && checkTags(childWithParent, filter.getTags())
-                        && (ignoreNameFilter || filterPredicate.test(childWithParent.getDocRef()))
-                        && checkSecurity(childWithParent, filter.getRequiredPermissions())) {
-                    treeModelOut.add(parent, childWithParent);
-                    added++;
+                    if (result.hasIssues) {
+                        foundChildNodeInfo = true;
+                    }
                 }
             }
 
             // The above loop may not look at all children so recurse into any remaining
-            // children to establish their max severity
-//            while (iterator.hasNext()) {
-//                final ExplorerNode child = iterator.next();
-//                final Severity childMaxSeverity = getMaxSeverity(treeModelIn, child, brokenDepsMap).orElse(null);
-//                maxSeverity = Severity.getMaxSeverity(maxSeverity, childMaxSeverity).orElse(null);
-//            }
+            // children to establish if any included nodes have issues
+            while (iterator.hasNext()) {
+                final ExplorerNode child = iterator.next();
+                final AddDescendantsResult result = clearNodeInfo(
+                        treeModelIn, treeModelOut, filter, filterPredicate, ignoreNameFilter, child);
+                if (result.hasIssues) {
+                    foundChildNodeInfo = true;
+                }
+            }
+        } else {
+            // Leaf
+            if (NullSafe.hasItems(parent.getNodeInfoList())) {
+                foundChildNodeInfo = true;
+            }
         }
 
-        return new AddDescendantsResult(added > 0);
+        return new AddDescendantsResult(added > 0, foundChildNodeInfo);
     }
 
-//    private Set<NodeInfo> buildNodeInfo(final DocRef docRef,
-//                                        final Map<DocRef, Set<DocRef>> brokenDepsMap) {
-//        final Set<DocRef> brokenDeps = brokenDepsMap.get(docRef);
-//        if (brokenDeps == null) {
-//            return null;
-//        } else {
-//            return brokenDeps.stream()
-//                    .map(missingDocRef -> {
-//                        final String msg = LogUtil.message(
-//                                "Missing dependency to {} '{}' ({})",
-//                                missingDocRef.getType(),
-//                                missingDocRef.getName(),
-//                                missingDocRef.getUuid());
-//                        return new NodeInfo(Severity.ERROR, msg);
-//                    })
-//                    .collect(Collectors.toSet());
-//        }
-//    }
+    private AddDescendantsResult clearNodeInfo(final TreeModel treeModelIn,
+                                               final FilteredTreeModel treeModelOut,
+                                               final ExplorerTreeFilter filter,
+                                               final Predicate<DocRef> filterPredicate,
+                                               final boolean ignoreNameFilter,
+                                               final ExplorerNode node) {
+        final List<ExplorerNode> children = treeModelIn.getChildren(node);
+        final boolean hasChildren = NullSafe.hasItems(children);
+        boolean hasIncludedChildren = false;
+
+        boolean foundIssues = false;
+        if (isNodeIncluded(hasChildren, filter, filterPredicate, ignoreNameFilter, node)) {
+            if (hasChildren) {
+                hasIncludedChildren = true;
+                // Branch
+                for (final ExplorerNode child : children) {
+                    // Recurse
+                    final AddDescendantsResult result = clearNodeInfo(
+                            treeModelIn, treeModelOut, filter, filterPredicate, ignoreNameFilter, child);
+                    if (result.hasIssues) {
+                        foundIssues = true;
+                    }
+                }
+                if (!foundIssues) {
+                }
+            } else {
+                // Leaf node
+                if (NullSafe.hasItems(node.getNodeInfoList())) {
+                    foundIssues = true;
+                }
+            }
+        } else {
+            // Node not included so don't need to worry about it
+        }
+        return new AddDescendantsResult(hasIncludedChildren, foundIssues);
+    }
+
+    private boolean isNodeIncluded(final boolean hasChildren,
+                                   final ExplorerTreeFilter filter,
+                                   final Predicate<DocRef> filterPredicate,
+                                   final boolean ignoreNameFilter,
+                                   final ExplorerNode childWithParent) {
+        return hasChildren
+                || (
+                checkType(childWithParent, filter.getIncludedTypes())
+                        && checkTags(childWithParent, filter.getTags())
+                        && (ignoreNameFilter || filterPredicate.test(childWithParent.getDocRef()))
+                        && checkSecurity(childWithParent, filter.getRequiredPermissions()));
+    }
 
     private boolean checkSecurity(final ExplorerNode explorerNode, final Set<String> requiredPermissions) {
         if (requiredPermissions == null || requiredPermissions.size() == 0) {
@@ -1137,7 +1171,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     @Override
     public List<DocumentType> getVisibleTypes() {
         // Get the master tree model.
-        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+        final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
 
         // Filter the model by user permissions.
         final Set<String> requiredPermissions = new HashSet<>();
@@ -1150,7 +1184,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private boolean addTypes(final ExplorerNode parent,
-                             final TreeModel treeModel,
+                             final UnmodifiableTreeModel treeModel,
                              final Set<String> types,
                              final Set<String> requiredPermissions) {
         boolean added = false;
@@ -1214,7 +1248,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             for (final DocContentMatch docContentMatch : matches) {
                 final List<String> parents = new ArrayList<>();
                 parents.add(docContentMatch.getDocRef().getName());
-                final TreeModel masterTreeModel = explorerTreeModel.getModel();
+                final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
                 if (masterTreeModel != null) {
                     ExplorerNode parent = masterTreeModel.getParent(ExplorerNode
                             .builder()
@@ -1254,7 +1288,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     // --------------------------------------------------------------------------------
 
 
-    private record AddDescendantsResult(boolean hasChildren) {
+    private record AddDescendantsResult(boolean hasChildren, boolean hasIssues) {
 
     }
 }

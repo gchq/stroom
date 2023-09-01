@@ -61,7 +61,7 @@ class ExplorerTreeModel {
     private final ExplorerActionHandlers explorerActionHandlers;
     private final Provider<ContentService> contentServiceProvider;
 
-    private volatile TreeModel currentModel;
+    private volatile UnmodifiableTreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
     private final AtomicLong currentId = new AtomicLong();
     private final AtomicInteger performingRebuild = new AtomicInteger();
@@ -85,12 +85,12 @@ class ExplorerTreeModel {
     }
 
     private boolean isSynchronousUpdateRequired(final long minId, final long now) {
-        return true || currentModel == null ||
+        return currentModel == null ||
                 currentModel.getId() < minId ||
                 currentModel.getCreationTime() < now - ONE_HOUR;
     }
 
-    TreeModel getModel() {
+    UnmodifiableTreeModel getModel() {
         final long currentId = this.currentId.get();
         final long now = System.currentTimeMillis();
 
@@ -100,7 +100,7 @@ class ExplorerTreeModel {
 
         LOGGER.debug("currentId: {}, minId: {}", currentId, minId);
 
-        TreeModel model = null;
+        UnmodifiableTreeModel model = null;
 
         // Create a model synchronously if it is currently null or hasn't been rebuilt for an hour or is old for the
         // current session.
@@ -152,23 +152,26 @@ class ExplorerTreeModel {
         return model;
     }
 
-    private TreeModel updateModel(final long id, final long creationTime) {
+    private UnmodifiableTreeModel updateModel(final long id, final long creationTime) {
         TreeModel newModel;
+        UnmodifiableTreeModel newUnmodifiableModel;
         performingRebuild.incrementAndGet();
         try {
             LOGGER.debug("Updating model for id {}", id);
             newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
 
-            decorateModelWithBrokenDeps(newModel);
+            decorateWithBrokenDeps(newModel);
 
-            setCurrentModel(newModel);
+            // Now make it immutable as this is our master model
+            newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);
+            setCurrentModel(newUnmodifiableModel);
         } finally {
             performingRebuild.decrementAndGet();
         }
-        return newModel;
+        return newUnmodifiableModel;
     }
 
-    private void decorateModelWithBrokenDeps(final TreeModel treeModel) {
+    private void decorateWithBrokenDeps(final TreeModel treeModel) {
         final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
 
         treeModel.decorate((nodeKey, node) -> {
@@ -178,10 +181,36 @@ class ExplorerTreeModel {
         });
     }
 
-    ExplorerNode cloneWithNodeInfo(final TreeModel treeModel,
-                                   final ExplorerNode node) {
+//    private void decorateLeavesWithBrokenDeps(final TreeModel treeModel) {
+//        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+//
+//        treeModel.decorate((nodeKey, node) -> {
+//            LOGGER.debug(() -> "decorate called on node: " + node.getName());
+//
+//            return cloneWithLeafNodeInfo(treeModel, brokenDepsMap, node);
+//        });
+//    }
+//
+//    <K> void decorateBranchesWithBrokenDeps(final AbstractTreeModel<K> treeModel) {
+//        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+//
+//        treeModel.decorate((nodeKey, node) -> {
+//            LOGGER.debug(() -> "decorate called on node: " + node.getName());
+//
+//            return cloneWithBranchNodeInfo(treeModel, brokenDepsMap, node);
+//        });
+//    }
+//
+//    ExplorerNode cloneWithLeafNodeInfo(final TreeModel treeModel,
+//                                       final ExplorerNode node) {
+//        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+//        return cloneWithLeafNodeInfo(treeModel, brokenDepsMap, node);
+//    }
+
+    ExplorerNode cloneWithBranchNodeInfo(final TreeModel treeModel,
+                                       final ExplorerNode node) {
         final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
-        return cloneWithNodeInfo(treeModel, brokenDepsMap, node);
+        return cloneWithBranchNodeInfo(treeModel, brokenDepsMap, node);
     }
 
     private ExplorerNode cloneWithNodeInfo(final TreeModel treeModel,
@@ -197,13 +226,14 @@ class ExplorerTreeModel {
                     .addNodeInfo(nodeInfos)
                     .build();
         } else {
+            // Branch
             final Severity maxSeverity = Severity.getMaxSeverity(
-                    NullSafe.stream(children)
-                            .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
-                                    .map(NodeInfo::getSeverity))
-                            .max(Severity.HIGH_TO_LOW_COMPARATOR)
-                            .orElse(null),
-                    null)
+                            NullSafe.stream(children)
+                                    .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
+                                            .map(NodeInfo::getSeverity))
+                                    .max(Severity.HIGH_TO_LOW_COMPARATOR)
+                                    .orElse(null),
+                            null)
                     .orElse(null);
 
             if (maxSeverity != null) {
@@ -219,6 +249,58 @@ class ExplorerTreeModel {
                 // No issues, return the node as is
                 return node;
             }
+        }
+    }
+
+//    private ExplorerNode cloneWithLeafNodeInfo(final TreeModel treeModel,
+//                                               final Map<DocRef, Set<DocRef>> brokenDepsMap,
+//                                               final ExplorerNode node) {
+//        final DocRef docRef = node.getDocRef();
+//        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
+//        final List<ExplorerNode> children = treeModel.getChildren(node);
+//
+//        if (NullSafe.isEmptyCollection(children) && NullSafe.hasItems(nodeInfos)) {
+//            LOGGER.debug(() -> LogUtil.message("Leaf '{}' has issues", node.getName()));
+//            return node.copy()
+//                    .addNodeInfo(nodeInfos)
+//                    .build();
+//        } else {
+//            return node;
+//        }
+//    }
+
+    private <K> ExplorerNode cloneWithBranchNodeInfo(final AbstractTreeModel<K> treeModel,
+                                                     final Map<DocRef, Set<DocRef>> brokenDepsMap,
+                                                     final ExplorerNode node) {
+        final DocRef docRef = node.getDocRef();
+        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
+        final List<ExplorerNode> children = treeModel.getChildren(node);
+
+        if (NullSafe.hasItems(children) && NullSafe.isEmptyCollection(nodeInfos)) {
+            final Severity maxSeverity = Severity.getMaxSeverity(
+                            NullSafe.stream(children)
+                                    .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
+                                            .map(NodeInfo::getSeverity))
+                                    .max(Severity.HIGH_TO_LOW_COMPARATOR)
+                                    .orElse(null),
+                            null)
+                    .orElse(null);
+
+            if (maxSeverity != null) {
+                // At least one descendant has an issue, so mark this branch too
+                LOGGER.debug(() -> LogUtil.message("Branch '{}' has issues, maxSeverity: {}",
+                        node.getName(), maxSeverity));
+                return node.copy()
+                        .addNodeInfo(new NodeInfo(
+                                maxSeverity,
+                                BRANCH_NODE_INFO))
+                        .build();
+            } else {
+                // No issues, return the node as is
+                return node;
+            }
+        } else {
+            return node;
         }
     }
 
@@ -242,7 +324,6 @@ class ExplorerTreeModel {
     }
 
     private Map<DocRef, Set<DocRef>> getBrokenDependenciesMap() {
-        // Not sure we need to bother caching this
         if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
             synchronized (this) {
                 if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
@@ -264,7 +345,7 @@ class ExplorerTreeModel {
         return documentType.getIcon();
     }
 
-    private synchronized void setCurrentModel(final TreeModel treeModel) {
+    private synchronized void setCurrentModel(final UnmodifiableTreeModel treeModel) {
         if (currentModel == null || currentModel.getId() < treeModel.getId()) {
 
             LOGGER.debug(() -> LogUtil.message("Setting new model old id: {}, new id {}",
