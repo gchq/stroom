@@ -1,7 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form overflow-hidden">
@@ -9,9 +8,7 @@
             <g:FlowPanel styleName="dock-container-vertical dock-max quickFilter-container overflow-hidden">
                 <g:FlowPanel styleName="dock-min dock-container-horizontal exportConfigViewImpl-filter">
                     <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
-                    <g:FlowPanel addStyleNames="dock-min button-container">
-                        <p:SvgButton ui:field="typeFilter"/>
-                    </g:FlowPanel>
+                    <g:FlowPanel ui:field="buttonContainer" addStyleNames="dock-min button-container" />
                 </g:FlowPanel>
                 <g:MaxScrollPanel ui:field="tree" styleName="dock-max stroom-control__no-padding"/>
             </g:FlowPanel>

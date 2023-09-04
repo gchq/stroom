@@ -55,6 +55,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
@@ -74,6 +75,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     private final CellTable<DocumentType> cellTable;
 
     private final TypeFilterSelectionEventManager typeFilterSelectionEventManager;
+    private Consumer<Boolean> filterStateConsumer = null;
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
@@ -103,7 +105,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         hideSelf();
     }
 
-    public void show(final Element element) {
+    public void show(final Element element,
+                     final Consumer<Boolean> filterStateConsumer) {
+        this.filterStateConsumer = filterStateConsumer;
         Rect relativeRect = new Rect(element);
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.RIGHT);
@@ -113,6 +117,11 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> selectFirstItem())
+                .onHide(event -> {
+                    if (filterStateConsumer != null) {
+                        filterStateConsumer.accept(hasActiveFilter());
+                    }
+                })
                 .fire();
     }
 
@@ -151,6 +160,12 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     public Set<String> getIncludedTypes() {
         return selected;
+    }
+
+    public boolean hasActiveFilter() {
+        return !getIncludedTypes().containsAll(visibleTypes.stream()
+                .map(DocumentType::getType)
+                .collect(Collectors.toSet()));
     }
 
     @Override
@@ -197,6 +212,10 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
             }
         }
 
+        if (filterStateConsumer != null) {
+            filterStateConsumer.accept(hasActiveFilter());
+        }
+
         refreshView();
         DataSelectionEvent.fire(
                 TypeFilterPresenter.this,
@@ -229,10 +248,18 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         };
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface TypeFilterView extends View {
 
         void setWidget(Widget widget);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class TypeFilterSelectionEventManager extends CheckListSelectionEventManager<DocumentType> {
 

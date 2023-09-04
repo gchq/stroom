@@ -31,8 +31,10 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -42,6 +44,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -54,6 +57,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class ExportConfigPresenter
         extends MyPresenter<ExportConfigPresenter.ExportConfigView, ExportConfigPresenter.ExportProxy>
@@ -66,6 +70,9 @@ public class ExportConfigPresenter
     private final TypeFilterPresenter typeFilterPresenter;
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
+
+    private final InlineSvgToggleButton filter;
+    private boolean hasActiveFilter = false;
 
     @Inject
     public ExportConfigPresenter(final EventBus eventBus,
@@ -82,6 +89,17 @@ public class ExportConfigPresenter
         this.typeFilterPresenter = typeFilterPresenter;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
+
+        filter = new InlineSvgToggleButton();
+        filter.setState(hasActiveFilter);
+        filter.setSvg(SvgImage.FILTER);
+        filter.getElement().addClassName("navigation-header-button filter");
+        filter.setTitle("Filter Types");
+        filter.setEnabled(true);
+
+        final FlowPanel buttons = getView().getButtonContainer();
+        buttons.add(filter);
+
         view.setTreeView(treePresenter.getView());
         view.setUiHandlers(this);
 
@@ -93,6 +111,21 @@ public class ExportConfigPresenter
     protected void onBind() {
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> treePresenter.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes())));
+
+        registerHandler(filter.addClickHandler((e) ->
+                showTypeFilter(filter.getElement())));
+    }
+
+    public void showTypeFilter(final Element target) {
+        // Override the default behaviour of the toggle button as we only want
+        // it to be ON if a filter has been set, not just when clicked
+        filter.setState(hasActiveFilter);
+        typeFilterPresenter.show(target, this::setFilterState);
+    }
+
+    private void setFilterState(final boolean hasActiveFilter) {
+        this.hasActiveFilter = hasActiveFilter;
+        filter.setState(hasActiveFilter);
     }
 
     @ProxyEvent
@@ -165,15 +198,26 @@ public class ExportConfigPresenter
     }
 
     @Override
-    public void showTypeFilter(final MouseDownEvent event) {
+    public void showTypeFilter(final MouseDownEvent event,
+                               final Consumer<Boolean> filterStateConsumer) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-        typeFilterPresenter.show(target);
+        typeFilterPresenter.show(target, filterStateConsumer);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ExportConfigView extends View, Focus, HasUiHandlers<ExportConfigUiHandlers> {
 
         void setTreeView(View view);
+
+        FlowPanel getButtonContainer();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface ExportProxy extends Proxy<ExportConfigPresenter> {

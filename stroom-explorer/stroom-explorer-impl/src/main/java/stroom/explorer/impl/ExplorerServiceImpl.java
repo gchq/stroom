@@ -332,9 +332,12 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         if (rootNode != null) {
             rootNodeBuilder = rootNode.copy();
         } else {
-            // If there is no root at this point then we know there is no match on it
+            // If there is no root at this point then either the quick filter has filtered
+            // everything out so System is not a match, or it is type filter with no matching types
+            // in which case System would be considered a match as we only have non-matches when
+            // using the QuickFilter
             rootNodeBuilder = ExplorerConstants.SYSTEM_NODE.copy()
-                    .isFilterMatch(false);
+                    .isFilterMatch(NullSafe.isBlankString(filter.getNameFilter()));
         }
 
         if (criteria.getFilter() != null &&

@@ -19,6 +19,8 @@ package stroom.explorer.client.presenter;
 import com.google.gwt.dom.client.NativeEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
+import java.util.function.Consumer;
+
 public interface ExplorerTreeUiHandlers extends UiHandlers {
 
     void newItem(NativeEvent event);
@@ -27,5 +29,5 @@ public interface ExplorerTreeUiHandlers extends UiHandlers {
 
     void changeQuickFilter(String name);
 
-    void showTypeFilter(NativeEvent event);
+    void showTypeFilter(NativeEvent event, final Consumer<Boolean> filterStateConsumer);
 }

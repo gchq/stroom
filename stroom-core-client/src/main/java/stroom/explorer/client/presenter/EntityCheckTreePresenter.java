@@ -186,6 +186,10 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface EntityCheckTreeView extends View {
 
         void setCellTree(Widget cellTree);

@@ -18,15 +18,13 @@ package stroom.importexport.client.view;
 
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 import stroom.importexport.client.presenter.ExportConfigUiHandlers;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -42,12 +40,13 @@ public class ExportConfigViewImpl
     QuickFilter nameFilter;
     @UiField
     MaxScrollPanel tree;
-    @UiField(provided = true)
-    SvgButton typeFilter;
+    @UiField
+    FlowPanel buttonContainer;
+
+    private boolean hasActiveFilter = false;
 
     @Inject
     public ExportConfigViewImpl(final Binder binder) {
-        typeFilter = SvgButton.create(SvgPresets.FILTER);
         widget = binder.createAndBindUi(this);
     }
 
@@ -66,15 +65,19 @@ public class ExportConfigViewImpl
         tree.setWidget(view.asWidget());
     }
 
+    @Override
+    public FlowPanel getButtonContainer() {
+        return buttonContainer;
+    }
+
     @UiHandler("nameFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().changeQuickFilter(nameFilter.getText());
     }
 
-    @UiHandler("typeFilter")
-    void onFilterClick(final MouseDownEvent event) {
-        getUiHandlers().showTypeFilter(event);
-    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, ExportConfigViewImpl> {
 
