@@ -239,7 +239,7 @@ export interface Annotation {
 
   /** @format int64 */
   createTime?: number;
-  createUser?: UserName;
+  createUser?: string;
   history?: string;
 
   /** @format int64 */
@@ -250,7 +250,7 @@ export interface Annotation {
 
   /** @format int64 */
   updateTime?: number;
-  updateUser?: UserName;
+  updateUser?: string;
 
   /** @format int32 */
   version?: number;
@@ -264,7 +264,7 @@ export interface AnnotationDetail {
 export interface AnnotationEntry {
   /** @format int64 */
   createTime?: number;
-  createUser?: UserName;
+  createUser?: string;
   entryType?: string;
   entryValue?: EntryValue;
 
@@ -273,7 +273,7 @@ export interface AnnotationEntry {
 
   /** @format int64 */
   updateTime?: number;
-  updateUser?: UserName;
+  updateUser?: string;
 
   /** @format int32 */
   version?: number;
@@ -916,6 +916,7 @@ export interface DocumentType {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
@@ -1282,6 +1283,7 @@ export interface ExplorerDocContentMatch {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
@@ -1462,6 +1464,7 @@ export interface ExplorerNode {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
@@ -1903,7 +1906,7 @@ export interface FilterFieldDefinition {
 
 export interface FilterUsersRequest {
   quickFilterInput?: string;
-  users?: SimpleUser[];
+  users?: UserName[];
 }
 
 export interface FindAnalyticDataShardCriteria {
@@ -2010,11 +2013,11 @@ export interface FindStoredQueryCriteria {
   dashboardUuid?: string;
   favourite?: boolean;
   name?: StringCriteria;
+  ownerUuid?: string;
   pageRequest?: PageRequest;
   requiredPermission?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
-  userId?: string;
 }
 
 export interface FindTaskCriteria {
@@ -2163,9 +2166,9 @@ export interface GetFeedStatusResponse {
     | "401 - 300 - Client Certificate Required"
     | "401 - 301 - Client Token Required"
     | "401 - 302 - Client Token or Certificate Required"
-    | "403 - 310 - Client Certificate not authorised"
-    | "403 - 311 - Client Token not authorised"
-    | "403 - 312 - Client Token or Certificate not authorised"
+    | "401 - 310 - Client Certificate failed authentication"
+    | "401 - 311 - Client Token failed authentication"
+    | "401 - 312 - Client Token or Certificate failed authentication"
     | "500 - 400 - Compressed stream invalid"
     | "500 - 999 - Unknown error";
 }
@@ -2798,6 +2801,7 @@ export interface PipelineElementType {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
@@ -3127,6 +3131,7 @@ export interface ProcessorFilter {
 
   /** @format int64 */
   minMetaCreateTimeMs?: number;
+  ownerUuid?: string;
   pipelineName?: string;
   pipelineUuid?: string;
 
@@ -3147,7 +3152,7 @@ export interface ProcessorFilter {
   version?: number;
 }
 
-export type ProcessorFilterRow = ProcessorListRow & { processorFilter?: ProcessorFilter };
+export type ProcessorFilterRow = ProcessorListRow & { ownerDisplayName?: string; processorFilter?: ProcessorFilter };
 
 export interface ProcessorFilterTracker {
   /** @format int64 */
@@ -3258,6 +3263,15 @@ export interface Prop {
 export interface PropertyPath {
   leafPart?: string;
   parentParts?: string[];
+}
+
+export type QLVisResult = Result & { dataPoints?: number; jsonData?: string; visSettings?: QLVisSettings };
+
+export interface QLVisSettings {
+  json?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  visualisation?: DocRef;
 }
 
 /**
@@ -3708,7 +3722,7 @@ export interface ResultRequest {
   requestedRange: OffsetRange;
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
-  resultStyle: "FLAT" | "TABLE";
+  resultStyle: "FLAT" | "TABLE" | "VIS" | "QL_VIS";
 
   /** If the data includes time in the key then you can apply a time filter when retrieving rows */
   timeFilter?: TimeFilter;
@@ -3716,6 +3730,7 @@ export interface ResultRequest {
 
 export interface ResultStoreInfo {
   complete?: boolean;
+  createUser?: string;
 
   /** @format int64 */
   creationTime?: number;
@@ -3730,7 +3745,6 @@ export interface ResultStoreInfo {
   /** @format int64 */
   storeSize?: number;
   taskProgress?: SearchTaskProgress;
-  userId?: string;
 }
 
 export interface ResultStoreResponse {
@@ -3954,7 +3968,7 @@ export interface SessionDetails {
   /** @format int64 */
   lastAccessedMs?: number;
   nodeName?: string;
-  userName?: string;
+  userName?: UserName;
 }
 
 export interface SessionInfo {
@@ -3997,13 +4011,6 @@ export interface SimpleDuration {
   /** @format int64 */
   time?: number;
   timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
-}
-
-export interface SimpleUser {
-  displayName?: string;
-  fullName?: string;
-  name?: string;
-  uuid?: string;
 }
 
 export interface Size {
@@ -4261,6 +4268,7 @@ export interface StoredQuery {
   /** @format int32 */
   id?: number;
   name?: string;
+  ownerUuid?: string;
 
   /** The query terms for the search */
   query?: Query;
@@ -4447,6 +4455,7 @@ export interface TableSettings {
 
   /** A logical addOperator term in a query expression tree */
   valueFilter?: ExpressionOperator;
+  visSettings?: QLVisSettings;
   window?: Window;
 }
 
@@ -4597,6 +4606,9 @@ export interface TokenResponse {
   /** @format int64 */
   expires_in?: number;
   id_token?: string;
+
+  /** @format int64 */
+  refresh_expires_in?: number;
   refresh_token?: string;
 
   /** @format int64 */
@@ -4676,7 +4688,7 @@ export interface User {
 
   /** @format int32 */
   id?: number;
-  name?: string;
+  subjectId?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -4696,8 +4708,9 @@ export interface UserAndPermissions {
 export interface UserName {
   displayName?: string;
   fullName?: string;
-  name?: string;
+  subjectId?: string;
   userIdentityForAudit?: string;
+  uuid?: string;
 }
 
 export type UserNameEntryValue = EntryValue & { userName?: UserName };
@@ -8440,7 +8453,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
-      this.request<any, SimpleUser[]>({
+      this.request<any, UserName[]>({
         path: `/permission/doc/v1/filterUsers`,
         method: "POST",
         body: data,
@@ -10590,18 +10603,33 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name GetByUserId
-     * @summary Find the user name matching the supplied unique user ID
-     * @request GET:/userNames/v1/{userId}
+     * @name GetByUuid
+     * @summary Find the user name matching the supplied unique Stroom user UUID
+     * @request GET:/userNames/v1/getByUuid/{userUuid}
      * @secure
      */
-    getByUserId: (userId: string, data: string, params: RequestParams = {}) =>
+    getByUuid: (userUuid: string, params: RequestParams = {}) =>
       this.request<any, UserName>({
-        path: `/userNames/v1/${userId}`,
+        path: `/userNames/v1/getByUuid/${userUuid}`,
         method: "GET",
-        body: data,
         secure: true,
-        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name GetByUserId
+     * @summary Find the user name matching the supplied unique user subject ID
+     * @request GET:/userNames/v1/{subjectId}
+     * @secure
+     */
+    getByUserId: (subjectId: string, params: RequestParams = {}) =>
+      this.request<any, UserName>({
+        path: `/userNames/v1/${subjectId}`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
   };

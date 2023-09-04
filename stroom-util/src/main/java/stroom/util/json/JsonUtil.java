@@ -109,11 +109,11 @@ public final class JsonUtil {
     }
 
     private static ObjectMapper createMapper(final boolean indent) {
-        final SimpleModule module = new SimpleModule();
-        module.addSerializer(Double.class, new MyDoubleSerialiser());
+//        final SimpleModule module = new SimpleModule();
+//        module.addSerializer(Double.class, new MyDoubleSerialiser());
 
         final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(module);
+//        mapper.registerModule(module);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);

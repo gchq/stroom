@@ -503,6 +503,17 @@ class stroom.query.api.v2.Param$Builder - public native int java.lang.Object.has
 class stroom.query.api.v2.Param$Builder - public stroom.query.api.v2.Param stroom.query.api.v2.Param$Builder.build()
 class stroom.query.api.v2.Param$Builder - public stroom.query.api.v2.Param$Builder stroom.query.api.v2.Param$Builder.key(java.lang.String)
 class stroom.query.api.v2.Param$Builder - public stroom.query.api.v2.Param$Builder stroom.query.api.v2.Param$Builder.value(java.lang.String)
+class stroom.query.api.v2.QLVisSettings - public boolean stroom.query.api.v2.QLVisSettings.equals(java.lang.Object)
+class stroom.query.api.v2.QLVisSettings - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.QLVisSettings - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.QLVisSettings - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.QLVisSettings - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.QLVisSettings - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.QLVisSettings - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.QLVisSettings - public int stroom.query.api.v2.QLVisSettings.hashCode()
+class stroom.query.api.v2.QLVisSettings - public java.lang.String stroom.query.api.v2.QLVisSettings.getJson()
+class stroom.query.api.v2.QLVisSettings - public java.lang.String stroom.query.api.v2.QLVisSettings.toString()
+class stroom.query.api.v2.QLVisSettings - public stroom.docref.DocRef stroom.query.api.v2.QLVisSettings.getVisualisation()
 class stroom.query.api.v2.Query - public boolean stroom.query.api.v2.Query.equals(java.lang.Object)
 class stroom.query.api.v2.Query - public final native java.lang.Class<?> java.lang.Object.getClass()
 class stroom.query.api.v2.Query - public final native void java.lang.Object.notify()
@@ -778,6 +789,7 @@ class stroom.query.api.v2.TableSettings - public static stroom.query.api.v2.Tabl
 class stroom.query.api.v2.TableSettings - public stroom.docref.DocRef stroom.query.api.v2.TableSettings.getExtractionPipeline()
 class stroom.query.api.v2.TableSettings - public stroom.query.api.v2.ExpressionOperator stroom.query.api.v2.TableSettings.getAggregateFilter()
 class stroom.query.api.v2.TableSettings - public stroom.query.api.v2.ExpressionOperator stroom.query.api.v2.TableSettings.getValueFilter()
+class stroom.query.api.v2.TableSettings - public stroom.query.api.v2.QLVisSettings stroom.query.api.v2.TableSettings.getVisSettings()
 class stroom.query.api.v2.TableSettings - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings.copy()
 class stroom.query.api.v2.TableSettings - public stroom.query.api.v2.Window stroom.query.api.v2.TableSettings.getWindow()
 class stroom.query.api.v2.TableSettings$Builder - public boolean java.lang.Object.equals(java.lang.Object)
@@ -804,6 +816,7 @@ class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.Tab
 class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.queryId(java.lang.String)
 class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.showDetail(java.lang.Boolean)
 class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.valueFilter(stroom.query.api.v2.ExpressionOperator)
+class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.visSettings(stroom.query.api.v2.QLVisSettings)
 class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.window(stroom.query.api.v2.Window)
 class stroom.query.api.v2.TimeFilter - public boolean stroom.query.api.v2.TimeFilter.equals(java.lang.Object)
 class stroom.query.api.v2.TimeFilter - public final native java.lang.Class<?> java.lang.Object.getClass()
