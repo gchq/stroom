@@ -586,7 +586,7 @@ public class LmdbRowKeyFactoryFactory {
                 start.put(childDepth);
                 start.putLong(timeFilter.getFrom());
                 start.flip();
-                final ByteBuffer stop = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES);
+                final ByteBuffer stop = ByteBuffer.allocateDirect(start.limit());
                 stop.put(childDepth);
                 stop.putLong(timeFilter.getTo() + 1);
                 stop.flip();
@@ -603,7 +603,7 @@ public class LmdbRowKeyFactoryFactory {
 
                 // Create a time based child group key. <DEPTH><TIME_MS><GROUP_HASHES...>
                 final ByteBuffer start = ByteBuffer.allocateDirect(
-                        Byte.BYTES + (groupHashes.length * Long.BYTES));
+                        Byte.BYTES + Long.BYTES + (groupHashes.length * Long.BYTES));
                 start.put(childDepth);
                 start.putLong(timeFilter.getFrom());
                 for (final long groupHash : groupHashes) {
