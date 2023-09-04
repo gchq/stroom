@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
@@ -94,7 +95,6 @@ public class QueryEditPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultPresenter queryResultPresenter;
-    private final QueryResultVisPresenter visPresenter;
     private final IndexLoader indexLoader;
     private final Views views;
     private boolean dirty;
@@ -104,6 +104,10 @@ public class QueryEditPresenter
     private final RestFactory restFactory;
     private final QueryResultTabsView linkTabsLayoutView;
 
+    private final Provider<QueryResultVisPresenter> visPresenterProvider;
+
+    private QueryResultVisPresenter currentVisPresenter;
+
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
                               final QueryEditView view,
@@ -111,7 +115,7 @@ public class QueryEditPresenter
                               final QueryToolbarPresenter queryToolbarPresenter,
                               final EditorPresenter editorPresenter,
                               final QueryResultPresenter queryResultPresenter,
-                              final QueryResultVisPresenter visPresenter,
+                              final Provider<QueryResultVisPresenter> visPresenterProvider,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,
                               final Views views,
@@ -122,7 +126,7 @@ public class QueryEditPresenter
         this.queryHelpPresenter = queryHelpPresenter;
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.queryResultPresenter = queryResultPresenter;
-        this.visPresenter = visPresenter;
+        this.visPresenterProvider = visPresenterProvider;
         this.indexLoader = indexLoader;
         this.views = views;
         this.restFactory = restFactory;
@@ -135,31 +139,32 @@ public class QueryEditPresenter
 
             @Override
             public OffsetRange getRequestedRange() {
-                return visPresenter.getRequestedRange();
+                return null;
             }
 
             @Override
             public Set<String> getOpenGroups() {
-                return visPresenter.getOpenGroups();
+                return null;
             }
 
             @Override
             public void reset() {
                 hasData = false;
-//                visPresenter.reset();
             }
 
             @Override
             public void startSearch() {
                 hasData = false;
-//                visPresenter.startSearch();
             }
 
             @Override
             public void endSearch() {
-                visPresenter.endSearch();
+                if (currentVisPresenter != null) {
+                    currentVisPresenter.endSearch();
+                }
                 start = false;
                 if (!hasData) {
+                    destroyCurrentVis();
                     setVisHidden(true);
                 }
             }
@@ -168,8 +173,9 @@ public class QueryEditPresenter
             public void setData(final Result componentResult) {
                 if (componentResult != null) {
                     if (!start) {
-                        visPresenter.startSearch();
-                        visPresenter.reset();
+                        createNewVis();
+                        currentVisPresenter.startSearch();
+                        currentVisPresenter.reset();
                         start = true;
                     }
 
@@ -179,13 +185,14 @@ public class QueryEditPresenter
                         setVisHidden(false);
                     }
 
-                    visPresenter.setData(componentResult);
+                    currentVisPresenter.setData(componentResult);
                 } else {
                     if (start) {
-                        visPresenter.clear();
-                        visPresenter.endSearch();
+                        currentVisPresenter.clear();
+                        currentVisPresenter.endSearch();
                         start = false;
                         hasData = false;
+                        destroyCurrentVis();
                         setVisHidden(true);
                     }
                 }
@@ -248,6 +255,21 @@ public class QueryEditPresenter
         }
     }
 
+    private void createNewVis() {
+        destroyCurrentVis();
+        currentVisPresenter = visPresenterProvider.get();
+        if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
+            linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
+        }
+    }
+
+    private void destroyCurrentVis() {
+        if (currentVisPresenter != null) {
+            currentVisPresenter.onRemove();
+            currentVisPresenter = null;
+        }
+    }
+
     @Override
     public List<Widget> getToolbars() {
         return Collections.singletonList(queryToolbarPresenter.getWidget());
@@ -292,7 +314,7 @@ public class QueryEditPresenter
             linkTabsLayoutView.getLayerContainer().show(queryResultPresenter);
         } else if (VISUALISATION.equals(tabData)) {
             linkTabsLayoutView.getTabBar().selectTab(tabData);
-            linkTabsLayoutView.getLayerContainer().show(visPresenter);
+            linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
     }
 
@@ -376,6 +398,7 @@ public class QueryEditPresenter
 
     public void onClose() {
         queryModel.reset(DestroyReason.TAB_CLOSE);
+        destroyCurrentVis();
     }
 
     private void startStop() {
