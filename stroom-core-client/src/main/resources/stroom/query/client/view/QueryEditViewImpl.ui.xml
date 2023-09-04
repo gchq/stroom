@@ -2,11 +2,11 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:ThinSplitLayoutPanel styleName="QueryEditViewImpl max dashboard-scrollPanel">
-        <g:north size="400">
+        <g:north size="600">
             <g:ThinSplitLayoutPanel styleName="max">
-                <g:east size="700">
+                <g:west size="300">
                     <g:SimplePanel ui:field="queryHelpContainer" styleName="max"/>
-                </g:east>
+                </g:west>
                 <g:center>
                     <g:SimplePanel ui:field="queryEditorContainer" styleName="max"/>
                 </g:center>

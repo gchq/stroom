@@ -5,7 +5,7 @@
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
 
     <g:ThinSplitLayoutPanel styleName="QueryHelpViewImpl max">
-        <g:west size="270">
+        <g:north size="250">
             <g:SimplePanel styleName="QueryHelpViewImpl max dashboard-panel">
                 <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical">
                     <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
@@ -14,7 +14,7 @@
                     </g:MaxScrollPanel>
                 </g:FlowPanel>
             </g:SimplePanel>
-        </g:west>
+        </g:north>
         <g:center>
             <g:FlowPanel styleName="QueryHelpViewImpl-details max dashboard-panel dock-container-vertical">
                 <g:FlowPanel styleName="QueryHelpViewImpl-buttons dock-min button-container">

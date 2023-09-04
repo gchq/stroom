@@ -55,6 +55,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -242,6 +243,13 @@ public class QueryEditPresenter
         linkTabsLayoutView.getTabBar().addTab(TABLE);
         linkTabsLayoutView.getTabBar().addTab(VISUALISATION);
         setVisHidden(true);
+    }
+
+    private void focus() {
+        Scheduler.get().scheduleFixedDelay(() -> {
+            editorPresenter.focus();
+            return false;
+        }, 500);
     }
 
     private void setVisHidden(final boolean state) {
@@ -476,6 +484,7 @@ public class QueryEditPresenter
         editorPresenter.getFormatAction().setAvailable(!readOnly);
 
         dirty = false;
+        focus();
     }
 
     public String getQuery() {
