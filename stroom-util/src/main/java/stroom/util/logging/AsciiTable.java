@@ -65,6 +65,11 @@ public class AsciiTable {
             BLOCK_7_8THS_WIDE,
             BLOCK_8_8THS_WIDE};
 
+    private static final Set<String> IGNORED_RECORD_METHOD_NAMES = Set.of(
+            "equals",
+            "toString",
+            "hashCode");
+
     private AsciiTable() {
     }
 
@@ -144,11 +149,19 @@ public class AsciiTable {
             // Simple single column table so don't try and get getters.
             tableBuilder.withColumn(Column.of(item.getClass().getSimpleName(), Object::toString));
         } else {
-            Stream<Method> methodNameStream = Arrays.stream(item.getClass().getDeclaredMethods())
-                    .filter(method -> {
-                        final String methodName = method.getName();
-                        return methodName.startsWith("get") || methodName.startsWith("is");
-                    });
+            Stream<Method> methodNameStream = Arrays.stream(item.getClass().getDeclaredMethods());
+
+            if (item.getClass().isRecord()) {
+                methodNameStream = methodNameStream.filter(method -> {
+                    final String methodName = method.getName();
+                    return !IGNORED_RECORD_METHOD_NAMES.contains(methodName);
+                });
+            } else {
+                methodNameStream = methodNameStream.filter(method -> {
+                    final String methodName = method.getName();
+                    return methodName.startsWith("get") || methodName.startsWith("is");
+                });
+            }
 
             if (sortColumns) {
                 methodNameStream = methodNameStream.sorted(Comparator.comparing(Method::getName));
@@ -183,7 +196,6 @@ public class AsciiTable {
         result = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, result);
         return result.replaceAll("(?<!^)([A-Z])", " $1");
     }
-
 
     public static String asciiBar(final long value,
                                   final long minValueInc,

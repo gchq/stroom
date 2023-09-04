@@ -25,6 +25,7 @@ import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.processor.impl.ProcessorTaskQueueManager;
+import stroom.security.user.api.UserNameService;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -62,6 +63,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final FsVolumeService fsVolumeService;
     private final PathCreator pathCreator;
     private final IndexVolumeService indexVolumeService;
+    private final UserNameService userNameService;
 
     //    private static boolean needsCleanup;
     // Thread local for parallel test running
@@ -78,7 +80,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final FsVolumeConfig fsVolumeConfig,
                               final FsVolumeService fsVolumeService,
                               final PathCreator pathCreator,
-                              final IndexVolumeService indexVolumeService) {
+                              final IndexVolumeService indexVolumeService,
+                              final UserNameService userNameService) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -90,6 +93,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.fsVolumeService = fsVolumeService;
         this.pathCreator = pathCreator;
         this.indexVolumeService = indexVolumeService;
+        this.userNameService = userNameService;
     }
 
     @Override

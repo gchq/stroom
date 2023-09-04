@@ -71,7 +71,7 @@ public class GetFeedStatusResponse extends RemoteResponse {
     }
 
     public static GetFeedStatusResponse createCertificateNotAuthorisedResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.CLIENT_CERTIFICATE_NOT_AUTHORISED);
+        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.CLIENT_CERTIFICATE_NOT_AUTHENTICATED);
     }
 
     public FeedStatus getStatus() {

@@ -24,6 +24,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -162,7 +163,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                         caught -> showNodeInfoError(caught, popupPosition));
             }
         };
-        dataGrid.addColumn(infoColumn, "<br/>", 20);
+        dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Name.
         final Column<NodeStatusResult, String> nameColumn = new OrderByColumn<NodeStatusResult, String>(
@@ -211,7 +212,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
             }
         };
         masterColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-        dataGrid.addColumn(masterColumn, "Master", 50);
+        dataGrid.addColumn(masterColumn, "Master", 60);
 
         // Priority.
         final Column<NodeStatusResult, Number> priorityColumn = new OrderByColumn<NodeStatusResult, Number>(

@@ -9,11 +9,16 @@ import java.util.List;
 
 public interface StoredQueryDao extends HasIntCrud<StoredQuery> {
 
-    ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria);
+    ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria);
 
-    void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs);
+    void clean(final String ownerUuid,
+               final boolean favourite,
+               final Integer oldestId,
+               final long oldestCrtMs);
 
     List<String> getUsers(final boolean favourite);
 
-    Integer getOldestId(final String user, final boolean favourite, final int retain);
+    Integer getOldestId(final String ownerUuid,
+                        final boolean favourite,
+                        final int retain);
 }

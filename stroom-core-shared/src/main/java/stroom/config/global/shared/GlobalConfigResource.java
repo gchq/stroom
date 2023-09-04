@@ -1,5 +1,6 @@
 package stroom.config.global.shared;
 
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -34,6 +35,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     String DB_OVERRIDE_VALUE_SUB_PATH = "/dbOverrideValue";
     String CLUSTER_PROPERTIES_SUB_PATH = "/clusterProperties";
     String FETCH_UI_CONFIG_SUB_PATH = "/noauth/fetchUiConfig";
+    String FETCH_EXTENDED_UI_CONFIG_SUB_PATH = "/noauth/fetchExtendedUiConfig";
 
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -105,4 +107,11 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             summary = "Fetch the UI configuration",
             operationId = "fetchUiConfig")
     UiConfig fetchUiConfig();
+
+    @GET
+    @Path(FETCH_EXTENDED_UI_CONFIG_SUB_PATH)
+    @Operation(
+            summary = "Fetch the extended UI configuration",
+            operationId = "fetchExtendedUiConfig")
+    ExtendedUiConfig fetchExtendedUiConfig();
 }

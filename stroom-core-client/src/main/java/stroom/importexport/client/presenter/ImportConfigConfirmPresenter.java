@@ -396,7 +396,7 @@ public class ImportConfigConfirmPresenter extends
                 tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
             }
         };
-        dataGrid.addColumn(infoColumn, "<br/>", 20);
+        dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private void addActionColumn() {

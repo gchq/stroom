@@ -78,7 +78,7 @@ class JobService {
             // We always want to update a job instance even if we have a stale version.
             before.ifPresent(j -> job.setVersion(j.getVersion()));
 
-            AuditUtil.stamp(securityContext.getUserId(), job);
+            AuditUtil.stamp(securityContext, job);
             final Job after = jobDao.update(job);
             return decorate(after);
         });

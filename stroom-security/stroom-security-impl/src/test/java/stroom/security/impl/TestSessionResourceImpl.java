@@ -6,6 +6,7 @@ import stroom.security.shared.SessionResource;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.SimpleUserName;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -37,8 +38,16 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
+                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1"),
+                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1")));
 
         when(sessionListService.listSessions(Mockito.anyString()))
                 .thenReturn(expectedResponse);
@@ -59,13 +68,24 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
+                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1"),
+                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1")));
 
         when(sessionListService.listSessions())
                 .thenReturn(expectedResponse);
 
-        final SessionListResponse response = doGetTest(subPath, SessionListResponse.class, expectedResponse);
+        final SessionListResponse response = doGetTest(
+                subPath,
+                SessionListResponse.class,
+                expectedResponse);
 
         verify(sessionListService).listSessions();
     }

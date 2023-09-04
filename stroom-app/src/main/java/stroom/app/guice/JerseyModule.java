@@ -4,16 +4,23 @@ import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
+import stroom.util.NullSafe;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.jersey.WebTargetProxy;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.Map;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation.Builder;
@@ -45,35 +52,56 @@ public class JerseyModule extends AbstractModule {
     @Provides
     @Singleton
     WebTargetFactory provideJerseyRequestBuilder(final JerseyClientFactoryImpl jerseyClientFactory,
-                                                 final SecurityContext securityContext) {
+                                                 final SecurityContext securityContext,
+                                                 final Provider<UserIdentityFactory> userIdentityFactoryProvider) {
         return url -> {
             final JerseyClientName clientName = JerseyClientName.STROOM;
             final Client client = jerseyClientFactory.getNamedClient(clientName);
-            final WebTarget webTarget = client.target(url);
+            final WebTarget delegateWebTarget = client.target(url);
             LOGGER.debug("Building WebTarget for client: '{}', url: '{}'", clientName, url);
-            final WebTarget webTargetProxy = new WebTargetProxy(webTarget) {
+
+            return (WebTarget) new WebTargetProxy(delegateWebTarget) {
                 @Override
                 public Builder request() {
                     final Builder builder = super.request();
-                    securityContext.addAuthorisationHeader(builder);
+                    addAuthHeader(builder);
                     return builder;
                 }
 
                 @Override
                 public Builder request(final String... acceptedResponseTypes) {
                     final Builder builder = super.request(acceptedResponseTypes);
-                    securityContext.addAuthorisationHeader(builder);
+                    addAuthHeader(builder);
                     return builder;
                 }
 
                 @Override
                 public Builder request(final MediaType... acceptedResponseTypes) {
                     final Builder builder = super.request(acceptedResponseTypes);
-                    securityContext.addAuthorisationHeader(builder);
+                    addAuthHeader(builder);
                     return builder;
                 }
+
+                private void addAuthHeader(final Builder builder) {
+                    final UserIdentity userIdentity = securityContext.getUserIdentity();
+
+                    final UserIdentityFactory userIdentityFactory = userIdentityFactoryProvider.get();
+                    if (!userIdentityFactory.isServiceUser(userIdentity)) {
+                        // We are running as a user who is not the service/proc user so need to put their
+                        // identity in the headers. We can't use the human user identity as they may have
+                        // an AWS token that we can't refresh.
+                        builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, userIdentity.getSubjectId());
+                    }
+                    // Always authenticate as the proc user
+                    final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
+
+                    LOGGER.debug(() -> LogUtil.message("Adding auth headers to request, keys: '{}', userType: {}",
+                            String.join(", ", NullSafe.map(authHeaders).keySet()),
+                            NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName)));
+
+                    authHeaders.forEach(builder::header);
+                }
             };
-            return webTargetProxy;
         };
     }
 }

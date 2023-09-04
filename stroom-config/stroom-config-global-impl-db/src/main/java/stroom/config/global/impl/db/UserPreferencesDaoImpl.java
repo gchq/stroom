@@ -25,12 +25,12 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
     }
 
     @Override
-    public Optional<UserPreferences> fetch(final String userId) {
+    public Optional<UserPreferences> fetch(final String userUuid) {
         final Optional<String> optionalDat = JooqUtil.contextResult(connProvider, context ->
                 context
                         .select(PREFERENCES.DAT)
                         .from(PREFERENCES)
-                        .where(PREFERENCES.USER_ID.eq(userId))
+                        .where(PREFERENCES.USER_UUID.eq(userUuid))
                         .fetchOptional()
                         .map(r -> r.get(PREFERENCES.DAT)));
 
@@ -45,7 +45,9 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
     }
 
     @Override
-    public int update(final String userId, final UserPreferences userPreferences) {
+    public int update(final String userUuid,
+                      final String userIdentityForAudit,
+                      final UserPreferences userPreferences) {
         try {
             final String dat = JsonUtil.writeValueAsString(userPreferences, true);
             final long now = System.currentTimeMillis();
@@ -54,7 +56,7 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
                 final Optional<Integer> optionalId = context
                         .select(PREFERENCES.ID)
                         .from(PREFERENCES)
-                        .where(PREFERENCES.USER_ID.eq(userId))
+                        .where(PREFERENCES.USER_UUID.eq(userUuid))
                         .fetchOptional()
                         .map(r -> r.get(PREFERENCES.ID));
 
@@ -63,7 +65,7 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
                             .update(PREFERENCES)
                             .set(PREFERENCES.VERSION, PREFERENCES.VERSION.plus(1))
                             .set(PREFERENCES.UPDATE_TIME_MS, now)
-                            .set(PREFERENCES.UPDATE_USER, userId)
+                            .set(PREFERENCES.UPDATE_USER, userIdentityForAudit)
                             .set(PREFERENCES.DAT, dat)
                             .where(PREFERENCES.ID.eq(optionalId.get()))
                             .execute();
@@ -75,9 +77,9 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
                                     PREFERENCES.CREATE_USER,
                                     PREFERENCES.UPDATE_TIME_MS,
                                     PREFERENCES.UPDATE_USER,
-                                    PREFERENCES.USER_ID,
+                                    PREFERENCES.USER_UUID,
                                     PREFERENCES.DAT)
-                            .values(1, now, userId, now, userId, userId, dat)
+                            .values(1, now, userIdentityForAudit, now, userIdentityForAudit, userUuid, dat)
                             .execute();
                 }
             });
@@ -88,11 +90,11 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
     }
 
     @Override
-    public int delete(final String userId) {
+    public int delete(final String userUuid) {
         return JooqUtil.contextResult(connProvider, context ->
                 context
                         .deleteFrom(PREFERENCES)
-                        .where(PREFERENCES.USER_ID.eq(userId))
+                        .where(PREFERENCES.USER_UUID.eq(userUuid))
                         .execute());
     }
 }

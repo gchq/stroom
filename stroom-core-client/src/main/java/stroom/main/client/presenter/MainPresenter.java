@@ -25,7 +25,7 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -104,7 +104,7 @@ public class MainPresenter
         });
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
-                    final UiConfig uiConfig = event.getProperties();
+                    final ExtendedUiConfig uiConfig = event.getProperties();
                     if (uiConfig.getTheme() != null) {
                         getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
                     }

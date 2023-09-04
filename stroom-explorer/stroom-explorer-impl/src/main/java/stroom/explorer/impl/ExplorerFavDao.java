@@ -9,28 +9,28 @@ public interface ExplorerFavDao {
     /**
      * Set the specified document as a favourite for a particular user
      * @param docRef Document to set as a favourite
-     * @param userId UUID of the user account
+     * @param userUuid UUID of the user account
      */
-    void createFavouriteForUser(final DocRef docRef, final String userId);
+    void createFavouriteForUser(final DocRef docRef, final String userUuid);
 
     /**
      * Unset the specified document as a favourite for a particular user
      * @param docRef Document to unset as a favourite
-     * @param userId UUID of the user account
+     * @param userUuid UUID of the user account
      */
-    void deleteFavouriteForUser(final DocRef docRef, final String userId);
+    void deleteFavouriteForUser(final DocRef docRef, final String userUuid);
 
     /**
      * Retrieve document favourites for the specified user
      *
-     * @param userId UUID of the user account
+     * @param userUuid UUID of the user account
      * @return
      */
-    List<DocRef> getUserFavourites(final String userId);
+    List<DocRef> getUserFavourites(final String userUuid);
 
     /**
      * Return whether the specified document is set as a favourite for the user
      * @return
      */
-    boolean isFavourite(final DocRef docRef, final String userId);
+    boolean isFavourite(final DocRef docRef, final String userUuid);
 }

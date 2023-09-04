@@ -88,9 +88,10 @@ public class NodeServiceImpl implements NodeService {
 
     Node update(final Node node) {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update nodes");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "You are not authorised to update nodes");
         }
-        AuditUtil.stamp(securityContext.getUserId(), node);
+        AuditUtil.stamp(securityContext, node);
         final Node updated = nodeDao.update(node);
 
         // Let all nodes know that the node has changed.
@@ -189,12 +190,16 @@ public class NodeServiceImpl implements NodeService {
 
                     LOGGER.debug(() -> "Response status " + response.getStatus());
                     if (response.getStatus() != Status.OK.getStatusCode()) {
-                        throw new WebApplicationException(response);
+                        throw new WebApplicationException(
+                                LogUtil.message("Error calling node: '{}', url: '{}', status code: {}, status: '{}'",
+                                        nodeName, url, response.getStatus(), response.getStatusInfo()),
+                                response);
                     }
                     resp = responseMapper.apply(response);
                 }
 
-                Objects.requireNonNull(resp, "Null response calling url " + url);
+                Objects.requireNonNull(resp, LogUtil.message(
+                        "Null response calling node: '{}', url: '{}'", nodeName, url));
             } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }

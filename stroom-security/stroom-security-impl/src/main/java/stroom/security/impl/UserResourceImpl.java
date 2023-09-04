@@ -1,25 +1,35 @@
 package stroom.security.impl;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
+import stroom.util.user.UserNameUtil;
 
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 
 @AutoLogged
 public class UserResourceImpl implements UserResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserResourceImpl.class);
 
     private final Provider<UserService> userServiceProvider;
     private final Provider<SecurityContext> securityContextProvider;
@@ -84,20 +94,7 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
-    public User create(final String name,
-                       final Boolean isGroup) {
-        User user;
-
-        if (isGroup) {
-            user = createGroup(name);
-        } else {
-            user = createUser(name);
-        }
-
-        return user;
-    }
-
-    private User createUser(final String name) {
+    public User createUser(final UserName name) {
         final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
@@ -107,10 +104,11 @@ public class UserResourceImpl implements UserResource {
 
                         builder.withObjects(
                                 event.logging.User.builder()
-                                        .withId(user.getName())
+                                        .withId(user.getSubjectId())
                                         .build());
 
-                        stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
+                        stroomEventLoggingServiceProvider.get()
+                                .log("UserResourceImpl.createUser",
                                 "Creating new Stroom user " + name, builder.build());
                     });
 
@@ -118,7 +116,7 @@ public class UserResourceImpl implements UserResource {
         } catch (Exception ex) {
             builder.withObjects(
                     event.logging.User.builder()
-                            .withId(name)
+                            .withId(name.getSubjectId())
                             .build());
             builder.withOutcome(Outcome.builder()
                     .withSuccess(false)
@@ -132,7 +130,35 @@ public class UserResourceImpl implements UserResource {
         }
     }
 
-    private User createGroup(final String name) {
+    @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    public List<User> createUsersFromCsv(final String usersCsvData) {
+
+        final List<UserName> names = UserNameUtil.parseUsersCsvData(usersCsvData);
+
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "createUsers"))
+                .withDescription(LogUtil.message("Creating batch of {} users", NullSafe.size(names)))
+                .withDefaultEventAction(CreateEventAction.builder()
+                        .withObjects(NullSafe.stream(names)
+                                .map(userName -> event.logging.User.builder()
+                                        .withId(userName.getSubjectId())
+                                        .withName(userName.getDisplayName())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    final UserService userService = userServiceProvider.get();
+                    return NullSafe.stream(names)
+                            .map(userService::getOrCreateUser)
+                            .collect(Collectors.toList());
+                })
+                .getResultAndLog();
+    }
+
+    @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    public User createGroup(final String name) {
         final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
@@ -191,7 +217,8 @@ public class UserResourceImpl implements UserResource {
             errorMessage = e.getMessage();
         }
 
-        authorisationEventLogProvider.get().addUserToGroup(userIdForLogging, groupIdForLogging, success, errorMessage);
+        authorisationEventLogProvider.get()
+                .addUserToGroup(userIdForLogging, groupIdForLogging, success, errorMessage);
 
         return success;
     }
@@ -223,7 +250,7 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public List<String> getAssociates(final String filter) {
+    public List<UserName> getAssociates(final String filter) {
         return userServiceProvider.get().getAssociates(filter);
     }
 
@@ -232,7 +259,7 @@ public class UserResourceImpl implements UserResource {
             Optional<User> found = securityContextProvider.get()
                     .asProcessingUserResult(() -> userServiceProvider.get().loadByUuid(uuid));
             if (found.isPresent() && !found.get().isGroup()) {
-                return found.get().getName();
+                return found.get().getUserIdentityForAudit();
             }
         } catch (Exception ex) {
             //Ignore at this time
@@ -245,7 +272,8 @@ public class UserResourceImpl implements UserResource {
             Optional<User> found = securityContextProvider.get()
                     .asProcessingUserResult(() -> userServiceProvider.get().loadByUuid(uuid));
             if (found.isPresent() && found.get().isGroup()) {
-                return found.get().getName();
+                // Groups only have a name
+                return found.get().getSubjectId();
             }
         } catch (Exception ex) {
             //Ignore at this time

@@ -133,7 +133,7 @@ class TestIndexVolumeGroupDaoImpl {
     private IndexVolumeGroup createGroup(final String name) {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
-        AuditUtil.stamp(TestModule.TEST_USER, indexVolumeGroup);
+        AuditUtil.stamp(() -> TestModule.TEST_USER, indexVolumeGroup);
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }

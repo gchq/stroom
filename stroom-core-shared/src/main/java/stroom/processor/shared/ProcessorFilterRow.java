@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"processorFilter"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class ProcessorFilterRow extends ProcessorListRow {
 
@@ -35,14 +35,22 @@ public class ProcessorFilterRow extends ProcessorListRow {
 
     @JsonProperty
     private final ProcessorFilter processorFilter;
+    @JsonProperty
+    private final String ownerDisplayName;
 
     @JsonCreator
-    public ProcessorFilterRow(@JsonProperty("processorFilter") final ProcessorFilter processorFilter) {
+    public ProcessorFilterRow(@JsonProperty("processorFilter") final ProcessorFilter processorFilter,
+                              @JsonProperty("ownerDisplayName") final String ownerDisplayName) {
         this.processorFilter = processorFilter;
+        this.ownerDisplayName = ownerDisplayName;
     }
 
     public ProcessorFilter getProcessorFilter() {
         return processorFilter;
+    }
+
+    public String getOwnerDisplayName() {
+        return ownerDisplayName;
     }
 
     @JsonIgnore
@@ -72,6 +80,7 @@ public class ProcessorFilterRow extends ProcessorListRow {
     public String toString() {
         return "ProcessorFilterRow{" +
                 "processorFilter=" + processorFilter +
+                "ownerDisplayName=" + ownerDisplayName +
                 '}';
     }
 }

@@ -18,8 +18,13 @@ package stroom.security.impl;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.SessionDetails;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.UserName;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -36,6 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 class SessionListServlet extends HttpServlet implements IsServlet {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionListServlet.class);
 
     private static final Set<String> PATH_SPECS = Set.of("/sessionList");
 
@@ -81,33 +88,51 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                 "<tr>" +
                 "<th>Last Accessed</th>" +
                 "<th>Created</th>" +
-                "<th>User Id</th>" +
+                "<th>User Display Name</th>" +
+                "<th>User Full Name</th>" +
+                "<th>User Unique Identity</th>" +
                 "<th>Node</th>" +
                 "<th>Agent</th>" +
                 "</tr>" +
                 "</thead>");
 
         final Writer writer = response.getWriter();
-        sessionListService
-                .listSessions()
-                .stream()
-                .filter(sessionDetails -> Objects.nonNull(sessionDetails.getUserName()))
-                .sorted(Comparator.comparing(SessionDetails::getLastAccessedMs))
-                .forEach(sessionDetails -> {
-                    try {
-                        writer.write("<tr>");
+        try {
+            sessionListService
+                    .listSessions()
+                    .stream()
+                    .filter(sessionDetails -> Objects.nonNull(sessionDetails.getUserName()))
+                    .sorted(Comparator.comparing(SessionDetails::getLastAccessedMs))
+                    .forEach(sessionDetails -> {
+                        try {
+                            writer.write("<tr>");
+                            final String subjectId = NullSafe.get(
+                                    sessionDetails.getUserName(),
+                                    UserName::getSubjectId);
+                            final String displayName = NullSafe.getOrElse(
+                                    sessionDetails.getUserName(),
+                                    UserName::getDisplayName,
+                                    subjectId);
 
-                        writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
-                        writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
-                        writeCell(writer, sessionDetails.getUserName());
-                        writeCell(writer, sessionDetails.getNodeName());
-                        writeCell(writer, "<span class=\"agent\">" + sessionDetails.getLastAccessedAgent() + "</span>");
+                            writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
+                            writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
+                            writeCell(writer, displayName);
+                            writeCell(writer, NullSafe.get(sessionDetails.getUserName(), UserName::getFullName));
+                            writeCell(writer, subjectId);
+                            writeCell(writer, sessionDetails.getNodeName());
+                            writeCell(writer, "<span class=\"agent\">"
+                                    + sessionDetails.getLastAccessedAgent() + "</span>");
 
-                        writer.write("</tr>");
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
+                            writer.write("</tr>");
+                        } catch (final IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+        } catch (Exception e) {
+            LOGGER.error("Error displaying session list servlet: "
+                    + LogUtil.exceptionMessage(e), e);
+            throw new RuntimeException(e);
+        }
         response.getWriter().write("</table>");
         response.getWriter().write("</body></html>");
 

@@ -6,6 +6,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
 import stroom.util.cert.SSLUtil;
 import stroom.util.concurrent.ThreadUtil;
@@ -59,7 +60,8 @@ public class ForwardStreamHandler implements StreamHandler {
                                 final ForwardHttpPostConfig config,
                                 final SSLSocketFactory sslSocketFactory,
                                 final String userAgent,
-                                final AttributeMap attributeMap) throws IOException {
+                                final AttributeMap attributeMap,
+                                final UserIdentityFactory userIdentityFactory) throws IOException {
         this.logStream = logStream;
         this.forwardUrl = config.getForwardUrl();
         this.forwardDelay = NullSafe.duration(config.getForwardDelay());
@@ -104,9 +106,33 @@ public class ForwardStreamHandler implements StreamHandler {
 
         connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
-        AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
+        final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {
             connection.addRequestProperty(entry.getKey(), entry.getValue());
+        }
+
+        // Allows sending to systems on the same OpenId realm as us using an access token
+        if (config.isAddOpenIdAccessToken()) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "'{}' - Setting request props (values truncated):\n{}",
+                    forwarderName,
+                    userIdentityFactory.getServiceUserAuthHeaders()
+                            .entrySet()
+                            .stream()
+                            .sorted(Entry.comparingByKey())
+                            .map(entry ->
+                                    "  " + String.join(":",
+                                            entry.getKey(),
+                                            LogUtil.truncateUnless(
+                                                    entry.getValue(),
+                                                    50,
+                                                    LOGGER.isTraceEnabled())))
+                            .collect(Collectors.joining("\n"))));
+
+            userIdentityFactory.getServiceUserAuthHeaders()
+                    .forEach((key, value) -> {
+                        connection.setRequestProperty(key, value);
+                    });
         }
 
         if (forwardChunkSize.isNonZero() && forwardChunkSize.getBytes() <= Integer.MAX_VALUE) {
@@ -209,7 +235,8 @@ public class ForwardStreamHandler implements StreamHandler {
                 throw e;
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                logStream.log(SEND_LOG,
+                logStream.log(
+                        SEND_LOG,
                         attributeMap,
                         "SEND",
                         forwardUrl,

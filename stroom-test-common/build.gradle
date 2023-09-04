@@ -10,6 +10,7 @@ dependencies {
     implementation libs.assertj_core
     implementation libs.commons_lang
     implementation libs.data_faker
+    implementation libs.dropwizard_jersey
     implementation libs.dropwizard_testing
     implementation libs.flyway_core
     implementation libs.guava

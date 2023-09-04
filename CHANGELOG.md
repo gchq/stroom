@@ -13,6 +13,71 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.55] - 2023-08-30
+
+* Issue **#3711** : Fix NPE.
+
+* Add missing resource annotations causing `should not consume any entity` errors.
+
+
+## [v7.2-beta.54] - 2023-08-29
+
+* Change DB migrations to use dynamic SQL to stop them failing during the build of a new DB.
+
+
+## [v7.2-beta.53] - 2023-08-29
+
+* Issue **#3624** : Add display name and full name to session list servlet.
+
+* Change document permission errors to include the document name.
+
+* Change processor filters to use a dedicated owner_uuid column instead of using create_user.
+
+* Change `currentUser()` and `current-user()` functions to take an arg for the name type `(display|subject|full)`.
+
+* Issue **#3117** : Change `annotation:CreatedOn` and `annotation:UpdatedOn` to return dates rather then millis since epoch.
+
+* Fix dashboard column `annotation:UpdatedBy` returning a date. Now returns the user display name.
+
+* Issue **#3709** : Fix data source info not appearing in the query helper if the data source has no description.
+
+* DB Migration : stroom-annotation - `V07_02_00_005__annotation_assigned_migration_to_uuid.sql`
+
+* DB Migration : stroom-annotation - `V07_02_00_010__annotation_entry_assigned_migration_to_uuid.sql`
+
+* DB Migration : stroom-config - `V07_02_00_005__preferences_column_rename.sql`
+
+* DB Migration : stroom-dashboard - `V07_02_00_005__query_add_owner_uuid.sql`
+
+* DB Migration : stroom-processor - `V07_02_00_005__processor_filter_add_owner_uuid_col.sql`
+
+* DB Migration : stroom-security - `V07_01_00_001__add_stroom_user_cols.sql`
+
+* DB Migration : stroom-security - `V07_01_00_002__rename_preferred_username_col.sql`
+
+* Issue **#3577** : Fix ownership permissions when creating a new entity.
+
+* Issue **#3613** : Fix error un-marshalling TimeRange.
+
+* Issue **#3620** : Fix `currentUser()` not returning display name in OIDC version.
+
+* Issue **#3475** : Change proxy error handling to return 401 for token authentication failures.
+
+* Change internode comms to authenticate as the processing user then run as a user supplied in headers.
+
+* Uplift packaged send_to_stroom.sh version to v3.2.2.
+
+* Issue **#3117** : Fix problems with user display name not showing on welcome screen.
+
+* Change manage user command to run as processing user.
+
+* Change the CLI commands to also log to stdout/err.
+
+* Issue **#3117** : Add _Preferred Username_ and _Full name_ to the user permissions data grids when using an external IDP. This is to make it easier to identify which users are which when assigning permissions as the IDP unique identity may be a UUID.
+
+* Issue **#3118** : Hide the Tools => (API Keys|Users) menu items when using an external IDP.
+
+
 ## [v7.2-beta.52] - 2023-08-28
 
 * Issue **#3618** : Fix explorer tree filtering when filtering for a Searchable, i.e. `dual`.
@@ -5771,7 +5836,10 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.52...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.55...HEAD
+[v7.2-beta.55]: https://github.com/gchq/stroom/compare/v7.2-beta.54...v7.2-beta.55
+[v7.2-beta.54]: https://github.com/gchq/stroom/compare/v7.2-beta.53...v7.2-beta.54
+[v7.2-beta.53]: https://github.com/gchq/stroom/compare/v7.2-beta.52...v7.2-beta.53
 [v7.2-beta.52]: https://github.com/gchq/stroom/compare/v7.2-beta.51...v7.2-beta.52
 [v7.2-beta.51]: https://github.com/gchq/stroom/compare/v7.2-beta.50...v7.2-beta.51
 [v7.2-beta.50]: https://github.com/gchq/stroom/compare/v7.2-beta.49...v7.2-beta.50

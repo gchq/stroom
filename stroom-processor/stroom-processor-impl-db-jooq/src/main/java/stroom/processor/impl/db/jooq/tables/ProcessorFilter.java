@@ -4,6 +4,7 @@
 package stroom.processor.impl.db.jooq.tables;
 
 
+import stroom.processor.impl.db.jooq.Indexes;
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
@@ -11,9 +12,10 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row16;
+import org.jooq.Row17;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -129,6 +131,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     public final TableField<ProcessorFilterRecord, Long> MAX_META_CREATE_TIME_MS = createField(DSL.name("max_meta_create_time_ms"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>stroom.processor_filter.owner_uuid</code>.
+     */
+    public final TableField<ProcessorFilterRecord, String> OWNER_UUID = createField(DSL.name("owner_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
     private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -165,6 +172,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
+    }
+
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.PROCESSOR_FILTER_OWNER_UUID);
     }
 
     @Override
@@ -243,11 +255,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row16 type methods
+    // Row17 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row16<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean, Long, Long> fieldsRow() {
-        return (Row16) super.fieldsRow();
+    public Row17<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean, Long, Long, String> fieldsRow() {
+        return (Row17) super.fieldsRow();
     }
 }

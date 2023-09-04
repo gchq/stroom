@@ -16,6 +16,8 @@
 
 package stroom.security.shared;
 
+import stroom.util.shared.UserName;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,7 +28,7 @@ import java.util.Objects;
 public class SessionDetails {
 
     @JsonProperty
-    private final String userName;
+    private final UserName userName;
     @JsonProperty
     private final long createMs;
     @JsonProperty
@@ -37,7 +39,7 @@ public class SessionDetails {
     private final String nodeName;
 
     @JsonCreator
-    public SessionDetails(@JsonProperty("userName") final String userName,
+    public SessionDetails(@JsonProperty("userName") final UserName userName,
                           @JsonProperty("createMs") final long createMs,
                           @JsonProperty("lastAccessedMs") final long lastAccessedMs,
                           @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
@@ -49,7 +51,7 @@ public class SessionDetails {
         this.nodeName = nodeName;
     }
 
-    public String getUserName() {
+    public UserName getUserName() {
         return userName;
     }
 

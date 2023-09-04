@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
 import java.util.Objects;

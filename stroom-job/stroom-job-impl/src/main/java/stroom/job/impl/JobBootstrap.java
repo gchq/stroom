@@ -133,7 +133,7 @@ class JobBootstrap {
                                         ? "ENABLED"
                                         : "DISABLED") + ")");
 
-                        AuditUtil.stamp(securityContext.getUserId(), newJobNode);
+                        AuditUtil.stamp(securityContext, newJobNode);
                         jobNodeDao.create(newJobNode);
                         localJobNodeMap.put(newJobNode.getJob().getName(), newJobNode);
 
@@ -141,7 +141,7 @@ class JobBootstrap {
                         // If the job type has changed then update the job node.
                         jobNode.setJobType(newJobNode.getJobType());
                         jobNode.setSchedule(newJobNode.getSchedule());
-                        AuditUtil.stamp(securityContext.getUserId(), jobNode);
+                        AuditUtil.stamp(securityContext, jobNode);
                         jobNode = jobNodeDao.update(jobNode);
                         localJobNodeMap.put(scheduledJob.getName(), jobNode);
                     }
@@ -179,7 +179,7 @@ class JobBootstrap {
                                     ? "ENABLED"
                                     : "DISABLED") + ")");
 
-                    AuditUtil.stamp(securityContext.getUserId(), newJobNode);
+                    AuditUtil.stamp(securityContext, newJobNode);
                     jobNodeDao.create(newJobNode);
                 }
             });
@@ -215,12 +215,12 @@ class JobBootstrap {
             if (job.getDescription() != null && !job.getDescription().equals(result.getDescription())) {
                 result.setDescription(job.getDescription());
                 LOGGER.info(() -> "Updating Job     '" + job.getName() + "'");
-                AuditUtil.stamp(securityContext.getUserId(), result);
+                AuditUtil.stamp(securityContext, result);
                 result = jobDao.update(result);
             }
         } else {
             LOGGER.info(() -> "Adding Job     '" + job.getName() + "'");
-            AuditUtil.stamp(securityContext.getUserId(), job);
+            AuditUtil.stamp(securityContext, job);
             result = jobDao.create(job);
         }
 

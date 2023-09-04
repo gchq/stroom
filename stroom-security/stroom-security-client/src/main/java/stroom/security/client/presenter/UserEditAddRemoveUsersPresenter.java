@@ -25,6 +25,7 @@ import stroom.security.shared.ChangeUserRequest;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -56,16 +57,17 @@ public class UserEditAddRemoveUsersPresenter
                                            final PagerView pagerView,
                                            final RestFactory restFactory,
                                            final Provider<SelectGroupPresenter> selectGroupPresenterProvider,
-                                           final Provider<SelectUserPresenter> selectUserPresenterProvider) {
-        super(eventBus, userListView, pagerView, restFactory);
+                                           final Provider<SelectUserPresenter> selectUserPresenterProvider,
+                                           final UiConfigCache uiConfigCache) {
+        super(eventBus, userListView, pagerView, restFactory, uiConfigCache);
         this.restFactory = restFactory;
         this.selectGroupPresenterProvider = selectGroupPresenterProvider;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
         addButton = addButton(SvgPresets.ADD);
-        addButton.setTitle("Add Group");
+        addButton.setTitle("Add Group Membership");
         removeButton = addButton(SvgPresets.REMOVE);
-        removeButton.setTitle("Remove Group");
+        removeButton.setTitle("Remove Group Membership");
     }
 
     @Override
@@ -83,7 +85,9 @@ public class UserEditAddRemoveUsersPresenter
 
                 final Rest<Boolean> rest = restFactory.create();
                 rest
-                        .onSuccess(result -> refresh())
+                        .onSuccess(result -> {
+                            refresh();
+                        })
                         .call(APP_PERMISSION_RESOURCE)
                         .changeUser(request);
             };
@@ -123,18 +127,20 @@ public class UserEditAddRemoveUsersPresenter
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
         findUserCriteria.setRelatedUser(relatedUser);
 
-        final String type = getRelatedType();
-        addButton.setTitle("Add " + type);
-        removeButton.setTitle("Remove " + type);
+        if (relatedUser.isGroup()) {
+            addButton.setTitle("Add User to Group");
+            removeButton.setTitle("Remove User from Group");
+        } else {
+            addButton.setTitle("Add Group Membership");
+            removeButton.setTitle("Remove Group Membership");
+        }
 
         setup(findUserCriteria);
     }
 
-    private String getRelatedType() {
-        String type = "Group";
-        if (relatedUser.isGroup()) {
-            type = "User";
-        }
-        return type;
+    @Override
+    public boolean includeAdditionalUserInfo() {
+        // If relatedUser is a group then we are listing users and vice versa
+        return relatedUser == null || relatedUser.isGroup();
     }
 }

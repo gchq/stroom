@@ -16,6 +16,8 @@
 
 package stroom.security.client.api;
 
+import stroom.util.shared.UserName;
+
 public interface ClientSecurityContext {
 
     /**
@@ -23,7 +25,7 @@ public interface ClientSecurityContext {
      *
      * @return The id of the user associated with this security context.
      */
-    String getUserId();
+    UserName getUserName();
 
     /**
      * Check if the user associated with this security context is logged in.

@@ -6,18 +6,21 @@
     <g:MySplitLayoutPanel styleName="max">
         <g:north size="200">
             <g:FlowPanel styleName="max form">
-                <form:FormGroup identity="userGroupUserMembership" label="User Membership" addStyleNames="max">
+                <form:FormGroup identity="userGroupUserMembership"
+                                label="Users in this Group"
+                                addStyleNames="max">
                     <g:SimplePanel ui:field="users" styleName="dock-max"/>
                 </form:FormGroup>
             </g:FlowPanel>
         </g:north>
         <g:center>
             <g:FlowPanel styleName="max form">
-                <form:FormGroup identity="userGroupApplicationPermissions" label="Application Permissions"
+                <form:FormGroup identity="userGroupApplicationPermissions"
+                                label="Application Permissions"
                                 addStyleNames="max">
                     <g:SimplePanel ui:field="appPermissions" styleName="dock-max stroom-control"/>
                 </form:FormGroup>
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

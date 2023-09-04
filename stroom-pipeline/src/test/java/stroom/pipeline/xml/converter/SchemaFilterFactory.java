@@ -20,6 +20,7 @@ package stroom.pipeline.xml.converter;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -56,7 +57,8 @@ public class SchemaFilterFactory {
                     persistence,
                     null,
                     null,
-                    securityContext),
+                    securityContext,
+                    MockDocRefInfoService::new),
             serialiser);
     private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);

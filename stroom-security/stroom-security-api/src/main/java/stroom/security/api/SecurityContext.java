@@ -16,32 +16,75 @@
 
 package stroom.security.api;
 
-import java.util.function.Supplier;
-import javax.ws.rs.client.Invocation;
+import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
-public interface SecurityContext {
+import java.util.function.Supplier;
+
+public interface SecurityContext extends HasAuditableUserIdentity {
 
     /**
      * Get the id of the user associated with this security context.
+     * If using an external IDP this may not be a very user-friendly value so for anything
+     * where the user identity is going to be shown in the UI, use {@link SecurityContext#getUserIdentityForAudit()}
      *
      * @return The id of the user associated with this security context.
      */
-    String getUserId();
+    String getSubjectId();
 
     /**
      * Retrieve the user's UUID if supported by the type of user.
+     * This is the Stroom User UUID.
      */
     String getUserUuid();
 
-
-    UserIdentity createIdentity(String userId);
+    /**
+     * @return The user identity in a form suitable for use in audit events, for display
+     * in the UI, or in exception messages. Returns {@link UserIdentity#getDisplayName()} or
+     * if that is not set {@link UserIdentity#getSubjectId()}.
+     */
+    default String getUserIdentityForAudit() {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            return null;
+        }
+        return userIdentity.getUserIdentityForAudit();
+    }
 
     /**
-     * Gets teh identity of the current user.
+     * See {@link UserIdentity#getCombinedName()}
+     */
+    default String getCombinedUserIdentity() {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            return null;
+        }
+        return userIdentity.getCombinedName();
+    }
+
+    UserIdentity createIdentity(String subjectId);
+
+    /**
+     * Gets the identity of the current user.
      *
      * @return The identity of the current user.
      */
     UserIdentity getUserIdentity();
+
+    default UserName getUserName() {
+        final UserIdentity userIdentity = getUserIdentity();
+        final String displayName;
+        final String fullName;
+        if (userIdentity != null) {
+            displayName = userIdentity.getDisplayName();
+            fullName = userIdentity.getFullName().orElse(null);
+        } else {
+            displayName = null;
+            fullName = null;
+        }
+        return new SimpleUserName(getSubjectId(), displayName, fullName, getUserUuid());
+    }
 
     /**
      * Check if the user associated with this security context is logged in.
@@ -164,6 +207,4 @@ public interface SecurityContext {
      * insecurely even if it is often secured when executed from other entry points.
      */
     <T> T insecureResult(Supplier<T> supplier);
-
-    void addAuthorisationHeader(final Invocation.Builder builder);
 }

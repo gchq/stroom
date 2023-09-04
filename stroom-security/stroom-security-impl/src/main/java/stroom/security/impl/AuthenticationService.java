@@ -16,6 +16,8 @@
 
 package stroom.security.impl;
 
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
@@ -23,6 +25,7 @@ import stroom.util.AuditUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.inject.Inject;
@@ -30,29 +33,29 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-class AuthenticationService {
+public class AuthenticationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 
-    private static final String ADMINISTRATORS = "Administrators";
+    private static final String ADMINISTRATORS_GROUP_SUBJECT_ID = "Administrators";
     private static final int GET_USER_ATTEMPTS = 2;
 
     private final UserDao userDao;
     private final AppPermissionDao appPermissionDao;
-    private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
 
     @Inject
     AuthenticationService(
             final UserDao userDao,
             final AppPermissionDao appPermissionDao,
-            final Provider<OpenIdConfig> openIdConfigProvider) {
+            final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
         this.userDao = userDao;
         this.appPermissionDao = appPermissionDao;
         this.openIdConfigProvider = openIdConfigProvider;
     }
 
-    User getOrCreateUser(final String userId) {
-        if (userId == null || userId.trim().length() == 0) {
+    User getOrCreateUser(final String subjectId) {
+        if (subjectId == null || subjectId.trim().length() == 0) {
             return null;
         }
 
@@ -63,7 +66,7 @@ class AuthenticationService {
         Optional<User> optUser = Optional.empty();
 
         while (optUser.isEmpty()) {
-            optUser = getUser(userId);
+            optUser = getUser(subjectId);
 
             if (optUser.isEmpty()) {
                 // At this point the user has been authenticated using JWT.
@@ -71,7 +74,7 @@ class AuthenticationService {
                 // some way of sensibly referencing the user and something to attach permissions to.
                 // We need to elevate the user because no one is currently logged in.
                 try {
-                    optUser = Optional.of(create(userId, false));
+                    optUser = Optional.of(create(subjectId, false));
                 } catch (final Exception e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
@@ -83,6 +86,7 @@ class AuthenticationService {
             }
 
             if (attempts++ > GET_USER_ATTEMPTS) {
+                LOGGER.error("Failed to create user {} after {} attempts", subjectId, attempts);
                 break;
             }
         }
@@ -90,30 +94,50 @@ class AuthenticationService {
         return optUser.orElseThrow(() -> new RuntimeException("Should have a user by this point"));
     }
 
-    private User create(final String name, final boolean isGroup) {
-        User user = new User();
-        AuditUtil.stamp("AuthenticationServiceImpl", user);
-        user.setUuid(UUID.randomUUID().toString());
-        user.setName(name);
-        user.setGroup(isGroup);
-
-        return userDao.tryCreate(user);
+    private User create(final String subjectId, final boolean isGroup) {
+        return create(subjectId, UUID.randomUUID().toString(), isGroup);
     }
 
-    public Optional<User> getUser(final String username) {
+    private User create(final String subjectId,
+                        final String userUuid,
+                        final boolean isGroup) {
+        Objects.requireNonNull(subjectId);
+        Objects.requireNonNull(userUuid);
+        final User user = new User();
+        AuditUtil.stamp(() -> "AuthenticationServiceImpl", user);
+
+        // This is the identifier for the stroom user, for authorisation, not authentication
+        user.setUuid(userUuid);
+
+        // This is the unique identifier that links the stroom User to the stroom account or an IDP account.
+        // The id field/column is the surrogate primary key in the DB, unrelated to the IDP user ID, stroom account
+        // or stroom user UUID.
+        user.setSubjectId(subjectId);
+
+        user.setGroup(isGroup);
+
+        return userDao.tryCreate(user, createdUser -> {
+            LOGGER.info("Created new stroom_user record, type: '{}', subjectId: '{}', userUuid: '{}'",
+                    (isGroup ? "group" : "user"),
+                    createdUser.getSubjectId(),
+                    createdUser.getUuid());
+        });
+    }
+
+    public Optional<User> getUser(final String subjectId) {
         Optional<User> optUser;
 
         try {
-            optUser = userDao.getByName(username, false);
+            optUser = userDao.getBySubjectId(subjectId, false);
             if (optUser.isEmpty()
-                    && openIdConfigProvider.get().isUseInternal()
-                    && User.ADMIN_USER_NAME.equals(username)) {
+                    && User.ADMIN_SUBJECT_ID.equals(subjectId)
+                    && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
                 //   running of stroom in UseInternal mode which then leaves admin/admin open
                 // Using our internal identity provider so ensure the admin user is present
                 // Can't do this for 3rd party IDPs as we don't know what the user name is
-                optUser = Optional.of(createOrRefreshUser(User.ADMIN_USER_NAME));
+                optUser = Optional.of(createOrRefreshUser(User.ADMIN_SUBJECT_ID));
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
@@ -123,29 +147,30 @@ class AuthenticationService {
         return optUser;
     }
 
-    public User createOrRefreshUser(final String name) {
-        return createOrRefreshUserOrGroup(name, false);
+    public User createOrRefreshUser(final String subjectId) {
+        return createOrRefreshUserOrGroup(subjectId, false);
     }
 
-    public User createOrRefreshGroup(final String name) {
-        return createOrRefreshUserOrGroup(name, true);
-    }
+//    public User createOrRefreshGroup(final String name) {
+//        return createOrRefreshUserOrGroup(name, true);
+//    }
 
-    private User createOrRefreshUserOrGroup(final String name, final boolean isGroup) {
-        return userDao.getByName(name, isGroup)
+    private User createOrRefreshUserOrGroup(final String subjectId, final boolean isGroup) {
+        return userDao.getBySubjectId(subjectId, isGroup)
                 .orElseGet(() -> {
-                    LOGGER.info("Creating {} {}",
+                    LOGGER.info("Creating {} '{}'",
                             (isGroup
                                     ? "group"
                                     : "user"),
-                            name);
+                            subjectId);
 
-                    final User userRef = create(name, isGroup);
+                    final User userRef = create(subjectId, isGroup);
 
                     // Creating the admin user so create its group too
-                    if (User.ADMIN_USER_NAME.equals(name) && openIdConfigProvider.get().isUseInternal()) {
+                    if (User.ADMIN_SUBJECT_ID.equals(subjectId)
+                            && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
                         try {
-                            User userGroup = createOrRefreshAdminUserGroup();
+                            User userGroup = createOrRefreshAdminUserGroup(ADMINISTRATORS_GROUP_SUBJECT_ID);
                             userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());
                         } catch (final RuntimeException e) {
                             // Expected.
@@ -156,19 +181,19 @@ class AuthenticationService {
                 });
     }
 
-    /**
-     * Enusure the admin user groups are created
-     *
-     * @return the full admin user group
-     */
-    private User createOrRefreshAdminUserGroup() {
-        return createOrRefreshAdminUserGroup(ADMINISTRATORS);
-    }
+//    /**
+//     * Enusure the admin user groups are created
+//     *
+//     * @return the full admin user group
+//     */
+//    private User createOrRefreshAdminUserGroup() {
+//        return createOrRefreshAdminUserGroup(ADMINISTRATORS_GROUP_SUBJECT_ID);
+//    }
 
-    private User createOrRefreshAdminUserGroup(final String userGroupName) {
-        return userDao.getByName(userGroupName, true)
+    private User createOrRefreshAdminUserGroup(final String subjectId) {
+        return userDao.getBySubjectId(subjectId, true)
                 .orElseGet(() -> {
-                    final User newUserGroup = create(userGroupName, true);
+                    final User newUserGroup = create(subjectId, true);
                     try {
                         appPermissionDao.addPermission(newUserGroup.getUuid(), PermissionNames.ADMINISTRATOR);
                     } catch (final RuntimeException e) {

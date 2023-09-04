@@ -1,5 +1,6 @@
 package stroom.util.validation;
 
+import stroom.test.common.AbstractValidatorTest;
 import stroom.util.shared.validation.IsSubsetOf;
 
 import org.junit.jupiter.api.Test;

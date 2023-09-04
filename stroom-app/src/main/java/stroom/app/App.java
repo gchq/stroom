@@ -24,6 +24,7 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.SecurityConfig;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.AdminServlets;
@@ -35,6 +36,11 @@ import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.dropwizard.common.WebSockets;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.security.impl.AuthenticationConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
+import stroom.util.NullSafe;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -277,7 +283,7 @@ public class App extends Application<Config> {
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
-        warnAboutDefaultOpenIdCreds(configuration);
+        warnAboutDefaultOpenIdCreds(configuration, appInjector);
 
         showNodeInfo(configuration);
     }
@@ -291,10 +297,24 @@ public class App extends Application<Config> {
                 + "\n********************************************************************************");
     }
 
-    private void warnAboutDefaultOpenIdCreds(Config configuration) {
-        if (configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
-                    "useDefaultOpenIdCredentials");
+    private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
+
+        final boolean areDefaultOpenIdCredsInUse = NullSafe.test(configuration.getYamlAppConfig(),
+                AppConfig::getSecurityConfig,
+                SecurityConfig::getAuthenticationConfig,
+                AuthenticationConfig::getOpenIdConfig,
+                openIdConfig ->
+                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
+
+        if (areDefaultOpenIdCredsInUse) {
+            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
+                    DefaultOpenIdCredentials.class);
+            final String propPath = configuration.getYamlAppConfig()
+                    .getSecurityConfig()
+                    .getAuthenticationConfig()
+                    .getOpenIdConfig()
+                    .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
+
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n  " +
@@ -302,8 +322,9 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   This is insecure! These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to false for production environments." +
+                    "\n   Set " + propPath + " to INTERNAL_IDP/EXTERNAL_IDP for production environments." +
                     "\n" +
+                    "\n   " + defaultOpenIdCredentials.getApiKey() +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n");
         }

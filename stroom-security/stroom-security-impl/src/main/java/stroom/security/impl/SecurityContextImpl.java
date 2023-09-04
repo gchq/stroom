@@ -1,27 +1,26 @@
 package stroom.security.impl;
 
-import stroom.docref.HasUuid;
-import stroom.security.api.ClientSecurityUtil;
-import stroom.security.api.HasJws;
-import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.api.UserIdentityFactory;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.HasStroomUserIdentity;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Invocation;
 
 @Singleton
 class SecurityContextImpl implements SecurityContext {
@@ -33,8 +32,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
-    private final UserCache userCache;
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final Provider<UserCache> userCacheProvider;
     private final UserIdentityFactory userIdentityFactory;
 
     @Inject
@@ -42,24 +40,22 @@ class SecurityContextImpl implements SecurityContext {
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
-            final UserCache userCache,
-            final ProcessingUserIdentityProvider processingUserIdentityProvider,
+            final Provider<UserCache> userCacheProvider,
             final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
-        this.userCache = userCache;
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.userCacheProvider = userCacheProvider;
         this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
-    public String getUserId() {
+    public String getSubjectId() {
         final UserIdentity userIdentity = getUserIdentity();
         if (userIdentity == null) {
             return null;
         }
-        return userIdentity.getId();
+        return userIdentity.getSubjectId();
     }
 
     @Override
@@ -77,13 +73,12 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String userId) {
-        Objects.requireNonNull(userId, "Null user id provided");
-        final Optional<User> optional = userCache.get(userId);
-        if (optional.isEmpty()) {
-            throw new AuthenticationException("Unable to find user with id=" + userId);
-        }
-        return new BasicUserIdentity(optional.get().getUuid(), userId);
+    public UserIdentity createIdentity(final String subjectId) {
+        Objects.requireNonNull(subjectId, "Null user id provided");
+        // Inject as provider to avoid circular dep issues
+        return userCacheProvider.get().getOrCreate(subjectId)
+                .map(BasicUserIdentity::new)
+                .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + subjectId));
     }
 
     @Override
@@ -107,7 +102,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        return processingUserIdentityProvider.isProcessingUser(userIdentity);
+        return userIdentityFactory.isServiceUser(userIdentity);
     }
 
     @Override
@@ -116,10 +111,20 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private String getUserUuid(final UserIdentity userIdentity) {
-        if (!(userIdentity instanceof HasUuid)) {
-            throw new AuthenticationException("Expecting a real user identity");
+        if (userIdentity instanceof final HasStroomUserIdentity hasStroomUserIdentity) {
+            final String userUuid = hasStroomUserIdentity.getUuid();
+
+            if (NullSafe.isBlankString(userUuid)) {
+                throw new AuthenticationException("Missing user UUID value");
+            }
+
+            return userUuid;
+        } else {
+            throw new AuthenticationException(LogUtil.message(
+                    "Expecting a stroom user identity (i.e. {}), but got {}",
+                    HasStroomUserIdentity.class.getSimpleName(),
+                    userIdentity.getClass().getSimpleName()));
         }
-        return ((HasUuid) userIdentity).getUuid();
     }
 
     private void pushUser(final UserIdentity userIdentity) {
@@ -152,7 +157,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        if (processingUserIdentityProvider.isProcessingUser(userIdentity)) {
+        if (userIdentityFactory.isServiceUser(userIdentity)) {
             return true;
         }
 
@@ -289,7 +294,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asProcessingUserResult(final Supplier<T> supplier) {
-        return asUserResult(processingUserIdentityProvider.get(), supplier);
+        return asUserResult(userIdentityFactory.getServiceUserIdentity(), supplier);
     }
 
     /**
@@ -297,7 +302,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asProcessingUser(final Runnable runnable) {
-        asUser(processingUserIdentityProvider.get(), runnable);
+        asUser(userIdentityFactory.getServiceUserIdentity(), runnable);
     }
 
     /**
@@ -305,7 +310,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asAdminUserResult(final Supplier<T> supplier) {
-        return asUserResult(createIdentity(User.ADMIN_USER_NAME), supplier);
+        return asUserResult(createIdentity(User.ADMIN_SUBJECT_ID), supplier);
     }
 
     /**
@@ -313,7 +318,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asAdminUser(final Runnable runnable) {
-        asUser(createIdentity(User.ADMIN_USER_NAME), runnable);
+        asUser(createIdentity(User.ADMIN_SUBJECT_ID), runnable);
     }
 
     /**
@@ -510,7 +515,8 @@ class SecurityContextImpl implements SecurityContext {
             // Don't check any further permissions.
             checkTypeThreadLocal.set(Boolean.FALSE);
             if (!hasAppPermission(permission)) {
-                throw new PermissionException(getUserId(),
+                throw new PermissionException(
+                        getUserIdentityForAudit(),
                         "User does not have the required permission (" + permission + ")");
             }
         } finally {
@@ -525,7 +531,7 @@ class SecurityContextImpl implements SecurityContext {
             checkTypeThreadLocal.set(Boolean.FALSE);
             if (!isLoggedIn()) {
                 throw new PermissionException(
-                        getUserId(),
+                        getUserIdentityForAudit(),
                         "A user must be logged in to call service");
             }
         } finally {
@@ -541,28 +547,6 @@ class SecurityContextImpl implements SecurityContext {
             return isAdmin();
         } finally {
             checkTypeThreadLocal.set(currentCheckType);
-        }
-    }
-
-    @Override
-    public void addAuthorisationHeader(final Invocation.Builder builder) {
-        final UserIdentity userIdentity = getUserIdentity();
-        if (userIdentity == null) {
-            LOGGER.debug("No user is currently logged in");
-
-        } else if (!(userIdentity instanceof HasJws)) {
-            LOGGER.debug("Current user has no JWS");
-            throw new RuntimeException("Current user has no token");
-
-        } else {
-            userIdentityFactory.refresh(userIdentity);
-            final String jws = ((HasJws) userIdentity).getJws();
-            if (jws == null) {
-                LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
-            } else {
-                LOGGER.debug("The JWS is '{}' for user '{}'", jws, userIdentity.getId());
-                ClientSecurityUtil.addAuthorisationHeader(builder, jws);
-            }
         }
     }
 }

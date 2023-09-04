@@ -4,8 +4,9 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
@@ -43,7 +44,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
     private final Provider<VolumeConfig> volumeConfigProvider;
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final UserIdentityFactory userIdentityFactory;
     private final PathCreator pathCreator;
     private final NodeInfo nodeInfo;
     private final Provider<EntityEventBus> entityEventBusProvider;
@@ -56,7 +57,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                        final IndexVolumeDao indexVolumeDao,
                                        final SecurityContext securityContext,
                                        final Provider<VolumeConfig> volumeConfigProvider,
-                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                       final UserIdentityFactory userIdentityFactory,
                                        final PathCreator pathCreator,
                                        final NodeInfo nodeInfo,
                                        final Provider<EntityEventBus> entityEventBusProvider) {
@@ -64,7 +65,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.volumeConfigProvider = volumeConfigProvider;
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.userIdentityFactory = userIdentityFactory;
         this.pathCreator = pathCreator;
         this.nodeInfo = nodeInfo;
         this.entityEventBusProvider = entityEventBusProvider;
@@ -88,7 +89,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         ensureDefaultVolumes();
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
-        AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
+        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -101,7 +102,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
-        AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
+        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -111,7 +112,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     @Override
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
-        AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
+        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup));
         fireChange(EntityAction.UPDATE);
@@ -163,10 +164,10 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                     if (isEnabled) {
                         if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
                             final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-                            final String processingUserId = processingUserIdentityProvider.get().getId();
+                            final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
                             final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
                             indexVolumeGroup.setName(groupName);
-                            AuditUtil.stamp(processingUserId, indexVolumeGroup);
+                            AuditUtil.stamp(processingUserIdentity, indexVolumeGroup);
 
                             LOGGER.info("Creating default index volume group [{}]", groupName);
                             final IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
@@ -198,10 +199,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                         indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
                                         indexVolume.setNodeName(nodeName);
                                         indexVolume.setPath(resolvedPath.toString());
-                                        indexVolume.setCreateTimeMs(System.currentTimeMillis());
-                                        indexVolume.setUpdateTimeMs(System.currentTimeMillis());
-                                        indexVolume.setCreateUser(processingUserId);
-                                        indexVolume.setUpdateUser(processingUserId);
+                                        AuditUtil.stamp(processingUserIdentity, indexVolume);
 
                                         indexVolumeDao.create(indexVolume);
                                     }
@@ -243,7 +241,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                     (long) (totalBytes * volumeConfigProvider.get().getDefaultIndexVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                    " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));
+                    " Please manually set limit for index volume. {}",
+                    FileUtil.getCanonicalPath(Path.of(path)), e.getMessage()));
             return OptionalLong.empty();
         }
     }

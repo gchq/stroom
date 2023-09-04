@@ -12,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
@@ -31,6 +32,7 @@ import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
 import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
+import org.jooq.exception.DataChangedException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.SQLDataType;
@@ -255,6 +257,13 @@ public final class JooqUtil {
 //        }
 //    }
 
+    /**
+     * @param dataSource
+     * @param function
+     * @param <R>
+     * @return
+     * @throws stroom.util.exception.DataChangedException If another thread/node has already changed the data
+     */
     public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource,
                                                            final Function<DSLContext, R> function) {
         R result;
@@ -266,6 +275,8 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
+        } catch (DataChangedException e) {
+            throw new stroom.util.exception.DataChangedException(e.getMessage(), e);
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -416,6 +427,8 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
+        } catch (DataChangedException e) {
+            throw new stroom.util.exception.DataChangedException(e.getMessage(), e);
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -937,6 +950,16 @@ public final class JooqUtil {
         if (count(context, table) > 0) {
             throw new RuntimeException("Unexpected data");
         }
+    }
+
+    public static void mapAuditFields(final Record record, final HasAuditInfo hasAuditInfo) {
+        Objects.requireNonNull(record);
+        Objects.requireNonNull(hasAuditInfo);
+
+        hasAuditInfo.setCreateTimeMs(record.get("create_time_ms", Long.class));
+        hasAuditInfo.setUpdateTimeMs(record.get("update_time_ms", Long.class));
+        hasAuditInfo.setCreateUser(record.get("create_user", String.class));
+        hasAuditInfo.setCreateUser(record.get("update_user", String.class));
     }
 
 

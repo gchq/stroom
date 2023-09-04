@@ -27,35 +27,35 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
     }
 
     @Override
-    public void createFavouriteForUser(final DocRef docRef, final String userId) {
+    public void createFavouriteForUser(final DocRef docRef, final String userUuid) {
         final Integer explorerNodeId = JooqUtil.contextResult(explorerDbConnProvider, context ->
                 getExplorerNodeId(context, docRef).fetchAny(EXPLORER_NODE.ID));
         Objects.requireNonNull(explorerNodeId);
         final ExplorerFavouriteRecord record = new ExplorerFavouriteRecord(
                 null,
                 explorerNodeId,
-                userId,
+                userUuid,
                 Instant.now().toEpochMilli());
         JooqUtil.tryCreate(explorerDbConnProvider, record, EXPLORER_FAVOURITE.EXPLORER_NODE_ID,
                 EXPLORER_FAVOURITE.USER_UUID);
     }
 
     @Override
-    public void deleteFavouriteForUser(final DocRef docRef, final String userId) {
+    public void deleteFavouriteForUser(final DocRef docRef, final String userUuid) {
         JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .deleteFrom(EXPLORER_FAVOURITE)
-                .where(EXPLORER_FAVOURITE.USER_UUID.eq(userId)
+                .where(EXPLORER_FAVOURITE.USER_UUID.eq(userUuid)
                         .and(EXPLORER_FAVOURITE.EXPLORER_NODE_ID.in(getExplorerNodeId(context, docRef))))
                 .execute());
     }
 
     @Override
-    public List<DocRef> getUserFavourites(final String userId) {
+    public List<DocRef> getUserFavourites(final String userUuid) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .select()
                 .from(EXPLORER_FAVOURITE
                         .innerJoin(EXPLORER_NODE).on(EXPLORER_NODE.ID.eq(EXPLORER_FAVOURITE.EXPLORER_NODE_ID)))
-                .where(EXPLORER_FAVOURITE.USER_UUID.eq(userId))
+                .where(EXPLORER_FAVOURITE.USER_UUID.eq(userUuid))
                 .fetch(r -> new DocRef(
                         r.get(EXPLORER_NODE.TYPE),
                         r.get(EXPLORER_NODE.UUID)
@@ -63,10 +63,10 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
     }
 
     @Override
-    public boolean isFavourite(final DocRef docRef, final String userId) {
+    public boolean isFavourite(final DocRef docRef, final String userUuid) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .fetchCount(EXPLORER_FAVOURITE,
-                        EXPLORER_FAVOURITE.USER_UUID.eq(userId)
+                        EXPLORER_FAVOURITE.USER_UUID.eq(userUuid)
                                 .and(EXPLORER_FAVOURITE.EXPLORER_NODE_ID.in(getExplorerNodeId(context, docRef)))) > 0);
     }
 

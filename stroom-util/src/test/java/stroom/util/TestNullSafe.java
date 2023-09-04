@@ -13,6 +13,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
+import io.vavr.Tuple5;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.assertj.core.api.Assertions;
@@ -218,32 +219,32 @@ class TestNullSafe {
     void testGet1Null() {
         Assertions.assertThat(NullSafe.get(
                         nullLevel1,
-                        Level1::getLevel))
+                        Level1::getLevelNo))
                 .isNull();
 
         Assertions.assertThat(NullSafe.getOrElse(
                         nullLevel1,
-                        Level1::getLevel,
+                        Level1::getLevelNo,
                         other))
                 .isEqualTo(other);
 
         Assertions.assertThat(NullSafe.getOrElseGet(
                         nullLevel1,
-                        Level1::getLevel,
+                        Level1::getLevelNo,
                         this::getOther))
                 .isEqualTo(other);
 
         Assertions.assertThat(NullSafe.get(
                         nullLevel1,
                         Level1::getNonNullLevel2,
-                        Level2::getLevel))
+                        Level2::getLevelNo))
                 .isNull();
 
         Assertions.assertThat(NullSafe.get(
                         nullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
-                        Level3::getLevel))
+                        Level3::getLevelNo))
                 .isNull();
 
         Assertions.assertThat(NullSafe.get(
@@ -251,7 +252,7 @@ class TestNullSafe {
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getNonNullLevel4,
-                        Level4::getLevel))
+                        Level4::getLevelNo))
                 .isNull();
     }
 
@@ -259,7 +260,14 @@ class TestNullSafe {
     void testGet1NonNull() {
         Assertions.assertThat(NullSafe.get(
                         nonNullLevel1,
-                        Level1::getLevel))
+                        Level1::getLevelNo))
+                .isEqualTo(1L);
+
+        Assertions.assertThat(
+                        NullSafe.requireNonNull(
+                                nonNullLevel1,
+                                Level1::getLevelNo,
+                                () -> "foo"))
                 .isEqualTo(1L);
     }
 
@@ -268,20 +276,20 @@ class TestNullSafe {
         Assertions.assertThat(NullSafe.get(
                         nonNullLevel1,
                         Level1::getNullLevel2,
-                        Level2::getLevel))
+                        Level2::getLevelNo))
                 .isNull();
 
         Assertions.assertThat(NullSafe.getOrElse(
                         nonNullLevel1,
                         Level1::getNullLevel2,
-                        Level2::getLevel,
+                        Level2::getLevelNo,
                         other))
                 .isEqualTo(other);
 
         Assertions.assertThat(NullSafe.getOrElseGet(
                         nonNullLevel1,
                         Level1::getNullLevel2,
-                        Level2::getLevel,
+                        Level2::getLevelNo,
                         this::getOther))
                 .isEqualTo(other);
 
@@ -289,7 +297,7 @@ class TestNullSafe {
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getNonNullLevel3,
-                        Level3::getLevel))
+                        Level3::getLevelNo))
                 .isNull();
 
         Assertions.assertThat(NullSafe.get(
@@ -297,7 +305,7 @@ class TestNullSafe {
                         Level1::getNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getNonNullLevel4,
-                        Level4::getLevel))
+                        Level4::getLevelNo))
                 .isNull();
     }
 
@@ -306,7 +314,7 @@ class TestNullSafe {
         Assertions.assertThat(NullSafe.get(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
-                        Level2::getLevel))
+                        Level2::getLevelNo))
                 .isEqualTo(2L);
     }
 
@@ -316,21 +324,21 @@ class TestNullSafe {
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNullLevel3,
-                        Level3::getLevel))
+                        Level3::getLevelNo))
                 .isNull();
 
         Assertions.assertThat(NullSafe.getOrElse(
                         nonNullLevel1,
                         Level1::getNullLevel2,
                         Level2::getNullLevel3,
-                        Level3::getLevel,
+                        Level3::getLevelNo,
                         other))
                 .isEqualTo(other);
 
         Assertions.assertThat(NullSafe.getOrElseGet(
                         nonNullLevel1,
                         Level1::getNullLevel2,
-                        Level2::getLevel,
+                        Level2::getLevelNo,
                         this::getOther))
                 .isEqualTo(other);
 
@@ -339,7 +347,7 @@ class TestNullSafe {
                         Level1::getNonNullLevel2,
                         Level2::getNullLevel3,
                         Level3::getNonNullLevel4,
-                        Level4::getLevel))
+                        Level4::getLevelNo))
                 .isNull();
     }
 
@@ -349,7 +357,7 @@ class TestNullSafe {
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
-                        Level3::getLevel))
+                        Level3::getLevelNo))
                 .isEqualTo(3L);
     }
 
@@ -360,7 +368,7 @@ class TestNullSafe {
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getNullLevel4,
-                        Level4::getLevel))
+                        Level4::getLevelNo))
                 .isNull();
 
         Assertions.assertThat(NullSafe.getOrElse(
@@ -368,7 +376,7 @@ class TestNullSafe {
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getNullLevel4,
-                        Level4::getLevel,
+                        Level4::getLevelNo,
                         other))
                 .isEqualTo(other);
 
@@ -377,7 +385,7 @@ class TestNullSafe {
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getNullLevel4,
-                        Level4::getLevel,
+                        Level4::getLevelNo,
                         this::getOther))
                 .isEqualTo(other);
     }
@@ -389,7 +397,7 @@ class TestNullSafe {
                         Level1::getNonNullLevel2,
                         Level2::getNonNullLevel3,
                         Level3::getNonNullLevel4,
-                        Level4::getLevel))
+                        Level4::getLevelNo))
                 .isEqualTo(4L);
     }
 
@@ -422,7 +430,7 @@ class TestNullSafe {
     void testTest1NonNullTrue() {
         Assertions.assertThat(NullSafe.test(
                         nonNullLevel1,
-                        Level1::getLevel,
+                        Level1::getLevelNo,
                         level -> level == 1L))
                 .isTrue();
     }
@@ -431,7 +439,7 @@ class TestNullSafe {
     void testTest1NonNullFalse() {
         Assertions.assertThat(NullSafe.test(
                         nonNullLevel1,
-                        Level1::getLevel,
+                        Level1::getLevelNo,
                         level -> level != 1L))
                 .isFalse();
     }
@@ -440,7 +448,7 @@ class TestNullSafe {
     void testTest1Null() {
         Assertions.assertThat(NullSafe.test(
                         nullLevel1,
-                        Level1::getLevel,
+                        Level1::getLevelNo,
                         level -> level == 1L))
                 .isFalse();
     }
@@ -450,7 +458,7 @@ class TestNullSafe {
         Assertions.assertThat(NullSafe.test(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
-                        Level2::getLevel,
+                        Level2::getLevelNo,
                         level -> level == 2L))
                 .isTrue();
     }
@@ -460,7 +468,7 @@ class TestNullSafe {
         Assertions.assertThat(NullSafe.test(
                         nonNullLevel1,
                         Level1::getNonNullLevel2,
-                        Level2::getLevel,
+                        Level2::getLevelNo,
                         level -> level != 2L))
                 .isFalse();
     }
@@ -470,7 +478,7 @@ class TestNullSafe {
         Assertions.assertThat(NullSafe.test(
                         nonNullLevel1,
                         Level1::getNullLevel2,
-                        Level2::getLevel,
+                        Level2::getLevelNo,
                         level -> level == 2L))
                 .isFalse();
     }
@@ -854,6 +862,7 @@ class TestNullSafe {
                 .addCase(new String[0], Collections.emptyList())
                 .addCase(new String[]{"foo"}, List.of("foo"))
                 .addCase(new String[]{"foo", "bar"}, List.of("foo", "bar"))
+                .addThrowsCase(new String[]{"foo", null}, NullPointerException.class)
                 .build();
     }
 
@@ -1000,14 +1009,14 @@ class TestNullSafe {
     @Test
     void testConsume2() {
         doConsumeTest(consumer ->
-                        NullSafe.consume(nonNullLevel1, Level1::getLevel, consumer),
+                        NullSafe.consume(nonNullLevel1, Level1::getLevelNo, consumer),
                 1L);
     }
 
     @Test
     void testConsume2_null() {
         doConsumeTest(consumer ->
-                        NullSafe.consume(nullLevel1, Level1::getLevel, consumer),
+                        NullSafe.consume(nullLevel1, Level1::getLevelNo, consumer),
                 -1L);
     }
 
@@ -1034,13 +1043,13 @@ class TestNullSafe {
                 })
                 .withSimpleEqualityAssertion()
                 .addNamedCase("All non null",
-                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getLevel),
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getLevelNo),
                         2L)
                 .addNamedCase("Level 1 null",
-                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getLevel),
+                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getLevelNo),
                         -1L)
                 .addNamedCase("Level 2 null",
-                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getLevel),
+                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getLevelNo),
                         -1L)
                 .build();
     }
@@ -1074,29 +1083,160 @@ class TestNullSafe {
                                 nonNullLevel1,
                                 Level1::getNonNullLevel2,
                                 Level2::getNonNullLevel3,
-                                Level3::getLevel),
+                                Level3::getLevelNo),
                         3L)
                 .addNamedCase("Level 1 null",
                         Tuple.of(
                                 nullLevel1,
                                 Level1::getNonNullLevel2,
                                 Level2::getNonNullLevel3,
-                                Level3::getLevel),
+                                Level3::getLevelNo),
                         -1L)
                 .addNamedCase("Level 2 null",
                         Tuple.of(
                                 nonNullLevel1,
                                 Level1::getNullLevel2,
                                 Level2::getNonNullLevel3,
-                                Level3::getLevel),
+                                Level3::getLevelNo),
                         -1L)
                 .addNamedCase("Level 3 null",
                         Tuple.of(
                                 nonNullLevel1,
                                 Level1::getNonNullLevel2,
                                 Level2::getNullLevel3,
-                                Level3::getLevel),
+                                Level3::getLevelNo),
                         -1L)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testTest3() {
+        final var inputType = new TypeLiteral<Tuple5<
+                Level1,
+                Function<Level1, Level2>,
+                Function<Level2, Level3>,
+                Function<Level3, Long>,
+                Boolean>>() { // bool allows us to make the predicate pass/fail
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.test(
+                                testCase.getInput()._1,
+                                testCase.getInput()._2,
+                                testCase.getInput()._3,
+                                testCase.getInput()._4,
+                                val -> val > 0L && testCase.getInput()._5))
+                .withSimpleEqualityAssertion()
+                .addNamedCase("All non null, test => true",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getLevelNo,
+                                true),
+                        true)
+                .addNamedCase("All non null, test => false",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getLevelNo,
+                                false),
+                        false)
+                .addNamedCase("Level 1 null",
+                        Tuple.of(
+                                nullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getLevelNo,
+                                true),
+                        false)
+                .addNamedCase("Level 2 null",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getLevelNo,
+                                true),
+                        false)
+                .addNamedCase("Level 3 null",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNullLevel3,
+                                Level3::getLevelNo,
+                                true),
+                        false)
+                .addNamedCase("Level number null",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getNullLevelNo,
+                                true),
+                        false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonNull2() {
+        final var inputType = new TypeLiteral<Tuple2<
+                Level1,
+                Function<Level1, Level2>
+                >>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    return NullSafe.requireNonNull(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            () -> "Oh dear!").getLevelNo();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2), 2L)
+                .addThrowsCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2), NullPointerException.class)
+                .addThrowsCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2), NullPointerException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonNull3() {
+        final var inputType = new TypeLiteral<Tuple3<
+                Level1,
+                Function<Level1, Level2>,
+                Function<Level2, Level3>
+                >>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    return NullSafe.requireNonNull(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3,
+                            () -> "Oh dear!").getLevelNo();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        3L)
+                .addThrowsCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNullLevel3),
+                        NullPointerException.class)
+                .addThrowsCase(
+                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getNonNullLevel3),
+                        NullPointerException.class)
+                .addThrowsCase(
+                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        NullPointerException.class)
                 .build();
     }
 
@@ -1196,8 +1336,12 @@ class TestNullSafe {
             return nonNullLevel2;
         }
 
-        public Long getLevel() {
+        public Long getLevelNo() {
             return level;
+        }
+
+        public Long getNullLevelNo() {
+            return null;
         }
 
         @Override
@@ -1245,8 +1389,12 @@ class TestNullSafe {
             return nonNullLevel3;
         }
 
-        public Long getLevel() {
+        public Long getLevelNo() {
             return level;
+        }
+
+        public Long getNullLevelNo() {
+            return null;
         }
 
         @Override
@@ -1294,8 +1442,12 @@ class TestNullSafe {
             return nonNullLevel4;
         }
 
-        public Long getLevel() {
+        public Long getLevelNo() {
             return level;
+        }
+
+        public Long getNullLevelNo() {
+            return null;
         }
 
         @Override
@@ -1343,8 +1495,12 @@ class TestNullSafe {
             return nonNullLevel5;
         }
 
-        public Long getLevel() {
+        public Long getLevelNo() {
             return level;
+        }
+
+        public Long getNullLevelNo() {
+            return null;
         }
 
         @Override
@@ -1381,8 +1537,12 @@ class TestNullSafe {
             this.id = id;
         }
 
-        public Long getLevel() {
+        public Long getLevelNo() {
             return level;
+        }
+
+        public Long getNullLevelNo() {
+            return null;
         }
 
         @Override

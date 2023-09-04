@@ -17,8 +17,10 @@ import org.junit.jupiter.api.DynamicTest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -464,6 +466,16 @@ class DynamicTestBuilder {
             if (NullSafe.isEmptyCollection(testCases)) {
                 Assertions.fail("No test cases provided");
             }
+            final Set<I> inputs = new HashSet<>();
+            for (int i = 0; i < testCases.size(); i++) {
+                final TestCase<I, O> testCase = testCases.get(i);
+                final I input = testCase.getInput();
+                if (inputs.contains(input)) {
+                    Assertions.fail(LogUtil.message("Test case {} has the same input has another case: {}",
+                            (i + 1), valueToStr(input)));
+                }
+                inputs.add(input);
+            }
             return createDynamicTestStream();
         }
 
@@ -479,24 +491,22 @@ class DynamicTestBuilder {
 
             if (value == null) {
                 stringBuilder.append("null");
-            } else if (value instanceof Double) {
-                stringBuilder.append(ModelStringUtil.formatCsv(
-                                (Double) value, 5, true))
+            } else if (value instanceof final Double valDbl) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valDbl, 5, true))
                         .append("D");
-            } else if (value instanceof Integer) {
-                stringBuilder.append(ModelStringUtil.formatCsv(((Integer) value).longValue()));
-            } else if (value instanceof Long) {
-                stringBuilder.append(ModelStringUtil.formatCsv((Long) value))
+            } else if (value instanceof final Integer valInt) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valInt.longValue()));
+            } else if (value instanceof final Long valLong) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valLong))
                         .append("L");
-            } else if (value instanceof Tuple) {
-                final Tuple tuple = (Tuple) value;
-                final String tupleStr = tuple.toSeq()
+            } else if (value instanceof final Tuple valTuple) {
+                final String tupleContentsStr = valTuple.toSeq()
                         .toStream()
                         .map(this::valueToStr)
                         .collect(Collectors.joining(", "));
 
                 stringBuilder.append("(")
-                        .append(tupleStr)
+                        .append(tupleContentsStr)
                         .append(")");
             } else if (value instanceof final Object[] arr) {
                 stringBuilder.append("[")
@@ -504,6 +514,9 @@ class DynamicTestBuilder {
                                 .map(this::valueToStr)
                                 .collect(Collectors.joining(", ")))
                         .append("]");
+            } else if (value.toString().contains("$$Lambda")) {
+                // Not sure if there is anything useful we can show for the lambda so just do this
+                stringBuilder.append("lambda");
             } else {
                 String valStr = value.toString();
                 // No point outputting the lambda reference as it doesn't help
@@ -535,6 +548,7 @@ class DynamicTestBuilder {
             return testCases.stream()
                     .sequential()
                     .map(testCase -> {
+
                         // Name defined in the testCase overrides the name function
                         final String testName = buildTestName(
                                 testCase,

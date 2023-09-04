@@ -52,6 +52,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
         super(eventBus, securityContext);
         this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
 
+        // Add handler for showing the document permissions dialog in the explorer tree context menu
         eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
                 event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
                     @Override
@@ -68,12 +69,13 @@ public class ManageUserPlugin extends NodeToolsPlugin {
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            // Menu item for the user/group permissions dialog
             MenuKeys.addSecurityMenu(event.getMenuItems());
             final Command command = () ->
                     usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
                         @Override
                         public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                            final PopupSize popupSize = PopupSize.resizable(800, 600);
+                            final PopupSize popupSize = PopupSize.resizable(1_100, 800);
                             ShowPopupEvent.builder(presenter)
                                     .popupType(PopupType.CLOSE_DIALOG)
                                     .popupSize(popupSize)

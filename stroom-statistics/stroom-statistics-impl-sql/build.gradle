@@ -46,9 +46,11 @@ dependencies {
 
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-api')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
-    
+
     testImplementation libs.assertj_core
     testImplementation libs.commons_lang
     testImplementation libs.mockito_core

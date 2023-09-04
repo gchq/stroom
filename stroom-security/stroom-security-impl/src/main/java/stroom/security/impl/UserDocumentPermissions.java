@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserDocumentPermissions {
+    //docUuid => Set<documentPermissionName>
     private final Map<String, Set<String>> permissions = new ConcurrentHashMap<>();
 
     public boolean hasDocumentPermission(final String documentUuid, final String permission) {

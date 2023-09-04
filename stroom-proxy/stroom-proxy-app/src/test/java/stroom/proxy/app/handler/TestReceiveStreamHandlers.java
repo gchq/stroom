@@ -14,6 +14,8 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.proxy.repo.store.Entries;
 import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
@@ -32,6 +34,7 @@ import org.mockito.quality.Strictness;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +46,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
     @Mock
     private SequentialFileStore sequentialFileStore;
+    @Mock
+    private UserIdentityFactory userIdentityFactory;
 
     @Test
     void testStoreAndForward(@TempDir Path tempDir) {
@@ -118,15 +123,19 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                 .build();
 
         final ProxyConfig.Builder builder = ProxyConfig.builder();
-        forwardUrlList.forEach(url -> builder.addForwardDestination(ForwardHttpPostConfig.withForwardUrl(url, url)));
+        forwardUrlList.forEach(url ->
+                builder.addForwardDestination(ForwardHttpPostConfig.withForwardUrl(url, url)));
 
         try {
             final Entries mockStroomZipOutputStream = Mockito.mock(Entries.class);
-            Mockito.when(sequentialFileStore.getEntries(Mockito.any())).thenReturn(
-                    mockStroomZipOutputStream);
+            Mockito.when(sequentialFileStore.getEntries(Mockito.any()))
+                    .thenReturn(mockStroomZipOutputStream);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        Mockito.when(userIdentityFactory.getAuthHeaders(Mockito.any(UserIdentity.class)))
+                .thenReturn(Collections.emptyMap());
 
         final ProxyRepositoryStreamHandlers proxyRepositoryRequestHandlerProvider =
                 new ProxyRepositoryStreamHandlers(sequentialFileStore);
@@ -137,14 +146,13 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         final BuildInfo buildInfo = new BuildInfo(now, "test version", now);
 
         final PathCreator pathCreator = new TemporaryPathCreator(tempDir);
-//        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-
         final ProxyConfig proxyConfig = builder.build();
 
         ForwardHttpPostHandlersFactory forwardHttpPostHandlersFactory = new ForwardHttpPostHandlersFactory(
                 logStream,
                 pathCreator,
-                () -> buildInfo);
+                () -> buildInfo,
+                userIdentityFactory);
 
         final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
                 proxyConfig,

@@ -44,7 +44,9 @@ public class UserDataProvider implements Refreshable {
     private RestDataProvider<User, ResultPage<User>> dataProvider;
     private FindUserCriteria criteria = new FindUserCriteria();
 
-    public UserDataProvider(final EventBus eventBus, final RestFactory restFactory, final DataGrid<User> dataGrid) {
+    public UserDataProvider(final EventBus eventBus,
+                            final RestFactory restFactory,
+                            final DataGrid<User> dataGrid) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.dataGrid = dataGrid;

@@ -41,6 +41,9 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractCoreIntegrationTest.class);
 
+    @Inject
+    private ConfigMapperSpy configMapperSpy;
+
     // This is all a bit nasty, but we need to be able to set a config mapper before the
     // guice bindings happen as the lmdb lib path is read by eager singletons before we
     // can inject and use ConfigMapperSpy.
@@ -57,9 +60,6 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         ConfigMapperSpy.setStaticConfigValueMapper(LmdbLibraryConfig.class, lmdbLibraryConfig ->
                 lmdbLibraryConfig.withSystemLibraryExtractDir(libPathStr));
     }
-
-    @Inject
-    private ConfigMapperSpy configMapperSpy;
 
     /**
      * Sets all the config value mappers that allow you to change the config values from their

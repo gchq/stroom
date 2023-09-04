@@ -18,6 +18,7 @@
 
 package stroom.security.identity.token;
 
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 //   possible
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class ApiKey implements HasIntegerId {
+public class ApiKey implements HasIntegerId, HasAuditInfo {
 
     @JsonProperty
     private Integer id;

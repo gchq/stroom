@@ -1,19 +1,120 @@
 package stroom.util.io;
 
 import stroom.test.common.TestUtil;
+import stroom.util.logging.LogUtil;
 
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 class TestByteSizeUnit {
 
-    @Test
-    void intBytes() {
+    private static final List<ByteSizeUnit> METRIC_UNITS = List.of(
+            ByteSizeUnit.KILOBYTE,
+            ByteSizeUnit.MEGABYTE,
+            ByteSizeUnit.GIGABYTE,
+            ByteSizeUnit.TERABYTE,
+            ByteSizeUnit.PETABYTE,
+            ByteSizeUnit.EXABYTE);
+
+    private static final List<ByteSizeUnit> IEC_UNITS = List.of(
+            ByteSizeUnit.KIBIBYTE,
+            ByteSizeUnit.MEBIBYTE,
+            ByteSizeUnit.GIBIBYTE,
+            ByteSizeUnit.TEBIBYTE,
+            ByteSizeUnit.PEBIBYTE,
+            ByteSizeUnit.EXBIBYTE);
+
+    @TestFactory
+    Stream<DynamicTest> testFromShortName() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(ByteSizeUnit.class)
+                .withTestFunction(testCase -> ByteSizeUnit.fromShortName(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase("KiB", ByteSizeUnit.KIBIBYTE)
+                .addCase("MiB", ByteSizeUnit.MEBIBYTE)
+                .addCase("GiB", ByteSizeUnit.GIBIBYTE)
+                .addCase("TiB", ByteSizeUnit.TEBIBYTE)
+                .addCase("PiB", ByteSizeUnit.PEBIBYTE)
+                .addCase("EiB", ByteSizeUnit.EXBIBYTE)
+                .addCase("kB", ByteSizeUnit.KILOBYTE)
+                .addCase("MB", ByteSizeUnit.MEGABYTE)
+                .addCase("GB", ByteSizeUnit.GIGABYTE)
+                .addCase("TB", ByteSizeUnit.TERABYTE)
+                .addCase("PB", ByteSizeUnit.PETABYTE)
+                .addCase("EB", ByteSizeUnit.EXABYTE)
+                .addThrowsCase("foobar", IllegalArgumentException.class)
+                .build();
+    }
+
+    @TestFactory
+    Iterable<DynamicTest> testLongBytes_Iec() {
+        final List<DynamicTest> tests = new ArrayList<>(IEC_UNITS.size());
+        for (int i = 0; i < IEC_UNITS.size(); i++) {
+            final int pow = i + 1;
+            final ByteSizeUnit byteSizeUnit = IEC_UNITS.get(i);
+            tests.add(DynamicTest.dynamicTest(
+                    LogUtil.message("Unit: {}, pow: {}", byteSizeUnit, pow),
+                    () -> {
+                        final long bytes = byteSizeUnit.longBytes();
+                        Assertions.assertThat(bytes)
+                                .isEqualTo((long) Math.pow(1024, pow));
+                    }
+            ));
+        }
+        return tests;
+    }
+
+    @TestFactory
+    Iterable<DynamicTest> testLongBytes_Metric() {
+        final List<DynamicTest> tests = new ArrayList<>(METRIC_UNITS.size());
+        for (int i = 0; i < METRIC_UNITS.size(); i++) {
+            final int pow = i + 1;
+            final ByteSizeUnit byteSizeUnit = METRIC_UNITS.get(i);
+            tests.add(DynamicTest.dynamicTest(
+                    LogUtil.message("Unit: {}, pow: {}", byteSizeUnit, pow),
+                    () -> {
+                        final long bytes = byteSizeUnit.longBytes();
+                        Assertions.assertThat(bytes)
+                                .isEqualTo((long) Math.pow(1000, pow));
+                    }
+            ));
+        }
+        return tests;
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testUnitValue() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(ByteSizeUnit.class, long.class)
+                .withOutputType(double.class)
+                .withTestFunction(testCase ->
+                        testCase.getInput()._1.unitValue(testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(ByteSizeUnit.BYTE, 256L), 256d)
+                .addCase(Tuple.of(ByteSizeUnit.KILOBYTE, 1024L), 1.024d)
+                .addCase(Tuple.of(ByteSizeUnit.KIBIBYTE, 1024L), 1d)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testLongValue2() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(ByteSizeUnit.class, long.class)
+                .withOutputType(long.class)
+                .withTestFunction(testCase ->
+                        testCase.getInput()._1.longBytes(testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(ByteSizeUnit.BYTE, 256L), 256L)
+                .addCase(Tuple.of(ByteSizeUnit.KILOBYTE, 1L), 1000L)
+                .addCase(Tuple.of(ByteSizeUnit.KIBIBYTE, 1L), 1024L)
+                .build();
     }
 
     @TestFactory
@@ -43,42 +144,6 @@ class TestByteSizeUnit {
                 .addCase(Tuple.of(5, ByteSizeUnit.KILOBYTE), 5 * 1000)
                 .addCase(Tuple.of(5, ByteSizeUnit.MEBIBYTE), 5 * 1024 * 1024)
                 .addCase(Tuple.of(5, ByteSizeUnit.MEGABYTE), 5 * 1000 * 1000)
-                .build();
-    }
-
-    @TestFactory
-    Stream<DynamicTest> testLongBytes() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputTypes(long.class, ByteSizeUnit.class)
-                .withOutputType(long.class)
-                .withTestFunction(testCase -> {
-                    final long value = testCase.getInput()._1;
-                    final ByteSizeUnit byteSizeUnit = testCase.getInput()._2;
-                    return byteSizeUnit.longBytes(value);
-                })
-                .withSimpleEqualityAssertion()
-                .addCase(Tuple.of(1L, ByteSizeUnit.BYTE), 1L)
-                .addCase(Tuple.of(1L, ByteSizeUnit.KIBIBYTE), 1024L)
-                .addCase(Tuple.of(1L, ByteSizeUnit.KILOBYTE), 1000L)
-                .addCase(Tuple.of(1L, ByteSizeUnit.MEBIBYTE), 1024L * 1024)
-                .addCase(Tuple.of(1L, ByteSizeUnit.MEGABYTE), 1000L * 1000)
-                .addCase(Tuple.of(1L, ByteSizeUnit.GIBIBYTE), 1024L * 1024 * 1024)
-                .addCase(Tuple.of(1L, ByteSizeUnit.GIGABYTE), 1000L * 1000 * 1000)
-                .addCase(Tuple.of(1L, ByteSizeUnit.TEBIBYTE), 1024L * 1024 * 1024 * 1024)
-                .addCase(Tuple.of(1L, ByteSizeUnit.TERABYTE), 1000L * 1000 * 1000 * 1000)
-                .addCase(Tuple.of(1L, ByteSizeUnit.PEBIBYTE), 1024L * 1024 * 1024 * 1024 * 1024)
-                .addCase(Tuple.of(1L, ByteSizeUnit.PETABYTE), 1000L * 1000 * 1000 * 1000 * 1000)
-                .addCase(Tuple.of(5L, ByteSizeUnit.BYTE), 5L)
-                .addCase(Tuple.of(5L, ByteSizeUnit.KIBIBYTE), 5L * 1024L)
-                .addCase(Tuple.of(5L, ByteSizeUnit.KILOBYTE), 5L * 1000L)
-                .addCase(Tuple.of(5L, ByteSizeUnit.MEBIBYTE), 5L * 1024L * 1024)
-                .addCase(Tuple.of(5L, ByteSizeUnit.MEGABYTE), 5L * 1000L * 1000)
-                .addCase(Tuple.of(5L, ByteSizeUnit.GIBIBYTE), 5L * 1024L * 1024 * 1024)
-                .addCase(Tuple.of(5L, ByteSizeUnit.GIGABYTE), 5L * 1000L * 1000 * 1000)
-                .addCase(Tuple.of(5L, ByteSizeUnit.TEBIBYTE), 5L * 1024L * 1024 * 1024 * 1024)
-                .addCase(Tuple.of(5L, ByteSizeUnit.TERABYTE), 5L * 1000L * 1000 * 1000 * 1000)
-                .addCase(Tuple.of(5L, ByteSizeUnit.PEBIBYTE), 5L * 1024L * 1024 * 1024 * 1024 * 1024)
-                .addCase(Tuple.of(5L, ByteSizeUnit.PETABYTE), 5L * 1000L * 1000 * 1000 * 1000 * 1000)
                 .build();
     }
 }

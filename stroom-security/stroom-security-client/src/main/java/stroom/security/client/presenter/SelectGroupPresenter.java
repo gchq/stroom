@@ -20,6 +20,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -37,8 +38,9 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
     public SelectGroupPresenter(final EventBus eventBus,
                                 final UserListView userListView,
                                 final PagerView pagerView,
-                                final RestFactory restFactory) {
-        super(eventBus, userListView, pagerView, restFactory);
+                                final RestFactory restFactory,
+                                final UiConfigCache uiConfigCache) {
+        super(eventBus, userListView, pagerView, restFactory, uiConfigCache);
     }
 
     @Override
@@ -61,7 +63,21 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         findUserCriteria.setGroup(true);
         setup(findUserCriteria);
 
-        final PopupSize popupSize = PopupSize.resizable(400, 400);
+        final PopupSize popupSize = PopupSize.builder()
+                .width(Size
+                        .builder()
+                        .initial(1000)
+                        .min(1000)
+                        .resizable(true)
+                        .build())
+                .height(Size
+                        .builder()
+                        .initial(600)
+                        .min(600)
+                        .resizable(true)
+                        .build())
+                .build();
+
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

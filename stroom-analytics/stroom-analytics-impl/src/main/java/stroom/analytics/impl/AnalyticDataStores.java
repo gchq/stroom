@@ -37,6 +37,7 @@ import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -300,8 +301,9 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
                 final Path path = analyticResultStoreDir.resolve(dir);
                 if (Files.isDirectory(path)) {
-                    if (securityContext.isAdmin() ||
-                            analyticRuleDoc.getCreateUser().equals(securityContext.getUserId())) {
+                    if (securityContext.hasDocumentPermission(
+                            analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
+
                         list.add(new ResultStoreInfo(
                                 new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
                                         analyticRuleDoc.getUuid(),
@@ -352,14 +354,14 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .uuid(criteria.getAnalyticDocUuid())
                 .build();
         try {
-            final AnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
-            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(doc);
+            final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
             final String componentId = getComponentId(searchRequest);
             final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
             final Path path = analyticResultStoreDir.resolve(dir);
             if (Files.isDirectory(path)) {
-                if (securityContext.isAdmin() ||
-                        doc.getCreateUser().equals(securityContext.getUserId())) {
+                if (securityContext.hasDocumentPermission(
+                        analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
 
                     long createTime = 0;
                     try {

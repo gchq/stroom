@@ -16,12 +16,15 @@
 
 package stroom.security.openid.api;
 
+import java.util.List;
+
 public class OpenId {
 
     public static final String AUTH_USER = "authuser";
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";
     public static final String CODE = "code";
+    public static final String KEY_ID = "kid";
     public static final String GRANT_TYPE = "grant_type";
     public static final String NONCE = "nonce";
     public static final String LOGIN_PROMPT = "login";
@@ -35,9 +38,47 @@ public class OpenId {
     public static final String STATE = "state";
 
     public static final String GRANT_TYPE__AUTHORIZATION_CODE = "authorization_code";
+    public static final String GRANT_TYPE__CLIENT_CREDENTIALS = "client_credentials";
+    public static final String GRANT_TYPE__REFRESH_TOKEN = "refresh_token";
     public static final String RESPONSE_TYPE__CODE = "code";
     public static final String SCOPE__OPENID = "openid";
     public static final String SCOPE__EMAIL = "email";
+
+    public static final List<String> DEFAULT_REQUEST_SCOPES = List.of(
+            OpenId.SCOPE__OPENID,
+            OpenId.SCOPE__EMAIL);
+
+    public static final List<String> DEFAULT_CLIENT_CREDENTIALS_SCOPES = List.of(
+            OpenId.SCOPE__OPENID);
+
+    /**
+     * Subject - Identifier for the End-User at the Issuer.
+     * <p>
+     * NOTE: Not all IDPs use this, e.g. Azure AD use 'oid', so refer to {@link OpenIdConfiguration} for
+     * which claims to use.
+     * </p>
+     */
+    public static final String CLAIM__SUBJECT = "sub";
+    /**
+     * End-User's preferred e-mail address.
+     */
+    public static final String CLAIM__EMAIL = "email";
+    /**
+     * Shorthand name by which the End-User wishes to be referred to at the RP, such as janedoe or j.doe.
+     * This value MAY be any valid JSON string including special characters such as @, /,
+     * or whitespace. The RP MUST NOT rely upon this value being unique
+     * <p>
+     * NOTE: Not all IDPs use this, e.g. Azure AD use 'upn', so refer to {@link OpenIdConfiguration} for
+     * which claims to use.
+     * </p>
+     */
+    public static final String CLAIM__PREFERRED_USERNAME = "preferred_username";
+
+    /**
+     * End-User's full name in displayable form including all name parts, possibly including titles and suffixes,
+     * ordered according to the End-User's locale and preferences.
+     */
+    public static final String CLAIM__NAME = "name";
 
     public static final String ID_TOKEN = "id_token";
 }

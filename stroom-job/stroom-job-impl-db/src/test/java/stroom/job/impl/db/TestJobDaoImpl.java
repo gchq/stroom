@@ -5,12 +5,12 @@ import stroom.job.shared.Job;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.AuditUtil;
+import stroom.util.exception.DataChangedException;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.jooq.exception.DataAccessException;
-import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -139,7 +139,7 @@ class TestJobDaoImpl {
 
     private Job createStandardJob() {
         Job job = new Job();
-        AuditUtil.stamp("test", job);
+        AuditUtil.stamp(() -> "test", job);
         job.setEnabled(true);
         job.setName("Some name");
         Job createdJob = dao.create(job);

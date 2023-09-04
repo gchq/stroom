@@ -12,6 +12,9 @@ import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
@@ -36,13 +39,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("proxyConfig");
 
-    public static final String PROP_NAME_USE_DEFAULT_OPENID_CREDENTIALS = "useDefaultOpenIdCredentials";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_PROXY_ID = "proxyId";
     public static final String PROP_NAME_CONTENT_DIR = "contentDir";
     public static final String PROP_NAME_PATH = "path";
     public static final String PROP_NAME_DB = "db";
-    public static final String PROP_NAME_RECEIVE_DATA_CONFIG = "receiveDataConfig";
+    public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_REPOSITORY = "repository";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
     public static final String PROP_NAME_FILE_SCANNERS = "fileScanners";
@@ -54,13 +56,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_FEED_STATUS = "feedStatus";
     public static final String PROP_NAME_THREADS = "threads";
     public static final String PROP_NAME_FORWARD_RETRY = "forwardRetry";
+    public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
 
     protected static final boolean DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS = false;
     protected static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
     protected static final String DEFAULT_CONTENT_DIR = "content";
 
-    private final boolean useDefaultOpenIdCredentials;
     private final boolean haltBootOnConfigValidationFailure;
     private final String proxyId;
     private final String contentDir;
@@ -79,10 +81,10 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final FeedStatusConfig feedStatusConfig;
     private final ThreadConfig threadConfig;
     private final ForwardRetryConfig forwardRetry;
+    private final ProxySecurityConfig proxySecurityConfig;
     private final List<SqsConnectorConfig> sqsConnectors;
 
     public ProxyConfig() {
-        useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
         haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
         proxyId = null;
         contentDir = DEFAULT_CONTENT_DIR;
@@ -101,6 +103,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         feedStatusConfig = new FeedStatusConfig();
         threadConfig = new ThreadConfig();
         forwardRetry = new ForwardRetryConfig();
+        proxySecurityConfig = new ProxySecurityConfig();
         sqsConnectors = new ArrayList<>();
     }
 
@@ -108,13 +111,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public ProxyConfig(
-            @JsonProperty(PROP_NAME_USE_DEFAULT_OPENID_CREDENTIALS) final boolean useDefaultOpenIdCredentials,
             @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
             @JsonProperty(PROP_NAME_PROXY_ID) final String proxyId,
             @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
             @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
             @JsonProperty(PROP_NAME_DB) final ProxyDbConfig proxyDbConfig,
-            @JsonProperty(PROP_NAME_RECEIVE_DATA_CONFIG) final ReceiveDataConfig receiveDataConfig,
+            @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
             @JsonProperty(PROP_NAME_REPOSITORY) final ProxyRepoConfig proxyRepoConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
             @JsonProperty(PROP_NAME_FILE_SCANNERS) final List<FileScannerConfig> fileScanners,
@@ -126,9 +128,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_FORWARD_RETRY) final ForwardRetryConfig forwardRetry,
+            @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
             @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
 
-        this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
         this.proxyId = proxyId;
         this.contentDir = contentDir;
@@ -146,6 +148,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.feedStatusConfig = feedStatusConfig;
         this.threadConfig = threadConfig;
         this.forwardRetry = forwardRetry;
+        this.proxySecurityConfig = proxySecurityConfig;
         this.sqsConnectors = sqsConnectors;
     }
 
@@ -160,14 +163,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
-    }
-
-    @JsonProperty(PROP_NAME_USE_DEFAULT_OPENID_CREDENTIALS)
-    @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
-            "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production. " +
-            "If API keys are set elsewhere in config then they will override this setting.")
-    public boolean isUseDefaultOpenIdCredentials() {
-        return useDefaultOpenIdCredentials;
     }
 
     @JsonProperty
@@ -191,7 +186,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxyDbConfig;
     }
 
-    @JsonProperty(PROP_NAME_RECEIVE_DATA_CONFIG)
+    @JsonProperty(PROP_NAME_RECEIVE)
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
     }
@@ -263,10 +258,14 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return threadConfig;
     }
 
-    @JsonPropertyDescription(PROP_NAME_FORWARD_RETRY)
-    @JsonProperty
+    @JsonProperty(PROP_NAME_FORWARD_RETRY)
     public ForwardRetryConfig getForwardRetry() {
         return forwardRetry;
+    }
+
+    @JsonProperty(PROP_NAME_SECURITY)
+    public ProxySecurityConfig getProxySecurityConfig() {
+        return proxySecurityConfig;
     }
 
     @JsonIgnore
@@ -289,6 +288,23 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return sqsConnectors;
     }
 
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if tokenAuthenticationEnabled " +
+            "is true")
+    public boolean isTokenAuthenticationEnabledValid() {
+        if (NullSafe.test(receiveDataConfig, ReceiveDataConfig::isTokenAuthenticationEnabled)) {
+            return NullSafe.test(
+                    proxySecurityConfig,
+                    ProxySecurityConfig::getAuthenticationConfig,
+                    ProxyAuthenticationConfig::getOpenIdConfig,
+                    AbstractOpenIdConfig::getIdentityProviderType,
+                    IdpType.EXTERNAL_IDP::equals);
+        } else {
+            return true;
+        }
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -306,7 +322,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static class Builder {
 
-        private Boolean useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
         private Boolean haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
         private String proxyId;
         private String contentDir = DEFAULT_CONTENT_DIR;
@@ -316,7 +331,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
-        private List<FileScannerConfig> fileScanners = new ArrayList<>();
+        private final List<FileScannerConfig> fileScanners = new ArrayList<>();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
@@ -325,15 +340,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
         private ForwardRetryConfig forwardRetry = new ForwardRetryConfig();
+        private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
         private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
         private Builder() {
 
-        }
-
-        public Builder useDefaultOpenIdCredentials(final Boolean useDefaultOpenIdCredentials) {
-            this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
-            return this;
         }
 
         public Builder haltBootOnConfigValidationFailure(final Boolean haltBootOnConfigValidationFailure) {
@@ -434,6 +445,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder securityConfig(final ProxySecurityConfig proxySecurityConfig) {
+            this.proxySecurityConfig = proxySecurityConfig;
+            return this;
+        }
+
         public Builder addSqsConnector(final SqsConnectorConfig sqsConnector) {
             this.sqsConnectors.add(sqsConnector);
             return this;
@@ -441,7 +457,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public ProxyConfig build() {
             return new ProxyConfig(
-                    useDefaultOpenIdCredentials,
                     haltBootOnConfigValidationFailure,
                     proxyId,
                     contentDir,
@@ -459,6 +474,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     feedStatusConfig,
                     threadConfig,
                     forwardRetry,
+                    proxySecurityConfig,
                     sqsConnectors);
         }
     }

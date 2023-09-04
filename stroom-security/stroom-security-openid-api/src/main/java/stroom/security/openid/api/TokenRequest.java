@@ -4,32 +4,50 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class TokenRequest {
 
     @JsonProperty(OpenId.GRANT_TYPE)
     private final String grantType;
+
     @JsonProperty(OpenId.CLIENT_ID)
     private final String clientId;
+
     @JsonProperty(OpenId.CLIENT_SECRET)
     private final String clientSecret;
+
     @JsonProperty(OpenId.REDIRECT_URI)
     private final String redirectUri;
+
+    @JsonProperty(OpenId.REFRESH_TOKEN)
+    private final String refreshToken;
+
     @JsonProperty(OpenId.CODE)
     private final String code;
 
+    @JsonProperty(OpenId.SCOPE)
+    private final String scope;
+
     @JsonCreator
-    public TokenRequest(@JsonProperty(OpenId.GRANT_TYPE) final String grantType,
-                 @JsonProperty(OpenId.CLIENT_ID) final String clientId,
-                 @JsonProperty(OpenId.CLIENT_SECRET) final String clientSecret,
-                 @JsonProperty(OpenId.REDIRECT_URI) final String redirectUri,
-                 @JsonProperty(OpenId.CODE) final String code) {
+    public TokenRequest(
+            @JsonProperty(OpenId.GRANT_TYPE) final String grantType,
+            @JsonProperty(OpenId.CLIENT_ID) final String clientId,
+            @JsonProperty(OpenId.CLIENT_SECRET) final String clientSecret,
+            @JsonProperty(OpenId.REDIRECT_URI) final String redirectUri,
+            @JsonProperty(OpenId.REFRESH_TOKEN) final String refreshToken,
+            @JsonProperty(OpenId.CODE) final String code,
+            @JsonProperty(OpenId.SCOPE) final String scope) {
+
         this.grantType = grantType;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.redirectUri = redirectUri;
+        this.refreshToken = refreshToken;
         this.code = code;
+        this.scope = scope;
     }
 
     public String getGrantType() {
@@ -48,8 +66,16 @@ public class TokenRequest {
         return redirectUri;
     }
 
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
     public String getCode() {
         return code;
+    }
+
+    public String getScope() {
+        return scope;
     }
 
     public static Builder builder() {
@@ -60,13 +86,31 @@ public class TokenRequest {
         return new Builder(this);
     }
 
+    @Override
+    public String toString() {
+        return "TokenRequest{" +
+                "grantType='" + grantType + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", clientSecret='" + clientSecret + '\'' +
+                ", redirectUri='" + redirectUri + '\'' +
+                ", refreshToken='" + refreshToken + '\'' +
+                ", code='" + code + '\'' +
+                ", scope='" + scope + '\'' +
+                '}';
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private String grantType;
         private String clientId;
         private String clientSecret;
         private String redirectUri;
+        private String refreshToken;
         private String code;
+        private String scope;
 
         private Builder() {
         }
@@ -76,6 +120,7 @@ public class TokenRequest {
             clientId = tokenRequest.clientId;
             clientSecret = tokenRequest.clientSecret;
             redirectUri = tokenRequest.redirectUri;
+            refreshToken = tokenRequest.refreshToken;
             code = tokenRequest.code;
         }
 
@@ -99,8 +144,18 @@ public class TokenRequest {
             return this;
         }
 
+        public Builder refreshToken(final String refreshToken) {
+            this.refreshToken = refreshToken;
+            return this;
+        }
+
         public Builder code(final String code) {
             this.code = code;
+            return this;
+        }
+
+        public Builder scope(final String scope) {
+            this.scope = scope;
             return this;
         }
 
@@ -110,7 +165,9 @@ public class TokenRequest {
                     clientId,
                     clientSecret,
                     redirectUri,
-                    code);
+                    refreshToken,
+                    code,
+                    scope);
         }
     }
 }

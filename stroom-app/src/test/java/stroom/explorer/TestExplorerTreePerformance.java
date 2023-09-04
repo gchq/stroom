@@ -127,14 +127,14 @@ class TestExplorerTreePerformance {
                     DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+                securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+                securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });
