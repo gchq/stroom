@@ -28,7 +28,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +126,7 @@ public final class JsonUtil {
      * Avoids having to parse the whole object if you only want to get a few keys.
      * Does not descend into child objects/arrays.
      * If the root is an array, returns an empty map.
+     *
      * @param json The json to parse.
      * @param keys The fields to find.
      * @return The entries with keys matching keys
@@ -145,8 +145,9 @@ public final class JsonUtil {
      * Avoids having to parse the whole object if you only want to get one key.
      * Does not descend into child objects/arrays.
      * If the root is an array, returns an empty map.
+     *
      * @param json The json to parse.
-     * @param key The field to find the value for.
+     * @param key  The field to find the value for.
      * @return The value for the supplied key.
      */
     public static Optional<String> getValue(final String json,
@@ -164,6 +165,7 @@ public final class JsonUtil {
      * Avoids having to parse the whole object if you only want to get a few keys.
      * Does not descend into child objects/arrays.
      * If the root is an array, returns an empty map.
+     *
      * @param json The json to parse.
      * @param keys The fields to find.
      * @return The entries with keys matching keys
