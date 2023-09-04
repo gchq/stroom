@@ -12,13 +12,18 @@ public class ShowDocRefDependenciesEvent extends GwtEvent<Handler> {
     private static Type<Handler> TYPE;
 
     private final DocRef docRef;
+    private final DependencyType dependencyType;
 
-    private ShowDocRefDependenciesEvent(final DocRef docRef) {
+    private ShowDocRefDependenciesEvent(final DocRef docRef,
+                                        final DependencyType dependencyType) {
         this.docRef = docRef;
+        this.dependencyType = dependencyType;
     }
 
-    public static void fire(final HasHandlers source, final DocRef docRef) {
-        source.fireEvent(new ShowDocRefDependenciesEvent(docRef));
+    public static void fire(final HasHandlers source,
+                            final DocRef docRef,
+                            final DependencyType dependencyType) {
+        source.fireEvent(new ShowDocRefDependenciesEvent(docRef, dependencyType));
     }
 
     public static Type<Handler> getType() {
@@ -42,8 +47,30 @@ public class ShowDocRefDependenciesEvent extends GwtEvent<Handler> {
         return docRef;
     }
 
+    public DependencyType getDependencyType() {
+        return dependencyType;
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onShow(ShowDocRefDependenciesEvent event);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum DependencyType {
+        /**
+         * Document X depends on something or things
+         */
+        DEPENDENCY,
+        /**
+         * Something or things depends on document X
+         */
+        DEPENDANT;
     }
 }
