@@ -15276,6 +15276,38 @@
           }
         }
       },
+      "QLVisResult" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Result"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "dataPoints" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "jsonData" : {
+              "type" : "string"
+            },
+            "visSettings" : {
+              "$ref" : "#/components/schemas/QLVisSettings"
+            }
+          }
+        } ],
+        "required" : [ "componentId" ]
+      },
+      "QLVisSettings" : {
+        "type" : "object",
+        "properties" : {
+          "json" : {
+            "type" : "string"
+          },
+          "visualisation" : {
+            "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
       "Query" : {
         "type" : "object",
         "description" : "The query terms for the search",
@@ -16153,7 +16185,7 @@
           "resultStyle" : {
             "type" : "string",
             "description" : "The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object",
-            "enum" : [ "FLAT", "TABLE" ]
+            "enum" : [ "FLAT", "TABLE", "VIS", "QL_VIS" ]
           },
           "timeFilter" : {
             "$ref" : "#/components/schemas/TimeFilter"
@@ -17870,6 +17902,9 @@
           },
           "valueFilter" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "visSettings" : {
+            "$ref" : "#/components/schemas/QLVisSettings"
           },
           "window" : {
             "$ref" : "#/components/schemas/Window"
