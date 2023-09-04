@@ -48,6 +48,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -202,6 +203,7 @@ public class TableBuilderAnalyticExecutor {
                 final String pipelineIdentity = pipelineRef.toInfoString();
                 final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
                         "Pipeline: " + pipelineIdentity,
+                        TerminateHandlerFactory.NOOP_FACTORY,
                         taskContext -> {
                             final boolean complete =
                                     processPipeline(pipelineRef, analytics, taskContext);
@@ -216,7 +218,7 @@ public class TableBuilderAnalyticExecutor {
         // Join.
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
 
-        return allComplete.get();
+        return allComplete.get() || parentTaskContext.isTerminated();
     }
 
     private boolean processPipeline(final DocRef pipelineDocRef,
@@ -236,23 +238,25 @@ public class TableBuilderAnalyticExecutor {
         if (sortedMetaList.size() > 0) {
             final PipelineData pipelineData = getPipelineData(pipelineDocRef);
             for (final Meta meta : sortedMetaList) {
-                try {
-                    if (Status.UNLOCKED.equals(meta.getStatus())) {
-                        processStream(pipelineDocRef, pipelineData, analytics, meta, parentTaskContext);
-                    } else {
-                        LOGGER.info("Complete for now");
+                if (!parentTaskContext.isTerminated()) {
+                    try {
+                        if (Status.UNLOCKED.equals(meta.getStatus())) {
+                            processStream(pipelineDocRef, pipelineData, analytics, meta, parentTaskContext);
+                        } else {
+                            LOGGER.info("Complete for now");
+                            analytics.forEach(analytic ->
+                                    analytic.trackerData.setMessage("Complete for now"));
+                            break;
+                        }
+                    } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        throw e;
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
                         analytics.forEach(analytic ->
-                                analytic.trackerData.setMessage("Complete for now"));
-                        break;
+                                analytic.trackerData.setMessage(e.getMessage()));
+                        throw e;
                     }
-                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    throw e;
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                    analytics.forEach(analytic ->
-                            analytic.trackerData.setMessage(e.getMessage()));
-                    throw e;
                 }
             }
         }
@@ -375,12 +379,13 @@ public class TableBuilderAnalyticExecutor {
                             fieldListConsumer.end();
                         }
 
-                        final ExtractionState extractionState = extractionStateProvider.get();
-
-                        filteredAnalytics.forEach(analytic -> {
-                            analytic.trackerData.incrementStreamCount();
-                            analytic.trackerData.addEventCount(extractionState.getCount());
-                        });
+                        if (!taskContext.isTerminated()) {
+                            final ExtractionState extractionState = extractionStateProvider.get();
+                            filteredAnalytics.forEach(analytic -> {
+                                analytic.trackerData.incrementStreamCount();
+                                analytic.trackerData.addEventCount(extractionState.getCount());
+                            });
+                        }
                     }).run();
         }
     }
