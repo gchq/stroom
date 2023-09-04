@@ -54,15 +54,15 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     }
 
     @Override
-    public void render(final Context context, final ExplorerNode item, final SafeHtmlBuilder sb) {
-        if (item != null) {
+    public void render(final Context context, final ExplorerNode node, final SafeHtmlBuilder sb) {
+        if (node != null) {
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
 
             int expanderPadding = 4;
 
             SvgImage expanderIcon = null;
-            if (item.getNodeState() != null) {
-                switch (item.getNodeState()) {
+            if (node.getNodeState() != null) {
+                switch (node.getNodeState()) {
                     case LEAF:
                         break;
                     case OPEN:
@@ -72,11 +72,11 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         expanderIcon = SvgImage.ARROW_RIGHT;
                         break;
                     default:
-                        throw new RuntimeException("Unexpected state " + item.getNodeState());
+                        throw new RuntimeException("Unexpected state " + node.getNodeState());
                 }
             }
 
-            int indent = item.getDepth();
+            int indent = node.getDepth();
             indent = expanderPadding + (indent * 17);
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
@@ -97,27 +97,27 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (tickBoxCell != null) {
                 final SafeHtmlBuilder tb = new SafeHtmlBuilder();
-                tickBoxCell.render(context, getValue(item), tb);
+                tickBoxCell.render(context, getValue(node), tb);
 
                 final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox", tb.toSafeHtml());
                 // Add tickbox
                 content.append(tickBoxHtml);
             }
 
-            if (item.getIcon() != null) {
+            if (node.getIcon() != null) {
                 // Add icon
                 final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
-                        item.getType(),
-                        item.getIcon(),
+                        node.getType(),
+                        node.getIcon(),
                         getCellClassName() + "-icon");
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
 
-                item.getMaxSeverity().ifPresent(maxSeverity -> {
+                node.getMaxSeverity().ifPresent(maxSeverity -> {
                     final SvgImage svgImage = maxSeverity.greaterThanOrEqual(Severity.WARNING)
                             ? SvgImage.ALERT_SIMPLE
                             : SvgImage.INFO;
                     builder.append(SvgImageUtil.toSafeHtml(
-                            buildAlertText(item),
+                            buildAlertText(node),
                             svgImage,
                             "svgIcon", "small", getCellClassName() + "-alert-icon"));
                 });
@@ -127,15 +127,15 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         builder.toSafeHtml()));
             }
 
-            if (item.getDisplayValue() != null) {
+            if (node.getDisplayValue() != null) {
                 // Add text
                 content.append(template.div(getCellClassName() + "-text",
-                        SafeHtmlUtils.fromString(item.getDisplayValue())));
+                        SafeHtmlUtils.fromString(node.getDisplayValue())));
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
-            if (item.getIsFavourite() && item.getRootNodeUuid() != null &&
-                    !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(item.getRootNodeUuid())) {
+            if (node.getIsFavourite() && node.getRootNodeUuid() != null &&
+                    !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(node.getRootNodeUuid())) {
                 content.append(SvgImageUtil.toSafeHtml(
                         "Item is a favourite",
                         SvgImage.FAVOURITES,
@@ -148,8 +148,11 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 //                        SvgImage.ALERT,
 //                        "svgIcon", "small"));
 //            });
+            final String filterMatchClass = getCellClassName() + "-" + (node.getIsFilterMatch()
+                    ? "filter-match"
+                    : "filter-no-match");
 
-            sb.append(template.outer(content.toSafeHtml()));
+            sb.append(template.outer(filterMatchClass, content.toSafeHtml()));
         }
     }
 
@@ -190,7 +193,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
 
-        @Template("<div class=\"explorerCell\">{0}</div>")
-        SafeHtml outer(SafeHtml content);
+        @Template("<div class=\"explorerCell {0}\">{1}</div>")
+        SafeHtml outer(String extraClassName, SafeHtml content);
     }
 }

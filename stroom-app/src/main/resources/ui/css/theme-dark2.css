@@ -195,6 +195,7 @@
     --navigation__background-color--selected--focussed: rgb(0,120,199);
     --navigation__text-color: #e6e1dc;
     --navigation__text-color--selected: #fff;
+    --navigation__text-color--no-match: #7b7b7b;
 
     /* Specific */
     --header__icon-color: #2185d0;

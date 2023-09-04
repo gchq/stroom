@@ -72,12 +72,11 @@ public abstract class AbstractTreeModel<K> {
         final K parentKey = getNodeKey(parent);
 
         parentMap.putIfAbsent(childKey, parent);
-        childMap.computeIfAbsent(parentKey, k -> new LinkedHashSet<>()).add(child);
+        final Set<ExplorerNode> childNodes = childMap.computeIfAbsent(parentKey, k -> new LinkedHashSet<>());
+        childNodes.add(child);
+
         nodeMap.putIfAbsent(childKey, child);
         nodeMap.putIfAbsent(parentKey, parent);
-//        if (parent == null) {
-//            roots.add(childUuid);
-//        }
     }
 
     /**

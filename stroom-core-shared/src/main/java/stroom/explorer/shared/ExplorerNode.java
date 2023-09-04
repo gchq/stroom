@@ -63,6 +63,10 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final boolean isFavourite;
     @JsonProperty
+    private final boolean isFilterMatch;
+    @JsonProperty
+    private final boolean isFolder;
+    @JsonProperty
     private final ExplorerNodeKey uniqueKey;
     @JsonProperty
     private final List<NodeInfo> nodeInfoList;
@@ -83,6 +87,8 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("children") final List<ExplorerNode> children,
                         @JsonProperty("rootNodeUuid") final String rootNodeUuid,
                         @JsonProperty("isFavourite") final boolean isFavourite,
+                        @JsonProperty("isFilterMatch") final boolean isFilterMatch,
+                        @JsonProperty("isFolder") final boolean isFolder,
                         @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey,
                         @JsonProperty("nodeInfoList") final List<NodeInfo> nodeInfoList) {
         this.type = type;
@@ -92,9 +98,11 @@ public class ExplorerNode implements HasDisplayValue {
         this.depth = depth;
         this.icon = icon;
         this.nodeState = nodeState;
-        this.children = GwtNullSafe.get(children, Collections::unmodifiableList);;
+        this.children = GwtNullSafe.get(children, Collections::unmodifiableList);
         this.rootNodeUuid = rootNodeUuid;
         this.isFavourite = isFavourite;
+        this.isFilterMatch = isFilterMatch;
+        this.isFolder = isFolder;
         this.uniqueKey = uniqueKey;
         this.nodeInfoList = GwtNullSafe.get(nodeInfoList, Collections::unmodifiableList);
     }
@@ -141,6 +149,14 @@ public class ExplorerNode implements HasDisplayValue {
 
     public boolean getIsFavourite() {
         return isFavourite;
+    }
+
+    public boolean getIsFilterMatch() {
+        return isFilterMatch;
+    }
+
+    public boolean getIsFolder() {
+        return isFolder;
     }
 
     @JsonIgnore
@@ -223,6 +239,8 @@ public class ExplorerNode implements HasDisplayValue {
         private List<ExplorerNode> children;
         private String rootNodeUuid;
         private boolean isFavourite;
+        private Boolean isFilterMatch;
+        private boolean isFolder;
         private List<NodeInfo> nodeInfoList;
 
         private Builder() {
@@ -239,6 +257,8 @@ public class ExplorerNode implements HasDisplayValue {
             this.children = GwtNullSafe.get(explorerNode.children, ArrayList::new);
             this.rootNodeUuid = explorerNode.rootNodeUuid;
             this.isFavourite = explorerNode.isFavourite;
+            this.isFilterMatch = explorerNode.isFilterMatch;
+            this.isFolder = explorerNode.isFolder;
             this.nodeInfoList = GwtNullSafe.get(explorerNode.nodeInfoList, ArrayList::new);
         }
 
@@ -318,6 +338,16 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
+        public Builder isFilterMatch(final boolean isFilterMatch) {
+            this.isFilterMatch = isFilterMatch;
+            return this;
+        }
+
+        public Builder isFolder(final boolean isFolder) {
+            this.isFolder = isFolder;
+            return this;
+        }
+
         public Builder nodeInfoList(final List<NodeInfo> nodeInfoList) {
             this.nodeInfoList = nodeInfoList;
             return this;
@@ -362,6 +392,8 @@ public class ExplorerNode implements HasDisplayValue {
                     children,
                     rootNodeUuid,
                     isFavourite,
+                    GwtNullSafe.requireNonNullElse(isFilterMatch, true), // Default to true
+                    isFolder,
                     new ExplorerNodeKey(type, uuid, rootNodeUuid),
                     nodeInfoList);
         }

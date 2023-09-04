@@ -8,7 +8,7 @@
  */
 
 /**************************************************
-*  NOTE: This file gets copied into stroom-docs by 
+*  NOTE: This file gets copied into stroom-docs by
 *  stroom-docs/update_stroom_icons.sh
 *  so any significant changes may break the docs.
 ***************************************************/
@@ -220,6 +220,7 @@
     --navigation__background-color--selected--focussed: rgba(10,36,65,.8);
     --navigation__text-color: #fff;
     --navigation__text-color--selected: #fff;
+    --navigation__text-color--no-match: #a9a9a9;
 
     /* Specific */
     --header__icon-color: #2185d0;

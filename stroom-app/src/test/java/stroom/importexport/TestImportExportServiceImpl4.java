@@ -126,13 +126,12 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
 
         // Now move the item.
         // Create a new dest dir.
-        final Optional<ExplorerNode> rootNode = explorerNodeService.getNodeWithRoot();
+        final ExplorerNode rootNode = explorerNodeService.getRoot();
         assertThat(rootNode).isNotNull();
-        assertThat(rootNode.isPresent()).isTrue();
 
         final DocRef destFolder =
                 new DocRef(ExplorerConstants.FOLDER, UUID.randomUUID().toString(), "Destination Folder");
-        explorerNodeService.createNode(destFolder, rootNode.get().getDocRef(), PermissionInheritance.DESTINATION);
+        explorerNodeService.createNode(destFolder, rootNode.getDocRef(), PermissionInheritance.DESTINATION);
         explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
         explorerNodeService.renameNode(renamedPipelineDocRef);
 
@@ -189,7 +188,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
         /////////////////////////////////////////////////
         final DocRef rootDocRef =
                 new DocRef(ExplorerConstants.FOLDER, UUID.randomUUID().toString(), "New Root");
-        explorerNodeService.createNode(rootDocRef, rootNode.get().getDocRef(), PermissionInheritance.DESTINATION);
+        explorerNodeService.createNode(rootDocRef, rootNode.getDocRef(), PermissionInheritance.DESTINATION);
         builder.rootDocRef(rootDocRef);
         builder.useImportNames(false);
         builder.useImportFolders(false);

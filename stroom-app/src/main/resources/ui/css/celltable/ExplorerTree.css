@@ -66,6 +66,18 @@
 	white-space: nowrap;
 }
 
+.explorerCell-filter-match .explorerCell-text {
+
+}
+
+.explorerCell-filter-no-match .explorerCell-text {
+    color: var(--navigation__text-color--no-match);
+}
+
+.explorerCell-filter-no-match .explorerCell-icon.svg-image {
+    opacity: 50%;
+}
+
  .explorerTree .cellTableCell {
     display: flex;
     align-items: center;

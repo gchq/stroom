@@ -30,6 +30,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.Builder;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -38,7 +39,6 @@ import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
-import stroom.importexport.api.ContentService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
@@ -50,7 +50,6 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,8 +77,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerServiceImpl.class);
 
-
-    private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
     private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
@@ -92,10 +89,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final ExplorerEventLog explorerEventLog;
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
     private final Provider<ExplorerFavService> explorerFavService;
-    private final Provider<ContentService> contentServiceProvider;
-
-    private volatile Map<DocRef, Set<DocRef>> brokenDependenciesMap = Collections.emptyMap();
-    private volatile long brokenDepsNextUpdateEpochMs = 0L;
+    private final BrokenDependenciesCache brokenDependenciesCache;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -105,7 +99,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final ExplorerEventLog explorerEventLog,
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
                         final Provider<ExplorerFavService> explorerFavService,
-                        final Provider<ContentService> contentServiceProvider) {
+                        final BrokenDependenciesCache brokenDependenciesCache) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -113,7 +107,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
         this.explorerFavService = explorerFavService;
-        this.contentServiceProvider = contentServiceProvider;
+        this.brokenDependenciesCache = brokenDependenciesCache;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -153,9 +147,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             // Create the predicate for the current filter value
             final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                     filter.getNameFilter(), FIELD_MAPPERS);
-            final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+            final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
 
-            addDescendants(
+            final NodeStates nodeStates = addDescendants(
                     null,
                     null,
                     masterTreeModelClone,
@@ -165,18 +159,18 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     false,
                     allOpenItems,
                     userFavourites,
-                    0,
-                    brokenDepsMap);
+                    0);
 
             // Sort the tree model
             filteredModel.sort(this::getPriority);
 
             // If the name filter has changed then we want to temporarily expand all nodes.
             if (filter.isNameFilterChange()) {
-                if (filter.getNameFilter() == null) {
+                if (NullSafe.isBlankString(filter.getNameFilter())) {
                     temporaryOpenItems = new HashSet<>();
                 } else {
-                    temporaryOpenItems = new HashSet<>(filteredModel.getAllParents());
+//                    temporaryOpenItems = new HashSet<>(filteredModel.getAllParents());
+                    temporaryOpenItems = new HashSet<>(nodeStates.openNodes);
                 }
 
                 rootNodes = addRoots(
@@ -199,9 +193,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             rootNodes = decorateTree(
                     criteria,
                     rootNodes,
+                    filter,
                     fuzzyMatchPredicate);
 
-            rootNodes = openRootNodesWithChildren(rootNodes, openedItems);
+            rootNodes = openRootNodesWithChildren(rootNodes, openedItems, filter);
 
             return new FetchExplorerNodeResult(
                     rootNodes, openedItems, temporaryOpenItems, qualifiedFilterInput);
@@ -211,28 +206,16 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
     }
 
-    private Map<DocRef, Set<DocRef>> getBrokenDependenciesMap() {
-        if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
-            synchronized (this) {
-                if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
-                    LOGGER.debug("Updating broken dependencies map");
-                    brokenDependenciesMap = contentServiceProvider.get().fetchBrokenDependencies();
-                    brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
-                }
-            }
-        }
-        return brokenDependenciesMap;
-    }
-
     private static List<ExplorerNode> openRootNodesWithChildren(final List<ExplorerNode> rootNodes,
-                                                                final List<ExplorerNodeKey> openedItems) {
+                                                                final List<ExplorerNodeKey> openedItems,
+                                                                final ExplorerTreeFilter filter) {
         // Ensure root nodes are open if they have items
         final List<ExplorerNode> nodes = NullSafe.stream(rootNodes)
                 .map(rootNode -> {
-                    if (rootNode.hasChildren()
+                    if (rootNode.getIsFolder()
                             && (rootNode.getNodeState() == null || NodeState.CLOSED.equals(rootNode.getNodeState()))) {
                         final ExplorerNode nodeCopy = rootNode.copy()
-                                .nodeState(NodeState.OPEN)
+                                .nodeState(ExplorerNode.NodeState.OPEN)
                                 .build();
                         // Expand the node
                         if (!openedItems.contains(nodeCopy.getUniqueKey())) {
@@ -240,10 +223,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         }
                         return nodeCopy;
 
-                    } else if (!rootNode.hasChildren()) {
+                    } else if (rootNode.getNodeState() == null && !rootNode.getIsFolder()) {
                         // No children so make it a leaf
                         return rootNode.copy()
-                                .nodeState(NodeState.LEAF)
+                                .nodeState(ExplorerNode.NodeState.LEAF)
                                 .build();
                     } else {
                         return rootNode;
@@ -253,19 +236,26 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
         // Now ensure we always have favourite system root nodes
         final List<ExplorerNode> result = new ArrayList<>();
-        final Optional<ExplorerNode> optFavouriteNode = removeMatchingNode(nodes, ExplorerConstants.FAVOURITES_NODE);
-        final Optional<ExplorerNode> optSystemNode = removeMatchingNode(nodes, ExplorerConstants.SYSTEM_NODE);
-        result.add(optFavouriteNode.orElseGet(() ->
-                ExplorerConstants.FAVOURITES_NODE.copy()
-                        .nodeState(NodeState.LEAF)
-                        .build()));
-        result.add(optSystemNode.orElseGet(() ->
-                ExplorerConstants.SYSTEM_NODE.copy()
-                        .nodeState(NodeState.LEAF)
-                        .build()));
+        result.add(ensureRootNode(nodes, filter, ExplorerConstants.FAVOURITES_NODE));
+        result.add(ensureRootNode(nodes, filter, ExplorerConstants.SYSTEM_NODE));
         // Add any remaining nodes, e.g. searchables
         result.addAll(nodes);
         return result;
+    }
+
+    private static ExplorerNode ensureRootNode(final List<ExplorerNode> nodes,
+                                        final ExplorerTreeFilter filter,
+                                        final ExplorerNode rootNodeConstant) {
+
+        // We may have no nodes under Favourites/System so ensure they are always present.
+        // If a quick filter is active then mark them as non-matches.
+        final ExplorerNode newRootNode = removeMatchingNode(nodes, rootNodeConstant)
+                .orElseGet(() ->
+                        rootNodeConstant.copy()
+                                .nodeState(NodeState.LEAF)
+                                .isFilterMatch(NullSafe.isBlankString(filter.getNameFilter()))
+                                .build());
+        return newRootNode;
     }
 
     private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
@@ -280,9 +270,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             }
         }
         return Optional.empty();
-//                .r
-//                .filter(node -> Objects.equals(targetNode, node))
-//                .findFirst();
     }
 
     private int getPriority(final ExplorerNode node) {
@@ -319,6 +306,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private List<ExplorerNode> decorateTree(final FindExplorerNodeCriteria criteria,
                                             final List<ExplorerNode> rootNodes,
+                                            final ExplorerTreeFilter filter,
                                             final Predicate<DocRef> fuzzyMatchPredicate) {
         if (rootNodes.size() > 0) {
             final ExplorerNode rootNode = rootNodes.get(rootNodes.size() - 1);
@@ -326,32 +314,27 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .stream()
                     .map(node -> {
                         if (node == rootNode) {
-                            return replaceRootNode(criteria, node, fuzzyMatchPredicate);
+                            return replaceRootNode(criteria, node, filter, fuzzyMatchPredicate);
                         }
                         return node;
                     })
                     .collect(Collectors.toList());
         } else {
-            return Collections.singletonList(replaceRootNode(criteria, null, fuzzyMatchPredicate));
+            return Collections.singletonList(replaceRootNode(criteria, null, filter, fuzzyMatchPredicate));
         }
     }
 
     private ExplorerNode replaceRootNode(final FindExplorerNodeCriteria criteria,
                                          final ExplorerNode rootNode,
+                                         final ExplorerTreeFilter filter,
                                          final Predicate<DocRef> fuzzyMatchPredicate) {
-        final ExplorerNode.Builder builder;
+        final ExplorerNode.Builder rootNodeBuilder;
         if (rootNode != null) {
-            builder = rootNode.copy();
+            rootNodeBuilder = rootNode.copy();
         } else {
-            builder = explorerNodeService.getNodeWithRoot()
-                    .map(node -> {
-                        final ExplorerNode.Builder root = node.copy();
-                        Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
-                                .map(DocumentType::getIcon)
-                                .ifPresent(root::icon);
-                        return root;
-                    })
-                    .orElseGet(ExplorerNode::builder);
+            // If there is no root at this point then we know there is no match on it
+            rootNodeBuilder = ExplorerConstants.SYSTEM_NODE.copy()
+                    .isFilterMatch(false);
         }
 
         if (criteria.getFilter() != null &&
@@ -369,11 +352,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 //                    if (rootNode == null) {
 //                        throw new RuntimeException("Missing root node");
 //                    }
-                    additionalDocRefs.forEach(docRef -> builder.addChild(createSearchableNode(docRef)));
+                    additionalDocRefs.forEach(docRef -> rootNodeBuilder.addChild(createSearchableNode(docRef)));
                 }
             }
         }
-        return builder.build();
+        return rootNodeBuilder.build();
     }
 
     @Override
@@ -400,7 +383,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .builder()
                 .docRef(docRef)
                 .tags(StandardTagNames.DATA_SOURCE)
-                .nodeState(NodeState.LEAF)
+                .nodeState(ExplorerNode.NodeState.LEAF)
                 .depth(1)
                 .icon(SvgImage.DOCUMENT_SEARCHABLE)
                 .build();
@@ -453,7 +436,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                                     final FindExplorerNodeCriteria criteria) {
         final Set<ExplorerNodeKey> forcedOpen = new HashSet<>();
 
-        // Add parents of  nodes that we have been requested to ensure are visible.
+        // Add parents of nodes that we have been requested to ensure are visible.
         if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
             for (final ExplorerNodeKey ensureVisible : criteria.getEnsureVisible()) {
                 ExplorerNode parent = masterTreeModel.getParent(ensureVisible.getUuid());
@@ -504,44 +487,20 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
     }
 
-    private Optional<Severity> getMaxSeverity(final TreeModel treeModelIn,
-                                              final ExplorerNode node,
-                                              final Map<DocRef, Set<DocRef>> brokenDepsMap) {
-        final List<ExplorerNode> children = treeModelIn.getChildren(node);
-
-        Severity maxSeverity = null;
-        if (NullSafe.hasItems(children)) {
-            for (final ExplorerNode child : children) {
-                // Recurse
-                final Severity childMaxSeverity = getMaxSeverity(treeModelIn, child, brokenDepsMap)
-                        .orElse(null);
-                maxSeverity = Severity.getMaxSeverity(maxSeverity, childMaxSeverity).orElse(null);
-            }
-        } else {
-            if (NullSafe.test(node, ExplorerNode::getDocRef, brokenDepsMap::containsKey)) {
-                // Missing dep is an ERROR
-                maxSeverity = Severity.getMaxSeverity(maxSeverity, Severity.ERROR)
-                        .orElse(null);
-            }
-        }
-
-        return Optional.ofNullable(maxSeverity);
-    }
-
-    private AddDescendantsResult addDescendants(final ExplorerNode rootNode,
-                                                final ExplorerNode parent,
-                                                final TreeModel treeModelIn,
-                                                final FilteredTreeModel treeModelOut,
-                                                final ExplorerTreeFilter filter,
-                                                final Predicate<DocRef> filterPredicate,
-                                                final boolean ignoreNameFilter,
-                                                final Set<ExplorerNodeKey> allOpenItems,
-                                                final Set<String> userFavourites,
-                                                final int currentDepth,
-                                                final Map<DocRef, Set<DocRef>> brokenDepsMap) {
+    private NodeStates addDescendants(final ExplorerNode rootNode,
+                                      final ExplorerNode parent,
+                                      final TreeModel treeModelIn,
+                                      final FilteredTreeModel treeModelOut,
+                                      final ExplorerTreeFilter filter,
+                                      final Predicate<DocRef> filterPredicate,
+                                      final boolean ignoreNameFilter,
+                                      final Set<ExplorerNodeKey> allOpenItems,
+                                      final Set<String> userFavourites,
+                                      final int currentDepth) {
         int added = 0;
-//        Severity maxSeverity = null;
         boolean foundChildNodeInfo = false;
+        boolean foundFilterMatch = false;
+        final Set<ExplorerNodeKey> openNodes = new HashSet<>();
 
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
@@ -554,20 +513,23 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             final Iterator<ExplorerNode> iterator = children.iterator();
             while (iterator.hasNext() && (addAllChildren || added == 0)) {
                 final ExplorerNode child = iterator.next();
+                // We don't want to filter child items if the parent folder matches the name filter.
+                final boolean isFilterMatch = NullSafe.isBlankString(filter.getNameFilter())
+                        || filterPredicate.test(child.getDocRef());
+                final boolean ignoreChildNameFilter = ignoreNameFilter || isFilterMatch;
+//                final boolean ignoreChildNameFilter = ignoreNameFilter;
 
                 // Decorate the child with the root parent node, so the same child can be referenced in multiple
                 // parent roots (e.g. System or Favourites)
                 ExplorerNode childWithParent = child.copy()
                         .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
                         .isFavourite(userFavourites.contains(child.getUuid()))
+                        .isFilterMatch(isFilterMatch)
                         .build();
-
-                // We don't want to filter child items if the parent folder matches the name filter.
-                final boolean ignoreChildNameFilter = filterPredicate.test(childWithParent.getDocRef());
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to
                 // include this as an ancestor.
-                final AddDescendantsResult result = addDescendants(
+                final NodeStates result = addDescendants(
                         Objects.requireNonNullElse(rootNode, childWithParent),
                         childWithParent,
                         treeModelIn,
@@ -577,16 +539,29 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         ignoreChildNameFilter,
                         allOpenItems,
                         userFavourites,
-                        currentDepth + 1,
-                        brokenDepsMap);
+                        currentDepth + 1);
+
+                openNodes.addAll(result.openNodes);
+                final Builder builder = childWithParent.copy()
+                        .isFolder(result.isFolder);
 
                 if (!result.hasIssues) {
                     // If the child has no included nodes with issues then clear its node info.
                     // It may have non-included children with issues, but we don't show an alert
                     // for them
-                    childWithParent = childWithParent.copy()
-                            .clearNodeInfo()
-                            .build();
+                    builder.clearNodeInfo();
+                }
+                childWithParent = builder.build();
+
+                if (result.isFolder && result.containsFilterMatch) {
+                    openNodes.add(childWithParent.getUniqueKey());
+                }
+                if (isFilterMatch) {
+                    foundFilterMatch = true;
+                }
+                if (result.containsFilterMatch) {
+                    // A child of this child matched
+                    foundFilterMatch = true;
                 }
 
                 if (isNodeIncluded(result.hasChildren, filter, filterPredicate, ignoreNameFilter, childWithParent)) {
@@ -602,7 +577,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             // children to establish if any included nodes have issues
             while (iterator.hasNext()) {
                 final ExplorerNode child = iterator.next();
-                final AddDescendantsResult result = clearNodeInfo(
+                final NodeStates result = checkForNodeInfoPresence(
                         treeModelIn, treeModelOut, filter, filterPredicate, ignoreNameFilter, child);
                 if (result.hasIssues) {
                     foundChildNodeInfo = true;
@@ -615,15 +590,20 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             }
         }
 
-        return new AddDescendantsResult(added > 0, foundChildNodeInfo);
+        return new NodeStates(
+                added > 0,
+                foundChildNodeInfo,
+                NullSafe.hasItems(children),
+                foundFilterMatch,
+                openNodes);
     }
 
-    private AddDescendantsResult clearNodeInfo(final TreeModel treeModelIn,
-                                               final FilteredTreeModel treeModelOut,
-                                               final ExplorerTreeFilter filter,
-                                               final Predicate<DocRef> filterPredicate,
-                                               final boolean ignoreNameFilter,
-                                               final ExplorerNode node) {
+    private NodeStates checkForNodeInfoPresence(final TreeModel treeModelIn,
+                                                final FilteredTreeModel treeModelOut,
+                                                final ExplorerTreeFilter filter,
+                                                final Predicate<DocRef> filterPredicate,
+                                                final boolean ignoreNameFilter,
+                                                final ExplorerNode node) {
         final List<ExplorerNode> children = treeModelIn.getChildren(node);
         final boolean hasChildren = NullSafe.hasItems(children);
         boolean hasIncludedChildren = false;
@@ -635,13 +615,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 // Branch
                 for (final ExplorerNode child : children) {
                     // Recurse
-                    final AddDescendantsResult result = clearNodeInfo(
+                    final NodeStates result = checkForNodeInfoPresence(
                             treeModelIn, treeModelOut, filter, filterPredicate, ignoreNameFilter, child);
                     if (result.hasIssues) {
                         foundIssues = true;
                     }
-                }
-                if (!foundIssues) {
                 }
             } else {
                 // Leaf node
@@ -652,7 +630,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         } else {
             // Node not included so don't need to worry about it
         }
-        return new AddDescendantsResult(hasIncludedChildren, foundIssues);
+        return new NodeStates(
+                hasIncludedChildren, foundIssues, hasChildren, true, Collections.emptySet());
     }
 
     private boolean isNodeIncluded(final boolean hasChildren,
@@ -754,11 +733,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
 
         final List<ExplorerNode> children = filteredModel.getChildren(parent);
-        if (children == null) {
-            builder.nodeState(NodeState.LEAF);
+        if (parent.getNodeState() == null && NullSafe.isEmptyCollection(children)) {
+            builder.nodeState(ExplorerNode.NodeState.LEAF);
         } else if (force || openItems.contains(parentNodeKey)) {
             final List<ExplorerNode> newChildren = new ArrayList<>();
-            for (final ExplorerNode child : children) {
+            for (final ExplorerNode child : NullSafe.list(children)) {
                 final ExplorerNode copy = addChildren(
                         rootNode,
                         child,
@@ -771,11 +750,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 newChildren.add(copy);
             }
 
-            builder.nodeState(NodeState.OPEN);
+            builder.nodeState(ExplorerNode.NodeState.OPEN);
             builder.children(newChildren);
             builder.rootNodeUuid(rootNode);
         } else {
-            builder.nodeState(NodeState.CLOSED);
+            builder.nodeState(ExplorerNode.NodeState.CLOSED);
         }
 
         return builder.build();
@@ -827,10 +806,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             return destinationFolder.getDocRef();
         }
 
-        final ExplorerNode rootNode = explorerNodeService.getNodeWithRoot().orElse(null);
+        final ExplorerNode rootNode = explorerNodeService.getRoot();
         return rootNode != null
                 ? rootNode.getDocRef()
-
                 : null;
     }
 
@@ -1154,7 +1132,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     @Override
     public void rebuildTree() {
-        brokenDepsNextUpdateEpochMs = 0;
+        brokenDependenciesCache.invalidate();
         explorerTreeModel.rebuild();
     }
 
@@ -1288,7 +1266,18 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     // --------------------------------------------------------------------------------
 
 
-    private record AddDescendantsResult(boolean hasChildren, boolean hasIssues) {
+    /**
+     * @param hasChildren         Whether this node has any children that are to be included in the tree.
+     * @param hasIssues           Whether this node or any of its descendants have an issue.
+     * @param isFolder            Whether this node is a folder, i.e. has children that may or may not be included
+     *                            in the tree.
+     * @param containsFilterMatch Whether this node or any descendant is a filter match.
+     */
+    private record NodeStates(boolean hasChildren,
+                              boolean hasIssues,
+                              boolean isFolder,
+                              boolean containsFilterMatch,
+                              Set<ExplorerNodeKey> openNodes) {
 
     }
 }

@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
-import stroom.importexport.api.ContentService;
 import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
@@ -30,7 +29,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -59,15 +56,12 @@ class ExplorerTreeModel {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final ExplorerActionHandlers explorerActionHandlers;
-    private final Provider<ContentService> contentServiceProvider;
+    private final BrokenDependenciesCache brokenDependenciesCache;
 
     private volatile UnmodifiableTreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
     private final AtomicLong currentId = new AtomicLong();
     private final AtomicInteger performingRebuild = new AtomicInteger();
-
-    private volatile Map<DocRef, Set<DocRef>> brokenDependenciesMap = Collections.emptyMap();
-    private volatile long brokenDepsNextUpdateEpochMs = 0L;
 
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
@@ -75,13 +69,13 @@ class ExplorerTreeModel {
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
                       final ExplorerActionHandlers explorerActionHandlers,
-                      final Provider<ContentService> contentServiceProvider) {
+                      final BrokenDependenciesCache brokenDependenciesCache) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.explorerActionHandlers = explorerActionHandlers;
-        this.contentServiceProvider = contentServiceProvider;
+        this.brokenDependenciesCache = brokenDependenciesCache;
     }
 
     private boolean isSynchronousUpdateRequired(final long minId, final long now) {
@@ -160,6 +154,8 @@ class ExplorerTreeModel {
             LOGGER.debug("Updating model for id {}", id);
             newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
 
+            // Make sure the cache is fresh for our new model
+            brokenDependenciesCache.invalidate();
             decorateWithBrokenDeps(newModel);
 
             // Now make it immutable as this is our master model
@@ -172,7 +168,7 @@ class ExplorerTreeModel {
     }
 
     private void decorateWithBrokenDeps(final TreeModel treeModel) {
-        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+        final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
 
         treeModel.decorate((nodeKey, node) -> {
             LOGGER.debug(() -> "decorate called on node: " + node.getName());
@@ -181,35 +177,9 @@ class ExplorerTreeModel {
         });
     }
 
-//    private void decorateLeavesWithBrokenDeps(final TreeModel treeModel) {
-//        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
-//
-//        treeModel.decorate((nodeKey, node) -> {
-//            LOGGER.debug(() -> "decorate called on node: " + node.getName());
-//
-//            return cloneWithLeafNodeInfo(treeModel, brokenDepsMap, node);
-//        });
-//    }
-//
-//    <K> void decorateBranchesWithBrokenDeps(final AbstractTreeModel<K> treeModel) {
-//        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
-//
-//        treeModel.decorate((nodeKey, node) -> {
-//            LOGGER.debug(() -> "decorate called on node: " + node.getName());
-//
-//            return cloneWithBranchNodeInfo(treeModel, brokenDepsMap, node);
-//        });
-//    }
-//
-//    ExplorerNode cloneWithLeafNodeInfo(final TreeModel treeModel,
-//                                       final ExplorerNode node) {
-//        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
-//        return cloneWithLeafNodeInfo(treeModel, brokenDepsMap, node);
-//    }
-
     ExplorerNode cloneWithBranchNodeInfo(final TreeModel treeModel,
-                                       final ExplorerNode node) {
-        final Map<DocRef, Set<DocRef>> brokenDepsMap = getBrokenDependenciesMap();
+                                         final ExplorerNode node) {
+        final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
         return cloneWithBranchNodeInfo(treeModel, brokenDepsMap, node);
     }
 
@@ -251,23 +221,6 @@ class ExplorerTreeModel {
             }
         }
     }
-
-//    private ExplorerNode cloneWithLeafNodeInfo(final TreeModel treeModel,
-//                                               final Map<DocRef, Set<DocRef>> brokenDepsMap,
-//                                               final ExplorerNode node) {
-//        final DocRef docRef = node.getDocRef();
-//        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
-//        final List<ExplorerNode> children = treeModel.getChildren(node);
-//
-//        if (NullSafe.isEmptyCollection(children) && NullSafe.hasItems(nodeInfos)) {
-//            LOGGER.debug(() -> LogUtil.message("Leaf '{}' has issues", node.getName()));
-//            return node.copy()
-//                    .addNodeInfo(nodeInfos)
-//                    .build();
-//        } else {
-//            return node;
-//        }
-//    }
 
     private <K> ExplorerNode cloneWithBranchNodeInfo(final AbstractTreeModel<K> treeModel,
                                                      final Map<DocRef, Set<DocRef>> brokenDepsMap,
@@ -321,19 +274,6 @@ class ExplorerTreeModel {
                     })
                     .collect(Collectors.toSet());
         }
-    }
-
-    private Map<DocRef, Set<DocRef>> getBrokenDependenciesMap() {
-        if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
-            synchronized (this) {
-                if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
-                    LOGGER.debug("Updating broken dependencies map");
-                    brokenDependenciesMap = contentServiceProvider.get().fetchBrokenDependencies();
-                    brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
-                }
-            }
-        }
-        return brokenDependenciesMap;
     }
 
     private SvgImage getIcon(final String type) {
