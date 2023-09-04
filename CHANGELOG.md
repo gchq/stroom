@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.56] - 2023-09-04
+
+* Issue **#3315** : Add visualisation support to the Stroom Query Language.
+
+* Issue **#3712** : Fix text pane appearance bug.
+
+* Issue **#3715** : Fix nested time grouped key creation for LMDB.
+
+* Issue **#3716** : Remove option to duplicate panes etc when not in design mode.
+
+* Issue **#3713** : Improve task termination for analytics.
+
+
 ## [v7.2-beta.55] - 2023-08-30
 
 * Issue **#3711** : Fix NPE.
@@ -5836,7 +5849,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.55...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.56...HEAD
+[v7.2-beta.56]: https://github.com/gchq/stroom/compare/v7.2-beta.55...v7.2-beta.56
 [v7.2-beta.55]: https://github.com/gchq/stroom/compare/v7.2-beta.54...v7.2-beta.55
 [v7.2-beta.54]: https://github.com/gchq/stroom/compare/v7.2-beta.53...v7.2-beta.54
 [v7.2-beta.53]: https://github.com/gchq/stroom/compare/v7.2-beta.52...v7.2-beta.53
