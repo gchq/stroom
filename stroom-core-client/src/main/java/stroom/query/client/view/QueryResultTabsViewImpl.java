@@ -16,32 +16,27 @@
 
 package stroom.query.client.view;
 
-import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
+import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class QueryEditViewImpl
-        extends ViewImpl
-        implements QueryEditView {
+public class QueryResultTabsViewImpl extends ViewImpl implements QueryResultTabsView {
 
     private final Widget widget;
-
     @UiField
-    SimplePanel queryHelpContainer;
+    TabBar tabBar;
     @UiField
-    SimplePanel queryEditorContainer;
-    @UiField
-    SimplePanel resultContainer;
+    LayerContainer layerContainer;
 
     @Inject
-    public QueryEditViewImpl(final Binder binder) {
+    public QueryResultTabsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        layerContainer.setFade(true);
     }
 
     @Override
@@ -50,22 +45,16 @@ public class QueryEditViewImpl
     }
 
     @Override
-    public void setQueryHelp(final View view) {
-        queryHelpContainer.setWidget(view.asWidget());
+    public TabBar getTabBar() {
+        return tabBar;
     }
 
     @Override
-    public void setQueryEditor(final View view) {
-        view.asWidget().addStyleName("dashboard-panel overflow-hidden");
-        queryEditorContainer.setWidget(view.asWidget());
+    public LayerContainer getLayerContainer() {
+        return layerContainer;
     }
 
-    @Override
-    public void setResultView(final View view) {
-        resultContainer.setWidget(view.asWidget());
-    }
-
-    public interface Binder extends UiBinder<Widget, QueryEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, QueryResultTabsViewImpl> {
 
     }
 }

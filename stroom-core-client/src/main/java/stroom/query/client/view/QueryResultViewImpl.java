@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.query.client.view;
 
-import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
-import stroom.widget.tab.client.presenter.TabBar;
+import stroom.query.client.presenter.QueryResultPresenter.QueryResultView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class LinkTabViewImpl extends ViewImpl implements LinkTabsLayoutView {
+public class QueryResultViewImpl
+        extends ViewImpl
+        implements QueryResultView {
 
     private final Widget widget;
+
     @UiField
-    TabBar tabBar;
-    @UiField
-    LayerContainer layerContainer;
+    SimplePanel layout;
 
     @Inject
-    public LinkTabViewImpl(final Binder binder) {
+    public QueryResultViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        layerContainer.setFade(true);
     }
 
     @Override
@@ -46,16 +45,11 @@ public class LinkTabViewImpl extends ViewImpl implements LinkTabsLayoutView {
     }
 
     @Override
-    public TabBar getTabBar() {
-        return tabBar;
+    public void setWidget(final Widget widget) {
+        layout.setWidget(widget);
     }
 
-    @Override
-    public LayerContainer getLayerContainer() {
-        return layerContainer;
-    }
-
-    public interface Binder extends UiBinder<Widget, LinkTabViewImpl> {
+    public interface Binder extends UiBinder<Widget, QueryResultViewImpl> {
 
     }
 }

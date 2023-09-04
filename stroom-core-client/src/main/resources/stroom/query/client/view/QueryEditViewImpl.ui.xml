@@ -13,18 +13,8 @@
             </g:ThinSplitLayoutPanel>
         </g:north>
         <g:center>
-
-            <g:ThinSplitLayoutPanel styleName="max">
-                <g:east size="400">
-                    <g:SimplePanel ui:field="tableContainer"
-                                   styleName="max"/>
-                </g:east>
-                <g:center>
-                    <g:SimplePanel ui:field="visContainer"
-                                   styleName="max"/>
-                </g:center>
-            </g:ThinSplitLayoutPanel>
-
+            <g:SimplePanel ui:field="resultContainer"
+                           styleName="max"/>
         </g:center>
     </g:ThinSplitLayoutPanel>
 </ui:UiBinder>

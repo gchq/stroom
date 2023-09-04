@@ -56,7 +56,7 @@ public class QueryResultVisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
         messagePanel.setVisible(false);
 
         visContainer = new SimplePanel();
-        visContainer.setStyleName("dashboardVis-innerLayout");
+        visContainer.setStyleName("queryVis-innerLayout");
 
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
         spinnerSmall.setStyleName("dashboardVis-smallSpinner");
@@ -90,7 +90,7 @@ public class QueryResultVisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
                 }
             }
         };
-        widget.setStyleName("dashboardVis-outerLayout");
+        widget.setStyleName("queryVis-outerLayout"); //("dashboardVis-outerLayout");
         widget.add(visContainer);
         widget.add(spinnerSmall);
         widget.add(pause);
