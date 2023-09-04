@@ -100,6 +100,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         tabPriority.add(tabData);
 
         onResize();
+        updateTabCount();
     }
 
     @Override
@@ -119,6 +120,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             } else {
                 selectTab(null);
             }
+            updateTabCount();
         }
     }
 
@@ -130,11 +132,20 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         tabPriority.clear();
 
         onResize();
+        updateTabCount();
     }
 
     private void keyboardSelectTab(final TabData tabData) {
         keyboardSelectedTab = tabData;
         onResize();
+    }
+
+    private void updateTabCount() {
+        if (tabs.size() > 1) {
+            addStyleName("multiple-tabs");
+        } else {
+            removeStyleName("multiple-tabs");
+        }
     }
 
     @Override

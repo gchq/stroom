@@ -44,7 +44,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
     private final InlineSvgButton settings;
-    //    private final InlineSvgButton close;
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
@@ -95,12 +94,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         settings.setTitle("Settings");
         buttons.add(settings);
 
-//        close = new InlineSvgButton();
-//        close.addStyleName("tabLayout-closeButton");
-//        close.setSvg(SvgImage.CLOSE);
-//        close.setTitle("Close");
-//        buttons.add(close);
-
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
         layerContainerImpl.setFade(true);
         layerContainerImpl.setStyleName("tabLayout-content");
@@ -125,21 +118,11 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 final TabData selectedTab = tabBar.getSelectedTab();
                 if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
-//                    component.showSettings();
-                    tabManager.showMenu(settings.getElement(), flexLayout, this, component.getTabConfig());
+                    component.showSettings();
+//                    tabManager.showMenu(settings.getElement(), flexLayout, this, component.getTabConfig());
                 }
             }
         }, ClickEvent.getType()));
-
-//        handlerRegistrations.add(close.addDomHandler(event -> {
-//            if (MouseUtil.isPrimary(event)) {
-//                final TabData selectedTab = tabBar.getSelectedTab();
-//                if (selectedTab instanceof Component) {
-//                    final Component component = (Component) selectedTab;
-//                    changeHandler.removeTab(tabLayoutConfig, component.getTabConfig());
-//                }
-//            }
-//        }, ClickEvent.getType()));
     }
 
     public void unbind() {

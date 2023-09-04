@@ -72,6 +72,10 @@ public class TabManager {
 
             if (Objects.equals(currentTabConfig, tabConfig)) {
                 HideMenuEvent.builder().fire(dashboardPresenter);
+
+//            } else if (!dashboardPresenter.isDesignMode()) {
+//                showSettings(tabConfig);
+
             } else {
 //                if (currentTabConfig != null) {
 //                    HideMenuEvent.builder().fire(dashboardPresenter);

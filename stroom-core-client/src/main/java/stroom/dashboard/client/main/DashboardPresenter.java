@@ -288,6 +288,10 @@ public class DashboardPresenter
         }
     }
 
+//    public boolean isDesignMode() {
+//        return designMode;
+//    }
+
     private void onAdd(final ClickEvent event) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
 

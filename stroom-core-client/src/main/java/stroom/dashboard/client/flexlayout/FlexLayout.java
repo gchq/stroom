@@ -162,9 +162,10 @@ public class FlexLayout extends Composite {
                     onMouseUp(event);
                 }
             }
-        } else if (MouseUtil.isPrimary(event) && Event.ONMOUSEUP == eventType) {
-            showMenu(event);
         }
+//        else if (MouseUtil.isPrimary(event) && Event.ONMOUSEUP == eventType) {
+//            showMenu(event);
+//        }
     }
 
     private void onMouseMove(final Event event) {
