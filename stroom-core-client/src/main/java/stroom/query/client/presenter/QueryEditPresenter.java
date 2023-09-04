@@ -94,7 +94,7 @@ public class QueryEditPresenter
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
-    private final QueryResultPresenter queryResultPresenter;
+    private final QueryResultTableSplitPresenter queryResultPresenter;
     private final IndexLoader indexLoader;
     private final Views views;
     private boolean dirty;
@@ -114,7 +114,7 @@ public class QueryEditPresenter
                               final QueryHelpPresenter queryHelpPresenter,
                               final QueryToolbarPresenter queryToolbarPresenter,
                               final EditorPresenter editorPresenter,
-                              final QueryResultPresenter queryResultPresenter,
+                              final QueryResultTableSplitPresenter queryResultPresenter,
                               final Provider<QueryResultVisPresenter> visPresenterProvider,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,

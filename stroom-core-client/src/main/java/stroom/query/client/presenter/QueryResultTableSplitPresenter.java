@@ -19,8 +19,9 @@ package stroom.query.client.presenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
-import stroom.query.client.presenter.QueryResultPresenter.QueryResultView;
+import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -30,30 +31,39 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
 
-public class QueryResultPresenter
-        extends MyPresenterWidget<QueryResultView>
+public class QueryResultTableSplitPresenter
+        extends MyPresenterWidget<QueryResultTableSplitView>
         implements ResultConsumer {
 
     private final QueryResultTablePresenter tablePresenter;
     private final TextPresenter textPresenter;
     private final ThinSplitLayoutPanel splitLayoutPanel;
+    private final SimplePanel tableContainer;
 
     private QueryModel queryModel;
+    private boolean showingSplit = true;
 
 
     @Inject
-    public QueryResultPresenter(final EventBus eventBus,
-                                final QueryResultView view,
-                                final QueryResultTablePresenter tablePresenter,
-                                final TextPresenter textPresenter) {
+    public QueryResultTableSplitPresenter(final EventBus eventBus,
+                                          final QueryResultTableSplitView view,
+                                          final QueryResultTablePresenter tablePresenter,
+                                          final TextPresenter textPresenter) {
         super(eventBus, view);
         this.tablePresenter = tablePresenter;
         this.textPresenter = textPresenter;
 
+        tableContainer = new SimplePanel();
+        tableContainer.setStyleName("max");
+
         splitLayoutPanel = new ThinSplitLayoutPanel();
         splitLayoutPanel.addStyleName("max");
+        final double size = Math.max(100, getWidget().getElement().getOffsetWidth() / 2D);
+        splitLayoutPanel.addEast(textPresenter.getWidget(), size);
+        splitLayoutPanel.add(tableContainer);
 
         view.setWidget(tablePresenter.getWidget());
+        showSplit(false);
     }
 
     public void setQueryModel(final QueryModel queryModel) {
@@ -72,7 +82,7 @@ public class QueryResultPresenter
 
     private void onSelection(final TableRow tableRow) {
         if (tableRow == null) {
-            getView().setWidget(tablePresenter.getWidget());
+            showSplit(false);
         } else {
             final String streamId = tableRow.getText("StreamId");
             final String eventId = tableRow.getText("EventId");
@@ -86,14 +96,23 @@ public class QueryResultPresenter
                             .withRecordIndex(evtId - 1)
                             .build();
                     textPresenter.show(sourceLocation);
-                    final double size = Math.max(100, getWidget().getElement().getOffsetWidth() / 2D);
-                    splitLayoutPanel.addEast(textPresenter.getWidget(), size);
-                    splitLayoutPanel.add(tablePresenter.getWidget());
-                    getView().setWidget(splitLayoutPanel);
+                    showSplit(true);
 
                 } catch (final RuntimeException e) {
-                    getView().setWidget(tablePresenter.getWidget());
+                    showSplit(false);
                 }
+            } else {
+                showSplit(false);
+            }
+        }
+    }
+
+    private void showSplit(final boolean show) {
+        if (show != showingSplit) {
+            showingSplit = show;
+            if (show) {
+                tableContainer.setWidget(tablePresenter.getWidget());
+                getView().setWidget(splitLayoutPanel);
             } else {
                 getView().setWidget(tablePresenter.getWidget());
             }
@@ -138,7 +157,7 @@ public class QueryResultPresenter
         tablePresenter.setData(componentResult);
     }
 
-    public interface QueryResultView extends View {
+    public interface QueryResultTableSplitView extends View {
 
         void setWidget(Widget widget);
     }

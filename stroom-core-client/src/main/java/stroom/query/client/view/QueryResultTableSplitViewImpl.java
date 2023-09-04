@@ -16,7 +16,7 @@
 
 package stroom.query.client.view;
 
-import stroom.query.client.presenter.QueryResultPresenter.QueryResultView;
+import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,9 +25,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class QueryResultViewImpl
+public class QueryResultTableSplitViewImpl
         extends ViewImpl
-        implements QueryResultView {
+        implements QueryResultTableSplitView {
 
     private final Widget widget;
 
@@ -35,7 +35,7 @@ public class QueryResultViewImpl
     SimplePanel layout;
 
     @Inject
-    public QueryResultViewImpl(final Binder binder) {
+    public QueryResultTableSplitViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -49,7 +49,7 @@ public class QueryResultViewImpl
         layout.setWidget(widget);
     }
 
-    public interface Binder extends UiBinder<Widget, QueryResultViewImpl> {
+    public interface Binder extends UiBinder<Widget, QueryResultTableSplitViewImpl> {
 
     }
 }

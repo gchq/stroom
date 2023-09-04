@@ -27,8 +27,8 @@ import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.presenter.QueryHelpPresenter;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
-import stroom.query.client.presenter.QueryResultPresenter;
-import stroom.query.client.presenter.QueryResultPresenter.QueryResultView;
+import stroom.query.client.presenter.QueryResultTableSplitPresenter;
+import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.QueryResultVisPresenter;
@@ -46,7 +46,7 @@ import stroom.query.client.view.QueryHelpViewImpl;
 import stroom.query.client.view.QueryResultTableViewImpl;
 import stroom.query.client.view.QueryResultTabsView;
 import stroom.query.client.view.QueryResultTabsViewImpl;
-import stroom.query.client.view.QueryResultViewImpl;
+import stroom.query.client.view.QueryResultTableSplitViewImpl;
 import stroom.query.client.view.QueryResultVisViewImpl;
 import stroom.query.client.view.QueryToolbarViewImpl;
 import stroom.query.client.view.ResultStoreSettingsViewImpl;
@@ -75,9 +75,9 @@ public class QueryModule extends PluginModule {
                 QueryEditView.class,
                 QueryEditViewImpl.class);
         bindPresenterWidget(
-                QueryResultPresenter.class,
-                QueryResultView.class,
-                QueryResultViewImpl.class);
+                QueryResultTableSplitPresenter.class,
+                QueryResultTableSplitView.class,
+                QueryResultTableSplitViewImpl.class);
         bindSharedView(
                 QueryResultTabsView.class,
                 QueryResultTabsViewImpl.class);
