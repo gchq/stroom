@@ -113,6 +113,10 @@ public class QueryHelpPresenter
     private static final String FIELDS_META = "Field";
     private static final String FUNCTIONS_META = "Function";
 
+    private static final String DETAIL_BASE_CLASS = "queryHelpDetail";
+    private static final String DETAIL_TABLE_CLASS = DETAIL_BASE_CLASS + "-table";
+    private static final String DETAIL_DESCRIPTION_CLASS = DETAIL_BASE_CLASS + "-description";
+
     // These control the priority of the items in the code completion menu.
     // Higher value appear further up for the same matching chars.
     private static final int DATA_SOURCES_COMPLETION_SCORE = 500;
@@ -137,7 +141,6 @@ public class QueryHelpPresenter
     private List<StructureElement> lastFetchedStructureElements = null;
     private List<AbstractField> lastFetchedDataSourceFields = null;
     private List<FunctionSignature> lastFetchedFunctions = null;
-    final Map<String, QueryHelpItem> branchMap = new HashMap<>();
 
     private QueryHelpItem dataSourceHeading;
     private QueryHelpItemHeading fieldsHeading;
@@ -403,12 +406,12 @@ public class QueryHelpPresenter
 //                                                    GWT.log("Building completion for " +
 //                                                            dataSourceHelpItem.title);
                                                     callback.accept(
-                                                    new AceCompletionValue(
-                                                            dataSourceHelpItem.title,
-                                                            dataSourceHelpItem.getInsertText(),
-                                                            DATA_SOURCES_META,
-                                                            safeHtml.asString(),
-                                                            DATA_SOURCES_COMPLETION_SCORE));
+                                                            new AceCompletionValue(
+                                                                    dataSourceHelpItem.title,
+                                                                    dataSourceHelpItem.getInsertText(),
+                                                                    DATA_SOURCES_META,
+                                                                    safeHtml.asString(),
+                                                                    DATA_SOURCES_COMPLETION_SCORE));
                                                 });
                                     }));
                         });
@@ -664,20 +667,14 @@ public class QueryHelpPresenter
             if (!Objects.equals(lastFetchedDataSourceFields, fields) || hasThemeChanged()) {
                 lastFetchedDataSourceFields = fields;
                 fieldsHeading.clear();
-                branchMap.clear();
                 keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
 
                 if (GwtNullSafe.hasItems(fields)) {
-//                        GWT.log("Adding " + dataSourceFieldsMap.size() + " fields");
-                    final RegExp nestedFieldDelimiterPattern = GwtNullSafe.isEmptyString(
-                            uiConfig.getNestedIndexFieldsDelimiterPattern())
-                            ? null
-                            : RegExp.compile(uiConfig.getNestedIndexFieldsDelimiterPattern());
-                    fields.stream()
+                    final List<AbstractField> sortedFields = fields.stream()
                             .sorted(Comparator.comparing(AbstractField::getName))
-                            .forEach(field -> {
-                                addFieldToMenu(helpUrl, field.getName(), field, nestedFieldDelimiterPattern);
-                            });
+                            .collect(Collectors.toList());
+
+                    addFieldsToMenu(helpUrl, sortedFields, uiConfig);
                 } else if (GwtNullSafe.isBlankString(quickFilterInput)) {
                     // Only show the EMPTY item if we are not filtering as an empty state is likely when filtering
                     createEmptyFieldsMenuItem(fieldsHeading);
@@ -726,10 +723,8 @@ public class QueryHelpPresenter
         };
     }
 
-    private void addFieldToMenu(final String helpUrl,
-                                final String fieldName,
-                                final AbstractField field,
-                                final RegExp nestedFieldDelimiterPattern) {
+    private SafeHtml buildFieldDetails(final AbstractField field) {
+        final String fieldName = field.getName();
         final String fieldType = field.getFieldType().getDisplayValue();
         final String supportedConditions = field.getConditions()
                 .stream()
@@ -745,62 +740,114 @@ public class QueryHelpPresenter
                         new SimpleEntry<>("Supported Conditions:", supportedConditions),
                         new SimpleEntry<>("Is queryable:", asDisplayValue(field.queryable())),
                         new SimpleEntry<>("Is numeric:", asDisplayValue(field.isNumeric()))));
+        return htmlBuilder.toSafeHtml();
+    }
 
-        QueryHelpItem parent = fieldsHeading;
-        FieldHelpItem fieldHelpItem = null;
-        // With dynamic indexing we can have field names like 'Events.Event.EventTime.TimeCreated', so
-        // split them on the dot and create branches if they don't already exist. Also nest the annotation:XXX
-        // fields.
-        if (nestedFieldDelimiterPattern != null && nestedFieldDelimiterPattern.test(fieldName)) {
-            final SplitResult splitResult = nestedFieldDelimiterPattern.split(fieldName);
-            int len = 0;
-            for (int i = 0; i < splitResult.length(); i++) {
-                final String part = splitResult.get(i);
-                if (i != 0) {
-                    // Account for the dot/colon in the key
-                    len += 1;
-                }
-                len += part.length();
-                if (i < splitResult.length() - 1) {
-                    // a branch
-                    final String key = fieldName.substring(0, len);
-                    QueryHelpItem branch = branchMap.get(key);
-                    if (branch == null) {
-                        branch = new FunctionCategoryItem(parent, part);
-                        branchMap.put(key, branch);
+    private void addFieldsToMenu(final String helpUrl,
+                                 final List<AbstractField> fields,
+                                 final ExtendedUiConfig uiConfig) {
+
+        final RegExp nestedFieldDelimiterPattern = GwtNullSafe.isEmptyString(
+                uiConfig.getNestedIndexFieldsDelimiterPattern())
+                ? null
+                : RegExp.compile(uiConfig.getNestedIndexFieldsDelimiterPattern());
+
+        final Map<String, SplitResult> fieldNameToSplitsMap = new HashMap<>(fields.size());
+        final Map<String, BranchInfo> branchKeyToInfoMap = new HashMap<>();
+        final String keyDelimiter = ".";
+
+        // Determine which branches are also fields and which are not
+        for (final AbstractField field : fields) {
+            final String fieldName = field.getName();
+            if (nestedFieldDelimiterPattern != null && nestedFieldDelimiterPattern.test(fieldName)) {
+                final SplitResult splitResult = nestedFieldDelimiterPattern.split(fieldName);
+                // Store splits for later
+                fieldNameToSplitsMap.put(fieldName, splitResult);
+
+                final int splitCount = splitResult.length();
+                final StringBuilder branchKeyBuilder = new StringBuilder();
+                for (int i = 0; i < splitCount; i++) {
+                    final String part = splitResult.get(i);
+                    final boolean isField = i == splitCount - 1;
+                    if (i != 0) {
+                        // Use a consistent delimiter for the keys in our map
+                        branchKeyBuilder.append(keyDelimiter);
                     }
-                    parent = branch;
-                } else {
-                    // a leaf
-                    fieldHelpItem = new FieldHelpItem(
-                            parent,
-                            part,
-                            fieldName2 ->
-                                    queryHelpDataSupplier.decorateFieldName(fieldName), // use full name, not part
-                            htmlBuilder.toSafeHtml(),
-                            helpUrl);
+                    branchKeyBuilder.append(part);
+                    final String branchKey = branchKeyBuilder.toString();
+                    final BranchInfo branchInfo = branchKeyToInfoMap.computeIfAbsent(
+                            branchKey,
+                            k -> new BranchInfo(k, isField, !isField));
+                    // Remember a BranchInfo can be both a field and a branch
+                    if (isField) {
+                        branchInfo.isField = true;
+                    } else {
+                        branchInfo.isBranch = true;
+                    }
+
                 }
             }
-        } else {
-            // Non-delimited field name, or no delimiter
-            fieldHelpItem = new FieldHelpItem(
-                    fieldsHeading,
-                    fieldName,
-                    queryHelpDataSupplier::decorateFieldName,
-                    htmlBuilder.toSafeHtml(),
-                    helpUrl);
         }
 
-        // Now add the ace completion for this field (no nesting)
-        if (fieldHelpItem != null) {
-            keyedAceCompletionProvider.addCompletion(
-                    FIELDS_COMPLETION_KEY,
-                    new AceCompletionValue(
-                            fieldName,
-                            fieldHelpItem.getInsertText(),
-                            FIELDS_META,
-                            fieldHelpItem.getDetail().asString(),
-                            FIELDS_COMPLETION_SCORE));
+        for (final AbstractField field : fields) {
+            QueryHelpItem parent = fieldsHeading;
+            QueryHelpItem fieldHelpItem = null;
+            final String fieldName = field.getName();
+            final SafeHtml detailSafeHtml = buildFieldDetails(field);
+            final SplitResult splitResult = fieldNameToSplitsMap.get(fieldName);
+            if (splitResult != null) {
+                final int splitCount = splitResult.length();
+                final StringBuilder branchKeyBuilder = new StringBuilder();
+                for (int i = 0; i < splitCount; i++) {
+                    final String part = splitResult.get(i);
+                    if (i != 0) {
+                        // Use a consistent delimiter for the keys in our map
+                        branchKeyBuilder.append(keyDelimiter);
+                    }
+                    branchKeyBuilder.append(part);
+                    final String branchKey = branchKeyBuilder.toString();
+                    final BranchInfo branchInfo = branchKeyToInfoMap.get(branchKey);
+                    if (branchInfo.queryHelpItem == null) {
+                        if (branchInfo.isField) {
+                            branchInfo.queryHelpItem = new FieldHelpItem(
+                                    parent,
+                                    part,
+                                    branchInfo.isBranch,
+                                    fieldName2 ->
+                                            queryHelpDataSupplier.decorateFieldName(fieldName),
+                                    // use full name, not part
+                                    detailSafeHtml,
+                                    helpUrl);
+                            fieldHelpItem = branchInfo.queryHelpItem;
+                        } else {
+                            branchInfo.queryHelpItem = new FunctionCategoryItem(parent, part);
+                        }
+                    }
+                    // We now become the next parent
+                    parent = branchInfo.queryHelpItem;
+                }
+            } else {
+                // Non delimited field
+                fieldHelpItem = new FieldHelpItem(
+                        fieldsHeading,
+                        fieldName,
+                        false,
+                        queryHelpDataSupplier::decorateFieldName,
+                        detailSafeHtml,
+                        helpUrl);
+            }
+
+            // Now add the ace completion for this field (no nesting)
+            if (fieldHelpItem != null) {
+                keyedAceCompletionProvider.addCompletion(
+                        FIELDS_COMPLETION_KEY,
+                        new AceCompletionValue(
+                                fieldName,
+                                fieldHelpItem.getInsertText(),
+                                FIELDS_META,
+                                fieldHelpItem.getDetail().asString(),
+                                FIELDS_COMPLETION_SCORE));
+            }
         }
     }
 
@@ -815,7 +862,7 @@ public class QueryHelpPresenter
                             .toSafeHtml(),
                     SafeHtmlUtil.from(entry.getValue()));
         }
-        htmlBuilder.div(tableBuilder::write, Attribute.className("queryHelpDetail-table"));
+        htmlBuilder.div(tableBuilder::write, Attribute.className(DETAIL_TABLE_CLASS));
     }
 
     private String asDisplayValue(final boolean bool) {
@@ -970,7 +1017,7 @@ public class QueryHelpPresenter
                 htmlBuilder2.hr();
 
                 htmlBuilder2.para(htmlBuilder3 -> htmlBuilder3.append(detail),
-                        Attribute.className("queryHelpDetail-description"));
+                        Attribute.className(DETAIL_DESCRIPTION_CLASS));
 
 //                    final boolean addedArgs = addArgsBlockToInfo(signature, hb1);
 //
@@ -996,7 +1043,7 @@ public class QueryHelpPresenter
 //                            "Help Documentation");
 //                    hb1.append(".");
 //                }
-            }, Attribute.className("queryHelpDetail"));
+            }, Attribute.className(DETAIL_BASE_CLASS));
 
             this.detail = htmlBuilder.toSafeHtml();
         }
@@ -1020,7 +1067,7 @@ public class QueryHelpPresenter
 
         @Override
         String getClassName() {
-            return super.getClassName() + " queryHelpItem-leaf";
+            return super.getClassName() + " " + QueryHelpItem.HELP_ITEM_LEAF_CLASS;
         }
 
         @Override
@@ -1042,10 +1089,11 @@ public class QueryHelpPresenter
 
         public FieldHelpItem(final QueryHelpItem parent,
                              final String title,
+                             final boolean isBranch,
                              final Function<String, String> insertTextDecorator,
                              final SafeHtml detail,
                              final String helpUrlBase) {
-            super(parent, title, false);
+            super(parent, title, isBranch);
             this.insertTextDecorator = insertTextDecorator;
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(hb1 -> {
@@ -1054,33 +1102,8 @@ public class QueryHelpPresenter
                 hb1.hr();
 
                 hb1.para(hb2 -> hb2.append(detail),
-                        Attribute.className("queryHelpDetail-description"));
-
-//                    final boolean addedArgs = addArgsBlockToInfo(signature, hb1);
-//
-//                    if (addedArgs) {
-//                        hb1.br();
-//                    }
-//
-//                    final List<String> aliases = signature.getAliases();
-//                    if (!aliases.isEmpty()) {
-//                        hb1.para(hb2 -> hb2.append("Aliases: " +
-//                                aliases.stream()
-//                                        .collect(Collectors.joining(", "))));
-//                    }
-
-//                if (helpUrlBase != null) {
-//                    hb1.append("For more information see the ");
-//                    hb1.appendLink(
-//                            helpUrlBase +
-//                                    "/user-guide/stroom-query-language/structure/" +
-//                                    title.toLowerCase().replace(" ", "-") +
-//                                    "#" +
-//                                    title,
-//                            "Help Documentation");
-//                    hb1.append(".");
-//                }
-            }, Attribute.className("queryHelpDetail"));
+                        Attribute.className(DETAIL_DESCRIPTION_CLASS));
+            }, Attribute.className(DETAIL_BASE_CLASS));
 
             this.detail = htmlBuilder.toSafeHtml();
         }
@@ -1099,7 +1122,10 @@ public class QueryHelpPresenter
 
         @Override
         String getClassName() {
-            return super.getClassName() + " queryHelpItem-leaf";
+            return super.getClassName() + " "
+                    + (isHeading()
+                    ? HELP_ITEM_HEADING_CLASS
+                    : HELP_ITEM_LEAF_CLASS);
         }
 
         @Override
@@ -1154,5 +1180,24 @@ public class QueryHelpPresenter
 
         void fetchDataSourceDescription(final DocRef dataSourceDocRef,
                                         final Consumer<Optional<String>> descriptionConsumer);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class BranchInfo {
+
+        private String branchKey;
+        private boolean isField = false;
+        private boolean isBranch = false;
+        private QueryHelpItem queryHelpItem = null;
+
+        public BranchInfo(final String branchKey, final boolean isField, final boolean isBranch) {
+            this.branchKey = branchKey;
+            // A branch may be a field or just a simple branch that is not a field
+            this.isField = isField;
+        }
+
     }
 }
