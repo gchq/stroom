@@ -127,13 +127,15 @@ public class DelegatingAceCompleter {
         final List<AceCompletion> allCompletions = new ArrayList<>();
         final AtomicInteger addedCount = new AtomicInteger(0);
 
+        // Aggregate the proposals from multiple completion providers, e.g. one for the Ace mode,
+        // one for the specific editor, etc.
         completionProviders.forEach(completionProvider -> {
             if (completionProvider != null) {
                 completionProvider.getProposals(editor, pos, prefix, proposals -> {
                     allCompletions.addAll(Arrays.asList(proposals));
                     if (addedCount.incrementAndGet() >= completionProviders.size()) {
                         // Now we have all the completions we can call back to Ace
-                        // with the completions. This assume we want to send all at once.
+                        // with the completions. This assumes we want to send all at once.
                         // Maybe Ace allows us to call the callback multiple times with an updated
                         // snapshot of completions each time.
                         callback.invokeWithCompletions(

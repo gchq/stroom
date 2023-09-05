@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 
 public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
+    static final String HELP_ITEM_BASE_CLASS = "queryHelpItem";
+    static final String HELP_ITEM_LEAF_CLASS = HELP_ITEM_BASE_CLASS + "-leaf";
+    static  final String HELP_ITEM_HEADING_CLASS = HELP_ITEM_BASE_CLASS + "-heading";
     static final int TOP_LEVEL_DEPTH = 0;
 
     final String title;
@@ -25,6 +28,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
     // exist in multiple categories
     protected String path;
 
+    // child -> child map so we can get a common instance back
     private Map<QueryHelpItem, QueryHelpItem> children;
 
     public QueryHelpItem(final QueryHelpItem parent,
@@ -87,8 +91,12 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
         return depth;
     }
 
+    public boolean isHeading() {
+        return heading;
+    }
+
     String getClassName() {
-        return "queryHelpItem";
+        return HELP_ITEM_BASE_CLASS;
     }
 
     public SafeHtml getLabel() {
@@ -141,7 +149,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         @Override
         String getClassName() {
-            return super.getClassName() + " " + "queryHelpItem-heading";
+            return super.getClassName() + " " + HELP_ITEM_HEADING_CLASS;
         }
 
         @Override
@@ -171,7 +179,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         @Override
         String getClassName() {
-            return super.getClassName() + " " + "queryHelpItem-topLevel";
+            return super.getClassName() + " " + HELP_ITEM_BASE_CLASS + "-topLevel";
         }
     }
 
@@ -200,7 +208,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         @Override
         String getClassName() {
-            return super.getClassName() + " " + "queryHelpItem-functionCategory";
+            return super.getClassName() + " " + HELP_ITEM_BASE_CLASS + "-functionCategory";
         }
     }
 
@@ -217,7 +225,7 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         @Override
         String getClassName() {
-            return super.getClassName() + " queryHelpItem-functionHeading";
+            return super.getClassName() + " " + HELP_ITEM_BASE_CLASS + "-functionHeading";
         }
     }
 
@@ -249,7 +257,9 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
         @Override
         String getClassName() {
-            return super.getClassName() + " queryHelpItem-function queryHelpItem-leaf";
+            return super.getClassName()
+                    + " " + HELP_ITEM_BASE_CLASS + "-function"
+                    + " " + HELP_ITEM_LEAF_CLASS;
         }
 
         @Override
