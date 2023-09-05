@@ -230,11 +230,11 @@ public class QueryEditPresenter
         this.editorPresenter = editorPresenter;
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
 
-        // This glues the editor code completion to the QueryHelpPresenter's completion provider
-        // Need to do this via addAttachHandler so the editor is fully loaded
-        // else it moans about the id not being a thing on the AceEditor
-        this.editorPresenter.getWidget().addAttachHandler(event ->
-                this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider()));
+//        // This glues the editor code completion to the QueryHelpPresenter's completion provider
+//        // Need to do this via addAttachHandler so the editor is fully loaded
+//        // else it moans about the id not being a thing on the AceEditor
+//        this.editorPresenter.getWidget().addAttachHandler(event ->
+//                this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider()));
 
         view.setQueryHelp(queryHelpPresenter.getView());
         view.setQueryEditor(this.editorPresenter.getView());
@@ -315,6 +315,12 @@ public class QueryEditPresenter
                 selectTab(e.getSelectedItem())));
 
         setupQueryHelpDataSupplier();
+    }
+
+    @Override
+    protected void onHide() {
+        // Clear the completions from memory
+        editorPresenter.deRegisterCompletionProviders();
     }
 
     private void selectTab(final TabData tabData) {

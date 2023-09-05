@@ -57,6 +57,8 @@
     background-image: none;
     border: 1px solid var(--dialog__border-color);
     color: var(--tooltip__text-color);
+    width: 600px;
+    overflow-wrap: anywhere;
 }
 
 .stroom .ace_tooltip.ace_doc-tooltip .queryHelpDetail {

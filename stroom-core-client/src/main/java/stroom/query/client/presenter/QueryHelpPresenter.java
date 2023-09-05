@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.KeyedAceCompletionProvider;
+import stroom.editor.client.presenter.LazyCompletion;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.QueryHelpItem.FunctionCategoryItem;
@@ -49,6 +50,7 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.TableBuilder;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -368,10 +370,10 @@ public class QueryHelpPresenter
             lastFetchedViews = viewDocRefs;
             dataSourceHeading.clear();
             if (!viewDocRefs.isEmpty()) {
+                keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
                 viewDocRefs.stream()
                         .sorted()
                         .forEach(viewDocRef -> {
-                            keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
                             final String name = viewDocRef.getName();
                             final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
                             appendKeyValueTable(htmlBuilder,
@@ -388,14 +390,27 @@ public class QueryHelpPresenter
                                     null,
                                     viewDocRef);
 
-                            keyedAceCompletionProvider.addCompletion(
+                            GWT.log("Adding completion for '" + dataSourceHelpItem.title + "'");
+
+                            keyedAceCompletionProvider.addLazyCompletion(
                                     DATA_SOURCES_COMPLETION_KEY,
-                                    new AceCompletionValue(
-                                            dataSourceHelpItem.title,
-                                            dataSourceHelpItem.getInsertText(),
-                                            DATA_SOURCES_META,
-                                            dataSourceHelpItem.getDetail().asString(),
-                                            DATA_SOURCES_COMPLETION_SCORE));
+                                    new LazyCompletion(callback -> {
+                                        queryHelpDataSupplier.fetchDataSourceDescription(
+                                                viewDocRef,
+                                                optMarkdown -> {
+                                                    final SafeHtml safeHtml = buildDatasourceDescription(
+                                                            optMarkdown, dataSourceHelpItem.getDetail());
+//                                                    GWT.log("Building completion for " +
+//                                                            dataSourceHelpItem.title);
+                                                    callback.accept(
+                                                    new AceCompletionValue(
+                                                            dataSourceHelpItem.title,
+                                                            dataSourceHelpItem.getInsertText(),
+                                                            DATA_SOURCES_META,
+                                                            safeHtml.asString(),
+                                                            DATA_SOURCES_COMPLETION_SCORE));
+                                                });
+                                    }));
                         });
             } else if (GwtNullSafe.isBlankString(quickFilterInput)) {
                 // Only show the EMPTY item if we are not filtering as an empty state is likely when filtering
@@ -587,18 +602,8 @@ public class QueryHelpPresenter
             queryHelpDataSupplier.fetchDataSourceDescription(
                     ((DataSourceHelpItem) queryHelpItem).getDocRef(),
                     optMarkdown -> {
-                        final SafeHtml combinedSafeHtml = optMarkdown.filter(markdown ->
-                                        !GwtNullSafe.isBlankString(markdown))
-                                .map(markdown -> {
-                                    final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
-                                            markdown);
-                                    final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
-                                    return safeHtmlBuilder.append(detailSafeHtml)
-                                            .append(markDownSafeHtml)
-                                            .toSafeHtml();
-                                })
-                                .orElse(detailSafeHtml);
-
+                        final SafeHtml combinedSafeHtml = buildDatasourceDescription(
+                                optMarkdown, detailSafeHtml);
                         getView().setDetails(combinedSafeHtml);
                     });
         } else {
@@ -606,6 +611,22 @@ public class QueryHelpPresenter
                     selectedItem.getDetail(),
                     SafeHtmlUtils.EMPTY_SAFE_HTML));
         }
+    }
+
+    private SafeHtml buildDatasourceDescription(final Optional<String> optMarkdown,
+                                                final SafeHtml basicDescription) {
+        final SafeHtml combinedSafeHtml = optMarkdown.filter(markdown ->
+                        !GwtNullSafe.isBlankString(markdown))
+                .map(markdown -> {
+                    final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
+                            markdown);
+                    final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
+                    return safeHtmlBuilder.append(basicDescription)
+                            .append(markDownSafeHtml)
+                            .toSafeHtml();
+                })
+                .orElse(basicDescription);
+        return combinedSafeHtml;
     }
 
     private void toggleOpen(final QueryHelpItem queryHelpItem) {
@@ -993,8 +1014,8 @@ public class QueryHelpPresenter
         public String getInsertText() {
             return GwtNullSafe.get(title, title2 ->
                     title2.contains(" ")
-                            ? "from \"" + title2 + "\""
-                            : "from " + title2);
+                            ? "\"" + title2 + "\""
+                            : title2);
         }
 
         @Override

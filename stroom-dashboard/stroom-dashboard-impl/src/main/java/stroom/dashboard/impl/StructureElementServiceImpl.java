@@ -64,7 +64,7 @@ class StructureElementServiceImpl implements StructureElementService {
                         Add boolean logic with `and`, `or` and `not` to build complex criteria as supported by the `where` clause.
                         Use brackets to group logical sub expressions as supported by the `where` clause.
                         """,
-                "filter ${1:field} ${:2=} ${3:value}\n$0");
+                "filter ${1:field} ${2:=} ${3:value}\n$0");
         add("eval",
                 """
                         Use eval to apply a function and get a result, e.g.
