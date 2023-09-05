@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.57] - 2023-09-05
+
+* Issue **#3724** : Fix missing datasource names in query helper.
+
+* Remove the `from ` prefix from the datasource completions in the query editor.
+
+* Add the View description to the datasource completion in the query editor.
+
+* Fix editor completion snippet for `filter` in the query editor.
+
+* Issue **#3714** : Change query helper so branches of nested fields can also be an insertable field.
+
+* Issue **#3722** : Fix text pane width.
+
+* Issue **#3725** : Add date/time functions `now()`, `second()`, `minute()`, `hour()`, `day()`, `week()`, `month()` and `year()`.
+
+
 ## [v7.2-beta.56] - 2023-09-04
 
 * Issue **#3315** : Add visualisation support to the Stroom Query Language.
@@ -5849,7 +5866,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.56...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.57...HEAD
+[v7.2-beta.57]: https://github.com/gchq/stroom/compare/v7.2-beta.56...v7.2-beta.57
 [v7.2-beta.56]: https://github.com/gchq/stroom/compare/v7.2-beta.55...v7.2-beta.56
 [v7.2-beta.55]: https://github.com/gchq/stroom/compare/v7.2-beta.54...v7.2-beta.55
 [v7.2-beta.54]: https://github.com/gchq/stroom/compare/v7.2-beta.53...v7.2-beta.54
