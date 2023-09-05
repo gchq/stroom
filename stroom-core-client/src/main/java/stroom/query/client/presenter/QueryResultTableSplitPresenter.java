@@ -37,9 +37,8 @@ public class QueryResultTableSplitPresenter
 
     private final QueryResultTablePresenter tablePresenter;
     private final TextPresenter textPresenter;
-    private final ThinSplitLayoutPanel splitLayoutPanel;
-    private final SimplePanel tableContainer;
-
+    private SimplePanel tableContainer;
+    private ThinSplitLayoutPanel splitLayoutPanel;
     private QueryModel queryModel;
     private boolean showingSplit = true;
 
@@ -52,15 +51,6 @@ public class QueryResultTableSplitPresenter
         super(eventBus, view);
         this.tablePresenter = tablePresenter;
         this.textPresenter = textPresenter;
-
-        tableContainer = new SimplePanel();
-        tableContainer.setStyleName("max");
-
-        splitLayoutPanel = new ThinSplitLayoutPanel();
-        splitLayoutPanel.addStyleName("max");
-        final double size = Math.max(100, getWidget().getElement().getOffsetWidth() / 2D);
-        splitLayoutPanel.addEast(textPresenter.getWidget(), size);
-        splitLayoutPanel.add(tableContainer);
 
         view.setWidget(tablePresenter.getWidget());
         showSplit(false);
@@ -111,6 +101,17 @@ public class QueryResultTableSplitPresenter
         if (show != showingSplit) {
             showingSplit = show;
             if (show) {
+                if (splitLayoutPanel == null) {
+                    tableContainer = new SimplePanel();
+                    tableContainer.setStyleName("max");
+
+                    splitLayoutPanel = new ThinSplitLayoutPanel();
+                    splitLayoutPanel.addStyleName("max");
+                    final double size = Math.max(100, getWidget().getElement().getOffsetWidth() / 2D);
+                    splitLayoutPanel.addEast(textPresenter.getWidget(), size);
+                    splitLayoutPanel.add(tableContainer);
+                }
+
                 tableContainer.setWidget(tablePresenter.getWidget());
                 getView().setWidget(splitLayoutPanel);
             } else {
