@@ -34,7 +34,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
     private List<ExplorerNode> rootNodes;
 
     public ExplorerTickBoxTree(final RestFactory restFactory) {
-        super(restFactory, false);
+        super(restFactory, false, true);
     }
 
     @Override

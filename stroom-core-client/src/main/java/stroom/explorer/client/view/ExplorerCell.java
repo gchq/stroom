@@ -28,9 +28,11 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     private static Template template;
     private final SelectionModel<ExplorerNode> selectionModel;
     private TickBoxCell tickBoxCell;
+    private boolean showAlerts;
 
-    public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel) {
+    public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel, final boolean showAlerts) {
         this.selectionModel = selectionModel;
+        this.showAlerts = showAlerts;
 
         if (selectionModel != null && selectionModel instanceof TickBoxSelectionModel) {
             tickBoxCell = TickBoxCell.create(true, false);
@@ -51,6 +53,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
     public String getTickBoxClassName() {
         return getCellClassName() + "-tickBox";
+    }
+
+    public void setShowAlerts(final boolean showAlerts) {
+        this.showAlerts = showAlerts;
     }
 
     @Override
@@ -112,15 +118,17 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         getCellClassName() + "-icon");
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
 
-                node.getMaxSeverity().ifPresent(maxSeverity -> {
-                    final SvgImage svgImage = maxSeverity.greaterThanOrEqual(Severity.WARNING)
-                            ? SvgImage.ALERT_SIMPLE
-                            : SvgImage.INFO;
-                    builder.append(SvgImageUtil.toSafeHtml(
-                            buildAlertText(node),
-                            svgImage,
-                            "svgIcon", "small", getCellClassName() + "-alert-icon"));
-                });
+                if (showAlerts) {
+                    node.getMaxSeverity().ifPresent(maxSeverity -> {
+                        final SvgImage svgImage = maxSeverity.greaterThanOrEqual(Severity.WARNING)
+                                ? SvgImage.ALERT_SIMPLE
+                                : SvgImage.INFO;
+                        builder.append(SvgImageUtil.toSafeHtml(
+                                buildAlertText(node),
+                                svgImage,
+                                "svgIcon", "small", getCellClassName() + "-alert-icon"));
+                    });
+                }
 
                 content.append(template.div(
                         getCellClassName() + "-icon-wrapper",
@@ -142,12 +150,6 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         "svgIcon", "small"));
             }
 
-//            item.getMaxSeverity().ifPresent(maxSeverity -> {
-//                content.append(SvgImageUtil.toSafeHtml(
-//                        buildAlertText(item),
-//                        SvgImage.ALERT,
-//                        "svgIcon", "small"));
-//            });
             final String filterMatchClass = getCellClassName() + "-" + (node.getIsFilterMatch()
                     ? "filter-match"
                     : "filter-no-match");

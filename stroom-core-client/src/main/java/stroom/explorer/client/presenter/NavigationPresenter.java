@@ -40,6 +40,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -88,6 +89,7 @@ public class NavigationPresenter
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
     private final InlineSvgToggleButton filter;
+    private final InlineSvgToggleButton showAlertsBtn;
     private boolean menuVisible = false;
     private boolean hasActiveFilter = false;
 
@@ -126,6 +128,13 @@ public class NavigationPresenter
         filter.setTitle("Filter Types");
         filter.setEnabled(true);
 
+        showAlertsBtn = new InlineSvgToggleButton();
+        showAlertsBtn.setOn();
+        showAlertsBtn.setSvg(SvgImage.EXCLAMATION);
+        showAlertsBtn.getElement().addClassName("navigation-header-button show-alerts");
+        showAlertsBtn.setTitle("Toggle Alerts");
+        showAlertsBtn.setEnabled(true);
+
         find = new InlineSvgButton();
         find.setSvg(SvgImage.FIND);
         find.getElement().addClassName("navigation-header-button find");
@@ -135,12 +144,13 @@ public class NavigationPresenter
         final FlowPanel buttons = getView().getButtonContainer();
         buttons.add(add);
         buttons.add(delete);
+        buttons.add(showAlertsBtn);
         buttons.add(filter);
         buttons.add(find);
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, true);
+        explorerTree = new ExplorerTree(restFactory, true, true);
 
         // Add views.
         uiConfigCache.get().onSuccess(uiConfig -> {
@@ -168,6 +178,10 @@ public class NavigationPresenter
                 deleteItem()));
         registerHandler(filter.addClickHandler((e) ->
                 showTypeFilter(filter.getElement())));
+        registerHandler(showAlertsBtn.addClickHandler((e) -> {
+            explorerTree.setShowAlerts(showAlertsBtn.getState());
+            explorerTree.refresh();
+        }));
 
         // Register for refresh events.
         registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
@@ -177,6 +191,12 @@ public class NavigationPresenter
 
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
+
+        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
+            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
+                    .anyMatch(ExplorerNode::hasNodeInfo);
+            showAlertsBtn.setVisible(treeHasNodeInfo);
+        });
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes())));

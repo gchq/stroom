@@ -182,6 +182,10 @@ public class ExplorerNode implements HasDisplayValue {
         return nodeInfoList;
     }
 
+    public boolean hasNodeInfo() {
+        return GwtNullSafe.hasItems(nodeInfoList);
+    }
+
     @JsonIgnore
     public Optional<Severity> getMaxSeverity() {
         return Optional.ofNullable(nodeInfoList)
@@ -349,7 +353,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder nodeInfoList(final List<NodeInfo> nodeInfoList) {
-            this.nodeInfoList = nodeInfoList;
+            this.nodeInfoList = new ArrayList<>(nodeInfoList);
             return this;
         }
 

@@ -39,7 +39,11 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         super(eventBus, view);
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, false);
+        // Debatable whether we want to show alerts or not
+        explorerTree = new ExplorerTree(
+                restFactory,
+                false,
+                false);
 
         // Add views.
         view.setCellTree(explorerTree);

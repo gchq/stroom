@@ -85,7 +85,7 @@ public class ExplorerTreePresenter
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, true) {
+        explorerTree = new ExplorerTree(restFactory, true, true) {
             @Override
             protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
                 super.doSelect(row, selectionType);

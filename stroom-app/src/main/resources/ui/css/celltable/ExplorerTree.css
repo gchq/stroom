@@ -49,7 +49,7 @@
 
 .explorerCell-alert-icon.svgIcon {
     left: 6px;
-    position: relative;
+    position: absolute;
     display: block;
     margin-top: -11px;
 	display: block;
@@ -64,6 +64,10 @@
 .explorerCell-text {
 	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 	white-space: nowrap;
+}
+
+.explorerCell-icon-wrapper {
+    position: relative;
 }
 
 .explorerCell-filter-match .explorerCell-text {

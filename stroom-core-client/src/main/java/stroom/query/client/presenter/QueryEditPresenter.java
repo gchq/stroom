@@ -377,7 +377,7 @@ public class QueryEditPresenter
                     final Rest<Documentation> rest = restFactory.create();
                     rest
                             .onSuccess(documentation -> {
-                                GWT.log("Description:\n" + documentation);
+//                                GWT.log("Description:\n" + documentation);
                                 final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
                                         Documentation::getMarkdown);
                                 if (descriptionConsumer != null) {
