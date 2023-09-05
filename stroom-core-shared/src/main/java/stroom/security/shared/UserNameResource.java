@@ -43,12 +43,12 @@ public interface UserNameResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Find the user name matching the supplied unique user subject ID",
             operationId = "getByUserId")
-    UserName getBySubjectId(final String subjectId);
+    UserName getBySubjectId(@PathParam("subjectId") final String subjectId);
 
     @GET
     @Path("/getByUuid/{userUuid}")
     @Operation(
             summary = "Find the user name matching the supplied unique Stroom user UUID",
             operationId = "getByUuid")
-    UserName getByUuid(final String userUuid);
+    UserName getByUuid(@PathParam("userUuid") final String userUuid);
 }

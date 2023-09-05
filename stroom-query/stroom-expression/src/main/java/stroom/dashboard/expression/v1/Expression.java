@@ -84,4 +84,9 @@ public class Expression implements Function {
     public boolean isCountPrevious() {
         return function instanceof CountPrevious;
     }
+
+    @Override
+    public Type getCommonReturnType() {
+        return function.getCommonReturnType();
+    }
 }

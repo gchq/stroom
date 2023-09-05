@@ -2,6 +2,7 @@ package stroom.analytics.impl;
 
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -24,12 +25,16 @@ class AnalyticErrorWritingExecutor {
                   final String pipelineUuid,
                   final TaskContext parentTaskContext,
                   final Consumer<TaskContext> taskContextConsumer) {
-        return taskContextFactory.childContext(parentTaskContext, taskName, taskContext -> {
-            final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
-            analyticErrorWriter.exec(
-                    errorFeedName,
-                    pipelineUuid,
-                    () -> taskContextConsumer.accept(taskContext));
-        });
+        return taskContextFactory.childContext(
+                parentTaskContext,
+                taskName,
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
+                    final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
+                    analyticErrorWriter.exec(
+                            errorFeedName,
+                            pipelineUuid,
+                            () -> taskContextConsumer.accept(taskContext));
+                });
     }
 }

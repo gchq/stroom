@@ -19,6 +19,7 @@ package stroom.util.config;
 
 
 import stroom.util.NullSafe;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -159,7 +160,7 @@ public final class PropertyUtil {
 //                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 //    }
     public static Map<String, Prop> getProperties(final Object object) {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = JsonUtil.getMapper();;
         return getProperties(objectMapper, object);
     }
 
@@ -293,7 +294,7 @@ public final class PropertyUtil {
     }
 
     public static <T> T copyObject(final T source) {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = JsonUtil.getMapper();
         final TokenBuffer tb = new TokenBuffer(objectMapper, false); // or one of factory methods
         try {
             objectMapper.writeValue(tb, source);

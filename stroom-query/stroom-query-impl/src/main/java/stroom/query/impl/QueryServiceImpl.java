@@ -76,6 +76,7 @@ class QueryServiceImpl implements QueryService {
     private final DataSourceResolver dataSourceResolver;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
+    private final SearchRequestBuilder searchRequestBuilder;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -87,7 +88,8 @@ class QueryServiceImpl implements QueryService {
                      final TaskContextFactory taskContextFactory,
                      final DataSourceResolver dataSourceResolver,
                      final ResultStoreManager searchResponseCreatorManager,
-                     final NodeInfo nodeInfo) {
+                     final NodeInfo nodeInfo,
+                     final SearchRequestBuilder searchRequestBuilder) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -98,6 +100,7 @@ class QueryServiceImpl implements QueryService {
         this.dataSourceResolver = dataSourceResolver;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
+        this.searchRequestBuilder = searchRequestBuilder;
     }
 
     @Override
@@ -326,7 +329,7 @@ class QueryServiceImpl implements QueryService {
                 null,
                 queryContext.getDateTimeSettings(),
                 searchRequest.isIncremental());
-        SearchRequest mappedRequest = SearchRequestBuilder.create(query, sampleRequest);
+        SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest);
         mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
         // Fix table result requests.
@@ -463,7 +466,7 @@ class QueryServiceImpl implements QueryService {
     public DataSource getDataSource(final String query) {
         final AtomicReference<DataSource> ref = new AtomicReference<>();
         try {
-            SearchRequestBuilder.extractDataSourceNameOnly(query, dataSourceName -> {
+            searchRequestBuilder.extractDataSourceNameOnly(query, dataSourceName -> {
                 final DataSource dataSource = dataSourceResolver.resolveDataSource(dataSourceName);
                 ref.set(dataSource);
             });

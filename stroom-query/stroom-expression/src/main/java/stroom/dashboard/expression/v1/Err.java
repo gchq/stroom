@@ -34,4 +34,9 @@ class Err extends AbstractStaticFunction {
     public Err(final String name) {
         super(name, GEN);
     }
+
+    @Override
+    public Type getCommonReturnType() {
+        return Type.ERR;
+    }
 }

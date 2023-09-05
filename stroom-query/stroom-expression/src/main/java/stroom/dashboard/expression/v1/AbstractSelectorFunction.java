@@ -58,4 +58,9 @@ abstract class AbstractSelectorFunction extends AbstractFunction {
     public boolean requiresChildData() {
         return true;
     }
+
+    @Override
+    public Type getCommonReturnType() {
+        return function.getCommonReturnType();
+    }
 }

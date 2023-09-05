@@ -5414,7 +5414,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/SimpleUser"
+                    "$ref" : "#/components/schemas/UserName"
                   }
                 }
               }
@@ -8898,18 +8898,17 @@
         "tags" : [ "Authorisation" ]
       }
     },
-    "/userNames/v1/{userId}" : {
+    "/userNames/v1/getByUuid/{userUuid}" : {
       "get" : {
-        "operationId" : "getByUserId",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "string"
-              }
-            }
+        "operationId" : "getByUuid",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
           }
-        },
+        } ],
         "responses" : {
           "default" : {
             "content" : {
@@ -8922,7 +8921,34 @@
             "description" : "default response"
           }
         },
-        "summary" : "Find the user name matching the supplied unique user ID",
+        "summary" : "Find the user name matching the supplied unique Stroom user UUID",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/userNames/v1/{subjectId}" : {
+      "get" : {
+        "operationId" : "getByUserId",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserName"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the user name matching the supplied unique user subject ID",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10053,7 +10079,7 @@
             "format" : "int64"
           },
           "createUser" : {
-            "$ref" : "#/components/schemas/UserName"
+            "type" : "string"
           },
           "history" : {
             "type" : "string"
@@ -10076,7 +10102,7 @@
             "format" : "int64"
           },
           "updateUser" : {
-            "$ref" : "#/components/schemas/UserName"
+            "type" : "string"
           },
           "version" : {
             "type" : "integer",
@@ -10106,7 +10132,7 @@
             "format" : "int64"
           },
           "createUser" : {
-            "$ref" : "#/components/schemas/UserName"
+            "type" : "string"
           },
           "entryType" : {
             "type" : "string"
@@ -10123,7 +10149,7 @@
             "format" : "int64"
           },
           "updateUser" : {
-            "$ref" : "#/components/schemas/UserName"
+            "type" : "string"
           },
           "version" : {
             "type" : "integer",
@@ -11558,7 +11584,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -11987,7 +12013,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "isFavourite" : {
             "type" : "boolean"
@@ -12012,7 +12038,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "isFavourite" : {
             "type" : "boolean"
@@ -12620,7 +12646,7 @@
           "users" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/SimpleUser"
+              "$ref" : "#/components/schemas/UserName"
             }
           }
         }
@@ -12933,6 +12959,9 @@
           "name" : {
             "$ref" : "#/components/schemas/StringCriteria"
           },
+          "ownerUuid" : {
+            "type" : "string"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
@@ -12948,9 +12977,6 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
-          },
-          "userId" : {
-            "type" : "string"
           }
         }
       },
@@ -13290,7 +13316,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client Token or Certificate Required", "403 - 310 - Client Certificate not authorised", "403 - 311 - Client Token not authorised", "403 - 312 - Client Token or Certificate not authorised", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client Token or Certificate Required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -14590,7 +14616,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ARROW_DOWN", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "RULESET", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -14966,6 +14992,9 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "ownerUuid" : {
+            "type" : "string"
+          },
           "pipelineName" : {
             "type" : "string"
           },
@@ -15014,6 +15043,9 @@
         }, {
           "type" : "object",
           "properties" : {
+            "ownerDisplayName" : {
+              "type" : "string"
+            },
             "processorFilter" : {
               "$ref" : "#/components/schemas/ProcessorFilter"
             }
@@ -15241,6 +15273,38 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "QLVisResult" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Result"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "dataPoints" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "jsonData" : {
+              "type" : "string"
+            },
+            "visSettings" : {
+              "$ref" : "#/components/schemas/QLVisSettings"
+            }
+          }
+        } ],
+        "required" : [ "componentId" ]
+      },
+      "QLVisSettings" : {
+        "type" : "object",
+        "properties" : {
+          "json" : {
+            "type" : "string"
+          },
+          "visualisation" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },
@@ -16121,7 +16185,7 @@
           "resultStyle" : {
             "type" : "string",
             "description" : "The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object",
-            "enum" : [ "FLAT", "TABLE" ]
+            "enum" : [ "FLAT", "TABLE", "VIS", "QL_VIS" ]
           },
           "timeFilter" : {
             "$ref" : "#/components/schemas/TimeFilter"
@@ -16134,6 +16198,9 @@
         "properties" : {
           "complete" : {
             "type" : "boolean"
+          },
+          "createUser" : {
+            "type" : "string"
           },
           "creationTime" : {
             "type" : "integer",
@@ -16160,9 +16227,6 @@
           },
           "taskProgress" : {
             "$ref" : "#/components/schemas/SearchTaskProgress"
-          },
-          "userId" : {
-            "type" : "string"
           }
         }
       },
@@ -16650,7 +16714,7 @@
             "type" : "string"
           },
           "userName" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           }
         }
       },
@@ -16759,23 +16823,6 @@
           "timeUnit" : {
             "type" : "string",
             "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
-          }
-        }
-      },
-      "SimpleUser" : {
-        "type" : "object",
-        "properties" : {
-          "displayName" : {
-            "type" : "string"
-          },
-          "fullName" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
           }
         }
       },
@@ -17305,6 +17352,9 @@
             "format" : "int32"
           },
           "name" : {
+            "type" : "string"
+          },
+          "ownerUuid" : {
             "type" : "string"
           },
           "query" : {
@@ -17853,6 +17903,9 @@
           "valueFilter" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
+          "visSettings" : {
+            "$ref" : "#/components/schemas/QLVisSettings"
+          },
           "window" : {
             "$ref" : "#/components/schemas/Window"
           }
@@ -18131,6 +18184,10 @@
           "id_token" : {
             "type" : "string"
           },
+          "refresh_expires_in" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "refresh_token" : {
             "type" : "string"
           },
@@ -18320,7 +18377,7 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "name" : {
+          "subjectId" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -18366,10 +18423,13 @@
           "fullName" : {
             "type" : "string"
           },
-          "name" : {
+          "subjectId" : {
             "type" : "string"
           },
           "userIdentityForAudit" : {
+            "type" : "string"
+          },
+          "uuid" : {
             "type" : "string"
           }
         }

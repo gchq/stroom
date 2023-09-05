@@ -1,8 +1,8 @@
 package stroom.config.global.shared;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import stroom.util.json.JsonUtil;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -35,10 +35,7 @@ class TestOverrideValue {
 
     private <T> void doSerdeTest(final T entity, final Class<T> clazz) throws IOException {
 
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-
+        final ObjectMapper mapper = JsonUtil.getMapper();
         assertThat(mapper.canSerialize(entity.getClass()))
                 .isTrue();
 

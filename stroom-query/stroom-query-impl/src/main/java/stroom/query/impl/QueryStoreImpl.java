@@ -55,15 +55,18 @@ class QueryStoreImpl implements QueryStore {
     private final Store<QueryDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataSourceResolver> dataSourceResolverProvider;
+    private final SearchRequestBuilder searchRequestBuilder;
 
     @Inject
     QueryStoreImpl(final StoreFactory storeFactory,
                    final QuerySerialiser serialiser,
                    final SecurityContext securityContext,
-                   final Provider<DataSourceResolver> dataSourceResolverProvider) {
+                   final Provider<DataSourceResolver> dataSourceResolverProvider,
+                   final SearchRequestBuilder searchRequestBuilder) {
         this.store = storeFactory.createStore(serialiser, QueryDoc.DOCUMENT_TYPE, QueryDoc.class);
         this.securityContext = securityContext;
         this.dataSourceResolverProvider = dataSourceResolverProvider;
+        this.searchRequestBuilder = searchRequestBuilder;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -151,7 +154,7 @@ class QueryStoreImpl implements QueryStore {
         return (doc, dependencyRemapper) -> {
             try {
                 if (doc.getQuery() != null) {
-                    SearchRequestBuilder.extractDataSourceNameOnly(doc.getQuery(), dataSourceName -> {
+                    searchRequestBuilder.extractDataSourceNameOnly(doc.getQuery(), dataSourceName -> {
                         try {
                             if (dataSourceName != null) {
                                 final DataSource dataSource = dataSourceResolverProvider

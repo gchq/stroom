@@ -12,13 +12,10 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.servicediscovery.api.RegisteredService;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourcePaths;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
@@ -78,22 +75,6 @@ class TestStroomIndexViewResource {
         return searchRequest;
     }
 
-    private static ObjectMapper getMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract
-        // classes
-//        mapper.enableDefaultTyping();
-        return mapper;
-    }
-
-    private static String serialiseSearchRequest(SearchRequest searchRequest) throws JsonProcessingException {
-        ObjectMapper objectMapper = getMapper(true);
-        return objectMapper.writeValueAsString(searchRequest);
-    }
-
     @Disabled
     // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
     // ages to run no tests
@@ -102,8 +83,7 @@ class TestStroomIndexViewResource {
         // Given
         String searchRequestJson = new String(Files.readAllBytes(Paths.get(
                 "src/test/resources/searchRequest.json")));
-        ObjectMapper objectMapper = new ObjectMapper();
-        SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
+        SearchRequest searchRequest = JsonUtil.readValue(searchRequestJson, SearchRequest.class);
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
         // When

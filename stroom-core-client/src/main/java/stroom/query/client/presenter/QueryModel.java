@@ -30,28 +30,30 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.TokenError;
-import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.core.client.GWT;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class QueryModel {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
+    public static final String TABLE_COMPONENT_ID = "table";
+    public static final String VIS_COMPONENT_ID = "vis";
+
+
     private final RestFactory restFactory;
-    private final IndexLoader indexLoader;
     private String queryUuid;
-    private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
 
     private final ResultConsumer tablePresenter;
 
-    private DashboardSearchResponse currentResponse;
     private String currentNode;
     private QueryKey currentQueryKey;
     private QueryContext currentQueryContext;
@@ -63,23 +65,23 @@ public class QueryModel {
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
+    private final Map<String, ResultConsumer> resultConsumers = new HashMap<>();
 
     public QueryModel(final RestFactory restFactory,
-                      final IndexLoader indexLoader,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
                       final ResultStoreModel resultStoreModel,
-                      final QueryResultTablePresenter tablePresenter) {
+                      final ResultConsumer tablePresenter,
+                      final ResultConsumer visPresenter) {
         this.restFactory = restFactory;
-        this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
         this.tablePresenter = tablePresenter;
+        resultConsumers.put(TABLE_COMPONENT_ID, tablePresenter);
+        resultConsumers.put(VIS_COMPONENT_ID, visPresenter);
     }
 
-    public void init(final String queryUuid,
-                     final String componentId) {
+    public void init(final String queryUuid) {
         this.queryUuid = queryUuid;
-        this.componentId = componentId;
     }
 
     /**
@@ -94,7 +96,7 @@ public class QueryModel {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        tablePresenter.endSearch();
+        resultConsumers.values().forEach(ResultConsumer::endSearch);
 
         // Stop polling.
         polling = false;
@@ -116,7 +118,7 @@ public class QueryModel {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        tablePresenter.endSearch();
+        resultConsumers.values().forEach(ResultConsumer::endSearch);
 
         // Stop polling.
         polling = false;
@@ -206,8 +208,8 @@ public class QueryModel {
 
             // Reset all result components and tell them that search is
             // starting.
-            tablePresenter.reset();
-            tablePresenter.startSearch();
+            resultConsumers.values().forEach(ResultConsumer::reset);
+            resultConsumers.values().forEach(ResultConsumer::startSearch);
 
             // Start polling.
             polling = true;
@@ -219,57 +221,35 @@ public class QueryModel {
     /**
      * Refresh the search data for the specified component.
      */
-    public void refresh() {
+    public void refresh(final String componentId) {
         final QueryKey queryKey = currentQueryKey;
-        if (queryKey != null) {
-//            final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
-//            if (resultComponentMap != null) {
-//                final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
-//                if (dataSourceRef != null) {
+        final ResultConsumer resultConsumer = resultConsumers.get(componentId);
+        if (resultConsumer != null && queryKey != null) {
             // Tell the refreshing component that it should want data.
-            tablePresenter.startSearch();
-
-//                    final QuerySearchRequest search = Search
-//                            .builder()
-//                            .dataSourceRef(currentSearch.getDataSourceRef())
-//                            .expression(currentSearch.getExpression())
-//                            .componentSettingsMap(resultComponentMap)
-//                            .params(currentSearch.getParams())
-//                            .timeRange(currentSearch.getTimeRange())
-//                            .incremental(true)
-//                            .build();
-//
-//            final List<ComponentResultRequest> requests = new ArrayList<>();
-//            final ComponentResultRequest componentResultRequest = tablePresenter.getResultRequest(true);
-//            requests.add(componentResultRequest);
-
+            resultConsumer.startSearch();
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(false)
-                    .openGroups(tablePresenter.getOpenGroups())
-                    .requestedRange(tablePresenter.getRequestedRange())
+                    .openGroups(resultConsumer.getOpenGroups())
+                    .requestedRange(resultConsumer.getRequestedRange())
                     .build();
 
             final Rest<DashboardSearchResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
-//                        Result result = null;
                         try {
-
                             if (response != null && response.getResults() != null) {
                                 for (final Result componentResult : response.getResults()) {
-                                    tablePresenter.setData(componentResult);
-                                    tablePresenter.endSearch();
-//                                    if (componentId.equals(componentResult.getComponentId())) {
-//                                        result = componentResult;
-//                                    }
+                                    if (componentId.equals(componentResult.getComponentId())) {
+                                        resultConsumer.setData(componentResult);
+                                        resultConsumer.endSearch();
+                                    }
                                 }
                             }
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
-//                        tablePresenter.setData(result);
                     })
                     .onFailure(throwable -> {
                         try {
@@ -279,13 +259,11 @@ public class QueryModel {
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
-                        tablePresenter.setData(null);
+                        resultConsumer.setData(null);
                     })
                     .call(QUERY_RESOURCE)
                     .search(currentNode, request);
         }
-//            }
-//        }
     }
 
 //    private void destroy(final QueryKey queryKey) {
@@ -404,17 +382,14 @@ public class QueryModel {
      * @param response The search response.
      */
     private void update(final DashboardSearchResponse response) {
-        currentResponse = response;
-
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                tablePresenter.setData(componentResult);
-
-//                final ResultConsumer resultComponent = componentMap.get(componentResult.getComponentId());
-//                if (resultComponent != null) {
-//                    resultComponent.setData(componentResult);
-//                }
+                final ResultConsumer resultConsumer =
+                        resultConsumers.get(componentResult.getComponentId());
+                if (resultConsumer != null) {
+                    resultConsumer.setData(componentResult);
+                }
             }
         }
 
@@ -422,7 +397,7 @@ public class QueryModel {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            tablePresenter.endSearch();
+            resultConsumers.values().forEach(ResultConsumer::endSearch);
         }
 
         setErrors(response.getErrors());

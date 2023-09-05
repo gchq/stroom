@@ -139,6 +139,11 @@ class Distinct extends AbstractFunction {
         return super.requiresChildData();
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.STRING;
+    }
+
     private static class Gen extends AbstractSingleChildGenerator {
 
         private final String delimiter;

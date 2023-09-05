@@ -43,13 +43,10 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.test.util.ConsoleColour;
 import stroom.util.io.StreamUtil;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
@@ -61,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -188,14 +184,12 @@ class TestSerialisation {
     }
 
     private <T> void testJSON(final T objIn, final Class<T> type, final String testName) throws IOException {
-        ObjectMapper mapper = createMapper(true);
-
         final Path dir = TestFileUtil.getTestResourcesDir().resolve("SerialisationTest");
         final Path expectedFile = dir.resolve(testName + "-JSON.expected.json");
         final Path actualFileIn = dir.resolve(testName + "-JSON.actual.in.json");
         final Path actualFileOut = dir.resolve(testName + "-JSON.actual.out.json");
 
-        String serialisedIn = mapper.writeValueAsString(objIn);
+        String serialisedIn = JsonUtil.writeValueAsString(objIn);
 //        System.out.println(serialisedIn);
 
         if (!Files.isRegularFile(expectedFile)) {
@@ -219,8 +213,8 @@ class TestSerialisation {
         assertEqualsIgnoreWhitespace(expected, serialisedIn);
 
         // Now deserialise the string from the serialised object
-        T objOut = mapper.readValue(serialisedIn, type);
-        String serialisedOut = mapper.writeValueAsString(objOut);
+        T objOut = JsonUtil.readValue(serialisedIn, type);
+        String serialisedOut = JsonUtil.writeValueAsString(objOut);
 //        System.out.println(serialisedOut);
         StreamUtil.stringToFile(serialisedOut, actualFileOut);
 
@@ -390,22 +384,6 @@ class TestSerialisation {
 //        return visResult;
 //    }
 
-    private ObjectMapper createMapper(final boolean indent) {
-//        final SimpleModule module = new SimpleModule();
-//        module.addSerializer(Double.class, new MyDoubleSerialiser());
-
-        final ObjectMapper mapper = new ObjectMapper();
-//        mapper.registerModule(module);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for
-        // abstract classes
-//        mapper.enableDefaultTyping();
-
-        return mapper;
-    }
 
     @JsonTypeInfo(
             use = JsonTypeInfo.Id.NAME,

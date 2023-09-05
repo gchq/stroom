@@ -167,7 +167,9 @@ public final class ResultRequest {
 
     public enum ResultStyle {
         FLAT,
-        TABLE
+        TABLE,
+        VIS,
+        QL_VIS
     }
 
     public enum Fetch {

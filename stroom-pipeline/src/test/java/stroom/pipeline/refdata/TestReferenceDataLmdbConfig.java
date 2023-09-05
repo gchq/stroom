@@ -1,28 +1,20 @@
 package stroom.pipeline.refdata;
 
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 class TestReferenceDataLmdbConfig {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestReferenceDataLmdbConfig.class);
 
     @Test
-    void testJsonSerialisation() throws JsonProcessingException {
-
-        ObjectMapper objectMapper = new ObjectMapper();
+    void testJsonSerialisation() {
         ReferenceDataLmdbConfig lmdbConfig = new ReferenceDataLmdbConfig();
-
-        final String json = objectMapper.writeValueAsString(lmdbConfig);
-
+        final String json = JsonUtil.writeValueAsString(lmdbConfig);
         LOGGER.info("json:\n{}", json);
 
         Assertions.assertThat(json)
@@ -32,11 +24,7 @@ class TestReferenceDataLmdbConfig {
     }
 
     @Test
-    void testJsonDeserialisation() throws IOException {
-
-        ObjectMapper objectMapper = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-
+    void testJsonDeserialisation() {
         final String json = """
                 {
                     "localDir":"my_dir",
@@ -47,7 +35,7 @@ class TestReferenceDataLmdbConfig {
                 }
                  """;
 
-        final ReferenceDataLmdbConfig lmdbConfig = objectMapper.readValue(json, ReferenceDataLmdbConfig.class);
+        final ReferenceDataLmdbConfig lmdbConfig = JsonUtil.readValue(json, ReferenceDataLmdbConfig.class);
 
         Assertions.assertThat(lmdbConfig.isReaderBlockedByWriter())
                 .isFalse();

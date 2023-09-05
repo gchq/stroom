@@ -18,15 +18,10 @@ package stroom.activity.impl.db;
 
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 class ActivitySerialiser {
 
@@ -38,12 +33,11 @@ class ActivitySerialiser {
                 if (activity.getDetails() == null) {
                     activity.setJson(null);
                 } else {
-                    final ObjectMapper mapper = createMapper(true);
-                    final String json = mapper.writeValueAsString(activity.getDetails());
+                    final String json = JsonUtil.writeValueAsString(activity.getDetails());
                     activity.setJson(json);
                 }
             }
-        } catch (final IOException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return activity;
@@ -55,23 +49,13 @@ class ActivitySerialiser {
                 if (activity.getJson() == null) {
                     activity.setDetails(null);
                 } else {
-                    final ObjectMapper mapper = createMapper(true);
-                    final ActivityDetails data = mapper.readValue(activity.getJson(), ActivityDetails.class);
+                    final ActivityDetails data = JsonUtil.readValue(activity.getJson(), ActivityDetails.class);
                     activity.setDetails(data);
                 }
             }
-        } catch (final IOException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return activity;
-    }
-
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 }

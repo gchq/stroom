@@ -4,6 +4,7 @@ import stroom.content.ContentPack;
 import stroom.content.GitRepo;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,7 +96,7 @@ public class ContentPackZipDownloader {
         }
 
         try {
-            final ObjectMapper mapper = new ObjectMapper();
+            final ObjectMapper mapper = JsonUtil.getMapper();
             final ContentPackZipCollection contentPacks = mapper.readValue(
                     contentPacksDefinition.toFile(),
                     ContentPackZipCollection.class);

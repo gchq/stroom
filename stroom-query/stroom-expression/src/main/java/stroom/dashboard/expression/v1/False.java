@@ -34,4 +34,9 @@ class False extends AbstractStaticFunction {
     public False(final String name) {
         super(name, GEN);
     }
+
+    @Override
+    public Type getCommonReturnType() {
+        return Type.BOOLEAN;
+    }
 }

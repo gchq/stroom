@@ -17,14 +17,9 @@
 package stroom.dashboard.impl;
 
 import stroom.query.api.v2.SearchRequest;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,27 +29,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSearchRequestSerialisation {
 
-    private static ObjectMapper getMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for
-        // abstract classes
-//        mapper.enableDefaultTyping();
-        return mapper;
-    }
-
     @Test
-    void testJsonSearchRequestSerialisation() throws IOException {
+    void testJsonSearchRequestSerialisation() {
         // Given
         SearchRequest searchRequest = SearchRequestTestData.apiSearchRequest();
-        ObjectMapper objectMapper = getMapper(true);
 
         // When
-        String serialisedSearchRequest = objectMapper.writeValueAsString(searchRequest);
-        SearchRequest deserialisedSearchRequest = objectMapper.readValue(serialisedSearchRequest, SearchRequest.class);
-        String reSerialisedSearchRequest = objectMapper.writeValueAsString(deserialisedSearchRequest);
+        String serialisedSearchRequest = JsonUtil.writeValueAsString(searchRequest);
+        SearchRequest deserialisedSearchRequest = JsonUtil.readValue(serialisedSearchRequest, SearchRequest.class);
+        String reSerialisedSearchRequest = JsonUtil.writeValueAsString(deserialisedSearchRequest);
 
         // Then
         assertThat(searchRequest).isEqualTo(deserialisedSearchRequest);

@@ -31,12 +31,15 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.QLVisResult;
+import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpDataSupplier;
+import stroom.query.client.view.QueryResultTabsView;
 import stroom.query.shared.QueryHelpItemsRequest;
 import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
 import stroom.query.shared.QueryHelpItemsResult;
@@ -48,12 +51,14 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.view.client.presenter.IndexLoader;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -71,6 +76,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
@@ -84,20 +90,25 @@ public class QueryEditPresenter
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
     private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
+    private static final TabData TABLE = new TabDataImpl("Table");
+    private static final TabData VISUALISATION = new TabDataImpl("Visualisation");
 
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
-    private final QueryResultTablePresenter tablePresenter;
+    private final QueryResultTableSplitPresenter queryResultPresenter;
     private final IndexLoader indexLoader;
-    private final TextPresenter textPresenter;
     private final Views views;
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
     private final QueryModel queryModel;
-    private final ThinSplitLayoutPanel splitLayoutPanel;
     private final RestFactory restFactory;
+    private final QueryResultTabsView linkTabsLayoutView;
+
+    private final Provider<QueryResultVisPresenter> visPresenterProvider;
+
+    private QueryResultVisPresenter currentVisPresenter;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
@@ -105,28 +116,99 @@ public class QueryEditPresenter
                               final QueryHelpPresenter queryHelpPresenter,
                               final QueryToolbarPresenter queryToolbarPresenter,
                               final EditorPresenter editorPresenter,
-                              final QueryResultTablePresenter tablePresenter,
+                              final QueryResultTableSplitPresenter queryResultPresenter,
+                              final Provider<QueryResultVisPresenter> visPresenterProvider,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,
-                              final TextPresenter textPresenter,
                               final Views views,
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
-                              final ResultStoreModel resultStoreModel) {
+                              final ResultStoreModel resultStoreModel,
+                              final QueryResultTabsView linkTabsLayoutView) {
         super(eventBus, view);
         this.queryHelpPresenter = queryHelpPresenter;
         this.queryToolbarPresenter = queryToolbarPresenter;
-        this.tablePresenter = tablePresenter;
+        this.queryResultPresenter = queryResultPresenter;
+        this.visPresenterProvider = visPresenterProvider;
         this.indexLoader = indexLoader;
-        this.textPresenter = textPresenter;
         this.views = views;
         this.restFactory = restFactory;
+        this.linkTabsLayoutView = linkTabsLayoutView;
+
+
+        final ResultConsumer resultConsumer = new ResultConsumer() {
+            boolean start;
+            boolean hasData;
+
+            @Override
+            public OffsetRange getRequestedRange() {
+                return null;
+            }
+
+            @Override
+            public Set<String> getOpenGroups() {
+                return null;
+            }
+
+            @Override
+            public void reset() {
+                hasData = false;
+            }
+
+            @Override
+            public void startSearch() {
+                hasData = false;
+            }
+
+            @Override
+            public void endSearch() {
+                if (currentVisPresenter != null) {
+                    currentVisPresenter.endSearch();
+                }
+                start = false;
+                if (!hasData) {
+                    destroyCurrentVis();
+                    setVisHidden(true);
+                }
+            }
+
+            @Override
+            public void setData(final Result componentResult) {
+                if (componentResult != null) {
+                    if (!start) {
+                        createNewVis();
+                        currentVisPresenter.startSearch();
+                        currentVisPresenter.reset();
+                        start = true;
+                    }
+
+                    final QLVisResult visResult = (QLVisResult) componentResult;
+                    if (visResult.getJsonData() != null && visResult.getJsonData().length() > 0) {
+                        hasData = true;
+                        setVisHidden(false);
+                    }
+
+                    currentVisPresenter.setData(componentResult);
+                } else {
+                    if (start) {
+                        currentVisPresenter.clear();
+                        currentVisPresenter.endSearch();
+                        start = false;
+                        hasData = false;
+                        destroyCurrentVis();
+                        setVisHidden(true);
+                    }
+                }
+            }
+        };
+
 
         queryModel = new QueryModel(
                 restFactory,
-                indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel,
-                tablePresenter);
+                queryResultPresenter,
+                resultConsumer);
+        queryResultPresenter.setQueryModel(queryModel);
         queryModel.addSearchErrorListener(queryToolbarPresenter);
         queryModel.addTokenErrorListener(e -> {
             final Indicators indicators = new Indicators();
@@ -154,12 +236,47 @@ public class QueryEditPresenter
         this.editorPresenter.getWidget().addAttachHandler(event ->
                 this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider()));
 
-        splitLayoutPanel = new ThinSplitLayoutPanel();
-        splitLayoutPanel.addStyleName("max");
-
         view.setQueryHelp(queryHelpPresenter.getView());
         view.setQueryEditor(this.editorPresenter.getView());
-        view.setTable(tablePresenter.getWidget());
+        view.setResultView(linkTabsLayoutView);
+
+        linkTabsLayoutView.getTabBar().addTab(TABLE);
+        linkTabsLayoutView.getTabBar().addTab(VISUALISATION);
+        setVisHidden(true);
+    }
+
+    private void focus() {
+        Scheduler.get().scheduleFixedDelay(() -> {
+            editorPresenter.focus();
+            return false;
+        }, 500);
+    }
+
+    private void setVisHidden(final boolean state) {
+        final boolean currentState = linkTabsLayoutView.getTabBar().isTabHidden(VISUALISATION);
+        if (currentState != state) {
+            linkTabsLayoutView.getTabBar().setTabHidden(VISUALISATION, state);
+            if (state) {
+                selectTab(TABLE);
+            } else {
+                selectTab(VISUALISATION);
+            }
+        }
+    }
+
+    private void createNewVis() {
+        destroyCurrentVis();
+        currentVisPresenter = visPresenterProvider.get();
+        if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
+            linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
+        }
+    }
+
+    private void destroyCurrentVis() {
+        if (currentVisPresenter != null) {
+            currentVisPresenter.onRemove();
+            currentVisPresenter = null;
+        }
     }
 
     @Override
@@ -186,10 +303,6 @@ public class QueryEditPresenter
             }
         }, KeyDownEvent.getType()));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
-        registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
-        registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
-        registerHandler(tablePresenter.getSelectionModel().addSelectionHandler(event ->
-                onSelection(tablePresenter.getSelectionModel().getSelected())));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> startStop()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
         queryHelpPresenter.linkToEditor(editorPresenter);
@@ -198,37 +311,19 @@ public class QueryEditPresenter
             // If a user is even attempting to close the browser or browser tab then destroy the query.
             queryModel.reset(DestroyReason.WINDOW_CLOSE);
         }));
+        registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
+                selectTab(e.getSelectedItem())));
 
         setupQueryHelpDataSupplier();
     }
 
-    private void onSelection(final TableRow tableRow) {
-        if (tableRow == null) {
-            getView().setTable(tablePresenter.getWidget());
-        } else {
-            final String streamId = tableRow.getText("StreamId");
-            final String eventId = tableRow.getText("EventId");
-            if (streamId != null && eventId != null && streamId.length() > 0 && eventId.length() > 0) {
-                try {
-                    final long strmId = Long.valueOf(streamId);
-                    final long evtId = Long.valueOf(eventId);
-                    final SourceLocation sourceLocation = SourceLocation
-                            .builder(strmId)
-                            .withPartIndex(0L)
-                            .withRecordIndex(evtId - 1)
-                            .build();
-                    textPresenter.show(sourceLocation);
-                    final double size = Math.max(100, getWidget().getElement().getOffsetWidth() / 2D);
-                    splitLayoutPanel.addEast(textPresenter.getWidget(), size);
-                    splitLayoutPanel.add(tablePresenter.getWidget());
-                    getView().setTable(splitLayoutPanel);
-
-                } catch (final RuntimeException e) {
-                    getView().setTable(tablePresenter.getWidget());
-                }
-            } else {
-                getView().setTable(tablePresenter.getWidget());
-            }
+    private void selectTab(final TabData tabData) {
+        if (TABLE.equals(tabData)) {
+            linkTabsLayoutView.getTabBar().selectTab(tabData);
+            linkTabsLayoutView.getLayerContainer().show(queryResultPresenter);
+        } else if (VISUALISATION.equals(tabData)) {
+            linkTabsLayoutView.getTabBar().selectTab(tabData);
+            linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
     }
 
@@ -245,9 +340,8 @@ public class QueryEditPresenter
 
             @Override
             public void registerChangeHandler(final Consumer<DataSourceFieldsMap> onChange) {
-                registerHandler(indexLoader.addChangeDataHandler(e -> {
-                    onChange.accept(indexLoader.getDataSourceFieldsMap());
-                }));
+                registerHandler(indexLoader.addChangeDataHandler(e ->
+                        onChange.accept(indexLoader.getDataSourceFieldsMap())));
             }
 
             @Override
@@ -265,9 +359,8 @@ public class QueryEditPresenter
 
                 final Rest<QueryHelpItemsResult> rest = restFactory.create();
                 rest
-                        .onSuccess(result -> {
-                            GwtNullSafe.consume(result, resultConsumer);
-                        })
+                        .onSuccess(result ->
+                                GwtNullSafe.consume(result, resultConsumer))
                         .onFailure(throwable -> AlertEvent.fireError(
                                 QueryEditPresenter.this,
                                 throwable.getMessage(),
@@ -315,6 +408,7 @@ public class QueryEditPresenter
 
     public void onClose() {
         queryModel.reset(DestroyReason.TAB_CLOSE);
+        destroyCurrentVis();
     }
 
     private void startStop() {
@@ -353,7 +447,7 @@ public class QueryEditPresenter
 
 
         // Clear the table selection and any markers.
-        tablePresenter.getSelectionModel().clear();
+        queryResultPresenter.clear();
         editorPresenter.setMarkers(Collections.emptyList());
         editorPresenter.setIndicators(new IndicatorLines(new Indicators()));
 
@@ -374,7 +468,7 @@ public class QueryEditPresenter
     public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {
         this.readOnly = readOnly;
 
-        queryModel.init(docRef.getUuid(), "query");
+        queryModel.init(docRef.getUuid());
         if (query != null) {
             reading = true;
             if (editorPresenter.getText().length() == 0 || !editorPresenter.getText().equals(query)) {
@@ -390,6 +484,7 @@ public class QueryEditPresenter
         editorPresenter.getFormatAction().setAvailable(!readOnly);
 
         dirty = false;
+        focus();
     }
 
     public String getQuery() {
@@ -415,6 +510,6 @@ public class QueryEditPresenter
 
         void setQueryEditor(View view);
 
-        void setTable(Widget widget);
+        void setResultView(View view);
     }
 }

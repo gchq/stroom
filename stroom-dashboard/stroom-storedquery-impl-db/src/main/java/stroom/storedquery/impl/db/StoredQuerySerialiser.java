@@ -18,15 +18,10 @@ package stroom.storedquery.impl.db;
 
 import stroom.dashboard.shared.StoredQuery;
 import stroom.query.api.v2.Query;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 public class StoredQuerySerialiser {
 
@@ -38,12 +33,11 @@ public class StoredQuerySerialiser {
                 if (storedQuery.getQuery() == null) {
                     storedQuery.setData(null);
                 } else {
-                    final ObjectMapper mapper = createMapper(true);
-                    final String json = mapper.writeValueAsString(storedQuery.getQuery());
+                    final String json = JsonUtil.writeValueAsString(storedQuery.getQuery());
                     storedQuery.setData(json);
                 }
             }
-        } catch (final IOException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return storedQuery;
@@ -55,24 +49,13 @@ public class StoredQuerySerialiser {
                 if (storedQuery.getData() == null) {
                     storedQuery.setQuery(null);
                 } else {
-                    final ObjectMapper mapper = createMapper(true);
-                    final Query data = mapper.readValue(storedQuery.getData(), Query.class);
+                    final Query data = JsonUtil.readValue(storedQuery.getData(), Query.class);
                     storedQuery.setQuery(data);
                 }
             }
-        } catch (final IOException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return storedQuery;
-    }
-
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 }

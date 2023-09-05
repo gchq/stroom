@@ -9,9 +9,9 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,8 +102,7 @@ public class SearchDebugUtil {
         if (enabled && ((writeExpected && !actual) || (writeActual && actual))) {
             final String suffix = getSuffix(actual);
             try {
-                final ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+                final ObjectMapper mapper = JsonUtil.getMapper();
                 try (final Writer writer = new OutputStreamWriter(
                         Files.newOutputStream(dir.resolve("searchRequest" + suffix)))) {
                     mapper.writeValue(writer, searchRequest);
@@ -118,8 +117,7 @@ public class SearchDebugUtil {
         if (enabled && ((writeExpected && !actual) || (writeActual && actual))) {
             final String suffix = getSuffix(actual);
             try {
-                final ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+                final ObjectMapper mapper = JsonUtil.getMapper();
 
                 try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(
                         dir.resolve("searchResponse" + suffix)))) {

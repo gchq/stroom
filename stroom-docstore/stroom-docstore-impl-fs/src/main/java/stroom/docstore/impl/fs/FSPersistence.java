@@ -5,10 +5,10 @@ import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.Doc;
 import stroom.util.io.PathCreator;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.string.EncodingUtil;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class FSPersistence implements Persistence, Clearable {
             throw new UncheckedIOException(e);
         }
 
-        objectMapper = createMapper();
+        objectMapper = JsonUtil.getNoIndentMapper();
     }
 
 
@@ -223,12 +223,6 @@ public class FSPersistence implements Persistence, Clearable {
         }
 
         return Optional.empty();
-    }
-
-    private ObjectMapper createMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
     }
 
     private static class GenericDoc extends Doc {

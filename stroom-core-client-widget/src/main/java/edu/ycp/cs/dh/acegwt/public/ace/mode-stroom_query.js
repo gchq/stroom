@@ -16,7 +16,7 @@ var StroomQueryHighlightRules = function() {
 
     var keywords = (
         "from|select|where|filter|eval|and|or|not|sort|group|by|order|limit|having|as|" +
-        "when|desc|asc|window"
+        "when|desc|asc|window|vis"
     );
 
 //    var builtinConstants = (

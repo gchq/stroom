@@ -60,6 +60,11 @@ class Random extends AbstractFunction {
         return false;
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.DOUBLE;
+    }
+
     private static final class Gen extends AbstractNoChildGenerator {
 
         private final RandomValReference randomValReference;

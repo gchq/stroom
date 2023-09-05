@@ -40,7 +40,8 @@ import java.util.Objects;
         "maxResults",
         "showDetail",
         "conditionalFormattingRules",
-        "modelVersion"})
+        "modelVersion",
+        "visSettings"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "An object to describe how the query results should be returned, including which fields " +
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
@@ -103,6 +104,9 @@ public final class TableSettings {
     @Deprecated
     private String modelVersion;
 
+    @JsonProperty("visSettings")
+    private final QLVisSettings visSettings;
+
     public TableSettings(
             final String queryId,
             final List<Field> fields,
@@ -113,7 +117,8 @@ public final class TableSettings {
             final DocRef extractionPipeline,
             final List<Long> maxResults,
             final Boolean showDetail,
-            final List<ConditionalFormattingRule> conditionalFormattingRules) {
+            final List<ConditionalFormattingRule> conditionalFormattingRules,
+            final QLVisSettings visSettings) {
         this.queryId = queryId;
         this.fields = fields;
         this.window = window;
@@ -124,6 +129,7 @@ public final class TableSettings {
         this.maxResults = maxResults;
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
+        this.visSettings = visSettings;
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -138,8 +144,10 @@ public final class TableSettings {
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Long> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
-            @JsonProperty("modelVersion") final String modelVersion) { // deprecated modelVersion.
+            @JsonProperty("conditionalFormattingRules")
+            final List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("modelVersion") final String modelVersion, // deprecated modelVersion.
+            @JsonProperty("visSettings") final QLVisSettings visSettings) {
         this.queryId = queryId;
         this.fields = fields;
         this.window = window;
@@ -151,6 +159,7 @@ public final class TableSettings {
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
+        this.visSettings = visSettings;
     }
 
     public String getQueryId() {
@@ -207,6 +216,10 @@ public final class TableSettings {
         return conditionalFormattingRules;
     }
 
+    public QLVisSettings getVisSettings() {
+        return visSettings;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -224,7 +237,8 @@ public final class TableSettings {
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
                 Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
+                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+                Objects.equals(visSettings, that.visSettings);
     }
 
     @Override
@@ -237,7 +251,8 @@ public final class TableSettings {
                 extractionPipeline,
                 maxResults,
                 showDetail,
-                conditionalFormattingRules);
+                conditionalFormattingRules,
+                visSettings);
     }
 
     @Override
@@ -252,6 +267,7 @@ public final class TableSettings {
                 ", maxResults=" + maxResults +
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
+                ", visSettings=" + visSettings +
                 '}';
     }
 
@@ -278,6 +294,7 @@ public final class TableSettings {
         private List<Long> maxResults;
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
+        private QLVisSettings visSettings;
 
         private Builder() {
         }
@@ -299,6 +316,7 @@ public final class TableSettings {
             this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
                     ? null
                     : new ArrayList<>(tableSettings.getConditionalFormattingRules());
+            this.visSettings = tableSettings.visSettings;
         }
 
         /**
@@ -433,6 +451,11 @@ public final class TableSettings {
             return this;
         }
 
+        public Builder visSettings(final QLVisSettings visSettings) {
+            this.visSettings = visSettings;
+            return this;
+        }
+
         public TableSettings build() {
             return new TableSettings(
                     queryId,
@@ -444,7 +467,8 @@ public final class TableSettings {
                     extractionPipeline,
                     maxResults,
                     showDetail,
-                    conditionalFormattingRules);
+                    conditionalFormattingRules,
+                    visSettings);
         }
     }
 }

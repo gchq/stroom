@@ -1,21 +1,28 @@
 package stroom.query.language;
 
+import stroom.dashboard.expression.v1.Expression;
+import stroom.dashboard.expression.v1.ExpressionParser;
+import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
+import stroom.query.api.v2.Format;
 import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,23 +34,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class SearchRequestBuilder {
 
-    public static final String COMPONENT_ID = "table";
+    public static final String TABLE_COMPONENT_ID = "table";
+    public static final String VIS_COMPONENT_ID = "vis";
 
-    private SearchRequestBuilder() {
+    private final VisualisationTokenConsumer visualisationTokenConsumer;
+
+    @Inject
+    public SearchRequestBuilder(final VisualisationTokenConsumer visualisationTokenConsumer) {
+        this.visualisationTokenConsumer = visualisationTokenConsumer;
     }
 
-    public static SearchRequest create(final String string, final SearchRequest in) {
-        return new SearchRequestBuilder().doCreate(string, in);
-    }
-
-    public static void extractDataSourceNameOnly(final String string, final Consumer<String> consumer) {
-        new SearchRequestBuilder().doExtractDataSourceNameOnly(string, consumer);
-    }
-
-    public void doExtractDataSourceNameOnly(final String string, final Consumer<String> consumer) {
+    public void extractDataSourceNameOnly(final String string, final Consumer<String> consumer) {
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
         if (tokens.size() == 0) {
@@ -60,7 +65,7 @@ public class SearchRequestBuilder {
         addDataSourceName(childTokens, new HashSet<>(), consumer, true);
     }
 
-    private SearchRequest doCreate(final String string, final SearchRequest in) {
+    public SearchRequest create(final String string, final SearchRequest in) {
         if (in == null) {
             throw new NullPointerException("Null sample request");
         }
@@ -386,13 +391,19 @@ public class SearchRequestBuilder {
         int groupDepth = 0;
 
         final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
+        TableSettings visTableSettings = null;
 
         List<AbstractToken> remaining = new LinkedList<>(tokens);
         while (remaining.size() > 0) {
             final AbstractToken token = remaining.get(0);
 
             // Check we have seen FROM and haven't already seen the SELECT.
-            checkConsumed(token, consumedTokens, new TokenType[]{TokenType.FROM}, new TokenType[]{TokenType.SELECT});
+            if (!TokenType.EVAL.equals(token.getTokenType())) {
+                checkConsumed(token,
+                        consumedTokens,
+                        new TokenType[]{TokenType.FROM},
+                        new TokenType[]{token.getTokenType()});
+            }
             consumedTokens.add(token.getTokenType());
 
             if (token instanceof final KeywordGroup keywordGroup) {
@@ -449,6 +460,12 @@ public class SearchRequestBuilder {
                                 tableSettingsBuilder);
                         remaining.remove(0);
                     }
+                    case VIS -> {
+                        final TableSettings parentTableSettings = tableSettingsBuilder.build();
+                        visTableSettings = visualisationTokenConsumer
+                                .processVis(keywordGroup, parentTableSettings);
+                        remaining.remove(0);
+                    }
                 }
             } else {
                 break;
@@ -462,14 +479,28 @@ public class SearchRequestBuilder {
 //                .showDetail(true)
                 .build();
 
-        final ResultRequest tableResultRequest = new ResultRequest(COMPONENT_ID,
+        final ResultRequest tableResultRequest = new ResultRequest(TABLE_COMPONENT_ID,
                 Collections.singletonList(tableSettings),
                 null,
                 null,
                 null,
-                ResultRequest.ResultStyle.TABLE,
+                ResultStyle.TABLE,
                 Fetch.ALL);
         resultRequests.add(tableResultRequest);
+
+        if (visTableSettings != null) {
+            final List<TableSettings> tableSettingsList = new ArrayList<>();
+            tableSettingsList.add(tableSettings);
+            tableSettingsList.add(visTableSettings);
+            final ResultRequest qlVisResultRequest = new ResultRequest(VIS_COMPONENT_ID,
+                    tableSettingsList,
+                    null,
+                    null,
+                    null,
+                    ResultStyle.QL_VIS,
+                    Fetch.ALL);
+            resultRequests.add(qlVisResultRequest);
+        }
 
         return remaining;
     }
@@ -668,6 +699,24 @@ public class SearchRequestBuilder {
             expression = ParamSubstituteUtil.makeParam(fieldName);
         }
 
+        Format format = Format.GENERAL;
+        try {
+            ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
+            final Expression exp = expressionParser.parse(new FieldIndex(), expression);
+            if (exp != null) {
+                switch (exp.getCommonReturnType()) {
+                    case DATE -> format = Format.DATE_TIME;
+                    case LONG -> format = Format.NUMBER;
+                    case INTEGER -> format = Format.NUMBER;
+                    case DOUBLE -> format = Format.NUMBER;
+                    case FLOAT -> format = Format.NUMBER;
+                    default -> format = Format.GENERAL;
+                }
+            }
+        } catch (final ParseException e) {
+            // Ignore.
+        }
+
         final Field field = Field.builder()
                 .id(fieldName)
                 .name(columnName != null
@@ -677,6 +726,7 @@ public class SearchRequestBuilder {
                 .sort(sortMap.get(fieldName))
                 .group(groupMap.get(fieldName))
                 .filter(filterMap.get(fieldName))
+                .format(format)
                 .build();
         tableSettingsBuilder.addFields(field);
     }

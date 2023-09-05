@@ -60,6 +60,11 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         return functions.length == 1;
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.DOUBLE;
+    }
+
     private static final class AggregateGen extends AbstractSingleChildGenerator {
 
         private final Calculator calculator;

@@ -18,11 +18,8 @@
 
 package stroom.analytics.impl;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import stroom.util.json.JsonUtil;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.simplejavamail.email.Email;
@@ -43,12 +40,10 @@ class EmailSender {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailSender.class);
 
     private final Provider<AnalyticsConfig> analyticsConfigProvider;
-    private final ObjectMapper objectMapper;
 
     @Inject
     EmailSender(final Provider<AnalyticsConfig> analyticsConfigProvider) {
         this.analyticsConfigProvider = analyticsConfigProvider;
-        this.objectMapper = createMapper(true);
     }
 
     public void send(final String name, final String emailAddress, final Detection detection) {
@@ -81,23 +76,14 @@ class EmailSender {
         email.setSubject(detection.getDetectorName());
 
         try {
-            final String text = objectMapper.writeValueAsString(detection);
+            final String text = JsonUtil.writeValueAsString(detection);
             email.setText(text);
-        } catch (final JsonProcessingException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
         LOGGER.info("Sending reset email to user {} at {}:{}",
                 serverConfig.getHost(), serverConfig.getPort(), serverConfig.getUsername());
         new Mailer(serverConfig, transportStrategy).sendMail(email);
-    }
-
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 }

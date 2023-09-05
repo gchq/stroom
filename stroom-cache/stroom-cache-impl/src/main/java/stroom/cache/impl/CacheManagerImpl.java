@@ -30,8 +30,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -169,12 +167,11 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                         stream = stream
                                 .sorted();
                     }
-                    final ObjectMapper objectMapper = JsonUtil.getMapper();
                     keyList = stream
                             .map(key -> {
                                 try {
                                     // Try and serialise it
-                                    objectMapper.writeValueAsString(key);
+                                    JsonUtil.writeValueAsString(key);
                                 } catch (Exception e) {
                                     return "Unable to serialise Key as JSON, dumping as string: "
                                             + key.toString().substring(0, 1_000);

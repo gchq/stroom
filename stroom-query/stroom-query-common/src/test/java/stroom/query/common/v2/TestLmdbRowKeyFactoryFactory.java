@@ -2,7 +2,9 @@ package stroom.query.common.v2;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatGroupedLmdbRowKeyFactory;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatTimeGroupedLmdbRowKeyFactory;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatTimeUngroupedLmdbRowKeyFactory;
@@ -17,35 +19,47 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 public class TestLmdbRowKeyFactoryFactory {
 
     @Test
-    void testUniqueFlatGroupedLmdbRowKeyFactory() {
-        testUnique(new FlatGroupedLmdbRowKeyFactory());
+    void testFlatGroupedLmdbRowKeyFactory() {
+        final FlatGroupedLmdbRowKeyFactory keyFactory = new FlatGroupedLmdbRowKeyFactory();
+        testUnique(keyFactory);
+        testNonTimeGroupedChildKeyRange(keyFactory);
     }
 
     @Test
-    void testUniqueFlatUngroupedLmdbRowKeyFactory() {
-        testUnique(new FlatUngroupedLmdbRowKeyFactory(getUniqueIdProvider()));
+    void testFlatUngroupedLmdbRowKeyFactory() {
+        final FlatUngroupedLmdbRowKeyFactory keyFactory = new FlatUngroupedLmdbRowKeyFactory(getUniqueIdProvider());
+        testUnique(keyFactory);
+        testNonTimeGroupedChildKeyRange(keyFactory);
     }
 
     @Test
-    void testUniqueFlatTimeGroupedLmdbRowKeyFactory() {
-        testUnique(new FlatTimeGroupedLmdbRowKeyFactory());
+    void testFlatTimeGroupedLmdbRowKeyFactory() {
+        final FlatTimeGroupedLmdbRowKeyFactory keyFactory = new FlatTimeGroupedLmdbRowKeyFactory();
+        testUnique(keyFactory);
+        testTimeGroupedChildKeyRange(keyFactory);
     }
 
     @Test
-    void testUniqueFlatTimeUngroupedLmdbRowKeyFactory() {
-        testUnique(new FlatTimeUngroupedLmdbRowKeyFactory(getUniqueIdProvider()));
+    void testFlatTimeUngroupedLmdbRowKeyFactory() {
+        final FlatTimeUngroupedLmdbRowKeyFactory keyFactory =
+                new FlatTimeUngroupedLmdbRowKeyFactory(getUniqueIdProvider());
+        testUnique(keyFactory);
+        testTimeGroupedChildKeyRange(keyFactory);
     }
 
     @Test
-    void testUniqueNestedGroupedLmdbRowKeyFactory() {
+    void testNestedGroupedLmdbRowKeyFactory() {
         final LmdbRowKeyFactory keyFactory = new NestedGroupedLmdbRowKeyFactory(
                 getUniqueIdProvider(),
                 getCompiledDepths(),
                 new ValHasher(new OutputFactoryImpl(new SearchResultStoreConfig()), new ErrorConsumerImpl()));
         testUnique(keyFactory);
+        testNonTimeGroupedChildKeyRange(keyFactory);
 
         final ByteBuffer parentKey = keyFactory
                 .create(0, null, 100L, 100L);
@@ -58,12 +72,13 @@ public class TestLmdbRowKeyFactoryFactory {
     }
 
     @Test
-    void testUniqueNestedTimeGroupedLmdbRowKeyFactory() {
+    void testNestedTimeGroupedLmdbRowKeyFactory() {
         final LmdbRowKeyFactory keyFactory = new NestedTimeGroupedLmdbRowKeyFactory(
                 getUniqueIdProvider(),
                 getCompiledDepths(),
                 new ValHasher(new OutputFactoryImpl(new SearchResultStoreConfig()), new ErrorConsumerImpl()));
         testUnique(keyFactory);
+        testTimeGroupedChildKeyRange(keyFactory);
 
         final ByteBuffer parentKey = keyFactory
                 .create(0, null, 100L, 100L);
@@ -74,6 +89,7 @@ public class TestLmdbRowKeyFactoryFactory {
         keyFactory.makeUnique(lmdbKV);
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
     }
+
 
     private void testUnique(final LmdbRowKeyFactory keyFactory) {
         final ByteBuffer key = keyFactory
@@ -82,6 +98,28 @@ public class TestLmdbRowKeyFactoryFactory {
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
         keyFactory.makeUnique(lmdbKV);
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
+    }
+
+    private void testNonTimeGroupedChildKeyRange(final LmdbRowKeyFactory keyFactory) {
+        keyFactory.createChildKeyRange(Key.ROOT_KEY);
+        assertThatThrownBy(() ->
+                keyFactory.createChildKeyRange(Key.ROOT_KEY, new TimeFilter(0, 10)))
+                .isInstanceOf(RuntimeException.class);
+
+        final Key key = new Key(10, List.of(new GroupKeyPart(Val.of("one", "two"))));
+        keyFactory.createChildKeyRange(key);
+        assertThatThrownBy(() ->
+                keyFactory.createChildKeyRange(key, new TimeFilter(0, 10)))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    private void testTimeGroupedChildKeyRange(final LmdbRowKeyFactory keyFactory) {
+        keyFactory.createChildKeyRange(Key.ROOT_KEY);
+        keyFactory.createChildKeyRange(Key.ROOT_KEY, new TimeFilter(0, 10));
+
+        final Key key = new Key(10, List.of(new GroupKeyPart(Val.of("one", "two"))));
+        keyFactory.createChildKeyRange(key);
+        keyFactory.createChildKeyRange(key, new TimeFilter(0, 10));
     }
 
     private UniqueIdProvider getUniqueIdProvider() {

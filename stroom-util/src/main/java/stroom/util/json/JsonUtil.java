@@ -28,7 +28,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,12 +46,23 @@ public final class JsonUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtil.class);
 
+    private static final ObjectMapper OBJECT_MAPPER = createMapper(true);
+    private static final ObjectMapper NO_INDENT_MAPPER = createMapper(false);
+
     public static String writeValueAsString(final Object object) {
+        return writeValueAsString(object, true);
+    }
+
+    public static String writeValueAsString(final Object object, final boolean indent) {
         String json = null;
 
         if (object != null) {
             try {
-                json = getMapper().writeValueAsString(object);
+                if (indent) {
+                    json = getMapper().writeValueAsString(object);
+                } else {
+                    json = getNoIndentMapper().writeValueAsString(object);
+                }
             } catch (final JsonProcessingException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -78,14 +88,34 @@ public final class JsonUtil {
         }
     }
 
+    public static <T> T readValue(String content, Class<T> valueType) {
+        Preconditions.checkNotNull(content);
+        Preconditions.checkNotNull(valueType);
+        try {
+            return getMapper().readValue(content, valueType);
+        } catch (final JsonProcessingException e) {
+            throw new RuntimeException(String.format("Error deserialising object %s",
+                    content), e);
+        }
+    }
+
     public static ObjectMapper getMapper() {
-        final SimpleModule module = new SimpleModule();
-        module.addSerializer(Double.class, new MyDoubleSerialiser());
+        return OBJECT_MAPPER;
+    }
+
+    public static ObjectMapper getNoIndentMapper() {
+        return NO_INDENT_MAPPER;
+    }
+
+    private static ObjectMapper createMapper(final boolean indent) {
+//        final SimpleModule module = new SimpleModule();
+//        module.addSerializer(Double.class, new MyDoubleSerialiser());
 
         final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(module);
+//        mapper.registerModule(module);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(Include.NON_NULL);
         return mapper;
     }
@@ -96,6 +126,7 @@ public final class JsonUtil {
      * Avoids having to parse the whole object if you only want to get a few keys.
      * Does not descend into child objects/arrays.
      * If the root is an array, returns an empty map.
+     *
      * @param json The json to parse.
      * @param keys The fields to find.
      * @return The entries with keys matching keys
@@ -114,8 +145,9 @@ public final class JsonUtil {
      * Avoids having to parse the whole object if you only want to get one key.
      * Does not descend into child objects/arrays.
      * If the root is an array, returns an empty map.
+     *
      * @param json The json to parse.
-     * @param key The field to find the value for.
+     * @param key  The field to find the value for.
      * @return The value for the supplied key.
      */
     public static Optional<String> getValue(final String json,
@@ -133,6 +165,7 @@ public final class JsonUtil {
      * Avoids having to parse the whole object if you only want to get a few keys.
      * Does not descend into child objects/arrays.
      * If the root is an array, returns an empty map.
+     *
      * @param json The json to parse.
      * @param keys The fields to find.
      * @return The entries with keys matching keys

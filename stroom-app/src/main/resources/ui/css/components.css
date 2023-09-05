@@ -265,13 +265,17 @@
 	position: absolute;
 	left: 0;
 	top: 0;
-	cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.5s linear;
     -webkit-transition: opacity 0.5s linear;
     -moz-transition: opacity 0.5s linear;
     -o-transition: opacity 0.5s linear;
     color: var(--link-tab__text-color);
+}
+
+.multiple-tabs .linkTab,
+.dashboard__designMode .linkTab{
+    cursor: pointer;
 }
 
 .linkTab-selected {
@@ -282,13 +286,15 @@
     opacity: 1;
 }
 
-.linkTab-keyboardSelected:focus {
+.multiple-tabs .linkTab-keyboardSelected:focus,
+.dashboard__designMode .linkTab-keyboardSelected:focus {
     opacity: 1;
     color: var(--link-tab__text-color--focussed);
     text-decoration: underline;
 }
 
-.linkTab:hover {
+.multiple-tabs .linkTab:hover,
+.dashboard__designMode .linkTab:hover {
     opacity: 1;
     text-decoration: underline;
 }
@@ -332,7 +338,9 @@
 	-webkit-transition: opacity .2s;
 	-moz-transition: opacity .2s;
 	-o-transition: opacity .2s;
+}
 
+.multiple-tabs .linkTab .linkTab-hotspot {
 	cursor: pointer;
 }
 

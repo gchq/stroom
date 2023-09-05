@@ -33,4 +33,9 @@ class True extends AbstractStaticFunction {
     public True(final String name) {
         super(name, GEN);
     }
+
+    @Override
+    public Type getCommonReturnType() {
+        return Type.BOOLEAN;
+    }
 }

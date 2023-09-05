@@ -45,6 +45,11 @@ class ToDouble extends AbstractCast {
         return CAST;
     }
 
+    @Override
+    public Type getCommonReturnType() {
+        return Type.DOUBLE;
+    }
+
     private static class Cast extends AbstractCaster {
 
         @Override

@@ -73,4 +73,6 @@ public interface Function extends Param {
      * @return True is the function selects a child row.
      */
     boolean requiresChildData();
+
+    Type getCommonReturnType();
 }

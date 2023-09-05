@@ -4,14 +4,10 @@ import stroom.analytics.impl.AnalyticTrackerDao;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.AnalyticTrackerData;
 import stroom.db.util.JooqUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.jooq.Record;
 
 import java.util.Optional;
@@ -26,15 +22,10 @@ public class AnalyticTrackerDaoImpl implements AnalyticTrackerDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticTrackerDaoImpl.class);
 
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
-    private final ObjectMapper mapper;
 
     @Inject
     public AnalyticTrackerDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider) {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
-        mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
     }
 
     @Override
@@ -89,8 +80,8 @@ public class AnalyticTrackerDaoImpl implements AnalyticTrackerDao {
     private String serialise(final AnalyticTracker tracker) {
         if (tracker.getAnalyticTrackerData() != null) {
             try {
-                return mapper.writeValueAsString(tracker.getAnalyticTrackerData());
-            } catch (final JsonProcessingException e) {
+                return JsonUtil.writeValueAsString(tracker.getAnalyticTrackerData(), false);
+            } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
@@ -101,8 +92,8 @@ public class AnalyticTrackerDaoImpl implements AnalyticTrackerDao {
         AnalyticTrackerData analyticTrackerData = null;
         if (data != null && !data.isBlank()) {
             try {
-                analyticTrackerData = mapper.readValue(data, AnalyticTrackerData.class);
-            } catch (final JsonProcessingException e) {
+                analyticTrackerData = JsonUtil.readValue(data, AnalyticTrackerData.class);
+            } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
