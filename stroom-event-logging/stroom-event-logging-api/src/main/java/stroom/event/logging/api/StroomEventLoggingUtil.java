@@ -15,6 +15,7 @@ import event.logging.AdvancedQuery;
 import event.logging.AdvancedQueryItem;
 import event.logging.And;
 import event.logging.CopyMoveOutcome;
+import event.logging.Group;
 import event.logging.MultiObject;
 import event.logging.Not;
 import event.logging.Or;
@@ -26,6 +27,7 @@ import event.logging.SearchEventAction;
 import event.logging.SimpleQuery;
 import event.logging.Term;
 import event.logging.TermCondition;
+import event.logging.User;
 import event.logging.util.EventLoggingUtil;
 
 import java.math.BigInteger;
@@ -66,6 +68,28 @@ public class StroomEventLoggingUtil {
                 .withType(type)
                 .withId(uuid)
                 .withName(name)
+                .build();
+    }
+
+    public static User createUser(final stroom.security.shared.User user) {
+        Objects.requireNonNull(user);
+        if (user.isGroup()) {
+            throw new RuntimeException("User " + user + " is a group not a user");
+        }
+        return User.builder()
+                .withId(user.getSubjectId())
+                .withName(user.getDisplayName())
+                .build();
+    }
+
+    public static Group createGroup(final stroom.security.shared.User group) {
+        Objects.requireNonNull(group);
+        if (!group.isGroup()) {
+            throw new RuntimeException("Group " + group + " is a user not a group");
+        }
+        return Group.builder()
+                .withId(group.getSubjectId())
+                .withName(group.getDisplayName())
                 .build();
     }
 

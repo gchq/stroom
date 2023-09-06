@@ -2,6 +2,7 @@ package stroom.app.commands;
 
 import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.UserAppPermissionService;
 import stroom.security.impl.UserService;
@@ -280,8 +281,8 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                                                             " doesn't exist"));
                                     userService.addUserToGroup(userOrGroup.getUuid(), targetGroup.getUuid());
                                     logAddOrRemoveFromGroupEvent(
-                                            userOrGroupId,
-                                            targetGroupId,
+                                            userOrGroup,
+                                            targetGroup,
                                             true,
                                             null,
                                             true);
@@ -604,37 +605,79 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 createEventAction);
     }
 
-    private void logAddOrRemoveFromGroupEvent(final String username,
-                                              final String groupName,
+    private void logAddOrRemoveFromGroupEvent(final stroom.security.shared.User userOrGroup,
+                                              final stroom.security.shared.User group,
                                               final boolean wasSuccessful,
                                               final String description,
                                               final boolean isAddingGroup) {
 
-        final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder()
-                .addUser(User.builder()
-                        .withId(username)
-                        .withName(username)
-                        .build());
+        final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
 
-        final Group group = Group.builder()
-                .withId(groupName)
-                .withName(groupName)
-                .build();
+        if (userOrGroup.isGroup()) {
+            authoriseBuilder.addUser(StroomEventLoggingUtil.createUser(userOrGroup));
+        } else {
+            authoriseBuilder.addGroup(StroomEventLoggingUtil.createGroup(userOrGroup));
+        }
 
         if (isAddingGroup) {
             authoriseBuilder.withAddGroups(AddGroups.builder()
-                    .addGroups(group)
+                    .addGroups(StroomEventLoggingUtil.createGroup(group))
                     .build());
         } else {
             authoriseBuilder.withRemoveGroups(RemoveGroups.builder()
-                    .addGroups(group)
+                    .addGroups(StroomEventLoggingUtil.createGroup(group))
                     .build());
         }
 
         stroomEventLoggingService.log(
                 "CliAddToGroup",
                 LogUtil.message("User/Group {} was {} to group {}",
-                        username,
+                        userOrGroup,
+                        (isAddingGroup
+                                ? "added to"
+                                : "removed from"),
+                        group),
+                authoriseBuilder
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(wasSuccessful)
+                                .withDescription(description)
+                                .build())
+                        .build());
+    }
+
+    private void logAddOrRemoveFromGroupEvent(final String userOrGroupName,
+                                              final String groupName,
+                                              final boolean wasSuccessful,
+                                              final String description,
+                                              final boolean isAddingGroup) {
+
+        final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
+
+        // Don't know if userOrGroupName is a user or group, so treat as a user
+
+        authoriseBuilder.addUser(User.builder()
+                .withId(userOrGroupName)
+                .withName(userOrGroupName)
+                .build());
+
+        final Group groupBlock = Group.builder()
+                .withId(groupName)
+                .withName(groupName)
+                .build();
+        if (isAddingGroup) {
+            authoriseBuilder.withAddGroups(AddGroups.builder()
+                    .addGroups(groupBlock)
+                    .build());
+        } else {
+            authoriseBuilder.withRemoveGroups(RemoveGroups.builder()
+                    .addGroups(groupBlock)
+                    .build());
+        }
+
+        stroomEventLoggingService.log(
+                "CliAddToGroup",
+                LogUtil.message("User/Group {} was {} to group {}",
+                        userOrGroupName,
                         (isAddingGroup
                                 ? "added to"
                                 : "removed from"),
