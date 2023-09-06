@@ -610,7 +610,12 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                                               final String description,
                                               final boolean isAddingGroup) {
 
-        final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
+        final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder()
+                .addUser(User.builder()
+                        .withId(username)
+                        .withName(username)
+                        .build());
+
         final Group group = Group.builder()
                 .withId(groupName)
                 .withName(groupName)
