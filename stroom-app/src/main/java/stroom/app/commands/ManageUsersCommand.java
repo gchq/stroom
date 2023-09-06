@@ -6,6 +6,9 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.UserAppPermissionService;
 import stroom.security.impl.UserService;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserName;
 import stroom.util.user.UserNameUtil;
@@ -23,13 +26,12 @@ import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,7 +48,7 @@ import javax.inject.Inject;
  */
 public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManageUsersCommand.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ManageUsersCommand.class);
 
     private static final String COMMAND_NAME = "manage_users";
     private static final String COMMAND_DESCRIPTION = "Create users/groups and manage application permissions";
@@ -222,14 +224,17 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
             userService.getUserBySubjectId(userName.getSubjectId())
                     .ifPresentOrElse(
                             user -> {
-                                final String outcomeMsg = LogUtil.message("User '{}' already exists", userName);
+                                final String outcomeMsg = LogUtil.message("User '{}' already exists",
+                                        UserName.buildCombinedName(userName));
                                 warn(LOGGER, outcomeMsg, "  ");
                                 logCreateUserEvent(userName, false, outcomeMsg);
                             },
                             () -> {
                                 userService.getOrCreateUser(userName);
                                 logCreateUserEvent(userName, true, null);
-                                info(LOGGER, "Created user " + userName, "  ");
+                                info(LOGGER,
+                                        "Created user " + UserName.buildCombinedName(userName),
+                                        "  ");
                             });
         } catch (Exception e) {
             LOGGER.debug("Error", e);
@@ -270,31 +275,22 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
             info(LOGGER, msg);
 
             try {
-                userService.getUserBySubjectId(userOrGroupId)
-                        .ifPresentOrElse(
-                                userOrGroup -> {
-                                    stroom.security.shared.User targetGroup = userService.getUserBySubjectId(
-                                                    targetGroupId)
-                                            .orElseThrow(() ->
-                                                    new RuntimeException("Target group " +
-                                                            targetGroupId +
-                                                            " doesn't exist"));
-                                    userService.addUserToGroup(userOrGroup.getUuid(), targetGroup.getUuid());
-                                    logAddOrRemoveFromGroupEvent(
-                                            userOrGroup,
-                                            targetGroup,
-                                            true,
-                                            null,
-                                            true);
-                                    info(LOGGER,
-                                            "Added " + userOrGroupId + " to group " + targetGroupId,
-                                            "  ");
-                                },
-                                () -> {
-                                    throw new RuntimeException("User/Group " +
-                                            userOrGroupId +
-                                            " does not exist");
-                                });
+                final stroom.security.shared.User userOrGroup = getUserObject(
+                        userOrGroupId, UserType.EITHER, ADD_TO_GROUP_ARG_NAME);
+                final stroom.security.shared.User targetGroup = getUserObject(
+                        targetGroupId, UserType.GROUP, ADD_TO_GROUP_ARG_NAME);
+
+                userService.addUserToGroup(userOrGroup.getUuid(), targetGroup.getUuid());
+                logAddOrRemoveFromGroupEvent(
+                        userOrGroup,
+                        targetGroup,
+                        true,
+                        null,
+                        true);
+                info(LOGGER,
+                        "Added " + userOrGroup.asCombinedName() + " to group " + targetGroup.asCombinedName(),
+                        "  ");
+
             } catch (Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
@@ -318,19 +314,24 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
             info(LOGGER, msg);
 
             try {
-                userService.getUserBySubjectId(userOrGroupId)
-                        .ifPresentOrElse(
-                                userOrGroup -> {
-                                    removeUserOrGroupFromGroup(groupArgs, userOrGroup);
-                                    info(LOGGER,
-                                            "Removed " + userOrGroupId + " from group " + targetGroupId,
-                                            "  ");
-                                },
-                                () -> {
-                                    throw new RuntimeException("User/Group '" +
-                                            userOrGroupId +
-                                            "' does not exist");
-                                });
+                final stroom.security.shared.User userOrGroup = getUserObject(
+                        userOrGroupId, UserType.EITHER, REMOVE_FROM_GROUP_ARG_NAME);
+                final stroom.security.shared.User targetGroup = getUserObject(
+                        targetGroupId, UserType.GROUP, REMOVE_FROM_GROUP_ARG_NAME);
+
+                userService.removeUserFromGroup(userOrGroup.getUuid(), targetGroup.getUuid());
+
+                logAddOrRemoveFromGroupEvent(
+                        groupArgs.userOrGroupId,
+                        groupArgs.targetGroupId,
+                        true,
+                        null,
+                        false);
+                info(LOGGER,
+                        "Removed " + userOrGroup.asCombinedName()
+                                + " from group " + targetGroup.asCombinedName(),
+                        "  ");
+
             } catch (Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
@@ -344,23 +345,6 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         });
     }
 
-    private void removeUserOrGroupFromGroup(final GroupArgs groupArgs,
-                                            final stroom.security.shared.User userOrGroup) {
-        final stroom.security.shared.User targetGroup = userService.getUserBySubjectId(
-                        groupArgs.targetGroupId)
-                .orElseThrow(() ->
-                        new RuntimeException("Target group '" +
-                                groupArgs.targetGroupId +
-                                "' doesn't exist"));
-        userService.removeUserFromGroup(userOrGroup.getUuid(), targetGroup.getUuid());
-        logAddOrRemoveFromGroupEvent(
-                groupArgs.userOrGroupId,
-                groupArgs.targetGroupId,
-                true,
-                null,
-                false);
-    }
-
     private void grantPermissions(final Namespace namespace) {
         final List<PermissionArgs> permissionArgsList = extractPermissionArgs(namespace, GRANT_PERMISSION_ARG_NAME);
         permissionArgsList.forEach(permissionArgs -> {
@@ -371,14 +355,12 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
             info(LOGGER, msg);
 
             try {
+                final stroom.security.shared.User userOrGroup = getUserObject(
+                        userOrGroupId, UserType.EITHER, GRANT_PERMISSION_ARG_NAME);
 
-                final stroom.security.shared.User userOrGroup = userService.getUserBySubjectId(userOrGroupId)
-                        .orElseThrow(() -> new RuntimeException(LogUtil.message("User/group '{}' does not exist",
-                                userOrGroupId)));
-
-                if (hasPermission(permissionArgs)) {
-                    final String failMsg = LogUtil.message("User/Group '{}' already has permission '{}'",
-                            userOrGroupId, permissionName);
+                if (hasPermission(userOrGroup, permissionName)) {
+                    final String failMsg = LogUtil.message("{} '{}' already has permission '{}'",
+                            getTypeName(userOrGroup), userOrGroup.asCombinedName(), permissionName);
                     warn(LOGGER, failMsg, "  ");
 
                     logAddOrRemoveFromGroupEvent(
@@ -399,7 +381,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             null,
                             true);
                     info(LOGGER, LogUtil.message("Granted application permission '{}' to '{}'",
-                            permissionName, userOrGroupId), "  ");
+                            permissionName, userOrGroup.asCombinedName()), "  ");
                 }
             } catch (Exception e) {
                 LOGGER.debug("Error", e);
@@ -422,23 +404,22 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         permissionArgsList.forEach(permissionArgs -> {
             final String permissionName = permissionArgs.permissionName;
             final String userOrGroupId = permissionArgs.userOrGroupId;
-            final String msg = LogUtil.message("Revoking application permission from '{}' to '{}'",
+            final String msg = LogUtil.message("Revoking application permission '{}' from '{}'",
                     permissionName, userOrGroupId);
 
             info(LOGGER, msg);
 
-            final stroom.security.shared.User userOrGroup = userService.getUserBySubjectId(userOrGroupId)
-                    .orElseThrow(() -> new RuntimeException(LogUtil.message("User/group '{}' does not exist",
-                            userOrGroupId)));
+            final stroom.security.shared.User userOrGroup = getUserObject(
+                    userOrGroupId, UserType.EITHER, REVOKE_PERMISSION_ARG_NAME);
 
             try {
-                if (hasPermission(permissionArgs)) {
+                if (hasPermission(userOrGroup, permissionName)) {
                     userAppPermissionService.removePermission(
                             userOrGroup.getUuid(),
                             permissionName);
 
-                    info(LOGGER, LogUtil.message("Revoked application permission from '{}' to '{}'",
-                            permissionName, userOrGroupId), "  ");
+                    info(LOGGER, LogUtil.message("Revoked application permission '{}' from '{}'",
+                            permissionName, userOrGroup.asCombinedName()), "  ");
 
                     logAddOrRemoveFromGroupEvent(
                             userOrGroupId,
@@ -447,8 +428,8 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             null,
                             false);
                 } else {
-                    final String failMsg = LogUtil.message("User/Group '{}' does not have permission '{}'",
-                            userOrGroupId, permissionName);
+                    final String failMsg = LogUtil.message("{} '{}' does not have permission '{}'",
+                            getTypeName(userOrGroup), userOrGroup.asCombinedName(), permissionName);
                     warn(LOGGER, failMsg, "  ");
 
                     logAddOrRemoveFromGroupEvent(
@@ -471,14 +452,60 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         });
     }
 
-    private boolean hasPermission(final PermissionArgs permissionArgs) {
-        String userOrGroupUuid = userService.getUserBySubjectId(permissionArgs.userOrGroupId)
-                .map(stroom.security.shared.User::getUuid)
-                .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                        "User/Group '{}' not found", permissionArgs.userOrGroupId)));
-        return userAppPermissionService.getPermissionNamesForUser(userOrGroupUuid)
+    private String getTypeName(final stroom.security.shared.User user) {
+        return NullSafe.get(user, stroom.security.shared.User::asCombinedName);
+    }
+
+    private boolean hasPermission(final stroom.security.shared.User userOrGroup, final String permissionName) {
+        return userAppPermissionService.getPermissionNamesForUser(userOrGroup.getUuid())
                 .stream()
-                .anyMatch(perm -> perm.equals(permissionArgs.permissionName));
+                .anyMatch(perm -> perm.equals(permissionName));
+    }
+
+    private stroom.security.shared.User getUserObject(final String idOrName,
+                                                      final UserType expectedUserType,
+                                                      final String argGroupName) {
+        Objects.requireNonNull(expectedUserType);
+        if (NullSafe.isBlankString(idOrName)) {
+            throw new RuntimeException(LogUtil.message("No {} identifier supplied for arg group '{}'",
+                    expectedUserType.getDisplayName(), argGroupName));
+        }
+        // First treat idOrName as an ID
+        Optional<stroom.security.shared.User> optUserOrGroup = userService.getUserBySubjectId(idOrName);
+
+        final boolean isId = optUserOrGroup.isPresent();
+        if (optUserOrGroup.isEmpty()) {
+            info(LOGGER, LogUtil.message("{} not found when treating '{}' in arg group '{}' as a unique subjectId. " +
+                            "Falling back to treating it as a displayName",
+                    expectedUserType.displayName, idOrName, argGroupName));
+        }
+
+        // Fallback on treating idOrName as a displayName
+        stroom.security.shared.User userOrGroup = optUserOrGroup.or(() -> userService.getUserByDisplayName(idOrName))
+                .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                        "A {} cannot be found with a subjectId or displayName matching identifier '{}' " +
+                                "in arg group '{}'",
+                        expectedUserType.displayName,
+                        idOrName,
+                        argGroupName)));
+
+        LOGGER.debug(() -> LogUtil.message("Found user object {}, treating identifier '{}' in arg group '{}' as a {}",
+                userOrGroup,
+                idOrName,
+                argGroupName,
+                (isId
+                        ? "subjectId"
+                        : "displayName")));
+
+        if (UserType.USER.equals(expectedUserType) && userOrGroup.isGroup()) {
+            throw new RuntimeException(LogUtil.message("Expecting identifier '{}' in arg group '{}' to be a User: {}",
+                    idOrName, argGroupName, userOrGroup));
+        } else if (UserType.GROUP.equals(expectedUserType) && !userOrGroup.isGroup()) {
+            throw new RuntimeException(LogUtil.message("Expecting identifier '{}' in arg group '{}' to be a Group: {}",
+                    idOrName, argGroupName, userOrGroup));
+        }
+
+        return userOrGroup;
     }
 
     private <T> List<T> extractArgs(final Namespace namespace,
@@ -614,9 +641,9 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
 
         if (userOrGroup.isGroup()) {
-            authoriseBuilder.addUser(StroomEventLoggingUtil.createUser(userOrGroup));
-        } else {
             authoriseBuilder.addGroup(StroomEventLoggingUtil.createGroup(userOrGroup));
+        } else {
+            authoriseBuilder.addUser(StroomEventLoggingUtil.createUser(userOrGroup));
         }
 
         if (isAddingGroup) {
@@ -733,6 +760,26 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     "userOrGroupId='" + userOrGroupId + '\'' +
                     ", permissionName='" + permissionName + '\'' +
                     '}';
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum UserType {
+        USER("User"),
+        GROUP("Group"),
+        EITHER("User/Group");
+
+        private final String displayName;
+
+        UserType(final String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
         }
     }
 }

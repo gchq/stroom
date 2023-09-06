@@ -85,7 +85,7 @@ public class StroomEventLoggingUtil {
     public static Group createGroup(final stroom.security.shared.User group) {
         Objects.requireNonNull(group);
         if (!group.isGroup()) {
-            throw new RuntimeException("Group " + group + " is a user not a group");
+            throw new RuntimeException(("Group '" + group.getUserIdentityForAudit() + "' is a user not a group"));
         }
         return Group.builder()
                 .withId(group.getSubjectId())

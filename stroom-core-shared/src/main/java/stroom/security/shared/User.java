@@ -228,6 +228,10 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         return new SimpleUserName(subjectId, displayName, fullName, uuid);
     }
 
+    public String asCombinedName() {
+        return UserName.buildCombinedName(subjectId, displayName);
+    }
+
     @Override
     public String toString() {
         return "User{" +
