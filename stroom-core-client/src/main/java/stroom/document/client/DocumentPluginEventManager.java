@@ -73,6 +73,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -930,9 +931,10 @@ public class DocumentPluginEventManager extends Plugin {
                     true);
             if (ownedItems.size() == 1) {
                 menuItems.add(new Separator(30));
-                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 31));
-                menuItems.add(new Separator(32));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 33, true));
+                menuItems.add(createShowDependenciesFromMenuItem(ownedItems.get(0), 31));
+                menuItems.add(createShowDependantsMenuItem(ownedItems.get(0), 32));
+                menuItems.add(new Separator(33));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 34, true));
             }
         }
     }
@@ -1151,13 +1153,27 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createShowDependenciesMenuItem(final ExplorerNode explorerNode, final int priority) {
+    private MenuItem createShowDependantsMenuItem(final ExplorerNode explorerNode, final int priority) {
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.DEPENDENCIES)
+                .text("Dependants")
+                .command(() -> ShowDocRefDependenciesEvent.fire(
+                        DocumentPluginEventManager.this,
+                        explorerNode.getDocRef(),
+                        DependencyType.DEPENDANT))
+                .build();
+    }
+
+    private MenuItem createShowDependenciesFromMenuItem(final ExplorerNode explorerNode, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
                 .text("Dependencies")
-                .command(() -> ShowDocRefDependenciesEvent.fire(DocumentPluginEventManager.this,
-                        explorerNode.getDocRef()))
+                .command(() -> ShowDocRefDependenciesEvent.fire(
+                        DocumentPluginEventManager.this,
+                        explorerNode.getDocRef(),
+                        DependencyType.DEPENDENCY))
                 .build();
     }
 

@@ -24,8 +24,10 @@ public class ExplorerTree extends AbstractExplorerTree {
 
     private MultiSelectionModelImpl<ExplorerNode> multiSelectionModel;
 
-    public ExplorerTree(final RestFactory restFactory, final boolean allowMultiSelect) {
-        super(restFactory, allowMultiSelect);
+    public ExplorerTree(final RestFactory restFactory,
+                        final boolean allowMultiSelect,
+                        final boolean showAlerts) {
+        super(restFactory, allowMultiSelect, showAlerts);
     }
 
     @Override

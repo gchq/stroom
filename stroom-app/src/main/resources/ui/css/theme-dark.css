@@ -66,8 +66,8 @@
     --icon-button__background-color--hover: rgb(55, 58, 67);
     --icon-button__border-color--hover: rgb(29, 31, 35);
     --icon-button__color: var(--blue-300);
-    --navigation-icon-button__background-color--on: #262a32;
-    --navigation-icon-button__border-color--on: #444;
+    --navigation-icon-button__background-color--on: var(--blue-500);
+    --navigation-icon-button__border-color--on: var(--black);
     --navigation-icon-button__background-color--hover: rgb(52, 53, 55);
     --navigation-icon-button__border-color--hover: rgb(18, 19, 21);
 
@@ -218,6 +218,7 @@
     --navigation__background-color--selected--focussed: rgb(0,120,199);
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--text-color--selected);
+    --navigation__text-color--no-match: #7b7b7b;
     --navigation__border-color: #27252c;
 
     /* Specific */

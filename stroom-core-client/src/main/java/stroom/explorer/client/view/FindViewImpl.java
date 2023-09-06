@@ -95,6 +95,10 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
         getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, FindViewImpl> {
 
     }

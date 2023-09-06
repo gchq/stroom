@@ -30,6 +30,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.Builder;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -88,6 +89,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final ExplorerEventLog explorerEventLog;
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
     private final Provider<ExplorerFavService> explorerFavService;
+    private final BrokenDependenciesCache brokenDependenciesCache;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -96,7 +98,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog,
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
-                        final Provider<ExplorerFavService> explorerFavService) {
+                        final Provider<ExplorerFavService> explorerFavService,
+                        final BrokenDependenciesCache brokenDependenciesCache) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -104,6 +107,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
         this.explorerFavService = explorerFavService;
+        this.brokenDependenciesCache = brokenDependenciesCache;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -120,17 +124,17 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     filter.getNameFilter(), FIELD_MAPPERS);
 
             // Get the master tree model.
-            final TreeModel masterTreeModel = explorerTreeModel.getModel().clone();
+            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
 
             // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
             final Set<String> userFavourites = explorerFavService.get().getUserFavourites()
                     .stream()
                     .map(DocRef::getUuid)
                     .collect(Collectors.toSet());
-            buildFavouritesNode(masterTreeModel);
+            buildFavouritesNode(masterTreeModelClone);
 
             // See if we need to open any more folders to see nodes we want to ensure are visible.
-            final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModel, criteria);
+            final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModelClone, criteria);
 
             final Set<ExplorerNodeKey> allOpenItems = new HashSet<>();
             allOpenItems.addAll(criteria.getOpenItems());
@@ -138,16 +142,17 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             allOpenItems.addAll(forcedOpenItems);
 
             final FilteredTreeModel filteredModel = new FilteredTreeModel(
-                    masterTreeModel.getId(),
-                    masterTreeModel.getCreationTime());
+                    masterTreeModelClone.getId(),
+                    masterTreeModelClone.getCreationTime());
             // Create the predicate for the current filter value
             final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                     filter.getNameFilter(), FIELD_MAPPERS);
+            final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
 
-            addDescendants(
+            final NodeStates nodeStates = addDescendants(
                     null,
                     null,
-                    masterTreeModel,
+                    masterTreeModelClone,
                     filteredModel,
                     filter,
                     fuzzyMatchPredicate,
@@ -161,10 +166,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
             // If the name filter has changed then we want to temporarily expand all nodes.
             if (filter.isNameFilterChange()) {
-                if (filter.getNameFilter() == null) {
+                if (NullSafe.isBlankString(filter.getNameFilter())) {
                     temporaryOpenItems = new HashSet<>();
                 } else {
-                    temporaryOpenItems = new HashSet<>(filteredModel.getAllParents());
+//                    temporaryOpenItems = new HashSet<>(filteredModel.getAllParents());
+                    temporaryOpenItems = new HashSet<>(nodeStates.openNodes);
                 }
 
                 rootNodes = addRoots(
@@ -187,9 +193,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             rootNodes = decorateTree(
                     criteria,
                     rootNodes,
+                    filter,
                     fuzzyMatchPredicate);
 
-            rootNodes = openRootNodesWithChildren(rootNodes, openedItems);
+            rootNodes = openRootNodesWithChildren(rootNodes, openedItems, filter);
 
             return new FetchExplorerNodeResult(
                     rootNodes, openedItems, temporaryOpenItems, qualifiedFilterInput);
@@ -200,14 +207,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private static List<ExplorerNode> openRootNodesWithChildren(final List<ExplorerNode> rootNodes,
-                                                                final List<ExplorerNodeKey> openedItems) {
+                                                                final List<ExplorerNodeKey> openedItems,
+                                                                final ExplorerTreeFilter filter) {
         // Ensure root nodes are open if they have items
         final List<ExplorerNode> nodes = NullSafe.stream(rootNodes)
                 .map(rootNode -> {
-                    if (rootNode.hasChildren()
+                    if (rootNode.getIsFolder()
                             && (rootNode.getNodeState() == null || NodeState.CLOSED.equals(rootNode.getNodeState()))) {
                         final ExplorerNode nodeCopy = rootNode.copy()
-                                .nodeState(NodeState.OPEN)
+                                .nodeState(ExplorerNode.NodeState.OPEN)
                                 .build();
                         // Expand the node
                         if (!openedItems.contains(nodeCopy.getUniqueKey())) {
@@ -215,10 +223,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         }
                         return nodeCopy;
 
-                    } else if (!rootNode.hasChildren()) {
+                    } else if (rootNode.getNodeState() == null && !rootNode.getIsFolder()) {
                         // No children so make it a leaf
                         return rootNode.copy()
-                                .nodeState(NodeState.LEAF)
+                                .nodeState(ExplorerNode.NodeState.LEAF)
                                 .build();
                     } else {
                         return rootNode;
@@ -228,19 +236,26 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
         // Now ensure we always have favourite system root nodes
         final List<ExplorerNode> result = new ArrayList<>();
-        final Optional<ExplorerNode> optFavouriteNode = removeMatchingNode(nodes, ExplorerConstants.FAVOURITES_NODE);
-        final Optional<ExplorerNode> optSystemNode = removeMatchingNode(nodes, ExplorerConstants.SYSTEM_NODE);
-        result.add(optFavouriteNode.orElseGet(() ->
-                ExplorerConstants.FAVOURITES_NODE.copy()
-                        .nodeState(NodeState.LEAF)
-                        .build()));
-        result.add(optSystemNode.orElseGet(() ->
-                ExplorerConstants.SYSTEM_NODE.copy()
-                        .nodeState(NodeState.LEAF)
-                        .build()));
+        result.add(ensureRootNode(nodes, filter, ExplorerConstants.FAVOURITES_NODE));
+        result.add(ensureRootNode(nodes, filter, ExplorerConstants.SYSTEM_NODE));
         // Add any remaining nodes, e.g. searchables
         result.addAll(nodes);
         return result;
+    }
+
+    private static ExplorerNode ensureRootNode(final List<ExplorerNode> nodes,
+                                        final ExplorerTreeFilter filter,
+                                        final ExplorerNode rootNodeConstant) {
+
+        // We may have no nodes under Favourites/System so ensure they are always present.
+        // If a quick filter is active then mark them as non-matches.
+        final ExplorerNode newRootNode = removeMatchingNode(nodes, rootNodeConstant)
+                .orElseGet(() ->
+                        rootNodeConstant.copy()
+                                .nodeState(NodeState.LEAF)
+                                .isFilterMatch(NullSafe.isBlankString(filter.getNameFilter()))
+                                .build());
+        return newRootNode;
     }
 
     private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
@@ -255,9 +270,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             }
         }
         return Optional.empty();
-//                .r
-//                .filter(node -> Objects.equals(targetNode, node))
-//                .findFirst();
     }
 
     private int getPriority(final ExplorerNode node) {
@@ -269,33 +281,32 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return documentType.getGroup().getPriority();
     }
 
-    private void buildFavouritesNode(final TreeModel masterTreeModel) {
-//        final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
-//                .icon(SvgImage.FAVOURITES);
-//        final ExplorerNode favNode = favNodeBuilder.build();
-        final ExplorerNode favNode = ExplorerConstants.FAVOURITES_NODE;
-
-        final Map<String, SvgImage> iconMap = getTypes()
-                .stream()
-                .collect(Collectors.toMap(DocumentType::getType, DocumentType::getIcon));
+    private void buildFavouritesNode(final TreeModel treeModel) {
+        final ExplorerNode favRootNode = ExplorerConstants.FAVOURITES_NODE;
+        treeModel.addRoot(favRootNode);
 
         for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
-            final ExplorerNode childNode = favNode.copy()
-                    .docRef(favDocRef)
+            final ExplorerNode treeModelNode = treeModel.getNode(favDocRef.getUuid());
+            final ExplorerNode childNode = treeModelNode.copy()
                     .depth(1)
-                    .icon(iconMap.get(favDocRef.getType()))
                     .isFavourite(true)
-                    .rootNodeUuid(favNode)
+                    .rootNodeUuid(favRootNode)
                     .tags(ExplorerTags.getTags(favDocRef.getType()))
                     .build();
-            masterTreeModel.add(favNode, childNode);
+            treeModel.add(favRootNode, childNode);
         }
 
-        masterTreeModel.add(null, favNode);
+        // We need to set the
+        final ExplorerNode newFavRootNode = explorerTreeModel.cloneWithBranchNodeInfo(treeModel, favRootNode);
+        if (newFavRootNode != favRootNode) {
+            // root object has changed so update tree model
+            treeModel.replaceNode(favRootNode.getUuid(), newFavRootNode);
+        }
     }
 
     private List<ExplorerNode> decorateTree(final FindExplorerNodeCriteria criteria,
                                             final List<ExplorerNode> rootNodes,
+                                            final ExplorerTreeFilter filter,
                                             final Predicate<DocRef> fuzzyMatchPredicate) {
         if (rootNodes.size() > 0) {
             final ExplorerNode rootNode = rootNodes.get(rootNodes.size() - 1);
@@ -303,32 +314,30 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .stream()
                     .map(node -> {
                         if (node == rootNode) {
-                            return replaceRootNode(criteria, node, fuzzyMatchPredicate);
+                            return replaceRootNode(criteria, node, filter, fuzzyMatchPredicate);
                         }
                         return node;
                     })
                     .collect(Collectors.toList());
         } else {
-            return Collections.singletonList(replaceRootNode(criteria, null, fuzzyMatchPredicate));
+            return Collections.singletonList(replaceRootNode(criteria, null, filter, fuzzyMatchPredicate));
         }
     }
 
     private ExplorerNode replaceRootNode(final FindExplorerNodeCriteria criteria,
                                          final ExplorerNode rootNode,
+                                         final ExplorerTreeFilter filter,
                                          final Predicate<DocRef> fuzzyMatchPredicate) {
-        final ExplorerNode.Builder builder;
+        final ExplorerNode.Builder rootNodeBuilder;
         if (rootNode != null) {
-            builder = rootNode.copy();
+            rootNodeBuilder = rootNode.copy();
         } else {
-            builder = explorerNodeService.getNodeWithRoot()
-                    .map(node -> {
-                        final ExplorerNode.Builder root = node.copy();
-                        Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
-                                .map(DocumentType::getIcon)
-                                .ifPresent(root::icon);
-                        return root;
-                    })
-                    .orElseGet(ExplorerNode::builder);
+            // If there is no root at this point then either the quick filter has filtered
+            // everything out so System is not a match, or it is type filter with no matching types
+            // in which case System would be considered a match as we only have non-matches when
+            // using the QuickFilter
+            rootNodeBuilder = ExplorerConstants.SYSTEM_NODE.copy()
+                    .isFilterMatch(NullSafe.isBlankString(filter.getNameFilter()));
         }
 
         if (criteria.getFilter() != null &&
@@ -346,11 +355,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 //                    if (rootNode == null) {
 //                        throw new RuntimeException("Missing root node");
 //                    }
-                    additionalDocRefs.forEach(docRef -> builder.addChild(createSearchableNode(docRef)));
+                    additionalDocRefs.forEach(docRef -> rootNodeBuilder.addChild(createSearchableNode(docRef)));
                 }
             }
         }
-        return builder.build();
+        return rootNodeBuilder.build();
     }
 
     @Override
@@ -377,7 +386,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .builder()
                 .docRef(docRef)
                 .tags(StandardTagNames.DATA_SOURCE)
-                .nodeState(NodeState.LEAF)
+                .nodeState(ExplorerNode.NodeState.LEAF)
                 .depth(1)
                 .icon(SvgImage.DOCUMENT_SEARCHABLE)
                 .build();
@@ -394,7 +403,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private Set<DocRef> getDescendants(final DocRef folder, final String type, final int maxDepth) {
-        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+        final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
         if (masterTreeModel != null) {
             final Set<DocRef> refs = new HashSet<>();
             addChildren(folder, type, 0, maxDepth, masterTreeModel, refs);
@@ -408,7 +417,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                              final String type,
                              final int depth,
                              final int maxDepth,
-                             final TreeModel treeModel,
+                             final UnmodifiableTreeModel treeModel,
                              final Set<DocRef> refs) {
         final List<DocRef> children = treeModel.getChildren(parent);
         if (children != null) {
@@ -430,7 +439,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                                     final FindExplorerNodeCriteria criteria) {
         final Set<ExplorerNodeKey> forcedOpen = new HashSet<>();
 
-        // Add parents of  nodes that we have been requested to ensure are visible.
+        // Add parents of nodes that we have been requested to ensure are visible.
         if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
             for (final ExplorerNodeKey ensureVisible : criteria.getEnsureVisible()) {
                 ExplorerNode parent = masterTreeModel.getParent(ensureVisible.getUuid());
@@ -481,42 +490,49 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
     }
 
-    private boolean addDescendants(final ExplorerNode rootNode,
-                                   final ExplorerNode parent,
-                                   final TreeModel treeModelIn,
-                                   final FilteredTreeModel treeModelOut,
-                                   final ExplorerTreeFilter filter,
-                                   final Predicate<DocRef> filterPredicate,
-                                   final boolean ignoreNameFilter,
-                                   final Set<ExplorerNodeKey> allOpenItems,
-                                   final Set<String> userFavourites,
-                                   final int currentDepth) {
+    private NodeStates addDescendants(final ExplorerNode rootNode,
+                                      final ExplorerNode parent,
+                                      final TreeModel treeModelIn,
+                                      final FilteredTreeModel treeModelOut,
+                                      final ExplorerTreeFilter filter,
+                                      final Predicate<DocRef> filterPredicate,
+                                      final boolean ignoreNameFilter,
+                                      final Set<ExplorerNodeKey> allOpenItems,
+                                      final Set<String> userFavourites,
+                                      final int currentDepth) {
         int added = 0;
+        boolean foundChildNodeInfo = false;
+        boolean foundFilterMatch = false;
+        final Set<ExplorerNodeKey> openNodes = new HashSet<>();
 
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
             final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
-                    || parent == null || allOpenItems.contains(parent.getUniqueKey());
+                    || parent == null
+                    || allOpenItems.contains(parent.getUniqueKey());
 
             // We need to add at least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerNode> iterator = children.iterator();
             while (iterator.hasNext() && (addAllChildren || added == 0)) {
                 final ExplorerNode child = iterator.next();
+                // We don't want to filter child items if the parent folder matches the name filter.
+                final boolean isFilterMatch = NullSafe.isBlankString(filter.getNameFilter())
+                        || filterPredicate.test(child.getDocRef());
+                final boolean ignoreChildNameFilter = ignoreNameFilter || isFilterMatch;
+//                final boolean ignoreChildNameFilter = ignoreNameFilter;
 
                 // Decorate the child with the root parent node, so the same child can be referenced in multiple
                 // parent roots (e.g. System or Favourites)
-                final ExplorerNode childWithParent = child.copy()
+                ExplorerNode childWithParent = child.copy()
                         .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
                         .isFavourite(userFavourites.contains(child.getUuid()))
+                        .isFilterMatch(isFilterMatch)
                         .build();
-
-                // We don't want to filter child items if the parent folder matches the name filter.
-                final boolean ignoreChildNameFilter = filterPredicate.test(childWithParent.getDocRef());
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to
                 // include this as an ancestor.
-                final boolean hasChildren = addDescendants(
+                final NodeStates result = addDescendants(
                         Objects.requireNonNullElse(rootNode, childWithParent),
                         childWithParent,
                         treeModelIn,
@@ -527,20 +543,111 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         allOpenItems,
                         userFavourites,
                         currentDepth + 1);
-                if (hasChildren) {
-                    treeModelOut.add(parent, childWithParent);
-                    added++;
-                } else if (checkType(childWithParent, filter.getIncludedTypes())
-                        && checkTags(childWithParent, filter.getTags())
-                        && (ignoreNameFilter || filterPredicate.test(childWithParent.getDocRef()))
-                        && checkSecurity(childWithParent, filter.getRequiredPermissions())) {
-                    treeModelOut.add(parent, childWithParent);
-                    added++;
+
+                openNodes.addAll(result.openNodes);
+                final Builder builder = childWithParent.copy()
+                        .isFolder(result.isFolder);
+
+                if (!result.hasIssues) {
+                    // If the child has no included nodes with issues then clear its node info.
+                    // It may have non-included children with issues, but we don't show an alert
+                    // for them
+                    builder.clearNodeInfo();
                 }
+                childWithParent = builder.build();
+
+                if (result.isFolder && result.containsFilterMatch) {
+                    openNodes.add(childWithParent.getUniqueKey());
+                }
+                if (isFilterMatch) {
+                    foundFilterMatch = true;
+                }
+                if (result.containsFilterMatch) {
+                    // A child of this child matched
+                    foundFilterMatch = true;
+                }
+
+                if (isNodeIncluded(result.hasChildren, filter, filterPredicate, ignoreNameFilter, childWithParent)) {
+                    treeModelOut.add(parent, childWithParent);
+                    added++;
+                    if (result.hasIssues) {
+                        foundChildNodeInfo = true;
+                    }
+                }
+            }
+
+            // The above loop may not look at all children so recurse into any remaining
+            // children to establish if any included nodes have issues
+            while (iterator.hasNext()) {
+                final ExplorerNode child = iterator.next();
+                final NodeStates result = checkForNodeInfoPresence(
+                        treeModelIn, treeModelOut, filter, filterPredicate, ignoreNameFilter, child);
+                if (result.hasIssues) {
+                    foundChildNodeInfo = true;
+                }
+            }
+        } else {
+            // Leaf
+            if (NullSafe.hasItems(parent.getNodeInfoList())) {
+                foundChildNodeInfo = true;
             }
         }
 
-        return added > 0;
+        return new NodeStates(
+                added > 0,
+                foundChildNodeInfo,
+                NullSafe.hasItems(children),
+                foundFilterMatch,
+                openNodes);
+    }
+
+    private NodeStates checkForNodeInfoPresence(final TreeModel treeModelIn,
+                                                final FilteredTreeModel treeModelOut,
+                                                final ExplorerTreeFilter filter,
+                                                final Predicate<DocRef> filterPredicate,
+                                                final boolean ignoreNameFilter,
+                                                final ExplorerNode node) {
+        final List<ExplorerNode> children = treeModelIn.getChildren(node);
+        final boolean hasChildren = NullSafe.hasItems(children);
+        boolean hasIncludedChildren = false;
+
+        boolean foundIssues = false;
+        if (isNodeIncluded(hasChildren, filter, filterPredicate, ignoreNameFilter, node)) {
+            if (hasChildren) {
+                hasIncludedChildren = true;
+                // Branch
+                for (final ExplorerNode child : children) {
+                    // Recurse
+                    final NodeStates result = checkForNodeInfoPresence(
+                            treeModelIn, treeModelOut, filter, filterPredicate, ignoreNameFilter, child);
+                    if (result.hasIssues) {
+                        foundIssues = true;
+                    }
+                }
+            } else {
+                // Leaf node
+                if (NullSafe.hasItems(node.getNodeInfoList())) {
+                    foundIssues = true;
+                }
+            }
+        } else {
+            // Node not included so don't need to worry about it
+        }
+        return new NodeStates(
+                hasIncludedChildren, foundIssues, hasChildren, true, Collections.emptySet());
+    }
+
+    private boolean isNodeIncluded(final boolean hasChildren,
+                                   final ExplorerTreeFilter filter,
+                                   final Predicate<DocRef> filterPredicate,
+                                   final boolean ignoreNameFilter,
+                                   final ExplorerNode childWithParent) {
+        return hasChildren
+                || (
+                checkType(childWithParent, filter.getIncludedTypes())
+                        && checkTags(childWithParent, filter.getTags())
+                        && (ignoreNameFilter || filterPredicate.test(childWithParent.getDocRef()))
+                        && checkSecurity(childWithParent, filter.getRequiredPermissions()));
     }
 
     private boolean checkSecurity(final ExplorerNode explorerNode, final Set<String> requiredPermissions) {
@@ -629,11 +736,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
 
         final List<ExplorerNode> children = filteredModel.getChildren(parent);
-        if (children == null) {
-            builder.nodeState(NodeState.LEAF);
+        if (parent.getNodeState() == null && NullSafe.isEmptyCollection(children)) {
+            builder.nodeState(ExplorerNode.NodeState.LEAF);
         } else if (force || openItems.contains(parentNodeKey)) {
             final List<ExplorerNode> newChildren = new ArrayList<>();
-            for (final ExplorerNode child : children) {
+            for (final ExplorerNode child : NullSafe.list(children)) {
                 final ExplorerNode copy = addChildren(
                         rootNode,
                         child,
@@ -646,12 +753,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 newChildren.add(copy);
             }
 
-            builder.nodeState(NodeState.OPEN);
+            builder.nodeState(ExplorerNode.NodeState.OPEN);
             builder.children(newChildren);
             builder.rootNodeUuid(rootNode);
-
         } else {
-            builder.nodeState(NodeState.CLOSED);
+            builder.nodeState(ExplorerNode.NodeState.CLOSED);
         }
 
         return builder.build();
@@ -703,10 +809,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             return destinationFolder.getDocRef();
         }
 
-        final ExplorerNode rootNode = explorerNodeService.getNodeWithRoot().orElse(null);
+        final ExplorerNode rootNode = explorerNodeService.getRoot();
         return rootNode != null
                 ? rootNode.getDocRef()
-
                 : null;
     }
 
@@ -1030,6 +1135,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     @Override
     public void rebuildTree() {
+        brokenDependenciesCache.invalidate();
         explorerTreeModel.rebuild();
     }
 
@@ -1046,7 +1152,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     @Override
     public List<DocumentType> getVisibleTypes() {
         // Get the master tree model.
-        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+        final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
 
         // Filter the model by user permissions.
         final Set<String> requiredPermissions = new HashSet<>();
@@ -1059,7 +1165,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private boolean addTypes(final ExplorerNode parent,
-                             final TreeModel treeModel,
+                             final UnmodifiableTreeModel treeModel,
                              final Set<String> types,
                              final Set<String> requiredPermissions) {
         boolean added = false;
@@ -1123,7 +1229,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             for (final DocContentMatch docContentMatch : matches) {
                 final List<String> parents = new ArrayList<>();
                 parents.add(docContentMatch.getDocRef().getName());
-                final TreeModel masterTreeModel = explorerTreeModel.getModel();
+                final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
                 if (masterTreeModel != null) {
                     ExplorerNode parent = masterTreeModel.getParent(ExplorerNode
                             .builder()
@@ -1157,5 +1263,24 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             return ResultPage.createUnboundedList(Collections.emptyList());
         }
         return ResultPage.createPageLimitedList(list, pageRequest);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * @param hasChildren         Whether this node has any children that are to be included in the tree.
+     * @param hasIssues           Whether this node or any of its descendants have an issue.
+     * @param isFolder            Whether this node is a folder, i.e. has children that may or may not be included
+     *                            in the tree.
+     * @param containsFilterMatch Whether this node or any descendant is a filter match.
+     */
+    private record NodeStates(boolean hasChildren,
+                              boolean hasIssues,
+                              boolean isFolder,
+                              boolean containsFilterMatch,
+                              Set<ExplorerNodeKey> openNodes) {
+
     }
 }

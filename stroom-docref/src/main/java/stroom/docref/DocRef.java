@@ -197,6 +197,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
 
     @Override
     public int hashCode() {
+        // In the unlikely event that the hash is actually -1 then it just means we compute every time
         if (hashCode == -1) {
             hashCode = Objects.hash(type, uuid);
         }

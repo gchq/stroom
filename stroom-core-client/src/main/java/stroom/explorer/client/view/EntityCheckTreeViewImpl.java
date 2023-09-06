@@ -46,6 +46,10 @@ public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTree
         panel.setWidget(cellTree);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, EntityCheckTreeViewImpl> {
 
     }

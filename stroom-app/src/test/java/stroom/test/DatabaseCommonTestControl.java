@@ -19,6 +19,7 @@ package stroom.test;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
@@ -64,6 +65,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final PathCreator pathCreator;
     private final IndexVolumeService indexVolumeService;
     private final UserNameService userNameService;
+    private final ExplorerNodeService explorerNodeService;
 
     //    private static boolean needsCleanup;
     // Thread local for parallel test running
@@ -81,7 +83,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final FsVolumeService fsVolumeService,
                               final PathCreator pathCreator,
                               final IndexVolumeService indexVolumeService,
-                              final UserNameService userNameService) {
+                              final UserNameService userNameService,
+                              final ExplorerNodeService explorerNodeService) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -94,6 +97,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.pathCreator = pathCreator;
         this.indexVolumeService = indexVolumeService;
         this.userNameService = userNameService;
+        this.explorerNodeService = explorerNodeService;
     }
 
     @Override
@@ -103,6 +107,10 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info(() -> LogUtil.inSeparatorLine("Starting setup of thread '{}' ({})",
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId()));
+
+        // This may be a fresh DB so ensure we have a root node as this is normally
+        // done once in the ExplorerNodeServiceImpl ctor
+        explorerNodeService.ensureRootNodeExists();
 
         Path fsVolDir;
         Path indexVolDir;
@@ -179,6 +187,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
         LOGGER.info(() -> LogUtil.inSeparatorLine(
                 "Test environment teardown completed in {}", Duration.between(startTime, Instant.now())));
+
+        // Make sure the db has its root node
+        explorerNodeService.ensureRootNodeExists();
     }
 
     @Override
