@@ -1887,11 +1887,12 @@ button.main-menu svg {
 }
 
 .queryHelpItem-heading.queryHelpItem-topLevel {
+    font-size: var(--font-size-15);
     color: var(--heading-color);
 }
 
 .queryHelpItem-heading {
-    font-size: var(--font-size-15);
+    font-size: var(--font-size-13);
     font-weight: 500;
 }
 
