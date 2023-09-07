@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.59] - 2023-09-07
+
+* Fix continuous integration build.
+
+
 ## [v7.2-beta.58] - 2023-09-07
 
 * Issue **#3230** : Add alert icons to the explorer tree to indicate entities with broken dependencies. Change explorer tree to highlight filter matches. Change explorer tree to include all descendants of a folder that matches a filter. Add a toggle button to turn explorer tree alert icons on/off.
@@ -5879,7 +5884,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.58...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.59...HEAD
+[v7.2-beta.59]: https://github.com/gchq/stroom/compare/v7.2-beta.58...v7.2-beta.59
 [v7.2-beta.58]: https://github.com/gchq/stroom/compare/v7.2-beta.57...v7.2-beta.58
 [v7.2-beta.57]: https://github.com/gchq/stroom/compare/v7.2-beta.56...v7.2-beta.57
 [v7.2-beta.56]: https://github.com/gchq/stroom/compare/v7.2-beta.55...v7.2-beta.56
