@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.58] - 2023-09-07
+
+* Issue **#3230** : Add alert icons to the explorer tree to indicate entities with broken dependencies. Change explorer tree to highlight filter matches. Change explorer tree to include all descendants of a folder that matches a filter. Add a toggle button to turn explorer tree alert icons on/off.
+
+* Change explorer tree filter icon to be a toggle button to show if type filtering is active or not.
+
+* Add menu items for showing dependants (as opposed to dependencies) to explorer tree and dependencies screen.
+
+* Issue **#3729** : Fix invalid audit events when adding users to groups using the manageUsers CLI.
+
+* Change the manageUsers CLI to look up identities using subjectId then falling back to displayName.
+
+
 ## [v7.2-beta.57] - 2023-09-05
 
 * Issue **#3724** : Fix missing datasource names in query helper.
@@ -5866,7 +5879,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.57...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.58...HEAD
+[v7.2-beta.58]: https://github.com/gchq/stroom/compare/v7.2-beta.57...v7.2-beta.58
 [v7.2-beta.57]: https://github.com/gchq/stroom/compare/v7.2-beta.56...v7.2-beta.57
 [v7.2-beta.56]: https://github.com/gchq/stroom/compare/v7.2-beta.55...v7.2-beta.56
 [v7.2-beta.55]: https://github.com/gchq/stroom/compare/v7.2-beta.54...v7.2-beta.55
