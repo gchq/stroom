@@ -41,7 +41,7 @@ ARG HOST_REPO_DIR
 # The name DOCKER_HOST is used by docker so don't use that.
 ARG DOCKER_HOST_IP
 
-ARG PLANTUML_VERSION=1.2021.5
+ARG PLANTUML_VERSION=1.2023.10
 
 # Set the user ID into an env var so the entrypoint can see it
 ENV CONTAINER_USER_ID=$USER_ID \
@@ -73,7 +73,7 @@ RUN apk add --no-cache \
       ttf-droid-nonlatin \
     && curl \
       -Ls \
-      https://sourceforge.net/projects/plantuml/files/plantuml.$PLANTUML_VERSION.jar/download \
+      https://github.com/plantuml/plantuml/releases/download/v$PLANTUML_VERSION/plantuml-$PLANTUML_VERSION.jar \
       -o /builder/plantuml.jar \
     && alias ll='ls -l' \
     && apk del curl \
