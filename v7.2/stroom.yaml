@@ -8043,11 +8043,13 @@ components:
           - ADD_BELOW
           - ADD_MULTIPLE
           - ALERT
+          - ALERT_SIMPLE
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
           - BACKWARD
+          - BORDERED_CIRCLE
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -8523,11 +8525,13 @@ components:
           - ADD_BELOW
           - ADD_MULTIPLE
           - ALERT
+          - ALERT_SIMPLE
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
           - BACKWARD
+          - BORDERED_CIRCLE
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -8711,11 +8715,13 @@ components:
           - ADD_BELOW
           - ADD_MULTIPLE
           - ALERT
+          - ALERT_SIMPLE
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
           - BACKWARD
+          - BORDERED_CIRCLE
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -8879,8 +8885,16 @@ components:
           - WARNING
         isFavourite:
           type: boolean
+        isFilterMatch:
+          type: boolean
+        isFolder:
+          type: boolean
         name:
           type: string
+        nodeInfoList:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeInfo'
         nodeState:
           type: string
           enum:
@@ -10531,6 +10545,18 @@ components:
         version:
           type: integer
           format: int32
+    NodeInfo:
+      type: object
+      properties:
+        description:
+          type: string
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
     NodeMonitoringConfig:
       type: object
       properties:
@@ -10818,11 +10844,13 @@ components:
           - ADD_BELOW
           - ADD_MULTIPLE
           - ALERT
+          - ALERT_SIMPLE
           - ARROW_DOWN
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
           - BACKWARD
+          - BORDERED_CIRCLE
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
