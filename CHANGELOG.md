@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.60] - 2023-09-07
+
+* Fix build.
+
+
 ## [v7.2-beta.59] - 2023-09-07
 
 * Fix continuous integration build.
@@ -5884,7 +5889,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.59...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.60...HEAD
+[v7.2-beta.60]: https://github.com/gchq/stroom/compare/v7.2-beta.59...v7.2-beta.60
 [v7.2-beta.59]: https://github.com/gchq/stroom/compare/v7.2-beta.58...v7.2-beta.59
 [v7.2-beta.58]: https://github.com/gchq/stroom/compare/v7.2-beta.57...v7.2-beta.58
 [v7.2-beta.57]: https://github.com/gchq/stroom/compare/v7.2-beta.56...v7.2-beta.57
