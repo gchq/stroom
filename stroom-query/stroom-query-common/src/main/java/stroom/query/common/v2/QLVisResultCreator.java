@@ -27,8 +27,11 @@ public class QLVisResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
-        final FlatResult flatResult = (FlatResult) resultCreator.create(dataStore, resultRequest);
-        return mapVisResult(visSettings, flatResult);
+        final Result result = resultCreator.create(dataStore, resultRequest);
+        if (result instanceof final FlatResult flatResult) {
+            return mapVisResult(visSettings, flatResult);
+        }
+        return null;
     }
 
     private QLVisResult mapVisResult(final QLVisSettings visSettings, final FlatResult result) {

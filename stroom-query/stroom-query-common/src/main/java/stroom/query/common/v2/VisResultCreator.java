@@ -23,8 +23,11 @@ public class VisResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
-        final FlatResult flatResult = (FlatResult) resultCreator.create(dataStore, resultRequest);
-        return mapVisResult(flatResult);
+        final Result result = resultCreator.create(dataStore, resultRequest);
+        if (result instanceof final FlatResult flatResult) {
+            return mapVisResult(flatResult);
+        }
+        return null;
     }
 
     private VisResult mapVisResult(final FlatResult result) {
