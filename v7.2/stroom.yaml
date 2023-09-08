@@ -7854,10 +7854,16 @@ components:
           type: string
           description: The local zone id to use when formatting date values in the
             search results. The value is the string form of a java.time.ZoneId
+        referenceTime:
+          type: integer
+          format: int64
+          description: The time in milliseconds since epoch to use as the reference
+            time for relative date functions like `day()`
         timeZone:
           $ref: '#/components/schemas/TimeZone'
       required:
       - localZoneId
+      - referenceTime
     DefaultLocation:
       type: object
       properties:
@@ -10575,9 +10581,6 @@ components:
           $ref: '#/components/schemas/DateTimeSettings'
         key:
           $ref: '#/components/schemas/QueryKey'
-        now:
-          type: integer
-          format: int64
         query:
           $ref: '#/components/schemas/Query'
         searchRequestSource:
