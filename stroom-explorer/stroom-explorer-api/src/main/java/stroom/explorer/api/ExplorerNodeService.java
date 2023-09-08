@@ -41,7 +41,7 @@ public interface ExplorerNodeService {
 
     void deleteNode(DocRef docRef);
 
-    Optional<ExplorerNode> getNodeWithRoot();
+    ExplorerNode getRoot();
 
     /**
      * Get the root node containing another node

@@ -66,7 +66,6 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -112,8 +111,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Make sure stream attributes get flushed straight away.
         setConfigValueMapper(MetaValueConfig.class, metaValueConfig -> metaValueConfig.withAddAsync(false));
 
-        final Optional<ExplorerNode> system = explorerNodeService.getNodeWithRoot();
-        final DocRef root = system.get().getDocRef();
+        final ExplorerNode system = explorerNodeService.getRoot();
+        final DocRef root = system.getDocRef();
         final DocRef folder1 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 1");
         folder2 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 2");
         final DocRef folder3 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 3");

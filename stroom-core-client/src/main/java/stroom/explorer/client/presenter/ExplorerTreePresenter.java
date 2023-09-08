@@ -54,6 +54,8 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
+import java.util.function.Consumer;
+
 public class ExplorerTreePresenter
         extends MyPresenter<ExplorerTreePresenter.ExplorerTreeView, ExplorerTreePresenter.ExplorerTreeProxy>
         implements ExplorerTreeUiHandlers, RefreshExplorerTreeEvent.Handler, HighlightExplorerNodeEvent.Handler,
@@ -83,7 +85,7 @@ public class ExplorerTreePresenter
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, true) {
+        explorerTree = new ExplorerTree(restFactory, true, true) {
             @Override
             protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
                 super.doSelect(row, selectionType);
@@ -194,9 +196,9 @@ public class ExplorerTreePresenter
     }
 
     @Override
-    public void showTypeFilter(final NativeEvent event) {
+    public void showTypeFilter(final NativeEvent event, final Consumer<Boolean> filterStateConsumer) {
         final Element target = event.getEventTarget().cast();
-        typeFilterPresenter.show(target);
+        typeFilterPresenter.show(target, filterStateConsumer);
     }
 
     @ProxyEvent
@@ -255,12 +257,20 @@ public class ExplorerTreePresenter
         return false;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ExplorerTreeView extends View, HasUiHandlers<ExplorerTreeUiHandlers> {
 
         void setCellTree(Widget widget);
 
         void setDeleteEnabled(boolean enable);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface ExplorerTreeProxy extends Proxy<ExplorerTreePresenter> {

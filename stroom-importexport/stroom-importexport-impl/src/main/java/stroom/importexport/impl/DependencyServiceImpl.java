@@ -8,6 +8,7 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -24,6 +25,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -104,6 +106,21 @@ public class DependencyServiceImpl implements DependencyService {
                 .get();
     }
 
+    @Override
+    public Map<DocRef, Set<DocRef>> getBrokenDependencies() {
+        return taskContextFactory.contextResult(
+                        "Get Broken Dependencies",
+                        taskContext -> {
+                            try {
+                                return buildMissingDependencies(taskContext);
+                            } catch (Exception e) {
+                                LOGGER.error("Error getting broken dependencies", e);
+                                throw e;
+                            }
+                        })
+                .get();
+    }
+
     private QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
                                                               final TaskContext parentTaskContext) {
         // Build a map of deps (parent to children)
@@ -134,6 +151,34 @@ public class DependencyServiceImpl implements DependencyService {
                 QuickFilterPredicateFactory.fullyQualifyInput(criteria.getPartialName(), FIELD_MAPPERS));
     }
 
+    private Map<DocRef, Set<DocRef>> buildMissingDependencies(final TaskContext parentTaskContext) {
+
+        // Parent => children
+        final Map<DocRef, Set<DocRef>> allDependencies = buildDependencyMap(parentTaskContext);
+        // Get the additional types that we use to decorate the explorer tree.
+        final Set<DocRef> additionalRefs = new HashSet<>(explorerDecorator.list());
+
+        final Map<DocRef, Optional<DocRefInfo>> docRefInfoCache = new ConcurrentHashMap<>();
+
+        return allDependencies.entrySet()
+                .stream()
+                .filter(entry -> NullSafe.hasItems(entry.getValue()))
+                .flatMap(entry -> {
+                    final DocRef parentDocRef = entry.getKey();
+                    final Set<DocRef> childDocRefs = entry.getValue();
+                    return childDocRefs.stream()
+                            .map(childDocRef -> Map.entry(parentDocRef, childDocRef));
+                })
+                .filter(entry -> {
+                    // Find ones where the child does not exist, i.e. broken dep
+                    final DocRef childDocRef = entry.getValue();
+                    return !allDependencies.containsKey(childDocRef)
+                            && !additionalRefs.contains(childDocRef);
+                })
+                .collect(Collectors.groupingBy(
+                        Entry::getKey,
+                        Collectors.mapping(Entry::getValue, Collectors.toSet())));
+    }
 
     private List<Dependency> buildFlatDependencies(final DependencyCriteria criteria,
                                                    final Map<DocRef, Set<DocRef>> allDependencies,
@@ -164,7 +209,6 @@ public class DependencyServiceImpl implements DependencyService {
                                     });
                         }),
                 optSortListComparator.orElse(null));
-
 
         if (optSortListComparator.isPresent()) {
             filteredStream = filteredStream.sorted(optSortListComparator.get());

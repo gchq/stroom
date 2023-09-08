@@ -40,7 +40,9 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -86,8 +88,10 @@ public class NavigationPresenter
     private final InlineSvgButton find;
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
-    private final InlineSvgButton filter;
+    private final InlineSvgToggleButton filter;
+    private final InlineSvgToggleButton showAlertsBtn;
     private boolean menuVisible = false;
+    private boolean hasActiveFilter = false;
 
     @Inject
     public NavigationPresenter(final EventBus eventBus,
@@ -117,11 +121,19 @@ public class NavigationPresenter
         delete.setTitle("Delete");
         delete.setEnabled(false);
 
-        filter = new InlineSvgButton();
+        filter = new InlineSvgToggleButton();
+        filter.setState(hasActiveFilter);
         filter.setSvg(SvgImage.FILTER);
         filter.getElement().addClassName("navigation-header-button filter");
-        filter.setTitle("Filter");
+        filter.setTitle("Filter Types");
         filter.setEnabled(true);
+
+        showAlertsBtn = new InlineSvgToggleButton();
+        showAlertsBtn.setOn();
+        showAlertsBtn.setSvg(SvgImage.EXCLAMATION);
+        showAlertsBtn.getElement().addClassName("navigation-header-button show-alerts");
+        showAlertsBtn.setTitle("Toggle Alerts");
+        showAlertsBtn.setEnabled(true);
 
         find = new InlineSvgButton();
         find.setSvg(SvgImage.FIND);
@@ -132,12 +144,13 @@ public class NavigationPresenter
         final FlowPanel buttons = getView().getButtonContainer();
         buttons.add(add);
         buttons.add(delete);
+        buttons.add(showAlertsBtn);
         buttons.add(filter);
         buttons.add(find);
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, true);
+        explorerTree = new ExplorerTree(restFactory, true, true);
 
         // Add views.
         uiConfigCache.get().onSuccess(uiConfig -> {
@@ -165,6 +178,10 @@ public class NavigationPresenter
                 deleteItem()));
         registerHandler(filter.addClickHandler((e) ->
                 showTypeFilter(filter.getElement())));
+        registerHandler(showAlertsBtn.addClickHandler((e) -> {
+            explorerTree.setShowAlerts(showAlertsBtn.getState());
+            explorerTree.refresh();
+        }));
 
         // Register for refresh events.
         registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
@@ -174,6 +191,12 @@ public class NavigationPresenter
 
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
+
+        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
+            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
+                    .anyMatch(ExplorerNode::hasNodeInfo);
+            showAlertsBtn.setVisible(treeHasNodeInfo);
+        });
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes())));
@@ -277,7 +300,15 @@ public class NavigationPresenter
     }
 
     public void showTypeFilter(final Element target) {
-        typeFilterPresenter.show(target);
+        // Override the default behaviour of the toggle button as we only want
+        // it to be ON if a filter has been set, not just when clicked
+        filter.setState(hasActiveFilter);
+        typeFilterPresenter.show(target, this::setFilterState);
+    }
+
+    private void setFilterState(final boolean hasActiveFilter) {
+        this.hasActiveFilter = hasActiveFilter;
+        filter.setState(hasActiveFilter);
     }
 
     @ProxyEvent
@@ -322,6 +353,10 @@ public class NavigationPresenter
     public interface NavigationProxy extends Proxy<NavigationPresenter> {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface NavigationView extends View, HasUiHandlers<NavigationUiHandlers> {
 

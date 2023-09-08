@@ -16,6 +16,7 @@
 
 package stroom.importexport.api;
 
+import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
@@ -25,6 +26,9 @@ import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
+import java.util.Map;
+import java.util.Set;
+
 public interface ContentService {
 
     ImportConfigResponse importContent(ImportConfigRequest request);
@@ -32,6 +36,8 @@ public interface ContentService {
     ResourceGeneration exportContent(DocRefs docRefs);
 
     QuickFilterResultPage<Dependency> fetchDependencies(DependencyCriteria criteria);
+
+    Map<DocRef, Set<DocRef>> fetchBrokenDependencies();
 
     ResourceKey exportAll();
 }

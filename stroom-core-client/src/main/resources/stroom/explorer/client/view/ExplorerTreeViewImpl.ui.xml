@@ -11,9 +11,9 @@
             </g:FlowPanel>
             <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max explorerTreeViewImpl-nameFilter"/>
             <g:FlowPanel addStyleNames="dock-min button-container">
-                <p:SvgButton ui:field="typeFilter"/>
+                <p:InlineSvgToggleButton ui:field="typeFilter"/>
             </g:FlowPanel>
         </g:FlowPanel>
         <g:SimplePanel styleName="dock-max" ui:field="treeContainer"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

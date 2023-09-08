@@ -213,13 +213,17 @@ class ExplorerDropDownTreePresenter
         this.caption = caption;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ExtendedExplorerTree extends ExplorerTree {
 
         private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
         public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter,
                                     final RestFactory restFactory) {
-            super(restFactory, false);
+            super(restFactory, false, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
             this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
         }

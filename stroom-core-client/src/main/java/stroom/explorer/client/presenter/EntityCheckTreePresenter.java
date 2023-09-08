@@ -25,6 +25,7 @@ import stroom.explorer.shared.ExplorerNode;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -39,7 +40,9 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     private final ExplorerTickBoxTree explorerTree;
 
     @Inject
-    public EntityCheckTreePresenter(final EntityCheckTreeView view, final RestFactory restFactory) {
+    public EntityCheckTreePresenter(final EntityCheckTreeView view,
+                                    final RestFactory restFactory,
+                                    final EventBus eventBus) {
         super(new SimpleEventBus(), view);
 
 //        selectionModel = new TickBoxSelectionModel<ExplorerNode>() {
@@ -185,6 +188,10 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<ExplorerNode>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EntityCheckTreeView extends View {
 

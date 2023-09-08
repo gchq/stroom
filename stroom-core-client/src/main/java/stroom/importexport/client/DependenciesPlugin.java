@@ -20,6 +20,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -51,8 +52,11 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
         // Open the Dependencies view, filtered by a particular DocRef
         registerHandler(getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
             open();
-            getPresenter().setQuickFilterText(DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier() + ":" +
-                    event.getDocRef().getUuid());
+
+            final String field = DependencyType.DEPENDANT.equals(event.getDependencyType())
+                    ? DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier()
+                    : DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier();
+            getPresenter().setQuickFilterText(field + ":" + event.getDocRef().getUuid());
         }));
     }
 

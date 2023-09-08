@@ -212,19 +212,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public Optional<ExplorerNode> getNodeWithRoot() {
-        final List<ExplorerTreeNode> roots = Optional
-                .ofNullable(explorerTreeDao.getRoots())
-                .filter(r -> r.size() > 0)
-                .orElseGet(() -> {
-                    createRoot();
-                    return explorerTreeDao.getRoots();
-                });
-
-        return Optional.ofNullable(roots)
-                .filter(r -> r.size() > 0)
-                .map(r -> r.get(0))
-                .map(this::createExplorerNode);
+    public ExplorerNode getRoot() {
+        // Assumes ensureRootNodeExists has been called already
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override

@@ -34,6 +34,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
@@ -235,7 +236,11 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
                         .text("Show dependencies")
-                        .command(() -> onShowDependencies(docRef)))
+                        .command(() -> onShowDependencies(docRef, DependencyType.DEPENDENCY)))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(SvgImage.DEPENDENCIES)
+                        .text("Show dependants")
+                        .command(() -> onShowDependencies(docRef, DependencyType.DEPENDANT)))
                 .build();
     }
 
@@ -265,8 +270,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 result -> refresh());
     }
 
-    private void onShowDependencies(final DocRef docRef) {
-        ShowDocRefDependenciesEvent.fire(DependenciesPresenter.this, docRef);
+    private void onShowDependencies(final DocRef docRef, final DependencyType dependencyType) {
+        ShowDocRefDependenciesEvent.fire(DependenciesPresenter.this, docRef, dependencyType);
     }
 
     private void refreshDocTypeIcons() {

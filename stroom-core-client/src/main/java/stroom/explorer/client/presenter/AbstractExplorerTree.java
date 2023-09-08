@@ -53,6 +53,7 @@ import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class AbstractExplorerTree extends Composite implements Focus {
 
@@ -63,20 +64,26 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
     private final String expanderClassName;
+    private final ExplorerCell explorerCell;
 
     // Required for multiple selection using shift and control key modifiers.
     private ExplorerNode multiSelectStart;
     private List<ExplorerNode> rows;
+    private boolean showAlerts;
+    private Consumer<FetchExplorerNodeResult> changeHandler = null;
 
-    AbstractExplorerTree(final RestFactory restFactory, final boolean allowMultiSelect) {
+    AbstractExplorerTree(final RestFactory restFactory,
+                         final boolean allowMultiSelect,
+                         final boolean showAlerts) {
         this.allowMultiSelect = allowMultiSelect;
+        this.showAlerts = showAlerts;
 
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
         spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
         spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
         spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
 
-        final ExplorerCell explorerCell = new ExplorerCell(getTickBoxSelectionModel());
+        explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
         expanderClassName = explorerCell.getExpanderClassName();
 
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
@@ -97,6 +104,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             protected void onDataChanged(final FetchExplorerNodeResult result) {
                 onData(result);
                 super.onDataChanged(result);
+
+                if (changeHandler != null) {
+                    changeHandler.accept(result);
+                }
             }
         };
 
@@ -135,6 +146,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     void onData(final FetchExplorerNodeResult result) {
     }
 
+    void addChangeHandler(final Consumer<FetchExplorerNodeResult> changeHandler) {
+        this.changeHandler = changeHandler;
+    }
+
     void setData(final List<ExplorerNode> rows) {
         this.rows = rows;
         cellTable.setRowData(0, rows);
@@ -148,6 +163,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     public void changeNameFilter(final String name) {
         treeModel.changeNameFilter(name);
+    }
+
+    public void setShowAlerts(final boolean showAlerts) {
+        this.showAlerts = showAlerts;
+        explorerCell.setShowAlerts(showAlerts);
     }
 
     public void refresh() {
@@ -308,6 +328,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     void selectAll() {
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<ExplorerNode> {
 

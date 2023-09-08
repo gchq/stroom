@@ -66,14 +66,17 @@ public interface UserName extends HasAuditableUserIdentity {
      * <p>{@code 'admin (6798d3ca-c1a1-490e-a52e-132ade052468)'} if they are different</p>
      */
     static String buildCombinedName(final UserName userName) {
-        final String name = userName.getSubjectId();
-        final String displayName = userName.getDisplayName();
+        return GwtNullSafe.get(userName,
+                userName2 -> buildCombinedName(userName2.getSubjectId(), userName2.getDisplayName()));
+    }
+
+    static String buildCombinedName(final String subjectId, final String displayName) {
         if (displayName == null) {
-            return name;
-        } else if (Objects.equals(name, displayName)) {
+            return subjectId;
+        } else if (Objects.equals(subjectId, displayName)) {
             return displayName;
         } else {
-            return displayName + " (" + name + ")";
+            return displayName + " (" + subjectId + ")";
         }
     }
 }

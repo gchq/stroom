@@ -65,6 +65,10 @@ class ExplorerActionHandlers {
         return handlers;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Handlers {
 
         private final Map<String, ExplorerActionHandler> allHandlers = new ConcurrentHashMap<>();

@@ -20,7 +20,9 @@ import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreeUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -47,15 +49,17 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     QuickFilter nameFilter;
     @UiField
     SimplePanel treeContainer;
-    @UiField(provided = true)
-    SvgButton typeFilter;
+    @UiField
+    InlineSvgToggleButton typeFilter;
 
     @Inject
     public ExplorerTreeViewImpl(final Binder binder,
                                 final UiConfigCache uiConfigCache) {
         newItem = SvgButton.create(SvgPresets.NEW_ITEM);
         deleteItem = SvgButton.create(SvgPresets.DELETE);
-        typeFilter = SvgButton.create(SvgPresets.FILTER);
+        typeFilter = new InlineSvgToggleButton();
+        typeFilter.setSvg(SvgImage.FILTER);
+        typeFilter.setOn();
         widget = binder.createAndBindUi(this);
 
         uiConfigCache.get()
@@ -94,7 +98,9 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
 
     @UiHandler("typeFilter")
     void onFilterClick(final MouseDownEvent event) {
-        getUiHandlers().showTypeFilter(event.getNativeEvent());
+        getUiHandlers().showTypeFilter(event.getNativeEvent(), hasActiveFilter -> {
+            typeFilter.setState(hasActiveFilter);
+        });
     }
 
     @Override
