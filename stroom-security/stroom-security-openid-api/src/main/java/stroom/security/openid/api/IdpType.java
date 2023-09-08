@@ -28,7 +28,8 @@ public enum IdpType {
 
     /**
      * No Open ID Connect identity provider. This may be used for remote proxies with no OIDC
-     * infrastructure that only talk to downstream proxies, forwarding with certificates.
+     * infrastructure that only talk to downstream proxies or stroom where stroom is using
+     * an internal IDP.  Feed status checks can be done by setting apiKey in the feedStatus config.
      */
     @JsonPropertyDescription("No Open ID Connect identity provider. This may be used for remote proxies with no OIDC " +
             "infrastructure that only talk to downstream proxies, forwarding with certificates.")
