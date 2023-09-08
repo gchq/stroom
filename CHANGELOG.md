@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.61] - 2023-09-08
+
+* Issue **#3726** : Add sort parameter (`asc`, `desc`) to `distinct()` function and apply total string length limit.
+
+* Change default value of prop `idpType` in the proxy config from INTERNAL_IDP to NO_IDP.
+
+
 ## [v7.2-beta.60] - 2023-09-07
 
 * Fix build.
@@ -5889,7 +5896,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.60...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.61...HEAD
+[v7.2-beta.61]: https://github.com/gchq/stroom/compare/v7.2-beta.60...v7.2-beta.61
 [v7.2-beta.60]: https://github.com/gchq/stroom/compare/v7.2-beta.59...v7.2-beta.60
 [v7.2-beta.59]: https://github.com/gchq/stroom/compare/v7.2-beta.58...v7.2-beta.59
 [v7.2-beta.58]: https://github.com/gchq/stroom/compare/v7.2-beta.57...v7.2-beta.58
