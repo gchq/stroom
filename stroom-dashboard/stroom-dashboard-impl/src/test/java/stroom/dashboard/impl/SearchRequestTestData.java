@@ -23,6 +23,7 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
+import stroom.expression.api.TimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -38,7 +39,6 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeZone;
 
 import java.util.ArrayList;
 import java.util.HashMap;

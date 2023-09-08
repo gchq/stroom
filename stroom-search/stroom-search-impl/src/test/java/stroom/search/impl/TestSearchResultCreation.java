@@ -6,9 +6,9 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbLibraryConfig;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -32,6 +32,7 @@ import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.IdentityItemMapper;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.OpenGroupsImpl;
@@ -120,10 +121,12 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory =
+                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
+                DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -229,10 +232,12 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory =
+                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
+                DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -246,6 +251,7 @@ class TestSearchResultCreation {
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
+                DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -304,10 +310,12 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory =
+                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
+                DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -321,6 +329,7 @@ class TestSearchResultCreation {
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
+                DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -392,10 +401,12 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory =
+                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
+                DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -409,6 +420,7 @@ class TestSearchResultCreation {
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
+                DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
@@ -612,7 +624,11 @@ class TestSearchResultCreation {
                 .addParam(ParamKeys.CURRENT_USER, "admin")
                 .build();
 
-        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId("Europe/London").build();
+        final DateTimeSettings dateTimeSettings = DateTimeSettings
+                .builder()
+                .localZoneId("Europe/London")
+                .referenceTime(0L)
+                .build();
         return SearchRequest.builder()
                 .key(key)
                 .query(query)

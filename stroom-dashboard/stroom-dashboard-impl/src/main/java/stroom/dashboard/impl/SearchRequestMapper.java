@@ -331,12 +331,12 @@ public class SearchRequestMapper {
 //        dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
 //    }
 //
-//    private stroom.query.api.v2.TimeZone mapTimeZone(final TimeZone timeZone) {
+//    private stroom.expression.api.TimeZone mapTimeZone(final TimeZone timeZone) {
 //        if (timeZone == null) {
 //            return null;
 //        }
 //
-//        return new stroom.query.api.v2.TimeZone(
+//        return new stroom.expression.api.TimeZone(
 //        Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(),
 //        timeZone.getOffsetMinutes());
 //    }

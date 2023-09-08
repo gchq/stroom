@@ -18,7 +18,7 @@
 package stroom.search.elastic.search;
 
 import stroom.annotation.api.AnnotationFields;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -72,7 +72,6 @@ class ElasticClusterSearchTaskHandler {
     public void search(final TaskContext taskContext,
                        final QueryKey queryKey,
                        final Query query,
-                       final long now,
                        final DateTimeSettings dateTimeSettings,
                        final Coprocessors coprocessors,
                        final ResultStore resultStore) {
@@ -86,7 +85,6 @@ class ElasticClusterSearchTaskHandler {
                 doSearch(
                         taskContext,
                         queryKey,
-                        now,
                         dateTimeSettings,
                         query,
                         coprocessors,
@@ -97,7 +95,6 @@ class ElasticClusterSearchTaskHandler {
 
     private void doSearch(final TaskContext taskContext,
                           final QueryKey queryKey,
-                          final long now,
                           final DateTimeSettings dateTimeSettings,
                           final Query query,
                           final Coprocessors coprocessors,
@@ -122,7 +119,6 @@ class ElasticClusterSearchTaskHandler {
             final CompletableFuture<Void> indexShardSearchFuture = elasticSearchFactory.search(
                     queryKey,
                     query,
-                    now,
                     dateTimeSettings,
                     expression,
                     coprocessors,

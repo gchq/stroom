@@ -18,6 +18,7 @@ package stroom.dashboard.expression.v1;
 
 import stroom.dashboard.expression.v1.ExpressionTokeniser.Token;
 import stroom.dashboard.expression.v1.ExpressionTokeniser.Token.Type;
+import stroom.expression.api.ExpressionContext;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -50,7 +51,9 @@ public class ExpressionParser {
         this.paramFactory = paramFactory;
     }
 
-    public Expression parse(final FieldIndex fieldIndex, final String input) throws ParseException {
+    public Expression parse(final ExpressionContext expressionContext,
+                            final FieldIndex fieldIndex,
+                            final String input) throws ParseException {
         if (input == null || input.trim().length() == 0) {
             return null;
         }
@@ -73,7 +76,7 @@ public class ExpressionParser {
         int lastSize = 0;
         while (objects.size() != lastSize) {
             lastSize = objects.size();
-            objects = processObjects(objects, fieldIndex);
+            objects = processObjects(objects, expressionContext, fieldIndex);
         }
 
         // We should have a single object.
@@ -88,15 +91,16 @@ public class ExpressionParser {
         return expression;
     }
 
-    private List<Param> processObjects(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
+    private List<Param> processObjects(final List<Param> objects,
+                                       final ExpressionContext expressionContext,
+                                       final FieldIndex fieldIndex) throws ParseException {
         Token functionStart = null;
         int start = -1;
         int end;
         for (int i = 0; i < objects.size(); i++) {
             final Param object = objects.get(i);
 
-            if (object instanceof Token) {
-                final Token token = (Token) object;
+            if (object instanceof final Token token) {
                 if (Type.FUNCTION_START.equals(token.getType())) {
                     functionStart = token;
                     start = i;
@@ -106,7 +110,7 @@ public class ExpressionParser {
                     }
 
                     end = i;
-                    final Function function = getFunction(objects, start, end, fieldIndex);
+                    final Function function = getFunction(objects, start, end, expressionContext, fieldIndex);
 
                     // Create a new list of objects to sandwich this function.
                     return sandwich(objects, function, start, end);
@@ -122,8 +126,7 @@ public class ExpressionParser {
 
         // We should not have any comma, whitespace or unidentified tokens.
         for (final Param object : objects) {
-            if (object instanceof Token) {
-                final Token token = (Token) object;
+            if (object instanceof final Token token) {
                 if (Type.COMMA.equals(token.getType())
                         || Type.WHITESPACE.equals(token.getType())
                         || Type.UNIDENTIFIED.equals(token.getType())) {
@@ -133,7 +136,7 @@ public class ExpressionParser {
         }
 
         // Any content that remains must be a parameter or parameter expression.
-        final Param param = getParam(copyList(objects, 0, objects.size() - 1), fieldIndex);
+        final Param param = getParam(copyList(objects, 0, objects.size() - 1), expressionContext, fieldIndex);
         return Collections.singletonList(param);
 
     }
@@ -141,6 +144,7 @@ public class ExpressionParser {
     private Function getFunction(final List<Param> objects,
                                  final int start,
                                  final int end,
+                                 final ExpressionContext expressionContext,
                                  final FieldIndex fieldIndex)
             throws ParseException {
         // Get the function.
@@ -159,8 +163,7 @@ public class ExpressionParser {
             // Turn comma separated tokens into parameters.
             for (int i = functionStart; i <= functionEnd; i++) {
                 final Param object = objects.get(i);
-                if (object instanceof Token) {
-                    final Token token = (Token) object;
+                if (object instanceof final Token token) {
                     if (Type.COMMA.equals(token.getType())) {
                         // Ifg we haven't found a parameter from the previous token or object then this comma
                         // is unexpected.
@@ -169,7 +172,9 @@ public class ExpressionParser {
                         }
 
                         final int paramEnd = i - 1;
-                        final Param param = getParam(copyList(objects, paramStart, paramEnd), fieldIndex);
+                        final Param param = getParam(copyList(objects, paramStart, paramEnd),
+                                expressionContext,
+                                fieldIndex);
                         paramList.add(param);
 
                         paramStart = -1;
@@ -183,7 +188,7 @@ public class ExpressionParser {
 
             // Capture last param if there is one.
             if (paramStart != -1) {
-                final Param param = getParam(copyList(objects, paramStart, functionEnd), fieldIndex);
+                final Param param = getParam(copyList(objects, paramStart, functionEnd), expressionContext, fieldIndex);
                 paramList.add(param);
             }
 
@@ -208,7 +213,7 @@ public class ExpressionParser {
             functionName = functionName.substring(0, functionName.length() - 1);
 
             // Create the function.
-            function = FunctionFactory.create(functionName);
+            function = FunctionFactory.create(expressionContext, functionName);
         }
 
         if (function == null) {
@@ -222,7 +227,9 @@ public class ExpressionParser {
         return function;
     }
 
-    private Param getParam(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
+    private Param getParam(final List<Param> objects,
+                           final ExpressionContext expressionContext,
+                           final FieldIndex fieldIndex) throws ParseException {
         List<Param> newObjects = objects;
 
         // If no objects are included to create this param then return null.
@@ -233,8 +240,7 @@ public class ExpressionParser {
         // If there is only a single object then turn it into a parameter if necessary and return.
         if (newObjects.size() == 1) {
             final Param object = newObjects.get(0);
-            if (object instanceof Token) {
-                final Token token = (Token) object;
+            if (object instanceof final Token token) {
                 return paramFactory.create(fieldIndex, token);
             }
             return object;
@@ -244,21 +250,20 @@ public class ExpressionParser {
         int lastSize = 0;
         while (newObjects.size() > 1 && newObjects.size() != lastSize) {
             lastSize = newObjects.size();
-            newObjects = applyBODMAS(newObjects, fieldIndex);
+            newObjects = applyBODMAS(newObjects, expressionContext, fieldIndex);
         }
 
         // Repeatedly try and apply equality operators.
         lastSize = 0;
         while (newObjects.size() > 1 && newObjects.size() != lastSize) {
             lastSize = newObjects.size();
-            newObjects = applyEquality(newObjects, fieldIndex);
+            newObjects = applyEquality(newObjects, expressionContext, fieldIndex);
         }
 
         // If there is only a single object then turn it into a parameter if necessary and return.
         if (newObjects.size() == 1) {
             final Param object = newObjects.get(0);
-            if (object instanceof Token) {
-                final Token token = (Token) object;
+            if (object instanceof final Token token) {
                 return paramFactory.create(fieldIndex, token);
             }
             return object;
@@ -274,13 +279,14 @@ public class ExpressionParser {
         throw new ParseException("Unexpected '" + object.toString() + "'", -1);
     }
 
-    private List<Param> applyBODMAS(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
+    private List<Param> applyBODMAS(final List<Param> objects,
+                                    final ExpressionContext expressionContext,
+                                    final FieldIndex fieldIndex) throws ParseException {
         // If there is more than one object then apply BODMAS rules.
         for (final Type type : BODMAS) {
             for (int i = 0; i < objects.size(); i++) {
                 final Param object = objects.get(i);
-                if (object instanceof Token) {
-                    final Token token = (Token) object;
+                if (object instanceof final Token token) {
                     if (type.equals(token.getType())) {
                         int leftParamIndex = i - 1;
                         int rightParamIndex = i + 1;
@@ -288,7 +294,9 @@ public class ExpressionParser {
                         // Get left param.
                         final Param leftParam;
                         if (leftParamIndex >= 0) {
-                            leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex), fieldIndex);
+                            leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex),
+                                    expressionContext,
+                                    fieldIndex);
                         } else {
                             leftParam = null;
                         }
@@ -296,6 +304,7 @@ public class ExpressionParser {
                         final Param rightParam;
                         if (rightParamIndex < objects.size()) {
                             rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex),
+                                    expressionContext,
                                     fieldIndex);
                         } else {
                             rightParam = null;
@@ -324,7 +333,7 @@ public class ExpressionParser {
                                 param = negate;
                             }
                         } else {
-                            final Function function = FunctionFactory.create(token.toString());
+                            final Function function = FunctionFactory.create(expressionContext, token.toString());
                             if (function == null) {
                                 throw new ParseException("Unknown function '" + token + "'", token.getStart());
                             }
@@ -342,21 +351,24 @@ public class ExpressionParser {
         return objects;
     }
 
-    private List<Param> applyEquality(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
+    private List<Param> applyEquality(final List<Param> objects,
+                                      final ExpressionContext expressionContext,
+                                      final FieldIndex fieldIndex) throws ParseException {
         // If there is more than one object then apply equality rules.
         for (final Type type : EQUALITY) {
             for (int i = 0; i < objects.size(); i++) {
                 final Param object = objects.get(i);
-                if (object instanceof Token) {
-                    final Token token = (Token) object;
+                if (object instanceof final Token token) {
                     if (type.equals(token.getType())) {
                         // Get before param.
                         final Param leftParam = getParam(
                                 copyList(objects, 0, i - 1),
+                                expressionContext,
                                 fieldIndex);
                         // Get after param.
                         final Param rightParam = getParam(
                                 copyList(objects, i + 1, objects.size() - 1),
+                                expressionContext,
                                 fieldIndex);
 
                         if (leftParam == null) {
@@ -366,7 +378,7 @@ public class ExpressionParser {
                             throw new ParseException("No parameter after operator", token.getStart());
                         }
 
-                        final Function function = FunctionFactory.create(token.toString());
+                        final Function function = FunctionFactory.create(expressionContext, token.toString());
                         if (function == null) {
                             throw new ParseException("Unknown function '" + token + "'", token.getStart());
                         }

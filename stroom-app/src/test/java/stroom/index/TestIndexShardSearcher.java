@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.FieldTypeFactory;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardService;
@@ -211,8 +212,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
                     null,
                     indexFieldsMap,
                     1024,
-                    null,
-                    System.currentTimeMillis());
+                    DateTimeSettings.builder().build());
             final TextField textField = new TextField("test");
             final ExpressionOperator expression = ExpressionOperator
                     .builder()

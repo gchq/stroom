@@ -16,6 +16,8 @@
 
 package stroom.query.api.v2;
 
+import stroom.expression.api.DateTimeSettings;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

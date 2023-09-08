@@ -3,6 +3,7 @@ package stroom.expression.matcher;
 import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dictionary.api.WordListProvider;
+import stroom.expression.api.DateTimeSettings;
 
 import java.util.Map;
 import javax.inject.Inject;
@@ -22,7 +23,6 @@ public class ExpressionMatcherFactory {
         return new ExpressionMatcher(fieldMap,
                 wordListProvider,
                 collectionService,
-                null,
-                System.currentTimeMillis());
+                DateTimeSettings.builder().build());
     }
 }

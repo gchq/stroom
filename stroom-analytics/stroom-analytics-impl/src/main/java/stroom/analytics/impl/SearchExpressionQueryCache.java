@@ -39,8 +39,7 @@ public class SearchExpressionQueryCache {
                 final SearchExpressionQueryBuilder searchExpressionQueryBuilder =
                         searchExpressionQueryBuilderFactory.create(
                                 indexFieldsMap,
-                                searchRequest.getDateTimeSettings(),
-                                System.currentTimeMillis());
+                                searchRequest.getDateTimeSettings());
                 luceneQuery = searchExpressionQueryBuilder
                         .buildQuery(
                                 LuceneVersionUtil.CURRENT_LUCENE_VERSION,

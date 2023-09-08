@@ -39,7 +39,6 @@ public class AnalyticsNodeSearchTaskCreator implements NodeTaskCreator {
                     query,
                     task.getSettings(),
                     task.getDateTimeSettings(),
-                    task.getNow(),
                     null);
 
             // Get the nodes that we are going to send the search request to.

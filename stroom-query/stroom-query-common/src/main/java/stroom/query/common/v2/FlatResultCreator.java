@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.FlatResultBuilder;
@@ -59,6 +60,7 @@ public class FlatResultCreator implements ResultCreator {
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
                              final SearchRequest searchRequest,
                              final String componentId,
+                             final ExpressionContext expressionContext,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
                              final FieldFormatter fieldFormatter,
@@ -96,6 +98,7 @@ public class FlatResultCreator implements ResultCreator {
                         dataStoreFactory,
                         dataStoreSettings,
                         searchRequest.getSearchRequestSource(),
+                        expressionContext,
                         searchRequest.getKey(),
                         componentId,
                         parent,
@@ -172,7 +175,8 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     @Override
-    public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
+    public Result create(final DataStore dataStore,
+                         final ResultRequest resultRequest) {
         final Fetch fetch = resultRequest.getFetch();
         if (Fetch.NONE.equals(fetch)) {
             return null;
@@ -302,6 +306,7 @@ public class FlatResultCreator implements ResultCreator {
         private final DataStoreFactory dataStoreFactory;
         private final DataStoreSettings dataStoreSettings;
         private final SearchRequestSource searchRequestSource;
+        private final ExpressionContext expressionContext;
         private final QueryKey queryKey;
         private final String componentId;
         private final TableSettings child;
@@ -314,6 +319,7 @@ public class FlatResultCreator implements ResultCreator {
         Mapper(final DataStoreFactory dataStoreFactory,
                final DataStoreSettings dataStoreSettings,
                final SearchRequestSource searchRequestSource,
+               final ExpressionContext expressionContext,
                final QueryKey queryKey,
                final String componentId,
                final TableSettings parent,
@@ -323,6 +329,7 @@ public class FlatResultCreator implements ResultCreator {
             this.dataStoreFactory = dataStoreFactory;
             this.dataStoreSettings = dataStoreSettings;
             this.searchRequestSource = searchRequestSource;
+            this.expressionContext = expressionContext;
             this.queryKey = queryKey;
             this.componentId = componentId;
             this.child = child;
@@ -341,7 +348,7 @@ public class FlatResultCreator implements ResultCreator {
             final List<Field> childFields = child != null
                     ? child.getFields()
                     : Collections.emptyList();
-            CompiledFields.create(childFields, childFieldIndex, paramMap);
+            CompiledFields.create(expressionContext, childFields, childFieldIndex, paramMap);
 
             // Create the index mapping.
             parentFieldIndices = new int[childFieldIndex.size()];
@@ -352,10 +359,12 @@ public class FlatResultCreator implements ResultCreator {
             }
         }
 
-        public DataStore map(final DataStore dataStore, final TimeFilter timeFilter) {
+        public DataStore map(final DataStore dataStore,
+                             final TimeFilter timeFilter) {
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
             final DataStore childDataStore = dataStoreFactory.create(
+                    expressionContext,
                     searchRequestSource,
                     queryKey,
                     componentId,

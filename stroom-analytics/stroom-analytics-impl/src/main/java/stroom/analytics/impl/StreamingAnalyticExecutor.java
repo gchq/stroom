@@ -8,6 +8,7 @@ import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.analytics.shared.StreamingAnalyticTrackerData;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
+import stroom.expression.api.ExpressionContext;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.meta.shared.Meta;
@@ -25,6 +26,7 @@ import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionState;
 import stroom.search.extraction.FieldListConsumerHolder;
@@ -84,6 +86,7 @@ public class StreamingAnalyticExecutor {
 
     private final AnalyticErrorWritingExecutor analyticErrorWritingExecutor;
     private final AnalyticHelper analyticHelper;
+    private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
     public StreamingAnalyticExecutor(final ExecutorProvider executorProvider,
@@ -102,7 +105,8 @@ public class StreamingAnalyticExecutor {
                                      final NodeInfo nodeInfo,
                                      final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                                      final NotificationStateService notificationStateService,
-                                     final DetectionConsumerFactory detectionConsumerFactory) {
+                                     final DetectionConsumerFactory detectionConsumerFactory,
+                                     final ExpressionContextFactory expressionContextFactory) {
         this.executorProvider = executorProvider;
         this.securityContext = securityContext;
         this.pipelineStore = pipelineStore;
@@ -120,6 +124,7 @@ public class StreamingAnalyticExecutor {
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.notificationStateService = notificationStateService;
         this.detectionConsumerFactory = detectionConsumerFactory;
+        this.expressionContextFactory = expressionContextFactory;
     }
 
     public void exec() {
@@ -362,9 +367,13 @@ public class StreamingAnalyticExecutor {
     private Optional<AnalyticFieldListConsumer> createEventConsumer(final StreamingAnalytic analytic) {
         // Create field index.
         final SearchRequest searchRequest = analytic.searchRequest();
+        final ExpressionContext expressionContext = expressionContextFactory
+                .createContext(searchRequest);
         final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
         final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
-        final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(), paramMap);
+        final CompiledFields compiledFields = CompiledFields.create(expressionContext,
+                tableSettings.getFields(),
+                paramMap);
         final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 
         // Cache the query for use across multiple streams.

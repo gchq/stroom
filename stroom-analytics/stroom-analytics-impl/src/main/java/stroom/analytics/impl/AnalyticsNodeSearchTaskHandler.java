@@ -235,8 +235,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     final TimeFilter timeFilter = DateExpressionParser
                             .getTimeFilter(
                                     task.getQuery().getTimeRange(),
-                                    task.getDateTimeSettings(),
-                                    System.currentTimeMillis());
+                                    task.getDateTimeSettings());
                     resultRequest = resultRequest
                             .copy()
                             .mappings(mappings)

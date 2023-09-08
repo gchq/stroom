@@ -20,6 +20,7 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.lmdb.LmdbLibraryConfig;
@@ -97,6 +98,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 queryKey,
                 componentId,
                 tableSettings,
+                new ExpressionContext(),
                 fieldIndex,
                 Collections.emptyMap(),
                 dataStoreSettings,

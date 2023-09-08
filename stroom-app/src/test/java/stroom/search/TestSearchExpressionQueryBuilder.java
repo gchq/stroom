@@ -4,11 +4,11 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.search.impl.SearchExpressionQueryBuilder;
@@ -51,8 +51,7 @@ public class TestSearchExpressionQueryBuilder extends AbstractCoreIntegrationTes
                 wordListProvider,
                 indexFieldsMap,
                 1024,
-                DateTimeSettings.builder().build(),
-                System.currentTimeMillis());
+                DateTimeSettings.builder().build());
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(

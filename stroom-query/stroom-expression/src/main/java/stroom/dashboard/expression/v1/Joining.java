@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.StringListReference;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.expression.api.ExpressionContext;
 
 import java.text.ParseException;
 import java.util.List;
@@ -79,6 +80,7 @@ class Joining extends AbstractFunction implements AggregateFunction {
     static final String NAME = "joining";
     static final int DEFAULT_LIMIT = 10;
 
+    private final ExpressionContext context;
     private String delimiter = "";
 
     private int limit = DEFAULT_LIMIT;
@@ -86,8 +88,10 @@ class Joining extends AbstractFunction implements AggregateFunction {
     private Function function;
     private StringListReference stringListReference;
 
-    public Joining(final String name) {
+    public Joining(final ExpressionContext context,
+                   final String name) {
         super(name, 1, 3);
+        this.context = context;
     }
 
     @Override
@@ -118,7 +122,7 @@ class Joining extends AbstractFunction implements AggregateFunction {
     @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, delimiter, limit, stringListReference);
+        return new Gen(childGenerator, delimiter, limit, context.getMaxStringLength(), stringListReference);
     }
 
     @Override
@@ -148,15 +152,18 @@ class Joining extends AbstractFunction implements AggregateFunction {
 
         private final String delimiter;
         private final int limit;
+        private final int maxStringLength;
         private final StringListReference stringListReference;
 
         Gen(final Generator childGenerator,
             final String delimiter,
             final int limit,
+            final int maxStringLength,
             final StringListReference stringListReference) {
             super(childGenerator);
             this.delimiter = delimiter;
             this.limit = limit;
+            this.maxStringLength = maxStringLength;
             this.stringListReference = stringListReference;
         }
 
@@ -164,12 +171,13 @@ class Joining extends AbstractFunction implements AggregateFunction {
         public void set(final Val[] values, final StoredValues storedValues) {
             childGenerator.set(values, storedValues);
 
-            final List<String> list = stringListReference.get(storedValues);
+            List<String> list = stringListReference.get(storedValues);
             if (list.size() < limit) {
                 final Val val = childGenerator.eval(storedValues, null);
                 final String value = val.toString();
                 if (value != null) {
                     list.add(value);
+                    list = trimList(list);
                     stringListReference.set(storedValues, list);
                 }
             }
@@ -178,24 +186,49 @@ class Joining extends AbstractFunction implements AggregateFunction {
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final List<String> list = stringListReference.get(storedValues);
-            return ValString.create(String.join(delimiter, list));
+            final StringBuilder sb = new StringBuilder();
+            for (String s : list) {
+                sb.append(s);
+                sb.append(delimiter);
+            }
+            if (sb.length() > 0) {
+                sb.setLength(sb.length() - delimiter.length());
+            }
+            return ValString.create(sb.toString());
         }
 
         @Override
         public void merge(final StoredValues existingValues, final StoredValues newValues) {
-            final List<String> existingList = stringListReference.get(existingValues);
-            final List<String> newList = stringListReference.get(newValues);
-            boolean changed = false;
-            for (final String value : newList) {
-                if (existingList.size() < limit) {
-                    existingList.add(value);
-                    changed = true;
+            List<String> list = stringListReference.get(existingValues);
+            if (list.size() < limit) {
+                final List<String> newList = stringListReference.get(newValues);
+                if (newList.size() > 0) {
+                    list.addAll(newList);
+                    list = trimList(list);
+                    stringListReference.set(existingValues, list);
                 }
             }
-            if (changed) {
-                stringListReference.set(existingValues, existingList);
-            }
             super.merge(existingValues, newValues);
+        }
+
+        private List<String> trimList(final List<String> list) {
+            int trimSize = 0;
+
+            int totalLength = 0;
+            for (String s : list) {
+                totalLength += s.length();
+                trimSize++;
+                if (totalLength >= maxStringLength) {
+                    break;
+                }
+            }
+
+            trimSize = Math.min(trimSize, limit);
+            if (list.size() > trimSize) {
+                return list.subList(0, trimSize);
+            } else {
+                return list;
+            }
         }
     }
 }

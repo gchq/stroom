@@ -9,6 +9,7 @@ dependencies {
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-expression-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-search:stroom-searchable-api')

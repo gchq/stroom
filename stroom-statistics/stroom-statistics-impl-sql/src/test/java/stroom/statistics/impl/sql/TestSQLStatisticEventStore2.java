@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql;
 
 
 import stroom.datasource.api.v2.TextField;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
@@ -293,7 +294,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
-                null);
+                DateTimeSettings.builder().build());
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);
@@ -364,7 +365,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
-                null);
+                DateTimeSettings.builder().build());
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getFilterTermsTree().toString()).isEqualTo("[]");
@@ -390,7 +391,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
-                null);
+                DateTimeSettings.builder().build());
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);

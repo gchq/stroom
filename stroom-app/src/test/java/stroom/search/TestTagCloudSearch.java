@@ -19,9 +19,9 @@ package stroom.search;
 
 
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -29,7 +29,6 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
@@ -46,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;

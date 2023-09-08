@@ -20,8 +20,9 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.TimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -40,7 +41,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeZone;
 import stroom.query.test.util.ConsoleColour;
 import stroom.util.io.StreamUtil;
 import stroom.util.json.JsonUtil;
@@ -129,7 +129,7 @@ class TestSerialisation {
                                 .showDetail(false)
                                 .build())
                         .build())
-                .dateTimeSettings(DateTimeSettings.builder().build())
+                .dateTimeSettings(DateTimeSettings.builder().referenceTime(0L).build())
                 .incremental(true)
                 .build();
     }

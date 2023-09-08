@@ -2,6 +2,7 @@ package stroom.dashboard.expression.v1;
 
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.expression.api.ExpressionContext;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.Offset;
@@ -101,6 +102,13 @@ public abstract class AbstractFunctionTest<T extends Function> {
     Supplier<T> getFunctionSupplier() {
         Class<T> clazz = getFunctionType();
         return () -> {
+            try {
+                return clazz.getConstructor(ExpressionContext.class, String.class)
+                        .newInstance(new ExpressionContext(), clazz.getSimpleName());
+            } catch (Exception e) {
+                // Ignore
+            }
+
             try {
                 return clazz.getConstructor(String.class)
                         .newInstance(clazz.getSimpleName());

@@ -2,6 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
@@ -20,7 +21,8 @@ public class MapDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final SearchRequestSource searchRequestSource,
+    public DataStore create(final ExpressionContext expressionContext,
+                            final SearchRequestSource searchRequestSource,
                             final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
@@ -36,6 +38,7 @@ public class MapDataStoreFactory implements DataStoreFactory {
                 serialisersProvider.get(),
                 componentId,
                 tableSettings,
+                expressionContext,
                 fieldIndex,
                 paramMap,
                 dataStoreSettings,

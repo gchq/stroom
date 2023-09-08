@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
 import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.expression.api.ExpressionContext;
 
 import org.assertj.core.data.Offset;
 import org.slf4j.Logger;
@@ -234,6 +235,7 @@ public class AbstractExpressionParserTest {
     protected void createExpression(final String expression,
                                     final int valueCount,
                                     final Consumer<Expression> consumer) {
+        final ExpressionContext expressionContext = new ExpressionContext();
         final FieldIndex fieldIndex = new FieldIndex();
         for (int i = 1; i <= valueCount; i++) {
             fieldIndex.create("val" + i);
@@ -241,7 +243,7 @@ public class AbstractExpressionParserTest {
 
         Expression exp;
         try {
-            exp = parser.parse(fieldIndex, expression);
+            exp = parser.parse(expressionContext, fieldIndex, expression);
         } catch (final ParseException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

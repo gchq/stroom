@@ -23,6 +23,7 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Null;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 
 import java.text.ParseException;
@@ -47,12 +48,14 @@ public class CompiledFields {
         this.valueReferenceIndex = valueReferenceIndex;
     }
 
-    public static CompiledFields create(final List<Field> fields,
+    public static CompiledFields create(final ExpressionContext expressionContext,
+                                        final List<Field> fields,
                                         final Map<String, String> paramMap) {
-        return create(fields, new FieldIndex(), paramMap);
+        return create(expressionContext, fields, new FieldIndex(), paramMap);
     }
 
-    public static CompiledFields create(final List<Field> fields,
+    public static CompiledFields create(final ExpressionContext expressionContext,
+                                        final List<Field> fields,
                                         final FieldIndex fieldIndex,
                                         final Map<String, String> paramMap) {
         final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
@@ -75,7 +78,10 @@ public class CompiledFields {
             boolean requiresChildData = false;
             if (field.getExpression() != null && field.getExpression().trim().length() > 0) {
                 try {
-                    final Expression expression = expressionParser.parse(fieldIndex, field.getExpression());
+                    final Expression expression = expressionParser.parse(
+                            expressionContext,
+                            fieldIndex,
+                            field.getExpression());
                     expression.setStaticMappedValues(paramMap);
                     expression.addValueReferences(valueReferenceIndex);
                     generator = expression.createGenerator();

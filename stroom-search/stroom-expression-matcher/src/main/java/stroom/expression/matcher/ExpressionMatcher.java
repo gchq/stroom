@@ -23,14 +23,13 @@ import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,26 +47,22 @@ public class ExpressionMatcher {
     private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
     private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;
-    private final long nowEpochMilli;
 
     public ExpressionMatcher(final Map<String, AbstractField> fieldMap) {
         this.fieldMap = fieldMap;
         this.wordListProvider = null;
         this.collectionService = null;
-        this.dateTimeSettings = null;
-        this.nowEpochMilli = System.currentTimeMillis();
+        this.dateTimeSettings = DateTimeSettings.builder().build();
     }
 
     public ExpressionMatcher(final Map<String, AbstractField> fieldMap,
                              final WordListProvider wordListProvider,
                              final CollectionService collectionService,
-                             final DateTimeSettings dateTimeSettings,
-                             final long nowEpochMilli) {
+                             final DateTimeSettings dateTimeSettings) {
         this.fieldMap = fieldMap;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
         this.dateTimeSettings = dateTimeSettings;
-        this.nowEpochMilli = nowEpochMilli;
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -438,8 +433,7 @@ public class ExpressionMatcher {
             //empty optional will be caught below
             return DateExpressionParser.parse(
                     value.toString(),
-                    dateTimeSettings,
-                    nowEpochMilli).get().toInstant().toEpochMilli();
+                    dateTimeSettings).get().toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new MatchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");

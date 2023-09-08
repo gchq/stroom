@@ -16,7 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
@@ -52,8 +52,6 @@ public class NodeSearchTask {
     @JsonProperty
     private final DateTimeSettings dateTimeSettings;
     @JsonProperty
-    private final long now;
-    @JsonProperty
     private final List<Long> shards; // Specific to Lucene.
 
     @JsonCreator
@@ -65,7 +63,6 @@ public class NodeSearchTask {
                           @JsonProperty("query") final Query query,
                           @JsonProperty("settings") final List<CoprocessorSettings> settings,
                           @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
-                          @JsonProperty("now") final long now,
                           @JsonProperty("shards") final List<Long> shards) {
         this.type = type;
         this.sourceTaskId = sourceTaskId;
@@ -75,7 +72,6 @@ public class NodeSearchTask {
         this.query = query;
         this.settings = settings;
         this.dateTimeSettings = dateTimeSettings;
-        this.now = now;
         this.shards = shards;
     }
 
@@ -109,10 +105,6 @@ public class NodeSearchTask {
 
     public DateTimeSettings getDateTimeSettings() {
         return dateTimeSettings;
-    }
-
-    public long getNow() {
-        return now;
     }
 
     public List<Long> getShards() {

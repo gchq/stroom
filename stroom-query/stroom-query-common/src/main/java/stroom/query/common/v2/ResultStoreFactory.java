@@ -25,9 +25,6 @@ public final class ResultStoreFactory {
         this.resultStoreSettingsFactory = resultStoreSettingsFactory;
     }
 
-    /**
-     * @param store The underlying store to use for creating the search responses.
-     */
     public ResultStore create(final SearchRequestSource searchRequestSource,
                               final CoprocessorsImpl coprocessors) {
         final String userUuid = securityContext.getUserUuid();

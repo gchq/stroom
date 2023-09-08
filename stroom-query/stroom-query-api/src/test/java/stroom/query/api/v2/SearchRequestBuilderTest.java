@@ -1,6 +1,7 @@
 package stroom.query.api.v2;
 
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 
 import org.junit.jupiter.api.Test;
 

@@ -20,6 +20,7 @@ package stroom.search.elastic;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -121,8 +122,7 @@ public class ElasticIndexRetentionExecutor {
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                             dictionaryStore,
                             indexFieldsMap,
-                            null,
-                            System.currentTimeMillis());
+                            DateTimeSettings.builder().build());
 
                     final QueryBuilder query = searchExpressionQueryBuilder.buildQuery(
                             elasticIndex.getRetentionExpression());

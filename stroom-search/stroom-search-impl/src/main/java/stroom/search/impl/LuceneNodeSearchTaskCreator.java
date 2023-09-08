@@ -79,7 +79,6 @@ public class LuceneNodeSearchTaskCreator implements NodeTaskCreator {
                     query,
                     task.getSettings(),
                     task.getDateTimeSettings(),
-                    task.getNow(),
                     shards);
             clusterTaskMap.put(node, nodeSearchTask);
         });
@@ -101,7 +100,7 @@ public class LuceneNodeSearchTaskCreator implements NodeTaskCreator {
 
         if (timeRange != null) {
             final TimeFilter timeFilter = DateExpressionParser
-                    .getTimeFilter(timeRange, task.getDateTimeSettings(), task.getNow());
+                    .getTimeFilter(timeRange, task.getDateTimeSettings());
 
             if (timeRange.getFrom() != null && !timeRange.getFrom().isBlank()) {
                 final TimePartition timePartition = timePartitionFactory.create(indexDoc, timeFilter.getFrom());

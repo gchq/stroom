@@ -75,7 +75,7 @@ public class ResultStore {
         lastAccessTime = creationTime;
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
-        searchResponseCreator = new SearchResponseCreator(sizesProvider, this);
+        searchResponseCreator = new SearchResponseCreator(sizesProvider, this, coprocessors.getExpressionContext());
     }
 
     public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {

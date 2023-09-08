@@ -18,7 +18,7 @@
 package stroom.search.solr.search;
 
 import stroom.annotation.api.AnnotationFields;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -70,7 +70,6 @@ class SolrClusterSearchTaskHandler {
     public void search(final TaskContext taskContext,
                        final QueryKey queryKey,
                        final Query query,
-                       final long now,
                        final DateTimeSettings dateTimeSettings,
                        final Coprocessors coprocessors) {
         SearchProgressLog.increment(queryKey, SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
@@ -81,13 +80,12 @@ class SolrClusterSearchTaskHandler {
                 taskContext.info(() -> "Initialising...");
 
                 // Start searching.
-                doSearch(taskContext, now, dateTimeSettings, queryKey, query, coprocessors);
+                doSearch(taskContext, dateTimeSettings, queryKey, query, coprocessors);
             }
         });
     }
 
     private void doSearch(final TaskContext taskContext,
-                          final long now,
                           final DateTimeSettings dateTimeSettings,
                           final QueryKey queryKey,
                           final Query query,
@@ -112,7 +110,6 @@ class SolrClusterSearchTaskHandler {
             final CompletableFuture<Void> indexShardSearchFuture = solrSearchFactory.search(
                     queryKey,
                     query,
-                    now,
                     dateTimeSettings,
                     expression,
                     coprocessors.getFieldIndex(),

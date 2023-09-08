@@ -38,6 +38,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.expression.api.ExpressionContext;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Query;
@@ -153,9 +154,10 @@ class DashboardServiceImpl implements DashboardService {
     @Override
     public ValidateExpressionResult validateExpression(final String expressionString) {
         try {
+            final ExpressionContext expressionContext = new ExpressionContext();
             final FieldIndex fieldIndex = new FieldIndex();
             final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
-            final Expression expression = expressionParser.parse(fieldIndex, expressionString);
+            final Expression expression = expressionParser.parse(expressionContext, fieldIndex, expressionString);
             String correctedExpression = "";
             if (expression != null) {
                 correctedExpression = expression.toString();

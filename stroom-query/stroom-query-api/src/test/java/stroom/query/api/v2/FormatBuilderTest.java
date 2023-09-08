@@ -1,5 +1,6 @@
 package stroom.query.api.v2;
 
+import stroom.expression.api.TimeZone;
 import stroom.query.api.v2.Format.Type;
 
 import org.junit.jupiter.api.Test;

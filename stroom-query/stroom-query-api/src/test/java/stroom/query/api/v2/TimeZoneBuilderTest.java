@@ -1,5 +1,7 @@
 package stroom.query.api.v2;
 
+import stroom.expression.api.TimeZone;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

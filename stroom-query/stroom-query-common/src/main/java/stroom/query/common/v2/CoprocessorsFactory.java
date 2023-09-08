@@ -3,6 +3,8 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
@@ -24,10 +26,13 @@ import javax.inject.Inject;
 public class CoprocessorsFactory {
 
     private final DataStoreFactory dataStoreFactory;
+    private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
-    public CoprocessorsFactory(final DataStoreFactory dataStoreFactory) {
+    public CoprocessorsFactory(final DataStoreFactory dataStoreFactory,
+                               final ExpressionContextFactory expressionContextFactory) {
         this.dataStoreFactory = dataStoreFactory;
+        this.expressionContextFactory = expressionContextFactory;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -61,6 +66,7 @@ public class CoprocessorsFactory {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
         return create(
                 searchRequest.getSearchRequestSource(),
+                searchRequest.getDateTimeSettings(),
                 searchRequest.getKey(),
                 coprocessorSettingsList,
                 searchRequest.getQuery().getParams(),
@@ -68,6 +74,7 @@ public class CoprocessorsFactory {
     }
 
     public CoprocessorsImpl create(final SearchRequestSource searchRequestSource,
+                                   final DateTimeSettings dateTimeSettings,
                                    final QueryKey queryKey,
                                    final List<CoprocessorSettings> coprocessorSettingsList,
                                    final List<Param> params,
@@ -80,12 +87,14 @@ public class CoprocessorsFactory {
 
         // Create error consumer.
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-
+        final ExpressionContext expressionContext = expressionContextFactory
+                .createContext(searchRequestSource, dateTimeSettings);
         final Map<Integer, Coprocessor> coprocessorMap = new HashMap<>();
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
                 final Coprocessor coprocessor = create(
+                        expressionContext,
                         searchRequestSource,
                         queryKey,
                         coprocessorSettings,
@@ -128,10 +137,12 @@ public class CoprocessorsFactory {
                 Collections.unmodifiableMap(componentIdCoprocessorMap),
                 Collections.unmodifiableMap(extractionPipelineCoprocessorMap),
                 fieldIndex,
-                errorConsumer);
+                errorConsumer,
+                expressionContext);
     }
 
-    private Coprocessor create(final SearchRequestSource searchRequestSource,
+    private Coprocessor create(final ExpressionContext expressionContext,
+                               final SearchRequestSource searchRequestSource,
                                final QueryKey queryKey,
                                final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
@@ -141,6 +152,7 @@ public class CoprocessorsFactory {
         if (settings instanceof final TableCoprocessorSettings tableCoprocessorSettings) {
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
             final DataStore dataStore = create(
+                    expressionContext,
                     searchRequestSource,
                     queryKey,
                     String.valueOf(tableCoprocessorSettings.getCoprocessorId()),
@@ -157,7 +169,8 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private DataStore create(final SearchRequestSource searchRequestSource,
+    private DataStore create(final ExpressionContext expressionContext,
+                             final SearchRequestSource searchRequestSource,
                              final QueryKey queryKey,
                              final String componentId,
                              final TableSettings tableSettings,
@@ -175,6 +188,7 @@ public class CoprocessorsFactory {
                         .build();
 
         return dataStoreFactory.create(
+                expressionContext,
                 searchRequestSource,
                 queryKey,
                 componentId,

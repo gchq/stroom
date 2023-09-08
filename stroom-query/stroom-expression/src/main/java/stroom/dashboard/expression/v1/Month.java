@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
+import stroom.expression.api.ExpressionContext;
+
 import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -36,10 +36,17 @@ class Month extends AbstractTimeFunction {
 
     private final Generator generator;
 
-    public Month(final String name) {
-        super(name);
-        final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-        final ZonedDateTime time = ZonedDateTime.of(now.getYear(), now.getMonthValue(), 1, 0, 0, 0, 0, now.getZone());
+    public Month(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
+        final ZonedDateTime referenceTime = getReferenceTime();
+        final ZonedDateTime time = ZonedDateTime.of(referenceTime.getYear(),
+                referenceTime.getMonthValue(),
+                1,
+                0,
+                0,
+                0,
+                0,
+                referenceTime.getZone());
         generator = new StaticValueGen(ValDate.create(time.toInstant().toEpochMilli()));
     }
 

@@ -16,12 +16,50 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
+
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 abstract class AbstractTimeFunction extends AbstractFunction {
 
-    public AbstractTimeFunction(final String name) {
+    private final ExpressionContext expressionContext;
+
+    public AbstractTimeFunction(final ExpressionContext expressionContext, final String name) {
         super(name, 0, 0);
+        this.expressionContext = expressionContext;
+    }
+
+    ZonedDateTime getReferenceTime() {
+        final DateTimeSettings dateTimeSettings = expressionContext.getDateTimeSettings();
+        final Instant instant = Instant.ofEpochMilli(expressionContext.getDateTimeSettings().getReferenceTime());
+        switch (dateTimeSettings.getTimeZone().getUse()) {
+            case LOCAL -> {
+                final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
+                return ZonedDateTime.ofInstant(instant, zoneId);
+            }
+            case UTC -> {
+                final ZoneId zoneId = ZoneId.of("Z");
+                return ZonedDateTime.ofInstant(instant, zoneId);
+            }
+            case ID -> {
+                final ZoneId zoneId = ZoneId.of(dateTimeSettings.getTimeZone().getId());
+                return ZonedDateTime.ofInstant(instant, zoneId);
+            }
+            case OFFSET -> {
+                final ZoneOffset zoneOffset = ZoneOffset
+                        .ofHoursMinutes(dateTimeSettings.getTimeZone().getOffsetHours(),
+                                dateTimeSettings.getTimeZone().getOffsetMinutes());
+                return ZonedDateTime.ofInstant(instant, zoneOffset);
+            }
+            default -> {
+                return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+            }
+        }
     }
 
     @Override

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;

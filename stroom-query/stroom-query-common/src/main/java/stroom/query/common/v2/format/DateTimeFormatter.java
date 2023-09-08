@@ -18,9 +18,9 @@ package stroom.query.common.v2.format;
 
 import stroom.dashboard.expression.v1.DateUtil;
 import stroom.dashboard.expression.v1.Val;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.TimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.DateTimeSettings;
-import stroom.query.api.v2.TimeZone;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

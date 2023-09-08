@@ -3,7 +3,7 @@ package stroom.index;
 import stroom.app.App;
 import stroom.config.app.Config;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Query;

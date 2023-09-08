@@ -23,6 +23,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TableSettings;
@@ -80,6 +81,7 @@ public class MapDataStore implements DataStore {
     public MapDataStore(final Serialisers serialisers,
                         final String componentId,
                         final TableSettings tableSettings,
+                        final ExpressionContext expressionContext,
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
                         final DataStoreSettings dataStoreSettings,
@@ -87,7 +89,7 @@ public class MapDataStore implements DataStore {
         this.componentId = componentId;
         this.serialisers = serialisers;
         fields = tableSettings.getFields();
-        this.compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
+        this.compiledFields = CompiledFields.create(expressionContext, fields, fieldIndex, paramMap);
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
         this.compiledFieldsArray = compiledFields.getCompiledFields();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFieldsArray, tableSettings.showDetail());

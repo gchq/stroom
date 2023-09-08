@@ -189,8 +189,7 @@ public class IndexShardSearchFactory {
                             dictionaryStore,
                             indexFieldsMap,
                             maxBooleanClauseCount,
-                            task.getDateTimeSettings(),
-                            task.getNow());
+                            task.getDateTimeSettings());
                     final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(version, expression);
 
                     // Make sure the query was created successfully.

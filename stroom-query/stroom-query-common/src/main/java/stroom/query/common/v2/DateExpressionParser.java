@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
 
@@ -49,48 +49,42 @@ public class DateExpressionParser {
     public static Optional<ZonedDateTime> parse(final String expression) {
         return parse(
                 expression,
-                null,
-                System.currentTimeMillis());
+                DateTimeSettings.builder().build());
     }
 
 
     public static Optional<ZonedDateTime> parse(final String expression, final long nowEpochMilli) {
         return parse(
                 expression,
-                null,
-                nowEpochMilli);
+                DateTimeSettings.builder().referenceTime(nowEpochMilli).build());
     }
 
     public static TimeFilter getTimeFilter(final TimeRange timeRange,
-                                           final DateTimeSettings dateTimeSettings,
-                                           final long nowEpochMilli) {
-        final long from = getMs(timeRange.getFrom(), dateTimeSettings, nowEpochMilli, 0);
-        final long to = getMs(timeRange.getTo(), dateTimeSettings, nowEpochMilli, Long.MAX_VALUE);
+                                           final DateTimeSettings dateTimeSettings) {
+        final long from = getMs(timeRange.getFrom(), dateTimeSettings, 0);
+        final long to = getMs(timeRange.getTo(), dateTimeSettings, Long.MAX_VALUE);
         return new TimeFilter(from, to);
     }
 
     private static long getMs(final String expression,
-                             final DateTimeSettings dateTimeSettings,
-                             final long nowEpochMilli,
-                             final long defaultValue) {
+                              final DateTimeSettings dateTimeSettings,
+                              final long defaultValue) {
         if (expression == null || expression.isBlank()) {
             return defaultValue;
         }
         return DateExpressionParser.parse(
                         expression,
-                        dateTimeSettings,
-                        nowEpochMilli)
+                        dateTimeSettings)
                 .map(time -> time.toInstant().toEpochMilli())
                 .orElse(defaultValue);
     }
 
     public static Optional<ZonedDateTime> parse(final String expression,
-                                                final DateTimeSettings dateTimeSettings,
-                                                final long nowEpochMilli) {
+                                                final DateTimeSettings dateTimeSettings) {
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
 
-        parseConstants(chars, parts, nowEpochMilli);
+        parseConstants(chars, parts, dateTimeSettings.getReferenceTime());
         parseDurations(chars, parts);
 
         // Find index of any remaining date.

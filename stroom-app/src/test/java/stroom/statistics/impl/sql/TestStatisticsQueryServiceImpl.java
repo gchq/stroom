@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -390,7 +391,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                 .query(Query.builder()
                         .expression(operatorBuilder.build())
                         .dataSource(DocRefUtil.create(statisticStoreDoc))
-                        .build());
+                        .build())
+                .dateTimeSettings(DateTimeSettings.builder().build());
 
         optTimeout.ifPresent(searchBuilder::timeout);
 

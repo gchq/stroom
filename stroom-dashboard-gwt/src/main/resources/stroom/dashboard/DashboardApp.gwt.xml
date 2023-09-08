@@ -82,6 +82,7 @@
 
     <!-- Additional -->
     <inherits name="stroom.dashboard.Dashboard"/>
+    <inherits name="stroom.expression.Expression"/>
     <inherits name="stroom.query.Query"/>
     <inherits name="stroom.docstore.DocStore"/>
     <inherits name="stroom.data.retention.DataRetention"/>

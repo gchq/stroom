@@ -110,6 +110,7 @@ select "Stream Id", "Event Id", "Event Time", "Status"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -228,6 +229,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -357,6 +359,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -477,6 +480,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -597,6 +601,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -691,6 +696,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -744,6 +750,7 @@ select StreamId
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -838,6 +845,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -932,6 +940,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -1026,6 +1035,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }
@@ -1082,6 +1092,7 @@ select StreamId as "Stream Id", count as Count
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }

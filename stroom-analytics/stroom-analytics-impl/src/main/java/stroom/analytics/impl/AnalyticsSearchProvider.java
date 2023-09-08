@@ -20,9 +20,8 @@ package stroom.analytics.impl;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.api.HasDataSourceDocRefs;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -79,9 +78,6 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     public ResultStore createResultStore(final SearchRequest searchRequest) {
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
@@ -91,8 +87,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
         // Extract highlights.
         final Set<String> highlights = getHighlights(
                 query.getExpression(),
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
@@ -103,6 +98,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
                 .createBasicSearchResultStoreSettings();
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
@@ -116,8 +112,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(
@@ -135,8 +130,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
      * highlighting.
      */
     private Set<String> getHighlights(final ExpressionOperator expression,
-                                      DateTimeSettings dateTimeSettings,
-                                      final long nowEpochMilli) {
+                                      DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
 //        try {

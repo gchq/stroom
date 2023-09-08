@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
@@ -46,6 +47,7 @@ public class SearchResponseCreator {
 
     private final SizesProvider sizesProvider;
     private final ResultStore store;
+    private final ExpressionContext expressionContext;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -53,9 +55,11 @@ public class SearchResponseCreator {
      * @param store The underlying store to use for creating the search responses.
      */
     public SearchResponseCreator(final SizesProvider sizesProvider,
-                                 final ResultStore store) {
+                                 final ResultStore store,
+                                 final ExpressionContext expressionContext) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
+        this.expressionContext = expressionContext;
     }
 
     /**
@@ -270,6 +274,7 @@ public class SearchResponseCreator {
                             dataStore.getSerialisers(),
                             searchRequest,
                             componentId,
+                            expressionContext,
                             resultRequest,
                             true);
                     map.put(componentId, resultCreator);
@@ -284,6 +289,7 @@ public class SearchResponseCreator {
     private ResultCreator getDefaultResultCreator(final Serialisers serialisers,
                                                   final SearchRequest searchRequest,
                                                   final String componentId,
+                                                  final ExpressionContext expressionContext,
                                                   final ResultRequest resultRequest,
                                                   final boolean cacheLastResult) {
         return cachedResultCreators.computeIfAbsent(componentId, k -> {
@@ -300,6 +306,7 @@ public class SearchResponseCreator {
                             new MapDataStoreFactory(() -> serialisers),
                             searchRequest,
                             componentId,
+                            expressionContext,
                             resultRequest,
                             null,
                             null,
@@ -312,6 +319,7 @@ public class SearchResponseCreator {
                             new MapDataStoreFactory(() -> serialisers),
                             searchRequest,
                             componentId,
+                            expressionContext,
                             resultRequest,
                             null,
                             null,
@@ -327,6 +335,7 @@ public class SearchResponseCreator {
                             new MapDataStoreFactory(() -> serialisers),
                             searchRequest,
                             componentId,
+                            expressionContext,
                             resultRequest,
                             null,
                             null,

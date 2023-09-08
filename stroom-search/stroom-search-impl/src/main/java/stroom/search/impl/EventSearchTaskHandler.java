@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -67,7 +68,7 @@ public class EventSearchTaskHandler {
 
             try {
                 // Get the current time in millis since epoch.
-                final long nowEpochMilli = System.currentTimeMillis();
+                final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
 
                 // Get the search.
                 final Query query = task.getQuery();
@@ -92,11 +93,11 @@ public class EventSearchTaskHandler {
                         searchName,
                         modifiedQuery,
                         Collections.singletonList(settings),
-                        null,
-                        nowEpochMilli);
+                        dateTimeSettings);
 
                 final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                         task.getSearchRequestSource(),
+                        dateTimeSettings,
                         task.getKey(),
                         Collections.singletonList(settings),
                         modifiedQuery.getParams(),

@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
+import stroom.expression.api.ExpressionContext;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -37,10 +37,10 @@ class Second extends AbstractTimeFunction {
 
     private final Generator generator;
 
-    public Second(final String name) {
-        super(name);
-        final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-        final ZonedDateTime time = now.truncatedTo(ChronoUnit.SECONDS);
+    public Second(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
+        final ZonedDateTime referenceTime = getReferenceTime();
+        final ZonedDateTime time = referenceTime.truncatedTo(ChronoUnit.SECONDS);
         generator = new StaticValueGen(ValDate.create(time.toInstant().toEpochMilli()));
     }
 

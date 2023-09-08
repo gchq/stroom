@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.expression.api.ExpressionContext;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Now.NAME,
@@ -32,9 +34,9 @@ class Now extends AbstractTimeFunction {
 
     private final Generator generator;
 
-    public Now(final String name) {
-        super(name);
-        generator = new StaticValueGen(ValDate.create(System.currentTimeMillis()));
+    public Now(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
+        generator = new StaticValueGen(ValDate.create(expressionContext.getDateTimeSettings().getReferenceTime()));
     }
 
     @Override

@@ -1,6 +1,6 @@
-package stroom.query.api.v2;
+package stroom.expression.api;
 
-import stroom.query.api.v2.TimeZone.Use;
+import stroom.expression.api.TimeZone.Use;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,6 +29,13 @@ public class DateTimeSettings {
     @JsonProperty
     private final String localZoneId;
 
+    @Schema(description = "The time in milliseconds since epoch to use as the reference time for relative date " +
+            "functions like `day()`",
+            required = true)
+    @JsonProperty
+    private final long referenceTime;
+
+
     /**
      * @param dateTimePattern The client date time pattern to use by default for formatting search results that contain
      *                        dates.
@@ -39,10 +46,12 @@ public class DateTimeSettings {
     @JsonCreator
     public DateTimeSettings(@JsonProperty("dateTimePattern") final String dateTimePattern,
                             @JsonProperty("timeZone") final TimeZone timeZone,
-                            @JsonProperty("localZoneId") final String localZoneId) {
+                            @JsonProperty("localZoneId") final String localZoneId,
+                            @JsonProperty("referenceTime") final long referenceTime) {
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
         this.localZoneId = localZoneId;
+        this.referenceTime = referenceTime;
     }
 
     public String getDateTimePattern() {
@@ -57,6 +66,10 @@ public class DateTimeSettings {
         return localZoneId;
     }
 
+    public long getReferenceTime() {
+        return referenceTime;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -66,21 +79,24 @@ public class DateTimeSettings {
             return false;
         }
         final DateTimeSettings that = (DateTimeSettings) o;
-        return Objects.equals(dateTimePattern, that.dateTimePattern) && Objects.equals(timeZone,
-                that.timeZone) && Objects.equals(localZoneId, that.localZoneId);
+        return Objects.equals(dateTimePattern, that.dateTimePattern) &&
+                Objects.equals(timeZone,                that.timeZone) &&
+                Objects.equals(localZoneId, that.localZoneId) &&
+                Objects.equals(referenceTime, that.referenceTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dateTimePattern, timeZone, localZoneId);
+        return Objects.hash(dateTimePattern, timeZone, localZoneId, referenceTime);
     }
 
     @Override
     public String toString() {
-        return "ClientSettings{" +
+        return "DateTimeSettings{" +
                 "dateTimePattern='" + dateTimePattern + '\'' +
                 ", timeZone=" + timeZone +
                 ", localZoneId='" + localZoneId + '\'' +
+                ", referenceTime=" + referenceTime +
                 '}';
     }
 
@@ -97,6 +113,7 @@ public class DateTimeSettings {
         private String dateTimePattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
         private TimeZone timeZone = TimeZone.builder().use(Use.UTC).build();
         private String localZoneId = "Z";
+        private Long referenceTime;
 
         private Builder() {
         }
@@ -122,8 +139,16 @@ public class DateTimeSettings {
             return this;
         }
 
+        public Builder referenceTime(final Long referenceTime) {
+            this.referenceTime = referenceTime;
+            return this;
+        }
+
         public DateTimeSettings build() {
-            return new DateTimeSettings(dateTimePattern, timeZone, localZoneId);
+            if (referenceTime == null) {
+                referenceTime = System.currentTimeMillis();
+            }
+            return new DateTimeSettings(dateTimePattern, timeZone, localZoneId, referenceTime);
         }
     }
 }

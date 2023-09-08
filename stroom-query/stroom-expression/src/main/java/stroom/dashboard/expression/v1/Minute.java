@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
+import stroom.expression.api.ExpressionContext;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -37,10 +37,10 @@ class Minute extends AbstractTimeFunction {
 
     private final Generator generator;
 
-    public Minute(final String name) {
-        super(name);
-        final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-        final ZonedDateTime time = now.truncatedTo(ChronoUnit.MINUTES);
+    public Minute(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
+        final ZonedDateTime referenceTime = getReferenceTime();
+        final ZonedDateTime time = referenceTime.truncatedTo(ChronoUnit.MINUTES);
         generator = new StaticValueGen(ValDate.create(time.toInstant().toEpochMilli()));
     }
 

@@ -20,6 +20,7 @@ package stroom.search.solr;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.search.solr.search.SearchExpressionQueryBuilder;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
@@ -108,8 +109,7 @@ public class SolrIndexRetentionExecutor {
                                         dictionaryStore,
                                         indexFieldsMap,
                                         searchConfigProvider.get().getMaxBooleanClauseCount(),
-                                        null,
-                                        System.currentTimeMillis());
+                                        DateTimeSettings.builder().build());
                         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder
                                 .buildQuery(solrIndexDoc.getRetentionExpression());
                         final Query query = searchExpressionQuery.getQuery();

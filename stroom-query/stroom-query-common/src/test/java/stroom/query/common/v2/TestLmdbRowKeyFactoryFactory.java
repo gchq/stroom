@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatGroupedLmdbRowKeyFactory;
@@ -137,7 +138,8 @@ public class TestLmdbRowKeyFactoryFactory {
                 .build();
         final List<Field> fields = List.of(field);
         final FieldIndex fieldIndex = new FieldIndex();
-        final CompiledFields compiledFields = CompiledFields.create(fields, fieldIndex, Collections.emptyMap());
+        final CompiledFields compiledFields = CompiledFields.create(new ExpressionContext(),
+                fields, fieldIndex, Collections.emptyMap());
         final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
         return new CompiledDepths(compiledFieldArray, false);
     }

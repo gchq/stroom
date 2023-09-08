@@ -8,6 +8,7 @@ import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
+import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
@@ -30,6 +31,7 @@ import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.Serialisers;
@@ -76,6 +78,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final Provider<Executor> executorProvider;
+    private final ExpressionContextFactory expressionContextFactory;
     private final Path analyticResultStoreDir;
     private final Map<AnalyticRuleDoc, AnalyticDataStore> dataStoreCache;
     private final NodeInfo nodeInfo;
@@ -88,6 +91,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                               final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                               final Provider<Executor> executorProvider,
+                              final ExpressionContextFactory expressionContextFactory,
                               final NodeInfo nodeInfo,
                               final SecurityContext securityContext) {
         this.lmdbEnvFactory = lmdbEnvFactory;
@@ -95,6 +99,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.executorProvider = executorProvider;
+        this.expressionContextFactory = expressionContextFactory;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
 
@@ -246,10 +251,13 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final String componentId = getComponentId(searchRequest);
         final TableSettings tableSettings = getTableSettings(searchRequest);
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
+        final ExpressionContext expressionContext = expressionContextFactory
+                .createContext(searchRequest);
         return createAnalyticLmdbDataStore(
                 searchRequest.getKey(),
                 componentId,
                 tableSettings,
+                expressionContext,
                 fieldIndex,
                 paramMap,
                 dataStoreSettings,
@@ -259,6 +267,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private LmdbDataStore createAnalyticLmdbDataStore(final QueryKey queryKey,
                                                       final String componentId,
                                                       final TableSettings tableSettings,
+                                                      final ExpressionContext expressionContext,
                                                       final FieldIndex fieldIndex,
                                                       final Map<String, String> paramMap,
                                                       final DataStoreSettings dataStoreSettings,
@@ -274,7 +283,6 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .componentId(componentId)
                 .build();
-
         return new LmdbDataStore(
                 searchRequestSource,
                 new Serialisers(storeConfig),
@@ -283,6 +291,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 queryKey,
                 componentId,
                 tableSettings,
+                expressionContext,
                 fieldIndex,
                 paramMap,
                 dataStoreSettings,
@@ -413,8 +422,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final TimeFilter timeFilter = DateExpressionParser
                         .getTimeFilter(
                                 request.getTimeRange(),
-                                request.getDateTimeSettings(),
-                                System.currentTimeMillis());
+                                request.getDateTimeSettings());
                 resultRequest = resultRequest
                         .copy()
                         .mappings(mappings)

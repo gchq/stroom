@@ -22,7 +22,7 @@ import stroom.datasource.api.v2.DateField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -131,9 +131,6 @@ public class SolrSearchProvider implements SearchProvider {
 
     @Override
     public ResultStore createResultStore(final SearchRequest searchRequest) {
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
@@ -147,8 +144,7 @@ public class SolrSearchProvider implements SearchProvider {
         final Set<String> highlights = getHighlights(
                 index,
                 query.getExpression(),
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
@@ -157,6 +153,7 @@ public class SolrSearchProvider implements SearchProvider {
         // Create a handler for search results.
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
@@ -169,8 +166,7 @@ public class SolrSearchProvider implements SearchProvider {
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create the search result store.
         final ResultStore resultStore = resultStoreFactory.create(
@@ -190,8 +186,7 @@ public class SolrSearchProvider implements SearchProvider {
      */
     private Set<String> getHighlights(final CachedSolrIndex index,
                                       final ExpressionOperator expression,
-                                      final DateTimeSettings dateTimeSettings,
-                                      final long nowEpochMilli) {
+                                      final DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
         try {
@@ -205,8 +200,7 @@ public class SolrSearchProvider implements SearchProvider {
                     wordListProvider,
                     indexFieldsMap,
                     searchConfig.getMaxBooleanClauseCount(),
-                    dateTimeSettings,
-                    nowEpochMilli);
+                    dateTimeSettings);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(expression);
 

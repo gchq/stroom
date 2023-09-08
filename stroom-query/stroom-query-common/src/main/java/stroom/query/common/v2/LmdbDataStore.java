@@ -26,6 +26,7 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
@@ -131,6 +132,7 @@ public class LmdbDataStore implements DataStore {
                          final QueryKey queryKey,
                          final String componentId,
                          final TableSettings tableSettings,
+                         final ExpressionContext expressionContext,
                          final FieldIndex fieldIndex,
                          final Map<String, String> paramMap,
                          final DataStoreSettings dataStoreSettings,
@@ -158,7 +160,7 @@ public class LmdbDataStore implements DataStore {
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
         valueFilter = modifiedTableSettings.getValueFilter();
         fieldExpressionMatcher = new FieldExpressionMatcher(fields);
-        this.compiledFields = CompiledFields.create(fields, fieldIndex, paramMap);
+        this.compiledFields = CompiledFields.create(expressionContext, fields, fieldIndex, paramMap);
         this.compiledFieldArray = compiledFields.getCompiledFields();
         valueReferenceIndex = compiledFields.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledFieldArray, modifiedTableSettings.showDetail());

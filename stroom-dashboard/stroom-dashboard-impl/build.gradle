@@ -16,6 +16,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-expression-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-resource:stroom-resource-api')

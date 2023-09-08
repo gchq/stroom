@@ -16,7 +16,7 @@
 
 package stroom.analytics.shared;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeRange;
 
@@ -47,7 +47,7 @@ public class GetAnalyticShardDataRequest {
                                        @JsonProperty("timeRange") final TimeRange timeRange,
                                        @JsonProperty("analyticDocUuid") final String analyticDocUuid,
                                        @JsonProperty("path") final String path,
-                                       @JsonProperty("dateTimeSettings")  final DateTimeSettings dateTimeSettings) {
+                                       @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings) {
         this.requestedRange = requestedRange;
         this.timeRange = timeRange;
         this.analyticDocUuid = analyticDocUuid;

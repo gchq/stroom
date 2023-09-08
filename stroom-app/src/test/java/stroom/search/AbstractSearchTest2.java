@@ -18,9 +18,9 @@ package stroom.search;
 
 
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;

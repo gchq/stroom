@@ -44,12 +44,6 @@ public class FieldIndex {
     private Integer streamIdFieldIndex;
     private Integer eventIdFieldIndex;
 
-    public static FieldIndex forFields(final String... fieldNames) {
-        final FieldIndex instance = new FieldIndex();
-        Arrays.stream(fieldNames).forEach(instance::create);
-        return instance;
-    }
-
     public int create(final String fieldName) {
         return fieldToPos.computeIfAbsent(fieldName, k -> {
             final int pos = index++;

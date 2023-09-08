@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
@@ -58,14 +58,13 @@ class TestSearchResponseCreator {
     @Test
     void create_nonIncremental_timesOut() {
         final Duration serverTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is never complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
         makeSearchStateAfter(500, false);
 
-        SearchRequest searchRequest = getSearchRequest(false, null);
-
+        final SearchRequest searchRequest = getSearchRequest(false, null);
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
@@ -85,20 +84,19 @@ class TestSearchResponseCreator {
         assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
     }
 
-    private SearchResponseCreator createSearchResponseCreator() {
-        return new SearchResponseCreator(sizesProvider, mockStore);
+    private SearchResponseCreator createSearchResponseCreator(final SearchRequest searchRequest) {
+        return new SearchResponseCreator(sizesProvider, mockStore, new ExpressionContextFactory()
+                .createContext(searchRequest));
     }
 
     @Test
     void create_nonIncremental_completesImmediately() {
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
-
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(true);
         makeSearchStateAfter(0, true);
 
-        SearchRequest searchRequest = getSearchRequest(false, null);
-
+        final SearchRequest searchRequest = getSearchRequest(false, null);
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
@@ -118,14 +116,14 @@ class TestSearchResponseCreator {
     @Test
     void create_nonIncremental_completesBeforeTimeout() {
         Duration clientTimeout = Duration.ofMillis(5_000);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store initially not complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
         long sleepTime = 200L;
         makeSearchStateAfter(sleepTime, true);
 
-        SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
+        final SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest,
@@ -145,7 +143,6 @@ class TestSearchResponseCreator {
     @Test
     void create_incremental_noTimeout() {
         final Duration clientTimeout = Duration.ofMillis(0);
-        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is not complete during test
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -155,7 +152,8 @@ class TestSearchResponseCreator {
         Mockito.when(mockStore.getData(Mockito.any())).thenReturn(null);
 
         //zero timeout
-        SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest,
@@ -178,13 +176,13 @@ class TestSearchResponseCreator {
     @Test
     void create_incremental_timesOutWithDataThenCompletes() {
         Duration clientTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(false);
         makeSearchStateAfter(500, false);
 
-        SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
 
         TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest,

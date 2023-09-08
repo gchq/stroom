@@ -795,6 +795,12 @@ export interface DateTimeSettings {
   /** The local zone id to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
   localZoneId: string;
 
+  /**
+   * The time in milliseconds since epoch to use as the reference time for relative date functions like `day()`
+   * @format int64
+   */
+  referenceTime: number;
+
   /** The timezone to apply to a date time value */
   timeZone?: TimeZone;
 }
@@ -2631,9 +2637,6 @@ export interface NodeSearchTask {
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   key?: QueryKey;
-
-  /** @format int64 */
-  now?: number;
 
   /** The query terms for the search */
   query?: Query;

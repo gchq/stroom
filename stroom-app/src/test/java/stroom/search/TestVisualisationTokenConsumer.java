@@ -1,8 +1,8 @@
 package stroom.search;
 
 import stroom.dictionary.impl.DictionaryStore;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.search.impl.EventSearchTaskHandler;

@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
+import stroom.expression.api.ExpressionContext;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
@@ -40,11 +40,11 @@ class Week extends AbstractTimeFunction {
 
     private final Generator generator;
 
-    public Week(final String name) {
-        super(name);
-        final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+    public Week(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
+        final ZonedDateTime referenceTime = getReferenceTime();
         TemporalField fieldISO = WeekFields.of(Locale.UK).dayOfWeek();
-        ZonedDateTime time = now.with(fieldISO, 1); // Monday
+        ZonedDateTime time = referenceTime.with(fieldISO, 1); // Monday
         time = time.truncatedTo(ChronoUnit.DAYS);
         generator = new StaticValueGen(ValDate.create(time.toInstant().toEpochMilli()));
     }

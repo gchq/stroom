@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ParamFactory;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -702,7 +703,7 @@ public class SearchRequestBuilder {
         Format format = Format.GENERAL;
         try {
             ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
-            final Expression exp = expressionParser.parse(new FieldIndex(), expression);
+            final Expression exp = expressionParser.parse(new ExpressionContext(), new FieldIndex(), expression);
             if (exp != null) {
                 switch (exp.getCommonReturnType()) {
                     case DATE -> format = Format.DATE_TIME;

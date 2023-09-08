@@ -1,8 +1,8 @@
 package stroom.search.impl;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -24,15 +24,13 @@ public class SearchExpressionQueryBuilderFactory {
     }
 
     public SearchExpressionQueryBuilder create(final IndexFieldsMap indexFieldsMap,
-                                               final DateTimeSettings dateTimeSettings,
-                                               final long nowEpochMilli) {
+                                               final DateTimeSettings dateTimeSettings) {
         try {
             return new SearchExpressionQueryBuilder(
                     wordListProvider,
                     indexFieldsMap,
                     searchConfigProvider.get().getMaxBooleanClauseCount(),
-                    dateTimeSettings,
-                    nowEpochMilli);
+                    dateTimeSettings);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;

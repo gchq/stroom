@@ -56,9 +56,9 @@ public class SolrAsyncSearchTaskHandler {
     }
 
     public void search(final TaskContext parentContext,
-                     final SolrAsyncSearchTask task,
-                     final Coprocessors coprocessors,
-                     final ResultStore resultStore) {
+                       final SolrAsyncSearchTask task,
+                       final Coprocessors coprocessors,
+                       final ResultStore resultStore) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
 
@@ -77,7 +77,6 @@ public class SolrAsyncSearchTaskHandler {
                                 parentContext,
                                 task.getKey(),
                                 query,
-                                task.getNow(),
                                 task.getDateTimeSettings(),
                                 coprocessors);
 

@@ -16,13 +16,13 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.expression.api.TimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.FormatSettings;
 import stroom.query.api.v2.NumberFormatSettings;
-import stroom.query.api.v2.TimeZone;
 import stroom.query.client.presenter.TimeZones;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;

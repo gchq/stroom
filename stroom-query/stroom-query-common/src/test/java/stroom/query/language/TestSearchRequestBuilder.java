@@ -1,6 +1,6 @@
 package stroom.query.language;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -26,7 +26,7 @@ public class TestSearchRequestBuilder extends AbstractQueryTest {
                 queryKey,
                 query,
                 resultRequests,
-                DateTimeSettings.builder().build(),
+                DateTimeSettings.builder().referenceTime(0L).build(),
                 false);
         searchRequest = new SearchRequestBuilder(null).create(input, searchRequest);
         return JsonUtil.writeValueAsString(searchRequest);

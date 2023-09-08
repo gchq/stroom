@@ -107,9 +107,6 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public ResultStore createResultStore(final SearchRequest searchRequest) {
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
@@ -127,6 +124,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         // Create a handler for search results.
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
@@ -139,8 +137,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(

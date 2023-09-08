@@ -16,8 +16,8 @@
 
 package stroom.query.common.v2.format;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;

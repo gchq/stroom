@@ -19,12 +19,12 @@ package stroom.search.impl;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.analyzer.AnalyzerFactory;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -68,18 +68,15 @@ public class SearchExpressionQueryBuilder {
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
     private final DateTimeSettings dateTimeSettings;
-    private final long nowEpochMilli;
 
     public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final IndexFieldsMap indexFieldsMap,
                                         final int maxBooleanClauseCount,
-                                        final DateTimeSettings dateTimeSettings,
-                                        final long nowEpochMilli) {
+                                        final DateTimeSettings dateTimeSettings) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.dateTimeSettings = dateTimeSettings;
-        this.nowEpochMilli = nowEpochMilli;
     }
 
     public SearchExpressionQuery buildQuery(final Version matchVersion,
@@ -800,7 +797,7 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli)
+            return DateExpressionParser.parse(value, dateTimeSettings)
                     .map(dt -> dt.toInstant().toEpochMilli())
                     .orElseThrow(() -> new SearchException("Expected a standard date value for field \"" + fieldName
                             + "\" but was given string \"" + value + "\""));

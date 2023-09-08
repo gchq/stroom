@@ -6,6 +6,7 @@ import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 
@@ -24,7 +25,8 @@ public class TestValueSerialisation {
         final List<Field> fields = List.of(field);
         final FieldIndex fieldIndex = new FieldIndex();
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-        final CompiledFields compiledFields = CompiledFields.create(fields, fieldIndex, Collections.emptyMap());
+        final CompiledFields compiledFields = CompiledFields
+                .create(new ExpressionContext(), fields, fieldIndex, Collections.emptyMap());
         final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
         final ValueReferenceIndex valueReferenceIndex = compiledFields.getValueReferenceIndex();
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFieldArray, false);

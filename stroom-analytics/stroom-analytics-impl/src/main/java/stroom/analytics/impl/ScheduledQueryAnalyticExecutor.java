@@ -9,6 +9,8 @@ import stroom.analytics.shared.ScheduledQueryAnalyticTrackerData;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.index.shared.IndexConstants;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -28,6 +30,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerImpl;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.FilteredRowCreator;
 import stroom.query.common.v2.ItemMapper;
 import stroom.query.common.v2.KeyFactory;
@@ -83,6 +86,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final SearchRequestBuilder searchRequestBuilder;
+    private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -97,7 +101,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final NotificationStateService notificationStateService,
                                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                                    final DetectionConsumerFactory detectionConsumerFactory,
-                                   final SearchRequestBuilder searchRequestBuilder) {
+                                   final SearchRequestBuilder searchRequestBuilder,
+                                   final ExpressionContextFactory expressionContextFactory) {
         this.analyticHelper = analyticHelper;
         this.dataSourceResolver = dataSourceResolver;
         this.executorProvider = executorProvider;
@@ -111,6 +116,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.searchRequestBuilder = searchRequestBuilder;
+        this.expressionContextFactory = expressionContextFactory;
     }
 
     public void exec() {
@@ -220,7 +226,7 @@ public class ScheduledQueryAnalyticExecutor {
                         null,
                         sampleQuery,
                         null,
-                        null,
+                        DateTimeSettings.builder().build(),
                         false);
                 SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest);
                 mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
@@ -233,6 +239,8 @@ public class ScheduledQueryAnalyticExecutor {
                             .requestedRange(OffsetRange.UNBOUNDED)
                             .build();
 
+                    final ExpressionContext expressionContext = expressionContextFactory
+                            .createContext(mappedRequest);
                     final RequestAndStore requestAndStore = searchResponseCreatorManager
                             .getResultStore(mappedRequest);
                     final SearchRequest modifiedRequest = requestAndStore.searchRequest();
@@ -244,7 +252,9 @@ public class ScheduledQueryAnalyticExecutor {
                         final TableSettings tableSettings = resultRequest.getMappings().get(0);
                         final Map<String, String> paramMap = ParamUtil
                                 .createParamMap(mappedRequest.getQuery().getParams());
-                        final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(),
+                        final CompiledFields compiledFields = CompiledFields.create(
+                                expressionContext,
+                                tableSettings.getFields(),
                                 paramMap);
                         final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 

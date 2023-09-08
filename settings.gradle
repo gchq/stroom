@@ -211,6 +211,7 @@ include 'stroom-proxy:stroom-proxy-remote-api'
 
 // Query
 include 'stroom-query:stroom-expression'
+include 'stroom-query:stroom-expression-api'
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'

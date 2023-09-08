@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.expression.api.ExpressionContext;
+
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.slf4j.Logger;
@@ -91,11 +93,25 @@ public class FunctionFactory {
 //        System.out.println(functions);
     }
 
-    public static Function create(final String functionName) {
+    public static Function create(final ExpressionContext expressionContext,
+                                  final String functionName) {
         final Class<? extends Function> clazz = ALIAS_MAP.get(functionName.toLowerCase());
         if (clazz != null) {
             try {
-                return clazz.getConstructor(String.class).newInstance(functionName);
+                try {
+                    return clazz
+                            .getConstructor(ExpressionContext.class, String.class)
+                            .newInstance(expressionContext, functionName);
+                } catch (final NoSuchMethodException
+                               | InvocationTargetException
+                               | InstantiationException
+                               | IllegalAccessException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                }
+
+                return clazz
+                        .getConstructor(String.class)
+                        .newInstance(functionName);
             } catch (final NoSuchMethodException
                            | InvocationTargetException
                            | InstantiationException

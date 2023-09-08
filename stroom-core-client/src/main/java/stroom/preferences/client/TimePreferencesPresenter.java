@@ -21,8 +21,8 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.expression.api.TimeZone;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
-import stroom.query.api.v2.TimeZone;
 import stroom.ui.config.shared.UserPreferences;
 
 import com.google.gwt.user.client.ui.Focus;

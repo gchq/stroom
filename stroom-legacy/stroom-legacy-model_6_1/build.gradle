@@ -1,6 +1,8 @@
 ext.moduleName = 'stroom.legacy.model_6_1'
 
 dependencies {
+    implementation project(':stroom-docref')
+
     implementation libs.hibernate_jpa
     implementation libs.jackson_annotations
     implementation libs.jackson_core

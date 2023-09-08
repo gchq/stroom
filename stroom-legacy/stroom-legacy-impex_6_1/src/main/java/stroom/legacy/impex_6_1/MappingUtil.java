@@ -391,23 +391,23 @@ public final class MappingUtil {
         return stroom.query.api.v2.Format.Type.valueOf(value.name());
     }
 
-    public static stroom.query.api.v2.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
+    public static stroom.expression.api.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.TimeZone(map(value.getUse()),
+        return new stroom.expression.api.TimeZone(map(value.getUse()),
                 value.getId(),
                 value.getOffsetHours(),
                 value.getOffsetMinutes());
     }
 
-    public static stroom.query.api.v2.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
+    public static stroom.expression.api.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.TimeZone.Use.valueOf(value.name());
+        return stroom.expression.api.TimeZone.Use.valueOf(value.name());
     }
 
     public static stroom.dashboard.shared.LayoutConfig map(stroom.legacy.model_6_1.LayoutConfig value) {

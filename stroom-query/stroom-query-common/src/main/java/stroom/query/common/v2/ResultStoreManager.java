@@ -538,8 +538,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         resultStoreMap.forEach((queryKey, resultStore) -> {
             if (hasPermission(resultStore)) {
                 final UserName ownerUserName = userNameService.getByUuid(resultStore.getUserUuid())
-                                .orElseThrow(() -> new RuntimeException("No user name found for userUuid: "
-                                        + resultStore.getUserUuid()));
+                        .orElseThrow(() -> new RuntimeException("No user name found for userUuid: "
+                                + resultStore.getUserUuid()));
                 list.add(new ResultStoreInfo(
                         resultStore.getSearchRequestSource(),
                         queryKey,

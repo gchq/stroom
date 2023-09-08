@@ -78,7 +78,6 @@ public class ElasticAsyncSearchTaskHandler {
                                 parentContext,
                                 task.getKey(),
                                 query,
-                                task.getNow(),
                                 task.getDateTimeSettings(),
                                 coprocessors,
                                 resultStore);

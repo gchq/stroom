@@ -6,8 +6,8 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.expression.api.DateTimeSettings;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -18,7 +18,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

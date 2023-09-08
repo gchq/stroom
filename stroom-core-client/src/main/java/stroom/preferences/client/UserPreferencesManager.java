@@ -4,7 +4,7 @@ import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.query.api.v2.TimeZone.Use;
+import stroom.expression.api.TimeZone.Use;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;

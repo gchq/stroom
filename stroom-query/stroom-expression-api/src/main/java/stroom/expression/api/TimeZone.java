@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.api.v2;
+package stroom.expression.api;
 
 import stroom.docref.HasDisplayValue;
 

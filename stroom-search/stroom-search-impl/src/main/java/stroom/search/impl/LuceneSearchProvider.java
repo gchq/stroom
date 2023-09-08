@@ -22,11 +22,11 @@ import stroom.datasource.api.v2.DateField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -131,9 +131,6 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     public ResultStore createResultStore(final SearchRequest searchRequest) {
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
@@ -148,8 +145,7 @@ public class LuceneSearchProvider implements SearchProvider {
         final Set<String> highlights = getHighlights(
                 index,
                 query.getExpression(),
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
@@ -160,6 +156,7 @@ public class LuceneSearchProvider implements SearchProvider {
                 .createBasicSearchResultStoreSettings();
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
@@ -173,8 +170,7 @@ public class LuceneSearchProvider implements SearchProvider {
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(
@@ -193,8 +189,7 @@ public class LuceneSearchProvider implements SearchProvider {
      */
     private Set<String> getHighlights(final IndexDoc index,
                                       final ExpressionOperator expression,
-                                      DateTimeSettings dateTimeSettings,
-                                      final long nowEpochMilli) {
+                                      final DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
         try {
@@ -202,7 +197,7 @@ public class LuceneSearchProvider implements SearchProvider {
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, dateTimeSettings, nowEpochMilli);
+                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, dateTimeSettings);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 
