@@ -178,23 +178,26 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         // Output standard index fields
         final AtomicReference<Long> streamId = new AtomicReference<>();
         final AtomicReference<Long> eventId = new AtomicReference<>();
-        fieldIndex.forEach((idx, fieldName) -> {
+        for (int pos = 0; pos < fieldIndex.size(); pos++) {
+            final String fieldName = fieldIndex.getField(pos);
+            if (fieldName != null) {
 //            if (skipFields.contains(fieldName)) {
-            final CompiledFieldValue compiledFieldValue = fieldVals[idx];
-            if (compiledFieldValue != null && compiledFieldValue.getVal() != null) {
-                if (fieldIndex.getStreamIdFieldIndex() == idx) {
-                    streamId.set(getSafeLong(compiledFieldValue.getVal()));
-                } else if (fieldIndex.getEventIdFieldIndex() == idx) {
-                    eventId.set(getSafeLong(compiledFieldValue.getVal()));
-                } else {
-                    final String fieldValStr =
-                            fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
-                                    compiledFieldValue.getVal());
-                    values.add(new DetectionValue(fieldName, fieldValStr));
+                final CompiledFieldValue compiledFieldValue = fieldVals[pos];
+                if (compiledFieldValue != null && compiledFieldValue.getVal() != null) {
+                    if (fieldIndex.getStreamIdFieldIndex() == pos) {
+                        streamId.set(getSafeLong(compiledFieldValue.getVal()));
+                    } else if (fieldIndex.getEventIdFieldIndex() == pos) {
+                        eventId.set(getSafeLong(compiledFieldValue.getVal()));
+                    } else {
+                        final String fieldValStr =
+                                fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
+                                        compiledFieldValue.getVal());
+                        values.add(new DetectionValue(fieldName, fieldValStr));
+                    }
                 }
             }
 //            }
-        });
+        }
 
         final Detection detection = new Detection(
                 DateUtil.createNormalDateTimeString(),

@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -36,8 +37,8 @@ public class FieldIndex {
     private static final String FALLBACK_STREAM_ID_FIELD_NAME = "StreamId";
     private static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
 
-    private final Map<String, Integer> fieldToPos = new HashMap<>();
-    private final Map<Integer, String> posToField = new TreeMap<>();
+    private final Map<String, Integer> fieldToPos = new ConcurrentHashMap<>();
+    private final Map<Integer, String> posToField = new ConcurrentHashMap<>();
     private int index;
 
     private Integer timeFieldIndex;
@@ -70,10 +71,6 @@ public class FieldIndex {
 
     public Stream<Entry<String, Integer>> stream() {
         return fieldToPos.entrySet().stream();
-    }
-
-    public void forEach(final BiConsumer<Integer, String> consumer) {
-        posToField.forEach(consumer);
     }
 
     public int getWindowTimeFieldIndex() {

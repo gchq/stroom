@@ -170,23 +170,26 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
         final FieldIndex fieldIndex = valueConsumerHolder.getFieldIndex();
         xPathExecutables = new XPathExecutable[fieldIndex.size()];
 
-        fieldIndex.forEach((index, fieldName) -> {
-            String xpathPart = fieldName;
+        for (int pos = 0; pos < fieldIndex.size(); pos++) {
+            final String fieldName = fieldIndex.getField(pos);
+            if (fieldName != null) {
+                String xpathPart = fieldName;
 
-            if (EVENT_ID.equals(xpathPart)) {
-                xpathPart = "@" + EVENT_ID;
-            } else if (STREAM_ID.equals(xpathPart)) {
-                xpathPart = "@" + STREAM_ID;
+                if (EVENT_ID.equals(xpathPart)) {
+                    xpathPart = "@" + EVENT_ID;
+                } else if (STREAM_ID.equals(xpathPart)) {
+                    xpathPart = "@" + STREAM_ID;
+                }
+
+                String xpath = "/" + topLevelElementToSkip + "/" + secondLevelElementToCreateDocs + "/" + xpathPart;
+
+                try {
+                    xPathExecutables[pos] = compiler.compile(xpath);
+                } catch (SaxonApiException e) {
+                    log(Severity.FATAL_ERROR, LogUtil.message("Error in XPath Expression: {}", xpath), e);
+                }
             }
-
-            String xpath = "/" + topLevelElementToSkip + "/" + secondLevelElementToCreateDocs + "/" + xpathPart;
-
-            try {
-                xPathExecutables[index] = compiler.compile(xpath);
-            } catch (SaxonApiException e) {
-                log(Severity.FATAL_ERROR, LogUtil.message("Error in XPath Expression: {}", xpath), e);
-            }
-        });
+        }
     }
 
     private int stringifyItem(XdmItem item, StringBuilder thisVal, int numberOfVals) {
