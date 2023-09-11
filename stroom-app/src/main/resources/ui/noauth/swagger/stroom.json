@@ -17755,10 +17755,6 @@
               "type" : "integer",
               "format" : "int64"
             },
-            "minStreamId" : {
-              "type" : "integer",
-              "format" : "int64"
-            },
             "totalEventCount" : {
               "type" : "integer",
               "format" : "int64"

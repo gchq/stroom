@@ -4401,7 +4401,6 @@ export type TableBuilderAnalyticTrackerData = AnalyticTrackerData & {
   lastStreamId?: number;
   lastWindowEndTimeMs?: number;
   lastWindowStartTimeMs?: number;
-  minStreamId?: number;
   totalEventCount?: number;
   totalStreamCount?: number;
 };
