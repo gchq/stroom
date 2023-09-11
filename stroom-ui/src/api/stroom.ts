@@ -924,11 +924,13 @@ export interface DocumentType {
     | "ADD_BELOW"
     | "ADD_MULTIPLE"
     | "ALERT"
+    | "ALERT_SIMPLE"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
     | "BACKWARD"
+    | "BORDERED_CIRCLE"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1291,11 +1293,13 @@ export interface ExplorerDocContentMatch {
     | "ADD_BELOW"
     | "ADD_MULTIPLE"
     | "ALERT"
+    | "ALERT_SIMPLE"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
     | "BACKWARD"
+    | "BORDERED_CIRCLE"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1472,11 +1476,13 @@ export interface ExplorerNode {
     | "ADD_BELOW"
     | "ADD_MULTIPLE"
     | "ALERT"
+    | "ALERT_SIMPLE"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
     | "BACKWARD"
+    | "BORDERED_CIRCLE"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1639,7 +1645,10 @@ export interface ExplorerNode {
     | "VOLUMES"
     | "WARNING";
   isFavourite?: boolean;
+  isFilterMatch?: boolean;
+  isFolder?: boolean;
   name?: string;
+  nodeInfoList?: NodeInfo[];
   nodeState?: "OPEN" | "CLOSED" | "LEAF";
   rootNodeUuid?: string;
   tags?: string;
@@ -2617,6 +2626,11 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeInfo {
+  description?: string;
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+}
+
 export interface NodeMonitoringConfig {
   /**
    * @format int32
@@ -2806,11 +2820,13 @@ export interface PipelineElementType {
     | "ADD_BELOW"
     | "ADD_MULTIPLE"
     | "ALERT"
+    | "ALERT_SIMPLE"
     | "ARROW_DOWN"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
     | "BACKWARD"
+    | "BORDERED_CIRCLE"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -4385,6 +4401,7 @@ export type TableBuilderAnalyticTrackerData = AnalyticTrackerData & {
   lastStreamId?: number;
   lastWindowEndTimeMs?: number;
   lastWindowStartTimeMs?: number;
+  minStreamId?: number;
   totalEventCount?: number;
   totalStreamCount?: number;
 };
