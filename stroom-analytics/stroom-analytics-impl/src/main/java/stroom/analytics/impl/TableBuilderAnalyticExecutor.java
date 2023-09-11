@@ -290,7 +290,7 @@ public class TableBuilderAnalyticExecutor {
         for (final Entry<ExpressionOperator, List<TableBuilderAnalytic>> filterGroupEntry : filterGroupMap.entrySet()) {
 
             // Get a min meta id and/or min create time.
-            Long minMetaId = null;
+            Long minStreamId = null;
             Long minCreateTime = null;
             Long maxCreateTime = null;
 
@@ -298,8 +298,7 @@ public class TableBuilderAnalyticExecutor {
                 final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData();
 
                 // Start at the next meta.
-                Long lastMetaId = trackerData.getLastStreamId();
-                minMetaId = AnalyticUtil.getMin(minMetaId, lastMetaId);
+                minStreamId = AnalyticUtil.getMin(minStreamId, trackerData.getMinStreamId());
                 minCreateTime = AnalyticUtil.getMin(minCreateTime,
                         analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
                 maxCreateTime = AnalyticUtil.getMax(maxCreateTime,
@@ -310,7 +309,7 @@ public class TableBuilderAnalyticExecutor {
 
             if (ExpressionUtil.termCount(findMetaExpression) > 0) {
                 final List<Meta> metaList = analyticHelper.findMeta(findMetaExpression,
-                        minMetaId,
+                        minStreamId,
                         minCreateTime,
                         maxCreateTime,
                         maxMetaListSize);
@@ -383,7 +382,7 @@ public class TableBuilderAnalyticExecutor {
                             // Update LMDB state.
                             analytics.forEach(analytic -> {
                                 final LmdbDataStore lmdbDataStore = analytic.dataStore().getLmdbDataStore();
-                                lmdbDataStore.putCurrentDbState(meta.getId(), -1, meta.getCreateMs());
+                                lmdbDataStore.putCurrentDbState(meta.getId(), null, null);
                                 lmdbDataStore.sync();
                             });
 
@@ -432,17 +431,7 @@ public class TableBuilderAnalyticExecutor {
                                  final Meta meta,
                                  final Map<String, Object> metaAttributeMap) {
         final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData;
-        final Long lastStreamId = trackerData.getLastStreamId();
-        final Long lastEventId = trackerData.getLastEventId();
-
-        long minStreamId;
-        if (lastEventId == null) {
-            // Start at the next stream.
-            minStreamId = AnalyticUtil.getMin(null, lastStreamId) + 1;
-        } else {
-            minStreamId = AnalyticUtil.getMin(null, lastStreamId);
-        }
-
+        final long minStreamId = trackerData.getMinStreamId();
         final long minCreateTime =
                 AnalyticUtil.getMin(null, analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
         final long maxCreateTime =
@@ -652,15 +641,9 @@ public class TableBuilderAnalyticExecutor {
     private void updateTrackerWithLmdbState(final TableBuilderAnalyticTrackerData trackerData,
                                             final CurrentDbState currentDbState) {
         if (currentDbState != null) {
-            trackerData.setLastStreamId(currentDbState.getStreamId() == -1
-                    ? null
-                    : currentDbState.getStreamId());
-            trackerData.setLastEventId(currentDbState.getEventId() == -1
-                    ? null
-                    : currentDbState.getEventId());
-            trackerData.setLastEventTime(currentDbState.getLastEventTime() == -1
-                    ? null
-                    : currentDbState.getLastEventTime());
+            trackerData.setLastStreamId(currentDbState.getStreamId());
+            trackerData.setLastEventId(currentDbState.getEventId());
+            trackerData.setLastEventTime(currentDbState.getLastEventTime());
         }
     }
 
