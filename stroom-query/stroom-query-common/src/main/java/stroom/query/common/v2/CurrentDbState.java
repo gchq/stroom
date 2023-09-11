@@ -13,30 +13,30 @@ import java.time.ZoneOffset;
 public class CurrentDbState {
 
     @JsonProperty
-    private final long streamId;
+    private final Long streamId;
     @JsonProperty
-    private final long eventId;
+    private final Long eventId;
     @JsonProperty
-    private final long lastEventTime;
+    private final Long lastEventTime;
 
     @JsonCreator
-    public CurrentDbState(@JsonProperty("streamId") final long streamId,
-                          @JsonProperty("eventId") final long eventId,
-                          @JsonProperty("lastEventTime") final long lastEventTime) {
+    public CurrentDbState(@JsonProperty("streamId") final Long streamId,
+                          @JsonProperty("eventId") final Long eventId,
+                          @JsonProperty("lastEventTime") final Long lastEventTime) {
         this.streamId = streamId;
         this.eventId = eventId;
         this.lastEventTime = lastEventTime;
     }
 
-    public long getStreamId() {
+    public Long getStreamId() {
         return streamId;
     }
 
-    public long getEventId() {
+    public Long getEventId() {
         return eventId;
     }
 
-    public long getLastEventTime() {
+    public Long getLastEventTime() {
         return lastEventTime;
     }
 

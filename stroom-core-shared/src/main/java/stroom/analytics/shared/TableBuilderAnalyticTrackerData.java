@@ -97,6 +97,19 @@ public class TableBuilderAnalyticTrackerData extends AnalyticTrackerData {
         this.lastStreamId = lastStreamId;
     }
 
+    public long getMinStreamId() {
+        if (lastStreamId == null) {
+            return 1L;
+        }
+
+        if (lastEventId == null || lastEventId == -1) {
+            // Start at the next stream.
+            return lastStreamId + 1;
+        }
+
+        return lastStreamId;
+    }
+
     public Long getLastEventId() {
         return lastEventId;
     }

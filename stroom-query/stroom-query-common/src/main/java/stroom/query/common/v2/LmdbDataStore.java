@@ -310,9 +310,9 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    public void putCurrentDbState(final long streamId,
-                                  final long eventId,
-                                  final long lastEventTime) {
+    public void putCurrentDbState(final Long streamId,
+                                  final Long eventId,
+                                  final Long lastEventTime) {
         final CurrentDbState currentDbState = new CurrentDbState(streamId, eventId, lastEventTime);
         put(new CurrentDbStateLmdbQueueItem(currentDbState));
     }
@@ -357,7 +357,8 @@ public class LmdbDataStore implements DataStore {
                                 uncommittedCount++;
                             } else if (queueItem instanceof
                                     final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem) {
-                                currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState();
+                                currentDbState =
+                                        mergeDbState(currentDbState, currentDbStateLmdbQueueItem.getCurrentDbState());
                             } else if (queueItem instanceof final Sync sync) {
                                 commit(writeTxn, currentDbState);
                                 sync.sync();
@@ -438,6 +439,19 @@ public class LmdbDataStore implements DataStore {
                 transferState.setThread(null);
             }
         });
+    }
+
+    private CurrentDbState mergeDbState(final CurrentDbState currentDbState, final CurrentDbState newDbState) {
+        Long lastEventTime = newDbState.getLastEventTime();
+        if (lastEventTime == null &&
+                currentDbState != null &&
+                currentDbState.getLastEventTime() != null) {
+            lastEventTime = currentDbState.getLastEventTime();
+        }
+        return new CurrentDbState(
+                newDbState.getStreamId(),
+                newDbState.getEventId(),
+                lastEventTime);
     }
 
     private void delete(final BatchingWriteTxn writeTxn,
@@ -706,9 +720,9 @@ public class LmdbDataStore implements DataStore {
         if (currentDbState != null) {
             final ByteBuffer keyBuffer = LmdbRowKeyFactoryFactory.DB_STATE_KEY;
             ByteBuffer valueBuffer = ByteBuffer.allocateDirect(Long.BYTES + Long.BYTES + Long.BYTES);
-            valueBuffer.putLong(currentDbState.getStreamId());
-            valueBuffer.putLong(currentDbState.getEventId());
-            valueBuffer.putLong(currentDbState.getLastEventTime());
+            putLong(valueBuffer, currentDbState.getStreamId());
+            putLong(valueBuffer, currentDbState.getEventId());
+            putLong(valueBuffer, currentDbState.getLastEventTime());
             valueBuffer = valueBuffer.flip();
 
             final boolean success = put(
@@ -736,15 +750,31 @@ public class LmdbDataStore implements DataStore {
                         final ByteBuffer key = keyVal.key();
                         if (LmdbRowKeyFactoryFactory.isStateKey(key)) {
                             final ByteBuffer val = keyVal.val();
-                            final long streamId = val.getLong(0);
-                            final long eventId = val.getLong(Long.BYTES);
-                            final long lastEventTime = val.getLong(Long.BYTES + Long.BYTES);
-                            currentDbStateAtomicReference.set(new CurrentDbState(streamId, eventId, lastEventTime));
+                            currentDbStateAtomicReference.set(new CurrentDbState(
+                                    getLong(val, 0),
+                                    getLong(val, Long.BYTES),
+                                    getLong(val, Long.BYTES + Long.BYTES)));
                         }
                     }
                 }));
 
         return currentDbStateAtomicReference.get();
+    }
+
+    private Long getLong(final ByteBuffer valueBuffer, final int index) {
+        final long l = valueBuffer.getLong(index);
+        if (l == -1) {
+            return null;
+        }
+        return l;
+    }
+
+    private void putLong(final ByteBuffer valueBuffer, final Long l) {
+        if (l == null) {
+            valueBuffer.putLong(-1);
+        } else {
+            valueBuffer.putLong(l);
+        }
     }
 
     public CurrentDbState sync() {
