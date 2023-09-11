@@ -18,6 +18,7 @@ package stroom.util.shared;
 
 import stroom.docref.HasDisplayValue;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
@@ -32,11 +33,6 @@ public enum Severity implements HasDisplayValue {
     FATAL_ERROR(4, "FATAL", "Fatal Errors");
 
     /**
-     * Array of severities in descending order of importance, i.e. FATAL_ERROR first
-     */
-    public static final Severity[] SEVERITIES = {FATAL_ERROR, ERROR, WARNING, INFO};
-
-    /**
      * Comparator for comparing severities with nulls first then lowest to highest severity
      */
     public static final Comparator<Severity> LOW_TO_HIGH_COMPARATOR = Comparator.nullsFirst(
@@ -47,6 +43,13 @@ public enum Severity implements HasDisplayValue {
      */
     public static final Comparator<Severity> HIGH_TO_LOW_COMPARATOR = Comparator.nullsLast(
             Comparator.comparing(Severity::getId).reversed());
+
+    /**
+     * Array of severities in descending order of importance, i.e. FATAL_ERROR first
+     */
+    public static final Severity[] SEVERITIES = Arrays.stream(Severity.values())
+            .sorted(HIGH_TO_LOW_COMPARATOR)
+            .toArray(Severity[]::new);
 
     private final int id;
     private final String displayValue;

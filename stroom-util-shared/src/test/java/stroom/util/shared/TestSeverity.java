@@ -22,6 +22,16 @@ class TestSeverity {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSeverity.class);
 
     @Test
+    void testSeverities() {
+        Assertions.assertThat(Severity.SEVERITIES)
+                .containsExactly(
+                        Severity.FATAL_ERROR,
+                        Severity.ERROR,
+                        Severity.WARNING,
+                        Severity.INFO);
+    }
+
+    @Test
     void testDefaultSort() {
         final List<Severity> list = new ArrayList<>();
         list.add(Severity.INFO);
@@ -206,6 +216,18 @@ class TestSeverity {
                 .addCase("   faTAL ", Severity.FATAL_ERROR)
                 .addCase("FOO", null)
                 .build();
+    }
+
+    @Test
+    void testGetSeverity2() {
+        for (final Severity severity : Severity.values()) {
+            final String displayValue = severity.getDisplayValue();
+
+            // getSeverity uses a hard coded if else approach, so make sure it covers all severities.
+            final Severity severity2 = Severity.getSeverity(displayValue);
+            Assertions.assertThat(severity2)
+                    .isEqualTo(severity);
+        }
     }
 
     @TestFactory
