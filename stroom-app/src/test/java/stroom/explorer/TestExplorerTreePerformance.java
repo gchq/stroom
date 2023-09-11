@@ -16,31 +16,25 @@
 
 package stroom.explorer;
 
-import stroom.app.guice.CoreModule;
-import stroom.cluster.impl.MockClusterModule;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.DocumentPermissionServiceImpl;
-import stroom.security.impl.SecurityContextModule;
 import stroom.security.impl.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
-import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -52,15 +46,9 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(GuiceExtension.class)
-@IncludeModule(CoreModule.class)
-@IncludeModule(MockClusterModule.class)
-@IncludeModule(MockMetaStatisticsModule.class)
-@IncludeModule(MockResourceModule.class)
-@IncludeModule(SecurityContextModule.class)
 @Disabled
         // manual testing only
-class TestExplorerTreePerformance {
+class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
     private static final int MAX_CHILDREN = 200;
@@ -96,7 +84,11 @@ class TestExplorerTreePerformance {
             LOGGER.logDurationIfInfoEnabled(() -> {
                 explorerService.clear();
                 FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
-                assertThat(result.getRootNodes()).isEmpty();
+                assertThat(result.getRootNodes()).hasSize(2);
+                assertThat(result.getRootNodes().get(0).getDocRef())
+                        .isEqualTo(ExplorerConstants.FAVOURITES_DOC_REF);
+                assertThat(result.getRootNodes().get(1).getDocRef())
+                        .isEqualTo(ExplorerConstants.SYSTEM_DOC_REF);
             }, "Checked empty tree");
 
             final int count = (int) Math.pow(MAX_CHILDREN, MAX_TREE_DEPTH) + MAX_CHILDREN + 1;
