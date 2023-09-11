@@ -195,13 +195,13 @@ public class LmdbDataStore implements DataStore {
                 totalResultCount,
                 completionState);
 
-        // Start transfer loop.
-        executorProvider.get().execute(this::transfer);
-
         storedValueKeyFactory = new StoredValueKeyFactory(compiledDepths, compiledFieldArray, keyFactoryConfig);
 
         // Create a factory that makes DB state objects.
         currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
+
+        // Start transfer loop.
+        executorProvider.get().execute(this::transfer);
     }
 
     /**
@@ -310,6 +310,13 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
+    public void putCurrentDbState(final long streamId,
+                                  final long eventId,
+                                  final long lastEventTime) {
+        final CurrentDbState currentDbState = new CurrentDbState(streamId, eventId, lastEventTime);
+        put(new CurrentDbStateLmdbQueueItem(currentDbState));
+    }
+
     void put(final LmdbQueueItem queueItem) {
         LOGGER.trace(() -> "put");
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_PUT);
@@ -332,7 +339,7 @@ public class LmdbDataStore implements DataStore {
         Metrics.measure("Transfer", () -> {
             transferState.setThread(Thread.currentThread());
 
-            CurrentDbState currentDbState = null;
+            CurrentDbState currentDbState = getCurrentDbState();
             try (final BatchingWriteTxn writeTxn = lmdbEnv.openBatchingWriteTxn(0)) {
                 long lastCommitMs = System.currentTimeMillis();
                 long uncommittedCount = 0;
@@ -348,13 +355,14 @@ public class LmdbDataStore implements DataStore {
                                 currentDbState = lmdbKV.getCurrentDbState();
                                 insert(writeTxn, dbi, lmdbKV);
                                 uncommittedCount++;
-                            } else {
-                                if (queueItem instanceof final Sync sync) {
-                                    commit(writeTxn, currentDbState);
-                                    sync.sync();
-                                } else if (queueItem instanceof final DeleteCommand deleteCommand) {
-                                    delete(writeTxn, deleteCommand);
-                                }
+                            } else if (queueItem instanceof
+                                    final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem) {
+                                currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState();
+                            } else if (queueItem instanceof final Sync sync) {
+                                commit(writeTxn, currentDbState);
+                                sync.sync();
+                            } else if (queueItem instanceof final DeleteCommand deleteCommand) {
+                                delete(writeTxn, deleteCommand);
                             }
                         }
 

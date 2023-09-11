@@ -380,6 +380,14 @@ public class TableBuilderAnalyticExecutor {
                         }
 
                         if (!taskContext.isTerminated()) {
+                            // Update LMDB state.
+                            analytics.forEach(analytic -> {
+                                final LmdbDataStore lmdbDataStore = analytic.dataStore().getLmdbDataStore();
+                                lmdbDataStore.putCurrentDbState(meta.getId(), -1, meta.getCreateMs());
+                                lmdbDataStore.sync();
+                            });
+
+                            // Update extraction state.
                             final ExtractionState extractionState = extractionStateProvider.get();
                             filteredAnalytics.forEach(analytic -> {
                                 analytic.trackerData.incrementStreamCount();
@@ -401,10 +409,8 @@ public class TableBuilderAnalyticExecutor {
             minEventId = trackerData.getLastEventId() + 1;
         }
 
-        final AnalyticDataStore dataStore = analyticDataStores.get(analytic.analyticRuleDoc());
+        final AnalyticDataStore dataStore = analytic.dataStore();
         final SearchRequest searchRequest = dataStore.searchRequest();
-
-        // Get or create LMDB data store.
         final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
 
         // Cache the query for use across multiple streams.
@@ -426,15 +432,15 @@ public class TableBuilderAnalyticExecutor {
                                  final Meta meta,
                                  final Map<String, Object> metaAttributeMap) {
         final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData;
-        final Long lastMetaId = trackerData.getLastStreamId();
+        final Long lastStreamId = trackerData.getLastStreamId();
         final Long lastEventId = trackerData.getLastEventId();
 
-        long minMetaId;
+        long minStreamId;
         if (lastEventId == null) {
-            // Start at the next meta.
-            minMetaId = AnalyticUtil.getMin(null, lastMetaId) + 1;
+            // Start at the next stream.
+            minStreamId = AnalyticUtil.getMin(null, lastStreamId) + 1;
         } else {
-            minMetaId = AnalyticUtil.getMin(null, lastMetaId);
+            minStreamId = AnalyticUtil.getMin(null, lastStreamId);
         }
 
         final long minCreateTime =
@@ -443,7 +449,7 @@ public class TableBuilderAnalyticExecutor {
                 AnalyticUtil.getMax(null, analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
 
         // Check this analytic should process this meta.
-        return meta.getId() < minMetaId ||
+        return meta.getId() < minStreamId ||
                 meta.getCreateMs() < minCreateTime ||
                 meta.getCreateMs() > maxCreateTime ||
                 !metaExpressionMatcher.match(metaAttributeMap, analytic.viewDoc().getFilter());
@@ -460,9 +466,7 @@ public class TableBuilderAnalyticExecutor {
                                                  final TaskContext parentTaskContext) {
         // Execute notifications on LMDB stores and sync.
         for (final TableBuilderAnalytic analytic : analytics) {
-            final AnalyticDataStore dataStore = analyticDataStores.get(analytic.analyticRuleDoc());
-
-            // Get or create LMDB data store.
+            final AnalyticDataStore dataStore = analytic.dataStore();
             final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
             CurrentDbState currentDbState = lmdbDataStore.sync();
 
@@ -648,9 +652,15 @@ public class TableBuilderAnalyticExecutor {
     private void updateTrackerWithLmdbState(final TableBuilderAnalyticTrackerData trackerData,
                                             final CurrentDbState currentDbState) {
         if (currentDbState != null) {
-            trackerData.setLastStreamId(currentDbState.getStreamId());
-            trackerData.setLastEventId(currentDbState.getEventId());
-            trackerData.setLastEventTime(currentDbState.getLastEventTime());
+            trackerData.setLastStreamId(currentDbState.getStreamId() == -1
+                    ? null
+                    : currentDbState.getStreamId());
+            trackerData.setLastEventId(currentDbState.getEventId() == -1
+                    ? null
+                    : currentDbState.getEventId());
+            trackerData.setLastEventTime(currentDbState.getLastEventTime() == -1
+                    ? null
+                    : currentDbState.getLastEventTime());
         }
     }
 
@@ -836,7 +846,8 @@ public class TableBuilderAnalyticExecutor {
                                 tracker,
                                 analyticProcessorTrackerData,
                                 searchRequest,
-                                viewDoc));
+                                viewDoc,
+                                dataStore));
                     }
 
                 } catch (final RuntimeException e) {
@@ -860,8 +871,8 @@ public class TableBuilderAnalyticExecutor {
                                         AnalyticTracker tracker,
                                         TableBuilderAnalyticTrackerData trackerData,
                                         SearchRequest searchRequest,
-                                        ViewDoc viewDoc) {
-
+                                        ViewDoc viewDoc,
+                                        AnalyticDataStore dataStore) {
 
     }
 }
