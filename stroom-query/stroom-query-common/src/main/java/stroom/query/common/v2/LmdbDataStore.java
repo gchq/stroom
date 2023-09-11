@@ -757,7 +757,7 @@ public class LmdbDataStore implements DataStore {
 
             // Get the current DB state.
             currentDbState = getCurrentDbState();
-            LOGGER.info("Current Db State: " + currentDbState);
+            LOGGER.debug(() -> "Current Db State: " + currentDbState);
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
