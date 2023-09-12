@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
+import stroom.security.api.SecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
@@ -57,6 +58,7 @@ class ExplorerTreeModel {
     private final TaskContextFactory taskContextFactory;
     private final ExplorerActionHandlers explorerActionHandlers;
     private final BrokenDependenciesCache brokenDependenciesCache;
+    private final SecurityContext securityContext;
 
     private volatile UnmodifiableTreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
@@ -69,13 +71,15 @@ class ExplorerTreeModel {
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
                       final ExplorerActionHandlers explorerActionHandlers,
-                      final BrokenDependenciesCache brokenDependenciesCache) {
+                      final BrokenDependenciesCache brokenDependenciesCache,
+                      final SecurityContext securityContext) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.explorerActionHandlers = explorerActionHandlers;
         this.brokenDependenciesCache = brokenDependenciesCache;
+        this.securityContext = securityContext;
     }
 
     private boolean isSynchronousUpdateRequired(final long minId, final long now) {
@@ -147,24 +151,26 @@ class ExplorerTreeModel {
     }
 
     private UnmodifiableTreeModel updateModel(final long id, final long creationTime) {
-        TreeModel newModel;
-        UnmodifiableTreeModel newUnmodifiableModel;
-        performingRebuild.incrementAndGet();
-        try {
-            LOGGER.debug("Updating model for id {}", id);
-            newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
+        return securityContext.asProcessingUserResult(() -> {
+            TreeModel newModel;
+            UnmodifiableTreeModel newUnmodifiableModel;
+            performingRebuild.incrementAndGet();
+            try {
+                LOGGER.debug("Updating model for id {}", id);
+                newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
 
-            // Make sure the cache is fresh for our new model
-            brokenDependenciesCache.invalidate();
-            decorateWithBrokenDeps(newModel);
+                // Make sure the cache is fresh for our new model
+                brokenDependenciesCache.invalidate();
+                decorateWithBrokenDeps(newModel);
 
-            // Now make it immutable as this is our master model
-            newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);
-            setCurrentModel(newUnmodifiableModel);
-        } finally {
-            performingRebuild.decrementAndGet();
-        }
-        return newUnmodifiableModel;
+                // Now make it immutable as this is our master model
+                newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);
+                setCurrentModel(newUnmodifiableModel);
+            } finally {
+                performingRebuild.decrementAndGet();
+            }
+            return newUnmodifiableModel;
+        });
     }
 
     private void decorateWithBrokenDeps(final TreeModel treeModel) {
@@ -286,14 +292,13 @@ class ExplorerTreeModel {
     }
 
     private synchronized void setCurrentModel(final UnmodifiableTreeModel treeModel) {
-        if (currentModel == null || currentModel.getId() < treeModel.getId()) {
+        if (currentModel == null
+                || treeModel == null
+                || currentModel.getId() < treeModel.getId()) {
 
             LOGGER.debug(() -> LogUtil.message("Setting new model old id: {}, new id {}",
-                    currentModel == null
-                            ? "null"
-                            : currentModel.getId(),
-                    treeModel.getId()));
-
+                    NullSafe.toStringOrElse(currentModel, UnmodifiableTreeModel::getId, "null"),
+                    NullSafe.toStringOrElse(treeModel, UnmodifiableTreeModel::getId, "null")));
             currentModel = treeModel;
         }
     }

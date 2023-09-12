@@ -158,8 +158,6 @@ public class DependencyServiceImpl implements DependencyService {
         // Get the additional types that we use to decorate the explorer tree.
         final Set<DocRef> additionalRefs = new HashSet<>(explorerDecorator.list());
 
-        final Map<DocRef, Optional<DocRefInfo>> docRefInfoCache = new ConcurrentHashMap<>();
-
         return allDependencies.entrySet()
                 .stream()
                 .filter(entry -> NullSafe.hasItems(entry.getValue()))

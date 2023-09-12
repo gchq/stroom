@@ -2,6 +2,7 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.importexport.api.ContentService;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -20,10 +21,13 @@ public class BrokenDependenciesCache {
     private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
 
     private final Provider<ContentService> contentServiceProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    public BrokenDependenciesCache(final Provider<ContentService> contentServiceProvider) {
+    public BrokenDependenciesCache(final Provider<ContentService> contentServiceProvider,
+                                   final SecurityContext securityContext) {
         this.contentServiceProvider = contentServiceProvider;
+        this.securityContext = securityContext;
     }
 
     private volatile Map<DocRef, Set<DocRef>> brokenDependenciesMap = Collections.emptyMap();
@@ -33,9 +37,11 @@ public class BrokenDependenciesCache {
         if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
             synchronized (this) {
                 if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
-                    LOGGER.debug("Updating broken dependencies map");
-                    brokenDependenciesMap = contentServiceProvider.get().fetchBrokenDependencies();
-                    brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
+                    securityContext.asProcessingUser(() -> {
+                        LOGGER.debug("Updating broken dependencies map");
+                        brokenDependenciesMap = contentServiceProvider.get().fetchBrokenDependencies();
+                        brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
+                    });
                 }
             }
         }
