@@ -26,6 +26,9 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
+import stroom.analytics.shared.StreamingAnalyticProcessConfig;
+import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,6 +40,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QueryResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
@@ -58,6 +62,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private final QueryEditPresenter queryEditPresenter;
     private final RestFactory restFactory;
@@ -114,15 +119,37 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
             } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
                 AlertEvent.fireError(this, "No default processing node configured", null);
             } else {
-                createRule(analyticUiDefaultConfig);
+                final String query = queryEditPresenter.getQuery();
+                final Rest<ValidateExpressionResult> rest = restFactory.create();
+                rest
+                        .onSuccess(validateExpressionResult -> {
+                            if (!validateExpressionResult.isOk()) {
+                                AlertEvent.fireError(this,
+                                        validateExpressionResult.getString(),
+                                        null);
+                            } else {
+                                AnalyticProcessType analyticProcessType = AnalyticProcessType.STREAMING;
+                                if (validateExpressionResult.isGroupBy()) {
+                                    analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
+                                }
+                                createRule(analyticUiDefaultConfig, query, analyticProcessType);
+                            }
+                        })
+                        .onFailure(throwable -> {
+                            AlertEvent.fireErrorFromException(this, throwable, null);
+                        })
+                        .call(QUERY_RESOURCE)
+                        .validateQuery(query);
             }
         });
     }
 
-    private void createRule(final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+    private void createRule(final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                            final String query,
+                            final AnalyticProcessType analyticProcessType) {
         final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
             final DocRef ruleDoc = newNode.getDocRef();
-            loadNewRule(ruleDoc, analyticUiDefaultConfig);
+            loadNewRule(ruleDoc, analyticUiDefaultConfig, query, analyticProcessType);
         };
 
         // First get the explorer node for the docref.
@@ -143,45 +170,112 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .getFromDocRef(docRef);
     }
 
-    private void loadNewRule(final DocRef ruleDocRef, final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+    private void loadNewRule(final DocRef ruleDocRef,
+                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                             final String query,
+                             final AnalyticProcessType analyticProcessType) {
         final Rest<AnalyticRuleDoc> rest = restFactory.create();
         rest
                 .onSuccess(doc -> {
-                    final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-                    final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
-                            ScheduledQueryAnalyticProcessConfig.builder()
-                                    .node(analyticUiDefaultConfig.getDefaultNode())
-                                    .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
-                                    .minEventTimeMs(System.currentTimeMillis())
-                                    .maxEventTimeMs(null)
-                                    .queryFrequency(oneHour)
-                                    .timeToWaitForData(oneHour)
-                                    .build();
-                    final AnalyticNotificationStreamDestination destination =
-                            AnalyticNotificationStreamDestination.builder()
-                                    .useSourceFeedIfPossible(false)
-                                    .destinationFeed(analyticUiDefaultConfig.getDefaultDestinationFeed())
-                                    .build();
-                    final AnalyticNotificationConfig analyticNotificationConfig = AnalyticNotificationConfig
-                            .builder()
-                            .limitNotifications(false)
-                            .maxNotifications(100)
-                            .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
-                            .destinationType(AnalyticNotificationDestinationType.STREAM)
-                            .destination(destination)
-                            .build();
-                    AnalyticRuleDoc updated = doc
-                            .copy()
-                            .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                            .query(queryEditPresenter.getQuery())
-                            .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                            .analyticProcessConfig(analyticProcessConfig)
-                            .analyticNotificationConfig(analyticNotificationConfig)
-                            .build();
-                    updateRule(ruleDocRef, updated);
+                    // Create default config.
+                    switch (analyticProcessType) {
+                        case SCHEDULED_QUERY ->
+                                createDefaultScheduledRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                        case TABLE_BUILDER ->
+                                createDefaultTableBuilderRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                        default -> createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                    }
                 })
                 .call(ANALYTIC_RULE_RESOURCE)
                 .fetch(ruleDocRef.getUuid());
+    }
+
+    private void createDefaultStreamingRule(final DocRef ruleDocRef,
+                                            final AnalyticRuleDoc doc,
+                                            final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                                            final String query) {
+        final StreamingAnalyticProcessConfig analyticProcessConfig =
+                StreamingAnalyticProcessConfig.builder()
+                        .node(analyticUiDefaultConfig.getDefaultNode())
+                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
+                        .minMetaCreateTimeMs(System.currentTimeMillis())
+                        .maxMetaCreateTimeMs(null)
+                        .build();
+        AnalyticRuleDoc updated = doc
+                .copy()
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(query)
+                .analyticProcessType(AnalyticProcessType.STREAMING)
+                .analyticProcessConfig(analyticProcessConfig)
+                .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .build();
+        updateRule(ruleDocRef, updated);
+    }
+
+    private void createDefaultScheduledRule(final DocRef ruleDocRef,
+                                            final AnalyticRuleDoc doc,
+                                            final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                                            final String query) {
+        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
+        final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
+                ScheduledQueryAnalyticProcessConfig.builder()
+                        .node(analyticUiDefaultConfig.getDefaultNode())
+                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
+                        .minEventTimeMs(System.currentTimeMillis())
+                        .maxEventTimeMs(null)
+                        .queryFrequency(oneHour)
+                        .timeToWaitForData(oneHour)
+                        .build();
+        AnalyticRuleDoc updated = doc
+                .copy()
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(query)
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .analyticProcessConfig(analyticProcessConfig)
+                .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .build();
+        updateRule(ruleDocRef, updated);
+    }
+
+    private void createDefaultTableBuilderRule(final DocRef ruleDocRef,
+                                               final AnalyticRuleDoc doc,
+                                               final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                                               final String query) {
+        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
+        final TableBuilderAnalyticProcessConfig analyticProcessConfig =
+                TableBuilderAnalyticProcessConfig.builder()
+                        .node(analyticUiDefaultConfig.getDefaultNode())
+                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
+                        .minMetaCreateTimeMs(System.currentTimeMillis())
+                        .maxMetaCreateTimeMs(null)
+                        .timeToWaitForData(oneHour)
+                        .build();
+        AnalyticRuleDoc updated = doc
+                .copy()
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(query)
+                .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)
+                .analyticProcessConfig(analyticProcessConfig)
+                .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .build();
+        updateRule(ruleDocRef, updated);
+    }
+
+    private AnalyticNotificationConfig createDefaultNotificationConfig(
+            final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+        final AnalyticNotificationStreamDestination destination =
+                AnalyticNotificationStreamDestination.builder()
+                        .useSourceFeedIfPossible(false)
+                        .destinationFeed(analyticUiDefaultConfig.getDefaultDestinationFeed())
+                        .build();
+        return AnalyticNotificationConfig
+                .builder()
+                .limitNotifications(false)
+                .maxNotifications(100)
+                .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
+                .destinationType(AnalyticNotificationDestinationType.STREAM)
+                .destination(destination)
+                .build();
     }
 
     private void updateRule(final DocRef ruleDocRef,

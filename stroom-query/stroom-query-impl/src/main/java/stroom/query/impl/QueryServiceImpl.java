@@ -25,11 +25,13 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
@@ -115,19 +117,29 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public ValidateExpressionResult validateQuery(final String expressionString) {
-        return null;
-//        try {
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
-//            final Expression expression = expressionParser.parse(fieldIndex, expressionString);
-//            String correctedExpression = "";
-//            if (expression != null) {
-//                correctedExpression = expression.toString();
-//            }
-//            return new ValidateExpressionResult(true, correctedExpression);
-//        } catch (final ParseException e) {
-//            return new ValidateExpressionResult(false, e.getMessage());
-//        }
+        try {
+            final QuerySearchRequest searchRequest = QuerySearchRequest.builder().query(expressionString).build();
+            final SearchRequest mappedRequest = mapRequest(searchRequest);
+            boolean groupBy = false;
+            int fieldCount = 0;
+            for (final ResultRequest resultRequest : mappedRequest.getResultRequests()) {
+                for (final TableSettings tableSettings : resultRequest.getMappings()) {
+                    for (final Field field : tableSettings.getFields()) {
+                        fieldCount++;
+                        if (field.getGroup() != null) {
+                            groupBy = true;
+                        }
+                    }
+                }
+            }
+            if (fieldCount == 0) {
+                throw new RuntimeException("No fields found");
+            }
+
+            return new ValidateExpressionResult(true, expressionString, groupBy);
+        } catch (final RuntimeException e) {
+            return new ValidateExpressionResult(false, e.getMessage(), false);
+        }
     }
 
     @Override
