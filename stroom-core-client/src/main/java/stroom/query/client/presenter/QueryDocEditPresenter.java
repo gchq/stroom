@@ -179,11 +179,14 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .onSuccess(doc -> {
                     // Create default config.
                     switch (analyticProcessType) {
-                        case SCHEDULED_QUERY ->
-                                createDefaultScheduledRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
-                        case TABLE_BUILDER ->
-                                createDefaultTableBuilderRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
-                        default -> createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                        case SCHEDULED_QUERY:
+                            createDefaultScheduledRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                            break;
+                        case TABLE_BUILDER:
+                            createDefaultTableBuilderRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                            break;
+                        default:
+                            createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
                     }
                 })
                 .call(ANALYTIC_RULE_RESOURCE)
