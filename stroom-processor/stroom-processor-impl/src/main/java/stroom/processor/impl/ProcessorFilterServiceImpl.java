@@ -340,7 +340,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
                                 String userDisplayName;
                                 try {
-                                    final String ownerUuid = securityContext.getDocumentOwnerUuid(processorFilter.getUuid());
+                                    final String ownerUuid = securityContext
+                                            .getDocumentOwnerUuid(processorFilter.getUuid());
                                     userDisplayName = Optional.ofNullable(ownerUuid)
                                             .flatMap(userNameService::getByUuid)
                                             .map(UserName::getUserIdentityForAudit)
