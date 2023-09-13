@@ -18546,6 +18546,9 @@
       "ValidateExpressionResult" : {
         "type" : "object",
         "properties" : {
+          "groupBy" : {
+            "type" : "boolean"
+          },
           "ok" : {
             "type" : "boolean"
           },
