@@ -3727,6 +3727,28 @@ paths:
       summary: Get all permissions for a given document type
       tags:
       - Doc Permissions
+  /permission/doc/v1/getDocumentOwners:
+    post:
+      operationId: getDocumentOwners
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: documentUuid
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserName'
+          description: default response
+      summary: Get the owners of the specified document
+      tags:
+      - Doc Permissions
   /permission/doc/v1/getPermissionForDocType/${docType}:
     get:
       operationId: getPermissionForDocType
@@ -11288,8 +11310,6 @@ components:
         minMetaCreateTimeMs:
           type: integer
           format: int64
-        ownerUuid:
-          type: string
         pipelineName:
           type: string
         pipelineUuid:
@@ -13065,6 +13085,8 @@ components:
           type: integer
           format: int64
         updateUser:
+          type: string
+        uuid:
           type: string
         version:
           type: integer
