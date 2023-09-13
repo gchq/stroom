@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -44,6 +45,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
+        storedQuery.setUuid(UUID.randomUUID().toString());
         StoredQuerySerialiser.serialise(storedQuery);
         StoredQuery result = genericDao.create(storedQuery);
         StoredQuerySerialiser.deserialise(result);

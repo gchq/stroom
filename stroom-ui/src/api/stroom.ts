@@ -3150,7 +3150,6 @@ export interface ProcessorFilter {
 
   /** @format int64 */
   minMetaCreateTimeMs?: number;
-  ownerUuid?: string;
   pipelineName?: string;
   pipelineUuid?: string;
 
@@ -4295,6 +4294,7 @@ export interface StoredQuery {
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+  uuid?: string;
 
   /** @format int32 */
   version?: number;
@@ -8474,6 +8474,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
       this.request<any, UserName[]>({
         path: `/permission/doc/v1/filterUsers`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Doc Permissions
+     * @name GetDocumentOwners
+     * @summary Get the owners of the specified document
+     * @request POST:/permission/doc/v1/getDocumentOwners
+     * @secure
+     */
+    getDocumentOwners: (data: string, params: RequestParams = {}) =>
+      this.request<any, UserName[]>({
+        path: `/permission/doc/v1/getDocumentOwners`,
         method: "POST",
         body: data,
         secure: true,

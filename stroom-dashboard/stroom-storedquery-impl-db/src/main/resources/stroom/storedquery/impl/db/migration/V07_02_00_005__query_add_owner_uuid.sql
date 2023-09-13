@@ -38,6 +38,18 @@ BEGIN
         ADD COLUMN owner_uuid varchar(255) NOT NULL;
         CREATE INDEX owner_uuid ON query (owner_uuid);
 
+        SELECT COUNT(1)
+        INTO object_count
+        FROM information_schema.tables
+        WHERE table_schema = database()
+        AND table_name = 'stroom_user';
+
+        IF object_count = 1 THEN
+            UPDATE query q, stroom_user s
+            SET q.owner_uuid = s.uuid
+            WHERE q.create_user = s.name;
+        END IF;
+
     END IF;
 
 END $$
