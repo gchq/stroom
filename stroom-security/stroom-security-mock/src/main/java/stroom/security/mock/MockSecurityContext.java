@@ -72,6 +72,11 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
+    public UserIdentity createIdentityByUserUuid(final String userUuid) {
+        return ADMIN_USER_IDENTITY;
+    }
+
+    @Override
     public boolean isLoggedIn() {
         return true;
     }
@@ -99,6 +104,11 @@ public class MockSecurityContext implements SecurityContext {
     @Override
     public boolean hasDocumentPermission(final String documentUuid, final String permission) {
         return true;
+    }
+
+    @Override
+    public String getDocumentOwnerUuid(final String documentUuid) {
+        return getUserUuid();
     }
 
     @Override

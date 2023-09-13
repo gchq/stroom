@@ -10,6 +10,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
@@ -474,8 +475,14 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 if (DocumentTypes.isFolder(docRef.getType())
                         || !permission.startsWith(DocumentPermissionNames.CREATE)) {
                     try {
-                        documentPermissionServiceProvider.get()
-                                .addPermission(docRef.getUuid(), userUuid, permission);
+                        if (DocumentPermissionNames.OWNER.equals(permission)) {
+                            documentPermissionServiceProvider.get()
+                                    .setDocumentOwner(docRef.getUuid(), userUuid);
+                        } else {
+                            documentPermissionServiceProvider.get()
+                                    .addPermission(docRef.getUuid(), userUuid, permission);
+                        }
+
                         // Remember the affected documents and users so we can clear the relevant caches.
                         affectedDocRefs.add(docRef);
                         affectedUserUuids.add(userUuid);
@@ -674,5 +681,21 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             LOGGER.error("Unrecognised permission assigned " + perm);
             return null;
         }
+    }
+
+    @Override
+    public List<UserName> getDocumentOwners(final String documentUuid) {
+        final DocumentPermissionService documentPermissionService = documentPermissionServiceProvider.get();
+        final UserService userService = userServiceProvider.get();
+
+        final Set<String> ownerUuids = documentPermissionService.getDocumentOwnerUuids(documentUuid);
+
+        return ownerUuids
+                .stream()
+                .map(userService::loadByUuid)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(user -> (UserName) user)
+                .toList();
     }
 }

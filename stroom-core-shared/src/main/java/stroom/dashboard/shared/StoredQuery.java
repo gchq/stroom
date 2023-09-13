@@ -40,6 +40,8 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private String updateUser;
     @JsonProperty
+    private String uuid;
+    @JsonProperty
     private String dashboardUuid;
     @JsonProperty
     private String componentId;
@@ -64,6 +66,7 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
                        @JsonProperty("createUser") final String createUser,
                        @JsonProperty("updateTimeMs") final Long updateTimeMs,
                        @JsonProperty("updateUser") final String updateUser,
+                       @JsonProperty("uuid") final String uuid,
                        @JsonProperty("dashboardUuid") final String dashboardUuid,
                        @JsonProperty("componentId") final String componentId,
                        @JsonProperty("name") final String name,
@@ -77,6 +80,7 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
+        this.uuid = uuid;
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
         this.name = name;
@@ -137,6 +141,14 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
 
     public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
     }
 
     public String getDashboardUuid() {
@@ -200,9 +212,18 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         return "StoredQuery{" +
                 "id=" + id +
                 ", version=" + version +
+                ", createTimeMs=" + createTimeMs +
+                ", createUser='" + createUser + '\'' +
+                ", updateTimeMs=" + updateTimeMs +
+                ", updateUser='" + updateUser + '\'' +
+                ", uuid='" + uuid + '\'' +
                 ", dashboardUuid='" + dashboardUuid + '\'' +
+                ", componentId='" + componentId + '\'' +
                 ", name='" + name + '\'' +
                 ", ownerUuid='" + ownerUuid + '\'' +
+                ", data='" + data + '\'' +
+                ", favourite=" + favourite +
+                ", query=" + query +
                 '}';
     }
 }

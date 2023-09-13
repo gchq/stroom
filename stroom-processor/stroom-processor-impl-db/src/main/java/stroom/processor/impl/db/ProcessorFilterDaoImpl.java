@@ -77,7 +77,6 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
-        expressionMapper.map(ProcessorFilterFields.OWNER_UUID, PROCESSOR_FILTER.OWNER_UUID, value -> value);
         expressionMapper.map(ProcessorFilterFields.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
         expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
@@ -86,7 +85,6 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
 
         expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
-        expressionMapper.map(ProcessorFields.OWNER_UUID, PROCESSOR_FILTER.OWNER_UUID, value -> value);
         expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value, false);
         expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);

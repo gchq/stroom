@@ -59,13 +59,12 @@ import javax.inject.Inject;
 public class ProcessorFilterImportExportHandlerImpl implements ImportExportActionHandler, NonExplorerDocRefProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterImportExportHandlerImpl.class);
+    private static final String META = "meta";
+
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
     private final ProcessorFilterService processorFilterService;
     private final ProcessorService processorService;
     private final DocRefInfoService docRefInfoService;
-
-    private static final String XML = "xml";
-    private static final String META = "meta";
 
     private final Serialiser2<ProcessorFilter> delegate;
 
@@ -226,8 +225,6 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         processorFilter.setProcessorFilterTracker(null);
         processorFilter.setProcessor(null);
         processorFilter.setData(null);
-        // Owner is meaningless outside stroom
-        processorFilter.setOwnerUuid(null);
 
         if (omitAuditFields) {
             processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);

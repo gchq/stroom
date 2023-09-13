@@ -69,6 +69,12 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Get all permissions for a given document type",
             operationId = "filterUsers")
-    List<UserName> filterUsers(final FilterUsersRequest filterUsersRequest);
+    List<UserName> filterUsers(FilterUsersRequest filterUsersRequest);
 
+    @POST
+    @Path("/getDocumentOwners")
+    @Operation(
+            summary = "Get the owners of the specified document",
+            operationId = "getDocumentOwners")
+    List<UserName> getDocumentOwners(@Parameter(description = "documentUuid", required = true) String documentUuid);
 }

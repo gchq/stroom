@@ -15,7 +15,6 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
         final ProcessorFilter processorFilter = new ProcessorFilter();
         processorFilter.setId(record.get(PROCESSOR_FILTER.ID));
         processorFilter.setVersion(record.get(PROCESSOR_FILTER.VERSION));
-        processorFilter.setOwnerUuid(record.get(PROCESSOR_FILTER.OWNER_UUID));
         processorFilter.setCreateTimeMs(record.get(PROCESSOR_FILTER.CREATE_TIME_MS));
         processorFilter.setCreateUser(record.get(PROCESSOR_FILTER.CREATE_USER));
         processorFilter.setUpdateTimeMs(record.get(PROCESSOR_FILTER.UPDATE_TIME_MS));
