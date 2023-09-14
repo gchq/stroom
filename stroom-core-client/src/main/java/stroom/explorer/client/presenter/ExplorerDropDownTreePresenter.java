@@ -202,7 +202,7 @@ class ExplorerDropDownTreePresenter
     }
 
     private static ExplorerNode resolve(final ExplorerNode selection) {
-        if (selection == ExplorerTreeModel.NULL_SELECTION) {
+        if (ExplorerTreeModel.NULL_SELECTION.equals(selection)) {
             return null;
         }
 
