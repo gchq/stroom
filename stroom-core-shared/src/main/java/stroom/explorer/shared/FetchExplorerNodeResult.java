@@ -16,6 +16,8 @@
 
 package stroom.explorer.shared;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -87,5 +89,62 @@ public class FetchExplorerNodeResult {
     @Override
     public int hashCode() {
         return Objects.hash(rootNodes, openedItems, temporaryOpenedItems, qualifiedFilterInput);
+    }
+
+    public String dumpTree() {
+        final StringBuilder stringBuilder = new StringBuilder();
+        GwtNullSafe.list(rootNodes)
+                .forEach(node -> {
+                    dumpNode(stringBuilder, 0, node);
+                });
+        return stringBuilder.toString();
+    }
+
+    public void dumpNode(final StringBuilder stringBuilder,
+                         final int depth,
+                         final ExplorerNode node) {
+        Objects.requireNonNull(node);
+        final int padCount = depth * 2;
+        //noinspection StringRepeatCanBeUsed
+        for (int i = 0; i < padCount; i++) {
+            stringBuilder.append(" ");
+        }
+        if (node.getIsFolder()) {
+            if (node.hasChildren()) {
+                if (GwtNullSafe.set(temporaryOpenedItems).contains(node.getUniqueKey())) {
+                    stringBuilder.append("▼ ");
+                } else {
+                    stringBuilder.append("▶ ");
+                }
+            } else {
+                stringBuilder.append("  ");
+            }
+            stringBuilder.append("🗀 ");
+        } else {
+            // is leaf
+            stringBuilder.append("  ◯ ");
+        }
+        stringBuilder.append(node.getName())
+                .append(" (");
+        // Add the various states
+        if (node.getIsFolder()) {
+            stringBuilder.append("🗀");
+        }
+        if (node.getIsFilterMatch()) {
+            stringBuilder.append("✓");
+        }
+        if (node.hasNodeInfo()) {
+            stringBuilder.append("⚠");
+        }
+        if (node.hasChildren()) {
+            stringBuilder.append("🚸");
+        }
+
+        stringBuilder
+                .append(")")
+                .append("\n");
+        for (final ExplorerNode childNode : GwtNullSafe.list(node.getChildren())) {
+            dumpNode(stringBuilder, depth + 1, childNode);
+        }
     }
 }

@@ -30,6 +30,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +51,6 @@ class ExplorerTreeModel {
 
     private static final long ONE_HOUR = 60 * 60 * 1000;
     private static final long TEN_MINUTES = 10 * 60 * 1000;
-    private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
 
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerSession explorerSession;
@@ -161,7 +161,7 @@ class ExplorerTreeModel {
 
                 // Make sure the cache is fresh for our new model
                 brokenDependenciesCache.invalidate();
-                decorateWithBrokenDeps(newModel);
+                addBrokenDependencies(newModel);
 
                 // Now make it immutable as this is our master model
                 newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);
@@ -173,102 +173,17 @@ class ExplorerTreeModel {
         });
     }
 
-    private void decorateWithBrokenDeps(final TreeModel treeModel) {
-        final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
-
-        treeModel.decorate((nodeKey, node) -> {
-            LOGGER.debug(() -> "decorate called on node: " + node.getName());
-
-            return cloneWithNodeInfo(treeModel, brokenDepsMap, node);
+    private void addBrokenDependencies(final TreeModel treeModel) {
+        final Map<DocRef, Set<DocRef>> brokenDepsMap = NullSafe.map(brokenDependenciesCache.getMap());
+        brokenDepsMap.forEach((nodeDocRef, missingDepDocRefs) -> {
+            final ExplorerNode node = treeModel.getNode(nodeDocRef);
+            final List<NodeInfo> nodeInfos = buildNodeInfo(missingDepDocRefs);
+            treeModel.addNodeInfo(node, nodeInfos);
         });
     }
 
-    ExplorerNode cloneWithBranchNodeInfo(final TreeModel treeModel,
-                                         final ExplorerNode node) {
-        final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
-        return cloneWithBranchNodeInfo(treeModel, brokenDepsMap, node);
-    }
-
-    private ExplorerNode cloneWithNodeInfo(final TreeModel treeModel,
-                                           final Map<DocRef, Set<DocRef>> brokenDepsMap,
-                                           final ExplorerNode node) {
-        final DocRef docRef = node.getDocRef();
-        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
-        final List<ExplorerNode> children = treeModel.getChildren(node);
-
-        if (NullSafe.isEmptyCollection(children) && NullSafe.hasItems(nodeInfos)) {
-            LOGGER.debug(() -> LogUtil.message("Leaf '{}' has issues", node.getName()));
-            return node.copy()
-                    .addNodeInfo(nodeInfos)
-                    .build();
-        } else {
-            // Branch
-            final Severity maxSeverity = Severity.getMaxSeverity(
-                            NullSafe.stream(children)
-                                    .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
-                                            .map(NodeInfo::getSeverity))
-                                    .max(Severity.HIGH_TO_LOW_COMPARATOR)
-                                    .orElse(null),
-                            null)
-                    .orElse(null);
-
-            if (maxSeverity != null) {
-                // At least one descendant has an issue, so mark this branch too
-                LOGGER.debug(() -> LogUtil.message("Branch '{}' has issues, maxSeverity: {}",
-                        node.getName(), maxSeverity));
-                return node.copy()
-                        .addNodeInfo(new NodeInfo(
-                                maxSeverity,
-                                BRANCH_NODE_INFO))
-                        .build();
-            } else {
-                // No issues, return the node as is
-                return node;
-            }
-        }
-    }
-
-    private <K> ExplorerNode cloneWithBranchNodeInfo(final AbstractTreeModel<K> treeModel,
-                                                     final Map<DocRef, Set<DocRef>> brokenDepsMap,
-                                                     final ExplorerNode node) {
-        final DocRef docRef = node.getDocRef();
-        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
-        final List<ExplorerNode> children = treeModel.getChildren(node);
-
-        if (NullSafe.hasItems(children) && NullSafe.isEmptyCollection(nodeInfos)) {
-            final Severity maxSeverity = Severity.getMaxSeverity(
-                            NullSafe.stream(children)
-                                    .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
-                                            .map(NodeInfo::getSeverity))
-                                    .max(Severity.HIGH_TO_LOW_COMPARATOR)
-                                    .orElse(null),
-                            null)
-                    .orElse(null);
-
-            if (maxSeverity != null) {
-                // At least one descendant has an issue, so mark this branch too
-                LOGGER.debug(() -> LogUtil.message("Branch '{}' has issues, maxSeverity: {}",
-                        node.getName(), maxSeverity));
-                return node.copy()
-                        .addNodeInfo(new NodeInfo(
-                                maxSeverity,
-                                BRANCH_NODE_INFO))
-                        .build();
-            } else {
-                // No issues, return the node as is
-                return node;
-            }
-        } else {
-            return node;
-        }
-    }
-
-    private Set<NodeInfo> buildNodeInfo(final DocRef docRef,
-                                        final Map<DocRef, Set<DocRef>> brokenDepsMap) {
-        final Set<DocRef> brokenDeps = brokenDepsMap.get(docRef);
-        if (brokenDeps == null) {
-            return null;
-        } else {
+    private List<NodeInfo> buildNodeInfo(final Set<DocRef> brokenDeps) {
+        if (NullSafe.hasItems(brokenDeps)) {
             return brokenDeps.stream()
                     .map(missingDocRef -> {
                         final String msg = LogUtil.message(
@@ -278,7 +193,9 @@ class ExplorerTreeModel {
                                 missingDocRef.getUuid());
                         return new NodeInfo(Severity.ERROR, msg);
                     })
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
         }
     }
 

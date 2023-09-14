@@ -1,9 +1,11 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,11 +24,15 @@ public abstract class AbstractTreeModel<K> {
     protected final long id;
     protected final long creationTime;
     // Child key => parent
-    protected Map<K, ExplorerNode> parentMap = new HashMap<>();
+    protected Map<K, ExplorerNode> childKeyToParentNodeMap = new HashMap<>();
     // Parent key => Set<child>
-    protected Map<K, Set<ExplorerNode>> childMap = new HashMap<>();
+    protected Map<K, Set<ExplorerNode>> parentKeyToChildNodesMap = new HashMap<>();
+    // Key => List<NodeInfo>
+    protected Map<K, List<NodeInfo>> keyToNodeInfoMap = new HashMap<>();
+    // Parent key => Set<child> (sub-set of children that have node info or have descendants that do)
+    protected Map<K, Set<ExplorerNode>> parentKeyToChildNodesWithInfoMap = new HashMap<>();
     // Node key => node
-    protected Map<K, ExplorerNode> nodeMap = new HashMap<>();
+    protected Map<K, ExplorerNode> keyToNodeMap = new HashMap<>();
 
     public AbstractTreeModel(final long id, final long creationTime) {
         this.id = id;
@@ -42,18 +48,18 @@ public abstract class AbstractTreeModel<K> {
     }
 
     public Set<K> getAllParents() {
-        return new LinkedHashSet<>(childMap.keySet());
+        return new LinkedHashSet<>(parentKeyToChildNodesMap.keySet());
     }
 
     public ExplorerNode getParent(final K childKey) {
-        return NullSafe.get(childKey, parentMap::get);
+        return NullSafe.get(childKey, childKeyToParentNodeMap::get);
     }
 
     /**
      * Get the node from the model with the supplied unique key
      */
     public ExplorerNode getNode(final K nodeKey) {
-        return NullSafe.get(nodeKey, nodeMap::get);
+        return NullSafe.get(nodeKey, keyToNodeMap::get);
     }
 
     /**
@@ -71,12 +77,50 @@ public abstract class AbstractTreeModel<K> {
         final K childKey = getNodeKey(child);
         final K parentKey = getNodeKey(parent);
 
-        parentMap.putIfAbsent(childKey, parent);
-        final Set<ExplorerNode> childNodes = childMap.computeIfAbsent(parentKey, k -> new LinkedHashSet<>());
+        childKeyToParentNodeMap.putIfAbsent(childKey, parent);
+        final Set<ExplorerNode> childNodes = parentKeyToChildNodesMap.computeIfAbsent(
+                parentKey,
+                k -> new LinkedHashSet<>());
         childNodes.add(child);
 
-        nodeMap.putIfAbsent(childKey, child);
-        nodeMap.putIfAbsent(parentKey, parent);
+        keyToNodeMap.putIfAbsent(childKey, child);
+        keyToNodeMap.putIfAbsent(parentKey, parent);
+    }
+
+    /**
+     * Should only be called after all calls to {@link AbstractTreeModel#add(ExplorerNode, ExplorerNode)}
+     * have been made so all nodes are available
+     */
+    public void addNodeInfo(final ExplorerNode node, final List<NodeInfo> nodeInfoList) {
+        Objects.requireNonNull(node);
+        if (NullSafe.hasItems(nodeInfoList)) {
+            final K nodeKey = getNodeKey(node);
+            keyToNodeInfoMap.put(nodeKey, nodeInfoList);
+            recordNodeInfoPresence(nodeKey, node);
+        }
+    }
+
+    public List<NodeInfo> getNodeInfo(final ExplorerNode node) {
+        return NullSafe.list(NullSafe.get(node, this::getNodeKey, keyToNodeInfoMap::get));
+    }
+
+    /**
+     * Record a child node having node info (or one of its descendants having node info.
+     */
+    private void recordNodeInfoPresence(final K nodeKey,
+                                        final ExplorerNode node) {
+
+        final ExplorerNode parentNode = getParent(nodeKey);
+        final K parentKey = getNodeKey(parentNode);
+        final boolean wasAdded = parentKeyToChildNodesWithInfoMap.computeIfAbsent(parentKey, k -> new HashSet<>())
+                .add(node);
+
+        // Another descendant of parentNode may have already marked it as having child node info,
+        // in which case nothing to do
+        if (wasAdded && parentKey != null) {
+            // Recurse up the chain of ancestors till we hit one with no parent
+            recordNodeInfoPresence(parentKey, parentNode);
+        }
     }
 
     /**
@@ -91,7 +135,7 @@ public abstract class AbstractTreeModel<K> {
     }
 
     public boolean containsNode(final ExplorerNode node) {
-        return nodeMap.containsKey(getNodeKey(node));
+        return keyToNodeMap.containsKey(getNodeKey(node));
     }
 
     /**
@@ -101,14 +145,14 @@ public abstract class AbstractTreeModel<K> {
      * of a node, e.g. the alerts on it.
      */
     public void replaceNode(final K key, final ExplorerNode newNode) {
-        if (!nodeMap.containsKey(key)) {
+        if (!keyToNodeMap.containsKey(key)) {
             throw new RuntimeException(LogUtil.message("Key {} not found in tree model for newNode: {}", key, newNode));
         }
-        final ExplorerNode parent = parentMap.get(key);
+        final ExplorerNode parent = childKeyToParentNodeMap.get(key);
         final K parentKey = getNodeKey(parent);
 
         // Get the children or newNode's parent, i.e. siblings
-        final Set<ExplorerNode> siblingNodes = childMap.get(parentKey);
+        final Set<ExplorerNode> siblingNodes = parentKeyToChildNodesMap.get(parentKey);
 
         if (siblingNodes != null) {
             final Set<ExplorerNode> newSiblingNodes = siblingNodes.stream()
@@ -121,22 +165,36 @@ public abstract class AbstractTreeModel<K> {
                         }
                     })
                     .collect(Collectors.toSet());
-            childMap.put(parentKey, newSiblingNodes);
+            parentKeyToChildNodesMap.put(parentKey, newSiblingNodes);
         }
 
-        nodeMap.put(key, newNode);
+        keyToNodeMap.put(key, newNode);
     }
 
     public ExplorerNode getParent(final ExplorerNode child) {
-        return NullSafe.get(child, child2 -> parentMap.get(getNodeKey(child2)));
+        return NullSafe.get(child, child2 -> childKeyToParentNodeMap.get(getNodeKey(child2)));
     }
 
     public List<ExplorerNode> getChildren(final ExplorerNode parent) {
         final K parentKey = getNodeKey(parent);
-        final Set<ExplorerNode> children = childMap.get(parentKey);
+        final Set<ExplorerNode> children = parentKeyToChildNodesMap.get(parentKey);
         return NullSafe.get(
                 children,
                 children2 -> children2.stream().toList());
+    }
+
+    public boolean hasChild(final ExplorerNode parent, final ExplorerNode child) {
+        if (parent != null && child != null) {
+            final K parentKey = getNodeKey(parent);
+            final Set<ExplorerNode> children = parentKeyToChildNodesMap.get(parentKey);
+
+            // Can't use contains due to hash/equals including rootNodeUuid which may be
+            // present on one but not the other.
+            return NullSafe.set(children).stream()
+                    .anyMatch(node -> Objects.equals(node.getDocRef(), child.getDocRef()));
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -144,12 +202,63 @@ public abstract class AbstractTreeModel<K> {
      * @return True if the node for this key has at least one child
      */
     public boolean hasChildren(final K key) {
-        return NullSafe.hasItems(childMap.get(key));
+        return NullSafe.hasItems(parentKeyToChildNodesMap.get(key));
+    }
+
+    public boolean hasChildren(final ExplorerNode parent) {
+        final K nodeKey = getNodeKey(parent);
+        return NullSafe.hasItems(parentKeyToChildNodesMap.get(nodeKey));
+    }
+
+    /**
+     * @return True if any one of childNode has {@link NodeInfo} or any of its descendants do.
+     */
+    public boolean hasDescendantNodeInfo(final ExplorerNode parentNode, final Collection<ExplorerNode> childNodes) {
+        final K parentKey = getNodeKey(parentNode);
+        if (parentKey != null && NullSafe.hasItems(childNodes)) {
+            final Set<ExplorerNode> childNodesWithInfo = NullSafe.set(parentKeyToChildNodesWithInfoMap.get(parentKey));
+            return childNodes.stream()
+                    .anyMatch(node -> {
+                        // Can't use set.contains in case we are comparing nodes with a rootNodeUuid to those
+                        // without
+                        return childNodesWithInfo.stream()
+                                .anyMatch(childNode -> Objects.equals(childNode.getDocRef(), node.getDocRef()));
+                    });
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @return The sub-set of childNodes that have node info or one of their descendants has it.
+     */
+    public Set<ExplorerNode> getChildrenWithDescendantInfo(final ExplorerNode parentNode,
+                                                           final Collection<ExplorerNode> childNodes) {
+        final K parentKey = getNodeKey(parentNode);
+        if (parentKey != null && NullSafe.hasItems(childNodes)) {
+            final Set<ExplorerNode> childNodesWithInfo = NullSafe.set(parentKeyToChildNodesWithInfoMap.get(parentKey));
+            return childNodes.stream()
+                    .filter(node -> {
+                        // TODO: 14/09/2023 Change to use contains when we refactor to have two different node types
+                        // Can't use set.contains in case we are comparing nodes with a rootNodeUuid to those
+                        // without
+                        return childNodesWithInfo.stream()
+                                .anyMatch(childNode -> Objects.equals(childNode.getDocRef(), node.getDocRef()));
+                    })
+                    .collect(Collectors.toSet());
+        } else {
+            return Collections.emptySet();
+        }
+    }
+
+    public Set<ExplorerNode> getChildrenWithDescendantInfo(final ExplorerNode parent) {
+        final K parentKey = getNodeKey(parent);
+        return parentKeyToChildNodesMap.get(parentKey);
     }
 
     public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
         final Map<K, Set<ExplorerNode>> newChildMap = new HashMap<>();
-        childMap.forEach((key, children) -> newChildMap.put(key, children
+        parentKeyToChildNodesMap.forEach((key, children) -> newChildMap.put(key, children
                 .stream()
                 .sorted(Comparator
                         .comparingInt(priorityExtractor)
@@ -157,7 +266,7 @@ public abstract class AbstractTreeModel<K> {
                         .thenComparing(ExplorerNode::getName))
                 .collect(Collectors.toCollection(LinkedHashSet::new))));
 
-        childMap = newChildMap;
+        parentKeyToChildNodesMap = newChildMap;
     }
 
     /**
@@ -167,7 +276,7 @@ public abstract class AbstractTreeModel<K> {
      */
     public void decorate(final BiFunction<K, ExplorerNode, ExplorerNode> nodeDecorator) {
         final K nullKey = null;
-        final Set<ExplorerNode> childNodes = childMap.get(nullKey);
+        final Set<ExplorerNode> childNodes = parentKeyToChildNodesMap.get(nullKey);
 
         // All the root nodes
         if (NullSafe.hasItems(childNodes)) {
@@ -179,12 +288,12 @@ public abstract class AbstractTreeModel<K> {
                 newChildNodes.add(newChildNode);
                 if (newChildNode != childNode) {
                     hasChildNodeChanged = true;
-                    nodeMap.put(nullKey, newChildNode);
+                    keyToNodeMap.put(nullKey, newChildNode);
                 }
             }
 
             if (hasChildNodeChanged) {
-                childMap.put(nullKey, newChildNodes);
+                parentKeyToChildNodesMap.put(nullKey, newChildNodes);
             }
         }
     }
@@ -194,7 +303,7 @@ public abstract class AbstractTreeModel<K> {
                                   final BiFunction<K, ExplorerNode, ExplorerNode> nodeDecorator) {
         Objects.requireNonNull(node);
 
-        final Set<ExplorerNode> childNodes = childMap.get(nodeKey);
+        final Set<ExplorerNode> childNodes = parentKeyToChildNodesMap.get(nodeKey);
         boolean hasAnyNodeChanged = false;
         final Set<ExplorerNode> newChildNodes = NullSafe.getOrElseGet(
                 childNodes,
@@ -209,17 +318,17 @@ public abstract class AbstractTreeModel<K> {
                     final ExplorerNode newChildNode = decorate(childNodeKey, childNode, nodeDecorator);
                     if (newChildNode != childNode) {
                         hasAnyNodeChanged = true;
-                        nodeMap.put(childNodeKey, newChildNode);
+                        keyToNodeMap.put(childNodeKey, newChildNode);
                     }
                     newChildNodes.add(newChildNode);
                 } else {
                     // Not sure we want this else block
                     newChildNodes.add(null);
-                    nodeMap.put(null, null);
+                    keyToNodeMap.put(null, null);
                 }
             }
             if (hasAnyNodeChanged) {
-                childMap.put(nodeKey, newChildNodes);
+                parentKeyToChildNodesMap.put(nodeKey, newChildNodes);
             }
         }
 
@@ -227,14 +336,14 @@ public abstract class AbstractTreeModel<K> {
         final ExplorerNode newNode = nodeDecorator.apply(nodeKey, node);
         if (newNode != node) {
             hasAnyNodeChanged = true;
-            nodeMap.put(nodeKey, newNode);
+            keyToNodeMap.put(nodeKey, newNode);
         }
 
         if (hasAnyNodeChanged) {
             // Now link the new children (if any) to the new node (their parent)
             for (final ExplorerNode newChildNode : newChildNodes) {
                 final K newChildNodeKey = getNodeKey(newChildNode);
-                parentMap.put(newChildNodeKey, newNode);
+                childKeyToParentNodeMap.put(newChildNodeKey, newNode);
             }
         }
 
@@ -245,11 +354,11 @@ public abstract class AbstractTreeModel<K> {
     public AbstractTreeModel<K> clone() {
         try {
             final AbstractTreeModel<K> treeModel = (AbstractTreeModel<K>) super.clone();
-            treeModel.nodeMap = new HashMap<>(this.nodeMap);
-            treeModel.parentMap = new HashMap<>(this.parentMap);
-            treeModel.childMap = new HashMap<>(this.childMap.size());
-            this.childMap.forEach((key, childNodes) ->
-                    treeModel.childMap.put(key, new LinkedHashSet<>(childNodes)));
+            treeModel.keyToNodeMap = new HashMap<>(this.keyToNodeMap);
+            treeModel.childKeyToParentNodeMap = new HashMap<>(this.childKeyToParentNodeMap);
+            treeModel.parentKeyToChildNodesMap = new HashMap<>(this.parentKeyToChildNodesMap.size());
+            this.parentKeyToChildNodesMap.forEach((key, childNodes) ->
+                    treeModel.parentKeyToChildNodesMap.put(key, new LinkedHashSet<>(childNodes)));
             return treeModel;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);

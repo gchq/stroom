@@ -321,8 +321,11 @@ public class ExplorerNode implements HasDisplayValue {
                 children = new ArrayList<>();
             }
             children.add(child);
-            ;
             return this;
+        }
+
+        public boolean hasChildren() {
+            return GwtNullSafe.hasItems(children);
         }
 
         public Builder rootNodeUuid(final String rootNodeUuid) {
@@ -331,9 +334,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder rootNodeUuid(final ExplorerNode node) {
-            this.rootNodeUuid = node != null
-                    ? node.getUuid()
-                    : null;
+            this.rootNodeUuid = GwtNullSafe.get(node, ExplorerNode::getUuid);
             return this;
         }
 
@@ -353,7 +354,11 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder nodeInfoList(final List<NodeInfo> nodeInfoList) {
-            this.nodeInfoList = new ArrayList<>(nodeInfoList);
+            if (GwtNullSafe.hasItems(nodeInfoList)) {
+                this.nodeInfoList = new ArrayList<>(nodeInfoList);
+            } else {
+                this.nodeInfoList = null;
+            }
             return this;
         }
 

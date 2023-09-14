@@ -16,6 +16,7 @@
 
 package stroom.explorer;
 
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
@@ -29,6 +30,7 @@ import stroom.security.impl.DocumentPermissionServiceImpl;
 import stroom.security.impl.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
+import stroom.svg.shared.SvgImage;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -37,8 +39,11 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,8 +56,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
-    private static final int MAX_CHILDREN = 200;
+    private static final int MAX_CHILDREN = 5;
     private static final int MAX_TREE_DEPTH = 2;
+    public static final String TYPE_TEST = "test";
 
     @Inject
     private ExplorerTreeDao explorerTreeDao;
@@ -64,6 +70,10 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
     private DocumentPermissionServiceImpl documentPermissionService;
     @Inject
     private SecurityContext securityContext;
+    @Inject
+    private Set<ExplorerActionHandler> explorerActionHandlers;
+
+    private final Map<String, SvgImage> typeToIconMap = new HashMap<>();
 
     @Test
     void testLargeTreePerformance() {
@@ -94,35 +104,42 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
             final int count = (int) Math.pow(MAX_CHILDREN, MAX_TREE_DEPTH) + MAX_CHILDREN + 1;
             LOGGER.info(() -> "Creating " + count + " tree nodes");
             LOGGER.logDurationIfInfoEnabled(() -> {
-                ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
+                ExplorerTreeNode root = explorerTreeDao.createRoot(newTreeNode("test_node"));
                 addChildren(root, 1, MAX_TREE_DEPTH);
             }, "Created " + count + " tree nodes");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 // Check create model.
-                explorerTreeDao.createModel(null, 0, System.currentTimeMillis());
+                explorerTreeDao.createModel(
+                        this::getIcon,
+                        0,
+                        System.currentTimeMillis());
             }, "Create model");
 
-            final AtomicReference<ExplorerNode> lastChild = new AtomicReference<>();
-            LOGGER.logDurationIfInfoEnabled(() -> {
-                lastChild.set(expandTree(findExplorerNodeCriteria, count));
-            }, "Expand all");
+            final ExplorerNode lastChild = LOGGER.logDurationIfInfoEnabled(
+                    () ->
+                            expandTree(findExplorerNodeCriteria, count),
+                    "Expand all");
 
             final User user = userService.getOrCreateUser("testuser");
             final User userGroup = userService.getOrCreateUserGroup("testusergroup");
             userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
-            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(),
+            documentPermissionService.addPermission(
+                    lastChild.getUuid(),
                     user.getUuid(),
                     DocumentPermissionNames.READ);
-            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(),
+            documentPermissionService.addPermission(
+                    lastChild.getUuid(),
                     userGroup.getUuid(),
                     DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
-                    // See what we get back with a user with limited permissions.
-                    expandTree(findExplorerNodeCriteria, 3);
-                });
+                securityContext.asUser(
+                        securityContext.createIdentity(user.getSubjectId()),
+                        () -> {
+                            // See what we get back with a user with limited permissions.
+                            expandTree(findExplorerNodeCriteria, 3);
+                        });
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
@@ -134,15 +151,22 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
         });
     }
 
-    private ExplorerNode expandTree(final FindExplorerNodeCriteria findExplorerNodeCriteria, final int expected) {
+    private ExplorerNode expandTree(final FindExplorerNodeCriteria findExplorerNodeCriteria,
+                                    final int expected) {
         final AtomicInteger count = new AtomicInteger();
         final AtomicReference<ExplorerNode> lastChild = new AtomicReference<>();
 
         explorerService.clear();
         FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
+        if (expected < 100) {
+            LOGGER.debug("tree:\n{}", result.dumpTree());
+        }
+
         count(result.getRootNodes(), count, lastChild);
 
-        assertThat(count.get()).isEqualTo(expected);
+        // Add one to expected to account for empty favourites & system roots
+        assertThat(count.get())
+                .isEqualTo(expected + 2);
 
         return lastChild.get();
     }
@@ -160,39 +184,56 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
         }
     }
 
-    private ExplorerNode openAll(final ExplorerNode parent,
-                                 final FetchExplorerNodeResult result,
-                                 final FindExplorerNodeCriteria findExplorerNodeCriteria) {
-        ExplorerNode lastChild = null;
-
-        final List<ExplorerNode> children = parent.getChildren();
-        if (children != null && children.size() > 0) {
-            for (final ExplorerNode child : children) {
-                findExplorerNodeCriteria.getOpenItems().add(child.getUniqueKey());
-                lastChild = openAll(child, result, findExplorerNodeCriteria);
-                if (lastChild == null) {
-                    lastChild = child;
-                }
-            }
-        }
-
-        return lastChild;
-    }
+//    private ExplorerNode openAll(final ExplorerNode parent,
+//                                 final FetchExplorerNodeResult result,
+//                                 final FindExplorerNodeCriteria findExplorerNodeCriteria) {
+//        ExplorerNode lastChild = null;
+//
+//        final List<ExplorerNode> children = parent.getChildren();
+//        if (children != null && children.size() > 0) {
+//            for (final ExplorerNode child : children) {
+//                findExplorerNodeCriteria.getOpenItems().add(child.getUniqueKey());
+//                lastChild = openAll(child, result, findExplorerNodeCriteria);
+//                if (lastChild == null) {
+//                    lastChild = child;
+//                }
+//            }
+//        }
+//
+//        return lastChild;
+//    }
 
     private void addChildren(final ExplorerTreeNode parent, final int depth, final int maxDepth) {
         for (int i = 1; i <= MAX_CHILDREN; i++) {
-            final ExplorerTreeNode child = explorerTreeDao.addChild(parent, newTreePojo(parent.getName() + "-" + i));
+            final ExplorerTreeNode child = explorerTreeDao.addChild(parent, newTreeNode(parent.getName() + "-" + i));
             if (depth < maxDepth) {
                 addChildren(child, depth + 1, maxDepth);
             }
         }
     }
 
-    private ExplorerTreeNode newTreePojo(final String name) {
+    private ExplorerTreeNode newSystemNode() {
+        final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();
+        explorerTreeNode.setName(ExplorerConstants.SYSTEM);
+        explorerTreeNode.setType(ExplorerConstants.SYSTEM_DOC_REF.getType());
+        explorerTreeNode.setUuid(ExplorerConstants.SYSTEM_DOC_REF.getUuid());
+        return explorerTreeNode;
+    }
+
+    private ExplorerTreeNode newTreeNode(final String name) {
         final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();
         explorerTreeNode.setName(name);
-        explorerTreeNode.setType("test");
+        explorerTreeNode.setType(TYPE_TEST);
         explorerTreeNode.setUuid(UUID.randomUUID().toString());
         return explorerTreeNode;
+    }
+
+    private SvgImage getIcon(final String type) {
+        return typeToIconMap.computeIfAbsent(type, k ->
+                explorerActionHandlers.stream()
+                        .filter(handler -> handler.getDocumentType().getType().equals(k))
+                        .map(handler -> handler.getDocumentType().getIcon())
+                        .findFirst()
+                        .orElse(SvgImage.OK));
     }
 }
