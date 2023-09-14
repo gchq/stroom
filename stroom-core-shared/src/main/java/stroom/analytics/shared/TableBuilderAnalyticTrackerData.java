@@ -1,6 +1,7 @@
 package stroom.analytics.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -97,6 +98,7 @@ public class TableBuilderAnalyticTrackerData extends AnalyticTrackerData {
         this.lastStreamId = lastStreamId;
     }
 
+    @JsonIgnore
     public long getMinStreamId() {
         if (lastStreamId == null) {
             return 1L;
