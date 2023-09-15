@@ -39,7 +39,9 @@ public class BrokenDependenciesCache {
                 if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
                     securityContext.asProcessingUser(() -> {
                         LOGGER.debug("Updating broken dependencies map");
-                        brokenDependenciesMap = contentServiceProvider.get().fetchBrokenDependencies();
+                        brokenDependenciesMap = LOGGER.logDurationIfDebugEnabled(() -> {
+                                    return contentServiceProvider.get().fetchBrokenDependencies();
+                                }, "Updating broken dependencies map");
                         brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
                     });
                 }

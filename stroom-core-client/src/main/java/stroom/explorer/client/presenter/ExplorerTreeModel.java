@@ -78,7 +78,7 @@ public class ExplorerTreeModel {
     public void changeNameFilter(final String name) {
         timer.setName(name);
         timer.cancel();
-        timer.schedule(300);
+        timer.schedule(400);
     }
 
     public void setIncludedTypeSet(final Set<String> types) {

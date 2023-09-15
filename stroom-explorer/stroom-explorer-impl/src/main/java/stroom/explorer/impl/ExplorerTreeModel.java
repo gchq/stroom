@@ -96,7 +96,7 @@ class ExplorerTreeModel {
         // session.
         long minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
 
-        LOGGER.debug("currentId: {}, minId: {}", currentId, minId);
+        LOGGER.debug("getModel() - currentId: {}, minId: {}", currentId, minId);
 
         UnmodifiableTreeModel model = null;
 
@@ -157,11 +157,15 @@ class ExplorerTreeModel {
             performingRebuild.incrementAndGet();
             try {
                 LOGGER.debug("Updating model for id {}", id);
-                newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
+                newModel = LOGGER.logDurationIfDebugEnabled(() ->
+                                explorerTreeDao.createModel(this::getIcon, id, creationTime),
+                        "Create model");
 
                 // Make sure the cache is fresh for our new model
                 brokenDependenciesCache.invalidate();
-                addBrokenDependencies(newModel);
+                LOGGER.logDurationIfDebugEnabled(() ->
+                                addBrokenDependencies(newModel),
+                        "Add dependencies to model");
 
                 // Now make it immutable as this is our master model
                 newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);

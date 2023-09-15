@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -66,7 +67,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     private List<DocumentType> visibleTypes;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All / None";
-    private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
+    static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM,
             SELECT_ALL_OR_NONE_TEXT,
             SELECT_ALL_OR_NONE_TEXT,
@@ -158,14 +159,29 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         refreshView();
     }
 
-    public Set<String> getIncludedTypes() {
-        return selected;
+    /**
+     * @return A set of types to include, or empty if the type filter is not active
+     */
+    public Optional<Set<String>> getIncludedTypes() {
+        if (visibleTypes != null) {
+            final Set<String> visibleTypeNames = visibleTypes.stream()
+                    .map(DocumentType::getType)
+                    .collect(Collectors.toSet());
+            if (selected.containsAll(visibleTypeNames)) {
+                // All selected so return null to save the back end pointlessly filtering on them.
+                // The visible types are derived from finding the distinct types of all the entities
+                // that a user has permission to read, so there is no point in filtering on all visible types.
+                return Optional.empty();
+            } else {
+                return Optional.of(selected);
+            }
+        } else {
+            return Optional.of(selected);
+        }
     }
 
     public boolean hasActiveFilter() {
-        return !getIncludedTypes().containsAll(visibleTypes.stream()
-                .map(DocumentType::getType)
-                .collect(Collectors.toSet()));
+        return getIncludedTypes().isPresent();
     }
 
     @Override

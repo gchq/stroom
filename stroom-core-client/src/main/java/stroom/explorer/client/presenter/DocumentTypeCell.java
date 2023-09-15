@@ -63,8 +63,17 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
             content.append(textHtml);
 
             sb.append(template.outer(content.toSafeHtml()));
+
+            // Possibly a bit hacky as the <hr> is part of the selected item, so it looks a bit odd.
+            if (TypeFilterPresenter.SELECT_ALL_OR_NONE_DOCUMENT_TYPE.equals(item)) {
+                sb.appendHtmlConstant("<hr>");
+            }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     interface Template extends SafeHtmlTemplates {
 

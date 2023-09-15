@@ -227,6 +227,17 @@ public final class LogUtil {
         }
     }
 
+    public static <T> String toPaddedMultiLine(final String padding,
+                                               final String multiLineMessage) {
+        if (multiLineMessage == null || multiLineMessage.isBlank()) {
+            return "";
+        } else {
+            return multiLineMessage.lines()
+                    .map(line -> Objects.requireNonNullElse(padding, "") + line)
+                    .collect(Collectors.joining("\n"));
+        }
+    }
+
     /**
      * Returns the simple class name with the message
      */

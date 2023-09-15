@@ -44,18 +44,19 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
-import stroom.util.filter.FilterFieldMapper;
-import stroom.util.filter.FilterFieldMappers;
-import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.logging.Metrics;
+import stroom.util.logging.Metrics.LocalMetrics;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -68,7 +69,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -79,10 +80,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerServiceImpl.class);
 
-    private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, DocRef::getUuid));
 
     private static final Set<String> FOLDER_TYPES = Set.of(
             ExplorerConstants.SYSTEM,
@@ -121,16 +118,16 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     @Override
     public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
+        final DurationTimer timer = DurationTimer.start();
+        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             List<ExplorerNode> rootNodes;
             List<ExplorerNodeKey> openedItems = new ArrayList<>();
             Set<ExplorerNodeKey> temporaryOpenItems;
 
             final ExplorerTreeFilter filter = criteria.getFilter();
-            final String qualifiedFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
-                    filter.getNameFilter(), FIELD_MAPPERS);
 
-            // Get the master tree model.
+            // Get a copy of the master tree model, so we can add the favourites into it.
             final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
 
             // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
@@ -155,9 +152,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             final FilteredTreeModel filteredModel = new FilteredTreeModel(
                     masterTreeModelClone.getId(),
                     masterTreeModelClone.getCreationTime());
-            // Create the predicate for the current filter value
-            final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                    filter.getNameFilter(), FIELD_MAPPERS);
+
+            // A transient holder for the filter, predicate
+            final NodeInclusionChecker nodeInclusionChecker = new NodeInclusionChecker(securityContext, filter);
 
             // Recurse down the tree adding items that should be included
             final NodeStates nodeStates = addDescendants(
@@ -166,11 +163,12 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     masterTreeModelClone,
                     filteredModel,
                     filter,
-                    fuzzyMatchPredicate,
+                    nodeInclusionChecker,
                     false,
                     allOpenItems,
                     userFavouriteUuids,
-                    0);
+                    0,
+                    metrics);
 
             // Sort the tree model
             filteredModel.sort(this::getPriority);
@@ -188,7 +186,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         criteria.getOpenItems(),
                         forcedOpenItems,
                         temporaryOpenItems,
-                        openedItems);
+                        openedItems,
+                        metrics);
             } else {
                 temporaryOpenItems = null;
 
@@ -197,44 +196,88 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         criteria.getOpenItems(),
                         forcedOpenItems,
                         criteria.getTemporaryOpenedItems(),
-                        openedItems);
+                        openedItems, metrics);
             }
 
             rootNodes = decorateTree(
                     criteria,
                     rootNodes,
                     filter,
-                    fuzzyMatchPredicate);
+                    nodeInclusionChecker);
 
             rootNodes = ensureRootNodes(rootNodes, filter);
 
-            if (LOGGER.isDebugEnabled()) {
+            if (LOGGER.isTraceEnabled()) {
                 logOpenItems(new HashSet<>(openedItems), temporaryOpenItems, null);
             }
 
-            return new FetchExplorerNodeResult(
-                    rootNodes, openedItems, temporaryOpenItems, qualifiedFilterInput);
+            final FetchExplorerNodeResult result = new FetchExplorerNodeResult(
+                    rootNodes, openedItems, temporaryOpenItems, nodeInclusionChecker.getQualifiedNameFilterInput());
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("getData() metrics:\n{}", LogUtil.toPaddedMultiLine("  ", metrics.toString()));
+                logResult(LOGGER::debug, criteria, result, timer.get());
+            }
+
+            return result;
         } catch (Exception e) {
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
     }
 
+    private void logResult(final Consumer<String> loggerFunc,
+                           final FindExplorerNodeCriteria criteria,
+                           final FetchExplorerNodeResult result,
+                           final Duration duration) {
+        final ExplorerTreeFilter filter = criteria.getFilter();
+        final String template = """
+                Returned FetchExplorerNodeResult in {}
+                  user: {}
+                  minDepth: {}
+                  includedTypes: {}
+                  includedTags: {}
+                  requiredPermissions: {}
+                  filterInput: '{}'
+                  qualifiedFilterInput: '{}'
+                  criteria open item count: {}
+                  criteria temp open item count: {}
+                  criteria ensure visible count: {}
+                  result open item count: {}
+                  result temp open item count: {}
+                """;
+        loggerFunc.accept(LogUtil.message(
+                template,
+                duration,
+                securityContext.getUserIdentityForAudit(),
+                criteria.getMinDepth(),
+                filter.getIncludedTypes(),
+                filter.getTags(),
+                filter.getRequiredPermissions(),
+                Objects.requireNonNullElse(filter.getNameFilter(), ""),
+                Objects.requireNonNullElse(result.getQualifiedFilterInput(), ""),
+                NullSafe.size(criteria.getOpenItems()),
+                NullSafe.size(criteria.getTemporaryOpenedItems()),
+                NullSafe.size(criteria.getEnsureVisible()),
+                NullSafe.size(result.getOpenedItems()),
+                NullSafe.size(result.getTemporaryOpenedItems())));
+    }
+
     private static void logOpenItems(final Set<ExplorerNodeKey> openItems,
                                      final Set<ExplorerNodeKey> tempOpenItems,
                                      final Set<ExplorerNodeKey> ensureVisible) {
         if (NullSafe.hasItems(openItems)) {
-            LOGGER.debug(() -> LogUtil.message("openItems:\n{}", NullSafe.stream(openItems)
+            LOGGER.trace(() -> LogUtil.message("openItems:\n{}", NullSafe.stream(openItems)
                     .map(Objects::toString)
                     .collect(Collectors.joining("\n"))));
         }
         if (NullSafe.hasItems(tempOpenItems)) {
-            LOGGER.debug(() -> LogUtil.message("tempOpenItems:\n{}", NullSafe.stream(tempOpenItems)
+            LOGGER.trace(() -> LogUtil.message("tempOpenItems:\n{}", NullSafe.stream(tempOpenItems)
                     .map(Objects::toString)
                     .collect(Collectors.joining("\n"))));
         }
         if (NullSafe.hasItems(ensureVisible)) {
-            LOGGER.debug(() -> LogUtil.message("ensureVisible:\n{}", NullSafe.stream(ensureVisible)
+            LOGGER.trace(() -> LogUtil.message("ensureVisible:\n{}", NullSafe.stream(ensureVisible)
                     .map(Objects::toString)
                     .collect(Collectors.joining("\n"))));
         }
@@ -322,27 +365,27 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private List<ExplorerNode> decorateTree(final FindExplorerNodeCriteria criteria,
                                             final List<ExplorerNode> rootNodes,
                                             final ExplorerTreeFilter filter,
-                                            final Predicate<DocRef> fuzzyMatchPredicate) {
+                                            final NodeInclusionChecker nodeInclusionChecker) {
         if (rootNodes.size() > 0) {
             final ExplorerNode rootNode = rootNodes.get(rootNodes.size() - 1);
             return rootNodes
                     .stream()
                     .map(node -> {
                         if (node == rootNode) {
-                            return replaceRootNode(criteria, node, filter, fuzzyMatchPredicate);
+                            return replaceRootNode(criteria, node, filter, nodeInclusionChecker);
                         }
                         return node;
                     })
                     .collect(Collectors.toList());
         } else {
-            return Collections.singletonList(replaceRootNode(criteria, null, filter, fuzzyMatchPredicate));
+            return Collections.singletonList(replaceRootNode(criteria, null, filter, nodeInclusionChecker));
         }
     }
 
     private ExplorerNode replaceRootNode(final FindExplorerNodeCriteria criteria,
                                          final ExplorerNode rootNode,
                                          final ExplorerTreeFilter filter,
-                                         final Predicate<DocRef> fuzzyMatchPredicate) {
+                                         final NodeInclusionChecker nodeInclusionChecker) {
         final ExplorerNode.Builder rootNodeBuilder;
         if (rootNode != null) {
             rootNodeBuilder = rootNode.copy();
@@ -363,7 +406,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             if (explorerDecorator != null) {
                 final List<DocRef> additionalDocRefs = explorerDecorator.list()
                         .stream()
-                        .filter(fuzzyMatchPredicate)
+                        .filter(nodeInclusionChecker.getFuzzyMatchPredicate())
                         .toList();
 
                 if (NullSafe.hasItems(additionalDocRefs)) {
@@ -512,111 +555,114 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                       final TreeModel treeModelIn,
                                       final FilteredTreeModel treeModelOut,
                                       final ExplorerTreeFilter filter,
-                                      final Predicate<DocRef> filterPredicate,
+                                      final NodeInclusionChecker nodeInclusionChecker,
                                       final boolean ignoreNameFilter,
                                       final Set<ExplorerNodeKey> allOpenItems,
                                       final Set<String> userFavourites,
-                                      final int currentDepth) {
-        int added = 0;
-        boolean foundChildNodeInfo = false;
-        boolean foundFilterMatch = false;
-        final Set<ExplorerNodeKey> openNodes = new HashSet<>();
+                                      final int currentDepth,
+                                      final LocalMetrics metrics) {
+        return metrics.measure("addDescendants", () -> {
+            int added = 0;
+            boolean foundChildNodeInfo = false;
+            boolean foundFilterMatch = false;
+            final Set<ExplorerNodeKey> openNodes = new HashSet<>();
 
-        final List<ExplorerNode> children = treeModelIn.getChildren(parent);
-        if (children != null) {
-            // Add all children if the name filter has changed or the parent item is open.
-            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
-                    || parent == null
-                    || allOpenItems.contains(parent.getUniqueKey());
+            final List<ExplorerNode> children = treeModelIn.getChildren(parent);
+            if (children != null) {
+                // Add all children if the name filter has changed or the parent item is open.
+                final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
+                        || parent == null
+                        || allOpenItems.contains(parent.getUniqueKey());
 
-            // We need to add at least one item to the tree to be able to determine if the parent is a leaf node.
-            final Iterator<ExplorerNode> iterator = children.iterator();
-            while (iterator.hasNext() && (addAllChildren || added == 0)) {
-                final ExplorerNode child = iterator.next();
-                // We don't want to filter child items if the parent folder matches the name filter.
-                final FilterOutcome filterOutcome = isFilterMatch(filter, filterPredicate, child);
-                final boolean ignoreChildNameFilter = ignoreNameFilter || filterOutcome.isMatch;
+                // We need to add at least one item to the tree to be able to determine if the parent is a leaf node.
+                final Iterator<ExplorerNode> iterator = children.iterator();
+                while (iterator.hasNext() && (addAllChildren || added == 0)) {
+                    final ExplorerNode child = iterator.next();
+                    // We don't want to filter child items if the parent folder matches the name filter.
+                    final boolean isFuzzyFilterMatch = nodeInclusionChecker.isFuzzyFilterMatch(child);
+                    final boolean ignoreChildNameFilter = ignoreNameFilter || isFuzzyFilterMatch;
 
-                final List<NodeInfo> childNodeInfo = treeModelIn.getNodeInfo(child);
-                // Decorate the child with the root parent node, so the same child can be referenced in multiple
-                // parent roots (e.g. System or Favourites)
-                ExplorerNode decoratedChild = child.copy()
-                        .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
-                        .isFavourite(userFavourites.contains(child.getUuid()))
-                        .isFilterMatch(filterOutcome.isMatch)
-                        .nodeInfoList(childNodeInfo)
-                        .build();
+                    final List<NodeInfo> childNodeInfo = treeModelIn.getNodeInfo(child);
+                    // Decorate the child with the root parent node, so the same child can be referenced in multiple
+                    // parent roots (e.g. System or Favourites)
+                    ExplorerNode decoratedChild = child.copy()
+                            .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
+                            .isFavourite(userFavourites.contains(child.getUuid()))
+                            .isFilterMatch(isFuzzyFilterMatch)
+                            .nodeInfoList(childNodeInfo)
+                            .build();
 
-                // Recurse right down to find out if a descendant is being added and therefore if we need to
-                // include this as an ancestor.
-                final NodeStates result = addDescendants(
-                        Objects.requireNonNullElse(rootNode, decoratedChild),
-                        decoratedChild,
-                        treeModelIn,
-                        treeModelOut,
-                        filter,
-                        filterPredicate,
-                        ignoreChildNameFilter,
-                        allOpenItems,
-                        userFavourites,
-                        currentDepth + 1);
-
-                openNodes.addAll(result.openNodes);
-                final Builder builder = decoratedChild.copy()
-                        .isFolder(result.isFolder);
-
-                if (result.hasIssues && result.isFolder) {
-                    // Mark the node as having descendants with issues
-                    builder.addNodeInfo(buildBrancNodeInfo());
-                }
-                decoratedChild = builder.build();
-
-                if (result.isFolder && result.containsFilterMatch) {
-                    openNodes.add(decoratedChild.getUniqueKey());
-                }
-                if (filterOutcome.isMatch || result.containsFilterMatch) {
-                    foundFilterMatch = true;
-                }
-
-                // See if child should be included in treeModelOut
-                if (isNodeIncluded(result.hasChildren, filter, filterPredicate, ignoreNameFilter, child)) {
-                    treeModelOut.add(parent, decoratedChild);
-                    added++;
-                    if (result.hasIssues || hasDescendantNodeInfo(
+                    // Recurse right down to find out if a descendant is being added and therefore if we need to
+                    // include this as an ancestor.
+                    final NodeStates result = addDescendants(
+                            Objects.requireNonNullElse(rootNode, decoratedChild),
+                            decoratedChild,
                             treeModelIn,
+                            treeModelOut,
                             filter,
-                            filterPredicate,
+                            nodeInclusionChecker,
+                            ignoreChildNameFilter,
+                            allOpenItems,
+                            userFavourites,
+                            currentDepth + 1, metrics);
+
+                    openNodes.addAll(result.openNodes);
+                    final Builder builder = decoratedChild.copy()
+                            .isFolder(result.isFolder);
+
+                    if (result.hasIssues && result.isFolder) {
+                        // Mark the node as having descendants with issues
+                        builder.addNodeInfo(buildBrancNodeInfo());
+                    }
+                    decoratedChild = builder.build();
+
+                    if (result.isFolder && result.containsFilterMatch) {
+                        openNodes.add(decoratedChild.getUniqueKey());
+                    }
+                    if (isFuzzyFilterMatch || result.containsFilterMatch) {
+                        foundFilterMatch = true;
+                    }
+
+                    // See if child should be included in treeModelOut
+                    if (isNodeIncluded(result.hasChildren, ignoreNameFilter, nodeInclusionChecker, child, metrics)) {
+                        treeModelOut.add(parent, decoratedChild);
+                        added++;
+                        if (result.hasIssues || hasDescendantNodeInfo(
+                                treeModelIn,
+                                nodeInclusionChecker,
+                                ignoreNameFilter,
+                                parent,
+                                Collections.singleton(child),
+                                metrics)) {
+                            foundChildNodeInfo = true;
+                        }
+                    }
+                }
+
+                // The above loop may not look at all children so check the remaining
+                // children to establish if any included nodes have issues
+                if (!foundChildNodeInfo && !addAllChildren) {
+                    final Set<ExplorerNode> remainingIncludedChildNodes = new HashSet<>();
+                    iterator.forEachRemaining(remainingIncludedChildNodes::add);
+
+                    if (hasDescendantNodeInfo(
+                            treeModelIn,
+                            nodeInclusionChecker,
                             ignoreNameFilter,
                             parent,
-                            Collections.singleton(child))) {
+                            remainingIncludedChildNodes,
+                            metrics)) {
                         foundChildNodeInfo = true;
                     }
                 }
             }
-
-            // The above loop may not look at all children so check the remaining
-            // children to establish if any included nodes have issues
-            if (!foundChildNodeInfo && !addAllChildren) {
-                final Set<ExplorerNode> remainingIncludedChildNodes = new HashSet<>();
-                iterator.forEachRemaining(remainingIncludedChildNodes::add);
-
-                if (hasDescendantNodeInfo(
-                        treeModelIn,
-                        filter,
-                        filterPredicate,
-                        ignoreNameFilter,
-                        parent,
-                        remainingIncludedChildNodes)) {
-                    foundChildNodeInfo = true;
-                }
-            }
-        }
-        return new NodeStates(
-                added > 0,
-                foundChildNodeInfo,
-                isFolder(parent),
-                foundFilterMatch,
-                openNodes);
+            return new NodeStates(
+                    added > 0,
+                    foundChildNodeInfo,
+                    isFolder(parent),
+                    foundFilterMatch,
+                    openNodes);
+        });
     }
 
     private boolean isFolder(final ExplorerNode explorerNode) {
@@ -637,51 +683,52 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
      * in treeModelOut
      */
     private boolean hasDescendantNodeInfo(final TreeModel treeModelIn,
-                                          final ExplorerTreeFilter filter,
-                                          final Predicate<DocRef> filterPredicate,
+                                          final NodeInclusionChecker nodeInclusionChecker,
                                           final boolean ignoreNameFilter,
                                           final ExplorerNode parentNode,
-                                          final Collection<ExplorerNode> childNodes) {
+                                          final Collection<ExplorerNode> childNodes,
+                                          final LocalMetrics metrics) {
 
-        // See if any of childNodes (or their descendants) have node info in the master model
-        boolean hasDescendantNodeInfo = false;
-        final Set<ExplorerNode> childrenWithDescendantInfo = treeModelIn.getChildrenWithDescendantInfo(
-                parentNode, childNodes);
+        return metrics.measure("hasDescendantNodeInfo", () -> {
+            // See if any of childNodes (or their descendants) have node info in the master model
+            boolean hasDescendantNodeInfo = false;
+            final Set<ExplorerNode> childrenWithDescendantInfo = treeModelIn.getChildrenWithDescendantInfo(
+                    parentNode, childNodes);
 
-        if (NullSafe.hasItems(childrenWithDescendantInfo)) {
-            // At least one descendant has node info, but there may be filter/perms limiting what
-            // the user can see or they are in un-opened branches, so we need to walk the full tree
-            // to check based on what we can see
-            for (final ExplorerNode childNode : childrenWithDescendantInfo) {
-                if (isNodeIncluded(filter, filterPredicate, ignoreNameFilter, childNode)) {
-                    // This child is included in the filtering and is known to have descendant node info,
-                    // so we can mark as found and bail out of this level
-                    hasDescendantNodeInfo = true;
-                    break;
-                } else {
-                    // Not included but its children might be so recurse those nodes known
-                    // to have descendant node info
-                    final Set<ExplorerNode> grandChildren = treeModelIn.getChildrenWithDescendantInfo(
-                            childNode);
-                    if (NullSafe.hasItems(grandChildren)) {
-                        hasDescendantNodeInfo = hasDescendantNodeInfo(treeModelIn, filter,
-                                filterPredicate, ignoreNameFilter, childNode, grandChildren);
+            if (NullSafe.hasItems(childrenWithDescendantInfo)) {
+                // At least one descendant has node info, but there may be filter/perms limiting what
+                // the user can see or they are in un-opened branches, so we need to walk the full tree
+                // to check based on what we can see
+                for (final ExplorerNode childNode : childrenWithDescendantInfo) {
+                    final boolean isNodeIncluded = metrics.measure("isNodeIncluded", () ->
+                            nodeInclusionChecker.isNodeIncluded(ignoreNameFilter, childNode));
+                    if (isNodeIncluded) {
+                        // This child is included in the filtering and is known to have descendant node info,
+                        // so we can mark as found and bail out of this level
+                        hasDescendantNodeInfo = true;
+                        break;
+                    } else {
+                        // Not included but its children might be so recurse those nodes known
+                        // to have descendant node info
+                        final Set<ExplorerNode> grandChildren = treeModelIn.getChildrenWithDescendantInfo(
+                                childNode);
+                        if (NullSafe.hasItems(grandChildren)) {
+                            hasDescendantNodeInfo = hasDescendantNodeInfo(
+                                    treeModelIn,
+                                    nodeInclusionChecker,
+                                    ignoreNameFilter,
+                                    childNode,
+                                    grandChildren,
+                                    metrics);
+                        }
+                    }
+                    if (hasDescendantNodeInfo) {
+                        break;
                     }
                 }
-                if (hasDescendantNodeInfo) {
-                    break;
-                }
             }
-        }
-        return hasDescendantNodeInfo;
-    }
-
-    private static FilterOutcome isFilterMatch(final ExplorerTreeFilter filter,
-                                               final Predicate<DocRef> filterPredicate,
-                                               final ExplorerNode node) {
-        return NullSafe.isBlankString(filter.getNameFilter())
-                ? FilterOutcome.NO_PREDICATE
-                : FilterOutcome.fromPredicateResult(filterPredicate.test(node.getDocRef()));
+            return hasDescendantNodeInfo;
+        });
     }
 
     private static NodeInfo buildBrancNodeInfo() {
@@ -689,84 +736,46 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private boolean isNodeIncluded(final boolean hasChildren,
-                                   final ExplorerTreeFilter filter,
-                                   final Predicate<DocRef> filterPredicate,
                                    final boolean ignoreNameFilter,
-                                   final ExplorerNode child) {
-        return hasChildren || isNodeIncluded(filter, filterPredicate, ignoreNameFilter, child);
-    }
-
-    private boolean isNodeIncluded(final ExplorerTreeFilter filter,
-                                   final Predicate<DocRef> filterPredicate,
-                                   final boolean ignoreNameFilter,
-                                   final ExplorerNode child) {
-        return checkType(child, filter.getIncludedTypes())
-                && checkTags(child, filter.getTags())
-                && (ignoreNameFilter || filterPredicate.test(child.getDocRef()))
-                && checkSecurity(child, filter.getRequiredPermissions());
-    }
-
-    private boolean checkSecurity(final ExplorerNode explorerNode, final Set<String> requiredPermissions) {
-        if (requiredPermissions == null || requiredPermissions.size() == 0) {
-            return false;
-        }
-
-        final String uuid = explorerNode.getDocRef().getUuid();
-        for (final String permission : requiredPermissions) {
-            if (!securityContext.hasDocumentPermission(uuid, permission)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    static boolean checkType(final ExplorerNode explorerNode, final Set<String> types) {
-        return types == null || types.contains(explorerNode.getType());
-    }
-
-    static boolean checkTags(final ExplorerNode explorerNode, final Set<String> tags) {
-        if (tags == null) {
-            return true;
-        } else if (explorerNode.getTags() != null && explorerNode.getTags().length() > 0 && tags.size() > 0) {
-            for (final String tag : tags) {
-                if (explorerNode.getTags().contains(tag)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+                                   final NodeInclusionChecker nodeInclusionChecker,
+                                   final ExplorerNode child,
+                                   final LocalMetrics metrics) {
+        return metrics.measure("isNodeIncluded (hasChildren)", () ->
+                hasChildren
+                        || nodeInclusionChecker.isNodeIncluded(ignoreNameFilter, child));
     }
 
     private List<ExplorerNode> addRoots(final FilteredTreeModel filteredModel,
                                         final Set<ExplorerNodeKey> openItems,
                                         final Set<ExplorerNodeKey> forcedOpenItems,
                                         final Set<ExplorerNodeKey> temporaryOpenItems,
-                                        final List<ExplorerNodeKey> openedItems) {
-        final List<ExplorerNode> rootNodes = new ArrayList<>();
-        final List<ExplorerNode> children = filteredModel.getChildren(null);
+                                        final List<ExplorerNodeKey> openedItems, final LocalMetrics metrics) {
+        return metrics.measure("addRoots", () -> {
+            final List<ExplorerNode> rootNodes = new ArrayList<>();
+            final List<ExplorerNode> children = filteredModel.getChildren(null);
 
-        if (children != null) {
-            final List<ExplorerNode> sortedChildren = children
-                    .stream()
-                    .sorted(Comparator.comparing(ExplorerNode::getName))
-                    .toList();
-            for (final ExplorerNode child : sortedChildren) {
-                final ExplorerNode copy =
-                        addChildren(
-                                child,
-                                child,
-                                filteredModel,
-                                openItems,
-                                forcedOpenItems,
-                                temporaryOpenItems,
-                                0,
-                                openedItems);
-                rootNodes.add(copy);
+            if (children != null) {
+                final List<ExplorerNode> sortedChildren = children
+                        .stream()
+                        .sorted(Comparator.comparing(ExplorerNode::getName))
+                        .toList();
+                for (final ExplorerNode child : sortedChildren) {
+                    final ExplorerNode copy =
+                            addChildren(
+                                    child,
+                                    child,
+                                    filteredModel,
+                                    openItems,
+                                    forcedOpenItems,
+                                    temporaryOpenItems,
+                                    0,
+                                    openedItems,
+                                    metrics);
+                    rootNodes.add(copy);
+                }
             }
-        }
-        return rootNodes;
+            return rootNodes;
+        });
     }
 
     private ExplorerNode addChildren(final ExplorerNode rootNode,
@@ -776,47 +785,51 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                      final Set<ExplorerNodeKey> forcedOpenItems,
                                      final Set<ExplorerNodeKey> temporaryOpenItems,
                                      final int currentDepth,
-                                     final List<ExplorerNodeKey> openedItems) {
-        ExplorerNode.Builder builder = parent.copy();
-        builder.depth(currentDepth);
+                                     final List<ExplorerNodeKey> openedItems,
+                                     final LocalMetrics metrics) {
+        return metrics.measure("addChildren", () -> {
+            ExplorerNode.Builder builder = parent.copy();
+            builder.depth(currentDepth);
 
-        final ExplorerNodeKey parentNodeKey = parent.getUniqueKey();
+            final ExplorerNodeKey parentNodeKey = parent.getUniqueKey();
 
-        // See if we need to force this item open.
-        boolean force = false;
-        if (forcedOpenItems.contains(parentNodeKey)) {
-            force = true;
-            openedItems.add(parentNodeKey);
-        } else if (temporaryOpenItems != null && temporaryOpenItems.contains(parentNodeKey)) {
-            force = true;
-        }
-
-        final List<ExplorerNode> children = filteredModel.getChildren(parent);
-        if (parent.getNodeState() == null && NullSafe.isEmptyCollection(children)) {
-            builder.nodeState(ExplorerNode.NodeState.LEAF);
-        } else if (force || openItems.contains(parentNodeKey)) {
-            final List<ExplorerNode> newChildren = new ArrayList<>();
-            for (final ExplorerNode child : NullSafe.list(children)) {
-                final ExplorerNode copy = addChildren(
-                        rootNode,
-                        child,
-                        filteredModel,
-                        openItems,
-                        forcedOpenItems,
-                        temporaryOpenItems,
-                        currentDepth + 1,
-                        openedItems);
-                newChildren.add(copy);
+            // See if we need to force this item open.
+            boolean force = false;
+            if (forcedOpenItems.contains(parentNodeKey)) {
+                force = true;
+                openedItems.add(parentNodeKey);
+            } else if (temporaryOpenItems != null && temporaryOpenItems.contains(parentNodeKey)) {
+                force = true;
             }
 
-            builder.nodeState(ExplorerNode.NodeState.OPEN);
-            builder.children(newChildren);
-            builder.rootNodeUuid(rootNode);
-        } else {
-            builder.nodeState(ExplorerNode.NodeState.CLOSED);
-        }
+            final List<ExplorerNode> children = filteredModel.getChildren(parent);
+            if (parent.getNodeState() == null && NullSafe.isEmptyCollection(children)) {
+                builder.nodeState(ExplorerNode.NodeState.LEAF);
+            } else if (force || openItems.contains(parentNodeKey)) {
+                final List<ExplorerNode> newChildren = new ArrayList<>();
+                for (final ExplorerNode child : NullSafe.list(children)) {
+                    final ExplorerNode copy = addChildren(
+                            rootNode,
+                            child,
+                            filteredModel,
+                            openItems,
+                            forcedOpenItems,
+                            temporaryOpenItems,
+                            currentDepth + 1,
+                            openedItems,
+                            metrics);
+                    newChildren.add(copy);
+                }
 
-        return builder.build();
+                builder.nodeState(ExplorerNode.NodeState.OPEN);
+                builder.children(newChildren);
+                builder.rootNodeUuid(rootNode);
+            } else {
+                builder.nodeState(ExplorerNode.NodeState.CLOSED);
+            }
+
+            return builder.build();
+        });
     }
 
     @Override
@@ -1231,12 +1244,17 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             for (final ExplorerNode child : children) {
                 // Recurse right down to find out if a descendant is being added and therefore if we need to
                 // include this type as it is an ancestor.
+                // Even if you have no permission on a folder, you can see descendants of it if you have permission
+                // on them, hence we have to recurse all the way.
                 final boolean hasChildren = addTypes(child, treeModel, types, requiredPermissions);
+                final String type = child.getType();
                 if (hasChildren) {
-                    types.add(child.getType());
+                    // We added one or more descendants of child, so add child's type
+                    types.add(type);
                     added = true;
-                } else if (checkSecurity(child, requiredPermissions)) {
-                    types.add(child.getType());
+                } else if (!types.contains(type)
+                        && NodeInclusionChecker.hasPermission(securityContext, child, requiredPermissions)) {
+                    types.add(type);
                     added = true;
                 }
             }
@@ -1339,34 +1357,4 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                               Set<ExplorerNodeKey> openNodes) {
 
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private enum FilterOutcome {
-        MATCH(true),
-        NON_MATCH(false),
-        NO_PREDICATE(true); // No predicate so considered a match
-
-        private final boolean isMatch;
-
-        FilterOutcome(final boolean isMatch) {
-            this.isMatch = isMatch;
-        }
-
-        static FilterOutcome fromPredicateResult(final boolean predicateResult) {
-            return predicateResult
-                    ? MATCH
-                    : NON_MATCH;
-        }
-
-        public boolean isMatch() {
-            return isMatch;
-        }
-    }
-
-//    private static class FilterMatchCache {
-//        private final Predicate<DocRef>
-//    }
 }

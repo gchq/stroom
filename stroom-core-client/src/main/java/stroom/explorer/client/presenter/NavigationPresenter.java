@@ -199,7 +199,7 @@ public class NavigationPresenter
         });
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
-                typeFilterPresenter.getIncludedTypes())));
+                typeFilterPresenter.getIncludedTypes().orElse(null))));
 
         // Fire events from the explorer tree globally.
         registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> {

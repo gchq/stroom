@@ -110,7 +110,7 @@ public class ExportConfigPresenter
     @Override
     protected void onBind() {
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> treePresenter.setIncludedTypeSet(
-                typeFilterPresenter.getIncludedTypes())));
+                typeFilterPresenter.getIncludedTypes().orElse(null))));
 
         registerHandler(filter.addClickHandler((e) ->
                 showTypeFilter(filter.getElement())));
