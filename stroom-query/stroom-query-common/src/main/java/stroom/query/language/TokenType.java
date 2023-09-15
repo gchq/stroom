@@ -88,6 +88,33 @@ public enum TokenType {
             LIMIT,
             HAVING,
             VIS);
+
+    public static final Set<TokenType> CONDITIONS = Set.of(
+            EQUALS,
+            NOT_EQUALS,
+            GREATER_THAN,
+            GREATER_THAN_OR_EQUAL_TO,
+            LESS_THAN,
+            LESS_THAN_OR_EQUAL_TO,
+            IS_NULL,
+            IS_NOT_NULL,
+            BETWEEN);
+
+    public static final Set<TokenType> NUMERIC_OPERATOR = Set.of(
+            ORDER,
+            DIVISION,
+            MULTIPLICATION,
+            MODULUS,
+            PLUS,
+            MINUS);
+
+    public static final Set<TokenType> VALUES = Set.of(
+            SINGLE_QUOTED_STRING,
+            DOUBLE_QUOTED_STRING,
+            STRING,
+            NUMBER
+            );
+//
 //
 //    public static Set<TokenType> QUERY = Set.of(WHERE, AND, OR, NOT);
 //

@@ -4751,6 +4751,7 @@ export interface UserPreferences {
 }
 
 export interface ValidateExpressionResult {
+  groupBy?: boolean;
   ok?: boolean;
   string?: string;
 }

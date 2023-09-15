@@ -55,3 +55,29 @@ from 'Test Index'
 eval count = count()
 group by StreamId
 select StreamId as "Stream Id", count as Count
+-----
+from datasource
+where field = * ans field != 'fred'
+-----
+from datasource
+where field=* and field='fred''
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval
+select UserId
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId
+select UserId
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId =
+select UserId
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId = uCase(UserId)
+select UserId

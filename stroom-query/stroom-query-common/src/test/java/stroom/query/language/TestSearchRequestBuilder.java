@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestSearchRequestBuilder extends AbstractQueryTest {
+
     @Override
     String getTestDirName() {
         return "TestSearchRequestBuilder";
@@ -18,17 +19,22 @@ public class TestSearchRequestBuilder extends AbstractQueryTest {
 
     @Override
     String convert(final String input) {
-        final List<ResultRequest> resultRequests = new ArrayList<>(0);
-        final QueryKey queryKey = new QueryKey("test");
-        final Query query = Query.builder().build();
-        SearchRequest searchRequest = new SearchRequest(
-                null,
-                queryKey,
-                query,
-                resultRequests,
-                DateTimeSettings.builder().referenceTime(0L).build(),
-                false);
-        searchRequest = new SearchRequestBuilder(null).create(input, searchRequest);
-        return JsonUtil.writeValueAsString(searchRequest);
+        try {
+            final List<ResultRequest> resultRequests = new ArrayList<>(0);
+            final QueryKey queryKey = new QueryKey("test");
+            final Query query = Query.builder().build();
+            SearchRequest searchRequest = new SearchRequest(
+                    null,
+                    queryKey,
+                    query,
+                    resultRequests,
+                    DateTimeSettings.builder().referenceTime(0L).build(),
+                    false);
+            searchRequest = new SearchRequestBuilder(null).create(input, searchRequest);
+            return JsonUtil.writeValueAsString(searchRequest);
+
+        } catch (final RuntimeException e) {
+            return e.toString();
+        }
     }
 }
