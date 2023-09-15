@@ -40,7 +40,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -129,7 +128,7 @@ public class NavigationPresenter
         filter.setEnabled(true);
 
         showAlertsBtn = new InlineSvgToggleButton();
-        showAlertsBtn.setOn();
+        showAlertsBtn.setOff();
         showAlertsBtn.setSvg(SvgImage.EXCLAMATION);
         showAlertsBtn.getElement().addClassName("navigation-header-button show-alerts");
         showAlertsBtn.setTitle("Toggle Alerts");
@@ -150,7 +149,7 @@ public class NavigationPresenter
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, true, true);
+        explorerTree = new ExplorerTree(restFactory, true, showAlertsBtn.getState());
 
         // Add views.
         uiConfigCache.get().onSuccess(uiConfig -> {
@@ -192,11 +191,11 @@ public class NavigationPresenter
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
 
-        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
-            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
-                    .anyMatch(ExplorerNode::hasNodeInfo);
-            showAlertsBtn.setVisible(treeHasNodeInfo);
-        });
+//        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
+//            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
+//                    .anyMatch(ExplorerNode::hasNodeInfo);
+//            showAlertsBtn.setVisible(treeHasNodeInfo);
+//        });
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));

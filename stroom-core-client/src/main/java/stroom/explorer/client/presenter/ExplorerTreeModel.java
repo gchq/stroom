@@ -59,6 +59,7 @@ public class ExplorerTreeModel {
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
+    private boolean showAlerts = false;
 
     private FindExplorerNodeCriteria currentCriteria;
     private boolean fetching;
@@ -125,6 +126,10 @@ public class ExplorerTreeModel {
         }
     }
 
+    public void setShowAlerts(final boolean showAlerts) {
+        this.showAlerts = showAlerts;
+    }
+
     public void refresh() {
         // Fetch data from the server to update the tree.
         fetchData();
@@ -144,11 +149,13 @@ public class ExplorerTreeModel {
         final ExplorerTreeFilter explorerTreeFilter = explorerTreeFilterBuilder.build();
         if (explorerTreeFilter != null) {
             // Fetch a list of data items that belong to this parent.
-            currentCriteria = new FindExplorerNodeCriteria(openItems.getOpenItems(),
+            currentCriteria = new FindExplorerNodeCriteria(
+                    openItems.getOpenItems(),
                     openItems.getTemporaryOpenItems(),
                     explorerTreeFilter,
                     minDepth,
-                    ensureVisible);
+                    ensureVisible,
+                    showAlerts);
 //            GWT.log("fetchData - openItems: " + openItems.getOpenItems().size()
 //                    + " minDepth: " + minDepth
 //                    + " ensureVisible: " + ensureVisible);

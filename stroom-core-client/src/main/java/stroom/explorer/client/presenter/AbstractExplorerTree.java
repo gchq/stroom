@@ -110,6 +110,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 }
             }
         };
+        treeModel.setShowAlerts(showAlerts);
 
         scrollPanel = new MaxScrollPanel();
         scrollPanel.setWidget(cellTable);
@@ -167,7 +168,9 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     public void setShowAlerts(final boolean showAlerts) {
         this.showAlerts = showAlerts;
+        treeModel.setShowAlerts(showAlerts);
         explorerCell.setShowAlerts(showAlerts);
+        treeModel.refresh();
     }
 
     public void refresh() {

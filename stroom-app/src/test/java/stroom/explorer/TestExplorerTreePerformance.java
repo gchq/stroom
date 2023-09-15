@@ -89,7 +89,8 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
                             null,
                             false),
                     Integer.MAX_VALUE,
-                    new HashSet<>());
+                    new HashSet<>(),
+                    true);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 explorerService.clear();

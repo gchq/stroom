@@ -155,6 +155,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
             // A transient holder for the filter, predicate
             final NodeInclusionChecker nodeInclusionChecker = new NodeInclusionChecker(securityContext, filter);
+            final boolean includeNodeInfo = criteria.getShowAlerts();
 
             // Recurse down the tree adding items that should be included
             final NodeStates nodeStates = addDescendants(
@@ -168,6 +169,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     allOpenItems,
                     userFavouriteUuids,
                     0,
+                    includeNodeInfo,
                     metrics);
 
             // Sort the tree model
@@ -560,6 +562,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                       final Set<ExplorerNodeKey> allOpenItems,
                                       final Set<String> userFavourites,
                                       final int currentDepth,
+                                      final boolean includeNodeInfo,
                                       final LocalMetrics metrics) {
         return metrics.measure("addDescendants", () -> {
             int added = 0;
@@ -582,15 +585,17 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     final boolean isFuzzyFilterMatch = nodeInclusionChecker.isFuzzyFilterMatch(child);
                     final boolean ignoreChildNameFilter = ignoreNameFilter || isFuzzyFilterMatch;
 
-                    final List<NodeInfo> childNodeInfo = treeModelIn.getNodeInfo(child);
                     // Decorate the child with the root parent node, so the same child can be referenced in multiple
                     // parent roots (e.g. System or Favourites)
-                    ExplorerNode decoratedChild = child.copy()
+                    final ExplorerNode.Builder nodeBuilder = child.copy()
                             .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
                             .isFavourite(userFavourites.contains(child.getUuid()))
-                            .isFilterMatch(isFuzzyFilterMatch)
-                            .nodeInfoList(childNodeInfo)
-                            .build();
+                            .isFilterMatch(isFuzzyFilterMatch);
+                    if (includeNodeInfo) {
+                        nodeBuilder.nodeInfoList(treeModelIn.getNodeInfo(child));
+                    }
+
+                    ExplorerNode decoratedChild = nodeBuilder.build();
 
                     // Recurse right down to find out if a descendant is being added and therefore if we need to
                     // include this as an ancestor.
@@ -604,13 +609,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                             ignoreChildNameFilter,
                             allOpenItems,
                             userFavourites,
-                            currentDepth + 1, metrics);
+                            currentDepth + 1,
+                            includeNodeInfo,
+                            metrics);
 
                     openNodes.addAll(result.openNodes);
                     final Builder builder = decoratedChild.copy()
                             .isFolder(result.isFolder);
 
-                    if (result.hasIssues && result.isFolder) {
+                    if (includeNodeInfo && result.hasIssues && result.isFolder) {
                         // Mark the node as having descendants with issues
                         builder.addNodeInfo(buildBrancNodeInfo());
                     }
@@ -627,21 +634,23 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     if (isNodeIncluded(result.hasChildren, ignoreNameFilter, nodeInclusionChecker, child, metrics)) {
                         treeModelOut.add(parent, decoratedChild);
                         added++;
-                        if (result.hasIssues || hasDescendantNodeInfo(
-                                treeModelIn,
-                                nodeInclusionChecker,
-                                ignoreNameFilter,
-                                parent,
-                                Collections.singleton(child),
-                                metrics)) {
-                            foundChildNodeInfo = true;
+                        if (includeNodeInfo) {
+                            if (result.hasIssues || hasDescendantNodeInfo(
+                                    treeModelIn,
+                                    nodeInclusionChecker,
+                                    ignoreNameFilter,
+                                    parent,
+                                    Collections.singleton(child),
+                                    metrics)) {
+                                foundChildNodeInfo = true;
+                            }
                         }
                     }
                 }
 
                 // The above loop may not look at all children so check the remaining
                 // children to establish if any included nodes have issues
-                if (!foundChildNodeInfo && !addAllChildren) {
+                if (includeNodeInfo && !foundChildNodeInfo && !addAllChildren) {
                     final Set<ExplorerNode> remainingIncludedChildNodes = new HashSet<>();
                     iterator.forEachRemaining(remainingIncludedChildNodes::add);
 

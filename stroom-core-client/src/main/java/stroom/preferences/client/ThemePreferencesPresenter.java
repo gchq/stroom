@@ -96,6 +96,10 @@ public final class ThemePreferencesPresenter
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ThemePreferencesView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
 
         String getTheme();

@@ -41,7 +41,8 @@ public class TestSerialisation {
                 Set.of(explorerNode.getUniqueKey()),
                 explorerTreeFilter,
                 2,
-                Set.of(explorerNode.getUniqueKey()));
+                Set.of(explorerNode.getUniqueKey()),
+                true);
 
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String result1 = objectMapper.writeValueAsString(criteria1);
