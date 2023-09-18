@@ -2,6 +2,7 @@ package stroom.explorer.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
+import stroom.explorer.impl.ExplorerFlags;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
@@ -188,6 +189,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .name(rec.getName())
                                     .tags(rec.getTags())
                                     .icon(iconProvider.apply(rec.getType()))
+                                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(rec.getType()).orElse(null))
                                     .build()));
 
             // Add the roots.

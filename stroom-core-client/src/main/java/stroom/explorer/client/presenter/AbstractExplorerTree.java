@@ -21,8 +21,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.explorer.shared.NodeFlag;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
@@ -408,7 +408,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final ExplorerNode selectedItem = e.getValue();
             if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
-                if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
+                if (selectedItem.hasNodeFlag(NodeFlag.LEAF)) {
                     final boolean doubleClick = doubleClickTest.test(selectedItem);
                     doSelect(selectedItem,
                             new SelectionType(doubleClick,

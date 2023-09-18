@@ -85,6 +85,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
                             Collections.singleton("test"),
                             Collections.singleton("test"),
                             null,
+                            null,
                             Collections.singleton(DocumentPermissionNames.READ),
                             null,
                             false),

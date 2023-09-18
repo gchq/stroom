@@ -68,6 +68,7 @@ import stroom.explorer.shared.ExplorerServiceCreateRequest;
 import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
+import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.event.ExportConfigEvent;
@@ -753,7 +754,7 @@ public class DocumentPluginEventManager extends Plugin {
         // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
         // item
         if (singleSelection && primarySelection != null && primarySelection.getDepth() > 0) {
-            final boolean isFavourite = primarySelection.getIsFavourite();
+            final boolean isFavourite = primarySelection.hasNodeFlag(NodeFlag.FAVOURITE);
             menuItems.add(new IconMenuItem.Builder()
                     .priority(priority)
                     .icon(isFavourite

@@ -20,6 +20,7 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.NodeFlag;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 
@@ -63,6 +64,10 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
 
     public void setTags(final String... tags) {
         explorerDropDownTreePresenter.setTags(tags);
+    }
+
+    public void setNodeFlags(final NodeFlag... nodeFlags) {
+        explorerDropDownTreePresenter.setNodeFlags(nodeFlags);
     }
 
     public void setRequiredPermissions(final String... requiredPermissions) {

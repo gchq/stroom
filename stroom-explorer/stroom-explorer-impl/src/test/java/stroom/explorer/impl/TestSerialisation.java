@@ -1,10 +1,10 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.NodeFlag;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +32,7 @@ public class TestSerialisation {
                 Set.of("t1", "t2"),
                 Set.of("t1", "t2"),
                 Set.of("t1", "t2"),
+                Set.of(NodeFlag.OPEN, NodeFlag.FAVOURITE),
                 Set.of("p1", "p2"),
                 "blah",
                 true);
@@ -63,7 +64,7 @@ public class TestSerialisation {
                 .uuid("child-uuid")
                 .name("child-name")
                 .tags("test-tags")
-                .nodeState(NodeState.LEAF)
+                .addNodeFlag(NodeFlag.LEAF)
                 .build();
 
         final ExplorerNode parent = ExplorerNode
@@ -72,7 +73,7 @@ public class TestSerialisation {
                 .uuid("parent-uuid")
                 .name("parent-name")
                 .tags("test-tags")
-                .nodeState(NodeState.OPEN)
+                .addNodeFlag(NodeFlag.OPEN)
                 .children(List.of(child))
                 .build();
 

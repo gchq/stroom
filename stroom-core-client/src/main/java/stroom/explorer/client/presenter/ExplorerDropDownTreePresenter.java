@@ -28,6 +28,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.NodeFlag;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.DropDownTreeUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownTreeView;
@@ -161,6 +162,10 @@ class ExplorerDropDownTreePresenter
 
     public void setTags(final String... tags) {
         explorerTree.getTreeModel().setTags(tags);
+    }
+
+    public void setNodeFlags(final NodeFlag... nodeFlags) {
+        explorerTree.getTreeModel().setNodeFlags(nodeFlags);
     }
 
     public void setRequiredPermissions(final String... requiredPermissions) {

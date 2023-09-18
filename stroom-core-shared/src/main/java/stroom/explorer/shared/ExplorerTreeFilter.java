@@ -44,6 +44,8 @@ public class ExplorerTreeFilter {
     @JsonProperty
     private final Set<String> tags;
     @JsonProperty
+    private final Set<NodeFlag> nodeFlags;
+    @JsonProperty
     private final Set<String> requiredPermissions;
     @JsonProperty
     private final String nameFilter;
@@ -54,12 +56,14 @@ public class ExplorerTreeFilter {
     public ExplorerTreeFilter(@JsonProperty("includedTypes") final Set<String> includedTypes,
                               @JsonProperty("includedRootTypes") final Set<String> includedRootTypes,
                               @JsonProperty("tags") final Set<String> tags,
+                              @JsonProperty("nodeFlags") final Set<NodeFlag> nodeFlags,
                               @JsonProperty("requiredPermissions") final Set<String> requiredPermissions,
                               @JsonProperty("nameFilter") final String nameFilter,
                               @JsonProperty("nameFilterChange") final boolean nameFilterChange) {
         this.includedTypes = includedTypes;
         this.includedRootTypes = includedRootTypes;
         this.tags = tags;
+        this.nodeFlags = nodeFlags;
         this.requiredPermissions = requiredPermissions;
         this.nameFilter = nameFilter;
         this.nameFilterChange = nameFilterChange;
@@ -77,6 +81,10 @@ public class ExplorerTreeFilter {
         return tags;
     }
 
+    public Set<NodeFlag> getNodeFlags() {
+        return nodeFlags;
+    }
+
     public Set<String> getRequiredPermissions() {
         return requiredPermissions;
     }
@@ -87,6 +95,20 @@ public class ExplorerTreeFilter {
 
     public boolean isNameFilterChange() {
         return nameFilterChange;
+    }
+
+    /**
+     * @return A copy of this {@link ExplorerTreeFilter} with the supplied nameFilter
+     */
+    public ExplorerTreeFilter withNameFilter(final String nameFilter) {
+        return new ExplorerTreeFilter(
+                includedTypes,
+                includedRootTypes,
+                tags,
+                nodeFlags,
+                requiredPermissions,
+                nameFilter,
+                nameFilterChange);
     }
 
     @Override
@@ -102,12 +124,20 @@ public class ExplorerTreeFilter {
                 Objects.equals(includedTypes, that.includedTypes) &&
                 Objects.equals(includedRootTypes, that.includedRootTypes) &&
                 Objects.equals(tags, that.tags) &&
+                Objects.equals(nodeFlags, that.nodeFlags) &&
                 Objects.equals(requiredPermissions, that.requiredPermissions) &&
                 Objects.equals(nameFilter, that.nameFilter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(includedTypes, includedRootTypes, tags, requiredPermissions, nameFilter, nameFilterChange);
+        return Objects.hash(
+                includedTypes,
+                includedRootTypes,
+                tags,
+                nodeFlags,
+                requiredPermissions,
+                nameFilter,
+                nameFilterChange);
     }
 }

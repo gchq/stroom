@@ -109,7 +109,7 @@ public class FetchExplorerNodeResult {
         for (int i = 0; i < padCount; i++) {
             stringBuilder.append(" ");
         }
-        if (node.getIsFolder()) {
+        if (node.hasNodeFlag(NodeFlag.FOLDER)) {
             if (node.hasChildren()) {
                 if (GwtNullSafe.set(temporaryOpenedItems).contains(node.getUniqueKey())) {
                     stringBuilder.append("▼ ");
@@ -127,13 +127,13 @@ public class FetchExplorerNodeResult {
         stringBuilder.append(node.getName())
                 .append(" (");
         // Add the various states
-        if (node.getIsFolder()) {
+        if (node.hasNodeFlag(NodeFlag.FOLDER)) {
             stringBuilder.append("🗀");
         }
-        if (node.getIsFilterMatch()) {
+        if (node.hasNodeFlag(NodeFlag.FILTER_MATCH)) {
             stringBuilder.append("✓");
         }
-        if (node.hasNodeInfo()) {
+        if (node.hasDescendantNodeInfo()) {
             stringBuilder.append("⚠");
         }
         if (node.hasChildren()) {

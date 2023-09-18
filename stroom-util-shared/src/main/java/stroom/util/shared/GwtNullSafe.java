@@ -5,6 +5,7 @@ import stroom.util.shared.time.SimpleDuration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -231,6 +232,13 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final T[] items) {
+        return items != null && items.length > 0;
+    }
+
+    /**
      * @return True if the map is non-null and not empty
      */
     public static <T1, T2> boolean hasEntries(final Map<T1, T2> map) {
@@ -243,6 +251,15 @@ public class GwtNullSafe {
     public static <T> int size(final Collection<T> collection) {
         return collection != null
                 ? collection.size()
+                : 0;
+    }
+
+    /**
+     * @return The size of the collection or zero if null.
+     */
+    public static <T> int size(final T[] items) {
+        return items != null
+                ? items.length
                 : 0;
     }
 
@@ -307,6 +324,29 @@ public class GwtNullSafe {
         } else {
             return Arrays.stream(items);
         }
+    }
+
+    /**
+     * Returns the passed array of items or varargs items as a non-null list.
+     * Does not support null items in the list.
+     * @return A non-null list of items. List should be assumed to be immutable.
+     */
+    public static <T> List<T> asList(final T... items) {
+        return items == null || items.length == 0
+                ? Collections.emptyList()
+                : Arrays.asList(items);
+    }
+
+    /**
+     * Returns the passed array of items or varargs items as a non-null set.
+     * Does not support null items in the array.
+     * @return A non-null unmodifiable set of items.
+     */
+    public static <T> Set<T> asSet(final T... items) {
+        //noinspection Java9CollectionFactory
+        return items == null || items.length == 0
+                ? Collections.emptySet()
+                : Collections.unmodifiableSet(new HashSet<>(Arrays.asList(items)));
     }
 
     /**

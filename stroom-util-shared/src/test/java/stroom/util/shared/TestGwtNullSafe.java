@@ -790,6 +790,34 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testAsList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() { })
+                .withWrappedOutputType(new TypeLiteral<List<String>>() { })
+                .withTestFunction(testCase ->
+                        GwtNullSafe.asList(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase(new String[]{}, Collections.emptyList())
+                .addCase(new String[]{"foo", "bar"}, List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAsSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() { })
+                .withWrappedOutputType(new TypeLiteral<Set<String>>() { })
+                .withTestFunction(testCase ->
+                        GwtNullSafe.asSet(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase(new String[]{}, Collections.emptySet())
+                .addCase(new String[]{"foo", "bar"}, Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testList() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {

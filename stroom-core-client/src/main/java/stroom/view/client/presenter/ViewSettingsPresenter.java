@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.StandardTagNames;
+import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
@@ -60,7 +60,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         view.setPipelineSelectionView(pipelineSelectionPresenter.getView());
         view.setExpressionView(expressionPresenter.getView());
 
-        dataSourceSelectionPresenter.setTags(StandardTagNames.DATA_SOURCE);
+        dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);

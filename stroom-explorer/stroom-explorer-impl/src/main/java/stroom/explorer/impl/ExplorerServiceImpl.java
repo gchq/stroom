@@ -31,15 +31,14 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.Builder;
-import stroom.explorer.shared.ExplorerNode.NodeInfo;
-import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
+import stroom.explorer.shared.NodeFlag;
+import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
@@ -54,7 +53,6 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Severity;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -80,6 +78,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerServiceImpl.class);
 
+//    private static final NodeFlag[] NODE_EXPANSION_FLAGS = new NodeFlag[]{
+//            NodeFlag.LEAF, NodeFlag.OPEN, NodeFlag.CLOSED};
 
     private static final Set<String> FOLDER_TYPES = Set.of(
             ExplorerConstants.SYSTEM,
@@ -295,12 +295,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         // We can't use the tree model to work out if the fav node has descendant issues or not
         // so we have to just check its direct children
         final boolean foundNodeInfo = NullSafe.stream(favouritesNode.getChildren())
-                .anyMatch(ExplorerNode::hasNodeInfo);
-        final List<NodeInfo> nodeInfoList = foundNodeInfo
-                ? Collections.singletonList(buildBrancNodeInfo())
-                : null;
+                .anyMatch(ExplorerNode::hasDescendantNodeInfo);
+//        final List<NodeInfo> nodeInfoList = foundNodeInfo
+//                ? Collections.singletonList(buildBrancNodeInfo())
+//                : null;
         favouritesNode = favouritesNode.copy()
-                .nodeInfoList(nodeInfoList)
+//                .nodeInfoList(nodeInfoList)
+                .setNodeFlag(NodeFlag.DESCENDANT_NODE_INFO, foundNodeInfo)
                 .build();
 
         result.add(favouritesNode);
@@ -319,8 +320,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final ExplorerNode newRootNode = removeMatchingNode(nodes, rootNodeConstant)
                 .orElseGet(() ->
                         rootNodeConstant.copy()
-                                .nodeState(NodeState.LEAF)
-                                .isFilterMatch(NullSafe.isBlankString(filter.getNameFilter()))
+                                .addNodeFlag(NodeFlag.LEAF)
+                                .setGroupedNodeFlag(
+                                        NodeFlagGroups.FILTER_MATCH_PAIR,
+                                        NullSafe.isBlankString(filter.getNameFilter()))
                                 .build());
         return newRootNode;
     }
@@ -355,10 +358,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
             final ExplorerNode treeModelNode = treeModel.getNode(favDocRef.getUuid());
             final ExplorerNode childNode = treeModelNode.copy()
-                    .depth(1)
-                    .isFavourite(true)
                     .rootNodeUuid(favRootNode)
-                    .tags(ExplorerTags.getTags(favDocRef.getType()))
+                    .depth(1)
+                    .addNodeFlag(NodeFlag.FAVOURITE)
+                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(favDocRef.getType()).orElse(null))
                     .build();
             treeModel.add(favRootNode, childNode);
         }
@@ -397,12 +400,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             // in which case System would be considered a match as we only have non-matches when
             // using the QuickFilter
             rootNodeBuilder = ExplorerConstants.SYSTEM_NODE.copy()
-                    .isFilterMatch(NullSafe.isBlankString(filter.getNameFilter()));
+                    .setGroupedNodeFlag(
+                            NodeFlagGroups.FILTER_MATCH_PAIR,
+                            NullSafe.isBlankString(filter.getNameFilter()));
         }
 
-        if (criteria.getFilter() != null &&
-                criteria.getFilter().getTags() != null &&
-                criteria.getFilter().getTags().contains(StandardTagNames.DATA_SOURCE)) {
+        if (criteria.getFilter() != null
+                && NullSafe.set(criteria.getFilter().getNodeFlags()).contains(NodeFlag.DATA_SOURCE)) {
 
             final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
             if (explorerDecorator != null) {
@@ -416,9 +420,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 }
             }
         }
-        if (rootNode == null || rootNode.getNodeState() == null) {
+        if (rootNode == null || !rootNode.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP)) {
             if (!rootNodeBuilder.hasChildren()) {
-                rootNodeBuilder.nodeState(NodeState.LEAF);
+                rootNodeBuilder.addNodeFlag(NodeFlag.LEAF);
             }
         }
         return rootNodeBuilder.build();
@@ -447,8 +451,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return ExplorerNode
                 .builder()
                 .docRef(docRef)
-                .tags(StandardTagNames.DATA_SOURCE)
-                .nodeState(ExplorerNode.NodeState.LEAF)
+                .addNodeFlag(NodeFlag.DATA_SOURCE)
+                .addNodeFlag(NodeFlag.LEAF)
                 .depth(1)
                 .icon(SvgImage.DOCUMENT_SEARCHABLE)
                 .build();
@@ -589,8 +593,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     // parent roots (e.g. System or Favourites)
                     final ExplorerNode.Builder nodeBuilder = child.copy()
                             .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
-                            .isFavourite(userFavourites.contains(child.getUuid()))
-                            .isFilterMatch(isFuzzyFilterMatch);
+                            .setNodeFlag(NodeFlag.FAVOURITE, userFavourites.contains(child.getUuid()))
+                            .setGroupedNodeFlag(NodeFlagGroups.FILTER_MATCH_PAIR, isFuzzyFilterMatch);
                     if (includeNodeInfo) {
                         nodeBuilder.nodeInfoList(treeModelIn.getNodeInfo(child));
                     }
@@ -615,11 +619,12 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
                     openNodes.addAll(result.openNodes);
                     final Builder builder = decoratedChild.copy()
-                            .isFolder(result.isFolder);
+                            .setNodeFlag(NodeFlag.FOLDER, result.isFolder);
 
                     if (includeNodeInfo && result.hasIssues && result.isFolder) {
                         // Mark the node as having descendants with issues
-                        builder.addNodeInfo(buildBrancNodeInfo());
+//                        builder.addNodeInfo(buildBrancNodeInfo());
+                        builder.addNodeFlag(NodeFlag.DESCENDANT_NODE_INFO);
                     }
                     decoratedChild = builder.build();
 
@@ -740,10 +745,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         });
     }
 
-    private static NodeInfo buildBrancNodeInfo() {
-        return new NodeInfo(Severity.WARNING, ExplorerTreeModel.BRANCH_NODE_INFO);
-    }
-
     private boolean isNodeIncluded(final boolean hasChildren,
                                    final boolean ignoreNameFilter,
                                    final NodeInclusionChecker nodeInclusionChecker,
@@ -812,8 +813,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             }
 
             final List<ExplorerNode> children = filteredModel.getChildren(parent);
-            if (parent.getNodeState() == null && NullSafe.isEmptyCollection(children)) {
-                builder.nodeState(ExplorerNode.NodeState.LEAF);
+            if (!parent.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP) && NullSafe.isEmptyCollection(children)) {
+                builder.setGroupedNodeFlag(NodeFlagGroups.EXPANDER_GROUP, NodeFlag.LEAF);
             } else if (force || openItems.contains(parentNodeKey)) {
                 final List<ExplorerNode> newChildren = new ArrayList<>();
                 for (final ExplorerNode child : NullSafe.list(children)) {
@@ -830,11 +831,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     newChildren.add(copy);
                 }
 
-                builder.nodeState(ExplorerNode.NodeState.OPEN);
+                builder.setGroupedNodeFlag(NodeFlagGroups.EXPANDER_GROUP, NodeFlag.OPEN);
                 builder.children(newChildren);
                 builder.rootNodeUuid(rootNode);
             } else {
-                builder.nodeState(ExplorerNode.NodeState.CLOSED);
+                builder.setGroupedNodeFlag(NodeFlagGroups.EXPANDER_GROUP, NodeFlag.CLOSED);
             }
 
             return builder.build();

@@ -21,6 +21,7 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.NodeFlag;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
@@ -154,6 +155,10 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
 
     public void setTags(final String... tags) {
         explorerTree.getTreeModel().setTags(tags);
+    }
+
+    public void setNodeFlags(final NodeFlag... nodeFlags) {
+        explorerTree.getTreeModel().setNodeFlags(nodeFlags);
     }
 
     public void setRequiredPermissions(final String... requiredPermissions) {

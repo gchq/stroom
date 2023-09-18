@@ -21,12 +21,13 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.NodeFlag;
+import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
@@ -96,6 +97,10 @@ public class ExplorerTreeModel {
 
     public void setTags(final String... tags) {
         explorerTreeFilterBuilder.setTags(tags);
+    }
+
+    public void setNodeFlags(final NodeFlag... nodeFlags) {
+        explorerTreeFilterBuilder.setNodeFlags(GwtNullSafe.asSet(nodeFlags));
     }
 
     public void setRequiredPermissions(final String... requiredPermissions) {
@@ -287,7 +292,7 @@ public class ExplorerTreeModel {
                         ExplorerTreeFilter::getNameFilter));
 
                 rows.add(0, NULL_SELECTION.copy()
-                        .isFilterMatch(isFilterMatch)
+                        .setGroupedNodeFlag(NodeFlagGroups.FILTER_MATCH_PAIR, isFilterMatch)
                         .build());
             }
         }
@@ -303,8 +308,8 @@ public class ExplorerTreeModel {
         for (ExplorerNode parent : in) {
             if (openItems.contains(parent.getUniqueKey())) {
                 final ExplorerNode.Builder builder = parent.copy();
-                if (!NodeState.LEAF.equals(parent.getNodeState())) {
-                    builder.nodeState(NodeState.OPEN);
+                if (!parent.hasNodeFlag(NodeFlag.LEAF)) {
+                    builder.setGroupedNodeFlag(NodeFlagGroups.EXPANDER_GROUP, NodeFlag.OPEN);
                 }
                 rows.add(builder.build());
 
@@ -315,8 +320,8 @@ public class ExplorerTreeModel {
 
             } else {
                 final ExplorerNode.Builder builder = parent.copy();
-                if (!NodeState.LEAF.equals(parent.getNodeState())) {
-                    builder.nodeState(NodeState.CLOSED);
+                if (!parent.hasNodeFlag(NodeFlag.LEAF)) {
+                    builder.setGroupedNodeFlag(NodeFlagGroups.EXPANDER_GROUP, NodeFlag.CLOSED);
                 }
                 rows.add(builder.build());
             }

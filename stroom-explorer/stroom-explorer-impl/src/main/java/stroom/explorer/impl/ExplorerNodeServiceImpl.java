@@ -254,7 +254,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
         return getNodeForDocRef(docRef)
-                .map(explorerTreeDao::getPath).orElse(Collections.emptyList()).stream()
+                .map(explorerTreeDao::getPath)
+                .orElse(Collections.emptyList())
+                .stream()
                 .map(this::createExplorerNode)
                 .collect(Collectors.toList());
     }
@@ -327,7 +329,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
         final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
         final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
-        setTags(docNode);
+//        setTags(docNode);
         explorerTreeDao.addChild(folderNode, docNode);
     }
 
@@ -347,11 +349,11 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         }
     }
 
-    private void setTags(final ExplorerTreeNode explorerTreeNode) {
-        if (explorerTreeNode != null) {
-            explorerTreeNode.setTags(ExplorerTags.getTags(explorerTreeNode.getType()));
-        }
-    }
+//    private void setTags(final ExplorerTreeNode explorerTreeNode) {
+//        if (explorerTreeNode != null) {
+//            explorerTreeNode.setTags(ExplorerFlags.getFlag(explorerTreeNode.getType()));
+//        }
+//    }
 
     private void addDocumentPermissions(final DocRef source,
                                         final DocRef dest,
@@ -400,10 +402,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             return ExplorerConstants.FAVOURITES_NODE;
         } else {
             return ExplorerNode.builder()
-                    .type(explorerTreeNode.getType())
-                    .uuid(explorerTreeNode.getUuid())
-                    .name(explorerTreeNode.getName())
+                    .docRef(explorerTreeNode.getDocRef())
                     .tags(explorerTreeNode.getTags())
+                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(explorerTreeNode.getType()).orElse(null))
                     .build();
         }
     }

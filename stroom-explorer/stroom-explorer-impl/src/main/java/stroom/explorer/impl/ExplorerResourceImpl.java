@@ -172,13 +172,8 @@ class ExplorerResourceImpl implements ExplorerResource {
                     final FetchExplorerNodeResult result = explorerServiceProvider.get().getData(request);
 
                     final ExplorerTreeFilter requestFilter = request.getFilter();
-                    final ExplorerTreeFilter qualifiedFilter = new ExplorerTreeFilter(
-                            requestFilter.getIncludedTypes(),
-                            requestFilter.getIncludedRootTypes(),
-                            requestFilter.getTags(),
-                            requestFilter.getRequiredPermissions(),
-                            result.getQualifiedFilterInput(),
-                            requestFilter.isNameFilterChange());
+                    final ExplorerTreeFilter qualifiedFilter = requestFilter.withNameFilter(
+                            result.getQualifiedFilterInput());
 
                     // Ignore the previous searchEventAction as it didn't have anything useful on it
                     final SearchEventAction newSearchEventAction = SearchEventAction.builder()

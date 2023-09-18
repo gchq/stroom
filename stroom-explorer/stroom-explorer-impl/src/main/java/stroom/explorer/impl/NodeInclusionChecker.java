@@ -3,6 +3,7 @@ package stroom.explorer.impl;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.NodeFlag;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
@@ -12,6 +13,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.StringUtil;
 
 import java.util.ArrayList;
@@ -78,16 +80,17 @@ class NodeInclusionChecker {
             }
         }
 
-        // If the list is empty does that mean match all or match none?
-        final Set<String> filterTags = filter.getTags();
-        if (!foundAlwaysFalsePredicate && filterTags != null) {
-            if (filterTags.isEmpty()) {
-                LOGGER.debug("Always false triggered by checkTags");
-                foundAlwaysFalsePredicate = true;
-            } else {
-                LOGGER.debug("Adding checkTags predicate for tags: {}", filterTags);
-                predicates.add(this::checkTags);
-            }
+        final Set<String> filterTags = NullSafe.set(filter.getTags());
+        if (!foundAlwaysFalsePredicate && !filterTags.isEmpty()) {
+            LOGGER.debug("Adding checkTags predicate for tags: {}", filterTags);
+            predicates.add(buildTagFilterPredicate(filterTags));
+        }
+
+        final Set<NodeFlag> filterNodeFlags = NullSafe.set(filter.getNodeFlags());
+        if (!foundAlwaysFalsePredicate && !filterNodeFlags.isEmpty()) {
+            LOGGER.debug("Adding checkNodeFlags predicate for nodeFlags: {}", filterNodeFlags);
+            predicates.add(filterableNode ->
+                    filterableNode.node().hasNodeFlags(filterNodeFlags));
         }
 
         if (!foundAlwaysFalsePredicate) {
@@ -120,6 +123,20 @@ class NodeInclusionChecker {
             combinedPredicate = PredicateUtil.andPredicates(predicates, ALWAYS_FALSE_PREDICATE);
         }
         return combinedPredicate;
+    }
+
+    private static Predicate<FilterableNode> buildTagFilterPredicate(final Set<String> filterTags) {
+        return filterableNode -> {
+            // TODO: 18/09/2023 Change tags to be a set
+            if (GwtNullSafe.isBlankString(filterableNode.node.getTags())) {
+                // No tags
+                return false;
+            } else {
+                final Set<String> nodeTags = NullSafe.asSet(filterableNode.node.getTags()
+                        .split(ExplorerNode.TAGS_DELIMITER));
+                return nodeTags.containsAll(filterTags);
+            }
+        };
     }
 
     private boolean testWithNameFilter(final FilterableNode filterableNode) {
