@@ -82,7 +82,9 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements Docume
                 @Override
                 protected ProcessorPresenter createPresenter() {
                     final ProcessorPresenter processorPresenter = processorPresenterProvider.get();
-                    processorPresenter.setAllowUpdate(securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR));
+                    final boolean isAdmin = securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR);
+                    processorPresenter.setIsAdmin(isAdmin);
+                    processorPresenter.setAllowUpdate(isAdmin);
                     return processorPresenter;
                 }
 

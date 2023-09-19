@@ -8,6 +8,8 @@ public interface DocumentPermissionDao {
 
     Map<String, Set<String>> getPermissionsForDocument(String docUuid);
 
+    Set<String> getDocumentOwnerUuids(String documentUuid);
+
     UserDocumentPermissions getPermissionsForUser(String userUuid);
 
     void addPermission(String docRefUuid, String userUuid, String permission);

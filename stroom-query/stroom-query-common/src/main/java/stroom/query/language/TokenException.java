@@ -47,4 +47,21 @@ public class TokenException extends RuntimeException {
         final DefaultLocation to = new DefaultLocation(lineNo, colNo);
         return new TokenError(from, to, getMessage());
     }
+
+    @Override
+    public String toString() {
+        if (token != null) {
+            return "TokenException{" +
+                    "tokenType=" + token.getTokenType() +
+                    ", start=" + token.getStart() +
+                    ", end=" + token.getEnd() +
+                    ", text=" + token.getText() +
+                    ", message=" + getMessage() +
+                    '}';
+        } else {
+            return "TokenException{" +
+                    "message=" + getMessage() +
+                    '}';
+        }
+    }
 }

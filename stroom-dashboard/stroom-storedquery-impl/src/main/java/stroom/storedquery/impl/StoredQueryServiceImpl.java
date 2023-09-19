@@ -8,6 +8,7 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
@@ -17,7 +18,8 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     private final StoredQueryDao dao;
 
     @Inject
-    public StoredQueryServiceImpl(final SecurityContext securityContext, final StoredQueryDao dao) {
+    public StoredQueryServiceImpl(final SecurityContext securityContext,
+                                  final StoredQueryDao dao) {
         this.securityContext = securityContext;
         this.dao = dao;
     }
@@ -26,6 +28,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext, storedQuery);
         storedQuery.setOwnerUuid(securityContext.getUserUuid());
+        storedQuery.setUuid(UUID.randomUUID().toString());
         return securityContext.secureResult(() -> dao.create(storedQuery));
     }
 

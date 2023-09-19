@@ -3,12 +3,15 @@ package stroom.security.impl.db;
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
+import stroom.security.shared.DocumentPermissionNames;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
@@ -48,6 +51,16 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                                 new HashSet<>()).add(r.get(DOC_PERMISSION.PERMISSION)));
 
         return permissions;
+    }
+
+    @Override
+    public Set<String> getDocumentOwnerUuids(final String docUuid) {
+        return new HashSet<>(JooqUtil.contextResult(securityDbConnProvider, context -> context
+                .select(DOC_PERMISSION.USER_UUID)
+                .from(DOC_PERMISSION)
+                .where(DOC_PERMISSION.DOC_UUID.eq(docUuid))
+                .and(DOC_PERMISSION.PERMISSION.eq(DocumentPermissionNames.OWNER))
+                .fetch(DOC_PERMISSION.USER_UUID)));
     }
 
     @Override

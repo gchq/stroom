@@ -41,6 +41,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -79,6 +80,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
     private final UserNameService userNameService;
+    private final DocumentPermissionService documentPermissionService;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
@@ -87,7 +89,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                final MetaService metaService,
                                final SecurityContext securityContext,
                                final DocRefInfoService docRefInfoService,
-                               final UserNameService userNameService) {
+                               final UserNameService userNameService,
+                               final DocumentPermissionService documentPermissionService) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
@@ -95,6 +98,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
         this.userNameService = userNameService;
+        this.documentPermissionService = documentPermissionService;
     }
 
     @Override
@@ -152,12 +156,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         // now create the filter and tracker
-        final ProcessorFilter processorFilter = new ProcessorFilter();
+        ProcessorFilter processorFilter = new ProcessorFilter();
         AuditUtil.stamp(securityContext, processorFilter);
-        // The creator of the filter becomes the owner and the processor tasks are run as the owner
-        // of the filter (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
-        processorFilter.setOwnerUuid(securityContext.getUserUuid());
-        // Blank tracker
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
         processorFilter.setPriority(calculatedPriority);
@@ -165,20 +165,23 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setQueryData(request.getQueryData());
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-
         if (processorFilterDocRef != null) {
             processorFilter.setUuid(processorFilterDocRef.getUuid());
         }
 
-        return securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.create(processorFilter));
+        return create(processorFilter);
     }
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
         ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.create(ensureValid(processorFilter)));
+
+        // The creator of the filter becomes the owner and the processor tasks are run as the owner
+        // of the filter (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
+        documentPermissionService.setDocumentOwner(createdFilter.getUuid(), securityContext.getUserUuid());
         createdFilter.setProcessor(processorFilter.getProcessor());
+
         return createdFilter;
     }
 
@@ -213,8 +216,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         return securityContext.secureResult(PERMISSION, () -> {
             if (processorFilterDao.logicalDeleteByProcessorFilterId(id) > 0) {
                 // Logically delete any associated tasks that have not yet finished processing.
-                // Once the filter is logically deleted no new tasks will be created for it
-                // but we may still have active tasks for 'deleted' filters.
+                // Once the filter is logically deleted no new tasks will be created for it, but we may still have
+                // active tasks for 'deleted' filters.
                 processorTaskDao.logicalDeleteByProcessorFilterId(id);
                 return true;
             }
@@ -252,23 +255,6 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
             final List<ProcessorListRow> values = new ArrayList<>();
 
             final ExpressionCriteria criteria = new ExpressionCriteria(request.getExpression());
-//            final ExpressionCriteria criteriaRoot = new ExpressionCriteria(request.getExpression());
-
-            // If the user is not an admin then only show them filters that were created by them.
-            if (!securityContext.isAdmin()) {
-
-                // Filtering by getUserIdentityForAudit is not ideal as
-                final ExpressionOperator.Builder builder = ExpressionOperator.builder()
-                        .addTerm(ProcessorFields.OWNER_UUID,
-                                Condition.EQUALS,
-                                securityContext.getUserUuid())
-                        .addOperator(criteria.getExpression());
-
-                criteria.setExpression(builder.build());
-            }
-
-//            final ResultPage<Processor> streamProcessors = processorService.find(criteriaRoot);
-
             final ResultPage<ProcessorFilter> processorFilters = find(criteria);
 
             final String processorIds = processorFilters
@@ -314,34 +300,61 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 values.add(processorRow);
 
                 // If the job row is open then add child rows.
+                final String userUuid = securityContext.getUserUuid();
                 if (request.getExpandedRows() == null || request.isRowExpanded(processorRow)) {
                     processorExpander.setExpanded(true);
 
                     // Add filters.
                     for (final ProcessorFilter processorFilter : processorFilters.getValues()) {
                         if (processor.equals(processorFilter.getProcessor())) {
-                            // Decorate the expression with resolved dictionaries etc.
-                            final QueryData queryData = processorFilter.getQueryData();
-                            if (queryData != null && queryData.getExpression() != null) {
-                                queryData.setExpression(decorate(queryData.getExpression()));
-                            }
 
-                            if (processorFilter.getPipelineName() == null) {
-                                if (processor.getPipelineName() == null) {
-                                    updatePipelineName(processor);
+                            // If the user is not an admin then only show them filters that are owned by them.
+                            boolean include = false;
+                            if (securityContext.isAdmin()) {
+                                include = true;
+                            } else {
+                                try {
+                                    final String ownerUuid = securityContext
+                                            .getDocumentOwnerUuid(processorFilter.getUuid());
+                                    if (ownerUuid.equals(userUuid)) {
+                                        include = true;
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.debug(e::getMessage, e);
                                 }
-                                processorFilter.setPipelineName(processor.getPipelineName());
                             }
 
+                            if (include) {
+                                // Decorate the expression with resolved dictionaries etc.
+                                final QueryData queryData = processorFilter.getQueryData();
+                                if (queryData != null && queryData.getExpression() != null) {
+                                    queryData.setExpression(decorate(queryData.getExpression()));
+                                }
 
-                            final String userDisplayName = Optional.ofNullable(processorFilter.getOwnerUuid())
-                                    .flatMap(userNameService::getByUuid)
-                                    .map(UserName::getUserIdentityForAudit)
-                                    .orElse(null);
+                                if (processorFilter.getPipelineName() == null) {
+                                    if (processor.getPipelineName() == null) {
+                                        updatePipelineName(processor);
+                                    }
+                                    processorFilter.setPipelineName(processor.getPipelineName());
+                                }
 
-                            final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(
-                                    processorFilter, userDisplayName);
-                            values.add(processorFilterRow);
+                                String userDisplayName;
+                                try {
+                                    final String ownerUuid = securityContext
+                                            .getDocumentOwnerUuid(processorFilter.getUuid());
+                                    userDisplayName = Optional.ofNullable(ownerUuid)
+                                            .flatMap(userNameService::getByUuid)
+                                            .map(UserName::getUserIdentityForAudit)
+                                            .orElse(null);
+                                } catch (final RuntimeException e) {
+                                    userDisplayName = e.getMessage();
+                                    LOGGER.debug(e::getMessage, e);
+                                }
+
+                                final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(
+                                        processorFilter, userDisplayName);
+                                values.add(processorFilterRow);
+                            }
                         }
                     }
                 }
@@ -409,22 +422,21 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         if (operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child instanceof ExpressionOperator) {
-                    builder.addOperator(decorate((ExpressionOperator) child));
+                if (child instanceof ExpressionOperator expressionOperator) {
+                    builder.addOperator(decorate(expressionOperator));
 
-                } else if (child instanceof ExpressionTerm) {
-                    ExpressionTerm term = (ExpressionTerm) child;
-                    DocRef docRef = term.getDocRef();
+                } else if (child instanceof ExpressionTerm expressionTerm) {
+                    DocRef docRef = expressionTerm.getDocRef();
 
                     try {
                         if (docRef != null) {
                             final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(docRef);
                             if (optionalDocRefInfo.isPresent()) {
-                                term = ExpressionTerm.builder()
-                                        .enabled(term.enabled())
-                                        .field(term.getField())
-                                        .condition(term.getCondition())
-                                        .value(term.getValue())
+                                expressionTerm = ExpressionTerm.builder()
+                                        .enabled(expressionTerm.enabled())
+                                        .field(expressionTerm.getField())
+                                        .condition(expressionTerm.getCondition())
+                                        .value(expressionTerm.getValue())
                                         .docRef(optionalDocRefInfo.get().getDocRef())
                                         .build();
                             }
@@ -433,7 +445,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         LOGGER.debug(e::getMessage, e);
                     }
 
-                    builder.addTerm(term);
+                    builder.addTerm(expressionTerm);
                 }
             }
         }
@@ -538,10 +550,6 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         AuditUtil.stamp(securityContext, processorFilter);
-        if (processorFilter.getOwnerUuid() == null) {
-            processorFilter.setOwnerUuid(securityContext.getUserUuid());
-        }
-
         return processorFilter;
     }
 }

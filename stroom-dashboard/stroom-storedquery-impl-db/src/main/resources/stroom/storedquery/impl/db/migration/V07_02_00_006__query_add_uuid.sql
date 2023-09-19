@@ -17,11 +17,11 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-DROP PROCEDURE IF EXISTS V07_02_00_005;
+DROP PROCEDURE IF EXISTS V07_02_00_006;
 
 DELIMITER $$
 
-CREATE PROCEDURE V07_02_00_005 ()
+CREATE PROCEDURE V07_02_00_006 ()
 BEGIN
     DECLARE object_count integer;
 
@@ -29,48 +29,25 @@ BEGIN
     INTO object_count
     FROM information_schema.columns
     WHERE table_schema = database()
-    AND table_name = 'processor_filter'
-    AND column_name = 'owner_uuid';
+    AND table_name = 'query'
+    AND column_name = 'uuid';
 
     IF object_count = 0 THEN
 
-        ALTER TABLE processor_filter
-        ADD COLUMN owner_uuid varchar(255) NOT NULL;
+        ALTER TABLE `query`
+        ADD COLUMN `uuid` varchar(255) NOT NULL;
+        UPDATE `query` set `uuid` = MID(UUID(),1,36);
+        CREATE UNIQUE INDEX `query_uuid` ON `query` (`uuid`);
 
-        SELECT COUNT(1)
-        INTO object_count
-        FROM information_schema.tables
-        WHERE table_schema = database()
-        AND table_name = 'stroom_user';
-
-        IF object_count = 1 THEN
-            UPDATE processor_filter pf, stroom_user s
-            SET pf.owner_uuid = s.uuid
-            WHERE pf.create_user = s.name;
-        END IF;
-
-    END IF;
-
-    SELECT COUNT(1)
-    INTO object_count
-    FROM information_schema.table_constraints
-    WHERE table_schema = database()
-    AND table_name = 'processor_filter'
-    AND constraint_name = 'owner_uuid';
-
-    IF object_count = 0 THEN
-        CREATE INDEX owner_uuid ON processor_filter (owner_uuid);
     END IF;
 
 END $$
 
 DELIMITER ;
 
-CALL V07_02_00_005;
+CALL V07_02_00_006;
 
-DROP PROCEDURE IF EXISTS V07_02_00_005;
-
--- --------------------------------------------------
+DROP PROCEDURE IF EXISTS V07_02_00_006;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

@@ -32,6 +32,7 @@ import stroom.search.extraction.ExtractionState;
 import stroom.search.extraction.FieldListConsumerHolder;
 import stroom.search.impl.SearchExpressionQueryBuilderFactory;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -158,19 +159,27 @@ public class StreamingAnalyticExecutor {
         final List<StreamingAnalytic> streamingAnalytics = loadStreamingAnalytics();
 
         // Group rules by transformation pipeline.
-        final Map<DocRef, List<StreamingAnalytic>> pipelineGroupMap = new HashMap<>();
+        final Map<GroupKey, List<StreamingAnalytic>> analyticGroupMap = new HashMap<>();
         for (final StreamingAnalytic streamingAnalytic : streamingAnalytics) {
-            pipelineGroupMap
-                    .computeIfAbsent(streamingAnalytic.viewDoc().getPipeline(), k -> new ArrayList<>())
-                    .add(streamingAnalytic);
+            try {
+                final String ownerUuid = securityContext.getDocumentOwnerUuid(streamingAnalytic.viewDoc().getUuid());
+                final GroupKey groupKey = new GroupKey(streamingAnalytic.viewDoc().getPipeline(), ownerUuid);
+                analyticGroupMap
+                        .computeIfAbsent(groupKey, k -> new ArrayList<>())
+                        .add(streamingAnalytic);
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "Error executing rule: " + streamingAnalytic.ruleIdentity(), e);
+            }
         }
 
         // Process each group in parallel.
         analyticHelper.info(() -> "Processing rules");
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
-        for (final Entry<DocRef, List<StreamingAnalytic>> entry : pipelineGroupMap.entrySet()) {
-            final DocRef pipelineRef = entry.getKey();
+        for (final Entry<GroupKey, List<StreamingAnalytic>> entry : analyticGroupMap.entrySet()) {
+            final GroupKey groupKey = entry.getKey();
+            final DocRef pipelineRef = groupKey.pipeline();
+            final String ownerUuid = groupKey.ownerUuid();
             final List<StreamingAnalytic> analytics = entry.getValue();
             if (analytics.size() > 0) {
                 final String pipelineIdentity = pipelineRef.toInfoString();
@@ -178,11 +187,14 @@ public class StreamingAnalyticExecutor {
                         "Pipeline: " + pipelineIdentity,
                         TerminateHandlerFactory.NOOP_FACTORY,
                         taskContext -> {
-                            final boolean complete =
-                                    processPipeline(pipelineRef, analytics, taskContext);
-                            if (!complete) {
-                                allComplete.set(false);
-                            }
+                            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+                            securityContext.asUser(userIdentity, () -> {
+                                final boolean complete =
+                                        processPipeline(pipelineRef, analytics, taskContext);
+                                if (!complete) {
+                                    allComplete.set(false);
+                                }
+                            });
                         });
                 completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
             }
@@ -531,6 +543,10 @@ public class StreamingAnalyticExecutor {
                                      StreamingAnalyticTrackerData trackerData,
                                      SearchRequest searchRequest,
                                      ViewDoc viewDoc) {
+
+    }
+
+    private record GroupKey(DocRef pipeline, String ownerUuid) {
 
     }
 }

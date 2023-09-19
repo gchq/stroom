@@ -10,10 +10,8 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.DocumentOwnerException;
 import stroom.util.shared.PermissionException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Set;
@@ -25,11 +23,10 @@ import javax.inject.Singleton;
 @Singleton
 class SecurityContextImpl implements SecurityContext {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
-
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
+    private final DocumentOwnerPermissionsCache documentOwnerPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final Provider<UserCache> userCacheProvider;
@@ -38,11 +35,13 @@ class SecurityContextImpl implements SecurityContext {
     @Inject
     SecurityContextImpl(
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
+            final DocumentOwnerPermissionsCache documentOwnerPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
             final Provider<UserCache> userCacheProvider,
             final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
+        this.documentOwnerPermissionsCache = documentOwnerPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCacheProvider = userCacheProvider;
@@ -74,11 +73,20 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public UserIdentity createIdentity(final String subjectId) {
-        Objects.requireNonNull(subjectId, "Null user id provided");
+        Objects.requireNonNull(subjectId, "Null subjectId provided");
         // Inject as provider to avoid circular dep issues
         return userCacheProvider.get().getOrCreate(subjectId)
                 .map(BasicUserIdentity::new)
                 .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + subjectId));
+    }
+
+    @Override
+    public UserIdentity createIdentityByUserUuid(final String userUuid) {
+        Objects.requireNonNull(userUuid, "Null user uuid provided");
+        // Inject as provider to avoid circular dep issues
+        return userCacheProvider.get().getByUuid(userUuid)
+                .map(BasicUserIdentity::new)
+                .orElseThrow(() -> new AuthenticationException("Unable to find user with uuid=" + userUuid));
     }
 
     @Override
@@ -251,6 +259,17 @@ class SecurityContextImpl implements SecurityContext {
             return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
         }
         return false;
+    }
+
+    @Override
+    public String getDocumentOwnerUuid(final String documentUuid) {
+        final Set<String> owners = documentOwnerPermissionsCache.get(documentUuid);
+        if (owners == null || owners.size() == 0) {
+            throw new DocumentOwnerException(documentUuid, "Document has no owners");
+        } else if (owners.size() > 1) {
+            throw new DocumentOwnerException(documentUuid, "Document has multiple owners");
+        }
+        return owners.iterator().next();
     }
 
     /**

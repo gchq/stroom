@@ -28,12 +28,16 @@ public class ValidateExpressionResult {
     private final boolean ok;
     @JsonProperty
     private final String string;
+    @JsonProperty
+    private final boolean groupBy;
 
     @JsonCreator
     public ValidateExpressionResult(@JsonProperty("ok") final boolean ok,
-                                    @JsonProperty("string") final String string) {
+                                    @JsonProperty("string") final String string,
+                                    @JsonProperty("groupBy") final boolean groupBy) {
         this.ok = ok;
         this.string = string;
+        this.groupBy = groupBy;
     }
 
     public boolean isOk() {
@@ -42,5 +46,9 @@ public class ValidateExpressionResult {
 
     public String getString() {
         return string;
+    }
+
+    public boolean isGroupBy() {
+        return groupBy;
     }
 }

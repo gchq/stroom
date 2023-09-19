@@ -44,6 +44,7 @@ import stroom.search.extraction.ExtractionState;
 import stroom.search.extraction.FieldListConsumerHolder;
 import stroom.search.impl.SearchExpressionQueryBuilderFactory;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -185,19 +186,27 @@ public class TableBuilderAnalyticExecutor {
         final List<TableBuilderAnalytic> loadedAnalyticList = loadAnalyticRules();
 
         // Group rules by transformation pipeline.
-        final Map<DocRef, List<TableBuilderAnalytic>> pipelineGroupMap = new HashMap<>();
+        final Map<GroupKey, List<TableBuilderAnalytic>> analyticGroupMap = new HashMap<>();
         for (final TableBuilderAnalytic loadedAnalytic : loadedAnalyticList) {
-            pipelineGroupMap
-                    .computeIfAbsent(loadedAnalytic.viewDoc().getPipeline(), k -> new ArrayList<>())
-                    .add(loadedAnalytic);
+            try {
+                final String ownerUuid = securityContext.getDocumentOwnerUuid(loadedAnalytic.viewDoc().getUuid());
+                final GroupKey groupKey = new GroupKey(loadedAnalytic.viewDoc().getPipeline(), ownerUuid);
+                analyticGroupMap
+                        .computeIfAbsent(groupKey, k -> new ArrayList<>())
+                        .add(loadedAnalytic);
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "Error executing rule: " + loadedAnalytic.ruleIdentity(), e);
+            }
         }
 
         // Process each group in parallel.
         info(() -> "Processing rules");
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
-        for (final Entry<DocRef, List<TableBuilderAnalytic>> entry : pipelineGroupMap.entrySet()) {
-            final DocRef pipelineRef = entry.getKey();
+        for (final Entry<GroupKey, List<TableBuilderAnalytic>> entry : analyticGroupMap.entrySet()) {
+            final GroupKey groupKey = entry.getKey();
+            final DocRef pipelineRef = groupKey.pipeline();
+            final String ownerUuid = groupKey.ownerUuid();
             final List<TableBuilderAnalytic> analytics = entry.getValue();
             if (analytics.size() > 0) {
                 final String pipelineIdentity = pipelineRef.toInfoString();
@@ -205,11 +214,14 @@ public class TableBuilderAnalyticExecutor {
                         "Pipeline: " + pipelineIdentity,
                         TerminateHandlerFactory.NOOP_FACTORY,
                         taskContext -> {
-                            final boolean complete =
-                                    processPipeline(pipelineRef, analytics, taskContext);
-                            if (!complete) {
-                                allComplete.set(false);
-                            }
+                            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+                            securityContext.asUser(userIdentity, () -> {
+                                final boolean complete =
+                                        processPipeline(pipelineRef, analytics, taskContext);
+                                if (!complete) {
+                                    allComplete.set(false);
+                                }
+                            });
                         });
                 completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
             }
@@ -856,6 +868,10 @@ public class TableBuilderAnalyticExecutor {
                                         SearchRequest searchRequest,
                                         ViewDoc viewDoc,
                                         AnalyticDataStore dataStore) {
+
+    }
+
+    private record GroupKey(DocRef pipeline, String ownerUuid) {
 
     }
 }

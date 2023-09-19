@@ -267,7 +267,7 @@ public class DateExpressionParser {
         }
     }
 
-    private static TimeFunction parseDuration(final String string, final char sign) {
+    public static TimeFunction parseDuration(final String string, final char sign) {
         // Strip out spaces.
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 
@@ -343,7 +343,7 @@ public class DateExpressionParser {
         }
     }
 
-    private enum DatePoint {
+    public enum DatePoint {
         NOW("now()"),
         SECOND("second()"),
         MINUTE("minute()"),

@@ -6,7 +6,7 @@
 >
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="processorEditExpression" label="Expression" addStyleNames="dock-max">
-            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes stroom-control"/>
+            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditMinMetaCreateTimeMs" label="Min Create Time">
             <c:MyDateBox ui:field="minMetaCreateTimeMs"/>

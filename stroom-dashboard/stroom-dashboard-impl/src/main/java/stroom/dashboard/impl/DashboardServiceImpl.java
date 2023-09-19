@@ -162,9 +162,9 @@ class DashboardServiceImpl implements DashboardService {
             if (expression != null) {
                 correctedExpression = expression.toString();
             }
-            return new ValidateExpressionResult(true, correctedExpression);
+            return new ValidateExpressionResult(true, correctedExpression, false);
         } catch (final ParseException e) {
-            return new ValidateExpressionResult(false, e.getMessage());
+            return new ValidateExpressionResult(false, e.getMessage(), false);
         }
     }
 

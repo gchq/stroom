@@ -17,11 +17,11 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-DROP PROCEDURE IF EXISTS V07_02_00_005;
+DROP PROCEDURE IF EXISTS V07_02_00_100;
 
 DELIMITER $$
 
-CREATE PROCEDURE V07_02_00_005 ()
+CREATE PROCEDURE V07_02_00_100 ()
 BEGIN
     DECLARE object_count integer;
 
@@ -32,12 +32,7 @@ BEGIN
     AND table_name = 'query'
     AND column_name = 'owner_uuid';
 
-    IF object_count = 0 THEN
-
-        ALTER TABLE query
-        ADD COLUMN owner_uuid varchar(255) NOT NULL;
-        CREATE INDEX owner_uuid ON query (owner_uuid);
-
+    IF object_count = 1 THEN
         SELECT COUNT(1)
         INTO object_count
         FROM information_schema.tables
@@ -51,14 +46,14 @@ BEGIN
         END IF;
 
     END IF;
-
+    
 END $$
 
 DELIMITER ;
 
-CALL V07_02_00_005;
+CALL V07_02_00_100;
 
-DROP PROCEDURE IF EXISTS V07_02_00_005;
+DROP PROCEDURE IF EXISTS V07_02_00_100;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
