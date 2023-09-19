@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -69,6 +70,14 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     public void createNode(final DocRef docRef,
                            final DocRef destinationFolderRef,
                            final PermissionInheritance permissionInheritance) {
+        createNode(docRef, destinationFolderRef, permissionInheritance, null);
+    }
+
+    @Override
+    public void createNode(final DocRef docRef,
+                           final DocRef destinationFolderRef,
+                           final PermissionInheritance permissionInheritance,
+                           final Set<String> tags) {
         // Ensure permission inheritance is set to something.
         PermissionInheritance perms = permissionInheritance;
         if (perms == null) {
@@ -95,7 +104,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             LOGGER.error(e.getMessage(), e);
         }
 
-        addNode(destinationFolderRef, docRef);
+        addNode(destinationFolderRef, docRef, tags);
     }
 
     @Override
@@ -327,6 +336,10 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
+        addNode(parentFolderRef, docRef, null);
+    }
+
+    private void addNode(final DocRef parentFolderRef, final DocRef docRef, final Set<String> tags) {
         final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
         final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
 //        setTags(docNode);

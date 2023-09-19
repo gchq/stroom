@@ -29,8 +29,10 @@ import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.ResultPage;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 class MockExplorerService implements ExplorerService {
 
@@ -99,5 +101,15 @@ class MockExplorerService implements ExplorerService {
     @Override
     public Optional<ExplorerNode> getFromDocRef(final DocRef docRef) {
         return Optional.empty();
+    }
+
+    @Override
+    public Set<String> parseNodeTags(final String tagsStr) {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public String nodeTagsToString(final Set<String> tags) {
+        return null;
     }
 }

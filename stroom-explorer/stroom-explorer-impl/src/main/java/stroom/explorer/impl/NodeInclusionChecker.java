@@ -13,7 +13,6 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.StringUtil;
 
 import java.util.ArrayList;
@@ -83,7 +82,8 @@ class NodeInclusionChecker {
         final Set<String> filterTags = NullSafe.set(filter.getTags());
         if (!foundAlwaysFalsePredicate && !filterTags.isEmpty()) {
             LOGGER.debug("Adding checkTags predicate for tags: {}", filterTags);
-            predicates.add(buildTagFilterPredicate(filterTags));
+            predicates.add(filterableNode ->
+                            filterableNode.node.hasTags(filterTags));
         }
 
         final Set<NodeFlag> filterNodeFlags = NullSafe.set(filter.getNodeFlags());
@@ -123,20 +123,6 @@ class NodeInclusionChecker {
             combinedPredicate = PredicateUtil.andPredicates(predicates, ALWAYS_FALSE_PREDICATE);
         }
         return combinedPredicate;
-    }
-
-    private static Predicate<FilterableNode> buildTagFilterPredicate(final Set<String> filterTags) {
-        return filterableNode -> {
-            // TODO: 18/09/2023 Change tags to be a set
-            if (GwtNullSafe.isBlankString(filterableNode.node.getTags())) {
-                // No tags
-                return false;
-            } else {
-                final Set<String> nodeTags = NullSafe.asSet(filterableNode.node.getTags()
-                        .split(ExplorerNode.TAGS_DELIMITER));
-                return nodeTags.containsAll(filterTags);
-            }
-        };
     }
 
     private boolean testWithNameFilter(final FilterableNode filterableNode) {
@@ -196,22 +182,6 @@ class NodeInclusionChecker {
 
     private boolean checkType(final FilterableNode filterableNode) {
         return filter.getIncludedTypes().contains(filterableNode.node.getType());
-    }
-
-    private boolean checkTags(final FilterableNode filterableNode) {
-        final Set<String> filterTagsSet = filter.getTags();
-        final String nodeTagsStr = filterableNode.node.getTags();
-
-        // TODO: 14/09/2023 Doing a simple string contains is pretty flawed if one tag is a substring of another.
-        //  It should be using an agreed delimiter (e.g. space) or better still have the node hold a set of
-        //  tags. Also should do a case insensitive comparison.
-        //  so a non-issue for now.
-        for (final String tag : filterTagsSet) {
-            if (nodeTagsStr != null && nodeTagsStr.contains(tag)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public ExplorerTreeFilter getFilter() {

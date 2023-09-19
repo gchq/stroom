@@ -29,10 +29,9 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ExplorerService extends Clearable {
 
@@ -66,4 +65,8 @@ public interface ExplorerService extends Clearable {
     ResultPage<ExplorerDocContentMatch> findContent(FindExplorerNodeQuery request);
 
     Optional<ExplorerNode> getFromDocRef(DocRef docRef);
+
+    Set<String> parseNodeTags(final String tagsStr);
+
+    String nodeTagsToString(final Set<String> tags);
 }

@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -51,7 +52,7 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final String tags;
+    private final Set<String> tags;
 
     @JsonProperty
     private final int depth;
@@ -80,7 +81,7 @@ public class ExplorerNode implements HasDisplayValue {
     public ExplorerNode(@JsonProperty("type") final String type,
                         @JsonProperty("uuid") final String uuid,
                         @JsonProperty("name") final String name,
-                        @JsonProperty("tags") final String tags,
+                        @JsonProperty("tags") final Set<String> tags,
                         @JsonProperty("depth") final int depth,
                         @JsonProperty("icon") final SvgImage icon,
                         @JsonProperty("children") final List<ExplorerNode> children,
@@ -113,8 +114,16 @@ public class ExplorerNode implements HasDisplayValue {
         return name;
     }
 
-    public String getTags() {
+    public Set<String> getTags() {
         return tags;
+    }
+
+    /**
+     * @return True if this node's set of tags contains ALL the passed tags.
+     */
+    public boolean hasTags(final Set<String> tags) {
+        return GwtNullSafe.set(this.tags)
+                .containsAll(tags);
     }
 
     public int getDepth() {
@@ -287,7 +296,7 @@ public class ExplorerNode implements HasDisplayValue {
         private String type;
         private String uuid;
         private String name;
-        private String tags;
+        private Set<String> tags;
         private int depth;
         private SvgImage icon;
         private List<ExplorerNode> children;
@@ -337,8 +346,35 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder tags(final String tags) {
+        public Builder tags(final Set<String> tags) {
             this.tags = tags;
+            return this;
+        }
+
+        public Builder addTag(final String tag) {
+            if (!GwtNullSafe.isBlankString(tag)) {
+                if (this.tags == null) {
+                    this.tags = new HashSet<>();
+                }
+                this.tags.add(tag);
+            }
+            return this;
+        }
+
+        public Builder addTags(final Set<String> tags) {
+            if (GwtNullSafe.hasItems(tags)) {
+                if (this.tags == null) {
+                    this.tags = new HashSet<>();
+                }
+                this.tags.addAll(tags);
+            }
+            return this;
+        }
+
+        public Builder addTags(final String... tags) {
+            if (GwtNullSafe.hasItems(tags)) {
+                addTags(GwtNullSafe.asSet(tags));
+            }
             return this;
         }
 

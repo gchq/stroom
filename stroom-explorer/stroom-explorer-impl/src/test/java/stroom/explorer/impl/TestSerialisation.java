@@ -25,7 +25,7 @@ public class TestSerialisation {
                 .type("test")
                 .uuid("test")
                 .name("test")
-                .tags("test")
+                .tags(Set.of("test"))
                 .build();
 
         final ExplorerTreeFilter explorerTreeFilter = new ExplorerTreeFilter(
@@ -63,7 +63,7 @@ public class TestSerialisation {
                 .type("test-type")
                 .uuid("child-uuid")
                 .name("child-name")
-                .tags("test-tags")
+                .addTag("test-tags")
                 .addNodeFlag(NodeFlag.LEAF)
                 .build();
 
@@ -72,7 +72,7 @@ public class TestSerialisation {
                 .type("test-type")
                 .uuid("parent-uuid")
                 .name("parent-name")
-                .tags("test-tags")
+                .addTag("test-tags")
                 .addNodeFlag(NodeFlag.OPEN)
                 .children(List.of(child))
                 .build();

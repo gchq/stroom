@@ -94,6 +94,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
     private final Provider<ExplorerFavService> explorerFavService;
     private final BrokenDependenciesCache brokenDependenciesCache;
+    private final NodeTagSerialiser nodeTagSerialiser;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -103,7 +104,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final ExplorerEventLog explorerEventLog,
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
                         final Provider<ExplorerFavService> explorerFavService,
-                        final BrokenDependenciesCache brokenDependenciesCache) {
+                        final BrokenDependenciesCache brokenDependenciesCache,
+                        final NodeTagSerialiser nodeTagSerialiser) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -112,6 +114,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         this.explorerDecoratorProvider = explorerDecoratorProvider;
         this.explorerFavService = explorerFavService;
         this.brokenDependenciesCache = brokenDependenciesCache;
+        this.nodeTagSerialiser = nodeTagSerialiser;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -1349,6 +1352,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return ResultPage.createPageLimitedList(list, pageRequest);
     }
 
+    @Override
+    public Set<String> parseNodeTags(final String tagsStr) {
+        return nodeTagSerialiser.deserialise(tagsStr);
+    }
+
+    @Override
+    public String nodeTagsToString(final Set<String> tags) {
+        return nodeTagSerialiser.serialise(tags);
+    }
 
     // --------------------------------------------------------------------------------
 

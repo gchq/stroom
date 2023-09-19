@@ -239,11 +239,15 @@ public final class LogUtil {
     }
 
     /**
-     * Returns the simple class name with the message
+     * Returns the simple class name with the message, useful as some exception messages
+     * only make sense if you know the class name, e.g. {@link NullPointerException} and
+     * some {@link java.io.IOException}s.
      */
     public static String exceptionMessage(final Throwable t) {
         if (t == null) {
             return null;
+        } else if (t.getMessage() == null) {
+            return NullSafe.get(t.getClass(), Class::getSimpleName);
         } else {
             return NullSafe.get(t.getClass(), Class::getSimpleName) + " " + t.getMessage();
         }
