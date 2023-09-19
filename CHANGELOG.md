@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.63] - 2023-09-19
+
+* Issue **#3737** : Ensure table builder analytics keep tracking processing state even if there are no matching events to store.
+
+* Issue **#3738** : Fix error when selecting Feed is None in stream filter.
+
+* Issue **#3744** : Add processor filter permissions.
+
+* Issue **#3746** : Create streaming analytics by default.
+
+* Issue **#3717** : Run analytics as the analytic document owner.
+
+* Issue **#3743** : Improve syntax validation in StroomQL.
+
+
 ## [v7.2-beta.62] - 2023-09-08
 
 * Issue **#3731** : Fix ConcurrentModificationException in FieldIndex.
@@ -5903,7 +5918,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.62...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.63...HEAD
+[v7.2-beta.63]: https://github.com/gchq/stroom/compare/v7.2-beta.62...v7.2-beta.63
 [v7.2-beta.62]: https://github.com/gchq/stroom/compare/v7.2-beta.61...v7.2-beta.62
 [v7.2-beta.61]: https://github.com/gchq/stroom/compare/v7.2-beta.60...v7.2-beta.61
 [v7.2-beta.60]: https://github.com/gchq/stroom/compare/v7.2-beta.59...v7.2-beta.60
