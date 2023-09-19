@@ -209,21 +209,20 @@ public class TableBuilderAnalyticExecutor {
             final String ownerUuid = groupKey.ownerUuid();
             final List<TableBuilderAnalytic> analytics = entry.getValue();
             if (analytics.size() > 0) {
-                final String pipelineIdentity = pipelineRef.toInfoString();
-                final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
-                        "Pipeline: " + pipelineIdentity,
-                        TerminateHandlerFactory.NOOP_FACTORY,
-                        taskContext -> {
-                            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
-                            securityContext.asUser(userIdentity, () -> {
+                final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+                securityContext.asUser(userIdentity, () -> {
+                    final String pipelineIdentity = pipelineRef.toInfoString();
+                    final Runnable runnable = taskContextFactory.context("Pipeline: " + pipelineIdentity,
+                            TerminateHandlerFactory.NOOP_FACTORY,
+                            taskContext -> {
                                 final boolean complete =
                                         processPipeline(pipelineRef, analytics, taskContext);
                                 if (!complete) {
                                     allComplete.set(false);
                                 }
                             });
-                        });
-                completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
+                    completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
+                });
             }
         }
 
