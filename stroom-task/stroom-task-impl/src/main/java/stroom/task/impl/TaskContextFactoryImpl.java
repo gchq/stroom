@@ -164,16 +164,16 @@ class TaskContextFactoryImpl implements TaskContextFactory {
     }
 
     private boolean isUseAsRead(final TaskContext taskContext) {
-        if (taskContext instanceof TaskContextImpl) {
-            return ((TaskContextImpl) taskContext).isUseAsRead();
-        }
+//        if (taskContext instanceof TaskContextImpl) {
+//            return ((TaskContextImpl) taskContext).isUseAsRead();
+//        }
         return securityContext.isUseAsRead();
     }
 
     private UserIdentity getUserIdentity(final TaskContext taskContext) {
-        if (taskContext instanceof TaskContextImpl) {
-            return ((TaskContextImpl) taskContext).getUserIdentity();
-        }
+//        if (taskContext instanceof TaskContextImpl) {
+//            return ((TaskContextImpl) taskContext).getUserIdentity();
+//        }
         return securityContext.getUserIdentity();
     }
 

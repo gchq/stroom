@@ -144,12 +144,15 @@ public class ScheduledQueryAnalyticExecutor {
                 try {
                     final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc.getUuid());
                     final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
-                    securityContext.asUser(userIdentity, () -> {
-                        taskContextFactory.context("Scheduled Query Analytic: " + analytic.ruleIdentity(),
+                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
+                        final Runnable runnable = taskContextFactory.childContext(
+                                parentTaskContext,
+                                "Scheduled Query Analytic: " + analytic.ruleIdentity(),
                                 taskContext -> {
                                     processScheduledQueryAnalytic(analytic, completableFutures, taskContext);
-                                }).run();
-                    });
+                                });
+                        runnable.run();
+                    }));
                 } catch (final RuntimeException e) {
                     LOGGER.error(() -> "Error executing rule: " + analytic.ruleIdentity(), e);
                 }
