@@ -61,8 +61,8 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         final TaskContext parent = resolveParent(parentContext);
         return createFromConsumer(
                 getTaskId(parent),
-                getUserIdentity(parentContext),
-                isUseAsRead(parent),
+                securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
                 consumer);
@@ -86,8 +86,8 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         final TaskContext parent = resolveParent(parentContext);
         return createFromFunction(
                 getTaskId(parent),
-                getUserIdentity(parentContext),
-                isUseAsRead(parent),
+                securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
                 function);
@@ -114,8 +114,8 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         final TaskContext parent = resolveParent(parentContext);
         return createFromConsumer(
                 getTaskId(parent),
-                getUserIdentity(parentContext),
-                isUseAsRead(parent),
+                securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 terminateHandlerFactory,
                 consumer);
@@ -142,8 +142,8 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         final TaskContext parent = resolveParent(parentContext);
         return createFromFunction(
                 getTaskId(parent),
-                getUserIdentity(parentContext),
-                isUseAsRead(parent),
+                securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 terminateHandlerFactory,
                 function);
@@ -161,20 +161,6 @@ class TaskContextFactoryImpl implements TaskContextFactory {
             return taskContext.getTaskId();
         }
         return null;
-    }
-
-    private boolean isUseAsRead(final TaskContext taskContext) {
-//        if (taskContext instanceof TaskContextImpl) {
-//            return ((TaskContextImpl) taskContext).isUseAsRead();
-//        }
-        return securityContext.isUseAsRead();
-    }
-
-    private UserIdentity getUserIdentity(final TaskContext taskContext) {
-//        if (taskContext instanceof TaskContextImpl) {
-//            return ((TaskContextImpl) taskContext).getUserIdentity();
-//        }
-        return securityContext.getUserIdentity();
     }
 
     private Runnable createFromConsumer(final TaskId parentTaskId,
