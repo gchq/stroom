@@ -189,7 +189,7 @@ public class TableBuilderAnalyticExecutor {
         final Map<GroupKey, List<TableBuilderAnalytic>> analyticGroupMap = new HashMap<>();
         for (final TableBuilderAnalytic loadedAnalytic : loadedAnalyticList) {
             try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(loadedAnalytic.viewDoc().getUuid());
+                final String ownerUuid = securityContext.getDocumentOwnerUuid(loadedAnalytic.viewDoc().asDocRef());
                 final GroupKey groupKey = new GroupKey(loadedAnalytic.viewDoc().getPipeline(), ownerUuid);
                 analyticGroupMap
                         .computeIfAbsent(groupKey, k -> new ArrayList<>())
@@ -200,7 +200,14 @@ public class TableBuilderAnalyticExecutor {
         }
 
         // Process each group in parallel.
-        info(() -> "Processing rules");
+        analyticHelper.info(() ->
+                LogUtil.message("Processing {} ({})",
+                        LogUtil.namedCount("table builder rule", analyticGroupMap.values()
+                                .stream()
+                                .mapToInt(List::size)
+                                .sum()),
+                        LogUtil.namedCount("group", analyticGroupMap.size())));
+
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<GroupKey, List<TableBuilderAnalytic>> entry : analyticGroupMap.entrySet()) {

@@ -16,6 +16,7 @@
 
 package stroom.security.api;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
@@ -134,7 +135,7 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * @param documentUuid The uuid of the document.
      * @return The UUID of the document owner.
      */
-    String getDocumentOwnerUuid(String documentUuid);
+    String getDocumentOwnerUuid(DocRef docRef);
 
     /**
      * Run the supplied code as the specified user.

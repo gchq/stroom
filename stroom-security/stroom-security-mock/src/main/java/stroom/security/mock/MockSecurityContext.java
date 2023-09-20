@@ -16,6 +16,7 @@
 
 package stroom.security.mock;
 
+import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.AuthenticationService;
@@ -107,7 +108,7 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public String getDocumentOwnerUuid(final String documentUuid) {
+    public String getDocumentOwnerUuid(final DocRef docRef) {
         return getUserUuid();
     }
 

@@ -249,7 +249,8 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
     private UserIdentity getFilterOwnerIdentity(final ProcessorFilter filter) {
         try {
-            return securityContext.createIdentityByUserUuid(securityContext.getDocumentOwnerUuid(filter.getUuid()));
+            return securityContext.createIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
+                    filter.asDocRef()));
         } catch (final RuntimeException e) {
             throw new RuntimeException(
                     LogUtil.message("No owner found for filter uuid: {}", filter.getUuid()));
