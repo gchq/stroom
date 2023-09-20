@@ -69,6 +69,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -555,20 +556,29 @@ public class TableBuilderAnalyticExecutor {
                                  final DetectionConsumer detectionConsumer,
                                  final AnalyticDataStore dataStore,
                                  final CurrentDbState currentDbState) {
-        SimpleDuration timeToWaitForData = analytic.analyticProcessConfig.getTimeToWaitForData();
-        if (timeToWaitForData == null) {
-            timeToWaitForData = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-        }
 
-        Instant from = Instant.ofEpochMilli(0);
+        final SimpleDuration timeToWaitForData = Objects.requireNonNullElseGet(
+                analytic.analyticProcessConfig.getTimeToWaitForData(),
+                () -> SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.HOURS)
+                        .build());
+
+        final Instant from;
         if (analytic.trackerData.getLastWindowEndTimeMs() != null) {
             from = Instant.ofEpochMilli(analytic.trackerData.getLastWindowEndTimeMs() + 1);
         } else if (analytic.analyticProcessConfig.getMinMetaCreateTimeMs() != null) {
             from = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
+        } else {
+            from = Instant.ofEpochMilli(0);
         }
 
-        Instant to = Instant.ofEpochMilli(currentDbState.getLastEventTime());
-        to = SimpleDurationUtil.minus(to, timeToWaitForData);
+        // TODO: 20/09/2023 Not sure what the default value should be if getLastEventTime is null
+        Instant to = Instant.ofEpochMilli(Objects.requireNonNullElse(currentDbState.getLastEventTime(), 0L));
+        final Instant newTo = SimpleDurationUtil.minus(to, timeToWaitForData);
+        if (!newTo.isBefore(Instant.EPOCH)) {
+            to = newTo;
+        }
         if (analytic.analyticProcessConfig.getMaxMetaCreateTimeMs() != null) {
             Instant max = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
             if (max.isBefore(to)) {

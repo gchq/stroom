@@ -304,8 +304,10 @@ class DynamicTestBuilder {
                         Assertions.assertThat(actualThrowable)
                                 .isInstanceOf(expectedThrowableType);
                     } else {
-                        LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}",
-                                expectedThrowableType.getSimpleName());
+                        LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}. " +
+                                        "Actual output: '{}'",
+                                expectedThrowableType.getSimpleName(),
+                                testOutcome.getActualOutput());
                         Assertions.fail("Expecting test to throw "
                                 + expectedThrowableType.getSimpleName());
                     }
