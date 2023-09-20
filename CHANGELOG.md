@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.65] - 2023-09-20
+
+* Issue **#3738** : Fix exceptions when using stream filter terms with no value, e.g. `Parent ID = ''`. Also change `= ''` to map to `is null` in database terms rather than `in ()` as it was doing.
+
+* Issue **#3717** : Run analytics as the analytic document owner.
+
+
 ## [v7.2-beta.64] - 2023-09-20
 
 * Issue **#3717** : Run analytics as the analytic document owner.
@@ -5923,7 +5930,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.64...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.65...HEAD
+[v7.2-beta.65]: https://github.com/gchq/stroom/compare/v7.2-beta.64...v7.2-beta.65
 [v7.2-beta.64]: https://github.com/gchq/stroom/compare/v7.2-beta.63...v7.2-beta.64
 [v7.2-beta.63]: https://github.com/gchq/stroom/compare/v7.2-beta.62...v7.2-beta.63
 [v7.2-beta.62]: https://github.com/gchq/stroom/compare/v7.2-beta.61...v7.2-beta.62
