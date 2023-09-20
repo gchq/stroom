@@ -851,6 +851,19 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testSingletonList() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::singletonList)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase("foo", List.of("foo"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testAsList() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String[].class)
@@ -877,6 +890,19 @@ class TestNullSafe {
                 .addCase(null, Collections.emptySet())
                 .addCase(Collections.emptySet(), Collections.emptySet())
                 .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSingletonSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withWrappedOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::singletonSet)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase("foo", Set.of("foo"))
                 .build();
     }
 

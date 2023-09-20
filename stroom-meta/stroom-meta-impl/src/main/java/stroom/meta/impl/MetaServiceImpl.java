@@ -369,7 +369,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private ResultPage<Meta> secureFind(final FindMetaCriteria criteria) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+        final ExpressionOperator expression = addPermissionConstraints(
+                criteria.getExpression(),
                 DocumentPermissionNames.READ,
                 FEED_FIELDS);
         criteria.setExpression(expression);

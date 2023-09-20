@@ -322,6 +322,15 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed value as a singleton list if non-null, else an empty list
+     */
+    public static <T> List<T> singletonList(final T item) {
+        return item != null
+                ? Collections.singletonList(item)
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed array of items or varargs items as a non-null list.
      * Does not supports null items in the list.
      * Uses {@link List#of()} under the hood.
@@ -341,6 +350,15 @@ public class NullSafe {
     public static <S extends Set<T>, T> Set<T> set(final S set) {
         return set != null
                 ? set
+                : Collections.emptySet();
+    }
+
+    /**
+     * Returns the passed value as a singleton set if non-null, else an empty set
+     */
+    public static <T> Set<T> singletonSet(final T item) {
+        return item != null
+                ? Collections.singleton(item)
                 : Collections.emptySet();
     }
 
