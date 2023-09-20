@@ -118,6 +118,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                 } else {
                     // Call the converter for each
                     return values.stream()
+                            .filter(val -> !NullSafe.isBlankString(val))
                             .flatMap(val -> converter.apply(val).stream())
                             .collect(Collectors.toList());
                 }
@@ -133,6 +134,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                     return Collections.emptyList();
                 } else {
                     return values.stream()
+                            .filter(val -> !NullSafe.isBlankString(val))
                             .map(converter::apply)
                             .filter(Objects::nonNull) // Null items would NPE on Collectors.toList
                             .collect(Collectors.toList());
