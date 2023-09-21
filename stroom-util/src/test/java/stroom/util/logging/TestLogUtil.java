@@ -1,13 +1,17 @@
 package stroom.util.logging;
 
+import stroom.test.common.TestUtil;
 import stroom.util.concurrent.DurationAdder;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -152,6 +156,38 @@ class TestLogUtil {
             }
         }))
                 .isEqualTo("abc");
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNamedCount() {
+        final String name = "apple";
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(int.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(count ->
+                        LogUtil.namedCount(name, count))
+                .withSimpleEqualityAssertion()
+                .addCase(0, "0 apples")
+                .addCase(1, "1 apple")
+                .addCase(2, "2 apples")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNamedCount2() {
+        final String base = "embass";
+        final String singular = "y";
+        final String plural = "ies";
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(int.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(count ->
+                        LogUtil.namedCount(base, singular, plural, count))
+                .withSimpleEqualityAssertion()
+                .addCase(0, "0 embassies")
+                .addCase(1, "1 embassy")
+                .addCase(2, "2 embassies")
+                .build();
     }
 
     private static class MyPojo {

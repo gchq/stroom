@@ -277,11 +277,15 @@ public class TestUtil {
     }
 
     /**
-     * @param rounds
-     * @param iterations
+     * Compares the performance of one or more {@link TimedCase}s, repeating each testCase
+     * over n iterations and repeating all that over x rounds.
+     * @param rounds Number of rounds to perform. A round runs n iterations for each testCase.
+     *               If rounds >1 then the results for the first round are treated as a JVM warm-up
+     *               and are not counted in the aggregate stats.
+     * @param iterations Number of times to run each testCase in a round.
      * @param setup          Run before each test case in each round
-     * @param outputConsumer
-     * @param testCases
+     * @param outputConsumer The consumer for the tabular results data
+     * @param testCases The test cases to run in each round.
      */
     public static void comparePerformance(final int rounds,
                                           final int iterations,
@@ -320,24 +324,40 @@ public class TestUtil {
         final TableBuilder<Entry<String, List<Duration>>> tableBuilder = AsciiTable.builder(summaryData)
                 .withColumn(Column.of("Name", Entry::getKey));
 
-        for (int round = 1; round <= rounds; round++) {
-            final int idx = round - 1;
-            tableBuilder.withColumn(Column.durationNanos("Round " + round, entry ->
-                    entry.getValue().get(idx)));
+        final int warmedUpRounds = rounds > 1
+                ? rounds - 1
+                : rounds;
+        int idx = 0;
+
+        if (rounds > 1) {
+            final int idxCopy = idx++;
+            tableBuilder.withColumn(Column.durationNanos("Warmup Round", entry ->
+                    entry.getValue().get(idxCopy)));
         }
+        // Rest of the rounds
+        for (int round = 1; round <= warmedUpRounds; round++) {
+            final int idxCopy = idx++;
+            tableBuilder.withColumn(Column.durationNanos("Round " + round, entry ->
+                    entry.getValue().get(idxCopy)));
+        }
+        // If we have multiple rounds then ignore first round for jvm warm-up
+        final int skipCount = rounds > 1
+                ? 1
+                : 0;
         final String tableStr = tableBuilder
                 .withColumn(Column.durationNanos("Min", entry ->
-                        entry.getValue().stream().min(Duration::compareTo).get()))
+                        entry.getValue().stream().skip(skipCount).min(Duration::compareTo).get()))
                 .withColumn(Column.durationNanos("Max", entry ->
-                        entry.getValue().stream().max(Duration::compareTo).get()))
+                        entry.getValue().stream().skip(skipCount).max(Duration::compareTo).get()))
                 .withColumn(Column.durationNanos("Avg over rounds", entry ->
                         Duration.ofNanos((long) entry.getValue()
                                 .stream()
+                                .skip(skipCount)
                                 .mapToLong(Duration::toNanos)
                                 .average()
                                 .getAsDouble())))
                 .withColumn(Column.decimal("Per iter (last round)", entry ->
-                        entry.getValue().get(rounds - 1).toNanos() / iterations, 0))
+                        entry.getValue().get(rounds - 1).toNanos() / (double) iterations, 0))
                 .build();
         outputConsumer.accept(LogUtil.message("Summary (iterations: {}, values in nanos):\n{}",
                 ModelStringUtil.formatCsv(iterations),

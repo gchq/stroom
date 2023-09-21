@@ -24,6 +24,7 @@ import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.RemovePermissionEvent;
 import stroom.util.shared.Clearable;
 
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -32,7 +33,7 @@ import javax.inject.Singleton;
 @Singleton
 public class DocumentOwnerPermissionsCache implements PermissionChangeEvent.Handler, Clearable {
 
-    private static final String CACHE_NAME = "Document Owner Permissions Cache";
+    static final String CACHE_NAME = "Document Owner Permissions Cache";
 
     private final LoadingStroomCache<String, Set<String>> cache;
 
@@ -46,7 +47,13 @@ public class DocumentOwnerPermissionsCache implements PermissionChangeEvent.Hand
                 documentPermissionDao::getDocumentOwnerUuids);
     }
 
+    /**
+     * @param documentUuid The UUID of the document to check ownership of.
+     * @return A set of stroom user UUIDs who have Owner permission on the document
+     * with the passed document UUID
+     */
     Set<String> get(final String documentUuid) {
+        Objects.requireNonNull(documentUuid, "No documentUuid provided");
         return cache.get(documentUuid);
     }
 

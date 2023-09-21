@@ -334,6 +334,7 @@ public class NullSafe {
      * Returns the passed array of items or varargs items as a non-null list.
      * Does not supports null items in the list.
      * Uses {@link List#of()} under the hood.
+     *
      * @return A non-null list of items. List should be assumed to be immutable.
      */
     @SafeVarargs
@@ -478,6 +479,32 @@ public class NullSafe {
             return Optional.empty();
         } else {
             return Optional.ofNullable(Objects.requireNonNull(getter).apply(value));
+        }
+    }
+
+    /**
+     * @return True if any of value or the result of getter1 are
+     * null, else false.
+     */
+    public static <T1, R> boolean isNull(final T1 value,
+                                         final Function<T1, R> getter) {
+        if (value == null) {
+            return true;
+        } else {
+            return Objects.requireNonNull(getter).apply(value) == null;
+        }
+    }
+
+    /**
+     * @return True if value and the result of getter
+     * are non-null, else false.
+     */
+    public static <T1, R> boolean nonNull(final T1 value,
+                                          final Function<T1, R> getter) {
+        if (value == null) {
+            return false;
+        } else {
+            return Objects.requireNonNull(getter).apply(value) != null;
         }
     }
 
@@ -633,6 +660,44 @@ public class NullSafe {
                 return Optional.empty();
             } else {
                 return Optional.ofNullable(Objects.requireNonNull(getter2).apply(value2));
+            }
+        }
+    }
+
+    /**
+     * @return True if any of value, the result of getter1 or the result of getter2 are
+     * null, else false.
+     */
+    public static <T1, T2, R> boolean isNull(final T1 value,
+                                             final Function<T1, T2> getter1,
+                                             final Function<T2, R> getter2) {
+        if (value == null) {
+            return true;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return true;
+            } else {
+                return Objects.requireNonNull(getter2).apply(value2) == null;
+            }
+        }
+    }
+
+    /**
+     * @return True if all of, value; the result of getter1 and the result of getter2
+     * are non-null, else false.
+     */
+    public static <T1, T2, R> boolean nonNull(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, R> getter2) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                return Objects.requireNonNull(getter2).apply(value2) != null;
             }
         }
     }

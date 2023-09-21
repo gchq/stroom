@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.security.mock'
 
 dependencies {
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-user-api')

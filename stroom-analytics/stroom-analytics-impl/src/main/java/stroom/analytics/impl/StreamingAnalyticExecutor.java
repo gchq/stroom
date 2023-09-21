@@ -162,7 +162,8 @@ public class StreamingAnalyticExecutor {
         final Map<GroupKey, List<StreamingAnalytic>> analyticGroupMap = new HashMap<>();
         for (final StreamingAnalytic streamingAnalytic : streamingAnalytics) {
             try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(streamingAnalytic.viewDoc().getUuid());
+                final String ownerUuid = securityContext.getDocumentOwnerUuid(streamingAnalytic.viewDoc().asDocRef());
+                LOGGER.debug("");
                 final GroupKey groupKey = new GroupKey(streamingAnalytic.viewDoc().getPipeline(), ownerUuid);
                 analyticGroupMap
                         .computeIfAbsent(groupKey, k -> new ArrayList<>())
@@ -173,7 +174,14 @@ public class StreamingAnalyticExecutor {
         }
 
         // Process each group in parallel.
-        analyticHelper.info(() -> "Processing rules");
+        analyticHelper.info(() ->
+                LogUtil.message("Processing {} ({})",
+                        LogUtil.namedCount("streaming rule", analyticGroupMap.values()
+                                .stream()
+                                .mapToInt(List::size)
+                                .sum()),
+                        LogUtil.namedCount("group", analyticGroupMap.size())));
+
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<GroupKey, List<StreamingAnalytic>> entry : analyticGroupMap.entrySet()) {
@@ -302,7 +310,9 @@ public class StreamingAnalyticExecutor {
         }
 
         // Now trim to the max meta list size as some of our filters may be further ahead.
-        List<Meta> sortedMetaList = allMatchingMeta.stream().sorted(Comparator.comparing(Meta::getId)).toList();
+        List<Meta> sortedMetaList = allMatchingMeta.stream()
+                .sorted(Comparator.comparing(Meta::getId))
+                .toList();
         if (sortedMetaList.size() > maxMetaListSize) {
             sortedMetaList = sortedMetaList.subList(0, maxMetaListSize);
         }
