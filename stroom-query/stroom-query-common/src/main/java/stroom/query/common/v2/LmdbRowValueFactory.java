@@ -1,10 +1,10 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
-import stroom.dashboard.expression.v1.ref.OutputFactory;
-import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.MyByteBufferOutput;
+import stroom.query.language.functions.ref.OutputFactory;
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;

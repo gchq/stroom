@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
@@ -35,10 +36,11 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeRange;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
-import stroom.query.language.TokenException;
+import stroom.query.language.token.TokenException;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
@@ -82,6 +84,7 @@ class QueryServiceImpl implements QueryService {
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final SearchRequestBuilder searchRequestBuilder;
+    private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -94,7 +97,8 @@ class QueryServiceImpl implements QueryService {
                      final DataSourceResolver dataSourceResolver,
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
-                     final SearchRequestBuilder searchRequestBuilder) {
+                     final SearchRequestBuilder searchRequestBuilder,
+                     final ExpressionContextFactory expressionContextFactory) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -106,6 +110,7 @@ class QueryServiceImpl implements QueryService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.searchRequestBuilder = searchRequestBuilder;
+        this.expressionContextFactory = expressionContextFactory;
     }
 
     @Override
@@ -353,7 +358,8 @@ class QueryServiceImpl implements QueryService {
                 null,
                 dateTimeSettings,
                 searchRequest.isIncremental());
-        SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
+        SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest, expressionContext);
         mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
         // Fix table result requests.
@@ -421,7 +427,7 @@ class QueryServiceImpl implements QueryService {
                         queryKey,
                         null,
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
-                        e.toTokenError(),
+                        TokenExceptionUtil.toTokenError(e),
                         true,
                         null);
 

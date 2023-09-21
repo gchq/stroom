@@ -2,8 +2,10 @@ package stroom.search;
 
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
@@ -37,6 +39,8 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
     @Inject
     private SearchRequestBuilder searchRequestBuilder;
     @Inject
+    private ExpressionContextFactory expressionContextFactory;
+    @Inject
     private ContentImportService contentImportService;
 
 
@@ -68,7 +72,8 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
                 null,
                 DateTimeSettings.builder().build(),
                 false);
-        searchRequest = searchRequestBuilder.create(queryString, searchRequest);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(searchRequest);
+        searchRequest = searchRequestBuilder.create(queryString, searchRequest, expressionContext);
 //        searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
 
 //        test(queryString, 5);

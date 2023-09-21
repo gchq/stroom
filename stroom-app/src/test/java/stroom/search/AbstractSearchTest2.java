@@ -19,6 +19,7 @@ package stroom.search;
 
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DestroyReason;
@@ -29,6 +30,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
@@ -61,6 +63,8 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     private SearchRequestBuilder searchRequestBuilder;
     @Inject
     private DataSourceResolver dataSourceResolver;
+    @Inject
+    private ExpressionContextFactory expressionContextFactory;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final ResultStoreManager searchResponseCreatorManager) {
@@ -110,7 +114,8 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 null,
                 DateTimeSettings.builder().build(),
                 false);
-        searchRequest = searchRequestBuilder.create(queryString, searchRequest);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(searchRequest);
+        searchRequest = searchRequestBuilder.create(queryString, searchRequest, expressionContext);
         searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
 
         // Add extraction pipeline.

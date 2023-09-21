@@ -1,6 +1,5 @@
 package stroom.meta.impl;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
@@ -29,6 +28,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

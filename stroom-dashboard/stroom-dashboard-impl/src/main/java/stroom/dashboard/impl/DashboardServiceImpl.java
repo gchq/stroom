@@ -16,10 +16,6 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.expression.v1.Expression;
-import stroom.dashboard.expression.v1.ExpressionParser;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
@@ -56,6 +52,10 @@ import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.Expression;
+import stroom.query.language.functions.ExpressionParser;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ParamFactory;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;

@@ -1,17 +1,17 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.expression.api.DateTimeSettings;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Generator;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.StoredValues;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 

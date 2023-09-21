@@ -1,10 +1,5 @@
 package stroom.search.impl;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ParamKeys;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.lmdb.LmdbEnvFactory;
@@ -42,6 +37,11 @@ import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ParamKeys;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.api.UserIdentity;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.PathCreator;

@@ -1,10 +1,10 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.AlphaNumericComparator;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValComparator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format.Type;
+import stroom.query.language.functions.AlphaNumericComparator;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValComparator;
 
 import java.util.Comparator;
 

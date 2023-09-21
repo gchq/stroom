@@ -1,12 +1,12 @@
 package stroom.index.impl;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;

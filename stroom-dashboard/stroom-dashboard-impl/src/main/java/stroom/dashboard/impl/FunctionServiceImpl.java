@@ -1,22 +1,22 @@
 package stroom.dashboard.impl;
 
-import stroom.dashboard.expression.v1.FunctionArg;
-import stroom.dashboard.expression.v1.FunctionCategory;
-import stroom.dashboard.expression.v1.FunctionDef;
-import stroom.dashboard.expression.v1.FunctionFactory;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValBoolean;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValErr;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValNumber;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
 import stroom.dashboard.shared.FunctionSignature.OverloadType;
 import stroom.dashboard.shared.FunctionSignature.Type;
+import stroom.query.language.functions.FunctionArg;
+import stroom.query.language.functions.FunctionCategory;
+import stroom.query.language.functions.FunctionDef;
+import stroom.query.language.functions.FunctionFactory;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValErr;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValNumber;
+import stroom.query.language.functions.ValString;
 import stroom.util.NullSafe;
 
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ public class FunctionServiceImpl implements FunctionService {
 
     private static FunctionSignature convertSignature(
             final FunctionDef functionDef,
-            final stroom.dashboard.expression.v1.FunctionSignature functionSignature,
+            final stroom.query.language.functions.FunctionSignature functionSignature,
             final Map<List<String>, Long> countsByCategoryPath) {
 
         if (functionSignature != null) {
@@ -136,7 +136,7 @@ public class FunctionServiceImpl implements FunctionService {
 
     private static List<String> buildCategoryPath(
             final FunctionDef functionDef,
-            final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
+            final stroom.query.language.functions.FunctionSignature functionSignature) {
 
         final String category = functionSignature.category().length > 0
                 ? convertCategory(functionSignature.category())

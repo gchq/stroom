@@ -16,9 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -33,6 +30,9 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
 import stroom.util.logging.Metrics;
 import stroom.util.shared.ModelStringUtil;
 

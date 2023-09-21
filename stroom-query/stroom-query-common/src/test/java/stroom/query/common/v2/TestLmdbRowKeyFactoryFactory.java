@@ -1,8 +1,6 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
 import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TimeFilter;
@@ -12,6 +10,8 @@ import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatTimeUngroupedLmdbRowK
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatUngroupedLmdbRowKeyFactory;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.NestedGroupedLmdbRowKeyFactory;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.NestedTimeGroupedLmdbRowKeyFactory;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
 
 import org.junit.jupiter.api.Test;
 

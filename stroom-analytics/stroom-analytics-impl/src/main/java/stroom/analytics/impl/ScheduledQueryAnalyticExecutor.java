@@ -6,8 +6,6 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
 import stroom.analytics.shared.ScheduledQueryAnalyticTrackerData;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
@@ -42,6 +40,8 @@ import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -246,7 +246,8 @@ public class ScheduledQueryAnalyticExecutor {
                         null,
                         DateTimeSettings.builder().build(),
                         false);
-                SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest);
+                final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
+                SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest, expressionContext);
                 mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
                 // Fix table result requests.
@@ -257,8 +258,6 @@ public class ScheduledQueryAnalyticExecutor {
                             .requestedRange(OffsetRange.UNBOUNDED)
                             .build();
 
-                    final ExpressionContext expressionContext = expressionContextFactory
-                            .createContext(mappedRequest);
                     final RequestAndStore requestAndStore = searchResponseCreatorManager
                             .getResultStore(mappedRequest);
                     final SearchRequest modifiedRequest = requestAndStore.searchRequest();

@@ -16,11 +16,11 @@
 
 package stroom.query.common.v2.format;
 
-import stroom.dashboard.expression.v1.DateUtil;
-import stroom.dashboard.expression.v1.Val;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.TimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.language.functions.DateUtil;
+import stroom.query.language.functions.Val;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

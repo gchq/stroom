@@ -61,10 +61,7 @@ public class SimpleDuration {
 
     @Override
     public String toString() {
-        return "SimpleDuration{" +
-                "time=" + time +
-                ", timeUnit=" + timeUnit +
-                '}';
+        return time + timeUnit.getShortForm();
     }
 
 

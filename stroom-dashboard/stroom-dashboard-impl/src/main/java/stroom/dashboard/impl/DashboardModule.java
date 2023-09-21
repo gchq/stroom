@@ -16,11 +16,11 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.query.language.functions.FunctionFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.WebSocketBinder;

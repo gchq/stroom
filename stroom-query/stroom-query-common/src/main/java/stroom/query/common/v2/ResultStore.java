@@ -16,11 +16,11 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.SearchTaskProgress;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

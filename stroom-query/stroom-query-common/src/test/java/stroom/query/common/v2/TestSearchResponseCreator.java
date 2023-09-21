@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -10,6 +9,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
+import stroom.query.language.functions.Val;
 import stroom.query.test.util.MockitoExtension;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.DurationTimer;

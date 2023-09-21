@@ -23,9 +23,9 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.UserName;
 
 import java.util.List;

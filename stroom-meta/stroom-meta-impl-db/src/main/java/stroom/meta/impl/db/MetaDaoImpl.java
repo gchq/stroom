@@ -1,11 +1,5 @@
 package stroom.meta.impl.db;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -45,6 +39,12 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.NullSafe;
 import stroom.util.Period;
 import stroom.util.collections.BatchingIterator;

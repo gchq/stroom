@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;

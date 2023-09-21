@@ -17,7 +17,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.DateUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -25,6 +24,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
+import stroom.query.language.functions.DateUtil;
 import stroom.util.NullSafe;
 import stroom.util.shared.CompareUtil;
 

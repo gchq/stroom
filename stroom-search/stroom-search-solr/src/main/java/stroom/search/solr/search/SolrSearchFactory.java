@@ -1,7 +1,5 @@
 package stroom.search.solr.search;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dictionary.api.WordListProvider;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
@@ -9,6 +7,8 @@ import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;

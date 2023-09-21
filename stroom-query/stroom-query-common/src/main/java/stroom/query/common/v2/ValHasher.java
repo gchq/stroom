@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValSerialiser;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.dashboard.expression.v1.ref.OutputFactory;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValSerialiser;
+import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.OutputFactory;
 
 import com.esotericsoftware.kryo.io.Output;
 import net.openhft.hashing.LongHashFunction;

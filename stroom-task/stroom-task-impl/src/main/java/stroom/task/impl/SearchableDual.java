@@ -1,14 +1,14 @@
 package stroom.task.impl;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 
 import java.util.Collections;

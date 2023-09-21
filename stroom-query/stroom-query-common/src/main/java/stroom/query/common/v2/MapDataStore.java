@@ -16,18 +16,18 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ChildData;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
+import stroom.query.language.functions.ChildData;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Generator;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
 

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl.download;
 
-import stroom.dashboard.expression.v1.DateUtil;
+import stroom.query.language.functions.DateUtil;
 
 import java.math.BigDecimal;
 

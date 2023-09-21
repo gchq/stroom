@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2.format;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.query.language.functions.Val;
 
 public class StringFormatter implements Formatter {
 

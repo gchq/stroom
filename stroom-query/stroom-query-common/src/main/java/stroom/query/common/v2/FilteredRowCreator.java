@@ -1,11 +1,11 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

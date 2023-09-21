@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ParamKeys;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
@@ -21,6 +20,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TimeRange;
+import stroom.query.language.functions.ParamKeys;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.user.api.UserNameService;

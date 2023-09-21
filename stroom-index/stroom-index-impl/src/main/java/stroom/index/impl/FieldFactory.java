@@ -16,13 +16,12 @@
 
 package stroom.index.impl;
 
-import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.filter.FieldValue;
+import stroom.query.language.functions.Val;
 
 import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.FloatField;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;

@@ -1,7 +1,5 @@
 package stroom.search.impl.shard;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dictionary.api.WordListProvider;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -10,6 +8,8 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.impl.NodeSearchTask;
 import stroom.search.impl.SearchConfig;

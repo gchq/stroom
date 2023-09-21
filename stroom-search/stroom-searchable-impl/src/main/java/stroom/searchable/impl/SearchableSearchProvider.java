@@ -1,6 +1,5 @@
 package stroom.searchable.impl;
 
-import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
@@ -18,6 +17,7 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.Sizes;
+import stroom.query.language.functions.FieldIndex;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 import stroom.security.api.SecurityContext;

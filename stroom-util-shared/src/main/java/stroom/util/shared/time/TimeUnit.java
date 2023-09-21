@@ -19,24 +19,31 @@ package stroom.util.shared.time;
 import stroom.docref.HasDisplayValue;
 
 public enum TimeUnit implements HasDisplayValue {
-    NANOSECONDS("Nanoseconds"),
-    MILLISECONDS("Milliseconds"),
-    SECONDS("Seconds"),
-    MINUTES("Minutes"),
-    HOURS("Hours"),
-    DAYS("Days"),
-    WEEKS("Weeks"),
-    MONTHS("Months"),
-    YEARS("Years");
+    NANOSECONDS("Nanoseconds", "ns"),
+    MILLISECONDS("Milliseconds", "ms"),
+    SECONDS("Seconds", "s"),
+    MINUTES("Minutes", "m"),
+    HOURS("Hours", "h"),
+    DAYS("Days", "d"),
+    WEEKS("Weeks", "w"),
+    MONTHS("Months", "M"),
+    YEARS("Years", "y");
 
     private final String displayValue;
+    private final String shortForm;
 
-    TimeUnit(final String displayValue) {
+    TimeUnit(final String displayValue,
+             final String shortForm) {
         this.displayValue = displayValue;
+        this.shortForm = shortForm;
     }
 
     @Override
     public String getDisplayValue() {
         return displayValue;
+    }
+
+    public String getShortForm() {
+        return shortForm;
     }
 }

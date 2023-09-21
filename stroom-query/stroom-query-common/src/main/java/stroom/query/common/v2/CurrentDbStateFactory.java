@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
 
 import java.util.Optional;
 

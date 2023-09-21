@@ -1,8 +1,8 @@
 package stroom.analytics.impl;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ValuesConsumer;
 
 public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldListConsumer {
 

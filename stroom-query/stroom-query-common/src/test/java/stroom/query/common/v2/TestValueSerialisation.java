@@ -1,14 +1,14 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

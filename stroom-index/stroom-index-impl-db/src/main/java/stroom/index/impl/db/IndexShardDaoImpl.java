@@ -1,11 +1,5 @@
 package stroom.index.impl.db;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapper.Converter;
@@ -31,6 +25,12 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.Partition;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;

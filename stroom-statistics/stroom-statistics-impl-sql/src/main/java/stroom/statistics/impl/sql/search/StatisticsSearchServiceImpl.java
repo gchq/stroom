@@ -1,13 +1,13 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;

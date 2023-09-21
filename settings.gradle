@@ -210,11 +210,11 @@ include 'stroom-proxy:stroom-proxy-repo-db-jooq'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
 // Query
-include 'stroom-query:stroom-expression'
-include 'stroom-query:stroom-expression-api'
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
+include 'stroom-query:stroom-query-language'
+include 'stroom-query:stroom-query-language-api'
 
 // Suggestions
 include 'stroom-suggestions:stroom-suggestions-api'

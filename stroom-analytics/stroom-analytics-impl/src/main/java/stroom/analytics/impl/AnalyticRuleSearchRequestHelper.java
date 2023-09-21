@@ -2,11 +2,13 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 
@@ -16,12 +18,15 @@ public class AnalyticRuleSearchRequestHelper {
 
     private final DataSourceResolver dataSourceResolver;
     private final SearchRequestBuilder searchRequestBuilder;
+    private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
     public AnalyticRuleSearchRequestHelper(final DataSourceResolver dataSourceResolver,
-                                           final SearchRequestBuilder searchRequestBuilder) {
+                                           final SearchRequestBuilder searchRequestBuilder,
+                                           final ExpressionContextFactory expressionContextFactory) {
         this.dataSourceResolver = dataSourceResolver;
         this.searchRequestBuilder = searchRequestBuilder;
+        this.expressionContextFactory = expressionContextFactory;
     }
 
     public SearchRequest create(final AnalyticRuleDoc alertRule) {
@@ -37,8 +42,9 @@ public class AnalyticRuleSearchRequestHelper {
                 null,
                 DateTimeSettings.builder().build(),
                 false);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
         final SearchRequest searchRequest = searchRequestBuilder
-                .create(alertRule.getQuery(), sampleRequest);
+                .create(alertRule.getQuery(), sampleRequest, expressionContext);
         return dataSourceResolver.resolveDataSource(searchRequest);
     }
 }

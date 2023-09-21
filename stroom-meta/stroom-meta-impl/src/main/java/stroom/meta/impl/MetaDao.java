@@ -1,6 +1,5 @@
 package stroom.meta.impl;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -15,6 +14,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 

@@ -34,7 +34,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-client')
     implementation project(':stroom-docref')
-    implementation project(':stroom-query:stroom-expression-api')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-client')
@@ -79,7 +79,7 @@ def projList = [
         project(':stroom-core-shared'),
         project(':stroom-dashboard:stroom-dashboard-client'),
         project(':stroom-docref'),
-        project(':stroom-query:stroom-expression-api'),
+        project(':stroom-query:stroom-query-language-api'),
         project(':stroom-query:stroom-query-api'),
         project(':stroom-query:stroom-query-common'),
         project(':stroom-security:stroom-security-client'),

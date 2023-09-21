@@ -1,8 +1,8 @@
 package stroom.search.impl;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
 import stroom.search.extraction.Event;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.extraction.StreamEventMap;

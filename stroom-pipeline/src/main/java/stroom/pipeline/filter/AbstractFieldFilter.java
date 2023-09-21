@@ -16,19 +16,19 @@
 
 package stroom.pipeline.filter;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValBoolean;
-import stroom.dashboard.expression.v1.ValDate;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValFloat;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 

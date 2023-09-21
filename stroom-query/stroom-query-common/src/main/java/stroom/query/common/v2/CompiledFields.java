@@ -16,15 +16,15 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Expression;
-import stroom.dashboard.expression.v1.ExpressionParser;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Null;
-import stroom.dashboard.expression.v1.ParamFactory;
-import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Field;
+import stroom.query.language.functions.Expression;
+import stroom.query.language.functions.ExpressionParser;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Generator;
+import stroom.query.language.functions.Null;
+import stroom.query.language.functions.ParamFactory;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
 import java.util.Collections;

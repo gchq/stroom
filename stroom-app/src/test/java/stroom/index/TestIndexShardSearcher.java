@@ -1,8 +1,5 @@
 package stroom.index;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
@@ -25,6 +22,9 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.impl.shard.DocIdQueue;

@@ -17,7 +17,6 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
@@ -42,6 +41,7 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;

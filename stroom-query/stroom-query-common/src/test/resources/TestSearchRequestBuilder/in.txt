@@ -81,3 +81,12 @@ from 'Test Index'
 where 'my.name' = '"foo bar"'
 eval UserId = uCase(UserId)
 select UserId
+-----
+from 'Test Index'
+eval comp = max(toFloat(day()-10d))
+select comp
+-----
+from 'Test Index'
+group by StreamId
+group by EventTime
+select StreamId, EventTime

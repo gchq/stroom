@@ -1,8 +1,8 @@
 package stroom.db.util;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValNull;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValNull;
 
 import org.jooq.Field;
 import org.jooq.Record;

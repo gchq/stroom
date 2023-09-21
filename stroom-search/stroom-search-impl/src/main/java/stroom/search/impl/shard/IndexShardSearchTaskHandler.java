@@ -16,10 +16,6 @@
 
 package stroom.search.impl.shard;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
@@ -28,6 +24,10 @@ import stroom.index.shared.IndexShard;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;

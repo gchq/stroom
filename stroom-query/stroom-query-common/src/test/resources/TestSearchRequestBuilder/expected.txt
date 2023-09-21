@@ -1185,3 +1185,106 @@ select UserId
 =====
 TokenException{tokenType=FUNCTION_GROUP, start=62, end=74, text=uCase(UserId), message=Unknown function name: uCase}
 -----
+from 'Test Index'
+eval comp = max(toFloat(day()-10d))
+select comp
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "comp",
+        "name" : "comp",
+        "expression" : "max(toFloat(day()-10d))",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+group by StreamId
+group by EventTime
+select StreamId, EventTime
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "EventTime",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 1,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----

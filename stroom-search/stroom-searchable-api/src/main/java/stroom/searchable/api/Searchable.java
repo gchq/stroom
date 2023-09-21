@@ -1,11 +1,11 @@
 package stroom.searchable.api;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.language.functions.ValuesConsumer;
 
 public interface Searchable {
 

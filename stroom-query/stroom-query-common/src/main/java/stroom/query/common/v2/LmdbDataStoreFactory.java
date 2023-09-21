@@ -1,7 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
@@ -10,6 +8,8 @@ import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;

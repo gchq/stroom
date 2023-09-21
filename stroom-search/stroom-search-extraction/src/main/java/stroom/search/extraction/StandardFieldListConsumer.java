@@ -1,10 +1,10 @@
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.pipeline.filter.FieldValue;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValuesConsumer;
 
 import java.util.List;
 

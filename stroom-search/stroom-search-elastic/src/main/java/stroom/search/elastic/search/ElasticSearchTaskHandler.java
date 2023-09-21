@@ -16,17 +16,17 @@
 
 package stroom.search.elastic.search;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValBoolean;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ResultStore;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;

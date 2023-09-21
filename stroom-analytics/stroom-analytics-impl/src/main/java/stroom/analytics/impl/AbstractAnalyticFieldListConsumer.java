@@ -1,12 +1,12 @@
 package stroom.analytics.impl;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.index.impl.FieldFactory;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.filter.FieldValue;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.util.logging.LambdaLogger;

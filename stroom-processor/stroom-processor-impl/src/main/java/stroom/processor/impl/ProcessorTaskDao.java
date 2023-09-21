@@ -1,6 +1,5 @@
 package stroom.processor.impl;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
@@ -11,6 +10,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;

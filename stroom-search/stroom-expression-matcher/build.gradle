@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-query:stroom-expression-api')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
 

@@ -1,9 +1,5 @@
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.data.store.api.DataException;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexConstants;
@@ -18,6 +14,10 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.StreamEventMap.EventSet;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;

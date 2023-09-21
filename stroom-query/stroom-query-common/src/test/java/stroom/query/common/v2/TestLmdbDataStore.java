@@ -16,10 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
@@ -36,6 +32,10 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;

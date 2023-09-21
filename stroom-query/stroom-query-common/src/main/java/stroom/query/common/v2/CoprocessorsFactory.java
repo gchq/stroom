@@ -1,7 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
@@ -12,6 +10,8 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 
 import java.util.ArrayList;
 import java.util.Collections;

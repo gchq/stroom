@@ -16,12 +16,12 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.QLVisSettings;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.language.AbstractToken;
-import stroom.query.language.FunctionGroup;
-import stroom.query.language.KeywordGroup;
-import stroom.query.language.TokenException;
-import stroom.query.language.TokenType;
 import stroom.query.language.VisualisationTokenConsumer;
+import stroom.query.language.token.AbstractToken;
+import stroom.query.language.token.FunctionGroup;
+import stroom.query.language.token.KeywordGroup;
+import stroom.query.language.token.TokenException;
+import stroom.query.language.token.TokenType;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 

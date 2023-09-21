@@ -1,7 +1,7 @@
 package stroom.search;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
 import stroom.search.extraction.Event;
 import stroom.search.extraction.StreamEventMap;
 import stroom.search.extraction.StreamEventMap.EventSet;

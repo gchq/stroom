@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.query.language.functions.Generator;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ref.StoredValues;
 
 import java.util.ArrayList;
 import java.util.List;

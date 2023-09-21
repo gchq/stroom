@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
@@ -27,6 +26,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

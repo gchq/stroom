@@ -16,9 +16,6 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -26,6 +23,9 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
 import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
