@@ -50,6 +50,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -497,8 +498,9 @@ public class TableBuilderAnalyticExecutor {
             final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
             CurrentDbState currentDbState = lmdbDataStore.sync();
 
-            // If we don't have any data in LMDB then the current DB state will be null.
-            if (currentDbState != null && currentDbState.getLastEventTime() != null) {
+            // If we don't have any data in LMDB then we may have a currentDbState
+            // but lastEventTime will not be present
+            if (NullSafe.test(currentDbState, CurrentDbState::hasLastEventTime)) {
                 // Remember meta load state.
                 updateTrackerWithLmdbState(analytic.trackerData, currentDbState);
 

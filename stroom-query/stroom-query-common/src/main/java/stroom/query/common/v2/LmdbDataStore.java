@@ -65,6 +65,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -311,7 +312,7 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    public void putCurrentDbState(final Long streamId,
+    public void putCurrentDbState(final long streamId,
                                   final Long eventId,
                                   final Long lastEventTime) {
         final CurrentDbState currentDbState = new CurrentDbState(streamId, eventId, lastEventTime);
@@ -358,8 +359,8 @@ public class LmdbDataStore implements DataStore {
                                 uncommittedCount++;
                             } else if (queueItem instanceof
                                     final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem) {
-                                currentDbState =
-                                        mergeDbState(currentDbState, currentDbStateLmdbQueueItem.getCurrentDbState());
+                                currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
+                                        .mergeExisting(currentDbState);
                             } else if (queueItem instanceof final Sync sync) {
                                 commit(writeTxn, currentDbState);
                                 sync.sync();
@@ -440,19 +441,6 @@ public class LmdbDataStore implements DataStore {
                 transferState.setThread(null);
             }
         });
-    }
-
-    private CurrentDbState mergeDbState(final CurrentDbState currentDbState, final CurrentDbState newDbState) {
-        Long lastEventTime = newDbState.getLastEventTime();
-        if (lastEventTime == null &&
-                currentDbState != null &&
-                currentDbState.getLastEventTime() != null) {
-            lastEventTime = currentDbState.getLastEventTime();
-        }
-        return new CurrentDbState(
-                newDbState.getStreamId(),
-                newDbState.getEventId(),
-                lastEventTime);
     }
 
     private void delete(final BatchingWriteTxn writeTxn,
@@ -751,10 +739,11 @@ public class LmdbDataStore implements DataStore {
                         final ByteBuffer key = keyVal.key();
                         if (LmdbRowKeyFactoryFactory.isStateKey(key)) {
                             final ByteBuffer val = keyVal.val();
-                            currentDbStateAtomicReference.set(new CurrentDbState(
-                                    getLong(val, 0),
-                                    getLong(val, Long.BYTES),
-                                    getLong(val, Long.BYTES + Long.BYTES)));
+                            final long streamId = Objects.requireNonNull(getLong(val, 0),
+                                    "streamId not present in DB state");
+                            final Long eventId = getLong(val, Long.BYTES);
+                            final Long lastEventTime = getLong(val, Long.BYTES + Long.BYTES);
+                            currentDbStateAtomicReference.set(new CurrentDbState(streamId, eventId, lastEventTime));
                         }
                     }
                 }));
