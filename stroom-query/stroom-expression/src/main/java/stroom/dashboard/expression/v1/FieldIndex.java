@@ -16,16 +16,12 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class FieldIndex {
@@ -91,6 +87,14 @@ public class FieldIndex {
         return timeFieldIndex;
     }
 
+    /**
+     * @return True if fieldName matches the special Stream ID field.
+     */
+    public static boolean isStreamIdFieldName(final String fieldName) {
+        return Objects.equals(DEFAULT_STREAM_ID_FIELD_NAME, fieldName)
+                || Objects.equals(FALLBACK_STREAM_ID_FIELD_NAME, fieldName);
+    }
+
     public int getStreamIdFieldIndex() {
         if (streamIdFieldIndex == null) {
             streamIdFieldIndex =
@@ -105,6 +109,14 @@ public class FieldIndex {
                             .orElse(-1);
         }
         return streamIdFieldIndex;
+    }
+
+    /**
+     * @return True if fieldName matches the special Event ID field.
+     */
+    public static boolean isEventIdFieldName(final String fieldName) {
+        return Objects.equals(DEFAULT_EVENT_ID_FIELD_NAME, fieldName)
+                || Objects.equals(FALLBACK_EVENT_ID_FIELD_NAME, fieldName);
     }
 
     public int getEventIdFieldIndex() {
