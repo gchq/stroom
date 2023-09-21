@@ -184,19 +184,19 @@ public class TableBuilderAnalyticExecutor {
         final AtomicBoolean allComplete = new AtomicBoolean(true);
 
         // Load event and aggregate rules.
-        final List<TableBuilderAnalytic> loadedAnalyticList = loadAnalyticRules();
+        final List<TableBuilderAnalytic> analytics = loadAnalyticRules();
 
         // Group rules by transformation pipeline.
         final Map<GroupKey, List<TableBuilderAnalytic>> analyticGroupMap = new HashMap<>();
-        for (final TableBuilderAnalytic loadedAnalytic : loadedAnalyticList) {
+        for (final TableBuilderAnalytic analytic : analytics) {
             try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(loadedAnalytic.viewDoc().asDocRef());
-                final GroupKey groupKey = new GroupKey(loadedAnalytic.viewDoc().getPipeline(), ownerUuid);
+                final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc().asDocRef());
+                final GroupKey groupKey = new GroupKey(analytic.viewDoc().getPipeline(), ownerUuid);
                 analyticGroupMap
                         .computeIfAbsent(groupKey, k -> new ArrayList<>())
-                        .add(loadedAnalytic);
+                        .add(analytic);
             } catch (final RuntimeException e) {
-                LOGGER.error(() -> "Error executing rule: " + loadedAnalytic.ruleIdentity(), e);
+                LOGGER.error(() -> "Error executing rule: " + analytic.ruleIdentity(), e);
             }
         }
 
@@ -212,32 +212,42 @@ public class TableBuilderAnalyticExecutor {
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<GroupKey, List<TableBuilderAnalytic>> entry : analyticGroupMap.entrySet()) {
-            final GroupKey groupKey = entry.getKey();
-            final DocRef pipelineRef = groupKey.pipeline();
-            final String ownerUuid = groupKey.ownerUuid();
-            final List<TableBuilderAnalytic> analytics = entry.getValue();
-            if (analytics.size() > 0) {
-                final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
-                securityContext.asUser(userIdentity, () -> {
-                    final String pipelineIdentity = pipelineRef.toInfoString();
-                    final Runnable runnable = taskContextFactory.context("Pipeline: " + pipelineIdentity,
-                            TerminateHandlerFactory.NOOP_FACTORY,
-                            taskContext -> {
-                                final boolean complete =
-                                        processPipeline(pipelineRef, analytics, taskContext);
-                                if (!complete) {
-                                    allComplete.set(false);
-                                }
-                            });
-                    completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
-                });
-            }
+            final Optional<CompletableFuture<Void>> optional =
+                    processGroup(parentTaskContext, entry.getKey(), entry.getValue(), allComplete);
+            optional.ifPresent(completableFutures::add);
         }
 
         // Join.
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
 
         return allComplete.get() || parentTaskContext.isTerminated();
+    }
+
+    private Optional<CompletableFuture<Void>> processGroup(final TaskContext parentTaskContext,
+                                                           final GroupKey groupKey,
+                                                           final List<TableBuilderAnalytic> analytics,
+                                                           final AtomicBoolean allComplete) {
+        final DocRef pipelineRef = groupKey.pipeline();
+        final String ownerUuid = groupKey.ownerUuid();
+        if (analytics.size() > 0) {
+            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+            return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
+                final String pipelineIdentity = pipelineRef.toInfoString();
+                final Runnable runnable = taskContextFactory.childContext(
+                        parentTaskContext,
+                        "Pipeline: " + pipelineIdentity,
+                        TerminateHandlerFactory.NOOP_FACTORY,
+                        taskContext -> {
+                            final boolean complete =
+                                    processPipeline(pipelineRef, analytics, taskContext);
+                            if (!complete) {
+                                allComplete.set(false);
+                            }
+                        });
+                return Optional.of(CompletableFuture.runAsync(runnable, executorProvider.get()));
+            }));
+        }
+        return Optional.empty();
     }
 
     private boolean processPipeline(final DocRef pipelineDocRef,
