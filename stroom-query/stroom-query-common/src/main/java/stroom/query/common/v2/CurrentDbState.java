@@ -30,10 +30,6 @@ public class CurrentDbState {
         this.lastEventTime = lastEventTime;
     }
 
-    public static CurrentDbState init(final long streamId) {
-        return new CurrentDbState(streamId, null, null);
-    }
-
     public long getStreamId() {
         return streamId;
     }
@@ -42,8 +38,16 @@ public class CurrentDbState {
         return eventId;
     }
 
+    public boolean hasEventId() {
+        return eventId != null;
+    }
+
     public Long getLastEventTime() {
         return lastEventTime;
+    }
+
+    public boolean hasLastEventTime() {
+        return lastEventTime != null;
     }
 
     @Override
