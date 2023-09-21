@@ -411,7 +411,16 @@ public class TableBuilderAnalyticExecutor {
                             // Update LMDB state.
                             analytics.forEach(analytic -> {
                                 final LmdbDataStore lmdbDataStore = analytic.dataStore().getLmdbDataStore();
-                                lmdbDataStore.putCurrentDbState(meta.getId(), null, null);
+
+                                // Get current state and last event time.
+                                final CurrentDbState currentDbState = lmdbDataStore.sync();
+                                Long lastEventTime = null;
+                                if (currentDbState != null) {
+                                    lastEventTime = currentDbState.getLastEventTime();
+                                }
+
+                                // Update the state.
+                                lmdbDataStore.putCurrentDbState(meta.getId(), null, lastEventTime);
                                 lmdbDataStore.sync();
                             });
 
@@ -489,7 +498,7 @@ public class TableBuilderAnalyticExecutor {
             CurrentDbState currentDbState = lmdbDataStore.sync();
 
             // If we don't have any data in LMDB then the current DB state will be null.
-            if (currentDbState != null) {
+            if (currentDbState != null && currentDbState.getLastEventTime() != null) {
                 // Remember meta load state.
                 updateTrackerWithLmdbState(analytic.trackerData, currentDbState);
 
@@ -573,6 +582,8 @@ public class TableBuilderAnalyticExecutor {
                                  final DetectionConsumer detectionConsumer,
                                  final AnalyticDataStore dataStore,
                                  final CurrentDbState currentDbState) {
+        Objects.requireNonNull(currentDbState, "Null LMDB state");
+        Objects.requireNonNull(currentDbState.getLastEventTime(), "Null LMDB last event time");
 
         final SimpleDuration timeToWaitForData = Objects.requireNonNullElseGet(
                 analytic.analyticProcessConfig.getTimeToWaitForData(),
@@ -590,8 +601,7 @@ public class TableBuilderAnalyticExecutor {
             from = Instant.ofEpochMilli(0);
         }
 
-        // TODO: 20/09/2023 Not sure what the default value should be if getLastEventTime is null
-        Instant to = Instant.ofEpochMilli(Objects.requireNonNullElse(currentDbState.getLastEventTime(), 0L));
+        Instant to = Instant.ofEpochMilli(currentDbState.getLastEventTime());
         final Instant newTo = SimpleDurationUtil.minus(to, timeToWaitForData);
         if (!newTo.isBefore(Instant.EPOCH)) {
             to = newTo;
