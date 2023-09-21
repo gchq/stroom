@@ -111,7 +111,14 @@ public class NullSafe {
      * Alias for {@link NullSafe#coalesce(T[])}
      */
     public static <T> Optional<T> firstNonNull(final T... vals) {
-        return coalesce(vals);
+        if (vals != null) {
+            for (final T val : vals) {
+                if (val != null) {
+                    return Optional.of(val);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /**
