@@ -45,6 +45,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -770,11 +771,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private void putLong(final ByteBuffer valueBuffer, final Long l) {
-        if (l == null) {
-            valueBuffer.putLong(-1);
-        } else {
-            valueBuffer.putLong(l);
-        }
+        valueBuffer.putLong(GwtNullSafe.requireNonNullElse(l, -1L));
     }
 
     public CurrentDbState sync() {
