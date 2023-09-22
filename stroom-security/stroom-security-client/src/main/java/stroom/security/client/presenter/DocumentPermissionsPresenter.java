@@ -170,8 +170,8 @@ public class DocumentPermissionsPresenter
                                             .build())
                                     .height(Size
                                             .builder()
-                                            .initial(700)
-                                            .min(700)
+                                            .initial(800)
+                                            .min(800)
                                             .resizable(true)
                                             .build())
                                     .build();
@@ -185,8 +185,8 @@ public class DocumentPermissionsPresenter
                                             .build())
                                     .height(Size
                                             .builder()
-                                            .initial(600)
-                                            .min(600)
+                                            .initial(700)
+                                            .min(700)
                                             .resizable(true)
                                             .build())
                                     .build();

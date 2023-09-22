@@ -17,47 +17,81 @@
 package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.client.TickBoxCell.Appearance;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames.InferredPermissionType;
+import stroom.security.shared.DocumentPermissionNames.InferredPermissions;
+import stroom.security.shared.DocumentPermissionNames.PermissionType;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
+import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class PermissionsListPresenter
         extends MyPresenterWidget<PermissionsListPresenter.PermissionsListView> {
 
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+
     private final CellTable<String> cellTable;
+    private Map<String, SvgImage> typeToSvgMap = new HashMap<>();
 
     private DocumentPermissions documentPermissions;
-    private List<String> permissions;
+    private List<String> allPermissions;
+    private InferredPermissions inferredPermissions = InferredPermissions.empty();
     private Changes changes;
     private User currentUser;
+    private final RestFactory restFactory;
+
+    private Column<String, Preset> typeColumn = null;
 
     @Inject
-    public PermissionsListPresenter(final EventBus eventBus, final PermissionsListView view) {
+    public PermissionsListPresenter(final EventBus eventBus,
+                                    final PermissionsListView view,
+                                    final RestFactory restFactory) {
         super(eventBus, view);
+        this.restFactory = restFactory;
+
+        refreshDocTypeIcons();
 
         final boolean updatable = true;
         final TickBoxCell.Appearance appearance = updatable
@@ -65,48 +99,16 @@ public class PermissionsListPresenter
                 : new TickBoxCell.NoBorderAppearance();
 
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        final Column<String, String> column = new Column<String, String>(new TextCell()) {
-            @Override
-            public String getValue(final String row) {
-                return row;
-            }
-        };
-        cellTable.addColumn(column);
-        cellTable.setColumnWidth(column, 250, Unit.PX);
+
+        final Column<String, SafeHtml> permissionNameColumn = buildPermissionNameColumn();
+        cellTable.addColumn(permissionNameColumn);
+        cellTable.setColumnWidth(permissionNameColumn, 250, Unit.PX);
 
         // Selection.
-        final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                TickBoxCell.create(appearance, false, false, updatable)) {
-            @Override
-            public TickBoxState getValue(final String permission) {
-                TickBoxState tickBoxState = TickBoxState.UNTICK;
+        final Column<String, TickBoxState> selectionColumn = buildSelectionColumn(
+                updatable,
+                appearance);
 
-                if (currentUser != null) {
-                    final String userUuid = currentUser.getUuid();
-                    final Set<String> permissions = documentPermissions.getPermissionsForUser(userUuid);
-                    if (permissions.contains(permission)) {
-                        tickBoxState = TickBoxState.TICK;
-
-                    } else {
-                        // If the user has a higher level of permission that is inferred by this level
-                        // then indicate that with a half tick.
-                        String higherPermission = DocumentPermissionNames.getHigherPermission(permission);
-                        boolean inferred = false;
-
-                        while (higherPermission != null && !inferred) {
-                            inferred = permissions.contains(higherPermission);
-                            higherPermission = DocumentPermissionNames.getHigherPermission(higherPermission);
-                        }
-
-                        if (inferred) {
-                            tickBoxState = TickBoxState.HALF_TICK;
-                        }
-                    }
-                }
-
-                return tickBoxState;
-            }
-        };
         if (updatable) {
             final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
             cellTable.sinkEvents(mouseMove);
@@ -116,10 +118,117 @@ public class PermissionsListPresenter
             cellTable.setSelectionModel(selectionModel, selectionEventManager);
         }
         cellTable.addColumn(selectionColumn);
-        cellTable.setColumnWidth(selectionColumn, 50, Unit.PX);
+        cellTable.setColumnWidth(selectionColumn, 12, Unit.PX);
         cellTable.setWidth("auto");
 
         view.setTable(cellTable);
+    }
+
+    private Column<String, TickBoxState> buildSelectionColumn(final boolean updatable,
+                                                              final Appearance appearance) {
+        final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
+                TickBoxCell.create(appearance, false, false, updatable)) {
+            @Override
+            public TickBoxState getValue(final String permission) {
+                final Optional<InferredPermissionType> optPermType = getInferredPermissions()
+                        .getInferredPermissionType(permission);
+
+                return optPermType.map(type -> type.isDirect()
+                                ? TickBoxState.TICK
+                                : TickBoxState.HALF_TICK)
+                        .orElse(TickBoxState.UNTICK);
+            }
+        };
+        selectionColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+        return selectionColumn;
+    }
+
+    private Column<String, SafeHtml> buildPermissionNameColumn() {
+        final Column<String, SafeHtml> column = new Column<String, SafeHtml>(new SafeHtmlCell()) {
+            @Override
+            public SafeHtml getValue(final String permission) {
+                final Optional<InferredPermissionType> optInferredType = getInferredPermissions()
+                        .getInferredPermissionType(permission);
+                GWT.log(permission + " - " + optInferredType);
+                final String permClassBase = "documentPermissionType-";
+                final List<String> classes = new ArrayList<>();
+
+                if (optInferredType.isEmpty()) {
+                    classes.add(permClassBase + "noPermission");
+                } else {
+                    // User has this perm (possibly inferred)
+                    if (!DocumentPermissionNames.isDocumentCreatePermission(permission)) {
+                        final PermissionType permissionType = DocumentPermissionNames.getPermissionType(permission);
+                        classes.add(permClassBase + (PermissionType.DESTRUCTIVE.equals(permissionType)
+                                ? "destructive"
+                                : "nonDestructive"));
+                    }
+                    final InferredPermissionType inferredType = optInferredType.get();
+                    classes.add(permClassBase + (inferredType.isInferred()
+                            ? "inferred"
+                            : "direct"));
+                }
+
+                final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
+                        .appendHtmlConstant("<span class=\"");
+                for (int i = 0; i < classes.size(); i++) {
+                    if (i > 0) {
+                        safeHtmlBuilder.appendEscaped(" ");
+                    }
+                    safeHtmlBuilder.appendEscaped(classes.get(i));
+                }
+                return safeHtmlBuilder
+                        .appendHtmlConstant("\">")
+                        .appendEscaped(permission)
+                        .appendHtmlConstant("</span>")
+                        .toSafeHtml();
+            }
+        };
+        return column;
+    }
+
+//    private Optional<InferredPermission> getCurrentUserInferredPermission(final String permission) {
+//        if (currentUser != null) {
+//
+//        } else {
+//            return Collections.emptySet();
+//        }
+//        return Optional.ofNullable(permission)
+//                .map()
+//    }
+
+//    private boolean currentUserHasInferredPermission(final String permission) {
+//        return GwtNullSafe.test(
+//                currentUser,
+//                User::getUuid,
+//                uuid -> documentPermissions.getPermissionsForUser(uuid),
+//                userPerms -> userPerms.contains(permission));
+//    }
+
+    private void updateInferredPermissions() {
+        if (currentUser != null && documentPermissions != null) {
+            final Set<String> directPermissions = documentPermissions.getPermissionsForUser(currentUser.getUuid());
+            inferredPermissions = DocumentPermissionNames.getInferredPermissions(directPermissions);
+        } else {
+            inferredPermissions = InferredPermissions.empty();
+        }
+    }
+
+    private void refreshDocTypeIcons() {
+
+        // Hold map of doc type icons keyed on type to save constructing for each row
+        final Rest<DocumentTypes> rest = restFactory.create();
+        rest
+                .onSuccess(documentTypes -> {
+                    typeToSvgMap = documentTypes
+                            .getTypes()
+                            .stream()
+                            .collect(Collectors.toMap(
+                                    DocumentType::getType,
+                                    DocumentType::getIcon));
+                })
+                .call(EXPLORER_RESOURCE)
+                .fetchDocumentTypes();
     }
 
     public void addPermission(final String userUuid, final String permission) {
@@ -128,6 +237,7 @@ public class PermissionsListPresenter
 
         // Add to the model.
         documentPermissions.addPermission(userUuid, permission);
+        updateInferredPermissions();
     }
 
     public void removePermission(final String userUuid, final String permission) {
@@ -136,6 +246,7 @@ public class PermissionsListPresenter
 
         // Remove from the model.
         documentPermissions.removePermission(userUuid, permission);
+        updateInferredPermissions();
     }
 
     public void toggle(final String userUuid, final String permission) {
@@ -165,9 +276,9 @@ public class PermissionsListPresenter
         if (currentUser != null) {
             final String userUuid = currentUser.getUuid();
             final Set<String> currentPermissions = documentPermissions.getPermissions().get(userUuid);
-            final boolean select = currentPermissions == null || currentPermissions.size() < permissions.size();
+            final boolean select = currentPermissions == null || currentPermissions.size() < allPermissions.size();
 
-            for (final String permission : permissions) {
+            for (final String permission : allPermissions) {
                 boolean hasPermission = false;
                 if (currentPermissions != null) {
                     hasPermission = currentPermissions.contains(permission);
@@ -188,31 +299,77 @@ public class PermissionsListPresenter
     }
 
     public void setDocumentPermissions(final DocumentPermissions documentPermissions,
-                                       final List<String> permissions,
+                                       final List<String> allPermissions,
                                        final Changes changes) {
         this.documentPermissions = documentPermissions;
-        this.permissions = permissions;
+        this.allPermissions = allPermissions;
         this.changes = changes;
+        updateInferredPermissions();
+
+        final boolean containsCreatePerms = GwtNullSafe.stream(allPermissions)
+                .anyMatch(DocumentPermissionNames::isDocumentCreatePermission);
+
+        if (containsCreatePerms) {
+            // These are doc create perms so add a col to show the doc type icon
+            if (typeColumn == null) {
+                typeColumn = DataGridUtil.svgPresetColumnBuilder(
+                                false,
+                                this::getDocTypeIcon)
+                        .build();
+            }
+            if (typeColumn == null || cellTable.getColumnIndex(typeColumn) == -1) {
+                cellTable.insertColumn(0, typeColumn);
+                cellTable.setColumnWidth(typeColumn, 12, Unit.PX);
+            }
+        } else {
+            // Not doc create perms so remove the col
+            if (cellTable.getColumnIndex(typeColumn) != -1) {
+                cellTable.removeColumn(typeColumn);
+            }
+        }
+    }
+
+    private Preset getDocTypeIcon(final String permission) {
+        if (!GwtNullSafe.isBlankString(permission)) {
+            final String type = DocumentPermissionNames.getTypeFromDocumentCreatePermission(permission);
+            return GwtNullSafe.get(
+                    typeToSvgMap.get(type),
+                    svgImage -> new Preset(svgImage, type, true));
+        } else {
+            return null;
+        }
     }
 
     public void setCurrentUser(User currentUser) {
         this.currentUser = currentUser;
+        updateInferredPermissions();
         refresh();
     }
 
     private void refresh() {
         if (currentUser != null) {
-            cellTable.setRowData(0, permissions);
-            cellTable.setRowCount(permissions.size());
+            cellTable.setRowData(0, allPermissions);
+            cellTable.setRowCount(allPermissions.size());
         } else {
             cellTable.setRowCount(0);
         }
     }
 
+    public InferredPermissions getInferredPermissions() {
+        return inferredPermissions;
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public interface PermissionsListView extends View {
 
         void setTable(Widget widget);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class PermissionsListSelectionEventManager extends CheckListSelectionEventManager<String> {
 

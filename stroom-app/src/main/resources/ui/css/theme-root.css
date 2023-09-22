@@ -25,6 +25,11 @@
 
     --text-color: #151515;
     --text-color--disabled: #666;
+    --text-color--red: var(--red-500);
+    --text-color--green: var(--green-500);
+    --text-color--red--dark: var(--red-700);
+    --text-color--green--dark: var(--green-700);
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */
