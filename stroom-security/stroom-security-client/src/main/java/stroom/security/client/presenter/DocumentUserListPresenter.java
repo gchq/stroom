@@ -119,8 +119,8 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         getDataGrid().setRowData(0, users);
         getDataGrid().setRowCount(users.size());
 
-                if (selected != null && users.contains(selected)) {
-                    getSelectionModel().setSelected(selected);
+        if (selected != null && users.contains(selected)) {
+            getSelectionModel().setSelected(selected);
         }
     }
 
