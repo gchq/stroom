@@ -72,6 +72,13 @@ public class DateTimeSettings {
         return referenceTime;
     }
 
+    /**
+     * @return A copy of this but without the referenceTime.
+     */
+    public DateTimeSettings withoutReferenceTime() {
+        return new DateTimeSettings(dateTimePattern, timeZone, localZoneId, null);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
