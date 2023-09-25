@@ -71,6 +71,8 @@ public class PermissionsListPresenter
         extends MyPresenterWidget<PermissionsListPresenter.PermissionsListView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+    public static final int CHECKBOX_COL_WIDTH = 26;
+    public static final int ICON_COL_WIDTH = 26;
 
     private final CellTable<String> cellTable;
     private Map<String, SvgImage> typeToSvgMap = new HashMap<>();
@@ -100,14 +102,19 @@ public class PermissionsListPresenter
 
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
 
-        final Column<String, SafeHtml> permissionNameColumn = buildPermissionNameColumn();
-        cellTable.addColumn(permissionNameColumn);
-        cellTable.setColumnWidth(permissionNameColumn, 250, Unit.PX);
-
         // Selection.
         final Column<String, TickBoxState> selectionColumn = buildSelectionColumn(
                 updatable,
                 appearance);
+        selectionColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+        cellTable.addColumn(selectionColumn);
+        cellTable.setColumnWidth(selectionColumn, CHECKBOX_COL_WIDTH, Unit.PX);
+
+        // Permission Name
+        final Column<String, SafeHtml> permissionNameColumn = buildPermissionNameColumn();
+        cellTable.addColumn(permissionNameColumn);
+        // Make this col variable width, using 100% of the space not used by the fixed width cols
+        cellTable.setColumnWidth(permissionNameColumn, 100, Unit.PCT);
 
         if (updatable) {
             final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
@@ -117,10 +124,8 @@ public class PermissionsListPresenter
                     new PermissionsListSelectionEventManager(cellTable);
             cellTable.setSelectionModel(selectionModel, selectionEventManager);
         }
-        cellTable.addColumn(selectionColumn);
-        cellTable.setColumnWidth(selectionColumn, 12, Unit.PX);
-        cellTable.setWidth("auto");
 
+        cellTable.setWidth("auto", true);
         view.setTable(cellTable);
     }
 
@@ -316,10 +321,11 @@ public class PermissionsListPresenter
                                 false,
                                 this::getDocTypeIcon)
                         .build();
+                typeColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
             }
             if (typeColumn == null || cellTable.getColumnIndex(typeColumn) == -1) {
-                cellTable.insertColumn(0, typeColumn);
-                cellTable.setColumnWidth(typeColumn, 12, Unit.PX);
+                cellTable.insertColumn(1, typeColumn);
+                cellTable.setColumnWidth(typeColumn, ICON_COL_WIDTH, Unit.PX);
             }
         } else {
             // Not doc create perms so remove the col

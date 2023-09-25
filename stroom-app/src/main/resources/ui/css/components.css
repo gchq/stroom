@@ -1981,7 +1981,7 @@ button.main-menu svg {
 .documentPermissionType-destructive.documentPermissionType-inferred {
     /* color: hsl(from var(--text-color--red) h s calc(l - 20%)); */
     color: var(--text-color--red--dark);
-    opacity: 80%;
+    opacity: 85%;
 }
 
 .documentPermissionType-destructive.documentPermissionType-direct {
@@ -1995,7 +1995,7 @@ button.main-menu svg {
 .documentPermissionType-nonDestructive.documentPermissionType-inferred {
     /* color: hsl(from var(--text-color--green) h s calc(l - 20%)); */
     color: var(--text-color--green--dark);
-    opacity: 80%;
+    opacity: 85%;
 }
 
 .documentPermissionType-nonDestructive.documentPermissionType-direct {
