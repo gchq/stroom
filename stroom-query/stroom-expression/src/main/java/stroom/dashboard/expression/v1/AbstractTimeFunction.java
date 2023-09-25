@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 abstract class AbstractTimeFunction extends AbstractFunction {
 
@@ -36,7 +37,11 @@ abstract class AbstractTimeFunction extends AbstractFunction {
 
     ZonedDateTime getReferenceTime() {
         final DateTimeSettings dateTimeSettings = expressionContext.getDateTimeSettings();
-        final Instant instant = Instant.ofEpochMilli(expressionContext.getDateTimeSettings().getReferenceTime());
+        Objects.requireNonNull(dateTimeSettings, "dateTimeSettings not set in searchRequest");
+        Objects.requireNonNull(dateTimeSettings.getReferenceTime(),
+                "referenceTime not set in searchRequest.dateTimeSettings");
+
+        final Instant instant = Instant.ofEpochMilli(dateTimeSettings.getReferenceTime());
         switch (dateTimeSettings.getTimeZone().getUse()) {
             case LOCAL -> {
                 final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
