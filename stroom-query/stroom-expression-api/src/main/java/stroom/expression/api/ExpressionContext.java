@@ -71,6 +71,10 @@ public class ExpressionContext {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private int maxStringLength;

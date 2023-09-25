@@ -30,11 +30,13 @@ public class DateTimeSettings {
     private final String localZoneId;
 
     @Schema(description = "The time in milliseconds since epoch to use as the reference time for relative date " +
-            "functions like `day()`",
+            "functions like `day()`. Typically this is the current time when the query is executed. If null the " +
+            "current time will be assumed.",
             required = true)
+    // This is used in the API, so can't expect API users to set the reference time to now every time they
+    // run an API search that uses related date terms.
     @JsonProperty
-    private final long referenceTime;
-
+    private final Long referenceTime;
 
     /**
      * @param dateTimePattern The client date time pattern to use by default for formatting search results that contain
@@ -47,7 +49,7 @@ public class DateTimeSettings {
     public DateTimeSettings(@JsonProperty("dateTimePattern") final String dateTimePattern,
                             @JsonProperty("timeZone") final TimeZone timeZone,
                             @JsonProperty("localZoneId") final String localZoneId,
-                            @JsonProperty("referenceTime") final long referenceTime) {
+                            @JsonProperty("referenceTime") final Long referenceTime) {
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
         this.localZoneId = localZoneId;
@@ -66,7 +68,7 @@ public class DateTimeSettings {
         return localZoneId;
     }
 
-    public long getReferenceTime() {
+    public Long getReferenceTime() {
         return referenceTime;
     }
 
@@ -80,7 +82,7 @@ public class DateTimeSettings {
         }
         final DateTimeSettings that = (DateTimeSettings) o;
         return Objects.equals(dateTimePattern, that.dateTimePattern) &&
-                Objects.equals(timeZone,                that.timeZone) &&
+                Objects.equals(timeZone, that.timeZone) &&
                 Objects.equals(localZoneId, that.localZoneId) &&
                 Objects.equals(referenceTime, that.referenceTime);
     }
@@ -107,6 +109,10 @@ public class DateTimeSettings {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 

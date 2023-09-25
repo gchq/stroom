@@ -35,6 +35,11 @@ public class ExpressionContextFactory {
 
         if (dateTimeSettings == null) {
             dateTimeSettings = DateTimeSettings.builder().build();
+        } else if (dateTimeSettings.getReferenceTime() == null) {
+            // Ensure we have a reference time
+            dateTimeSettings = dateTimeSettings.copy()
+                    .referenceTime(System.currentTimeMillis())
+                    .build();
         }
 
         return ExpressionContext.builder()

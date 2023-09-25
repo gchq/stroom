@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.ParamKeys;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -32,6 +33,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
@@ -228,6 +230,9 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             // Add partition time constraints to the query.
             modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
 
+            // Ensure we have a reference time so relative time expression work
+            modifiedRequest = addReferenceTime(modifiedRequest);
+
             final SearchRequest finalModifiedRequest = modifiedRequest;
             final QueryKey queryKey = finalModifiedRequest.getKey();
             LOGGER.trace(() -> "get() " + queryKey);
@@ -307,6 +312,26 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         }
 
         return result;
+    }
+
+    private SearchRequest addReferenceTime(final SearchRequest searchRequest) {
+        if (GwtNullSafe.get(searchRequest, SearchRequest::getDateTimeSettings) != null) {
+            DateTimeSettings dateTimeSettings = searchRequest.getDateTimeSettings();
+            if (searchRequest.getDateTimeSettings().getReferenceTime() == null) {
+                LOGGER.debug("Adding referenceTime");
+                dateTimeSettings = dateTimeSettings.copy()
+                        .referenceTime(System.currentTimeMillis())
+                        .build();
+
+                return searchRequest.copy()
+                        .dateTimeSettings(dateTimeSettings)
+                        .build();
+            } else {
+                return searchRequest;
+            }
+        } else {
+            return searchRequest;
+        }
     }
 
     private SearchResponse doSearch(final ResultStore resultStore,
