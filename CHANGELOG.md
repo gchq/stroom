@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.67] - 2023-09-25
+
+* Issue **#3776** : Change `dataTimeSettings.referenceTime` to be nullable in API search requests so it can be set to the current time by the server at query time. Change the Dashboard 'Download Query' feature to clear the `referenceTime` in the request JSON.
+
+
 ## [v7.2-beta.66] - 2023-09-25
 
 * Issue **#3757** : Fix NPE in rule processing. Fix NPE with `getLastEventTime()`.
@@ -5943,7 +5948,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.66...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.67...HEAD
+[v7.2-beta.67]: https://github.com/gchq/stroom/compare/v7.2-beta.66...v7.2-beta.67
 [v7.2-beta.66]: https://github.com/gchq/stroom/compare/v7.2-beta.65...v7.2-beta.66
 [v7.2-beta.65]: https://github.com/gchq/stroom/compare/v7.2-beta.64...v7.2-beta.65
 [v7.2-beta.64]: https://github.com/gchq/stroom/compare/v7.2-beta.63...v7.2-beta.64
