@@ -42,10 +42,13 @@ import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -87,6 +90,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final SearchRequestBuilder searchRequestBuilder;
     private final ExpressionContextFactory expressionContextFactory;
+    private final SecurityContext securityContext;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -102,7 +106,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                                    final DetectionConsumerFactory detectionConsumerFactory,
                                    final SearchRequestBuilder searchRequestBuilder,
-                                   final ExpressionContextFactory expressionContextFactory) {
+                                   final ExpressionContextFactory expressionContextFactory,
+                                   final SecurityContext securityContext) {
         this.analyticHelper = analyticHelper;
         this.dataSourceResolver = dataSourceResolver;
         this.executorProvider = executorProvider;
@@ -117,13 +122,14 @@ public class ScheduledQueryAnalyticExecutor {
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.searchRequestBuilder = searchRequestBuilder;
         this.expressionContextFactory = expressionContextFactory;
+        this.securityContext = securityContext;
     }
 
     public void exec() {
         // Load rules.
         final List<ScheduledQueryAnalytic> analytics = loadScheduledQueryAnalytics();
 
-        analyticHelper.info(() -> "Processing batch rules");
+        analyticHelper.info(() -> "Processing " + LogUtil.namedCount("batch rule", NullSafe.size(analytics)));
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         processScheduledQueryAnalytics(analytics, completableFutures, taskContextFactory.current());
 
@@ -136,60 +142,80 @@ public class ScheduledQueryAnalyticExecutor {
                                                 final TaskContext parentTaskContext) {
         for (final ScheduledQueryAnalytic analytic : analytics) {
             if (!parentTaskContext.isTerminated()) {
-                SimpleDuration timeToWaitForData = analytic.analyticProcessConfig.getTimeToWaitForData();
-                SimpleDuration queryFrequency = analytic.analyticProcessConfig.getQueryFrequency();
-                if (timeToWaitForData == null) {
-                    timeToWaitForData = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-                }
-                if (queryFrequency == null) {
-                    queryFrequency = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-                }
-
-                // See if it is time to execute this query.
-                final Instant now = Instant.now();
-                final Instant nextExecution = SimpleDurationUtil.minus(now, queryFrequency);
-                final Long lastExecutionTimeMs = analytic.trackerData.getLastExecutionTimeMs();
-                if (lastExecutionTimeMs == null || lastExecutionTimeMs < nextExecution.toEpochMilli()) {
-
-                    Instant from = Instant.ofEpochMilli(0);
-                    if (analytic.trackerData.getLastWindowEndTimeMs() != null) {
-                        from = Instant.ofEpochMilli(analytic.trackerData.getLastWindowEndTimeMs() + 1);
-                    } else if (analytic.analyticProcessConfig.getMinEventTimeMs() != null) {
-                        from = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMinEventTimeMs());
-                    }
-
-                    Instant to = now;
-                    to = SimpleDurationUtil.minus(to, timeToWaitForData);
-                    if (analytic.analyticProcessConfig.getMaxEventTimeMs() != null) {
-                        Instant max = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMaxEventTimeMs());
-                        if (max.isBefore(to)) {
-                            to = max;
-                        }
-                    }
-
-                    if (to.isAfter(from)) {
-                        final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
-                        final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
-                        final Runnable runnable = analyticErrorWritingExecutor.wrap(
-                                "Scheduled Query Analytic: " + analytic.ruleIdentity(),
-                                errorFeedName,
-                                null,
+                try {
+                    final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc.asDocRef());
+                    final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
+                        final Runnable runnable = taskContextFactory.childContext(
                                 parentTaskContext,
-                                taskContext -> processScheduledQueryAnalytic(analytic, timeFilter));
+                                "Scheduled Query Analytic: " + analytic.ruleIdentity(),
+                                taskContext -> {
+                                    processScheduledQueryAnalytic(analytic, completableFutures, taskContext);
+                                });
+                        runnable.run();
+                    }));
+                } catch (final RuntimeException e) {
+                    LOGGER.error(() -> "Error executing rule: " + analytic.ruleIdentity(), e);
+                }
+            }
+        }
+    }
 
-                        try {
-                            completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
-                        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                            LOGGER.debug(e::getMessage, e);
-                            throw e;
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e::getMessage, e);
-                            analytic.trackerData().setMessage(e.getMessage());
-                            LOGGER.info("Disabling: " + analytic.ruleIdentity());
-                            analyticHelper.updateTracker(analytic.tracker);
-                            analyticHelper.disableProcess(analytic.analyticRuleDoc());
-                        }
-                    }
+    private void processScheduledQueryAnalytic(final ScheduledQueryAnalytic analytic,
+                                               final List<CompletableFuture<Void>> completableFutures,
+                                               final TaskContext parentTaskContext) {
+        SimpleDuration timeToWaitForData = analytic.analyticProcessConfig.getTimeToWaitForData();
+        SimpleDuration queryFrequency = analytic.analyticProcessConfig.getQueryFrequency();
+        if (timeToWaitForData == null) {
+            timeToWaitForData = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
+        }
+        if (queryFrequency == null) {
+            queryFrequency = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
+        }
+
+        // See if it is time to execute this query.
+        final Instant now = Instant.now();
+        final Instant nextExecution = SimpleDurationUtil.minus(now, queryFrequency);
+        final Long lastExecutionTimeMs = analytic.trackerData.getLastExecutionTimeMs();
+        if (lastExecutionTimeMs == null || lastExecutionTimeMs < nextExecution.toEpochMilli()) {
+
+            Instant from = Instant.ofEpochMilli(0);
+            if (analytic.trackerData.getLastWindowEndTimeMs() != null) {
+                from = Instant.ofEpochMilli(analytic.trackerData.getLastWindowEndTimeMs() + 1);
+            } else if (analytic.analyticProcessConfig.getMinEventTimeMs() != null) {
+                from = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMinEventTimeMs());
+            }
+
+            Instant to = now;
+            to = SimpleDurationUtil.minus(to, timeToWaitForData);
+            if (analytic.analyticProcessConfig.getMaxEventTimeMs() != null) {
+                Instant max = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMaxEventTimeMs());
+                if (max.isBefore(to)) {
+                    to = max;
+                }
+            }
+
+            if (to.isAfter(from)) {
+                final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
+                final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
+                final Runnable runnable = analyticErrorWritingExecutor.wrap(
+                        "Scheduled Query Analytic: " + analytic.ruleIdentity(),
+                        errorFeedName,
+                        null,
+                        parentTaskContext,
+                        taskContext -> processScheduledQueryAnalytic(analytic, timeFilter));
+
+                try {
+                    completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                    analytic.trackerData().setMessage(e.getMessage());
+                    LOGGER.info("Disabling: " + analytic.ruleIdentity());
+                    analyticHelper.updateTracker(analytic.tracker);
+                    analyticHelper.disableProcess(analytic.analyticRuleDoc());
                 }
             }
         }

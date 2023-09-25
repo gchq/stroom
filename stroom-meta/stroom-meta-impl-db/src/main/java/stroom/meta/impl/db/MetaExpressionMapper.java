@@ -8,6 +8,7 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.util.NullSafe;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -47,6 +48,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                     values -> {
                         try {
                             return values.stream()
+                                    .filter(str -> !NullSafe.isBlankString(str))
                                     .map(Long::valueOf)
                                     .collect(Collectors.toList());
                         } catch (final NumberFormatException e) {

@@ -36,6 +36,7 @@ BEGIN
 
         ALTER TABLE query
         ADD COLUMN owner_uuid varchar(255) NOT NULL;
+        CREATE INDEX owner_uuid ON query (owner_uuid);
 
         SELECT COUNT(1)
         INTO object_count
@@ -49,17 +50,6 @@ BEGIN
             WHERE q.create_user = s.name;
         END IF;
 
-    END IF;
-
-    SELECT COUNT(1)
-    INTO object_count
-    FROM information_schema.table_constraints
-    WHERE table_schema = database()
-    AND table_name = 'query'
-    AND constraint_name = 'owner_uuid';
-
-    IF object_count = 0 THEN
-        CREATE INDEX owner_uuid ON query (owner_uuid);
     END IF;
 
 END $$

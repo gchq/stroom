@@ -22,19 +22,19 @@ public class TestV07_02_00_005 extends AbstractExplorerMigrationTest {
 
                 insert into explorer_node (type, uuid, name, tags)
                 values ('Folder', 'uuid-1', 'My Folder', 'tag-one');
-                                
+
                 insert into explorer_node (type, uuid, name, tags)
                 values ('StatisticStore', 'uuid-2', 'Imp_exp_test_statistics', 'DataSource');
-                                
+
                 insert into explorer_node (type, uuid, name, tags)
                 values ('SolrIndex', 'uuid-3', 'mycore', 'foo DataSource');
-                                
+
                 insert into explorer_node (type, uuid, name, tags)
                 values ('Index', 'uuid-4', 'LAX_CARGO_VOLUME-INDEX', 'DataSource foo');
-                                
+
                 insert into explorer_node (type, uuid, name, tags)
                 values ('Index', 'uuid-5', 'BROADBAND_SPEED_TESTS-INDEX', '  DataSource ');
-                                
+
                 insert into explorer_node (type, uuid, name, tags)
                 values ('Folder', 'uuid-6', 'Other Folder', '');
                 """;

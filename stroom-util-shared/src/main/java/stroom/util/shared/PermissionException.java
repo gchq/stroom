@@ -18,8 +18,6 @@ package stroom.util.shared;
 
 public class PermissionException extends EntityServiceException {
 
-    private static final long serialVersionUID = -7671344466028839328L;
-
     private String user;
 
     public PermissionException() {
@@ -46,18 +44,6 @@ public class PermissionException extends EntityServiceException {
                     ? ""
                     : " - " + methodName));
         }
-    }
-
-    public static PermissionException createLoginRequiredException(final String name,
-                                                                   final String methodName) {
-        return new PermissionException(null, null, name, methodName, "A user must be logged in to call service");
-    }
-
-    public static PermissionException createAppPermissionRequiredException(final String user,
-                                                                           final String permission,
-                                                                           final String methodName) {
-        return new PermissionException(user, null, permission, methodName,
-                "User does not have the required permission (" + permission + ")");
     }
 
     public String getUser() {

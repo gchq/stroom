@@ -178,26 +178,25 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
 
     private Condition eq(final ExpressionTerm term) {
         final List<T> list = getValues(term.getValue());
-        if (list.size() > 0) {
-            if (list.size() > 1) {
-                return field.in(list);
-            } else {
-                final T t = list.get(0);
-                if (t instanceof String) {
-                    final String string = (String) t;
-                    if (string.contains(ASTERISK)) {
-                        final String like = ASTERISK_PATTERN.matcher(string).replaceAll(PERCENT);
-                        return field.like(like);
-                    }
+        if (NullSafe.isEmptyCollection(list)) {
+            return field.isNull();
+        } else if (list.size() > 1) {
+            return field.in(list);
+        } else {
+            final T t = list.get(0);
+            if (t instanceof String) {
+                final String string = (String) t;
+                if (string.contains(ASTERISK)) {
+                    final String like = ASTERISK_PATTERN.matcher(string).replaceAll(PERCENT);
+                    return field.like(like);
                 }
-                return field.eq(t);
             }
+            return field.eq(t);
         }
-        return field.in(list);
     }
 
     private List<T> getValues(final String value) {
-        return converter.apply(List.of(value));
+        return converter.apply(NullSafe.singletonList(value));
     }
 
     private List<T> getValues(final List<String> values) {

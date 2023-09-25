@@ -75,6 +75,10 @@ public class FolderPermissionsTabPresenter
         createPermissionsListPresenter.setDocumentPermissions(documentPermissions, permissions, changes);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface FolderPermissionsTabView extends DocumentPermissionsTabView {
 
         void setCreatePermissionsView(View view);

@@ -95,7 +95,8 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserDocumentPermissionsCache.class)
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(UserGroupsCache.class)
-                .addBinding(UserCache.class);
+                .addBinding(UserCache.class)
+                .addBinding(DocumentOwnerPermissionsCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(UserCache.class)
@@ -103,7 +104,8 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserAppPermissionsCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
-                .addBinding(UserDocumentPermissionsCache.class);
+                .addBinding(UserDocumentPermissionsCache.class)
+                .addBinding(DocumentOwnerPermissionsCache.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AppPermissionResourceImpl.class)

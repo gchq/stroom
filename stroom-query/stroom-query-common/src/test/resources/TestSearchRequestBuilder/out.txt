@@ -629,7 +629,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
           "type" : "term",
           "field" : "EventTime",
           "condition" : "LESS_THAN_OR_EQUAL_TO",
-          "value" : "day() - 1d - 1h"
+          "value" : "day()-1d-1h"
         } ]
       } ]
     }
@@ -1098,4 +1098,90 @@ select StreamId as "Stream Id", count as Count
     }
   }
 }
+-----
+from datasource
+where field = * ans field != 'fred'
+=====
+TokenException{tokenType=STRING, start=32, end=34, text=ans, message=Unexpected token}
+-----
+from datasource
+where field=* and field='fred''
+=====
+TokenException{tokenType=STRING, start=46, end=46, text=', message=Unexpected token}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval
+select UserId
+=====
+TokenException{tokenType=EVAL, start=48, end=51, text=eval, message=Expected variable name following eval}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId
+select UserId
+=====
+TokenException{tokenType=STRING, start=53, end=58, text=UserId, message=Expected equals}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId =
+select UserId
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "my.name",
+          "condition" : "EQUALS",
+          "value" : "\"foo bar\""
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "UserId",
+        "name" : "UserId",
+        "expression" : "",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId = uCase(UserId)
+select UserId
+=====
+TokenException{tokenType=FUNCTION_GROUP, start=62, end=74, text=uCase(UserId), message=Unknown function name: uCase}
 -----

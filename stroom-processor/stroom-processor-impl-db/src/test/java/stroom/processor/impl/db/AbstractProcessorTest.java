@@ -166,7 +166,7 @@ class AbstractProcessorTest {
         processorFilter.setQueryData(QueryData.builder()
                 .build());
         processorFilter.setUuid(UUID.randomUUID().toString());
-        stampProcessorFilter(processorFilter, "jbloggs", UUID.randomUUID().toString());
+        stampProcessorFilter(processorFilter, "jbloggs");
 
         return processorFilterDao.create(processorFilter);
     }
@@ -283,9 +283,7 @@ class AbstractProcessorTest {
     }
 
     private void stampProcessorFilter(final ProcessorFilter processorFilter,
-                                      final String auditUser,
-                                      final String userUuid) {
+                                      final String auditUser) {
         AuditUtil.stamp(() -> auditUser, processorFilter);
-        processorFilter.setOwnerUuid(userUuid);
     }
 }

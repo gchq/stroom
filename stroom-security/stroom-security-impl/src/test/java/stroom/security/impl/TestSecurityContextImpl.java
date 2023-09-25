@@ -18,6 +18,8 @@ public class TestSecurityContextImpl {
                     null,
                     null,
                     null,
+                    null,
+                    null,
                     null);
             securityContext.secure(Assertions::fail);
         }).isInstanceOf(AuthenticationException.class);

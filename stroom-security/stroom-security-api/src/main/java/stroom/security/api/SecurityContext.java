@@ -16,6 +16,7 @@
 
 package stroom.security.api;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
@@ -52,18 +53,9 @@ public interface SecurityContext extends HasAuditableUserIdentity {
         return userIdentity.getUserIdentityForAudit();
     }
 
-    /**
-     * See {@link UserIdentity#getCombinedName()}
-     */
-    default String getCombinedUserIdentity() {
-        final UserIdentity userIdentity = getUserIdentity();
-        if (userIdentity == null) {
-            return null;
-        }
-        return userIdentity.getCombinedName();
-    }
-
     UserIdentity createIdentity(String subjectId);
+
+    UserIdentity createIdentityByUserUuid(String userUuid);
 
     /**
      * Gets the identity of the current user.
@@ -135,6 +127,15 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * requested permission.
      */
     boolean hasDocumentPermission(String documentUuid, String permission);
+
+    /**
+     * Get the user UUID of the owner of a document. Throws authentication exception if there are multiple users with
+     * ownership or no owners.
+     *
+     * @param documentUuid The uuid of the document.
+     * @return The UUID of the document owner.
+     */
+    String getDocumentOwnerUuid(DocRef docRef);
 
     /**
      * Run the supplied code as the specified user.

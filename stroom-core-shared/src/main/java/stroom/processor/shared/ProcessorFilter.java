@@ -81,8 +81,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     private String pipelineUuid;
     @JsonProperty
     private String pipelineName;
-    @JsonProperty
-    private String ownerUuid;
 
     @JsonProperty
     private Processor processor;
@@ -129,7 +127,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
                            @JsonProperty("pipelineName") final String pipelineName,
-                           @JsonProperty("ownerUuid") final String ownerUuid,
                            @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                            @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
         this.id = id;
@@ -154,7 +151,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.deleted = deleted;
         this.processorUuid = processorUuid;
         this.pipelineName = pipelineName;
-        this.ownerUuid = ownerUuid;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
     }
@@ -272,14 +268,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
     public void setPipelineName(final String pipelineName) {
         this.pipelineName = pipelineName;
-    }
-
-    public String getOwnerUuid() {
-        return ownerUuid;
-    }
-
-    public void setOwnerUuid(final String ownerUuid) {
-        this.ownerUuid = ownerUuid;
     }
 
     @JsonIgnore
@@ -413,5 +401,13 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 '}';
+    }
+
+    public DocRef asDocRef() {
+        // Doesn't really have a name
+        return DocRef.builder()
+                .type(ENTITY_TYPE)
+                .uuid(uuid)
+                .build();
     }
 }

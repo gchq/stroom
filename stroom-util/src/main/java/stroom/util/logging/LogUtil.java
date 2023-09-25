@@ -344,4 +344,39 @@ public final class LogUtil {
             return str.substring(0, maxLength) + "...";
         }
     }
+
+    /**
+     * @return A string of the form '1 apple' or `2 apples' depending on the count.
+     * User {@link LogUtil#namedCount(String, String, String, int)} for plural names
+     * that don't end with an 's'.
+     */
+    public static String namedCount(final String name, final int count) {
+        final StringBuilder sb = new StringBuilder()
+                .append(count)
+                .append(" ")
+                .append(name);
+        if (count != 1) {
+            sb.append("s");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return A string of the form '1 embassy' or `2 embassies' depending on the count
+     */
+    public static String namedCount(final String baseName,
+                                    final String singularSuffix,
+                                    final String pluralSuffix,
+                                    final int count) {
+        final StringBuilder sb = new StringBuilder()
+                .append(count)
+                .append(" ")
+                .append(baseName);
+        if (count == 1) {
+            sb.append(singularSuffix);
+        } else {
+            sb.append(pluralSuffix);
+        }
+        return sb.toString();
+    }
 }

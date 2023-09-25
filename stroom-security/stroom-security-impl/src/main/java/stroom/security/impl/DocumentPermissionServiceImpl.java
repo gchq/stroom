@@ -76,17 +76,16 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(
                     docUuid);
 
-            documentPermission.forEach((userUuid, permissions) -> {
-                userDao.getByUuid(userUuid)
-                        .ifPresent(user -> {
-                            if (user.isGroup()) {
-                                groups.add(user);
-                            } else {
-                                users.add(user);
-                            }
-                            userPermissions.put(user.getUuid(), permissions);
-                        });
-            });
+            documentPermission.forEach((userUuid, permissions) ->
+                    userDao.getByUuid(userUuid)
+                            .ifPresent(user -> {
+                                if (user.isGroup()) {
+                                    groups.add(user);
+                                } else {
+                                    users.add(user);
+                                }
+                                userPermissions.put(user.getUuid(), permissions);
+                            }));
         } catch (final RuntimeException e) {
             LOGGER.error("getPermissionsForDocument()", e);
             throw e;
@@ -165,6 +164,27 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                     "User {} of type {} does not have a stroom user identity",
                     userIdentity, NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName)));
         }
+    }
+
+    @Override
+    public void setDocumentOwner(final String documentUuid, final String userUuid) {
+        final Set<String> currentOwners = documentPermissionDao.getDocumentOwnerUuids(documentUuid);
+        if (currentOwners != null) {
+            currentOwners.forEach(ownerUuid -> {
+                documentPermissionDao.removePermission(documentUuid, ownerUuid, DocumentPermissionNames.OWNER);
+                RemovePermissionEvent.fire(permissionChangeEventBus,
+                        ownerUuid,
+                        documentUuid,
+                        DocumentPermissionNames.OWNER);
+            });
+        }
+        documentPermissionDao.addPermission(documentUuid, userUuid, DocumentPermissionNames.OWNER);
+        AddPermissionEvent.fire(permissionChangeEventBus, userUuid, documentUuid, DocumentPermissionNames.OWNER);
+    }
+
+    @Override
+    public Set<String> getDocumentOwnerUuids(final String documentUuid) {
+        return documentPermissionDao.getDocumentOwnerUuids(documentUuid);
     }
 
     private void copyPermissions(final String sourceUuid, final String destUuid) {

@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
@@ -9,11 +11,11 @@ import stroom.security.shared.HasStroomUserIdentity;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.DocumentOwnerException;
 import stroom.util.shared.PermissionException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Set;
@@ -25,28 +27,34 @@ import javax.inject.Singleton;
 @Singleton
 class SecurityContextImpl implements SecurityContext {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityContextImpl.class);
 
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
+    private final DocumentOwnerPermissionsCache documentOwnerPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final Provider<UserCache> userCacheProvider;
     private final UserIdentityFactory userIdentityFactory;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     SecurityContextImpl(
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
+            final DocumentOwnerPermissionsCache documentOwnerPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
             final Provider<UserCache> userCacheProvider,
-            final UserIdentityFactory userIdentityFactory) {
+            final UserIdentityFactory userIdentityFactory,
+            final DocRefInfoService docRefInfoService) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
+        this.documentOwnerPermissionsCache = documentOwnerPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCacheProvider = userCacheProvider;
         this.userIdentityFactory = userIdentityFactory;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -74,11 +82,20 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public UserIdentity createIdentity(final String subjectId) {
-        Objects.requireNonNull(subjectId, "Null user id provided");
+        Objects.requireNonNull(subjectId, "Null subjectId provided");
         // Inject as provider to avoid circular dep issues
         return userCacheProvider.get().getOrCreate(subjectId)
                 .map(BasicUserIdentity::new)
                 .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + subjectId));
+    }
+
+    @Override
+    public UserIdentity createIdentityByUserUuid(final String userUuid) {
+        Objects.requireNonNull(userUuid, "Null user uuid provided");
+        // Inject as provider to avoid circular dep issues
+        return userCacheProvider.get().getByUuid(userUuid)
+                .map(BasicUserIdentity::new)
+                .orElseThrow(() -> new AuthenticationException("Unable to find user with uuid=" + userUuid));
     }
 
     @Override
@@ -251,6 +268,44 @@ class SecurityContextImpl implements SecurityContext {
             return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
         }
         return false;
+    }
+
+    @Override
+    public String getDocumentOwnerUuid(final DocRef docRef) {
+        Objects.requireNonNull(docRef, "docRef not provided");
+        final String documentUuid = docRef.getUuid();
+        final Set<String> ownerStroomUserUuids = documentOwnerPermissionsCache.get(documentUuid);
+        if (NullSafe.isEmptyCollection(ownerStroomUserUuids)) {
+            throw new DocumentOwnerException(
+                    documentUuid,
+                    LogUtil.message("Document {} has no owners. Either assign an Owner to it or " +
+                                    "if there is one, then try clearing cache '{}'",
+                            decorateDocRefForLogging(docRef),
+                            DocumentOwnerPermissionsCache.CACHE_NAME));
+        } else if (ownerStroomUserUuids.size() > 1) {
+            throw new DocumentOwnerException(
+                    documentUuid,
+                    LogUtil.message("Document {} has multiple ({}) owners. There can be only one. " +
+                                    "Owner user uuids: [{}]. ",
+                            decorateDocRefForLogging(docRef),
+                            ownerStroomUserUuids.size(),
+                            String.join(", ", ownerStroomUserUuids)));
+        }
+        return ownerStroomUserUuids.iterator().next();
+    }
+
+    private DocRef decorateDocRefForLogging(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        } else {
+            try {
+                return docRefInfoService.decorate(docRef);
+            } catch (Exception e) {
+                // Failure should not be re-thrown
+                LOGGER.debug("Error decorating docRef {}", docRef, e);
+                return docRef;
+            }
+        }
     }
 
     /**
