@@ -1,6 +1,9 @@
 package stroom.security.shared;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,8 +14,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonPropertyOrder({"docUuid", "users", "groups", "permissions"})
 @JsonInclude(Include.NON_NULL)
@@ -26,6 +32,7 @@ public class DocumentPermissions {
     private final List<User> users;
     @JsonProperty
     private final List<User> groups;
+
     @JsonProperty
     private final Map<String, Set<String>> permissions;
 
@@ -52,6 +59,9 @@ public class DocumentPermissions {
         return groups;
     }
 
+    /**
+     * @return Map of user/group stroom user uuid to a set of held permissions
+     */
     public Map<String, Set<String>> getPermissions() {
         return new HashMap<>(permissions);
     }
@@ -65,6 +75,24 @@ public class DocumentPermissions {
         if (perms != null) {
             perms.remove(permission);
         }
+    }
+
+    /**
+     * @return The set of users with Owner permission
+     */
+    @JsonIgnore
+    public Set<User> getOwners() {
+        return permissions.entrySet()
+                .stream()
+                .filter(entry -> GwtNullSafe.set(entry.getValue()).contains(DocumentPermissionNames.OWNER))
+                .map(Entry::getKey)
+                .map(userUuid ->
+                        Stream.concat(users.stream(), groups.stream())
+                                .filter(user -> userUuid.equals(user.getUuid()))
+                                .findFirst()
+                                .orElseThrow(() ->
+                                        new RuntimeException("User with uuid " + userUuid + " not in lists")))
+                .collect(Collectors.toSet());
     }
 
     public boolean containsUserOrGroup(final String uuid, final boolean isGroup) {

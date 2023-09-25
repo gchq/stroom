@@ -17,6 +17,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -30,6 +31,8 @@ import stroom.security.shared.CopyPermissionsFromParentRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
+import stroom.security.shared.User;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -49,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -65,6 +69,7 @@ public class DocumentPermissionsPresenter
     private final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider;
 
     private Changes changes = new Changes(new HashMap<>(), new HashMap<>());
+    private DocumentPermissions documentPermissions = null;
 
     @Inject
     public DocumentPermissionsPresenter(
@@ -148,6 +153,7 @@ public class DocumentPermissionsPresenter
             final Rest<DocumentPermissions> rest = restFactory.create();
             rest
                     .onSuccess(documentPermissions -> {
+                        this.documentPermissions = documentPermissions;
                         usersPresenter.setDocumentPermissions(
                                 allPermissions,
                                 documentPermissions,
@@ -207,14 +213,28 @@ public class DocumentPermissionsPresenter
 
     private void onHideRequest(final HidePopupRequestEvent e, final DocRef docRef) {
         if (e.isOk()) {
-            final Rest<Boolean> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> e.hide())
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
-                            docRef,
-                            changes,
-                            getView().getCascade().getValue()));
+            final Set<User> owners = documentPermissions.getOwners();
+            if (GwtNullSafe.set(owners).size() > 1) {
+                final String ownerListStr = owners.stream()
+                        .map(user -> (user.isGroup() ? "Group" : "User ") + " - " + user.asCombinedName())
+                        .sorted()
+                        .collect(Collectors.joining("\n"));
+                AlertEvent.fireError(
+                        DocumentPermissionsPresenter.this,
+                        "Only one user/group can be the owner of this " + docRef.getType() + ".\n" +
+                                "The following users/groups currently have Owner permission",
+                        ownerListStr,
+                        null);
+            } else {
+                final Rest<Boolean> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> e.hide())
+                        .call(DOC_PERMISSION_RESOURCE)
+                        .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
+                                docRef,
+                                changes,
+                                getView().getCascade().getValue()));
+            }
         } else {
             e.hide();
         }
