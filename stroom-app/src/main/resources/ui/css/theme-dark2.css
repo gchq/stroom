@@ -19,6 +19,10 @@
 
     --text-color: #e6e1dc;
     --text-color--disabled: #666;
+    --text-color--red: var(--red-700);
+    --text-color--green: var(--green-500);
+    --text-color--red--dark: var(--red-900);
+    --text-color--green--dark: var(--green-700);
     --border-color: #353944;
 
     --header__border-color: #333;

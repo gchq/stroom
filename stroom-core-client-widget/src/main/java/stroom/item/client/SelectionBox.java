@@ -3,6 +3,7 @@ package stroom.item.client;
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
@@ -33,7 +34,7 @@ public class SelectionBox<T>
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyUpHandler(event -> {
                 int keyCode = event.getNativeKeyCode();
-                if (KeyCodes.KEY_ENTER == keyCode) {
+                if (KeyCodes.KEY_ENTER == keyCode || KeyCodes.KEY_SPACE == keyCode) {
                     showPopup();
                 }
             }));
@@ -118,6 +119,7 @@ public class SelectionBox<T>
 
     private void showPopup() {
         if (popup != null) {
+            GWT.log("Hiding popup");
             hidePopup();
         } else {
             popup = new SelectionPopup();
@@ -130,6 +132,7 @@ public class SelectionBox<T>
                     handlerRegistration.removeHandler();
                 }
                 popupHandlerRegistrations.clear();
+                popup = null;
             }));
             popup.show(textBox);
         }

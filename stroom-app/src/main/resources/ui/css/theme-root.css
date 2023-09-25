@@ -24,7 +24,12 @@
     --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 
     --text-color: #151515;
-    --text-color--disabled: #666;
+    --text-color--disabled: #777;
+    --text-color--red: var(--red-600);
+    --text-color--green: var(--green-600);
+    --text-color--red--dark: var(--red-900);
+    --text-color--green--dark: var(--green-900);
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */
