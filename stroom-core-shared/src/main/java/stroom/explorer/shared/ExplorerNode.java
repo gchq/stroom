@@ -181,7 +181,7 @@ public class ExplorerNode implements HasDisplayValue {
      * descendants does.
      */
     public boolean hasDescendantNodeInfo() {
-        return  hasNodeFlag(NodeFlag.DESCENDANT_NODE_INFO) || hasNodeInfo();
+        return hasNodeFlag(NodeFlag.DESCENDANT_NODE_INFO) || hasNodeInfo();
     }
 
     public Set<NodeFlag> getNodeFlags() {
@@ -346,11 +346,19 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
+        /**
+         * Set the tags on this builder to tags
+         */
         public Builder tags(final Set<String> tags) {
-            this.tags = tags;
+            this.tags = GwtNullSafe.hasItems(tags)
+                    ? new HashSet<>(tags)
+                    : null;
             return this;
         }
 
+        /**
+         * Add a single tag to the builder
+         */
         public Builder addTag(final String tag) {
             if (!GwtNullSafe.isBlankString(tag)) {
                 if (this.tags == null) {
@@ -361,6 +369,9 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
+        /**
+         * Add multiple tags to the builder
+         */
         public Builder addTags(final Set<String> tags) {
             if (GwtNullSafe.hasItems(tags)) {
                 if (this.tags == null) {

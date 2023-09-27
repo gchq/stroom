@@ -54,11 +54,18 @@ public interface ExplorerService extends Clearable {
 
     ExplorerNode rename(ExplorerNode explorerNode, String docName);
 
+    ExplorerNode updateTags(ExplorerNode explorerNode);
+
     BulkActionResult delete(List<ExplorerNode> explorerNodes);
 
     void rebuildTree();
 
     List<DocumentType> getTypes();
+
+    /**
+     * @return All known node tags
+     */
+    Set<String> getTags();
 
     List<DocumentType> getVisibleTypes();
 

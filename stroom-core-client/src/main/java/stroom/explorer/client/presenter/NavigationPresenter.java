@@ -48,6 +48,7 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Button;
@@ -66,11 +67,8 @@ import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.List;
 
-public class NavigationPresenter
-        extends
-        MyPresenter<NavigationView, NavigationProxy>
-        implements
-        NavigationUiHandlers,
+public class NavigationPresenter extends MyPresenter<NavigationView, NavigationProxy>
+        implements NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
         ShowMainEvent.Handler {
@@ -334,6 +332,7 @@ public class NavigationPresenter
 
     @Override
     public void onRefresh(final RefreshExplorerTreeEvent event) {
+        GWT.log("onRefresh " + event);
         explorerTree.getTreeModel().refresh();
     }
 

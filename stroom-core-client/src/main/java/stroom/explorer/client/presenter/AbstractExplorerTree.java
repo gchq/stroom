@@ -344,7 +344,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
         @Override
         protected void onMoveRight(final CellPreviewEvent<ExplorerNode> e) {
-            treeModel.setItemOpen(e.getValue(), true);
+            if (e.getValue().hasNodeFlags(NodeFlag.LEAF)) {
+                showMenu(e);
+            } else {
+                treeModel.setItemOpen(e.getValue(), true);
+            }
         }
 
         @Override

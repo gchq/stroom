@@ -14,11 +14,10 @@ class TestNodeTagSerialiser {
 
     @TestFactory
     Stream<DynamicTest> serialise() {
-        final NodeTagSerialiser nodeTagSerialiser = new NodeTagSerialiser();
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<Set<String>>(){})
                 .withOutputType(String.class)
-                .withSingleArgTestFunction(nodeTagSerialiser::serialise)
+                .withSingleArgTestFunction(NodeTagSerialiser::serialise)
                 .withSimpleEqualityAssertion()
                 .addCase(null, null)
                 .addCase(Collections.emptySet(), null)
@@ -26,16 +25,16 @@ class TestNodeTagSerialiser {
                 .addCase(Set.of("FOO"), "foo")
                 .addCase(Set.of("foo", "bar"), "bar foo")
                 .addCase(Set.of("bar", "FOO"), "bar foo")
+                .addCase(Set.of("b", "c", "a"), "a b c")
                 .build();
     }
 
     @TestFactory
     Stream<DynamicTest> deserialise() {
-        final NodeTagSerialiser nodeTagSerialiser = new NodeTagSerialiser();
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withWrappedOutputType(new TypeLiteral<Set<String>>(){})
-                .withSingleArgTestFunction(nodeTagSerialiser::deserialise)
+                .withSingleArgTestFunction(NodeTagSerialiser::deserialise)
                 .withSimpleEqualityAssertion()
                 .addCase(null, Collections.emptySet())
                 .addCase("", Collections.emptySet())

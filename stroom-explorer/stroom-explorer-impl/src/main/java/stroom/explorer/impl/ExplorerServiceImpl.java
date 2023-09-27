@@ -25,10 +25,12 @@ import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.api.StandardExplorerTags;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerDocContentMatch;
+import stroom.explorer.shared.ExplorerFields;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.Builder;
 import stroom.explorer.shared.ExplorerNodeKey;
@@ -39,10 +41,16 @@ import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.Suggestions;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -74,12 +82,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearable {
+class ExplorerServiceImpl
+        implements ExplorerService, CollectionService, Clearable, SuggestionsQueryHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerServiceImpl.class);
-
-//    private static final NodeFlag[] NODE_EXPANSION_FLAGS = new NodeFlag[]{
-//            NodeFlag.LEAF, NodeFlag.OPEN, NodeFlag.CLOSED};
 
     private static final Set<String> FOLDER_TYPES = Set.of(
             ExplorerConstants.SYSTEM,
@@ -93,8 +99,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final ExplorerEventLog explorerEventLog;
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
     private final Provider<ExplorerFavService> explorerFavService;
-    private final BrokenDependenciesCache brokenDependenciesCache;
-    private final NodeTagSerialiser nodeTagSerialiser;
+    private final EntityEventBus entityEventBus;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -104,8 +109,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final ExplorerEventLog explorerEventLog,
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
                         final Provider<ExplorerFavService> explorerFavService,
-                        final BrokenDependenciesCache brokenDependenciesCache,
-                        final NodeTagSerialiser nodeTagSerialiser) {
+                        final EntityEventBus entityEventBus) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -113,8 +117,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
         this.explorerFavService = explorerFavService;
-        this.brokenDependenciesCache = brokenDependenciesCache;
-        this.nodeTagSerialiser = nodeTagSerialiser;
+        this.entityEventBus = entityEventBus;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -413,13 +416,16 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
             final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
             if (explorerDecorator != null) {
-                final List<DocRef> additionalDocRefs = explorerDecorator.list()
+                // Unfortunately we need to create the nodes before we filter, as we
+                // need to be able to filter on the node's tags
+                final List<ExplorerNode> additionalNodes = explorerDecorator.list()
                         .stream()
+                        .map(this::createSearchableNode)
                         .filter(nodeInclusionChecker.getFuzzyMatchPredicate())
                         .toList();
 
-                if (NullSafe.hasItems(additionalDocRefs)) {
-                    additionalDocRefs.forEach(docRef -> rootNodeBuilder.addChild(createSearchableNode(docRef)));
+                if (NullSafe.hasItems(additionalNodes)) {
+                    additionalNodes.forEach(rootNodeBuilder::addChild);
                 }
             }
         }
@@ -860,6 +866,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             // Check that the user is allowed to create an item of this type in the destination folder.
             checkCreatePermission(getUUID(folderRef), type);
             // Create an item of the specified type in the destination folder.
+            // This should fire a CREATE entity event
             result = handler.createDocument(name);
             explorerEventLog.create(type, name, result.getUuid(), folderRef, permissionInheritance, null);
         } catch (final RuntimeException e) {
@@ -943,7 +950,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         });
 
         // Make sure the tree model is rebuilt.
-        rebuildTree();
+        remappings.values().forEach(newNode -> {
+            // Although the copy above will have fired entity events, they were before the deps
+            // get re-mapped. Thus ee need to let the exp tree know that deps may have changed
+            EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.CREATE_EXPLORER_NODE);
+        });
 
         return new BulkActionResult(new ArrayList<>(remappings.values()), resultMessage.toString());
     }
@@ -1108,10 +1119,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             if (result != null) {
                 explorerNodeService.moveNode(result, folderRef, permissionInheritance);
             }
+            // Let the tree know it has changed
+            EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), result, EntityAction.UPDATE_EXPLORER_NODE);
         }
-
-        // Make sure the tree model is rebuilt.
-        rebuildTree();
 
         return new BulkActionResult(resultNodes, resultMessage.toString());
     }
@@ -1122,9 +1132,35 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final ExplorerNode result = rename(handler, explorerNode, docName);
 
         // Make sure the tree model is rebuilt.
-        rebuildTree();
+        EntityEvent.fire(entityEventBus, result.getDocRef(), EntityAction.UPDATE_EXPLORER_NODE);
 
         return result;
+    }
+
+    @Override
+    public ExplorerNode updateTags(final ExplorerNode explorerNode) {
+        Objects.requireNonNull(explorerNode);
+        final DocRef docRef = explorerNode.getDocRef();
+        ExplorerNode beforeNode = null;
+        try {
+            beforeNode = explorerNodeService.getNode(explorerNode.getDocRef())
+                    .orElse(null);
+
+            explorerNodeService.updateTags(docRef, explorerNode.getTags());
+
+            final ExplorerNode afterNode = explorerNodeService.getNode(docRef)
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                            "Can't find node {} after updating it", docRef)));
+
+            explorerEventLog.update(beforeNode, explorerNode, null);
+
+            // Make sure the tree model is rebuilt.
+            EntityEvent.fire(entityEventBus, afterNode.getDocRef(), EntityAction.UPDATE_EXPLORER_NODE);
+            return afterNode;
+        } catch (final Exception e) {
+            explorerEventLog.update(beforeNode, explorerNode, e);
+            throw e;
+        }
     }
 
     private ExplorerNode rename(final ExplorerActionHandler handler,
@@ -1142,6 +1178,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
         // Rename the explorer node.
         explorerNodeService.renameNode(result);
+        EntityEvent.fire(entityEventBus, result, EntityAction.UPDATE_EXPLORER_NODE);
 
         return ExplorerNode.builder()
                 .docRef(result)
@@ -1151,21 +1188,25 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     @Override
     public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
-        final List<ExplorerNode> resultDocRefs = new ArrayList<>();
+        final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
         final HashSet<ExplorerNode> deleted = new HashSet<>();
         explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
             if (!deleted.contains(explorerNode)) {
-                recursiveDelete(explorerNodes, deleted, resultDocRefs, resultMessage);
+                recursiveDelete(explorerNodes, deleted, resultNodes, resultMessage);
             }
         });
 
-        // Make sure the tree model is rebuilt.
-        rebuildTree();
+        // The action handlers may fire DELETE events, but in case they don't
+        resultNodes.stream()
+                .filter(Objects::nonNull)
+                .map(ExplorerNode::getDocRef)
+                .forEach(docRef ->
+                        EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE_EXPLORER_NODE));
 
-        return new BulkActionResult(resultDocRefs, resultMessage.toString());
+        return new BulkActionResult(resultNodes, resultMessage.toString());
     }
 
     private void recursiveDelete(final List<ExplorerNode> explorerNodes,
@@ -1217,7 +1258,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     @Override
     public void rebuildTree() {
-        brokenDependenciesCache.invalidate();
         explorerTreeModel.rebuild();
     }
 
@@ -1229,6 +1269,22 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     @Override
     public List<DocumentType> getTypes() {
         return explorerActionHandlers.getTypes();
+    }
+
+    @Override
+    public Set<String> getTags() {
+        final Set<String> modelTags = NullSafe.set(explorerTreeModel.getModel().getAllTags());
+        final int count = StandardExplorerTags.values().length + modelTags.size();
+        final Set<String> tags = new HashSet<>(count);
+
+        // Add in our standard tags
+        for (final StandardExplorerTags tag : StandardExplorerTags.values()) {
+            tags.add(tag.getTagName());
+        }
+
+        // Add in all known tags from the exp tree model, i.e. user added ones
+        tags.addAll(modelTags);
+        return Collections.unmodifiableSet(tags);
     }
 
     @Override
@@ -1354,12 +1410,24 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     @Override
     public Set<String> parseNodeTags(final String tagsStr) {
-        return nodeTagSerialiser.deserialise(tagsStr);
+        return NodeTagSerialiser.deserialise(tagsStr);
     }
 
     @Override
     public String nodeTagsToString(final Set<String> tags) {
-        return nodeTagSerialiser.serialise(tags);
+        return NodeTagSerialiser.serialise(tags);
+    }
+
+    @Override
+    public Suggestions getSuggestions(final FetchSuggestionsRequest request) {
+        return securityContext.secureResult(() -> {
+            if (ExplorerFields.TAG.equals(request.getField())) {
+                final Set<String> tags = getTags();
+                return new Suggestions(new ArrayList<>(tags), false);
+            } else {
+                throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField()));
+            }
+        });
     }
 
     // --------------------------------------------------------------------------------

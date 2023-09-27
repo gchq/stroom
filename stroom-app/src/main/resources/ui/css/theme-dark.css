@@ -8,7 +8,7 @@
  */
 
 .stroom-theme-dark {
-    --focus-border: var(--blue-500);
+    --focus-border: var(--blue-800);
     --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
     --focus-border--valid: var(--valid);
     --focus-shadow--valid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--valid-rgb), .6); /* --bootstrap-success*/

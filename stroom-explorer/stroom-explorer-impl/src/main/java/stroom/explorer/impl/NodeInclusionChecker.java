@@ -34,19 +34,25 @@ class NodeInclusionChecker {
 
     private static final Predicate<FilterableNode> ALWAYS_FALSE_PREDICATE = node -> false;
     private static final Predicate<FilterableNode> ALWAYS_TRUE_PREDICATE = node -> true;
-    private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, DocRef::getUuid));
+
+    // TODO: 19/09/2023 FilterFieldMappers ought to support List/Sets of things so it does the test
+    //  on each item in the list/set. This may be ok for now.
+    private static final FilterFieldMappers<ExplorerNode> FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, ExplorerNode::getName),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, ExplorerNode::getType),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, ExplorerNode::getUuid),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TAG, NodeInclusionChecker::nodeToTagsString));
 
     private final SecurityContext securityContext;
     private final ExplorerTreeFilter filter;
+    // Cache the fuzzy match filter outcomes by docref, as we get repeated tests because of the favourites.
     private final Map<DocRef, FilterOutcome> filterOutcomeMap = new HashMap<>();
+    // Cache the outcome of perm checks as the favourites mean we have repeated tests for same docref
     private final Map<DocRef, Boolean> permCheckOutcomeMap = new HashMap<>();
     private final boolean hasNameFilter;
 
     private final Predicate<FilterableNode> combinedPredicate;
-    private Predicate<DocRef> fuzzyMatchPredicate = null;
+    private Predicate<ExplorerNode> fuzzyMatchPredicate = null;
 
 
     NodeInclusionChecker(final SecurityContext securityContext,
@@ -60,6 +66,14 @@ class NodeInclusionChecker {
         // The predicate is called for potentially every node, so it needs to be efficient.
         // For typical tree use, only the perm check will be active.
         this.combinedPredicate = buildCombinedPredicate(filter);
+    }
+
+    private static String nodeToTagsString(final ExplorerNode explorerNode) {
+        // Don't use NodeTagSerialiser as that sorts, and we don't care about that and
+        // don't want the perf hit.
+        return explorerNode.getTags() == null
+                ? null
+                : String.join(ExplorerNode.TAGS_DELIMITER, explorerNode.getTags());
     }
 
     private Predicate<FilterableNode> buildCombinedPredicate(final ExplorerTreeFilter filter) {
@@ -83,7 +97,7 @@ class NodeInclusionChecker {
         if (!foundAlwaysFalsePredicate && !filterTags.isEmpty()) {
             LOGGER.debug("Adding checkTags predicate for tags: {}", filterTags);
             predicates.add(filterableNode ->
-                            filterableNode.node.hasTags(filterTags));
+                    filterableNode.node.hasTags(filterTags));
         }
 
         final Set<NodeFlag> filterNodeFlags = NullSafe.set(filter.getNodeFlags());
@@ -127,22 +141,23 @@ class NodeInclusionChecker {
 
     private boolean testWithNameFilter(final FilterableNode filterableNode) {
         return filterableNode.ignoreNameFilter
-                || isFuzzyFilterMatch(filterableNode.node.getDocRef());
+                || doFuzzyMatchTest(filterableNode.node);
     }
 
-    private boolean isFuzzyFilterMatch(final DocRef docRef) {
-        return filterOutcomeMap.computeIfAbsent(docRef, docRef2 ->
-                FilterOutcome.fromPredicateResult(fuzzyMatchPredicate.test(docRef2)))
+    private boolean doFuzzyMatchTest(final ExplorerNode explorerNode) {
+        return filterOutcomeMap.computeIfAbsent(explorerNode.getDocRef(), docRef2 ->
+                FilterOutcome.fromPredicateResult(fuzzyMatchPredicate.test(explorerNode)))
                 .isMatch;
     }
 
     boolean isFuzzyFilterMatch(final ExplorerNode node) {
-        return !hasNameFilter || filterOutcomeMap.computeIfAbsent(node.getDocRef(), docRef ->
-                FilterOutcome.fromPredicateResult(fuzzyMatchPredicate.test(docRef)))
+        return !hasNameFilter
+                || filterOutcomeMap.computeIfAbsent(node.getDocRef(), docRef ->
+                FilterOutcome.fromPredicateResult(fuzzyMatchPredicate.test(node)))
                 .isMatch;
     }
 
-    Predicate<DocRef> getFuzzyMatchPredicate() {
+    Predicate<ExplorerNode> getFuzzyMatchPredicate() {
         if (fuzzyMatchPredicate == null) {
             // Create the predicate for the current filter value, lazily as there may not be one
             fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(

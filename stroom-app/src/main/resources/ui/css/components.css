@@ -2019,3 +2019,20 @@ button.main-menu svg {
     flex-shrink: 0;
     flex-grow: 0;
 }
+
+.editNodeTagsNodeTagsFrmGrp select {
+    flex-basis: 10rem;
+}
+
+.editNodeTagsAllTagsFrmGrp select {
+    flex-basis: 15rem;
+}
+
+/*
+.editNodeTags .editNodeTagsAllTagsInputPanel {
+    flex-direction: row;
+    display: flex;
+}
+*/
+
+

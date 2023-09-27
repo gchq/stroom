@@ -81,7 +81,8 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     @Override
     public ExplorerNode create(final ExplorerServiceCreateRequest request) {
-        return explorerServiceProvider.get().create(request.getDocType(),
+        return explorerServiceProvider.get().create(
+                request.getDocType(),
                 request.getDocName(),
                 request.getDestinationFolder(),
                 request.getPermissionInheritance());
@@ -91,14 +92,18 @@ class ExplorerResourceImpl implements ExplorerResource {
     public BulkActionResult delete(final ExplorerServiceDeleteRequest request) {
         final List<ExplorerNode> explorerNodes = request.getDocRefs()
                 .stream()
-                .map(this::getFromDocRef)
+                .map(docRef -> Objects.requireNonNull(
+                        getFromDocRef(docRef),
+                        () -> "No explorer node found for " + docRef))
                 .toList();
-        return explorerServiceProvider.get().delete(explorerNodes);
+        return explorerServiceProvider.get()
+                .delete(explorerNodes);
     }
 
     @Override
     public BulkActionResult copy(final ExplorerServiceCopyRequest request) {
-        return explorerServiceProvider.get().copy(request.getExplorerNodes(),
+        return explorerServiceProvider.get().copy(
+                request.getExplorerNodes(),
                 request.getDestinationFolder(),
                 request.isAllowRename(),
                 request.getDocName(),
@@ -115,6 +120,11 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     public ExplorerNode rename(final ExplorerServiceRenameRequest request) {
         return explorerServiceProvider.get().rename(request.getExplorerNode(), request.getDocName());
+    }
+
+    @Override
+    public ExplorerNode updateNodeTags(final ExplorerNode explorerNode) {
+        return explorerServiceProvider.get().updateTags(explorerNode);
     }
 
     @Override
@@ -150,6 +160,11 @@ class ExplorerResourceImpl implements ExplorerResource {
         final List<DocumentType> types = explorerService.getTypes();
         final List<DocumentType> visibleTypes = explorerService.getVisibleTypes();
         return new DocumentTypes(types, visibleTypes);
+    }
+
+    @Override
+    public Set<String> fetchExplorerNodeTags() {
+        return explorerServiceProvider.get().getTags();
     }
 
     @Override

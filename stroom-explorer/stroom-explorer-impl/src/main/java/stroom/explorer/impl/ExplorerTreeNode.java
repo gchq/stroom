@@ -17,8 +17,11 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.util.NullSafe;
 import stroom.util.shared.HasIntegerId;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -58,7 +61,9 @@ public class ExplorerTreeNode implements HasIntegerId {
         explorerTreeNode.setType(docRef.getType());
         explorerTreeNode.setUuid(docRef.getUuid());
         explorerTreeNode.setName(docRef.getName());
-        explorerTreeNode.setTags(tags);
+        explorerTreeNode.setTags(NullSafe.hasItems(tags)
+                ? new HashSet<>(tags)
+                : null);
         return explorerTreeNode;
     }
 
@@ -115,6 +120,14 @@ public class ExplorerTreeNode implements HasIntegerId {
         clone.name = name;
         clone.tags = tags;
         return clone;
+    }
+
+    public ExplorerNode.Builder buildExplorerNode() {
+        return ExplorerNode.builder()
+                .type(type)
+                .uuid(uuid)
+                .name(name)
+                .tags(tags);
     }
 
     @Override

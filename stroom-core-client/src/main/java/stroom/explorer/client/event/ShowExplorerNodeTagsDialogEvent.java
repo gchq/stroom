@@ -15,9 +15,8 @@
  *
  */
 
-package stroom.document.client.event;
+package stroom.explorer.client.event;
 
-import stroom.docref.DocRefInfo;
 import stroom.explorer.shared.ExplorerNode;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -26,27 +25,19 @@ import com.google.gwt.event.shared.HasHandlers;
 
 import java.util.Objects;
 
-public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialogEvent.Handler> {
+public class ShowExplorerNodeTagsDialogEvent extends GwtEvent<ShowExplorerNodeTagsDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final ExplorerNode explorerNode;
-    private final DocRefInfo info;
 
-    private ShowInfoDocumentDialogEvent(final ExplorerNode explorerNode, final DocRefInfo info) {
+    private ShowExplorerNodeTagsDialogEvent(final ExplorerNode explorerNode) {
         this.explorerNode = Objects.requireNonNull(explorerNode);
-        this.info = Objects.requireNonNull(info);
-        if (!Objects.equals(explorerNode.getDocRef(), info.getDocRef())) {
-            throw new RuntimeException("Different docRefs, "
-                    + "node docref: " + explorerNode.getDocRef()
-                    + " info docRef: " + info.getDocRef());
-        }
     }
 
     public static void fire(final HasHandlers handlers,
-                            final ExplorerNode explorerNode,
-                            final DocRefInfo info) {
+                            final ExplorerNode explorerNode) {
         handlers.fireEvent(
-                new ShowInfoDocumentDialogEvent(explorerNode, info));
+                new ShowExplorerNodeTagsDialogEvent(explorerNode));
     }
 
     public static Type<Handler> getType() {
@@ -66,10 +57,6 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
         handler.onCreate(this);
     }
 
-    public DocRefInfo getInfo() {
-        return info;
-    }
-
     public ExplorerNode getExplorerNode() {
         return explorerNode;
     }
@@ -79,6 +66,6 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
 
     public interface Handler extends EventHandler {
 
-        void onCreate(final ShowInfoDocumentDialogEvent event);
+        void onCreate(final ShowExplorerNodeTagsDialogEvent event);
     }
 }

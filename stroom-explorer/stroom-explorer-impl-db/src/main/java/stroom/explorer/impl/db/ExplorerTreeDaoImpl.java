@@ -36,7 +36,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final boolean orderIndexMatters;
     private final boolean removeReferencedNodes;
     private final ExplorerDbConnProvider explorerDbConnProvider;
-    private final NodeTagSerialiser nodeTagSerialiser;
 
     private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p = EXPLORER_PATH.as("p");
     private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p1 = EXPLORER_PATH.as("p1");
@@ -44,9 +43,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final stroom.explorer.impl.db.jooq.tables.ExplorerNode n = EXPLORER_NODE.as("n");
 
     @Inject
-    ExplorerTreeDaoImpl(final ExplorerDbConnProvider explorerDbConnProvider,
-                        final NodeTagSerialiser nodeTagSerialiser) {
-        this.nodeTagSerialiser = nodeTagSerialiser;
+    ExplorerTreeDaoImpl(final ExplorerDbConnProvider explorerDbConnProvider) {
         this.removeReferencedNodes = true;
         this.orderIndexMatters = false;
         this.explorerDbConnProvider = explorerDbConnProvider;
@@ -73,7 +70,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         .set(EXPLORER_NODE.TYPE, node.getType())
                         .set(EXPLORER_NODE.UUID, node.getUuid())
                         .set(EXPLORER_NODE.NAME, node.getName())
-                        .set(EXPLORER_NODE.TAGS, nodeTagSerialiser.serialise(node.getTags()))
+                        .set(EXPLORER_NODE.TAGS, NodeTagSerialiser.serialise(node.getTags()))
                         .returning(EXPLORER_NODE.ID)
                         .fetchOne()
                         .getId());
@@ -90,7 +87,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .set(EXPLORER_NODE.TYPE, node.getType())
                 .set(EXPLORER_NODE.UUID, node.getUuid())
                 .set(EXPLORER_NODE.NAME, node.getName())
-                .set(EXPLORER_NODE.TAGS, nodeTagSerialiser.serialise(node.getTags()))
+                .set(EXPLORER_NODE.TAGS, NodeTagSerialiser.serialise(node.getTags()))
                 .where(EXPLORER_NODE.ID.eq(node.getId()))
                 .execute());
     }
@@ -159,7 +156,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 r.get(n.TYPE),
                                 r.get(n.UUID),
                                 r.get(n.NAME),
-                                nodeTagSerialiser.deserialise(r.get(n.TAGS))))
+                                NodeTagSerialiser.deserialise(r.get(n.TAGS))))
                 .orElse(node));
     }
 
@@ -192,9 +189,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .type(rec.getType())
                                     .uuid(rec.getUuid())
                                     .name(rec.getName())
-                                    .tags(nodeTagSerialiser.deserialise(rec.getTags()))
+                                    .tags(NodeTagSerialiser.deserialise(rec.getTags()))
                                     .icon(iconProvider.apply(rec.getType()))
-                                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(rec.getType()).orElse(null))
+                                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(rec.getType())
+                                            .orElse(null))
                                     .build()));
 
             // Add the roots.
@@ -307,7 +305,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 r.get(n.TYPE),
                                 r.get(n.UUID),
                                 r.get(n.NAME),
-                                nodeTagSerialiser.deserialise(r.get(n.TAGS))));
+                                NodeTagSerialiser.deserialise(r.get(n.TAGS))));
     }
 
     @Override
@@ -686,7 +684,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 record.getType(),
                 record.getUuid(),
                 record.getName(),
-                nodeTagSerialiser.deserialise(record.getTags()));
+                NodeTagSerialiser.deserialise(record.getTags()));
     }
 
     private void assertInsertParameters(final ExplorerTreeNode parent,

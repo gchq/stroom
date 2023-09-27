@@ -205,6 +205,16 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
+    public void updateTags(final DocRef docRef, final Set<String> nodeTags) {
+        final ExplorerTreeNode explorerTreeNode = getNodeForDocRef(docRef)
+                .orElse(null);
+        if (explorerTreeNode != null) {
+            explorerTreeNode.setTags(nodeTags);
+            explorerTreeDao.update(explorerTreeNode);
+        }
+    }
+
+    @Override
     public void deleteNode(final DocRef docRef) {
         try {
             getNodeForDocRef(docRef).ifPresent(explorerTreeDao::remove);
@@ -233,8 +243,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     final String rootNodeUuid = explorerTreeDao.getRoot(node).getUuid();
 
                     // Set the root node UUID
-                    return ExplorerNode.builder()
-                            .docRef(docRef)
+                    return node.buildExplorerNode()
                             .rootNodeUuid(rootNodeUuid)
                             .build();
                 });
@@ -414,9 +423,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 && Objects.equals(ExplorerConstants.FAVOURITES_NODE.getUuid(), explorerTreeNode.getUuid())) {
             return ExplorerConstants.FAVOURITES_NODE;
         } else {
-            return ExplorerNode.builder()
-                    .docRef(explorerTreeNode.getDocRef())
-                    .tags(explorerTreeNode.getTags())
+            return explorerTreeNode.buildExplorerNode()
                     .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(explorerTreeNode.getType()).orElse(null))
                     .build();
         }

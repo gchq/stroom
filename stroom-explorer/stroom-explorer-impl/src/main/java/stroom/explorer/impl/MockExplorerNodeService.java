@@ -53,6 +53,11 @@ public class MockExplorerNodeService implements ExplorerNodeService {
     }
 
     @Override
+    public void updateTags(final DocRef docRef, final Set<String> nodeTags) {
+
+    }
+
+    @Override
     public void deleteNode(final DocRef docRef) {
 
     }

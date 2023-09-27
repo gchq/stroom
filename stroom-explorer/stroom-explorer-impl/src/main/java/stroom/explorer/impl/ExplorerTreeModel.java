@@ -24,6 +24,9 @@ import stroom.security.api.SecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -43,7 +46,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class ExplorerTreeModel {
+@EntityEventHandler(action = {
+        EntityAction.CREATE,
+        EntityAction.DELETE,
+        EntityAction.CREATE_EXPLORER_NODE,
+        EntityAction.UPDATE_EXPLORER_NODE,
+        EntityAction.DELETE_EXPLORER_NODE})
+class ExplorerTreeModel implements EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerTreeModel.class);
 
@@ -96,7 +105,7 @@ class ExplorerTreeModel {
         // session.
         long minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
 
-        LOGGER.debug("getModel() - currentId: {}, minId: {}", currentId, minId);
+        LOGGER.trace("getModel() - currentId: {}, minId: {}", currentId, minId);
 
         UnmodifiableTreeModel model = null;
 
@@ -118,7 +127,7 @@ class ExplorerTreeModel {
             // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
             // Find out what the oldest tree model is that we will allow before performing an asynchronous rebuild.
             final long oldestAllowed = Math.max(minExplorerTreeModelBuildTime.get(), now - TEN_MINUTES);
-            LOGGER.debug(() -> LogUtil.message("oldestAllowed: {}, model createTime: {}",
+            LOGGER.trace(() -> LogUtil.message("oldestAllowed: {}, model createTime: {}",
                     Instant.ofEpochMilli(oldestAllowed),
                     Instant.ofEpochMilli(currentModel.getCreationTime())));
 
@@ -224,14 +233,34 @@ class ExplorerTreeModel {
         }
     }
 
+    /**
+     * Set state such that the next call to getModel will trigger an update
+     */
     void rebuild() {
-        LOGGER.debug("rebuild called");
         final long now = System.currentTimeMillis();
-        minExplorerTreeModelBuildTime.getAndUpdate(prev -> Math.max(prev, now));
-        explorerSession.setMinExplorerTreeModelId(currentId.incrementAndGet());
+        final long newTimeMs = minExplorerTreeModelBuildTime.getAndUpdate(prev -> Math.max(prev, now));
+        final long newId = currentId.incrementAndGet();
+        LOGGER.trace(() -> LogUtil.message("rebuild called, newTime: {}, newId: {}",
+                Instant.ofEpochMilli(newTimeMs), newId));
+        explorerSession.setMinExplorerTreeModelId(newId);
     }
 
     void clear() {
         setCurrentModel(null);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        NullSafe.consume(event, EntityEvent::getAction, action -> {
+            switch (action) {
+                case CREATE,
+                        DELETE,
+                        UPDATE_EXPLORER_NODE -> {
+                    // E.g. tags on a node have changed
+                    LOGGER.debug("Rebuilding tree model due to entity event {}", event);
+                    rebuild();
+                }
+            }
+        });
     }
 }

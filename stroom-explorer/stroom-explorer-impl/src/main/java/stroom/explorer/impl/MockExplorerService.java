@@ -71,6 +71,11 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
+    public ExplorerNode updateTags(final ExplorerNode explorerNode) {
+        return null;
+    }
+
+    @Override
     public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
         return null;
     }
@@ -85,6 +90,11 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public List<DocumentType> getTypes() {
+        return null;
+    }
+
+    @Override
+    public Set<String> getTags() {
         return null;
     }
 

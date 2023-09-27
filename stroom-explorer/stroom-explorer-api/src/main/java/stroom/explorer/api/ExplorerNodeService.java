@@ -47,6 +47,8 @@ public interface ExplorerNodeService {
 
     void renameNode(DocRef docRef);
 
+    void updateTags(DocRef docRef, final Set<String> nodeTags);
+
     void deleteNode(DocRef docRef);
 
     ExplorerNode getRoot();

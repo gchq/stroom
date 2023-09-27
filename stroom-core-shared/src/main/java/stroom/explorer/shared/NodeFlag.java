@@ -18,6 +18,11 @@ import java.util.stream.Collectors;
  * A set of flags that can be used to mark {@link ExplorerNode} with characteristics.
  * Some flags are mutually exclusive with others.
  * Some are part of a mutually exclusive {@link NodeFlagGroup}.
+ *
+ * {@link NodeFlag}s are distinct from explorer node tags in that they are not directly visible
+ * to users (or not visible at all) and should only be used for internal conditional
+ * handling/rendering of nodes.
+ * Tags are directly visible to users and are managed by them.
  */
 public enum NodeFlag {
 

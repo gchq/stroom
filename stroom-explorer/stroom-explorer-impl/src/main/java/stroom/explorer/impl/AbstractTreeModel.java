@@ -3,7 +3,6 @@ package stroom.explorer.impl;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.util.NullSafe;
-import stroom.util.logging.LogUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +32,11 @@ public abstract class AbstractTreeModel<K> {
     protected Map<K, Set<ExplorerNode>> parentKeyToChildNodesWithInfoMap = new HashMap<>();
     // Node key => node
     protected Map<K, ExplorerNode> keyToNodeMap = new HashMap<>();
+    // Set of all tags seen in all nodes
+    // TODO: 26/09/2023 At some point we may consider limiting the visibility of tags based on having
+    //  Read permission on the node with the tag, in which case we won't be able to cache the set of
+    //  tags like this.
+    protected Set<String> allTags = new HashSet<>();
 
     public AbstractTreeModel(final long id, final long creationTime) {
         this.id = id;
@@ -63,6 +67,13 @@ public abstract class AbstractTreeModel<K> {
     }
 
     /**
+     * @return A set of all tags that exist across all nodes
+     */
+    public Set<String> getAllTags() {
+        return Collections.unmodifiableSet(allTags);
+    }
+
+    /**
      * Get the node from the model with the unique key of the supplied node
      */
     public ExplorerNode getNode(final ExplorerNode node) {
@@ -76,6 +87,7 @@ public abstract class AbstractTreeModel<K> {
     public void add(final ExplorerNode parent, final ExplorerNode child) {
         final K childKey = getNodeKey(child);
         final K parentKey = getNodeKey(parent);
+        recordNodeTags(parent, child);
 
         childKeyToParentNodeMap.putIfAbsent(childKey, parent);
         final Set<ExplorerNode> childNodes = parentKeyToChildNodesMap.computeIfAbsent(
@@ -104,6 +116,19 @@ public abstract class AbstractTreeModel<K> {
         return NullSafe.list(NullSafe.get(node, this::getNodeKey, keyToNodeInfoMap::get));
     }
 
+    private void recordNodeTags(final ExplorerNode... explorerNodes) {
+        if (explorerNodes != null) {
+            for (final ExplorerNode explorerNode : explorerNodes) {
+                if (explorerNode != null) {
+                    final Set<String> tags = explorerNode.getTags();
+                    if (NullSafe.hasItems(tags)) {
+                        allTags.addAll(tags);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Record a child node having node info (or one of its descendants having node info.
      */
@@ -123,53 +148,71 @@ public abstract class AbstractTreeModel<K> {
         }
     }
 
-    /**
-     * Replaces an existing node with the supplied one, based on the unique key
-     * of the new node. The new node will be linked to the previous node's parent
-     * and children. If the key is not found an exception will be thrown.
-     * Intended for changing other properties of a node, e.g. the alerts on it.
-     */
-    public void replaceNode(final ExplorerNode newNode) {
-        final K nodeKey = getNodeKey(newNode);
-        replaceNode(nodeKey, newNode);
-    }
+//    /**
+//     * Replaces an existing node with the supplied one, based on the unique key
+//     * of the new node. The new node will be linked to the previous node's parent
+//     * and children. If the key is not found an exception will be thrown.
+//     * Intended for changing other properties of a node, e.g. the alerts on it.
+//     *
+//     * MUST be done while under an exclusive lock on this model.
+//     */
+//    public void replaceNode(final ExplorerNode newNode) {
+//        final K nodeKey = getNodeKey(newNode);
+//        replaceNode(nodeKey, newNode);
+//    }
 
     public boolean containsNode(final ExplorerNode node) {
         return keyToNodeMap.containsKey(getNodeKey(node));
     }
 
-    /**
-     * Replaces an existing node with the supplied one. The new node will
-     * be linked to the previous node's parent and children. If the key is
-     * not found an exception will be thrown. Intended for changing other properties
-     * of a node, e.g. the alerts on it.
-     */
-    public void replaceNode(final K key, final ExplorerNode newNode) {
-        if (!keyToNodeMap.containsKey(key)) {
-            throw new RuntimeException(LogUtil.message("Key {} not found in tree model for newNode: {}", key, newNode));
-        }
-        final ExplorerNode parent = childKeyToParentNodeMap.get(key);
-        final K parentKey = getNodeKey(parent);
-
-        // Get the children or newNode's parent, i.e. siblings
-        final Set<ExplorerNode> siblingNodes = parentKeyToChildNodesMap.get(parentKey);
-
-        if (siblingNodes != null) {
-            final Set<ExplorerNode> newSiblingNodes = siblingNodes.stream()
-                    .map(node -> {
-                        final K nodeKey = getNodeKey(node);
-                        if (Objects.equals(nodeKey, key)) {
-                            return newNode;
-                        } else {
-                            return node;
-                        }
-                    })
-                    .collect(Collectors.toSet());
-            parentKeyToChildNodesMap.put(parentKey, newSiblingNodes);
-        }
-
-        keyToNodeMap.put(key, newNode);
-    }
+//    /**
+//     * Replaces an existing node with the supplied one. The new node will
+//     * be linked to the previous node's parent and children. If the key is
+//     * not found an exception will be thrown. Intended for changing other properties
+//     * of a node, e.g. the alerts on it.
+//     *
+//     * MUST be done while under an exclusive lock on this model.
+//     */
+//    public void replaceNode(final K key, final ExplorerNode newNode) {
+//        if (!keyToNodeMap.containsKey(key)) {
+//            throw new RuntimeException(LogUtil.message(
+//            "Key {} not found in tree model for newNode: {}", key, newNode));
+//        }
+//        final ExplorerNode oldNode = keyToNodeMap.get(key);
+//        final ExplorerNode parent = childKeyToParentNodeMap.get(key);
+//        final K parentKey = getNodeKey(parent);
+//
+//        // Get the children or newNode's parent, i.e. siblings
+//        final Set<ExplorerNode> siblingNodes = parentKeyToChildNodesMap.get(parentKey);
+//
+//        if (siblingNodes != null) {
+//            final Set<ExplorerNode> newSiblingNodes = siblingNodes.stream()
+//                    .map(node -> {
+//                        final K nodeKey = getNodeKey(node);
+//                        if (Objects.equals(nodeKey, key)) {
+//                            return newNode;
+//                        } else {
+//                            return node;
+//                        }
+//                    })
+//                    .collect(Collectors.toSet());
+//            parentKeyToChildNodesMap.put(parentKey, newSiblingNodes);
+//        }
+//
+//        keyToNodeMap.put(key, newNode);
+//        if (!Objects.equals(oldNode.getTags(), newNode.getTags())) {
+//            final Set<String> oldTags = NullSafe.set(oldNode.getTags());
+//            final Set<String> newTags = NullSafe.set(newNode.getTags());
+//
+//            final Set<String> removedTags = new HashSet<>(oldTags);
+//            removedTags.removeAll(newTags);
+//            allTags.removeAll(removedTags);
+//
+//            allTags.addAll(newTags);
+//        }
+//
+//        // TODO: 26/09/2023 Need to do something about parentKeyToChildNodesWithInfoMap
+//    }
 
     public ExplorerNode getParent(final ExplorerNode child) {
         return NullSafe.get(child, child2 -> childKeyToParentNodeMap.get(getNodeKey(child2)));

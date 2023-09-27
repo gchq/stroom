@@ -31,5 +31,8 @@ public @interface EntityEventHandler {
 
     EntityAction[] action() default {};
 
-    String type() default "*";
+    /**
+     * The entity type to handle. Leave unset to handle all types.
+     */
+    String type() default EntityEvent.TYPE_WILDCARD;
 }
