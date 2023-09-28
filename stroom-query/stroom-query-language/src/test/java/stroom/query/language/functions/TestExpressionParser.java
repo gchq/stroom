@@ -555,8 +555,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("encodeUrl('https://www.somesite.com:8080/this/path?query=string')",
                 Val.of(""),
                 out -> assertThat(out.toString()).isEqualTo(
-                        "https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring"))
-        ;
+                        "https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring"));
     }
 
     @Test

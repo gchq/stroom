@@ -58,7 +58,9 @@ class Ref extends AbstractFunction {
 
     @Override
     public void appendString(final StringBuilder sb) {
+        sb.append("${");
         sb.append(text);
+        sb.append("}");
     }
 
     @Override

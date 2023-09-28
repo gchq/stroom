@@ -2,35 +2,35 @@ from 'Test Index'
 where UserId = user5 and Description = e0567
 and EventTime <= 2000-01-01T00:00:00.000Z
 and EventTime >= 2016-01-02T00:00:00.000Z
-select "Stream Id", "Event Id", "Event Time", "Status"
+select StreamId, EventId, EventTime, Status
 -----
 from 'Test Index'
 where UserId = user5 and Description = e0567
 and EventTime <= 2000-01-01T00:00:00.000Z
 and EventTime >= 2016-01-02T00:00:00.000Z
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status
 -----
 from 'Test Index'
 where UserId = user5 and Description = e0567
 and EventTime <= 2000-01-01T00:00:00.000Z
 and EventTime >= 2016-01-02T00:00:00.000Z
 eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
 -----
 from 'Test Index'
 where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
 eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
 -----
 from 'Test Index'
 where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
 eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
 -----
 from 'Test Index'
 where EventTime <= day()-1d-1h
 eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
 -----
 from "index_view"
 where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
@@ -39,17 +39,17 @@ select StreamId
 from 'Test Index'
 where "my.name" = "foo bar"
 eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
 -----
 from 'Test Index'
 where 'my.name' = 'foo bar'
 eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
 -----
 from 'Test Index'
 where 'my.name' = '"foo bar"'
 eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
 -----
 from 'Test Index'
 eval count = count()
@@ -90,3 +90,8 @@ from 'Test Index'
 group by StreamId
 group by EventTime
 select StreamId, EventTime
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+select ${Stream Id}, ${Event Time}

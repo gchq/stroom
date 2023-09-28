@@ -29,7 +29,7 @@ public class AbstractExpressionParserTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractExpressionParserTest.class);
 
-    protected final ExpressionParser parser = new ExpressionParser(new ParamFactory());
+    protected final ExpressionParser parser = new ExpressionParser(new ParamFactory(new HashMap<>()));
 
     protected static Supplier<ChildData> createChildDataSupplier(final List<StoredValues> values) {
         return () -> new ChildData() {

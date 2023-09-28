@@ -121,6 +121,7 @@ public enum TokenType {
         return token != null
                 && (TokenType.STRING.equals(token.getTokenType()) ||
                 TokenType.SINGLE_QUOTED_STRING.equals(token.getTokenType()) ||
-                TokenType.DOUBLE_QUOTED_STRING.equals(token.getTokenType()));
+                TokenType.DOUBLE_QUOTED_STRING.equals(token.getTokenType()) ||
+                TokenType.PARAM.equals(token.getTokenType()));
     }
 }

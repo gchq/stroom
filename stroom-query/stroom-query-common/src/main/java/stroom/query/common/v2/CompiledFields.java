@@ -28,6 +28,7 @@ import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +64,7 @@ public class CompiledFields {
             return new CompiledFields(Collections.emptyList(), new CompiledField[0], fieldIndex, valueReferenceIndex);
         }
 
-        final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
+        final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(new HashMap<>()));
         final CompiledField[] compiledFields = new CompiledField[fields.size()];
         int i = 0;
 

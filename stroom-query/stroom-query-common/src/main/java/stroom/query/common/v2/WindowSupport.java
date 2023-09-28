@@ -2,6 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.HoppingWindow;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
@@ -75,14 +76,14 @@ public class WindowSupport {
                     final int index = fields.indexOf(timeField);
                     fields.set(index, timeField
                             .copy()
-                            .expression("${" + hoppingWindow.getTimeField() + "}")
+                            .expression(ParamSubstituteUtil.makeParam(hoppingWindow.getTimeField()))
                             .group(0)
                             .build());
                 } else {
                     fields.add(Field.builder()
                             .id(hoppingWindow.getTimeField())
                             .name(hoppingWindow.getTimeField())
-                            .expression("${" + hoppingWindow.getTimeField() + "}")
+                            .expression(ParamSubstituteUtil.makeParam(hoppingWindow.getTimeField()))
                             .group(0)
                             .sort(Sort.builder().order(0).direction(SortDirection.ASCENDING).build())
                             .visible(true)

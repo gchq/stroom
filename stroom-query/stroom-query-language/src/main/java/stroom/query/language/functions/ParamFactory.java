@@ -34,26 +34,13 @@ public class ParamFactory {
     public Param create(final FieldIndex fieldIndex,
                         final Token token) {
         try {
-            final String value = token.getText();
-
             // Token should be string or number or field.
             switch (token.getTokenType()) {
                 case DOUBLE_QUOTED_STRING, SINGLE_QUOTED_STRING:
                     return ValString.create(token.getUnescapedText());
 
-                case STRING:
-                    // See if this is a field ref.
-                    if (value.startsWith("${") && value.endsWith("}")) {
-                        final String name = value.substring(2, value.length() - 1);
-                        return createRef(name, fieldIndex);
-                    } else {
-                        // Treat as field ref anyway.
-                        return createRef(value, fieldIndex);
-                    }
-
-                case PARAM:
-                    final String name = value.substring(2, value.length() - 1);
-                    return createRef(name, fieldIndex);
+                case STRING, PARAM:
+                    return createRef(token.getUnescapedText(), fieldIndex);
 
                 case DATE_TIME:
                     return ValDate.create(DateUtil.parseNormalDateTimeString(token.getText()));

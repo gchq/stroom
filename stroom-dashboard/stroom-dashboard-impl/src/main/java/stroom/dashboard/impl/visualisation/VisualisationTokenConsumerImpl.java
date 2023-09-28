@@ -18,9 +18,9 @@ import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.language.VisualisationTokenConsumer;
 import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.FunctionGroup;
 import stroom.query.language.token.KeywordGroup;
 import stroom.query.language.token.TokenException;
+import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -44,29 +44,47 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
     @Override
     public TableSettings processVis(final KeywordGroup keywordGroup,
                                     final TableSettings parentTableSettings) {
-        VisualisationDoc visualisationDoc = null;
+        final VisualisationDoc visualisationDoc;
         Map<String, String> params = Collections.emptyMap();
 
         final List<AbstractToken> children = keywordGroup.getChildren();
+
+        // Get AS.
         if (children.size() > 0) {
             if (!TokenType.AS.equals(children.get(0).getTokenType())) {
-                throw new TokenException(children.get(0), "Syntax exception, expected AS");
-            } else if (children.size() > 2) {
-                throw new TokenException(children.get(2), "Unexpected token");
-            } else if (children.size() == 2) {
-                final AbstractToken token = children.get(1);
-                if (TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
-                    final FunctionGroup functionGroup = (FunctionGroup) token;
-                    final String visName = functionGroup.getName();
-                    visualisationDoc = loadVisualisation(token, visName);
-                    params = getParams(functionGroup.getChildren());
-                } else if (TokenType.isString(token)) {
-                    final String visName = token.getUnescapedText();
-                    visualisationDoc = loadVisualisation(token, visName);
-                } else {
-                    throw new TokenException(token, "Syntax exception, expected visualisation name");
-                }
+                throw new TokenException(children.get(0), "Expected AS");
             }
+        } else {
+            throw new TokenException(keywordGroup, "Expected AS");
+        }
+
+        // Get visualisation by name.
+        if (children.size() > 1) {
+            final AbstractToken token = children.get(1);
+            if (TokenType.isString(token)) {
+                final String visName = token.getUnescapedText();
+                visualisationDoc = loadVisualisation(token, visName);
+            } else {
+                throw new TokenException(token, "Expected visualisation name");
+            }
+        } else {
+            throw new TokenException(keywordGroup, "Expected visualisation name");
+        }
+
+        // Get visualisation parameters.
+        if (children.size() > 2) {
+            final AbstractToken token = children.get(2);
+            if (TokenType.TOKEN_GROUP.equals(token.getTokenType())) {
+                final TokenGroup tokenGroup = (TokenGroup) token;
+                params = getParams(tokenGroup.getChildren());
+            } else {
+                throw new TokenException(token, "Expected visualisation parameters in brackets");
+            }
+        }
+
+        // Check we don't have more than 3 tokens.
+        if (children.size() > 3) {
+            throw new TokenException(children.get(3), "Unexpected token");
         }
 
         // Add final field if we have one.

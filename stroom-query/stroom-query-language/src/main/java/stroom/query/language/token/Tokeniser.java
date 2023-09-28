@@ -36,8 +36,8 @@ public class Tokeniser {
         // Tag quoted strings and comments.
         extractQuotedTokens();
 
-        // Add support for legacy parameters.
-        split("\\$\\{[^}]*}", 0, TokenType.PARAM);
+        // Add support for parameters.
+        splitParam("\\$\\{[^}]*}", 0, TokenType.PARAM);
 
         // Tag keywords.
         TokenType.KEYWORDS.forEach(token -> tagKeyword(token.toString().toLowerCase(Locale.ROOT), token));
@@ -127,24 +127,86 @@ public class Tokeniser {
                 int lastPos = 0;
                 while (matcher.find()) {
                     final int start = matcher.start(group);
-                    final int end = matcher.end(group) - 1;
+                    final int end = matcher.end(group);
+                    if (start != -1 && end != -1) {
+                        if (start > lastPos) {
+                            out.add(new Token.Builder()
+                                    .tokenType(token.getTokenType())
+                                    .chars(token.getChars())
+                                    .start(token.getStart() + lastPos)
+                                    .end(token.getStart() + start - 1)
+                                    .build());
+                        }
 
-                    if (start > lastPos) {
-                        out.add(new Token(token.getTokenType(),
-                                token.getChars(),
-                                token.getStart() + lastPos,
-                                token.getStart() + start - 1));
+                        out.add(new Token.Builder()
+                                .tokenType(tokenType)
+                                .chars(token.getChars())
+                                .start(token.getStart() + start)
+                                .end(token.getStart() + end - 1)
+                                .build());
+                        lastPos = end;
                     }
-
-                    out.add(new Token(tokenType, token.getChars(), token.getStart() + start, token.getStart() + end));
-                    lastPos = end + 1;
                 }
 
                 if (token.getStart() + lastPos <= token.getEnd()) {
-                    out.add(new Token(token.getTokenType(),
-                            token.getChars(),
-                            token.getStart() + lastPos,
-                            token.getEnd()));
+                    out.add(new Token.Builder()
+                            .tokenType(token.getTokenType())
+                            .chars(token.getChars())
+                            .start(token.getStart() + lastPos)
+                            .end(token.getEnd())
+                            .build());
+                }
+            } else {
+                out.add(token);
+            }
+        }
+        this.tokens = out;
+    }
+
+    private void splitParam(final String regex,
+                            final int group,
+                            final TokenType tokenType) {
+        final Pattern pattern = PATTERN_CACHE
+                .computeIfAbsent(regex, k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+        final List<Token> out = new ArrayList<>();
+        for (final Token token : tokens) {
+            if (TokenType.UNKNOWN.equals(token.getTokenType())) {
+                final String str = new String(token.getChars(),
+                        token.getStart(),
+                        token.getEnd() - token.getStart() + 1);
+                final Matcher matcher = pattern.matcher(str);
+
+                int lastPos = 0;
+                while (matcher.find()) {
+                    final int start = matcher.start(group);
+                    final int end = matcher.end(group);
+                    if (start != -1 && end != -1) {
+                        if (start > lastPos) {
+                            out.add(new Token.Builder()
+                                    .tokenType(token.getTokenType())
+                                    .chars(token.getChars())
+                                    .start(token.getStart() + lastPos)
+                                    .end(token.getStart() + start - 1)
+                                    .build());
+                        }
+
+                        out.add(new ParamToken.Builder()
+                                .tokenType(tokenType)
+                                .chars(token.getChars())
+                                .start(token.getStart() + start)
+                                .end(token.getStart() + end - 1)
+                                .build());
+                        lastPos = end;
+                    }
+                }
+
+                if (token.getStart() + lastPos <= token.getEnd()) {
+                    out.add(new Token.Builder()
+                            .tokenType(token.getTokenType())
+                            .chars(token.getChars())
+                            .start(token.getStart() + lastPos)
+                            .end(token.getEnd())
+                            .build());
                 }
             } else {
                 out.add(token);

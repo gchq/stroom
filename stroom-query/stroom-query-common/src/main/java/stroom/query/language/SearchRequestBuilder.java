@@ -9,7 +9,6 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.HoppingWindow;
-import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -22,13 +21,9 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.Function;
-import stroom.query.language.functions.FunctionFactory;
 import stroom.query.language.functions.ParamFactory;
 import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.FunctionGroup;
 import stroom.query.language.token.KeywordGroup;
-import stroom.query.language.token.QuotedStringToken;
 import stroom.query.language.token.StructureBuilder;
 import stroom.query.language.token.Token;
 import stroom.query.language.token.TokenException;
@@ -252,7 +247,7 @@ public class SearchRequestBuilder {
         final AbstractToken fieldToken = tokens.get(0);
         final AbstractToken conditionToken = tokens.get(1);
 
-        if (!TokenType.isString(fieldToken)) {
+        if (!TokenType.isString(fieldToken) && !TokenType.PARAM.equals(fieldToken.getTokenType())) {
             throw new TokenException(fieldToken, "Expected field string");
         }
         if (!TokenType.CONDITIONS.contains(conditionToken.getTokenType())) {
@@ -582,7 +577,6 @@ public class SearchRequestBuilder {
                                                  final Set<TokenType> consumedTokens,
                                                  final boolean extractValues,
                                                  final List<ResultRequest> resultRequests) {
-        final Map<String, String> variables = new HashMap<>();
         final Map<String, Sort> sortMap = new HashMap<>();
         final Map<String, Integer> groupMap = new HashMap<>();
         final Map<String, Filter> filterMap = new HashMap<>();
@@ -612,9 +606,7 @@ public class SearchRequestBuilder {
                                     TokenType.FILTER,
                                     tableSettingsBuilder::valueFilter);
                     case EVAL -> {
-                        processEval(
-                                keywordGroup,
-                                variables);
+                        processEval(keywordGroup);
                         remaining.remove(0);
                     }
                     case WINDOW -> {
@@ -646,7 +638,6 @@ public class SearchRequestBuilder {
                     case SELECT -> {
                         processSelect(
                                 keywordGroup,
-                                variables,
                                 sortMap,
                                 groupMap,
                                 filterMap,
@@ -711,8 +702,10 @@ public class SearchRequestBuilder {
         String field;
         String durationString;
         String advanceString = null;
+
+        // Get field name.
         if (children.size() > 0) {
-            AbstractToken token = children.get(0);
+            final AbstractToken token = children.get(0);
             if (!TokenType.isString(token)) {
                 throw new TokenException(token, "Syntax exception");
             }
@@ -721,8 +714,9 @@ public class SearchRequestBuilder {
             throw new TokenException(keywordGroup, "Expected field");
         }
 
+        // Get BY.
         if (children.size() > 1) {
-            AbstractToken token = children.get(1);
+            final AbstractToken token = children.get(1);
             if (!TokenType.BY.equals(token.getTokenType())) {
                 throw new TokenException(token, "Syntax exception, expected by");
             }
@@ -730,34 +724,40 @@ public class SearchRequestBuilder {
             throw new TokenException(keywordGroup, "Syntax exception, expected by");
         }
 
+        // Get duration.
         if (children.size() > 2) {
-            AbstractToken token = children.get(2);
-            if (!TokenType.isString(token)) {
-                throw new TokenException(token, "Syntax exception, expected by");
+            final AbstractToken token = children.get(2);
+            if (!TokenType.DURATION.equals(token.getTokenType())) {
+                throw new TokenException(token, "Syntax exception, expected valid window duration");
             }
             durationString = token.getUnescapedText();
         } else {
             throw new TokenException(keywordGroup, "Syntax exception, expected window duration");
         }
 
+        // Get advance.
         if (children.size() > 3) {
-            AbstractToken token = children.get(3);
-            if (!TokenType.isString(token)) {
+            final AbstractToken token = children.get(3);
+            if (!TokenType.isString(token) || !token.getUnescapedText().equals("advance")) {
                 throw new TokenException(token, "Syntax exception, expected advance");
             }
-            if (!token.getUnescapedText().equals("advance")) {
-                throw new TokenException(token, "Syntax exception, expected advance");
-            }
+        }
 
+        // If advance then get advance duration.
+        if (children.size() > 3) {
             if (children.size() > 4) {
-                token = children.get(4);
-                if (!TokenType.isString(token)) {
-                    throw new TokenException(token, "Syntax exception, expected advance duration");
+                final AbstractToken token = children.get(4);
+                if (!TokenType.DURATION.equals(token.getTokenType())) {
+                    throw new TokenException(token, "Syntax exception, expected valid advance duration");
                 }
                 advanceString = token.getUnescapedText();
             } else {
                 throw new TokenException(keywordGroup, "Syntax exception, expected advance duration");
             }
+        }
+
+        if (children.size() > 5) {
+            throw new TokenException(children.get(5), "Unexpected token");
         }
 
         builder.window(HoppingWindow.builder()
@@ -769,8 +769,7 @@ public class SearchRequestBuilder {
                 .build());
     }
 
-    private void processEval(final KeywordGroup keywordGroup,
-                             final Map<String, String> variables) {
+    private void processEval(final KeywordGroup keywordGroup) {
         final List<AbstractToken> children = keywordGroup.getChildren();
 
         // Check we have a variable name.
@@ -793,7 +792,7 @@ public class SearchRequestBuilder {
         }
 
         // Check we have a function expression.
-        if (children.size() < 2) {
+        if (children.size() <= 2) {
             throw new TokenException(equalsToken, "Expected eval expression");
         }
 
@@ -931,56 +930,68 @@ public class SearchRequestBuilder {
 //    }
 
     private void processSelect(final KeywordGroup keywordGroup,
-                               final Map<String, String> functions,
                                final Map<String, Sort> sortMap,
                                final Map<String, Integer> groupMap,
                                final Map<String, Filter> filterMap,
                                final TableSettings.Builder tableSettingsBuilder) {
         final List<AbstractToken> children = keywordGroup.getChildren();
-        String fieldName = null;
+        AbstractToken fieldToken = null;
         String columnName = null;
         boolean afterAs = false;
 
-        for (final AbstractToken t : children) {
-            if (TokenType.isString(t)) {
+        for (final AbstractToken token : children) {
+            if (TokenType.isString(token)) {
                 if (afterAs) {
                     if (columnName != null) {
-                        throw new TokenException(t, "Syntax exception, duplicate column name");
+                        throw new TokenException(token, "Syntax exception, duplicate column name");
                     } else {
-                        columnName = t.getUnescapedText();
+                        columnName = token.getUnescapedText();
                     }
-                } else if (fieldName == null) {
-                    fieldName = t.getUnescapedText();
+                } else if (fieldToken == null) {
+                    fieldToken = token;
                 } else {
-                    throw new TokenException(t, "Syntax exception, expected AS");
+                    throw new TokenException(token, "Syntax exception, expected AS");
                 }
-            } else if (TokenType.AS.equals(t.getTokenType())) {
-                if (fieldName == null) {
-                    throw new TokenException(t, "Syntax exception, expected field name");
+            } else if (TokenType.AS.equals(token.getTokenType())) {
+                if (fieldToken == null) {
+                    throw new TokenException(token, "Syntax exception, expected field name");
                 }
 
                 afterAs = true;
 
-            } else if (TokenType.COMMA.equals(t.getTokenType())) {
-                if (fieldName == null) {
-                    throw new TokenException(t, "Syntax exception, expected field name");
+            } else if (TokenType.COMMA.equals(token.getTokenType())) {
+                if (fieldToken == null) {
+                    throw new TokenException(token, "Syntax exception, expected field name");
                 }
 
-                addField(fieldName, columnName, sortMap, groupMap, filterMap, tableSettingsBuilder);
+                addField(fieldToken,
+                        fieldToken.getUnescapedText(),
+                        columnName,
+                        sortMap,
+                        groupMap,
+                        filterMap,
+                        tableSettingsBuilder);
 
-                fieldName = null;
+                fieldToken = null;
                 columnName = null;
                 afterAs = false;
             }
         }
 
         // Add final field if we have one.
-        if (fieldName != null) {
-            addField(fieldName, columnName, sortMap, groupMap, filterMap, tableSettingsBuilder);
+        if (fieldToken != null) {
+            addField(fieldToken,
+                    fieldToken.getUnescapedText(),
+                    columnName,
+                    sortMap,
+                    groupMap,
+                    filterMap,
+                    tableSettingsBuilder);
         }
     }
 
-    private void addField(final String fieldName,
+    private void addField(final AbstractToken token,
+                          final String fieldName,
                           final String columnName,
                           final Map<String, Sort> sortMap,
                           final Map<String, Integer> groupMap,
@@ -990,28 +1001,27 @@ public class SearchRequestBuilder {
         if (expression == null) {
             ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
             try {
-                expression = expressionParser.parse(expressionContext, fieldIndex, fieldName);
+                expression = expressionParser.parse(expressionContext, fieldIndex, Collections.singletonList(token));
             } catch (final ParseException e) {
-                // TODO: throw token exception....
+                throw new TokenException(token, e.getMessage());
             }
         }
 
         Format format = Format.GENERAL;
-            if (expression != null) {
-                switch (expression.getCommonReturnType()) {
-                    case DATE -> format = Format.DATE_TIME;
-                    case LONG, INTEGER, DOUBLE, FLOAT -> format = Format.NUMBER;
-                    default -> {
-                    }
-                }
+        switch (expression.getCommonReturnType()) {
+            case DATE -> format = Format.DATE_TIME;
+            case LONG, INTEGER, DOUBLE, FLOAT -> format = Format.NUMBER;
+            default -> {
             }
+        }
 
+        final String expressionString = expression.toString();
         final Field field = Field.builder()
                 .id(fieldName)
                 .name(columnName != null
                         ? columnName
                         : fieldName)
-                .expression(expression)
+                .expression(expressionString)
                 .sort(sortMap.get(fieldName))
                 .group(groupMap.get(fieldName))
                 .filter(filterMap.get(fieldName))

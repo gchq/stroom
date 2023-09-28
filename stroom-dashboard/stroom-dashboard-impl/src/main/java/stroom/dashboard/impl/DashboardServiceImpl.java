@@ -82,6 +82,7 @@ import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -156,7 +157,7 @@ class DashboardServiceImpl implements DashboardService {
         try {
             final ExpressionContext expressionContext = new ExpressionContext();
             final FieldIndex fieldIndex = new FieldIndex();
-            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(new HashMap<>()));
             final Expression expression = expressionParser.parse(expressionContext, fieldIndex, expressionString);
             String correctedExpression = "";
             if (expression != null) {
