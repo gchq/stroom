@@ -1,6 +1,7 @@
 package stroom.util;
 
 import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -586,6 +587,82 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testIsNull_and_nonNull2() {
+        final Level1 nullLevel1 = null;
+        final Level1 nonNullLevel1 = new Level1();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Level1, Function<Level1, Level2>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final Level1 level1 = testCase.getInput()._1;
+                    final Function<Level1, Level2> getter = testCase.getInput()._2;
+                    final boolean isNull = NullSafe.isNull(level1, getter);
+                    final boolean isNonNull = NullSafe.nonNull(level1, getter);
+                    Assertions.assertThat(isNull)
+                            .isEqualTo(!isNonNull);
+                    return isNull;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nullLevel1, Level1::getNullLevel2), true)
+                .addCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2), true)
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2), true)
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2), false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsNull_and_nonNull3() {
+        final Level1 nullLevel1 = null;
+        final Level1 nonNullLevel1 = new Level1();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple3<
+                        Level1,
+                        Function<Level1, Level2>,
+                        Function<Level2, Level3>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final Level1 level1 = testCase.getInput()._1;
+                    final Function<Level1, Level2> getter1 = testCase.getInput()._2;
+                    final Function<Level2, Level3> getter2 = testCase.getInput()._3;
+                    final boolean isNull = NullSafe.isNull(level1, getter1, getter2);
+                    final boolean nonNull = NullSafe.nonNull(level1, getter1, getter2);
+                    Assertions.assertThat(isNull)
+                            .isEqualTo(!nonNull);
+                    return isNull;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(
+                        Tuple.of(nullLevel1, Level1::getNullLevel2, Level2::getNullLevel3),
+                        true)
+                .addCase(
+                        Tuple.of(nullLevel1, Level1::getNullLevel2, Level2::getNonNullLevel3),
+                        true)
+                .addCase(
+                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getNullLevel3),
+                        true)
+                .addCase(
+                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        true)
+                .addCase(
+                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getNullLevel3),
+                        true)
+                .addCase(
+                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getNonNullLevel3),
+                        true)
+                .addCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNullLevel3),
+                        true)
+                .addCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        false)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testIsEmptyMap() {
         final Map<String, String> emptyMap = Collections.emptyMap();
         final Map<String, String> nonEmptyMap = Map.of("foo", "bar");
@@ -851,6 +928,19 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testSingletonList() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::singletonList)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase("foo", List.of("foo"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testAsList() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String[].class)
@@ -877,6 +967,19 @@ class TestNullSafe {
                 .addCase(null, Collections.emptySet())
                 .addCase(Collections.emptySet(), Collections.emptySet())
                 .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSingletonSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withWrappedOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::singletonSet)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase("foo", Set.of("foo"))
                 .build();
     }
 
@@ -1307,6 +1410,37 @@ class TestNullSafe {
                     (double) totalNanosNullSafe.getValue() / totalNanosOptional.getValue());
             LOGGER.info("--------------------------------");
         }
+    }
+
+    @Disabled
+    @Test
+    void testIsNullPerf() {
+
+        final TimedCase pureJavaCase = TimedCase.of("Pure java", (round, iterations) -> {
+            final Level1 nonNullLevel1 = new Level1();
+            int i = 0;
+            if (nonNullLevel1 != null
+                    && nonNullLevel1.getNonNullLevel2() != null
+                    && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
+                i++;
+            }
+//            System.out.println(i);
+        });
+        final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
+            final Level1 nonNullLevel1 = new Level1();
+            int i = 0;
+            if (NullSafe.nonNull(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3)) {
+                i++;
+            }
+//            System.out.println(i);
+        });
+
+        TestUtil.comparePerformance(
+                4,
+                1_000_000_000,
+                LOGGER::info,
+                pureJavaCase,
+                nullSafeCase);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

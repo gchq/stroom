@@ -156,54 +156,70 @@ public class StreamingAnalyticExecutor {
         final AtomicBoolean allComplete = new AtomicBoolean(true);
 
         // Load rules.
-        final List<StreamingAnalytic> streamingAnalytics = loadStreamingAnalytics();
+        final List<StreamingAnalytic> analytics = loadStreamingAnalytics();
 
         // Group rules by transformation pipeline.
         final Map<GroupKey, List<StreamingAnalytic>> analyticGroupMap = new HashMap<>();
-        for (final StreamingAnalytic streamingAnalytic : streamingAnalytics) {
+        for (final StreamingAnalytic analytic : analytics) {
             try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(streamingAnalytic.viewDoc().getUuid());
-                final GroupKey groupKey = new GroupKey(streamingAnalytic.viewDoc().getPipeline(), ownerUuid);
+                final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc().asDocRef());
+                final GroupKey groupKey = new GroupKey(analytic.viewDoc().getPipeline(), ownerUuid);
                 analyticGroupMap
                         .computeIfAbsent(groupKey, k -> new ArrayList<>())
-                        .add(streamingAnalytic);
+                        .add(analytic);
             } catch (final RuntimeException e) {
-                LOGGER.error(() -> "Error executing rule: " + streamingAnalytic.ruleIdentity(), e);
+                LOGGER.error(() -> "Error executing rule: " + analytic.ruleIdentity(), e);
             }
         }
 
         // Process each group in parallel.
-        analyticHelper.info(() -> "Processing rules");
+        analyticHelper.info(() ->
+                LogUtil.message("Processing {} ({})",
+                        LogUtil.namedCount("streaming rule", analyticGroupMap.values()
+                                .stream()
+                                .mapToInt(List::size)
+                                .sum()),
+                        LogUtil.namedCount("group", analyticGroupMap.size())));
+
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<GroupKey, List<StreamingAnalytic>> entry : analyticGroupMap.entrySet()) {
-            final GroupKey groupKey = entry.getKey();
-            final DocRef pipelineRef = groupKey.pipeline();
-            final String ownerUuid = groupKey.ownerUuid();
-            final List<StreamingAnalytic> analytics = entry.getValue();
-            if (analytics.size() > 0) {
-                final String pipelineIdentity = pipelineRef.toInfoString();
-                final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
-                        "Pipeline: " + pipelineIdentity,
-                        TerminateHandlerFactory.NOOP_FACTORY,
-                        taskContext -> {
-                            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
-                            securityContext.asUser(userIdentity, () -> {
-                                final boolean complete =
-                                        processPipeline(pipelineRef, analytics, taskContext);
-                                if (!complete) {
-                                    allComplete.set(false);
-                                }
-                            });
-                        });
-                completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
-            }
+            final Optional<CompletableFuture<Void>> optional =
+                    processGroup(parentTaskContext, entry.getKey(), entry.getValue(), allComplete);
+            optional.ifPresent(completableFutures::add);
         }
 
         // Join.
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
 
         return allComplete.get() || parentTaskContext.isTerminated();
+    }
+
+    private Optional<CompletableFuture<Void>> processGroup(final TaskContext parentTaskContext,
+                                                           final GroupKey groupKey,
+                                                           final List<StreamingAnalytic> analytics,
+                                                           final AtomicBoolean allComplete) {
+        final DocRef pipelineRef = groupKey.pipeline();
+        final String ownerUuid = groupKey.ownerUuid();
+        if (analytics.size() > 0) {
+            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+            return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
+                final String pipelineIdentity = pipelineRef.toInfoString();
+                final Runnable runnable = taskContextFactory.childContext(
+                        parentTaskContext,
+                        "Pipeline: " + pipelineIdentity,
+                        TerminateHandlerFactory.NOOP_FACTORY,
+                        taskContext -> {
+                            final boolean complete =
+                                    processPipeline(pipelineRef, analytics, taskContext);
+                            if (!complete) {
+                                allComplete.set(false);
+                            }
+                        });
+                return Optional.of(CompletableFuture.runAsync(runnable, executorProvider.get()));
+            }));
+        }
+        return Optional.empty();
     }
 
     private boolean processPipeline(final DocRef pipelineDocRef,
@@ -302,7 +318,9 @@ public class StreamingAnalyticExecutor {
         }
 
         // Now trim to the max meta list size as some of our filters may be further ahead.
-        List<Meta> sortedMetaList = allMatchingMeta.stream().sorted(Comparator.comparing(Meta::getId)).toList();
+        List<Meta> sortedMetaList = allMatchingMeta.stream()
+                .sorted(Comparator.comparing(Meta::getId))
+                .toList();
         if (sortedMetaList.size() > maxMetaListSize) {
             sortedMetaList = sortedMetaList.subList(0, maxMetaListSize);
         }

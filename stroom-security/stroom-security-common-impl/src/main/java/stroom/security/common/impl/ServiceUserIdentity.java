@@ -21,8 +21,9 @@ public class ServiceUserIdentity
                                final String displayName,
                                final UpdatableToken updatableToken) {
         this.id = Objects.requireNonNull(id);
-        // Fall back to id if not present
-        this.displayName = Objects.requireNonNullElse(displayName, id);
+        // The IDP may or may not provide a nice name for the service user so provide a hard coded fallback.
+        // There should be only one service user so this is ok.
+        this.displayName = Objects.requireNonNullElse(displayName, "Internal Processing User");
         this.updatableToken = Objects.requireNonNull(updatableToken);
     }
 

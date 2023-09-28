@@ -86,6 +86,19 @@ class TestTermHandler {
 
                 .addCase(ExpressionTerm.builder()
                                 .field(ID_FIELD.getName())
+                                .condition(ExpressionTerm.Condition.EQUALS)
+                                .value("")
+                                .build(),
+                        ID_DB_FIELD.isNull()) // Empty value
+
+                .addCase(ExpressionTerm.builder()
+                                .field(ID_FIELD.getName())
+                                .condition(ExpressionTerm.Condition.EQUALS)
+                                .build(),
+                        ID_DB_FIELD.isNull()) // Empty value
+
+                .addCase(ExpressionTerm.builder()
+                                .field(ID_FIELD.getName())
                                 .condition(ExpressionTerm.Condition.BETWEEN)
                                 .value("1,3")
                                 .build(),
@@ -150,7 +163,7 @@ class TestTermHandler {
                                 .condition(ExpressionTerm.Condition.IN)
                                 .value("")
                                 .build(),
-                        DSL.falseCondition())
+                        DSL.falseCondition()) // Empty in list, so always false
 
                 .addCase(ExpressionTerm.builder()
                                 .field(ID_FIELD.getName())

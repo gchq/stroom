@@ -50,6 +50,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -69,6 +70,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -183,54 +185,70 @@ public class TableBuilderAnalyticExecutor {
         final AtomicBoolean allComplete = new AtomicBoolean(true);
 
         // Load event and aggregate rules.
-        final List<TableBuilderAnalytic> loadedAnalyticList = loadAnalyticRules();
+        final List<TableBuilderAnalytic> analytics = loadAnalyticRules();
 
         // Group rules by transformation pipeline.
         final Map<GroupKey, List<TableBuilderAnalytic>> analyticGroupMap = new HashMap<>();
-        for (final TableBuilderAnalytic loadedAnalytic : loadedAnalyticList) {
+        for (final TableBuilderAnalytic analytic : analytics) {
             try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(loadedAnalytic.viewDoc().getUuid());
-                final GroupKey groupKey = new GroupKey(loadedAnalytic.viewDoc().getPipeline(), ownerUuid);
+                final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc().asDocRef());
+                final GroupKey groupKey = new GroupKey(analytic.viewDoc().getPipeline(), ownerUuid);
                 analyticGroupMap
                         .computeIfAbsent(groupKey, k -> new ArrayList<>())
-                        .add(loadedAnalytic);
+                        .add(analytic);
             } catch (final RuntimeException e) {
-                LOGGER.error(() -> "Error executing rule: " + loadedAnalytic.ruleIdentity(), e);
+                LOGGER.error(() -> "Error executing rule: " + analytic.ruleIdentity(), e);
             }
         }
 
         // Process each group in parallel.
-        info(() -> "Processing rules");
+        analyticHelper.info(() ->
+                LogUtil.message("Processing {} ({})",
+                        LogUtil.namedCount("table builder rule", analyticGroupMap.values()
+                                .stream()
+                                .mapToInt(List::size)
+                                .sum()),
+                        LogUtil.namedCount("group", analyticGroupMap.size())));
+
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<GroupKey, List<TableBuilderAnalytic>> entry : analyticGroupMap.entrySet()) {
-            final GroupKey groupKey = entry.getKey();
-            final DocRef pipelineRef = groupKey.pipeline();
-            final String ownerUuid = groupKey.ownerUuid();
-            final List<TableBuilderAnalytic> analytics = entry.getValue();
-            if (analytics.size() > 0) {
-                final String pipelineIdentity = pipelineRef.toInfoString();
-                final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
-                        "Pipeline: " + pipelineIdentity,
-                        TerminateHandlerFactory.NOOP_FACTORY,
-                        taskContext -> {
-                            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
-                            securityContext.asUser(userIdentity, () -> {
-                                final boolean complete =
-                                        processPipeline(pipelineRef, analytics, taskContext);
-                                if (!complete) {
-                                    allComplete.set(false);
-                                }
-                            });
-                        });
-                completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
-            }
+            final Optional<CompletableFuture<Void>> optional =
+                    processGroup(parentTaskContext, entry.getKey(), entry.getValue(), allComplete);
+            optional.ifPresent(completableFutures::add);
         }
 
         // Join.
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
 
         return allComplete.get() || parentTaskContext.isTerminated();
+    }
+
+    private Optional<CompletableFuture<Void>> processGroup(final TaskContext parentTaskContext,
+                                                           final GroupKey groupKey,
+                                                           final List<TableBuilderAnalytic> analytics,
+                                                           final AtomicBoolean allComplete) {
+        final DocRef pipelineRef = groupKey.pipeline();
+        final String ownerUuid = groupKey.ownerUuid();
+        if (analytics.size() > 0) {
+            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+            return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
+                final String pipelineIdentity = pipelineRef.toInfoString();
+                final Runnable runnable = taskContextFactory.childContext(
+                        parentTaskContext,
+                        "Pipeline: " + pipelineIdentity,
+                        TerminateHandlerFactory.NOOP_FACTORY,
+                        taskContext -> {
+                            final boolean complete =
+                                    processPipeline(pipelineRef, analytics, taskContext);
+                            if (!complete) {
+                                allComplete.set(false);
+                            }
+                        });
+                return Optional.of(CompletableFuture.runAsync(runnable, executorProvider.get()));
+            }));
+        }
+        return Optional.empty();
     }
 
     private boolean processPipeline(final DocRef pipelineDocRef,
@@ -394,7 +412,16 @@ public class TableBuilderAnalyticExecutor {
                             // Update LMDB state.
                             analytics.forEach(analytic -> {
                                 final LmdbDataStore lmdbDataStore = analytic.dataStore().getLmdbDataStore();
-                                lmdbDataStore.putCurrentDbState(meta.getId(), null, null);
+
+                                // Get current state and last event time.
+                                final CurrentDbState currentDbState = lmdbDataStore.sync();
+                                Long lastEventTime = null;
+                                if (currentDbState != null) {
+                                    lastEventTime = currentDbState.getLastEventTime();
+                                }
+
+                                // Update the state.
+                                lmdbDataStore.putCurrentDbState(meta.getId(), null, lastEventTime);
                                 lmdbDataStore.sync();
                             });
 
@@ -471,8 +498,9 @@ public class TableBuilderAnalyticExecutor {
             final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
             CurrentDbState currentDbState = lmdbDataStore.sync();
 
-            // If we don't have any data in LMDB then the current DB state will be null.
-            if (currentDbState != null) {
+            // If we don't have any data in LMDB then we may have a currentDbState
+            // but lastEventTime will not be present
+            if (NullSafe.test(currentDbState, CurrentDbState::hasLastEventTime)) {
                 // Remember meta load state.
                 updateTrackerWithLmdbState(analytic.trackerData, currentDbState);
 
@@ -556,20 +584,30 @@ public class TableBuilderAnalyticExecutor {
                                  final DetectionConsumer detectionConsumer,
                                  final AnalyticDataStore dataStore,
                                  final CurrentDbState currentDbState) {
-        SimpleDuration timeToWaitForData = analytic.analyticProcessConfig.getTimeToWaitForData();
-        if (timeToWaitForData == null) {
-            timeToWaitForData = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-        }
+        Objects.requireNonNull(currentDbState, "Null LMDB state");
+        Objects.requireNonNull(currentDbState.getLastEventTime(), "Null LMDB last event time");
 
-        Instant from = Instant.ofEpochMilli(0);
+        final SimpleDuration timeToWaitForData = Objects.requireNonNullElseGet(
+                analytic.analyticProcessConfig.getTimeToWaitForData(),
+                () -> SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.HOURS)
+                        .build());
+
+        final Instant from;
         if (analytic.trackerData.getLastWindowEndTimeMs() != null) {
             from = Instant.ofEpochMilli(analytic.trackerData.getLastWindowEndTimeMs() + 1);
         } else if (analytic.analyticProcessConfig.getMinMetaCreateTimeMs() != null) {
             from = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
+        } else {
+            from = Instant.ofEpochMilli(0);
         }
 
         Instant to = Instant.ofEpochMilli(currentDbState.getLastEventTime());
-        to = SimpleDurationUtil.minus(to, timeToWaitForData);
+        final Instant newTo = SimpleDurationUtil.minus(to, timeToWaitForData);
+        if (!newTo.isBefore(Instant.EPOCH)) {
+            to = newTo;
+        }
         if (analytic.analyticProcessConfig.getMaxMetaCreateTimeMs() != null) {
             Instant max = Instant.ofEpochMilli(analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
             if (max.isBefore(to)) {

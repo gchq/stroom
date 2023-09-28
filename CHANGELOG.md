@@ -13,6 +13,51 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.67] - 2023-09-25
+
+* Issue **#3776** : Change `dataTimeSettings.referenceTime` to be nullable in API search requests so it can be set to the current time by the server at query time. Change the Dashboard 'Download Query' feature to clear the `referenceTime` in the request JSON.
+
+
+## [v7.2-beta.66] - 2023-09-25
+
+* Issue **#3757** : Fix NPE in rule processing. Fix NPE with `getLastEventTime()`.
+
+* Issue **#3756** : Fix confusing logging when a View has 0 or >1 owners. Improve rule processing logging.
+
+* Issue **#3764** : Fix security task context issue.
+
+* Issue **#3765** : Improve styling of doc/folder permissions dialog. Add validation to document/folder permissions screen to enforce one owner rule.
+
+* Issue **#3773** : Add a fallback display name for service user identities with no display name.
+
+
+## [v7.2-beta.65] - 2023-09-20
+
+* Issue **#3738** : Fix exceptions when using stream filter terms with no value, e.g. `Parent ID = ''`. Also change `= ''` to map to `is null` in database terms rather than `in ()` as it was doing.
+
+* Issue **#3717** : Run analytics as the analytic document owner.
+
+
+## [v7.2-beta.64] - 2023-09-20
+
+* Issue **#3717** : Run analytics as the analytic document owner.
+
+
+## [v7.2-beta.63] - 2023-09-19
+
+* Issue **#3737** : Ensure table builder analytics keep tracking processing state even if there are no matching events to store.
+
+* Issue **#3738** : Fix error when selecting Feed is None in stream filter.
+
+* Issue **#3744** : Add processor filter permissions.
+
+* Issue **#3746** : Create streaming analytics by default.
+
+* Issue **#3717** : Run analytics as the analytic document owner.
+
+* Issue **#3743** : Improve syntax validation in StroomQL.
+
+
 ## [v7.2-beta.62] - 2023-09-08
 
 * Issue **#3731** : Fix ConcurrentModificationException in FieldIndex.
@@ -5903,7 +5948,12 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.62...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.67...HEAD
+[v7.2-beta.67]: https://github.com/gchq/stroom/compare/v7.2-beta.66...v7.2-beta.67
+[v7.2-beta.66]: https://github.com/gchq/stroom/compare/v7.2-beta.65...v7.2-beta.66
+[v7.2-beta.65]: https://github.com/gchq/stroom/compare/v7.2-beta.64...v7.2-beta.65
+[v7.2-beta.64]: https://github.com/gchq/stroom/compare/v7.2-beta.63...v7.2-beta.64
+[v7.2-beta.63]: https://github.com/gchq/stroom/compare/v7.2-beta.62...v7.2-beta.63
 [v7.2-beta.62]: https://github.com/gchq/stroom/compare/v7.2-beta.61...v7.2-beta.62
 [v7.2-beta.61]: https://github.com/gchq/stroom/compare/v7.2-beta.60...v7.2-beta.61
 [v7.2-beta.60]: https://github.com/gchq/stroom/compare/v7.2-beta.59...v7.2-beta.60

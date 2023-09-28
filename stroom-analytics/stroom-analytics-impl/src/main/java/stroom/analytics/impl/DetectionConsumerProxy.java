@@ -3,6 +3,7 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.expression.api.DateTimeSettings;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.query.api.v2.Field;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -12,6 +13,7 @@ import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.StoredValues;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
@@ -178,25 +180,25 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         // Output standard index fields
         final AtomicReference<Long> streamId = new AtomicReference<>();
         final AtomicReference<Long> eventId = new AtomicReference<>();
-        for (int pos = 0; pos < fieldIndex.size(); pos++) {
-            final String fieldName = fieldIndex.getField(pos);
-            if (fieldName != null) {
-//            if (skipFields.contains(fieldName)) {
-                final CompiledFieldValue compiledFieldValue = fieldVals[pos];
-                if (compiledFieldValue != null && compiledFieldValue.getVal() != null) {
-                    if (fieldIndex.getStreamIdFieldIndex() == pos) {
-                        streamId.set(getSafeLong(compiledFieldValue.getVal()));
-                    } else if (fieldIndex.getEventIdFieldIndex() == pos) {
-                        eventId.set(getSafeLong(compiledFieldValue.getVal()));
-                    } else {
-                        final String fieldValStr =
-                                fieldFormatter.format(compiledFieldValue.getCompiledField().getField(),
-                                        compiledFieldValue.getVal());
-                        values.add(new DetectionValue(fieldName, fieldValStr));
-                    }
+
+        // fieldIndex may differ in size to fieldVals if the query uses field but does not
+        // select them, e.g.
+        //   eval compound=field1+field2
+        //   select compound
+        for (final CompiledFieldValue fieldVal : fieldVals) {
+            NullSafe.consume(fieldVal, CompiledFieldValue::getVal, val -> {
+                final CompiledField compiledField = fieldVal.getCompiledField();
+                final Field field = compiledField.getField();
+                final String fieldName = field.getName();
+                if (FieldIndex.isStreamIdFieldName(fieldName)) {
+                    streamId.set(getSafeLong(val));
+                } else if (FieldIndex.isEventIdFieldName(fieldName)) {
+                    eventId.set(getSafeLong(val));
+                } else {
+                    final String fieldValStr = fieldFormatter.format(field, val);
+                    values.add(new DetectionValue(fieldName, fieldValStr));
                 }
-            }
-//            }
+            });
         }
 
         final Detection detection = new Detection(

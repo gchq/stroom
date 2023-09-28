@@ -206,6 +206,12 @@ class DashboardServiceImpl implements DashboardService {
 
                 builder.componentResultRequests(componentResultRequests);
 
+                // API users don't want a fixed referenceTime for their queries. They want it null
+                // so the backend sets it for them
+                NullSafe.consume(request.getDateTimeSettings(), dateTimeSettings -> {
+                    builder.dateTimeSettings(dateTimeSettings.withoutReferenceTime());
+                });
+
                 // Convert our internal model to the model used by the api
                 SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(builder.build());
 

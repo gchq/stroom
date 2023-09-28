@@ -48,6 +48,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -128,7 +129,7 @@ public class ScheduledQueryAnalyticExecutor {
         // Load rules.
         final List<ScheduledQueryAnalytic> analytics = loadScheduledQueryAnalytics();
 
-        analyticHelper.info(() -> "Processing batch rules");
+        analyticHelper.info(() -> "Processing " + LogUtil.namedCount("batch rule", NullSafe.size(analytics)));
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         processScheduledQueryAnalytics(analytics, completableFutures, taskContextFactory.current());
 
@@ -142,10 +143,17 @@ public class ScheduledQueryAnalyticExecutor {
         for (final ScheduledQueryAnalytic analytic : analytics) {
             if (!parentTaskContext.isTerminated()) {
                 try {
-                    final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc.getUuid());
+                    final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc.asDocRef());
                     final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
-                    securityContext.asUser(userIdentity, () ->
-                            processScheduledQueryAnalytic(analytic, completableFutures, parentTaskContext));
+                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
+                        final Runnable runnable = taskContextFactory.childContext(
+                                parentTaskContext,
+                                "Scheduled Query Analytic: " + analytic.ruleIdentity(),
+                                taskContext -> {
+                                    processScheduledQueryAnalytic(analytic, completableFutures, taskContext);
+                                });
+                        runnable.run();
+                    }));
                 } catch (final RuntimeException e) {
                     LOGGER.error(() -> "Error executing rule: " + analytic.ruleIdentity(), e);
                 }

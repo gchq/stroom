@@ -3,8 +3,9 @@ package stroom.query.common.v2;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.util.shared.GwtNullSafe;
 
-import java.util.Optional;
+import java.util.Objects;
 
 public class CurrentDbStateFactory {
 
@@ -42,13 +43,13 @@ public class CurrentDbStateFactory {
                     long time = 0;
                     if (timeFieldIndex >= 0 && timeFieldIndex < values.length) {
                         final Val eventTime = values[timeFieldIndex];
-                        time = Optional.ofNullable(eventTime).map(Val::toLong).orElse(0L);
+                        time = GwtNullSafe.getOrElse(eventTime, Val::toLong, 0L);
                     }
 
-                    final long streamIdLong = Optional.ofNullable(streamId.toLong()).orElseThrow(() ->
-                            new RuntimeException("Unable to get stream id"));
-                    final long eventIdLong = Optional.ofNullable(eventId.toLong()).orElseThrow(() ->
-                            new RuntimeException("Unable to get event id"));
+                    final long streamIdLong = Objects.requireNonNull(
+                            streamId.toLong(), "Unable to get stream id");
+                    final long eventIdLong = Objects.requireNonNull(
+                            eventId.toLong(), "Unable to get event id");
 
                     return new CurrentDbState(streamIdLong, eventIdLong, time);
                 }

@@ -796,7 +796,7 @@ export interface DateTimeSettings {
   localZoneId: string;
 
   /**
-   * The time in milliseconds since epoch to use as the reference time for relative date functions like `day()`
+   * The time in milliseconds since epoch to use as the reference time for relative date functions like `day()`. Typically this is the current time when the query is executed. If null the current time will be assumed.
    * @format int64
    */
   referenceTime: number;

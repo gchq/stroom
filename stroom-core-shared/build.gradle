@@ -17,13 +17,14 @@ dependencies {
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
 
-
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
+    testImplementation libs.guice5 // For DynamicTestFactory
     testImplementation libs.jackson_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.slf4j_api
+    testImplementation libs.vavr
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

@@ -272,8 +272,12 @@ class DynamicTestBuilder {
          */
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
             final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome -> {
-                if (testOutcome.getExpectedOutput() instanceof Collection
-                    && testOutcome.getActualOutput() instanceof Collection) {
+                if (testOutcome.getExpectedOutput() instanceof Set<?>
+                        && testOutcome.getActualOutput() instanceof Set<?>) {
+                    Assertions.assertThat((Set<O>) testOutcome.getActualOutput())
+                            .containsExactlyInAnyOrderElementsOf((Set<O>) testOutcome.getExpectedOutput());
+                } else if (testOutcome.getExpectedOutput() instanceof Collection
+                        && testOutcome.getActualOutput() instanceof Collection) {
                     // Using contains will give a better error message
                     Assertions.assertThat((Collection<O>) testOutcome.getActualOutput())
                             .containsExactlyElementsOf((Collection<O>) testOutcome.getExpectedOutput());
@@ -304,8 +308,10 @@ class DynamicTestBuilder {
                         Assertions.assertThat(actualThrowable)
                                 .isInstanceOf(expectedThrowableType);
                     } else {
-                        LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}",
-                                expectedThrowableType.getSimpleName());
+                        LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}. " +
+                                        "Actual output: '{}'",
+                                expectedThrowableType.getSimpleName(),
+                                testOutcome.getActualOutput());
                         Assertions.fail("Expecting test to throw "
                                 + expectedThrowableType.getSimpleName());
                     }

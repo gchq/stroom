@@ -315,7 +315,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                             } else {
                                 try {
                                     final String ownerUuid = securityContext
-                                            .getDocumentOwnerUuid(processorFilter.getUuid());
+                                            .getDocumentOwnerUuid(processorFilter.asDocRef());
                                     if (ownerUuid.equals(userUuid)) {
                                         include = true;
                                     }
@@ -341,7 +341,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                 String userDisplayName;
                                 try {
                                     final String ownerUuid = securityContext
-                                            .getDocumentOwnerUuid(processorFilter.getUuid());
+                                            .getDocumentOwnerUuid(processorFilter.asDocRef());
                                     userDisplayName = Optional.ofNullable(ownerUuid)
                                             .flatMap(userNameService::getByUuid)
                                             .map(UserName::getUserIdentityForAudit)

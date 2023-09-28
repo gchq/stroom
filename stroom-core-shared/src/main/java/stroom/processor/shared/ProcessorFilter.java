@@ -402,4 +402,12 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 '}';
     }
+
+    public DocRef asDocRef() {
+        // Doesn't really have a name
+        return DocRef.builder()
+                .type(ENTITY_TYPE)
+                .uuid(uuid)
+                .build();
+    }
 }

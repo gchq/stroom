@@ -87,6 +87,14 @@ public class FieldIndex {
         return timeFieldIndex;
     }
 
+    /**
+     * @return True if fieldName matches the special Stream ID field.
+     */
+    public static boolean isStreamIdFieldName(final String fieldName) {
+        return Objects.equals(DEFAULT_STREAM_ID_FIELD_NAME, fieldName)
+                || Objects.equals(FALLBACK_STREAM_ID_FIELD_NAME, fieldName);
+    }
+
     public int getStreamIdFieldIndex() {
         if (streamIdFieldIndex == null) {
             streamIdFieldIndex =
@@ -101,6 +109,14 @@ public class FieldIndex {
                             .orElse(-1);
         }
         return streamIdFieldIndex;
+    }
+
+    /**
+     * @return True if fieldName matches the special Event ID field.
+     */
+    public static boolean isEventIdFieldName(final String fieldName) {
+        return Objects.equals(DEFAULT_EVENT_ID_FIELD_NAME, fieldName)
+                || Objects.equals(FALLBACK_EVENT_ID_FIELD_NAME, fieldName);
     }
 
     public int getEventIdFieldIndex() {

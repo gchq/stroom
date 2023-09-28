@@ -51,7 +51,7 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
 
     @Override
     public Optional<String> getFullName() {
-        return Optional.of(fullName);
+        return Optional.ofNullable(fullName);
     }
 
     @Override

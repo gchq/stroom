@@ -25,39 +25,18 @@ public class SimpleDurationUtil {
                 final String number = matcher.group(1);
                 final String unit = matcher.group(2);
                 final long time = Long.parseLong(number);
-                final TimeUnit timeUnit;
-
-                switch (unit) {
-                    case "ns":
-                        timeUnit = TimeUnit.NANOSECONDS;
-                        break;
-                    case "ms":
-                        timeUnit = TimeUnit.MILLISECONDS;
-                        break;
-                    case "s":
-                        timeUnit = TimeUnit.SECONDS;
-                        break;
-                    case "m":
-                        timeUnit = TimeUnit.MINUTES;
-                        break;
-                    case "h":
-                        timeUnit = TimeUnit.HOURS;
-                        break;
-                    case "d", "D":
-                        timeUnit = TimeUnit.DAYS;
-                        break;
-                    case "w", "W":
-                        timeUnit = TimeUnit.WEEKS;
-                        break;
-                    case "M":
-                        timeUnit = TimeUnit.MONTHS;
-                        break;
-                    case "y", "Y":
-                        timeUnit = TimeUnit.YEARS;
-                        break;
-                    default:
-                        throw new ParseException("Time unit is invalid: " + trimmed, 0);
-                }
+                final TimeUnit timeUnit = switch (unit) {
+                    case "ns" -> TimeUnit.NANOSECONDS;
+                    case "ms" -> TimeUnit.MILLISECONDS;
+                    case "s" -> TimeUnit.SECONDS;
+                    case "m" -> TimeUnit.MINUTES;
+                    case "h" -> TimeUnit.HOURS;
+                    case "d", "D" -> TimeUnit.DAYS;
+                    case "w", "W" -> TimeUnit.WEEKS;
+                    case "M" -> TimeUnit.MONTHS;
+                    case "y", "Y" -> TimeUnit.YEARS;
+                    default -> throw new ParseException("Time unit is invalid: " + trimmed, 0);
+                };
 
                 return new SimpleDuration(time, timeUnit);
             } catch (final RuntimeException e) {
@@ -80,27 +59,17 @@ public class SimpleDurationUtil {
         if (simpleDuration == null) {
             return dateTime;
         }
-        switch (simpleDuration.getTimeUnit()) {
-            case NANOSECONDS:
-                return dateTime.plusNanos(simpleDuration.getTime());
-            case MILLISECONDS:
-                return dateTime.plusNanos(simpleDuration.getTime() * 1000000);
-            case SECONDS:
-                return dateTime.plusSeconds(simpleDuration.getTime());
-            case MINUTES:
-                return dateTime.plusMinutes(simpleDuration.getTime());
-            case HOURS:
-                return dateTime.plusHours(simpleDuration.getTime());
-            case DAYS:
-                return dateTime.plusDays(simpleDuration.getTime());
-            case WEEKS:
-                return dateTime.plusWeeks(simpleDuration.getTime());
-            case MONTHS:
-                return dateTime.plusMonths(simpleDuration.getTime());
-            case YEARS:
-                return dateTime.plusYears(simpleDuration.getTime());
-        }
-        throw new UnsupportedOperationException("Unknown time unit");
+        return switch (simpleDuration.getTimeUnit()) {
+            case NANOSECONDS -> dateTime.plusNanos(simpleDuration.getTime());
+            case MILLISECONDS -> dateTime.plusNanos(simpleDuration.getTime() * 1_000_000);
+            case SECONDS -> dateTime.plusSeconds(simpleDuration.getTime());
+            case MINUTES -> dateTime.plusMinutes(simpleDuration.getTime());
+            case HOURS -> dateTime.plusHours(simpleDuration.getTime());
+            case DAYS -> dateTime.plusDays(simpleDuration.getTime());
+            case WEEKS -> dateTime.plusWeeks(simpleDuration.getTime());
+            case MONTHS -> dateTime.plusMonths(simpleDuration.getTime());
+            case YEARS -> dateTime.plusYears(simpleDuration.getTime());
+        };
     }
 
     public static Instant minus(final Instant dateTime,
@@ -115,91 +84,72 @@ public class SimpleDurationUtil {
         if (simpleDuration == null) {
             return dateTime;
         }
-        switch (simpleDuration.getTimeUnit()) {
-            case NANOSECONDS:
-                return dateTime.minusNanos(simpleDuration.getTime());
-            case MILLISECONDS:
-                return dateTime.minusNanos(simpleDuration.getTime() * 1000000);
-            case SECONDS:
-                return dateTime.minusSeconds(simpleDuration.getTime());
-            case MINUTES:
-                return dateTime.minusMinutes(simpleDuration.getTime());
-            case HOURS:
-                return dateTime.minusHours(simpleDuration.getTime());
-            case DAYS:
-                return dateTime.minusDays(simpleDuration.getTime());
-            case WEEKS:
-                return dateTime.minusWeeks(simpleDuration.getTime());
-            case MONTHS:
-                return dateTime.minusMonths(simpleDuration.getTime());
-            case YEARS:
-                return dateTime.minusYears(simpleDuration.getTime());
-        }
-        throw new UnsupportedOperationException("Unknown time unit");
+        return switch (simpleDuration.getTimeUnit()) {
+            case NANOSECONDS -> dateTime.minusNanos(simpleDuration.getTime());
+            case MILLISECONDS -> dateTime.minusNanos(simpleDuration.getTime() * 1_000_000);
+            case SECONDS -> dateTime.minusSeconds(simpleDuration.getTime());
+            case MINUTES -> dateTime.minusMinutes(simpleDuration.getTime());
+            case HOURS -> dateTime.minusHours(simpleDuration.getTime());
+            case DAYS -> dateTime.minusDays(simpleDuration.getTime());
+            case WEEKS -> dateTime.minusWeeks(simpleDuration.getTime());
+            case MONTHS -> dateTime.minusMonths(simpleDuration.getTime());
+            case YEARS -> dateTime.minusYears(simpleDuration.getTime());
+        };
     }
 
     public static LocalDateTime roundDown(LocalDateTime dateTime, SimpleDuration simpleDuration) {
-        switch (simpleDuration.getTimeUnit()) {
-            case NANOSECONDS:
-                return LocalDateTime.of(
-                        dateTime.getYear(),
-                        dateTime.getMonthValue(),
-                        dateTime.getDayOfMonth(),
-                        dateTime.getHour(),
-                        dateTime.getMinute(),
-                        dateTime.getSecond(),
-                        (dateTime.getNano() / 1000000) & 1000000);
-            case MILLISECONDS:
-                return LocalDateTime.of(
-                        dateTime.getYear(),
-                        dateTime.getMonthValue(),
-                        dateTime.getDayOfMonth(),
-                        dateTime.getHour(),
-                        dateTime.getMinute(),
-                        dateTime.getSecond());
-            case SECONDS:
-                return LocalDateTime.of(
-                        dateTime.getYear(),
-                        dateTime.getMonthValue(),
-                        dateTime.getDayOfMonth(),
-                        dateTime.getHour(),
-                        dateTime.getMinute());
-            case MINUTES:
-                return LocalDateTime.of(
-                        dateTime.getYear(),
-                        dateTime.getMonthValue(),
-                        dateTime.getDayOfMonth(),
-                        dateTime.getHour(),
-                        0);
-            case HOURS:
-                return LocalDateTime.of(
-                        dateTime.getYear(),
-                        dateTime.getMonthValue(),
-                        dateTime.getDayOfMonth(),
-                        0,
-                        0);
-            case DAYS:
-                return LocalDateTime.of(
-                        dateTime.getYear(),
-                        dateTime.getMonthValue(),
-                        1,
-                        0,
-                        0);
-            case WEEKS, MONTHS:
-                return LocalDateTime.of(
-                        dateTime.getYear(),
-                        1,
-                        1,
-                        0,
-                        0);
-            case YEARS:
-                return LocalDateTime.of(
-                        1970,
-                        1,
-                        1,
-                        0,
-                        0);
-        }
-        throw new UnsupportedOperationException("Unknown time unit");
+        return switch (simpleDuration.getTimeUnit()) {
+            case NANOSECONDS -> LocalDateTime.of(
+                    dateTime.getYear(),
+                    dateTime.getMonthValue(),
+                    dateTime.getDayOfMonth(),
+                    dateTime.getHour(),
+                    dateTime.getMinute(),
+                    dateTime.getSecond(),
+                    (dateTime.getNano() / 1_000_000) & 1_000_000);
+            case MILLISECONDS -> LocalDateTime.of(
+                    dateTime.getYear(),
+                    dateTime.getMonthValue(),
+                    dateTime.getDayOfMonth(),
+                    dateTime.getHour(),
+                    dateTime.getMinute(),
+                    dateTime.getSecond());
+            case SECONDS -> LocalDateTime.of(
+                    dateTime.getYear(),
+                    dateTime.getMonthValue(),
+                    dateTime.getDayOfMonth(),
+                    dateTime.getHour(),
+                    dateTime.getMinute());
+            case MINUTES -> LocalDateTime.of(
+                    dateTime.getYear(),
+                    dateTime.getMonthValue(),
+                    dateTime.getDayOfMonth(),
+                    dateTime.getHour(),
+                    0);
+            case HOURS -> LocalDateTime.of(
+                    dateTime.getYear(),
+                    dateTime.getMonthValue(),
+                    dateTime.getDayOfMonth(),
+                    0,
+                    0);
+            case DAYS -> LocalDateTime.of(
+                    dateTime.getYear(),
+                    dateTime.getMonthValue(),
+                    1,
+                    0,
+                    0);
+            case WEEKS, MONTHS -> LocalDateTime.of(
+                    dateTime.getYear(),
+                    1,
+                    1,
+                    0,
+                    0);
+            case YEARS -> LocalDateTime.of(
+                    1970,
+                    1,
+                    1,
+                    0,
+                    0);
+        };
     }
 }
