@@ -489,23 +489,11 @@ public class SearchRequestBuilder {
                                         TokenType.WHERE,
                                         queryBuilder::expression);
                     }
-                    case FILTER -> {
-                        checkTokenOrder(token,
-                                consumedTokens,
-                                Set.of(TokenType.FROM),
-                                Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW));
-                        remaining =
-                                addExpression(remaining,
-                                        consumedTokens,
-                                        Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW),
-                                        TokenType.FILTER,
-                                        tableSettingsBuilder::valueFilter);
-                    }
                     case EVAL -> {
                         checkTokenOrder(token,
                                 consumedTokens,
                                 Set.of(TokenType.FROM),
-                                Set.of(TokenType.FROM, TokenType.WHERE));
+                                Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL));
                         processEval(keywordGroup);
                         remaining.remove(0);
                     }
@@ -518,6 +506,18 @@ public class SearchRequestBuilder {
                                 keywordGroup,
                                 tableSettingsBuilder);
                         remaining.remove(0);
+                    }
+                    case FILTER -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW));
+                        remaining =
+                                addExpression(remaining,
+                                        consumedTokens,
+                                        Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW),
+                                        TokenType.FILTER,
+                                        tableSettingsBuilder::valueFilter);
                     }
                     case SORT -> {
                         checkTokenOrder(token,
