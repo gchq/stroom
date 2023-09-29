@@ -61,6 +61,7 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -158,7 +159,7 @@ public class LmdbDataStore implements DataStore {
 
         this.windowSupport = new WindowSupport(tableSettings);
         final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
-        fields = modifiedTableSettings.getFields();
+        fields = Objects.requireNonNullElse(modifiedTableSettings.getFields(), Collections.emptyList());
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
         valueFilter = modifiedTableSettings.getValueFilter();
         fieldExpressionMatcher = new FieldExpressionMatcher(fields);
