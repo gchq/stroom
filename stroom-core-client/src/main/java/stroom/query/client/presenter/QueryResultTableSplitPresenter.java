@@ -16,6 +16,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dashboard.shared.IndexConstants;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
@@ -74,8 +75,8 @@ public class QueryResultTableSplitPresenter
         if (tableRow == null) {
             showSplit(false);
         } else {
-            final String streamId = tableRow.getText("StreamId");
-            final String eventId = tableRow.getText("EventId");
+            final String streamId = tableRow.getText(IndexConstants.STREAM_ID);
+            final String eventId = tableRow.getText(IndexConstants.EVENT_ID);
             if (streamId != null && eventId != null && streamId.length() > 0 && eventId.length() > 0) {
                 try {
                     final long strmId = Long.parseLong(streamId);
