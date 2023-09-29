@@ -13,6 +13,11 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+//@EntityEventHandler(
+//        action = {
+//                EntityAction.CREATE,
+//                EntityAction.DELETE,
+//                EntityAction.UPDATE})
 @Singleton
 public class BrokenDependenciesCache {
 
@@ -53,4 +58,20 @@ public class BrokenDependenciesCache {
     public void invalidate() {
         brokenDepsNextUpdateEpochMs = 0L;
     }
+
+//    @Override
+//    public void onChange(final EntityEvent event) {
+//        switch (event.getAction()) {
+//            case UPDATE -> {
+//                // User has potentially fixed a dependency so
+//
+//                brokenDependenciesMap.
+//
+//            }
+//            case DELETE -> {
+//                // User has potentially broken a dependency
+//
+//            }
+//        }
+//    }
 }
