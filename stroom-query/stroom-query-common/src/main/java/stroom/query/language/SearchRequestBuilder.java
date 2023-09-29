@@ -9,6 +9,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.HoppingWindow;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -595,6 +597,20 @@ public class SearchRequestBuilder {
             consumedTokens.add(token.getTokenType());
         }
 
+        // Ensure StreamId and EventId fields exist if there is no grouping.
+        if (groupDepth == 0) {
+            if (!fieldExists(tableSettingsBuilder, FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
+                tableSettingsBuilder.addFields(buildSpecialField(
+                        FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME,
+                        FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
+            }
+            if (!fieldExists(tableSettingsBuilder, FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
+                tableSettingsBuilder.addFields(buildSpecialField(
+                        FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME,
+                        FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+            }
+        }
+
         final TableSettings tableSettings = tableSettingsBuilder
                 .extractValues(true)
                 .build();
@@ -621,6 +637,33 @@ public class SearchRequestBuilder {
                     Fetch.ALL);
             resultRequests.add(qlVisResultRequest);
         }
+    }
+
+    public boolean fieldExists(final TableSettings.Builder tableSettingsBuilder,
+                               final String fieldName) {
+        final List<Field> fields = tableSettingsBuilder.build().getFields();
+        if (fields == null) {
+            return false;
+        }
+        final Optional<String> field = fields
+                .stream()
+                .map(Field::getExpression)
+                .filter(Objects::nonNull)
+                .map(ParamSubstituteUtil::getParam)
+                .filter(fieldName::equals)
+                .findAny();
+        return field.isPresent();
+    }
+
+    public Field buildSpecialField(final String columnName,
+                                   final String indexFieldName) {
+        return Field.builder()
+                .id(columnName)
+                .name(columnName)
+                .expression(ParamSubstituteUtil.makeParam(indexFieldName))
+                .visible(false)
+                .special(true)
+                .build();
     }
 
     private void processWindow(final KeywordGroup keywordGroup,

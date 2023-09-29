@@ -28,10 +28,10 @@ public class FieldIndex {
 
     public static final String DEFAULT_TIME_FIELD_NAME = "__time__";
     public static final String FALLBACK_TIME_FIELD_NAME = "EventTime";
-    private static final String DEFAULT_STREAM_ID_FIELD_NAME = "__stream_id__";
-    private static final String DEFAULT_EVENT_ID_FIELD_NAME = "__event_id__";
-    private static final String FALLBACK_STREAM_ID_FIELD_NAME = "StreamId";
-    private static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
+    public static final String DEFAULT_STREAM_ID_FIELD_NAME = "__stream_id__";
+    public static final String DEFAULT_EVENT_ID_FIELD_NAME = "__event_id__";
+    public static final String FALLBACK_STREAM_ID_FIELD_NAME = "StreamId";
+    public static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
 
     private final Map<String, Integer> fieldToPos = new ConcurrentHashMap<>();
     private final Map<Integer, String> posToField = new ConcurrentHashMap<>();
