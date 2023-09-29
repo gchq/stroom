@@ -98,7 +98,6 @@ public class QueryEditPresenter
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
     private final IndexLoader indexLoader;
-    private final Views views;
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
@@ -120,7 +119,6 @@ public class QueryEditPresenter
                               final Provider<QueryResultVisPresenter> visPresenterProvider,
                               final RestFactory restFactory,
                               final IndexLoader indexLoader,
-                              final Views views,
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
                               final ResultStoreModel resultStoreModel,
                               final QueryResultTabsView linkTabsLayoutView) {
@@ -130,7 +128,6 @@ public class QueryEditPresenter
         this.queryResultPresenter = queryResultPresenter;
         this.visPresenterProvider = visPresenterProvider;
         this.indexLoader = indexLoader;
-        this.views = views;
         this.restFactory = restFactory;
         this.linkTabsLayoutView = linkTabsLayoutView;
 
@@ -243,6 +240,9 @@ public class QueryEditPresenter
         linkTabsLayoutView.getTabBar().addTab(TABLE);
         linkTabsLayoutView.getTabBar().addTab(VISUALISATION);
         setVisHidden(true);
+
+        queryToolbarPresenter.setEnabled(true);
+        queryToolbarPresenter.onSearching(false);
     }
 
     private void focus() {
@@ -483,8 +483,6 @@ public class QueryEditPresenter
             }
             reading = false;
         }
-        queryToolbarPresenter.setEnabled(true);
-        queryToolbarPresenter.onSearching(false);
 
         editorPresenter.setReadOnly(readOnly);
         editorPresenter.getFormatAction().setAvailable(!readOnly);
