@@ -78,7 +78,7 @@ public class SearchRequestBuilder {
         final List<AbstractToken> childTokens = tokenGroup.getChildren();
 
         // Add data source.
-        addDataSourceName(childTokens, new HashSet<>(), consumer, true);
+        addDataSourceName(childTokens, consumer, true);
     }
 
     public SearchRequest create(final String string,
@@ -110,26 +110,22 @@ public class SearchRequestBuilder {
         }
 
         // Keep track of consumed tokens to check token order.
-        final Set<TokenType> consumedTokens = new HashSet<>();
+        final List<TokenType> consumedTokens = new ArrayList<>();
 
-        // Add data source.
-        List<AbstractToken> remaining = addDataSourceName(childTokens, consumedTokens, queryBuilder::dataSourceName);
-
-        // Add where expression.
-        remaining = addExpression(remaining, consumedTokens, TokenType.WHERE, queryBuilder::expression);
+        // Create result requests.
+        final List<ResultRequest> resultRequests = new ArrayList<>();
+        addTableSettings(childTokens, consumedTokens, resultRequests, queryBuilder);
 
         // Try to make a query.
         Query query = queryBuilder.build();
         if (query.getDataSource() == null) {
             throw new TokenException(null, "No data source has been specified.");
         }
-//        if (query.getExpression() == null) {
-//            throw new TokenException(null, "No query expression has been defined, are you missing a `where` clause?");
-//        }
 
-        // Create result requests.
-        final List<ResultRequest> resultRequests = new ArrayList<>();
-        remaining = addTableSettings(remaining, consumedTokens, true, resultRequests);
+        // Make sure there is a non-null expression.
+        if (query.getExpression() == null) {
+            query = query.copy().expression(ExpressionOperator.builder().build()).build();
+        }
 
         return new SearchRequest(
                 in.getSearchRequestSource(),
@@ -142,9 +138,8 @@ public class SearchRequestBuilder {
     }
 
     private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
-                                                  final Set<TokenType> consumedTokens,
                                                   final Consumer<String> consumer) {
-        return addDataSourceName(tokens, consumedTokens, consumer, false);
+        return addDataSourceName(tokens, consumer, false);
     }
 
     /**
@@ -155,7 +150,6 @@ public class SearchRequestBuilder {
      *                  so if this method is called it will treat 'sel as an extra child.
      */
     private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
-                                                  final Set<TokenType> consumedTokens,
                                                   final Consumer<String> consumer,
                                                   final boolean isLenient) {
         AbstractToken token = tokens.get(0);
@@ -183,40 +177,36 @@ public class SearchRequestBuilder {
         final String dataSourceName = dataSourceToken.getUnescapedText();
         consumer.accept(dataSourceName);
 
-        consumedTokens.add(token.getTokenType());
         return tokens.subList(1, tokens.size());
     }
 
     private List<AbstractToken> addExpression(final List<AbstractToken> tokens,
-                                              final Set<TokenType> consumedTokens,
+                                              final List<TokenType> consumedTokens,
+                                              final Set<TokenType> allowConsumed,
                                               final TokenType keyword,
                                               final Consumer<ExpressionOperator> expressionConsumer) {
         List<AbstractToken> whereGroup = new ArrayList<>();
-        final Set<TokenType> localConsumedTokens = new HashSet<>();
+        final List<TokenType> localConsumedTokens = new ArrayList<>(consumedTokens);
+        final Set<TokenType> allowFollowing = new HashSet<>(allowConsumed);
         int i = 0;
         for (; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
-
-            // Check we have had a FROM
-            if (i == 0) {
-                checkConsumed(token, consumedTokens, new TokenType[]{TokenType.FROM}, new TokenType[]{});
-            }
-
             if (token instanceof final KeywordGroup keywordGroup) {
                 final TokenType tokenType = keywordGroup.getTokenType();
                 if (keyword.equals(tokenType)) {
                     // Make sure we haven't already consumed the keyword token.
-                    checkConsumed(token, localConsumedTokens, new TokenType[]{}, new TokenType[]{keyword});
-                    localConsumedTokens.add(token.getTokenType());
-                    consumedTokens.add(token.getTokenType());
+                    checkTokenOrder(token, localConsumedTokens, Set.of(TokenType.FROM), allowConsumed);
+                    localConsumedTokens.add(tokenType);
+                    consumedTokens.add(tokenType);
+                    allowFollowing.add(tokenType);
+                    allowFollowing.addAll(Set.of(TokenType.AND, TokenType.OR, TokenType.NOT));
                     whereGroup.add(keywordGroup);
                 } else if (TokenType.AND.equals(tokenType) ||
                         TokenType.OR.equals(tokenType) ||
                         TokenType.NOT.equals(tokenType)) {
                     // Check we have already consumed the expected keyword token.
-                    checkConsumed(token, localConsumedTokens, new TokenType[]{keyword}, new TokenType[]{});
-                    localConsumedTokens.add(token.getTokenType());
-                    consumedTokens.add(token.getTokenType());
+                    checkTokenOrder(token, localConsumedTokens, Set.of(TokenType.FROM, keyword), allowFollowing);
+                    localConsumedTokens.add(tokenType);
                     whereGroup.add(keywordGroup);
                 } else {
                     break;
@@ -317,11 +307,6 @@ public class SearchRequestBuilder {
     private int addValue(final List<AbstractToken> tokens,
                          final StringBuilder value,
                          final int start) {
-//        TokenType numericOperator = null;
-//        boolean datePointMode = false;
-//        boolean firstToken = true;
-//
-
         final StringBuilder sb = new StringBuilder();
         for (int i = start; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
@@ -357,114 +342,6 @@ public class SearchRequestBuilder {
         value.append(expression);
 
         return tokens.size();
-
-//            } else if (TokenType.NUMERIC_OPERATOR.contains(token.tokenType)) {
-//                if (firstToken) {
-//                    // At the start of a value only treat as a numeric operator if + or -.
-//                    if (isPlusOrMinus(token.tokenType)) {
-//                        numericOperator = token.tokenType;
-//                    } else if (!TokenType.MULTIPLICATION.equals(token.tokenType)) {
-//                        // We allow `*` to be treated as text but all other operators are forbidden at the start.
-//                        throw new TokenException(token, "Unexpected numeric operator");
-//                    }
-//
-//                    value.append(token.getUnescapedText());
-//
-//                } else {
-//                    if (numericOperator != null) {
-//                        // Only allow multiple +- operators.
-//                        if (!isPlusOrMinus(numericOperator)) {
-//                            throw new TokenException(token, "Unexpected numeric operator");
-//                        }
-//                    }
-//
-//                    value.append(token.getUnescapedText());
-//                    numericOperator = token.tokenType;
-//                }
-//
-//            } else {
-//                // Only allow subsequent value tokens if they follow an operator.
-//                if (!firstToken && numericOperator == null) {
-//                    throw new TokenException(token, "Unexpected token");
-//                }
-//
-//                // Make sure we have a value token, e.g. a string or number.
-//                if (!TokenType.VALUES.contains(token.tokenType)) {
-//                    // We allow date point functions in values (e.g. `day()`) so see if we have one of those.
-//                    if (isDatePoint(token)) {
-//                        if (!firstToken) {
-//                            throw new TokenException(token, "Unexpected date point function");
-//                        } else {
-//                            datePointMode = true;
-//                        }
-//                    } else {
-//                        throw new TokenException(token, "Expected value or date point function");
-//                    }
-//                }
-//
-//                if (numericOperator != null) {
-//                    if (datePointMode) {
-//                        validateDuration(token, numericOperator);
-//                    } else {
-//                        validateNumber(token);
-//                    }
-//                }
-//
-//                value.append(token.getUnescapedText());
-//                numericOperator = null;
-//            }
-//
-//            firstToken = false;
-//        }
-//        return tokens.size();
-    }
-
-
-//    private boolean isDatePoint(final AbstractToken token) {
-//        final String text = token.getText();
-//        for (final DateExpressionParser.DatePoint datePoint : DateExpressionParser.DatePoint.values()) {
-//            if (datePoint.getFunction().equals(text)) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
-    private boolean isPlusOrMinus(final TokenType numericOperator) {
-        return numericOperator.equals(TokenType.PLUS) || numericOperator.equals(TokenType.MINUS);
-    }
-
-//    private void validateDuration(final AbstractToken token, final TokenType numericOperator) {
-//        // Make sure expression is duration.
-//        if (!isPlusOrMinus(numericOperator)) {
-//            throw new TokenException(token, "Unexpected operator on duration");
-//        }
-//        if (token instanceof final FunctionGroup functionGroup) {
-//            if (!functionGroup.getName().equals("duration") &&
-//                    !functionGroup.getName().equals("period")) {
-//                throw new TokenException(token, "Expected duration");
-//            }
-//        } else {
-//            throw new TokenException(token, "Expected duration");
-//        }
-//    }
-
-    private boolean isNumber(final AbstractToken token) {
-        // See if this might be a quantity.
-        if (Character.isDigit(token.getText().charAt(0))) {
-            validateNumber(token);
-            return true;
-        }
-        return false;
-    }
-
-    private void validateNumber(final AbstractToken token) {
-        // Make sure expression is a number.
-        try {
-            Double.parseDouble(token.getText());
-        } catch (final RuntimeException e) {
-            throw new TokenException(token, "Unable to parse number");
-        }
     }
 
     private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
@@ -573,10 +450,10 @@ public class SearchRequestBuilder {
         return builder;
     }
 
-    private List<AbstractToken> addTableSettings(final List<AbstractToken> tokens,
-                                                 final Set<TokenType> consumedTokens,
-                                                 final boolean extractValues,
-                                                 final List<ResultRequest> resultRequests) {
+    private void addTableSettings(final List<AbstractToken> tokens,
+                                  final List<TokenType> consumedTokens,
+                                  final List<ResultRequest> resultRequests,
+                                  final Query.Builder queryBuilder) {
         final Map<String, Sort> sortMap = new HashMap<>();
         final Map<String, Integer> groupMap = new HashMap<>();
         final Map<String, Filter> filterMap = new HashMap<>();
@@ -589,53 +466,98 @@ public class SearchRequestBuilder {
         while (remaining.size() > 0) {
             final AbstractToken token = remaining.get(0);
 
-            // Check we have seen FROM and haven't already seen the SELECT.
-            if (!TokenType.EVAL.equals(token.getTokenType())) {
-                checkConsumed(token,
-                        consumedTokens,
-                        new TokenType[]{TokenType.FROM},
-                        new TokenType[]{token.getTokenType()});
-            }
-            consumedTokens.add(token.getTokenType());
-
             if (token instanceof final KeywordGroup keywordGroup) {
                 switch (keywordGroup.getTokenType()) {
-                    case FILTER -> remaining =
-                            addExpression(remaining,
-                                    consumedTokens,
-                                    TokenType.FILTER,
-                                    tableSettingsBuilder::valueFilter);
+                    case FROM -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(),
+                                Set.of());
+                        remaining =
+                                addDataSourceName(remaining,
+                                        queryBuilder::dataSourceName);
+                    }
+                    case WHERE -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                Set.of(TokenType.FROM));
+                        remaining =
+                                addExpression(remaining,
+                                        consumedTokens,
+                                        Set.of(TokenType.FROM),
+                                        TokenType.WHERE,
+                                        queryBuilder::expression);
+                    }
+                    case FILTER -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW));
+                        remaining =
+                                addExpression(remaining,
+                                        consumedTokens,
+                                        Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW),
+                                        TokenType.FILTER,
+                                        tableSettingsBuilder::valueFilter);
+                    }
                     case EVAL -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                Set.of(TokenType.FROM, TokenType.WHERE));
                         processEval(keywordGroup);
                         remaining.remove(0);
                     }
                     case WINDOW -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL));
                         processWindow(
                                 keywordGroup,
                                 tableSettingsBuilder);
                         remaining.remove(0);
                     }
                     case SORT -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.HAVING, TokenType.VIS)));
                         processSortBy(
                                 keywordGroup,
                                 sortMap);
                         remaining.remove(0);
                     }
                     case GROUP -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.HAVING, TokenType.VIS)));
                         processGroupBy(
                                 keywordGroup,
                                 groupMap,
                                 groupDepth);
                         groupDepth++;
                         remaining.remove(0);
-                        consumedTokens.remove(token.getTokenType());
                     }
-                    case HAVING -> remaining =
-                            addExpression(remaining,
-                                    consumedTokens,
-                                    TokenType.HAVING,
-                                    tableSettingsBuilder::aggregateFilter);
+                    case HAVING -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)));
+                        remaining =
+                                addExpression(remaining,
+                                        consumedTokens,
+                                        inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)),
+                                        TokenType.HAVING,
+                                        tableSettingsBuilder::aggregateFilter);
+                    }
                     case SELECT -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                inverse(Set.of(TokenType.SELECT, TokenType.VIS)));
                         processSelect(
                                 keywordGroup,
                                 sortMap,
@@ -645,28 +567,36 @@ public class SearchRequestBuilder {
                         remaining.remove(0);
                     }
                     case LIMIT -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                inverse(Set.of(TokenType.SELECT, TokenType.VIS)));
                         processLimit(
                                 keywordGroup,
                                 tableSettingsBuilder);
                         remaining.remove(0);
                     }
                     case VIS -> {
+                        checkTokenOrder(token,
+                                consumedTokens,
+                                Set.of(TokenType.FROM),
+                                inverse(Set.of(TokenType.VIS)));
                         final TableSettings parentTableSettings = tableSettingsBuilder.build();
                         visTableSettings = visualisationTokenConsumer
                                 .processVis(keywordGroup, parentTableSettings);
                         remaining.remove(0);
                     }
+                    default -> throw new TokenException(token, "Unexpected token");
                 }
             } else {
-                break;
+                throw new TokenException(token, "Unexpected token");
             }
+
+            consumedTokens.add(token.getTokenType());
         }
 
-        //        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
         final TableSettings tableSettings = tableSettingsBuilder
-                .extractValues(extractValues)
-//                .extractionPipeline(resultPipeline)
-//                .showDetail(true)
+                .extractValues(true)
                 .build();
 
         final ResultRequest tableResultRequest = new ResultRequest(TABLE_COMPONENT_ID,
@@ -691,8 +621,6 @@ public class SearchRequestBuilder {
                     Fetch.ALL);
             resultRequests.add(qlVisResultRequest);
         }
-
-        return remaining;
     }
 
     private void processWindow(final KeywordGroup keywordGroup,
@@ -805,129 +733,7 @@ public class SearchRequestBuilder {
         } catch (final ParseException e) {
             throw new TokenException(keywordGroup, e.getMessage());
         }
-
-//        // Turn the rest into a string.
-//        final StringBuilder sb = new StringBuilder();
-//        addFunctionChildren(children, sb, variables, 2, false);
-//        variables.put(variable, sb.toString());
     }
-
-//    private void addFunctionToken(final AbstractToken token,
-//                                  final StringBuilder sb,
-//                                  final Map<String, String> variables) {
-//        if (token instanceof FunctionGroup) {
-//            processFunction(((FunctionGroup) token), sb, variables);
-//        } else if (TokenType.STRING.equals(token.getTokenType())) {
-//            // Non quoted strings are identifiers.
-//            // See if there is already a mapping to the string.
-//            final String innerFunction = variables.get(token.getUnescapedText());
-//            if (innerFunction != null) {
-//                sb.append(innerFunction);
-//            } else {
-//                // See if this might be a number.
-//                if (isNumber(token)) {
-//                    sb.append(token.getText());
-//
-//                } else {
-//                    // Adapt the string into a param substitute for compatibility.
-//                    sb.append(ParamSubstituteUtil.makeParam(token.getUnescapedText()));
-//                }
-//            }
-//        } else if (token instanceof QuotedStringToken) {
-//            sb.append(token.getText());
-//        } else {
-//            sb.append(token.getUnescapedText());
-//        }
-//    }
-//
-//    private void processFunction(final FunctionGroup functionGroup,
-//                                 final StringBuilder sb,
-//                                 final Map<String, String> variables) {
-//        final StringBuilder functionString = new StringBuilder();
-//        validateFunctionName(functionGroup);
-//        functionString.append(functionGroup.getName());
-//        functionString.append("(");
-//        final List<AbstractToken> functionGroupChildren = functionGroup.getChildren();
-//        addFunctionChildren(functionGroupChildren, functionString, variables, 0, true);
-//        functionString.append(")");
-//
-//        validateFunction(functionGroup, functionString.toString());
-//
-//        sb.append(functionString);
-//    }
-//
-//    private void validateFunction(final AbstractToken token, final String expression) {
-//        try {
-//            new ExpressionParser(new ParamFactory()).parse(expressionContext,
-//                    new FieldIndex(),
-//                    expression);
-//        } catch (final ParseException e) {
-//            throw new TokenException(token, e.getMessage());
-//        }
-//    }
-//
-//    private void addFunctionChildren(final List<AbstractToken> functionGroupChildren,
-//                                     final StringBuilder sb,
-//                                     final Map<String, String> variables,
-//                                     final int start,
-//                                     final boolean allowComma) {
-//        TokenType numericOperator = null;
-//        boolean firstToken = true;
-//        for (int i = start; i < functionGroupChildren.size(); i++) {
-//            final AbstractToken token = functionGroupChildren.get(i);
-//            if (TokenType.NUMERIC_OPERATOR.contains(token.getTokenType())) {
-//                if (firstToken) {
-//                    // At the start of a value only treat as a numeric operator if + or -.
-//                    if (isPlusOrMinus(token.getTokenType())) {
-//                        numericOperator = token.getTokenType();
-//                    } else if (!TokenType.MULTIPLICATION.equals(token.getTokenType())) {
-//                        // We allow `*` to be treated as text but all other operators are forbidden at the start.
-//                        throw new TokenException(token, "Unexpected numeric operator");
-//                    }
-//                } else {
-//                    if (numericOperator != null) {
-//                        // Only allow multiple +- operators.
-//                        if (!isPlusOrMinus(numericOperator)) {
-//                            throw new TokenException(token, "Unexpected numeric operator");
-//                        }
-//                    }
-//                    numericOperator = token.getTokenType();
-//                }
-//            }
-//
-//            // Only allow subsequent tokens if they follow an operator.
-//            if (!firstToken && numericOperator == null) {
-//                throw new TokenException(token, "Unexpected token");
-//            }
-//
-//            addFunctionToken(token, sb, variables);
-//            firstToken = false;
-//
-//            if (TokenType.COMMA.equals(token.getTokenType())) {
-//                if (allowComma) {
-//                    // Begin new set of tokens.
-//                    firstToken = true;
-//                } else {
-//                    throw new TokenException(token, "Unexpected comma");
-//                }
-//            }
-//        }
-//    }
-//
-//    private void validateFunctionName(final FunctionGroup functionGroup) {
-//        final Function function;
-//        try {
-//            // Validate function name.
-//            function = FunctionFactory
-//                    .create(expressionContext, functionGroup.getName());
-//        } catch (final RuntimeException e) {
-//            throw new TokenException(functionGroup, e.getMessage());
-//        }
-//
-//        if (function == null) {
-//            throw new TokenException(functionGroup, "Unknown function name: " + functionGroup.getName());
-//        }
-//    }
 
     private void processSelect(final KeywordGroup keywordGroup,
                                final Map<String, Sort> sortMap,
@@ -1040,9 +846,8 @@ public class SearchRequestBuilder {
                 } catch (final NumberFormatException e) {
                     throw new TokenException(t, "Syntax exception, expected number");
                 }
-            } else if (TokenType.COMMA.equals(t.getTokenType())) {
-                // Expected.
-            } else {
+            } else if (!TokenType.COMMA.equals(t.getTokenType())) {
+                // We expect numbers and commas.
                 throw new TokenException(t, "Syntax exception, expected number");
             }
         }
@@ -1136,21 +941,27 @@ public class SearchRequestBuilder {
         }
     }
 
-    private void checkConsumed(final AbstractToken token,
-                               final Set<TokenType> consumedTokens,
-                               final TokenType[] expectedConsumed,
-                               final TokenType[] expectedNotConsumed) {
-        for (final TokenType tokenType : expectedConsumed) {
+    private void checkTokenOrder(final AbstractToken token,
+                                 final List<TokenType> consumedTokens,
+                                 final Set<TokenType> requireConsumed,
+                                 final Set<TokenType> allowConsumed) {
+        for (final TokenType tokenType : requireConsumed) {
             if (!consumedTokens.contains(tokenType)) {
                 throw new TokenException(token,
-                        "Expected token " + tokenType + " before " + token.getTokenType());
+                        "Required token " + tokenType + " before " + token.getTokenType());
             }
         }
-        for (final TokenType tokenType : expectedNotConsumed) {
-            if (consumedTokens.contains(tokenType)) {
+        for (final TokenType tokenType : consumedTokens) {
+            if (!allowConsumed.contains(tokenType)) {
                 throw new TokenException(token,
                         "Unexpected token " + token.getTokenType() + " after " + tokenType);
             }
         }
+    }
+
+    private Set<TokenType> inverse(final Set<TokenType> tokenTypes) {
+        final Set<TokenType> set = new HashSet<>(TokenType.ALL);
+        set.removeAll(tokenTypes);
+        return set;
     }
 }

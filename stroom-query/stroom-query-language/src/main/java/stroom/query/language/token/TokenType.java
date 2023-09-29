@@ -117,6 +117,8 @@ public enum TokenType {
             NUMBER
             );
 
+    public static final Set<TokenType> ALL = Set.of(values());
+
     public static boolean isString(AbstractToken token) {
         return token != null
                 && (TokenType.STRING.equals(token.getTokenType()) ||
