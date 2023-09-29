@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.68] - 2023-09-29
+
+* Issue **#3789** : Fix find content screen formatting.
+
+* Issue **#3747** : Fix date expression offsets.
+
+* Issue **#3751** : Fix multi group by in StroomQL.
+
+* Issue **#3754** : Fix realtive time functions in StroomQL.
+
+* Issue **#3760** : Improve validation of StroomQL keyword order.
+
+* Issue **#3750** : Query editor start button no longer reset on save.
+
+* Issue **#3755** : Fix null fields in StroomQL.
+
+* Issue **#3752** : Ensure StreamId and EventId fields exist in query results.
+
+
 ## [v7.2-beta.67] - 2023-09-25
 
 * Issue **#3776** : Change `dataTimeSettings.referenceTime` to be nullable in API search requests so it can be set to the current time by the server at query time. Change the Dashboard 'Download Query' feature to clear the `referenceTime` in the request JSON.
@@ -5948,7 +5967,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.67...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.68...HEAD
+[v7.2-beta.68]: https://github.com/gchq/stroom/compare/v7.2-beta.67...v7.2-beta.68
 [v7.2-beta.67]: https://github.com/gchq/stroom/compare/v7.2-beta.66...v7.2-beta.67
 [v7.2-beta.66]: https://github.com/gchq/stroom/compare/v7.2-beta.65...v7.2-beta.66
 [v7.2-beta.65]: https://github.com/gchq/stroom/compare/v7.2-beta.64...v7.2-beta.65
