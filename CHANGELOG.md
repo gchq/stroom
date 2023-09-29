@@ -21,7 +21,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3751** : Fix multi group by in StroomQL.
 
-* Issue **#3754** : Fix realtive time functions in StroomQL.
+* Issue **#3754** : Fix relative time functions in StroomQL.
 
 * Issue **#3760** : Improve validation of StroomQL keyword order.
 
