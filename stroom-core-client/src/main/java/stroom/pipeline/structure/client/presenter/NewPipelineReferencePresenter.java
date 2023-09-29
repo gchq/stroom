@@ -20,12 +20,15 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.shared.FeedDoc;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -56,14 +59,23 @@ public class NewPipelineReferencePresenter
                                          final NewPipelineReferenceView view,
                                          final EntityDropDownPresenter pipelinePresenter,
                                          final EntityDropDownPresenter feedPresenter,
-                                         final RestFactory restFactory) {
+                                         final RestFactory restFactory,
+                                         final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;
 
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get().onSuccess(extendedUiConfig ->
+                GwtNullSafe.consume(
+                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelinePresenter::setQuickFilter));
+
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 

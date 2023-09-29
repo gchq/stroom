@@ -56,6 +56,8 @@ class ExplorerDropDownTreePresenter
     private boolean allowFolderSelection;
     private String caption = "Choose item";
     private ExplorerNode selectedExplorerNode;
+    private String initialQuickFilter;
+    private boolean isShowing = false;
 
     @Inject
     ExplorerDropDownTreePresenter(final EventBus eventBus,
@@ -81,10 +83,15 @@ class ExplorerDropDownTreePresenter
                                 uiConfig.getHelpUrlQuickFilter())));
     }
 
+    @Override
+    protected void onHide() {
+        isShowing = false;
+    }
+
     public void show() {
-        getView().clearFilter();
+        isShowing = true;
         refresh();
-        final PopupSize popupSize = PopupSize.resizable(400, 550);
+        final PopupSize popupSize = PopupSize.resizable(500, 550);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -142,14 +149,21 @@ class ExplorerDropDownTreePresenter
 
     @Override
     public void nameFilterChanged(final String text) {
+//        GWT.log("nameFilterChanged: " + text);
         explorerTree.changeNameFilter(text);
     }
 
     public void refresh() {
-        explorerTree.setSelectedItem(selectedExplorerNode);
-        explorerTree.getTreeModel().reset();
-        explorerTree.getTreeModel().setEnsureVisible(selectedExplorerNode);
-        explorerTree.getTreeModel().refresh();
+        // Refresh gets called on show so no point doing it before then
+        if (isShowing) {
+//            GWT.log("refresh with initialQuickFilter: " + initialQuickFilter);
+            getView().setQuickFilter(initialQuickFilter);
+            explorerTree.getTreeModel().setInitialNameFilter(initialQuickFilter);
+            explorerTree.setSelectedItem(selectedExplorerNode);
+            explorerTree.getTreeModel().reset(initialQuickFilter);
+            explorerTree.getTreeModel().setEnsureVisible(selectedExplorerNode);
+            explorerTree.getTreeModel().refresh();
+        }
     }
 
     public void setIncludedTypes(final String... includedTypes) {
@@ -183,7 +197,9 @@ class ExplorerDropDownTreePresenter
     public void setSelectedEntityReference(final DocRef docRef) {
         restFactory
                 .create()
-                .onSuccess(explorerNode -> setSelectedEntityData((ExplorerNode) explorerNode))
+                .onSuccess(explorerNode -> {
+                    setSelectedEntityData((ExplorerNode) explorerNode);
+                })
                 .call(EXPLORER_RESOURCE)
                 .getFromDocRef(docRef);
     }
@@ -193,6 +209,7 @@ class ExplorerDropDownTreePresenter
     }
 
     private void setSelectedEntityData(final ExplorerNode explorerNode) {
+//        GWT.log("setSelectedEntityData: " + explorerNode);
         this.selectedExplorerNode = explorerNode;
         refresh();
     }
@@ -218,6 +235,9 @@ class ExplorerDropDownTreePresenter
         this.caption = caption;
     }
 
+    public void setInitialQuickFilter(final String initialQuickFilter) {
+        this.initialQuickFilter = initialQuickFilter;
+    }
 
     // --------------------------------------------------------------------------------
 

@@ -68,6 +68,42 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if all values in the array are null or the array itself is null
+     */
+    public static <T> boolean allNull(final T... vals) {
+        if (vals == null) {
+            return true;
+        } else {
+            boolean allNull = true;
+            for (final T val : vals) {
+                if (val != null) {
+                    allNull = false;
+                    break;
+                }
+            }
+            return allNull;
+        }
+    }
+
+    /**
+     * @return True if the array itself is non-null and all values in the array are non-null
+     */
+    public static <T> boolean allNonNull(final T... vals) {
+        if (vals == null) {
+            return false;
+        } else {
+            boolean allNonNull = true;
+            for (final T val : vals) {
+                if (val == null) {
+                    allNonNull = false;
+                    break;
+                }
+            }
+            return allNonNull;
+        }
+    }
+
+    /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */
     public static <T> Optional<T> coalesce(final T val1, final T val2) {

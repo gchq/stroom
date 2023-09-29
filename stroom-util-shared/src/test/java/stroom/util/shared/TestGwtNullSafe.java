@@ -101,6 +101,41 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testAllNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(GwtNullSafe::allNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(new String[]{null}, true)
+                .addCase(new String[]{null, null}, true)
+                .addCase(new String[]{null, null, null}, true)
+                .addCase(new String[]{"foo", null, null}, false)
+                .addCase(new String[]{null, "foo", null}, false)
+                .addCase(new String[]{null, null, "foo"}, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAllNonNull() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(GwtNullSafe::allNonNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(new String[]{null}, false)
+                .addCase(new String[]{null, null}, false)
+                .addCase(new String[]{null, null, null}, false)
+                .addCase(new String[]{"foo", null, null}, false)
+                .addCase(new String[]{null, "foo", null}, false)
+                .addCase(new String[]{null, "foo", "foo"}, false)
+                .addCase(new String[]{"1", "2", "3"}, true)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testCoalesce_twoValues() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, String.class)

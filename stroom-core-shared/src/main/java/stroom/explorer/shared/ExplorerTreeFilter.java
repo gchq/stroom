@@ -16,6 +16,7 @@
 
 package stroom.explorer.shared;
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerTreeFilter {
@@ -34,7 +36,7 @@ public class ExplorerTreeFilter {
     public static FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField("Name");
     public static FilterFieldDefinition FIELD_DEF_TYPE = FilterFieldDefinition.qualifiedField("Type");
     public static FilterFieldDefinition FIELD_DEF_UUID = FilterFieldDefinition.qualifiedField("UUID");
-    public static FilterFieldDefinition FIELD_DEF_TAG = FilterFieldDefinition.qualifiedField("tag");
+    public static FilterFieldDefinition FIELD_DEF_TAG = FilterFieldDefinition.qualifiedField("Tag");
 
     public static List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_NAME, FIELD_DEF_TYPE, FIELD_DEF_UUID, FIELD_DEF_TAG);
@@ -114,6 +116,19 @@ public class ExplorerTreeFilter {
     }
 
     @Override
+    public String toString() {
+        return "ExplorerTreeFilter{" +
+                "includedTypes=" + includedTypes +
+                ", includedRootTypes=" + includedRootTypes +
+                ", tags=" + tags +
+                ", nodeFlags=" + nodeFlags +
+                ", requiredPermissions=" + requiredPermissions +
+                ", nameFilter='" + nameFilter + '\'' +
+                ", nameFilterChange=" + nameFilterChange +
+                '}';
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -141,5 +156,23 @@ public class ExplorerTreeFilter {
                 requiredPermissions,
                 nameFilter,
                 nameFilterChange);
+    }
+
+    /**
+     * Turns 'cat dog' into 'tag:cat tag:dog '
+     * @return A qualified quick filter input string or null if tags is empty/null
+     */
+    public static String createTagQuickFilterInput(final Set<String> tags) {
+        final String quickFilterInput;
+        if (GwtNullSafe.hasItems(tags)) {
+            // Add a space on the end so the user is ready to type any extra terms
+            quickFilterInput = tags.stream()
+                    .map(tag ->
+                            ExplorerTreeFilter.FIELD_DEF_TAG.getFilterQualifier() + ":" + tag)
+                    .collect(Collectors.joining(" ")) + " ";
+        } else {
+            quickFilterInput = null;
+        }
+        return quickFilterInput;
     }
 }

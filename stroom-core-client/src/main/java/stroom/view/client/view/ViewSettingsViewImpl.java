@@ -62,6 +62,10 @@ public class ViewSettingsViewImpl extends ViewImpl implements ViewSettingsView {
         expression.setWidget(view.asWidget());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, ViewSettingsViewImpl> {
 
     }

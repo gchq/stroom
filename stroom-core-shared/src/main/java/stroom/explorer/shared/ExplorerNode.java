@@ -44,6 +44,7 @@ import java.util.Set;
 public class ExplorerNode implements HasDisplayValue {
 
     public static final String TAGS_DELIMITER = " ";
+    public static final String TAG_PATTERN_STR = "^[a-z0-9-]+$";
 
     @JsonProperty
     private final String type;

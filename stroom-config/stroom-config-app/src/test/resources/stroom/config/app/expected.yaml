@@ -311,6 +311,10 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
+    suggestedTags:
+    - "reference-loader"
+    - "dynamic"
+    - "extraction"
   export:
     enabled: false
   feed:
@@ -992,10 +996,17 @@ appConfig:
       defaultRecordLimit: 1000000
       defaultTimeLimit: 30
     query:
+      dashboardPipelineSelectorIncludedTags:
+      - "extraction"
       infoPopup:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+      viewPipelineSelectorIncludedTags:
+      - "dynamic"
+      - "extraction"
+    referencePipelineSelectorIncludedTags:
+    - "reference-loader"
     requireReactWrapper: true
     source:
       maxCharactersInPreviewFetch: 30000

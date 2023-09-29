@@ -77,10 +77,20 @@ public class ExplorerTreeModel {
         this.restFactory = restFactory;
     }
 
+    /**
+     * For use when the filter input is being typed by a user.
+     */
     public void changeNameFilter(final String name) {
         timer.setName(name);
         timer.cancel();
         timer.schedule(400);
+    }
+
+    /**
+     * For use when setting an initial value for the filter.
+     */
+    public void setInitialNameFilter(final String name) {
+        explorerTreeFilterBuilder.setNameFilter(name, true);
     }
 
     public void setIncludedTypeSet(final Set<String> types) {
@@ -161,15 +171,16 @@ public class ExplorerTreeModel {
                     minDepth,
                     ensureVisible,
                     showAlerts);
-//            GWT.log("fetchData - openItems: " + openItems.getOpenItems().size()
-//                    + " minDepth: " + minDepth
-//                    + " ensureVisible: " + ensureVisible);
 
             if (!fetching) {
                 fetching = true;
                 loading.setVisible(true);
                 Scheduler.get().scheduleDeferred(() -> {
                     final FindExplorerNodeCriteria criteria = currentCriteria;
+//                    GWT.log("fetchData - filter: " + explorerTreeFilter.getNameFilter()
+//                            + " openItems: " + openItems.getOpenItems().size()
+//                            + " minDepth: " + minDepth
+//                            + " ensureVisible: " + ensureVisible);
                     final Rest<FetchExplorerNodeResult> rest = restFactory.create();
                     rest
                             .onSuccess(result -> {
@@ -184,6 +195,10 @@ public class ExplorerTreeModel {
 
     private void handleFetchResult(final FindExplorerNodeCriteria criteria,
                                    final FetchExplorerNodeResult result) {
+//        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
+//                + " openItems: " + GwtNullSafe.size(result.getOpenedItems())
+//                + " tempOpenedItems: " + GwtNullSafe.size(result.getTemporaryOpenedItems()));
+
         fetching = false;
         // Check if the filter settings have changed
         // since we were asked to fetch.
@@ -332,7 +347,12 @@ public class ExplorerTreeModel {
     }
 
     public void reset() {
-        explorerTreeFilterBuilder.setNameFilter(null);
+        reset(null);
+    }
+
+    public void reset(final String initialNameFilter) {
+//        GWT.log("reset with initialQuickFilter: " + initialNameFilter);
+        explorerTreeFilterBuilder.setNameFilter(initialNameFilter);
         explorerTree.setData(new ArrayList<>());
         openItems.clear();
         minDepth = 1;
