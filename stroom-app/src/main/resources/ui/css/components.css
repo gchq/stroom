@@ -2020,19 +2020,31 @@ button.main-menu svg {
     flex-grow: 0;
 }
 
-.editNodeTagsNodeTagsFrmGrp select {
-    flex-basis: 10rem;
+.editNodeTagsAllTagsFrmGrp,
+.editNodeTagsNodeTagsFrmGrp {
+    flex-basis: 200px;
 }
 
-.editNodeTagsAllTagsFrmGrp select {
-    flex-basis: 15rem;
+.editNodeTagsAddTagsInputPanel .button-container {
+    position: absolute;
+    margin-top: 7px;
+    right: 50px;
 }
 
-/*
-.editNodeTags .editNodeTagsAllTagsInputPanel {
-    flex-direction: row;
-    display: flex;
+.editNodeTagsAddTagsInputPanel .button-container .invisible {
+    visibility: hidden;
 }
-*/
+
+.editNodeTagsAddTagsInputContainer .svg-image__clear.face {
+    color: var(--control__text-color);
+}
+
+.editNodeTagsListsContainer .form-group{
+    margin-top: 0px;
+}
+
+.editNodeTags .form-label {
+    margin-bottom: 0px;
+}
 
 

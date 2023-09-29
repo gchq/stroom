@@ -35,6 +35,7 @@ import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -70,15 +71,19 @@ public class ExplorerNodeEditTagsViewImpl
     private String selectedValue = null;
 
     @UiField
-    ButtonPanel nodeTagsButtonPanel;
-    @UiField
-    ListBox nodeTagsListBox;
-    @UiField
     TextBox textBox;
+    @UiField
+    ButtonPanel clearButtonPanel;
+    @UiField
+    ButtonPanel inputButtonPanel;
     @UiField
     ListBox allTagsListBox;
     @UiField
-    ButtonPanel inputButtonPanel;
+    ButtonPanel nodeTagsButtonPanel;
+    @UiField
+    Label editNodeTagsAllTagsLabel;
+    @UiField
+    ListBox nodeTagsListBox;
     private DocRef docRef;
 
     @Inject
@@ -87,19 +92,20 @@ public class ExplorerNodeEditTagsViewImpl
         widget.addAttachHandler(event -> focus());
 
         addFromAllTagsButton = nodeTagsButtonPanel.addButton(
-                SvgPresets.ADD.title("Add selected tags from 'All Known Tags'"));
+                SvgPresets.ARROW_RIGHT.title("Add selected tags from 'All Known Tags'"));
         addFromAllTagsButton.setEnabled(false);
         addFromAllTagsButton.addClickHandler(this::onAddFromAllTagsClicked);
 
         removeButton = nodeTagsButtonPanel.addButton(
-                SvgPresets.REMOVE.title("Remove selected tags"));
+                SvgPresets.ARROW_LEFT.title("Remove selected tags"));
         removeButton.setEnabled(false);
         removeButton.addClickHandler(this::onDeleteClicked);
 
-        clearInputButton = inputButtonPanel.addButton(
+        clearInputButton = clearButtonPanel.addButton(
                 SvgPresets.CLEAR.title("Clear entered tag(s)"));
-        clearInputButton.setEnabled(false);
+        clearInputButton.setEnabled(true); // hidden/visible, never disabled
         clearInputButton.addClickHandler(this::onClearInputClicked);
+        clearInputButton.asWidget().addStyleName("clear");
 
         addFromInputButton = inputButtonPanel.addButton(
                 SvgPresets.ADD.title("Add entered tag(s)"));
@@ -138,8 +144,7 @@ public class ExplorerNodeEditTagsViewImpl
 
 
     private void handleNodeTagsClickEvent(final ClickEvent event) {
-        removeButton.setEnabled(nodeTagsListBox.getItemCount() > 0
-                && nodeTagsListBox.getSelectedValue() != null);
+        updateButtonStates();
     }
 
     private void handleNodeTagsDoubleClickEvent(final DoubleClickEvent event) {
@@ -150,8 +155,7 @@ public class ExplorerNodeEditTagsViewImpl
     }
 
     private void handleAllTagsClickEvent(final ClickEvent event) {
-        addFromInputButton.setEnabled(allTagsListBox.getItemCount() > 0
-                && allTagsListBox.getSelectedValue() != null);
+        updateButtonStates();
         selectedValue = allTagsListBox.getSelectedValue();
     }
 
@@ -173,8 +177,9 @@ public class ExplorerNodeEditTagsViewImpl
             case KeyCodes.KEY_UP:
 //                textBox.setText(allTagsListBox.getSelectedValue());
                 // Allow the user to move up from the list to the text field
-                if (allTagsListBox.getSelectedIndex() == 0
-                        && Objects.equals(allTagsListBox.getSelectedValue(), selectedValue)) {
+                if (allTagsListBox.getItemCount() == 0
+                        || (allTagsListBox.getSelectedIndex() == 0
+                        && Objects.equals(allTagsListBox.getSelectedValue(), selectedValue))) {
                     textBox.setFocus(true);
                     textBox.selectAll();
                 }
@@ -183,7 +188,12 @@ public class ExplorerNodeEditTagsViewImpl
             case KeyCodes.KEY_ENTER:
 //                    GWT.log("allTagsListBox ENTER clicked");
                 addSelectedTags();
+
                 textBox.setFocus(true);
+//                if (allTagsListBox.getItemCount() == 0) {
+                // None left so go back up
+//                    textBox.setFocus(true);
+//                }
 //                clearInput();
                 updateAllTagsListBoxContents();
                 break;
@@ -212,8 +222,7 @@ public class ExplorerNodeEditTagsViewImpl
 ////                        // replace any uppercase with lowercase
 ////                        textBox.setText(text);
 ////                    }
-                updateAddFromInputEnabledState();
-                updateClearInputEnabledState();
+                updateButtonStates();
                 updateAllTagsListBoxContents();
         }
     }
@@ -344,7 +353,7 @@ public class ExplorerNodeEditTagsViewImpl
         }
         if (nodeTagsListBox.getItemCount() > 0) {
             nodeTagsListBox.setSelectedIndex(0);
-            removeButton.setEnabled(true);
+            updateButtonStates();
         }
     }
 
@@ -390,7 +399,15 @@ public class ExplorerNodeEditTagsViewImpl
                 allTagsListBox.setSelectedIndex(0);
             }
         }
+        updateButtonStates();
+//        updateAddFromAllTagsEnabledState();
+    }
+
+    private void updateButtonStates() {
+        updateAddFromInputEnabledState();
+        updateClearInputVisibleState();
         updateAddFromAllTagsEnabledState();
+        updateRemoveEnabledState();
     }
 
     private void updateAddFromAllTagsEnabledState() {
@@ -398,12 +415,25 @@ public class ExplorerNodeEditTagsViewImpl
                 && allTagsListBox.getSelectedIndex() != -1);
     }
 
-    private void updateClearInputEnabledState() {
-        clearInputButton.setEnabled(!GwtNullSafe.isEmptyString(textBox.getText()));
+    private void updateClearInputVisibleState() {
+        final boolean isInputEmpty = GwtNullSafe.isEmptyString(textBox.getText());
+        clearInputButton.setVisible(!isInputEmpty);
+        final String text = "All known tags"
+                + (isInputEmpty
+                ? ""
+                : " (filtered)");
+        if (!Objects.equals(editNodeTagsAllTagsLabel.getText(), text)) {
+            editNodeTagsAllTagsLabel.setText(text);
+        }
     }
 
     private void updateAddFromInputEnabledState() {
         addFromInputButton.setEnabled(!GwtNullSafe.isBlankString(textBox.getText()));
+    }
+
+    private void updateRemoveEnabledState() {
+        removeButton.setEnabled(nodeTagsListBox.getItemCount() > 0
+                && nodeTagsListBox.getSelectedIndex() != -1);
     }
 
     @Override
@@ -424,15 +454,15 @@ public class ExplorerNodeEditTagsViewImpl
     private void clearInput() {
         textBox.setText("");
 //        selectedValue = null;
-        updateClearInputEnabledState();
-        updateAddFromInputEnabledState();
+        updateButtonStates();
+        updateAllListBoxes();
     }
 
-    private void setInput(final String text) {
-        textBox.setText(text);
-//        selectedValue = null;
-        updateClearInputEnabledState();
-    }
+//    private void setInput(final String text) {
+//        textBox.setText(text);
+////        selectedValue = null;
+//        updateClearInputEnabledState();
+//    }
 
 
     // --------------------------------------------------------------------------------
