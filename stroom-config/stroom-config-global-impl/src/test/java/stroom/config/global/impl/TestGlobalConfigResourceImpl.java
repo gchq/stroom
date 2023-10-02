@@ -7,6 +7,7 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
+import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.impl.StroomOpenIdConfig;
@@ -419,6 +420,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 UiConfig::new,
                 null,
                 () -> nodeInfo,
-                StroomOpenIdConfig::new);
+                StroomOpenIdConfig::new,
+                ExplorerConfig::new);
     }
 }
