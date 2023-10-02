@@ -39,6 +39,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -57,6 +58,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -131,14 +133,14 @@ public class StreamingAnalyticExecutor {
     public void exec() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
-            analyticHelper.info(() -> "Starting analytic processing");
+            info(() -> "Starting streaming analytic processing");
             processUntilAllComplete();
-            analyticHelper.info(() -> LogUtil.message("Finished analytic processing in {}", logExecutionTime));
+            info(() -> LogUtil.message("Finished streaming analytic processing in {}", logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug("Task terminated", e);
-            LOGGER.debug(() -> LogUtil.message("Analytic processing terminated after {}", logExecutionTime));
+            LOGGER.debug(() -> LogUtil.message("Streaming analytic processing terminated after {}", logExecutionTime));
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error during analytic processing: {}", e.getMessage()), e);
+            LOGGER.error(() -> LogUtil.message("Error during streaming analytic processing: {}", e.getMessage()), e);
         }
     }
 
@@ -173,7 +175,7 @@ public class StreamingAnalyticExecutor {
         }
 
         // Process each group in parallel.
-        analyticHelper.info(() ->
+        info(() ->
                 LogUtil.message("Processing {} ({})",
                         LogUtil.namedCount("streaming rule", analyticGroupMap.values()
                                 .stream()
@@ -242,8 +244,11 @@ public class StreamingAnalyticExecutor {
                 if (!parentTaskContext.isTerminated()) {
                     try {
                         if (Status.UNLOCKED.equals(meta.getStatus())) {
+                            logStreamProcessing("Processing:", pipelineDocRef, analytics, meta, "");
                             processStream(pipelineDocRef, pipelineData, analytics, meta, parentTaskContext);
+                            logStreamProcessing("Finished processing:", pipelineDocRef, analytics, meta, "");
                         } else {
+                            logStreamProcessing("Complete for now:", pipelineDocRef, analytics, meta, "");
                             LOGGER.info("Complete for now");
                             analytics.forEach(loadedAnalytic ->
                                     loadedAnalytic.tracker()
@@ -254,6 +259,8 @@ public class StreamingAnalyticExecutor {
                         LOGGER.debug(e::getMessage, e);
                         throw e;
                     } catch (final RuntimeException e) {
+                        logStreamProcessing("Error processing:", pipelineDocRef, analytics, meta,
+                                ", error=" + e.getMessage());
                         LOGGER.error(e::getMessage, e);
                         analytics.forEach(loadedAnalytic ->
                                 loadedAnalytic.tracker().getAnalyticTrackerData().setMessage(e.getMessage()));
@@ -269,6 +276,29 @@ public class StreamingAnalyticExecutor {
         }
 
         return sortedMetaList.size() < maxMetaListSize;
+    }
+
+    private void logStreamProcessing(final String suffix,
+                                     final DocRef pipelineDocRef,
+                                     final List<StreamingAnalytic> analytics,
+                                     final Meta meta,
+                                     final String message) {
+        if (LOGGER.isDebugEnabled()) {
+            analytics.forEach(analytic -> {
+                // Create some processing info.
+                final String info = " analytic=" +
+                        analytic.ruleIdentity() +
+                        " pipeline=" +
+                        pipelineDocRef.getName() +
+                        ", feed=" +
+                        meta.getFeedName() +
+                        ", meta_id=" +
+                        meta.getId() +
+                        ", created=" +
+                        DateUtil.createNormalDateTimeString(meta.getCreateMs());
+                LOGGER.debug(suffix + info + message);
+            });
+        }
     }
 
     private List<Meta> getMetaBatch(final List<StreamingAnalytic> analytics) {
@@ -483,7 +513,7 @@ public class StreamingAnalyticExecutor {
 
     private List<StreamingAnalytic> loadStreamingAnalytics() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        analyticHelper.info(() -> "Loading rules");
+        info(() -> "Loading rules");
         final List<StreamingAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
@@ -550,8 +580,13 @@ public class StreamingAnalyticExecutor {
                 }
             }
         }
-        analyticHelper.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
+        info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
         return analyticList;
+    }
+
+    private void info(final Supplier<String> messageSupplier) {
+        LOGGER.info(messageSupplier);
+        taskContextFactory.current().info(messageSupplier);
     }
 
     private record StreamingAnalytic(String ruleIdentity,

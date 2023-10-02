@@ -157,14 +157,16 @@ public class TableBuilderAnalyticExecutor {
     public void exec() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
-            info(() -> "Starting analytic processing");
+            info(() -> "Starting table builder analytic processing");
             processUntilAllComplete();
-            info(() -> LogUtil.message("Finished analytic processing in {}", logExecutionTime));
+            info(() -> LogUtil.message("Finished table builder analytic processing in {}", logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug("Task terminated", e);
-            LOGGER.debug(() -> LogUtil.message("Analytic processing terminated after {}", logExecutionTime));
+            LOGGER.debug(() ->
+                    LogUtil.message("Table builder analytic processing terminated after {}", logExecutionTime));
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error during analytic processing: {}", e.getMessage()), e);
+            LOGGER.error(() ->
+                    LogUtil.message("Error during table builder analytic processing: {}", e.getMessage()), e);
         }
     }
 
@@ -202,7 +204,7 @@ public class TableBuilderAnalyticExecutor {
         }
 
         // Process each group in parallel.
-        analyticHelper.info(() ->
+        info(() ->
                 LogUtil.message("Processing {} ({})",
                         LogUtil.namedCount("table builder rule", analyticGroupMap.values()
                                 .stream()
@@ -816,7 +818,7 @@ public class TableBuilderAnalyticExecutor {
 
     private List<TableBuilderAnalytic> loadAnalyticRules() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        analyticHelper.info(() -> "Loading rules");
+        info(() -> "Loading rules");
         final List<TableBuilderAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {

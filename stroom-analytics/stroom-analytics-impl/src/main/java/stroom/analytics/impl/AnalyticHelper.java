@@ -13,7 +13,6 @@ import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -24,7 +23,6 @@ import stroom.view.shared.ViewDoc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -34,7 +32,6 @@ public class AnalyticHelper {
 
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticTrackerDao analyticTrackerDao;
-    private final TaskContextFactory taskContextFactory;
     private final ViewStore viewStore;
     private final MetaService metaService;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
@@ -42,13 +39,11 @@ public class AnalyticHelper {
     @Inject
     public AnalyticHelper(final AnalyticRuleStore analyticRuleStore,
                           final AnalyticTrackerDao analyticTrackerDao,
-                          final TaskContextFactory taskContextFactory,
                           final ViewStore viewStore,
                           final MetaService metaService,
                           final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider) {
         this.analyticRuleStore = analyticRuleStore;
         this.analyticTrackerDao = analyticTrackerDao;
-        this.taskContextFactory = taskContextFactory;
         this.viewStore = viewStore;
         this.metaService = metaService;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
@@ -111,11 +106,6 @@ public class AnalyticHelper {
 
     public void updateTracker(final AnalyticTracker tracker) {
         analyticTrackerDao.update(tracker);
-    }
-
-    public void info(final Supplier<String> messageSupplier) {
-        LOGGER.info(messageSupplier);
-        taskContextFactory.current().info(messageSupplier);
     }
 
     public List<Meta> findMeta(final ExpressionOperator expression,

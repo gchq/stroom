@@ -69,6 +69,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -126,15 +127,26 @@ public class ScheduledQueryAnalyticExecutor {
     }
 
     public void exec() {
-        // Load rules.
-        final List<ScheduledQueryAnalytic> analytics = loadScheduledQueryAnalytics();
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        try {
+            info(() -> "Starting scheduled analytic processing");
 
-        analyticHelper.info(() -> "Processing " + LogUtil.namedCount("batch rule", NullSafe.size(analytics)));
-        final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
-        processScheduledQueryAnalytics(analytics, completableFutures, taskContextFactory.current());
+            // Load rules.
+            final List<ScheduledQueryAnalytic> analytics = loadScheduledQueryAnalytics();
 
-        // Join.
-        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+            info(() -> "Processing " + LogUtil.namedCount("batch rule", NullSafe.size(analytics)));
+            final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
+            processScheduledQueryAnalytics(analytics, completableFutures, taskContextFactory.current());
+
+            // Join.
+            CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+            info(() -> LogUtil.message("Finished scheduled analytic processing in {}", logExecutionTime));
+        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+            LOGGER.debug("Task terminated", e);
+            LOGGER.debug(() -> LogUtil.message("Scheduled Analytic processing terminated after {}", logExecutionTime));
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("Error during scheduled analytic processing: {}", e.getMessage()), e);
+        }
     }
 
     private void processScheduledQueryAnalytics(final List<ScheduledQueryAnalytic> analytics,
@@ -149,9 +161,8 @@ public class ScheduledQueryAnalyticExecutor {
                         final Runnable runnable = taskContextFactory.childContext(
                                 parentTaskContext,
                                 "Scheduled Query Analytic: " + analytic.ruleIdentity(),
-                                taskContext -> {
-                                    processScheduledQueryAnalytic(analytic, completableFutures, taskContext);
-                                });
+                                taskContext ->
+                                        processScheduledQueryAnalytic(analytic, completableFutures, taskContext));
                         runnable.run();
                     }));
                 } catch (final RuntimeException e) {
@@ -409,7 +420,7 @@ public class ScheduledQueryAnalyticExecutor {
 
     private List<ScheduledQueryAnalytic> loadScheduledQueryAnalytics() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        analyticHelper.info(() -> "Loading rules");
+        info(() -> "Loading rules");
         final List<ScheduledQueryAnalytic> analyticList = new ArrayList<>();
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
@@ -477,8 +488,13 @@ public class ScheduledQueryAnalyticExecutor {
                 }
             }
         }
-        analyticHelper.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
+        info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
         return analyticList;
+    }
+
+    private void info(final Supplier<String> messageSupplier) {
+        LOGGER.info(messageSupplier);
+        taskContextFactory.current().info(messageSupplier);
     }
 
     private record ScheduledQueryAnalytic(String ruleIdentity,
