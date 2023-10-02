@@ -65,15 +65,25 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
 
     @UiHandler("nameFilter")
     public void onNameFilterChange(final ValueChangeEvent<String> event) {
+//        GWT.log("onNameFilterChange: " + event);
         if (getUiHandlers() != null) {
             getUiHandlers().nameFilterChanged(nameFilter.getText());
         }
     }
 
     @Override
-    public void clearFilter() {
+    public void clearQuickFilter() {
         nameFilter.clear();
     }
+
+    @Override
+    public void setQuickFilter(final String filterInput) {
+        nameFilter.setText(filterInput);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, DropDownTreeViewImpl> {
 

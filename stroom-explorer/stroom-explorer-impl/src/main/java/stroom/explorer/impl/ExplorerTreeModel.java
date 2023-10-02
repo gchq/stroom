@@ -20,15 +20,20 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
+import stroom.security.api.SecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +46,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class ExplorerTreeModel {
+@EntityEventHandler(action = {
+        EntityAction.CREATE,
+        EntityAction.DELETE,
+        EntityAction.CREATE_EXPLORER_NODE,
+        EntityAction.UPDATE_EXPLORER_NODE,
+        EntityAction.DELETE_EXPLORER_NODE})
+class ExplorerTreeModel implements EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerTreeModel.class);
 
@@ -49,7 +60,6 @@ class ExplorerTreeModel {
 
     private static final long ONE_HOUR = 60 * 60 * 1000;
     private static final long TEN_MINUTES = 10 * 60 * 1000;
-    private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
 
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerSession explorerSession;
@@ -57,6 +67,7 @@ class ExplorerTreeModel {
     private final TaskContextFactory taskContextFactory;
     private final ExplorerActionHandlers explorerActionHandlers;
     private final BrokenDependenciesCache brokenDependenciesCache;
+    private final SecurityContext securityContext;
 
     private volatile UnmodifiableTreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
@@ -69,13 +80,15 @@ class ExplorerTreeModel {
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
                       final ExplorerActionHandlers explorerActionHandlers,
-                      final BrokenDependenciesCache brokenDependenciesCache) {
+                      final BrokenDependenciesCache brokenDependenciesCache,
+                      final SecurityContext securityContext) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.explorerActionHandlers = explorerActionHandlers;
         this.brokenDependenciesCache = brokenDependenciesCache;
+        this.securityContext = securityContext;
     }
 
     private boolean isSynchronousUpdateRequired(final long minId, final long now) {
@@ -92,7 +105,7 @@ class ExplorerTreeModel {
         // session.
         long minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
 
-        LOGGER.debug("currentId: {}, minId: {}", currentId, minId);
+        LOGGER.trace("getModel() - currentId: {}, minId: {}", currentId, minId);
 
         UnmodifiableTreeModel model = null;
 
@@ -114,7 +127,7 @@ class ExplorerTreeModel {
             // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
             // Find out what the oldest tree model is that we will allow before performing an asynchronous rebuild.
             final long oldestAllowed = Math.max(minExplorerTreeModelBuildTime.get(), now - TEN_MINUTES);
-            LOGGER.debug(() -> LogUtil.message("oldestAllowed: {}, model createTime: {}",
+            LOGGER.trace(() -> LogUtil.message("oldestAllowed: {}, model createTime: {}",
                     Instant.ofEpochMilli(oldestAllowed),
                     Instant.ofEpochMilli(currentModel.getCreationTime())));
 
@@ -147,122 +160,43 @@ class ExplorerTreeModel {
     }
 
     private UnmodifiableTreeModel updateModel(final long id, final long creationTime) {
-        TreeModel newModel;
-        UnmodifiableTreeModel newUnmodifiableModel;
-        performingRebuild.incrementAndGet();
-        try {
-            LOGGER.debug("Updating model for id {}", id);
-            newModel = explorerTreeDao.createModel(this::getIcon, id, creationTime);
+        return securityContext.asProcessingUserResult(() -> {
+            TreeModel newModel;
+            UnmodifiableTreeModel newUnmodifiableModel;
+            performingRebuild.incrementAndGet();
+            try {
+                LOGGER.debug("Updating model for id {}", id);
+                newModel = LOGGER.logDurationIfDebugEnabled(() ->
+                                explorerTreeDao.createModel(this::getIcon, id, creationTime),
+                        "Create model");
 
-            // Make sure the cache is fresh for our new model
-            brokenDependenciesCache.invalidate();
-            decorateWithBrokenDeps(newModel);
+                // Make sure the cache is fresh for our new model
+                brokenDependenciesCache.invalidate();
+                LOGGER.logDurationIfDebugEnabled(() ->
+                                addBrokenDependencies(newModel),
+                        "Add dependencies to model");
 
-            // Now make it immutable as this is our master model
-            newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);
-            setCurrentModel(newUnmodifiableModel);
-        } finally {
-            performingRebuild.decrementAndGet();
-        }
-        return newUnmodifiableModel;
-    }
-
-    private void decorateWithBrokenDeps(final TreeModel treeModel) {
-        final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
-
-        treeModel.decorate((nodeKey, node) -> {
-            LOGGER.debug(() -> "decorate called on node: " + node.getName());
-
-            return cloneWithNodeInfo(treeModel, brokenDepsMap, node);
+                // Now make it immutable as this is our master model
+                newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);
+                setCurrentModel(newUnmodifiableModel);
+            } finally {
+                performingRebuild.decrementAndGet();
+            }
+            return newUnmodifiableModel;
         });
     }
 
-    ExplorerNode cloneWithBranchNodeInfo(final TreeModel treeModel,
-                                         final ExplorerNode node) {
-        final Map<DocRef, Set<DocRef>> brokenDepsMap = brokenDependenciesCache.getMap();
-        return cloneWithBranchNodeInfo(treeModel, brokenDepsMap, node);
+    private void addBrokenDependencies(final TreeModel treeModel) {
+        final Map<DocRef, Set<DocRef>> brokenDepsMap = NullSafe.map(brokenDependenciesCache.getMap());
+        brokenDepsMap.forEach((nodeDocRef, missingDepDocRefs) -> {
+            final ExplorerNode node = treeModel.getNode(nodeDocRef);
+            final List<NodeInfo> nodeInfos = buildNodeInfo(missingDepDocRefs);
+            treeModel.addNodeInfo(node, nodeInfos);
+        });
     }
 
-    private ExplorerNode cloneWithNodeInfo(final TreeModel treeModel,
-                                           final Map<DocRef, Set<DocRef>> brokenDepsMap,
-                                           final ExplorerNode node) {
-        final DocRef docRef = node.getDocRef();
-        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
-        final List<ExplorerNode> children = treeModel.getChildren(node);
-
-        if (NullSafe.isEmptyCollection(children) && NullSafe.hasItems(nodeInfos)) {
-            LOGGER.debug(() -> LogUtil.message("Leaf '{}' has issues", node.getName()));
-            return node.copy()
-                    .addNodeInfo(nodeInfos)
-                    .build();
-        } else {
-            // Branch
-            final Severity maxSeverity = Severity.getMaxSeverity(
-                            NullSafe.stream(children)
-                                    .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
-                                            .map(NodeInfo::getSeverity))
-                                    .max(Severity.HIGH_TO_LOW_COMPARATOR)
-                                    .orElse(null),
-                            null)
-                    .orElse(null);
-
-            if (maxSeverity != null) {
-                // At least one descendant has an issue, so mark this branch too
-                LOGGER.debug(() -> LogUtil.message("Branch '{}' has issues, maxSeverity: {}",
-                        node.getName(), maxSeverity));
-                return node.copy()
-                        .addNodeInfo(new NodeInfo(
-                                maxSeverity,
-                                BRANCH_NODE_INFO))
-                        .build();
-            } else {
-                // No issues, return the node as is
-                return node;
-            }
-        }
-    }
-
-    private <K> ExplorerNode cloneWithBranchNodeInfo(final AbstractTreeModel<K> treeModel,
-                                                     final Map<DocRef, Set<DocRef>> brokenDepsMap,
-                                                     final ExplorerNode node) {
-        final DocRef docRef = node.getDocRef();
-        final Set<NodeInfo> nodeInfos = buildNodeInfo(docRef, brokenDepsMap);
-        final List<ExplorerNode> children = treeModel.getChildren(node);
-
-        if (NullSafe.hasItems(children) && NullSafe.isEmptyCollection(nodeInfos)) {
-            final Severity maxSeverity = Severity.getMaxSeverity(
-                            NullSafe.stream(children)
-                                    .flatMap(childNode -> NullSafe.stream(childNode.getNodeInfoList())
-                                            .map(NodeInfo::getSeverity))
-                                    .max(Severity.HIGH_TO_LOW_COMPARATOR)
-                                    .orElse(null),
-                            null)
-                    .orElse(null);
-
-            if (maxSeverity != null) {
-                // At least one descendant has an issue, so mark this branch too
-                LOGGER.debug(() -> LogUtil.message("Branch '{}' has issues, maxSeverity: {}",
-                        node.getName(), maxSeverity));
-                return node.copy()
-                        .addNodeInfo(new NodeInfo(
-                                maxSeverity,
-                                BRANCH_NODE_INFO))
-                        .build();
-            } else {
-                // No issues, return the node as is
-                return node;
-            }
-        } else {
-            return node;
-        }
-    }
-
-    private Set<NodeInfo> buildNodeInfo(final DocRef docRef,
-                                        final Map<DocRef, Set<DocRef>> brokenDepsMap) {
-        final Set<DocRef> brokenDeps = brokenDepsMap.get(docRef);
-        if (brokenDeps == null) {
-            return null;
-        } else {
+    private List<NodeInfo> buildNodeInfo(final Set<DocRef> brokenDeps) {
+        if (NullSafe.hasItems(brokenDeps)) {
             return brokenDeps.stream()
                     .map(missingDocRef -> {
                         final String msg = LogUtil.message(
@@ -272,7 +206,9 @@ class ExplorerTreeModel {
                                 missingDocRef.getUuid());
                         return new NodeInfo(Severity.ERROR, msg);
                     })
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
         }
     }
 
@@ -286,26 +222,45 @@ class ExplorerTreeModel {
     }
 
     private synchronized void setCurrentModel(final UnmodifiableTreeModel treeModel) {
-        if (currentModel == null || currentModel.getId() < treeModel.getId()) {
+        if (currentModel == null
+                || treeModel == null
+                || currentModel.getId() < treeModel.getId()) {
 
             LOGGER.debug(() -> LogUtil.message("Setting new model old id: {}, new id {}",
-                    currentModel == null
-                            ? "null"
-                            : currentModel.getId(),
-                    treeModel.getId()));
-
+                    NullSafe.toStringOrElse(currentModel, UnmodifiableTreeModel::getId, "null"),
+                    NullSafe.toStringOrElse(treeModel, UnmodifiableTreeModel::getId, "null")));
             currentModel = treeModel;
         }
     }
 
+    /**
+     * Set state such that the next call to getModel will trigger an update
+     */
     void rebuild() {
-        LOGGER.debug("rebuild called");
         final long now = System.currentTimeMillis();
-        minExplorerTreeModelBuildTime.getAndUpdate(prev -> Math.max(prev, now));
-        explorerSession.setMinExplorerTreeModelId(currentId.incrementAndGet());
+        final long newTimeMs = minExplorerTreeModelBuildTime.getAndUpdate(prev -> Math.max(prev, now));
+        final long newId = currentId.incrementAndGet();
+        LOGGER.trace(() -> LogUtil.message("rebuild called, newTime: {}, newId: {}",
+                Instant.ofEpochMilli(newTimeMs), newId));
+        explorerSession.setMinExplorerTreeModelId(newId);
     }
 
     void clear() {
         setCurrentModel(null);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        NullSafe.consume(event, EntityEvent::getAction, action -> {
+            switch (action) {
+                case CREATE,
+                        DELETE,
+                        UPDATE_EXPLORER_NODE -> {
+                    // E.g. tags on a node have changed
+                    LOGGER.debug("Rebuilding tree model due to entity event {}", event);
+                    rebuild();
+                }
+            }
+        });
     }
 }

@@ -40,7 +40,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -49,6 +48,7 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Button;
@@ -67,11 +67,8 @@ import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.List;
 
-public class NavigationPresenter
-        extends
-        MyPresenter<NavigationView, NavigationProxy>
-        implements
-        NavigationUiHandlers,
+public class NavigationPresenter extends MyPresenter<NavigationView, NavigationProxy>
+        implements NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
         ShowMainEvent.Handler {
@@ -129,7 +126,7 @@ public class NavigationPresenter
         filter.setEnabled(true);
 
         showAlertsBtn = new InlineSvgToggleButton();
-        showAlertsBtn.setOn();
+        showAlertsBtn.setOff();
         showAlertsBtn.setSvg(SvgImage.EXCLAMATION);
         showAlertsBtn.getElement().addClassName("navigation-header-button show-alerts");
         showAlertsBtn.setTitle("Toggle Alerts");
@@ -150,7 +147,7 @@ public class NavigationPresenter
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, true, true);
+        explorerTree = new ExplorerTree(restFactory, true, showAlertsBtn.getState());
 
         // Add views.
         uiConfigCache.get().onSuccess(uiConfig -> {
@@ -192,14 +189,14 @@ public class NavigationPresenter
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
 
-        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
-            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
-                    .anyMatch(ExplorerNode::hasNodeInfo);
-            showAlertsBtn.setVisible(treeHasNodeInfo);
-        });
+//        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
+//            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
+//                    .anyMatch(ExplorerNode::hasNodeInfo);
+//            showAlertsBtn.setVisible(treeHasNodeInfo);
+//        });
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
-                typeFilterPresenter.getIncludedTypes())));
+                typeFilterPresenter.getIncludedTypes().orElse(null))));
 
         // Fire events from the explorer tree globally.
         registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> {
@@ -335,6 +332,7 @@ public class NavigationPresenter
 
     @Override
     public void onRefresh(final RefreshExplorerTreeEvent event) {
+        GWT.log("onRefresh " + event);
         explorerTree.getTreeModel().refresh();
     }
 

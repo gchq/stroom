@@ -957,6 +957,20 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testAsSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() { })
+                .withWrappedOutputType(new TypeLiteral<Set<String>>() { })
+                .withTestFunction(testCase ->
+                        NullSafe.asSet(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase(new String[]{}, Collections.emptySet())
+                .addCase(new String[]{"foo", "bar"}, Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {

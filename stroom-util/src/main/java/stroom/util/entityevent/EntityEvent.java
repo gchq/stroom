@@ -30,6 +30,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class EntityEvent {
 
+    public static final String TYPE_WILDCARD = "*";
+
     @JsonProperty
     private final DocRef docRef;
 
@@ -88,18 +90,13 @@ public class EntityEvent {
         return action;
     }
 
-    public interface Handler {
-
-        void onChange(EntityEvent event);
-    }
-
     @Override
     public String toString() {
-        return "EntityEvent{" +
-                "docRef=" + docRef +
-                ", oldDocRef=" + oldDocRef +
-                ", action=" + action +
-                '}';
+        return action + " "
+                + docRef
+                + (oldDocRef != null
+                ? " (oldDocRef: " + oldDocRef + ")"
+                : "");
     }
 
     @Override
@@ -118,5 +115,14 @@ public class EntityEvent {
     @Override
     public int hashCode() {
         return Objects.hash(docRef, oldDocRef, action);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface Handler {
+
+        void onChange(EntityEvent event);
     }
 }

@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.69] - 2023-10-02
+
+* Issue **#3742** : Improve performance of showing dependency problems in the explorer tree. Change the Toggle Alerts button in the explorer pane to be always visible and off by default.
+
+* Add ability to tag explorer nodes with tag management done from the explorer context menu.
+
+* Issue **#3228** : Reload explorer tree cache on all nodes when entities are created/deleted.
+
+* Add pre-populated tag filters to View, Dashboard and Pipeline reference loader pipeline tree pickers. E.g. pre-populates the filter with `tag:extraction tag:dynamic` in the View extraction pipeline picker. IMPORTANT: you will need to assign tags to pipelines so that they are visible in the three screens mentioned above. All reference loader pipelines (i.e. those using ``) should be tagged with `reference-loader`. All extraction pipelines (i.e. those using `SearchResultOutputFilter`) should be tagged with `extraction`. All dynamic extraction pipelines (i.e. those using `DynamicSearchResultOutputFilter`) should be tagged with `extraction` and `dynamic`. If you want to disable pre-filtering of pipelines then you can clear these properites: `dashboardPipelineSelectorIncludedTags`, `viewPipelineSelectorIncludedTags` and `referencePipelineSelectorIncludedTags`.
+
+* Issue **#3794** : Fix size of activity pane when activities with long descriptions are selected.
+
+
 ## [v7.2-beta.68] - 2023-09-29
 
 * Issue **#3789** : Fix find content screen formatting.
@@ -5967,7 +5980,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.68...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.69...HEAD
+[v7.2-beta.69]: https://github.com/gchq/stroom/compare/v7.2-beta.68...v7.2-beta.69
 [v7.2-beta.68]: https://github.com/gchq/stroom/compare/v7.2-beta.67...v7.2-beta.68
 [v7.2-beta.67]: https://github.com/gchq/stroom/compare/v7.2-beta.66...v7.2-beta.67
 [v7.2-beta.66]: https://github.com/gchq/stroom/compare/v7.2-beta.65...v7.2-beta.66

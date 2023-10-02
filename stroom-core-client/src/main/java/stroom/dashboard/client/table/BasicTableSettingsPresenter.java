@@ -24,8 +24,12 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.QueryConfig;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -43,8 +47,10 @@ public class BasicTableSettingsPresenter
     private final EntityDropDownPresenter pipelinePresenter;
 
     @Inject
-    public BasicTableSettingsPresenter(final EventBus eventBus, final BasicTableSettingsView view,
-                                       final EntityDropDownPresenter pipelinePresenter) {
+    public BasicTableSettingsPresenter(final EventBus eventBus,
+                                       final BasicTableSettingsView view,
+                                       final EntityDropDownPresenter pipelinePresenter,
+                                       final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
 
@@ -52,6 +58,14 @@ public class BasicTableSettingsPresenter
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setPipelineView(pipelinePresenter.getView());
+
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get().onSuccess(extendedUiConfig ->
+                GwtNullSafe.consume(
+                        extendedUiConfig.getQuery(),
+                        QueryConfig::getDashboardPipelineSelectorIncludedTags,
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelinePresenter::setQuickFilter));
     }
 
     @Override
@@ -206,6 +220,10 @@ public class BasicTableSettingsPresenter
 
         return list;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface BasicTableSettingsView extends BasicSettingsView {
 

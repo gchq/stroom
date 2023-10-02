@@ -755,6 +755,8 @@ select option:disabled {
 }
 
 .activityOuter {
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .activityButton {
@@ -865,6 +867,10 @@ select option:disabled {
     overflow: auto;
 }
 
+.align-center {
+    align-items: center;
+}
+
 .overflow-hidden {
     overflow: hidden;
 }
@@ -911,4 +917,26 @@ textarea.clipboardCopy {
 
 .user-batch-text {
     overflow-y: scroll;
+}
+
+.lower-case-input {
+    text-transform: lowercase;
+}
+
+.upper-case-input {
+    text-transform: uppercase;
+}
+
+.example-label {
+    font-size: 92%;
+    opacity: 80%;
+    margin-top: 0.1rem;
+    margin-bottom: 0.1rem;
+}
+
+/* TODO AT - not sure if these need to be done here or somewhere else */
+select:focus-visible,
+input:focus-visible {
+  border: thin solid var(--focus-border) !important;
+  box-shadow: var(--focus-shadow);
 }

@@ -33,7 +33,9 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.NullSafe;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
@@ -179,7 +181,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // Get the path.
             final String path = properties.getProperty("path");
             // Get the tags.
-            final String tags = properties.getProperty("tags");
+            final Set<String> tags = explorerService.parseNodeTags(properties.getProperty("tags"));
+
 
             // Create a doc ref.
             final DocRef docRef = new DocRef(type, uuid, name);
@@ -211,7 +214,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 // Find the appropriate handler
                 final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
                 if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
-                    imported = importNonExplorerDoc(importExportActionHandler,
+                    imported = importNonExplorerDoc(
+                            importExportActionHandler,
                             nodeFile,
                             docRef,
                             path,
@@ -221,9 +225,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             importSettings);
 
                 } else {
-                    imported = importExplorerDoc(importExportActionHandler,
+                    imported = importExplorerDoc(
+                            importExportActionHandler,
                             nodeFile,
                             docRef,
+                            tags,
                             path,
                             dataMap,
                             importState,
@@ -318,6 +324,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private DocRef importExplorerDoc(final ImportExportActionHandler importExportActionHandler,
                                      final Path nodeFile,
                                      final DocRef docRef,
+                                     final Set<String> tags,
                                      final String path,
                                      final Map<String, byte[]> dataMap,
                                      final ImportState importState,
@@ -405,7 +412,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                     // Create, rename and/or move explorer node.
                     if (existingNode.isEmpty()) {
-                        explorerNodeService.createNode(imported,
+                        explorerNodeService.createNode(
+                                imported,
                                 folderRef,
                                 PermissionInheritance.DESTINATION);
                         explorerService.rebuildTree();
@@ -493,7 +501,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 exportSummary.addSuccess(docRef.getType());
             } catch (final IOException | RuntimeException e) {
                 messageList.add(new Message(Severity.ERROR,
-                        "Error created while exporting (" + docRef.toString() + ") : " + e.getMessage()));
+                        "Error created while exporting (" + docRef.toString() + ") : "
+                                + LogUtil.exceptionMessage(e)));
                 exportSummary.addFailure(docRef.getType());
             }
         }
@@ -666,7 +675,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         } catch (final IOException e) {
                             localMessageList.add(new Message(
                                     Severity.ERROR,
-                                    "Failed to write file '" + fileName + "'"));
+                                    "Failed to write file '" + fileName + "': "
+                                            + LogUtil.exceptionMessage(e)));
                         }
                     });
 
@@ -687,6 +697,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 }
             } catch (Exception e) {
                 importExportDocumentEventLog.exportDocument(docRef, e);
+                localMessageList.add(new Message(
+                        Severity.ERROR,
+                        "Error exporting directory '"
+                                + NullSafe.get(dir, Path::toAbsolutePath, Path::normalize) + "': "
+                                + LogUtil.exceptionMessage(e)));
             } finally {
                 messageList.addAll(localMessageList);
             }
@@ -715,14 +730,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             properties.setProperty("type", explorerNode.getType());
             properties.setProperty("name", explorerNode.getName());
             properties.setProperty("path", String.join("/", pathElements));
-            if (explorerNode.getTags() != null) {
-                properties.setProperty("tags", explorerNode.getTags());
+            final String tagsStr = NullSafe.get(explorerNode.getTags(), explorerService::nodeTagsToString);
+            if (!NullSafe.isBlankString(tagsStr)) {
+                properties.setProperty("tags", tagsStr);
             }
 
             final OutputStream outputStream = Files.newOutputStream(parentDir.resolve(fileName));
             PropertiesSerialiser.write(properties, outputStream);
-        } catch (final IOException e) {
-            messageList.add(new Message(Severity.ERROR, "Failed to write file '" + fileName + "'"));
+        } catch (final Exception e) {
+            messageList.add(new Message(
+                    Severity.ERROR,
+                    "Error writing properties to file '" + fileName + "': " + LogUtil.exceptionMessage(e)));
         }
     }
 

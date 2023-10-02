@@ -63,7 +63,7 @@ class EntityEventHandler {
             // Fire to type specific handlers.
             fireEventByType(event, event.getDocRef().getType());
             // Fire to any (*) type handlers.
-            fireEventByType(event, "*");
+            fireEventByType(event, EntityEvent.TYPE_WILDCARD);
         }
     }
 

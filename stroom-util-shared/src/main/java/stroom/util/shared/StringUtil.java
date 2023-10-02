@@ -21,6 +21,31 @@ public class StringUtil {
         return obj.toString();
     }
 
+    public static String prefix(final String string, final char prefixChar, final int count) {
+        final StringBuilder stringBuilder = new StringBuilder();
+
+        //noinspection StringRepeatCanBeUsed
+        for (int i = 0; i < count; i++) {
+            stringBuilder.append(prefixChar);
+        }
+        if (string != null) {
+            stringBuilder.append(string);
+        }
+        return stringBuilder.toString();
+    }
+
+    public static String suffix(final String string, final char prefixChar, final int count) {
+        final StringBuilder stringBuilder = new StringBuilder();
+        if (string != null) {
+            stringBuilder.append(string);
+        }
+        //noinspection StringRepeatCanBeUsed
+        for (int i = 0; i < count; i++) {
+            stringBuilder.append(prefixChar);
+        }
+        return stringBuilder.toString();
+    }
+
     /**
      * @return params as is, unless it is empty or blank, in which case return null.
      */

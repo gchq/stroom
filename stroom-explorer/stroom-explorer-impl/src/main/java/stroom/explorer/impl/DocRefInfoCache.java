@@ -36,7 +36,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-@EntityEventHandler(action = {EntityAction.CREATE, EntityAction.UPDATE})
+@EntityEventHandler(action = {
+        EntityAction.CREATE,
+        EntityAction.UPDATE,
+        EntityAction.UPDATE_EXPLORER_NODE})
 class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocRefInfoCache.class);

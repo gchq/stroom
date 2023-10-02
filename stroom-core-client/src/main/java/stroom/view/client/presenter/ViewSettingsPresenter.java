@@ -22,11 +22,15 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.StandardTagNames;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.QueryConfig;
+import stroom.util.shared.GwtNullSafe;
 import stroom.view.client.presenter.ViewSettingsPresenter.ViewSettingsView;
 import stroom.view.shared.ViewDoc;
 
@@ -49,7 +53,8 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
                                  final RestFactory restFactory,
                                  final EntityDropDownPresenter dataSourceSelectionPresenter,
                                  final EntityDropDownPresenter pipelineSelectionPresenter,
-                                 final EditExpressionPresenter expressionPresenter) {
+                                 final EditExpressionPresenter expressionPresenter,
+                                 final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
@@ -60,11 +65,19 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         view.setPipelineSelectionView(pipelineSelectionPresenter.getView());
         view.setExpressionView(expressionPresenter.getView());
 
-        dataSourceSelectionPresenter.setTags(StandardTagNames.DATA_SOURCE);
+        dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get().onSuccess(extendedUiConfig ->
+            GwtNullSafe.consume(
+                    extendedUiConfig.getQuery(),
+                    QueryConfig::getViewPipelineSelectorIncludedTags,
+                    ExplorerTreeFilter::createTagQuickFilterInput,
+                    pipelineSelectionPresenter::setQuickFilter));
     }
 
     @Override
@@ -106,6 +119,10 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         entity.setFilter(expressionPresenter.write());
         return entity;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ViewSettingsView extends View {
 

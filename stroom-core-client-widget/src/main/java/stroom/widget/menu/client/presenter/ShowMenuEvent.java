@@ -1,7 +1,7 @@
 package stroom.widget.menu.client.presenter;
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
@@ -24,17 +24,20 @@ public class ShowMenuEvent
     private final ShowPopupEvent.Handler showHandler;
     private final HidePopupEvent.Handler hideHandler;
     private final Element[] autoHidePartners;
+    private final boolean allowCloseOnMoveLeft;
 
     private ShowMenuEvent(final List<Item> items,
                           final PopupPosition popupPosition,
                           final ShowPopupEvent.Handler showHandler,
                           final HidePopupEvent.Handler hideHandler,
-                          final Element[] autoHidePartners) {
+                          final Element[] autoHidePartners,
+                          final boolean allowCloseOnMoveLeft) {
         this.items = items;
         this.popupPosition = popupPosition;
         this.autoHidePartners = autoHidePartners;
         this.showHandler = showHandler;
         this.hideHandler = hideHandler;
+        this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
     }
 
     public static Builder builder() {
@@ -73,6 +76,10 @@ public class ShowMenuEvent
         return autoHidePartners;
     }
 
+    public boolean isAllowCloseOnMoveLeft() {
+        return allowCloseOnMoveLeft;
+    }
+
     @Override
     protected void dispatch(Handler handler) {
         handler.onShow(this);
@@ -83,10 +90,18 @@ public class ShowMenuEvent
         void onShow(ShowMenuEvent event);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface HasShowMenuHandlers extends HasHandlers {
 
         HandlerRegistration addShowMenuHandler(ShowMenuEvent.Handler handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
@@ -95,6 +110,7 @@ public class ShowMenuEvent
         private ShowPopupEvent.Handler showHandler;
         private HidePopupEvent.Handler hideHandler;
         private final List<Element> autoHidePartners = new ArrayList<>();
+        private Boolean allowCloseOnMoveLeft = null;
 
         public Builder() {
         }
@@ -128,6 +144,26 @@ public class ShowMenuEvent
             return this;
         }
 
+        /**
+         * If allowCloseOnMoveLeft is true and the menu item has no parent (i.e. a root item)
+         * then the menu will be closed. Useful when the menu is triggered by move right on
+         * an explorer tree or similar. Default is false.
+         */
+        public Builder allowCloseOnMoveLeft(final boolean allowCloseOnMoveLeft) {
+            this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
+            return this;
+        }
+
+        /**
+         * If allowCloseOnMoveLeft is true and the menu item has no parent (i.e. a root item)
+         * then the menu will be closed. Useful when the menu is triggered by move right on
+         * an explorer tree or similar. Default is false.
+         */
+        public Builder allowCloseOnMoveLeft() {
+            this.allowCloseOnMoveLeft = true;
+            return this;
+        }
+
         public void fire(HasHandlers hasHandlers) {
             Element[] elements = null;
             if (autoHidePartners.size() > 0) {
@@ -139,7 +175,8 @@ public class ShowMenuEvent
                     popupPosition,
                     showHandler,
                     hideHandler,
-                    elements));
+                    elements,
+                    GwtNullSafe.requireNonNullElse(allowCloseOnMoveLeft, false)));
         }
     }
 }

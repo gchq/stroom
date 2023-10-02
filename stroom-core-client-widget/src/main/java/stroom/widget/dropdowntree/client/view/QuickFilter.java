@@ -171,6 +171,10 @@ public class QuickFilter extends FlowPanel
         handlerManager.fireEvent(event);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class HelpPopup extends PopupPanel {
 
         public HelpPopup(final SafeHtml content) {

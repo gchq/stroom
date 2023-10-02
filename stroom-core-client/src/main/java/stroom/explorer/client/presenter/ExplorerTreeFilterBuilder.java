@@ -17,6 +17,8 @@
 package stroom.explorer.client.presenter;
 
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.NodeFlag;
+import stroom.util.shared.GwtNullSafe;
 
 import java.util.Set;
 
@@ -25,6 +27,7 @@ public class ExplorerTreeFilterBuilder {
     private Set<String> includedTypes;
     private Set<String> includedRootTypes;
     private Set<String> tags;
+    private Set<NodeFlag> nodeFlags;
     private Set<String> requiredPermissions;
     private String nameFilter;
     private boolean nameFilterChange;
@@ -54,6 +57,10 @@ public class ExplorerTreeFilterBuilder {
         this.tags = SetUtil.toSet(tags);
     }
 
+    public void setNodeFlags(final Set<NodeFlag> nodeFlags) {
+        this.nodeFlags = nodeFlags;
+    }
+
     public void setRequiredPermissions(final String... requiredPermissions) {
         this.requiredPermissions = SetUtil.toSet(requiredPermissions);
     }
@@ -61,28 +68,32 @@ public class ExplorerTreeFilterBuilder {
     /**
      * This sets the name filter to be used when fetching items. This method
      * returns false is the filter is set to the same value that is already set.
-     *
-     * @param nameFilter
-     * @return
      */
     public boolean setNameFilter(final String nameFilter) {
-        String filter = nameFilter;
-        if (filter != null) {
-            filter = filter.trim();
-            if (filter.length() == 0) {
-                filter = null;
-            }
-        }
+        return setNameFilter(nameFilter, false);
+    }
 
-        if ((filter == null && this.nameFilter == null)
-                || (filter != null && filter.equals(this.nameFilter))) {
+    /**
+     * This sets the name filter to be used when fetching items. This method
+     * returns false is the filter is set to the same value that is already set.
+     */
+    public boolean setNameFilter(final String nameFilter, final boolean forceChange) {
+        final String filter = GwtNullSafe.get(
+                nameFilter,
+                String::trim,
+                str -> str.length() == 0
+                        ? null
+                        : str);
+
+        if (!forceChange && ((GwtNullSafe.allNull(filter, this.nameFilter))
+                || (filter != null && filter.equals(this.nameFilter)))) {
             return false;
+        } else {
+            this.nameFilter = filter;
+            this.nameFilterChange = true;
+
+            return true;
         }
-
-        this.nameFilter = filter;
-        this.nameFilterChange = true;
-
-        return true;
     }
 
     public ExplorerTreeFilter build() {
@@ -93,6 +104,7 @@ public class ExplorerTreeFilterBuilder {
                 SetUtil.copySet(includedTypes),
                 SetUtil.copySet(includedRootTypes),
                 SetUtil.copySet(tags),
+                nodeFlags,
                 SetUtil.copySet(requiredPermissions),
                 nameFilter,
                 nameFilterChange);

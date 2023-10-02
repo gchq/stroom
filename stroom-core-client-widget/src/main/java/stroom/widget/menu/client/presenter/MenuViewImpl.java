@@ -33,6 +33,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private Timer subMenuShowTimer;
     // The item that has a delayed sub menu scheduled
     private Item timerItem = null;
+    private boolean allowCloseOnMoveLeft = false;
 
     public MenuViewImpl() {
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
@@ -163,6 +164,11 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     }
 
     @Override
+    public void setAllowCloseOnMoveLeft(final boolean allowCloseOnMoveLeft) {
+        this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
+    }
+
+    @Override
     public void selectFirstItem() {
         int row = getFirstSelectableRow();
         if (row >= 0) {
@@ -250,6 +256,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         protected void onMoveLeft(final CellPreviewEvent<Item> e) {
             if (hasParent()) {
                 focusParent(true);
+            } else if (allowCloseOnMoveLeft) {
+                escape();
             }
         }
 

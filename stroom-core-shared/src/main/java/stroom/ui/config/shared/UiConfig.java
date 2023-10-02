@@ -16,8 +16,11 @@
 
 package stroom.ui.config.shared;
 
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.StandardExplorerTags;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.validation.AllMatchPattern;
 import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.Set;
 import javax.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -129,8 +133,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     private final NodeMonitoringConfig nodeMonitoring;
+
     @JsonProperty
     private final AnalyticUiDefaultConfig analyticUiDefaultConfig;
+
     @JsonProperty
     @JsonPropertyDescription("This regex pattern defines the delimiter to use for nesting index fields in the query " +
             "helper. This is useful when dealing with large numbers of dynamic fields. e.g. if every element is made " +
@@ -139,6 +145,14 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "nested categories. The default pattern is '[:.]' to also categorise the special " +
             "'annotation:XXX' fields. Set it to null or an empty string prevent nesting.")
     private final String nestedIndexFieldsDelimiterPattern;
+
+    @AllMatchPattern(pattern = ExplorerNode.TAG_PATTERN_STR)
+    @JsonProperty
+    @JsonPropertyDescription("Set of explorer tags to use as a filter on the Reference Pipeline selector of " +
+            "an XSLTFilter within a pipeline." +
+            "Explorer nodes will only be included if they have at least all the tags in this property. " +
+            "This property should contain a sub set of the tags in property stroom.explorer.suggestedTags")
+    private final Set<String> referencePipelineSelectorIncludedTags;
 
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -165,6 +179,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         nodeMonitoring = new NodeMonitoringConfig();
         analyticUiDefaultConfig = new AnalyticUiDefaultConfig();
         nestedIndexFieldsDelimiterPattern = "[.:]"; // : is to split the special annotation:XXX fields
+        referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
+                StandardExplorerTags.REFERENCE_LOADER);
     }
 
     @JsonCreator
@@ -192,7 +208,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("requireReactWrapper") Boolean requireReactWrapper,
                     @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring,
                     @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig,
-                    @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern) {
+                    @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
+                    @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -217,6 +234,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.nodeMonitoring = nodeMonitoring;
         this.analyticUiDefaultConfig = analyticUiDefaultConfig;
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
+        this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
     }
 
     public String getWelcomeHtml() {
@@ -379,6 +397,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return nestedIndexFieldsDelimiterPattern;
     }
 
+    public Set<String> getReferencePipelineSelectorIncludedTags() {
+        return referencePipelineSelectorIncludedTags;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -388,6 +410,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             return false;
         }
         final UiConfig uiConfig = (UiConfig) o;
+
         return Objects.equals(welcomeHtml, uiConfig.welcomeHtml)
                 && Objects.equals(aboutHtml, uiConfig.aboutHtml)
                 && Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage)
@@ -410,7 +433,9 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper)
                 && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
                 && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
-                && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern);
+                && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
+                && Objects.equals(referencePipelineSelectorIncludedTags,
+                uiConfig.referencePipelineSelectorIncludedTags);
     }
 
     @Override
@@ -437,7 +462,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 requireReactWrapper,
                 nodeMonitoring,
                 analyticUiDefaultConfig,
-                nestedIndexFieldsDelimiterPattern);
+                nestedIndexFieldsDelimiterPattern,
+                referencePipelineSelectorIncludedTags);
     }
 
     @Override
@@ -466,6 +492,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", nodeMonitoring=" + nodeMonitoring +
                 ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
                 ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
+                ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
                 '}';
     }
 }

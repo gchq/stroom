@@ -21,6 +21,8 @@ public class FindExplorerNodeCriteria {
     private final Integer minDepth;
     @JsonProperty
     private final Set<ExplorerNodeKey> ensureVisible;
+    @JsonProperty
+    private final boolean showAlerts;
 
     @JsonCreator
     public FindExplorerNodeCriteria(
@@ -28,12 +30,14 @@ public class FindExplorerNodeCriteria {
             @JsonProperty("temporaryOpenedItems") final Set<ExplorerNodeKey> temporaryOpenedItems,
             @JsonProperty("filter") final ExplorerTreeFilter filter,
             @JsonProperty("minDepth") final Integer minDepth,
-            @JsonProperty("ensureVisible") final Set<ExplorerNodeKey> ensureVisible) {
+            @JsonProperty("ensureVisible") final Set<ExplorerNodeKey> ensureVisible,
+            @JsonProperty("showAlerts") final boolean showAlerts) {
         this.openItems = openItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
         this.filter = filter;
         this.minDepth = minDepth;
         this.ensureVisible = ensureVisible;
+        this.showAlerts = showAlerts;
     }
 
     public Set<ExplorerNodeKey> getOpenItems() {
@@ -54,6 +58,10 @@ public class FindExplorerNodeCriteria {
 
     public Set<ExplorerNodeKey> getEnsureVisible() {
         return ensureVisible;
+    }
+
+    public boolean getShowAlerts() {
+        return showAlerts;
     }
 
     @Override

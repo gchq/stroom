@@ -130,6 +130,147 @@ public final class BasicLambdaLogger implements LambdaLogger {
     }
 
     @Override
+    public void log(final LogLevel logLevel, final String message) {
+        try {
+            switch (logLevel) {
+                case TRACE -> logger.trace(message);
+                case DEBUG -> logger.debug(message);
+                case INFO -> logger.info(message);
+                case WARN -> logger.warn(message);
+                case ERROR -> logger.error(message);
+                default -> logger.error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel, final String format, final Object arg) {
+        try {
+            switch (logLevel) {
+                case TRACE -> logger.trace(format, arg);
+                case DEBUG -> logger.debug(format, arg);
+                case INFO -> logger.info(format, arg);
+                case WARN -> logger.warn(format, arg);
+                case ERROR -> logger.error(format, arg);
+                default -> logger.error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel,
+                    final String format,
+                    final Object arg1,
+                    final Object arg2) {
+        try {
+            switch (logLevel) {
+                case TRACE -> logger.trace(format, arg1, arg2);
+                case DEBUG -> logger.debug(format, arg1, arg2);
+                case INFO -> logger.info(format, arg1, arg2);
+                case WARN -> logger.warn(format, arg1, arg2);
+                case ERROR -> logger.error(format, arg1, arg2);
+                default -> logger.error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel, final String format, final Object... args) {
+        try {
+            switch (logLevel) {
+                case TRACE -> logger.trace(format, args);
+                case DEBUG -> logger.debug(format, args);
+                case INFO -> logger.info(format, args);
+                case WARN -> logger.warn(format, args);
+                case ERROR -> logger.error(format, args);
+                default -> logger.error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel, final Supplier<String> messageSupplier) {
+        try {
+            switch (logLevel) {
+                case TRACE -> {
+                    if (logger.isTraceEnabled()) {
+                        logger.trace(messageSupplier.get());
+                    }
+                }
+                case DEBUG -> {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(messageSupplier.get());
+                    }
+                }
+                case INFO -> {
+                    if (logger.isInfoEnabled()) {
+                        logger.info(messageSupplier.get());
+                    }
+                }
+                case WARN -> {
+                    if (logger.isWarnEnabled()) {
+                        logger.warn(messageSupplier.get());
+                    }
+                }
+                case ERROR -> {
+                    if (logger.isErrorEnabled()) {
+                        logger.error(messageSupplier.get());
+                    }
+                }
+                default -> logger.error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel,
+                    final Supplier<String> messageSupplier,
+                    final Throwable t) {
+        try {
+            switch (logLevel) {
+                case TRACE -> {
+                    if (logger.isTraceEnabled()) {
+                        logger.trace(messageSupplier.get(), t);
+                    }
+                }
+                case DEBUG -> {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(messageSupplier.get(), t);
+                    }
+                }
+                case INFO -> {
+                    if (logger.isInfoEnabled()) {
+                        logger.info(messageSupplier.get(), t);
+                    }
+                }
+                case WARN -> {
+                    if (logger.isWarnEnabled()) {
+                        logger.warn(messageSupplier.get(), t);
+                    }
+                }
+                case ERROR -> {
+                    if (logger.isErrorEnabled()) {
+                        logger.error(messageSupplier.get(), t);
+                    }
+                }
+                default -> logger.error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public boolean isTraceEnabled() {
         return logger.isTraceEnabled();
     }
@@ -152,6 +293,23 @@ public final class BasicLambdaLogger implements LambdaLogger {
     @Override
     public boolean isErrorEnabled() {
         return logger.isErrorEnabled();
+    }
+
+    @Override
+    public boolean isEnabled(final LogLevel logLevel) {
+        try {
+            return switch (logLevel) {
+                case TRACE -> logger.isTraceEnabled();
+                case DEBUG -> logger.isDebugEnabled();
+                case INFO -> logger.isInfoEnabled();
+                case WARN -> logger.isWarnEnabled();
+                case ERROR -> logger.isErrorEnabled();
+                default -> throw new RuntimeException("Unexpected logLevel: " + logLevel);
+            };
+        } catch (Exception e) {
+            logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+            return false;
+        }
     }
 
     @Override
