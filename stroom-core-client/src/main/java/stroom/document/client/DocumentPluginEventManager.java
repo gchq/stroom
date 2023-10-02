@@ -926,11 +926,11 @@ public class DocumentPluginEventManager extends Plugin {
         }
 
         menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled));
-        menuItems.add(createCopyMenuItem(readableItems, 21, isCopyEnabled));
-        menuItems.add(createMoveMenuItem(updatableItems, 22, allowUpdate));
-        menuItems.add(createRenameMenuItem(updatableItems, 23, isRenameEnabled));
-        menuItems.add(createDeleteMenuItem(deletableItems, 24, allowDelete));
-        menuItems.add(createEditTagsMenuItem(singleReadableItem, 25, isEditTagsEnabled));
+        menuItems.add(createEditTagsMenuItem(singleReadableItem, 21, isEditTagsEnabled));
+        menuItems.add(createCopyMenuItem(readableItems, 22, isCopyEnabled));
+        menuItems.add(createMoveMenuItem(updatableItems, 23, allowUpdate));
+        menuItems.add(createRenameMenuItem(updatableItems, 24, isRenameEnabled));
+        menuItems.add(createDeleteMenuItem(deletableItems, 25, allowDelete));
 
         if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
             menuItems.add(createImportMenuItem(26));
