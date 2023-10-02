@@ -32,6 +32,7 @@ public class ExplorerTreeNode implements HasIntegerId {
     private String uuid;
     private String name;
     private Set<String> tags;
+    private int version;
 
     public ExplorerTreeNode() {
     }
@@ -40,12 +41,14 @@ public class ExplorerTreeNode implements HasIntegerId {
                             final String type,
                             final String uuid,
                             final String name,
-                            final Set<String> tags) {
+                            final Set<String> tags,
+                            final int version) {
         this.id = id;
         this.type = type;
         this.uuid = uuid;
         this.name = name;
         this.tags = tags;
+        this.version = version;
     }
 
     public static ExplorerTreeNode create(final DocRef docRef) {

@@ -13,7 +13,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row5;
+import org.jooq.Row6;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -73,6 +73,11 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
      */
     public final TableField<ExplorerNodeRecord, String> TAGS = createField(DSL.name("tags"), SQLDataType.VARCHAR(255), this, "");
 
+    /**
+     * The column <code>stroom.explorer_node.version</code>.
+     */
+    public final TableField<ExplorerNodeRecord, Integer> VERSION = createField(DSL.name("version"), SQLDataType.INTEGER.defaultValue(DSL.inline("1", SQLDataType.INTEGER)), this, "");
+
     private ExplorerNode(Name alias, Table<ExplorerNodeRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -127,6 +132,11 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
     }
 
     @Override
+    public TableField<ExplorerNodeRecord, Integer> getRecordVersion() {
+        return VERSION;
+    }
+
+    @Override
     public ExplorerNode as(String alias) {
         return new ExplorerNode(DSL.name(alias), this);
     }
@@ -153,11 +163,11 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row5 type methods
+    // Row6 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Integer, String, String, String, String> fieldsRow() {
-        return (Row5) super.fieldsRow();
+    public Row6<Integer, String, String, String, String, Integer> fieldsRow() {
+        return (Row6) super.fieldsRow();
     }
 }

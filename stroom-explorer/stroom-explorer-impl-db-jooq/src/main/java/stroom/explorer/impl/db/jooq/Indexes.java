@@ -4,12 +4,12 @@
 package stroom.explorer.impl.db.jooq;
 
 
-import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+
+import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 
 
 /**
