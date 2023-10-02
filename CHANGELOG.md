@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.70] - 2023-10-02
+
+* Issue **#3779** : Improve logging for StreamingAnalyticExecutor.
+
+* Add a prop `stroom.explorer.dependencyWarningsEnabled` to disable dependency warnings in the explorer tree.
+
+* Issue **#3798** : Change the position of the _Tags_ context menu item.
+
+
 ## [v7.2-beta.69] - 2023-10-02
 
 * Issue **#3742** : Improve performance of showing dependency problems in the explorer tree. Change the Toggle Alerts button in the explorer pane to be always visible and off by default.
@@ -5980,7 +5989,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.69...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.70...HEAD
+[v7.2-beta.70]: https://github.com/gchq/stroom/compare/v7.2-beta.69...v7.2-beta.70
 [v7.2-beta.69]: https://github.com/gchq/stroom/compare/v7.2-beta.68...v7.2-beta.69
 [v7.2-beta.68]: https://github.com/gchq/stroom/compare/v7.2-beta.67...v7.2-beta.68
 [v7.2-beta.67]: https://github.com/gchq/stroom/compare/v7.2-beta.66...v7.2-beta.67
