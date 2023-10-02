@@ -34,6 +34,10 @@ public class ShowAboutEvent extends GwtEvent<ShowAboutHandler> {
         showAboutHandler.onShow(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ShowAboutHandler extends EventHandler {
 
         void onShow(ShowAboutEvent event);

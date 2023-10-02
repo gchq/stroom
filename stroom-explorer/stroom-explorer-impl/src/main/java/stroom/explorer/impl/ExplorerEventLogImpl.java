@@ -20,14 +20,19 @@ package stroom.explorer.impl;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 
 import event.logging.CopyEventAction;
 import event.logging.CreateEventAction;
 import event.logging.DeleteEventAction;
+import event.logging.MetaDataTags;
 import event.logging.MoveEventAction;
 import event.logging.MultiObject;
+import event.logging.OtherObject;
+import event.logging.UpdateEventAction;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,6 +133,61 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 LOGGER.error("Unable to move event!", e2);
             }
         });
+    }
+
+    @Override
+    public void update(final ExplorerNode explorerNodeBefore,
+                       final ExplorerNode explorerNodeAfter,
+                       final Exception ex) {
+        securityContext.insecure(() -> {
+            try {
+
+                final UpdateEventAction.Builder<Void> actionBuilder = UpdateEventAction.builder();
+
+                if (explorerNodeBefore != null) {
+                    actionBuilder.withBefore(MultiObject.builder()
+                            .addObject(OtherObject.builder()
+                                    .withType(explorerNodeBefore.getType())
+                                    .withId(explorerNodeBefore.getUuid())
+                                    .withName(explorerNodeBefore.getName())
+                                    .withTags(NullSafe.get(explorerNodeBefore.getTags(),
+                                            tags -> MetaDataTags.builder()
+                                                    .withTags(tags)
+                                                    .build()))
+                                    .build())
+                            .build());
+                }
+
+                if (explorerNodeAfter != null) {
+                    actionBuilder.withAfter(MultiObject.builder()
+                            .addObject(OtherObject.builder()
+                                    .withType(explorerNodeAfter.getType())
+                                    .withId(explorerNodeAfter.getUuid())
+                                    .withName(explorerNodeAfter.getName())
+                                    .withTags(NullSafe.get(explorerNodeAfter.getTags(),
+                                            tags -> MetaDataTags.builder()
+                                                    .withTags(tags)
+                                                    .build()))
+                                    .build())
+                            .build());
+                }
+
+                eventLoggingService.log(
+                        "Update",
+                        createEventDescription(
+                                "Updating",
+                                NullSafe.firstNonNull(explorerNodeBefore, explorerNodeAfter)
+                                        .map(ExplorerNode::getDocRef)
+                                        .orElse(null),
+                                null),
+                        actionBuilder
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
+            } catch (final RuntimeException e2) {
+                LOGGER.error("Unable to delete event!", e2);
+            }
+        });
+
     }
 
     @Override

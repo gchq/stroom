@@ -16,7 +16,6 @@
 
 package stroom.security.impl;
 
-import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -93,10 +92,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private void fireEntityChangeEvent(final String userUuid) {
         EntityEvent.fire(
                 entityEventBus,
-                DocRef.builder()
-                        .uuid(userUuid)
-                        .type(UserDocRefUtil.USER)
-                        .build(),
+                UserDocRefUtil.createDocRef(userUuid),
                 EntityAction.UPDATE);
     }
 }

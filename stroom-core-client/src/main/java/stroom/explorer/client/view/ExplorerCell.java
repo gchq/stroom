@@ -6,9 +6,10 @@ import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
+import stroom.explorer.shared.NodeFlag;
+import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.Severity;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -24,6 +25,8 @@ import com.google.gwt.view.client.SelectionModel;
 import java.util.stream.Collectors;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
+
+    private static final String DESCENDANT_ISSUES_MSG = "Descendants have issues";
 
     private static Template template;
     private final SelectionModel<ExplorerNode> selectionModel;
@@ -67,19 +70,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             int expanderPadding = 4;
 
             SvgImage expanderIcon = null;
-            if (node.getNodeState() != null) {
-                switch (node.getNodeState()) {
-                    case LEAF:
-                        break;
-                    case OPEN:
-                        expanderIcon = SvgImage.ARROW_DOWN;
-                        break;
-                    case CLOSED:
-                        expanderIcon = SvgImage.ARROW_RIGHT;
-                        break;
-                    default:
-                        throw new RuntimeException("Unexpected state " + node.getNodeState());
-                }
+            if (node.hasNodeFlag(NodeFlag.OPEN)) {
+                expanderIcon = SvgImage.ARROW_DOWN;
+            } else if (node.hasNodeFlag(NodeFlag.CLOSED)) {
+                expanderIcon = SvgImage.ARROW_RIGHT;
             }
 
             int indent = node.getDepth();
@@ -119,15 +113,12 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
 
                 if (showAlerts) {
-                    node.getMaxSeverity().ifPresent(maxSeverity -> {
-                        final SvgImage svgImage = maxSeverity.greaterThanOrEqual(Severity.WARNING)
-                                ? SvgImage.ALERT_SIMPLE
-                                : SvgImage.INFO;
+                    if (node.hasDescendantNodeInfo()) {
                         builder.append(SvgImageUtil.toSafeHtml(
                                 buildAlertText(node),
-                                svgImage,
+                                SvgImage.ALERT_SIMPLE,
                                 "svgIcon", "small", getCellClassName() + "-alert-icon"));
-                    });
+                    }
                 }
 
                 content.append(template.div(
@@ -142,7 +133,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
-            if (node.getIsFavourite() && node.getRootNodeUuid() != null &&
+            if (node.hasNodeFlag(NodeFlag.FAVOURITE) && node.getRootNodeUuid() != null &&
                     !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(node.getRootNodeUuid())) {
                 content.append(SvgImageUtil.toSafeHtml(
                         "Item is a favourite",
@@ -150,22 +141,38 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         "svgIcon", "small"));
             }
 
-            final String filterMatchClass = getCellClassName() + "-" + (node.getIsFilterMatch()
-                    ? "filter-match"
-                    : "filter-no-match");
+            // We style the non-matches rather than the matches
+            final String filterMatchClass;
+            if (node.hasNodeFlag(NodeFlag.FILTER_MATCH)) {
+                filterMatchClass = getCellClassName() + "-" + "filter-match";
+            } else if (node.hasNodeFlag(NodeFlag.FILTER_NON_MATCH)) {
+                filterMatchClass = getCellClassName() + "-" + "filter-no-match";
+            } else {
+                filterMatchClass = "";
+            }
 
             sb.append(template.outer(filterMatchClass, content.toSafeHtml()));
         }
     }
 
     private String buildAlertText(final ExplorerNode explorerNode) {
-        return GwtNullSafe.get(
-                explorerNode,
-                ExplorerNode::getNodeInfoList,
-                nodeInfoList -> GwtNullSafe.stream(nodeInfoList)
-                        .sorted()
-                        .map(NodeInfo::toString)
-                        .collect(Collectors.joining("\n")));
+        if (explorerNode == null) {
+            return null;
+        } else {
+            if (explorerNode.hasNodeFlag(NodeFlag.DESCENDANT_NODE_INFO)) {
+                return DESCENDANT_ISSUES_MSG;
+            } else if (explorerNode.hasNodeInfo()) {
+                return GwtNullSafe.get(
+                        explorerNode,
+                        ExplorerNode::getNodeInfoList,
+                        nodeInfoList -> GwtNullSafe.stream(nodeInfoList)
+                                .sorted()
+                                .map(NodeInfo::toString)
+                                .collect(Collectors.joining("\n")));
+            } else {
+                return null;
+            }
+        }
     }
 
     private TickBoxState getValue(final ExplorerNode item) {

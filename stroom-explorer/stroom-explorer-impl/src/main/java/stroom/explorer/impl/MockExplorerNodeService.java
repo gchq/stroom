@@ -8,6 +8,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class MockExplorerNodeService implements ExplorerNodeService {
 
@@ -20,6 +21,14 @@ public class MockExplorerNodeService implements ExplorerNodeService {
     public void createNode(final DocRef docRef,
                            final DocRef destinationFolderRef,
                            final PermissionInheritance permissionInheritance) {
+
+    }
+
+    @Override
+    public void createNode(final DocRef docRef,
+                           final DocRef destinationFolderRef,
+                           final PermissionInheritance permissionInheritance,
+                           final Set<String> tags) {
 
     }
 
@@ -40,6 +49,11 @@ public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
     public void renameNode(final DocRef docRef) {
+
+    }
+
+    @Override
+    public void updateTags(final DocRef docRef, final Set<String> nodeTags) {
 
     }
 
@@ -99,7 +113,7 @@ public class MockExplorerNodeService implements ExplorerNodeService {
                 .type("test")
                 .uuid("test")
                 .name("test")
-                .tags("test")
+                .tags(Set.of("test"))
                 .build();
     }
 }

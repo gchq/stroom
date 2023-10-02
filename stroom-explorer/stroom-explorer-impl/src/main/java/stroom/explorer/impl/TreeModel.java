@@ -6,6 +6,9 @@ import stroom.util.NullSafe;
 
 import java.util.List;
 
+/**
+ * {@link AbstractTreeModel} keyed by doc UUID.
+ */
 public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
 
     public TreeModel(final long id, final long creationTime) {
@@ -13,9 +16,9 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
     }
 
     public List<DocRef> getChildren(final DocRef parent) {
-        final String parentUuid = parent != null ? parent.getUuid() : null;
-        if (childMap.containsKey(parentUuid)) {
-            return childMap.get(parentUuid)
+        final String parentUuid = NullSafe.get(parent, DocRef::getUuid);
+        if (parentKeyToChildNodesMap.containsKey(parentUuid)) {
+            return parentKeyToChildNodesMap.get(parentUuid)
                     .stream()
                     .map(ExplorerNode::getDocRef)
                     .toList();
@@ -24,6 +27,10 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
         }
     }
 
+    public ExplorerNode getNode(final DocRef docRef) {
+        final String uuid = NullSafe.get(docRef, DocRef::getUuid);
+        return keyToNodeMap.get(uuid);
+    }
 
     @Override
     String getNodeKey(final ExplorerNode node) {

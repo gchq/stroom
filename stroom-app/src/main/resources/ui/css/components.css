@@ -2019,3 +2019,32 @@ button.main-menu svg {
     flex-shrink: 0;
     flex-grow: 0;
 }
+
+.editNodeTagsAllTagsFrmGrp,
+.editNodeTagsNodeTagsFrmGrp {
+    flex-basis: 200px;
+}
+
+.editNodeTagsAddTagsInputPanel .button-container {
+    position: absolute;
+    margin-top: 7px;
+    right: 50px;
+}
+
+.editNodeTagsAddTagsInputPanel .button-container .invisible {
+    visibility: hidden;
+}
+
+.editNodeTagsAddTagsInputContainer .svg-image__clear.face {
+    color: var(--control__text-color);
+}
+
+.editNodeTagsListsContainer .form-group{
+    margin-top: 0px;
+}
+
+.editNodeTags .form-label {
+    margin-bottom: 0px;
+}
+
+

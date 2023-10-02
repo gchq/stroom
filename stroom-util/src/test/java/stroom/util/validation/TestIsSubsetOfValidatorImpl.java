@@ -55,6 +55,10 @@ class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
                 LOGGER.info(violation.getMessage()));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class PoJo {
 
         private final List<String> values;

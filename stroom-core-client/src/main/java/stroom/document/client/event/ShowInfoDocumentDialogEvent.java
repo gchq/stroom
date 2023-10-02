@@ -18,23 +18,35 @@
 package stroom.document.client.event;
 
 import stroom.docref.DocRefInfo;
+import stroom.explorer.shared.ExplorerNode;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
+import java.util.Objects;
+
 public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
+    private final ExplorerNode explorerNode;
     private final DocRefInfo info;
 
-    private ShowInfoDocumentDialogEvent(final DocRefInfo info) {
-        this.info = info;
+    private ShowInfoDocumentDialogEvent(final ExplorerNode explorerNode, final DocRefInfo info) {
+        this.explorerNode = Objects.requireNonNull(explorerNode);
+        this.info = Objects.requireNonNull(info);
+        if (!Objects.equals(explorerNode.getDocRef(), info.getDocRef())) {
+            throw new RuntimeException("Different docRefs, "
+                    + "node docref: " + explorerNode.getDocRef()
+                    + " info docRef: " + info.getDocRef());
+        }
     }
 
-    public static void fire(final HasHandlers handlers, final DocRefInfo info) {
+    public static void fire(final HasHandlers handlers,
+                            final ExplorerNode explorerNode,
+                            final DocRefInfo info) {
         handlers.fireEvent(
-                new ShowInfoDocumentDialogEvent(info));
+                new ShowInfoDocumentDialogEvent(explorerNode, info));
     }
 
     public static Type<Handler> getType() {
@@ -57,6 +69,13 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
     public DocRefInfo getInfo() {
         return info;
     }
+
+    public ExplorerNode getExplorerNode() {
+        return explorerNode;
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler extends EventHandler {
 

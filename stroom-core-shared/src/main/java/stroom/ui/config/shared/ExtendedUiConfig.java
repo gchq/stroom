@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Allows us to make other back-end config available to the UI while having one mechanism
@@ -192,6 +193,11 @@ public class ExtendedUiConfig {
     @JsonIgnore
     public String getNestedIndexFieldsDelimiterPattern() {
         return uiConfig.getNestedIndexFieldsDelimiterPattern();
+    }
+
+    @JsonIgnore
+    public Set<String> getReferencePipelineSelectorIncludedTags() {
+        return uiConfig.getReferencePipelineSelectorIncludedTags();
     }
 
     @Override

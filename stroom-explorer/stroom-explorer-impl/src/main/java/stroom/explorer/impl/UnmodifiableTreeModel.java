@@ -44,6 +44,10 @@ public class UnmodifiableTreeModel {
         return treeModel.getNode(node);
     }
 
+    public Set<String> getAllTags() {
+        return treeModel.getAllTags();
+    }
+
     public void addRoot(final ExplorerNode rootNode) {
         treeModel.addRoot(rootNode);
     }
