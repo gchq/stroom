@@ -926,6 +926,7 @@ export interface DocumentType {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -1083,6 +1084,7 @@ export interface DocumentType {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1222,7 +1224,14 @@ export interface ElasticIndexTestResponse {
 }
 
 export interface EntityEvent {
-  action?: "CREATE" | "UPDATE" | "DELETE" | "CLEAR_CACHE";
+  action?:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CLEAR_CACHE"
+    | "CREATE_EXPLORER_NODE"
+    | "UPDATE_EXPLORER_NODE"
+    | "DELETE_EXPLORER_NODE";
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
@@ -1295,6 +1304,7 @@ export interface ExplorerDocContentMatch {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -1452,6 +1462,7 @@ export interface ExplorerDocContentMatch {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1478,6 +1489,7 @@ export interface ExplorerNode {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -1635,6 +1647,7 @@ export interface ExplorerNode {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1644,14 +1657,11 @@ export interface ExplorerNode {
     | "USERS"
     | "VOLUMES"
     | "WARNING";
-  isFavourite?: boolean;
-  isFilterMatch?: boolean;
-  isFolder?: boolean;
   name?: string;
+  nodeFlags?: ("C" | "D" | "I" | "V" | "FM" | "FN" | "F" | "L" | "O")[];
   nodeInfoList?: NodeInfo[];
-  nodeState?: "OPEN" | "CLOSED" | "LEAF";
   rootNodeUuid?: string;
-  tags?: string;
+  tags?: string[];
   type?: string;
   uniqueKey?: ExplorerNodeKey;
   uuid?: string;
@@ -1705,6 +1715,7 @@ export interface ExplorerTreeFilter {
   includedTypes?: string[];
   nameFilter?: string;
   nameFilterChange?: boolean;
+  nodeFlags?: ("C" | "D" | "I" | "V" | "FM" | "FN" | "F" | "L" | "O")[];
   requiredPermissions?: string[];
   tags?: string[];
 }
@@ -1960,6 +1971,7 @@ export interface FindExplorerNodeCriteria {
   /** @format int32 */
   minDepth?: number;
   openItems?: ExplorerNodeKey[];
+  showAlerts?: boolean;
   temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
@@ -2822,6 +2834,7 @@ export interface PipelineElementType {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -2979,6 +2992,7 @@ export interface PipelineElementType {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -3315,7 +3329,9 @@ export type QueryComponentSettings = ComponentSettings & {
 };
 
 export interface QueryConfig {
+  dashboardPipelineSelectorIncludedTags?: string[];
   infoPopup?: InfoPopupConfig;
+  viewPipelineSelectorIncludedTags?: string[];
 }
 
 export interface QueryContext {
@@ -4657,6 +4673,7 @@ export interface UiConfig {
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
+  referencePipelineSelectorIncludedTags?: string[];
   requireReactWrapper?: boolean;
   source?: SourceConfig;
   splash?: SplashConfig;
@@ -7015,6 +7032,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name FetchExplorerNodeTags
+     * @summary Fetch all known explorer node tags
+     * @request GET:/explorer/v2/fetchExplorerNodeTags
+     * @secure
+     */
+    fetchExplorerNodeTags: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/explorer/v2/fetchExplorerNodeTags`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name FetchExplorerNodes
      * @summary Fetch explorer nodes
      * @request POST:/explorer/v2/fetchExplorerNodes
@@ -7137,6 +7171,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     renameExplorerItems: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
       this.request<any, ExplorerNode>({
         path: `/explorer/v2/rename`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name UpdateExplorerNodeTags
+     * @summary Update explorer node tags
+     * @request PUT:/explorer/v2/tags
+     * @secure
+     */
+    updateExplorerNodeTags: (data: ExplorerNode, params: RequestParams = {}) =>
+      this.request<any, ExplorerNode>({
+        path: `/explorer/v2/tags`,
         method: "PUT",
         body: data,
         secure: true,
