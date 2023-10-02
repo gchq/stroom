@@ -755,6 +755,8 @@ select option:disabled {
 }
 
 .activityOuter {
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .activityButton {
