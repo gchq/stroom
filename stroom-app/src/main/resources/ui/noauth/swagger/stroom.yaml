@@ -2113,6 +2113,22 @@ paths:
       summary: Fetch document types
       tags:
       - Explorer (v2)
+  /explorer/v2/fetchExplorerNodeTags:
+    get:
+      operationId: fetchExplorerNodeTags
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                uniqueItems: true
+          description: default response
+      summary: Fetch all known explorer node tags
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchExplorerNodes:
     post:
       operationId: fetchExplorerNodes
@@ -2257,6 +2273,26 @@ paths:
                 $ref: '#/components/schemas/ExplorerNode'
           description: default response
       summary: Rename explorer items
+      tags:
+      - Explorer (v2)
+  /explorer/v2/tags:
+    put:
+      operationId: updateExplorerNodeTags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExplorerNode'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplorerNode'
+          description: default response
+      summary: Update explorer node tags
       tags:
       - Explorer (v2)
   /explorerFavourite/v1/createUserFavourite:
@@ -8074,6 +8110,7 @@ components:
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN
+          - ARROW_LEFT
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
@@ -8231,6 +8268,7 @@ components:
           - TABLE
           - TABLE_NESTED
           - TAB_CLOSE
+          - TAGS
           - TICK
           - UNDO
           - UNLOCK
@@ -8457,6 +8495,9 @@ components:
           - UPDATE
           - DELETE
           - CLEAR_CACHE
+          - CREATE_EXPLORER_NODE
+          - UPDATE_EXPLORER_NODE
+          - DELETE_EXPLORER_NODE
         docRef:
           $ref: '#/components/schemas/DocRef'
         oldDocRef:
@@ -8556,6 +8597,7 @@ components:
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN
+          - ARROW_LEFT
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
@@ -8713,6 +8755,7 @@ components:
           - TABLE
           - TABLE_NESTED
           - TAB_CLOSE
+          - TAGS
           - TICK
           - UNDO
           - UNLOCK
@@ -8746,6 +8789,7 @@ components:
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN
+          - ARROW_LEFT
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
@@ -8903,6 +8947,7 @@ components:
           - TABLE
           - TABLE_NESTED
           - TAB_CLOSE
+          - TAGS
           - TICK
           - UNDO
           - UNLOCK
@@ -8912,28 +8957,34 @@ components:
           - USERS
           - VOLUMES
           - WARNING
-        isFavourite:
-          type: boolean
-        isFilterMatch:
-          type: boolean
-        isFolder:
-          type: boolean
         name:
           type: string
+        nodeFlags:
+          type: array
+          items:
+            type: string
+            enum:
+            - C
+            - D
+            - I
+            - V
+            - FM
+            - FN
+            - F
+            - L
+            - O
+          uniqueItems: true
         nodeInfoList:
           type: array
           items:
             $ref: '#/components/schemas/NodeInfo'
-        nodeState:
-          type: string
-          enum:
-          - OPEN
-          - CLOSED
-          - LEAF
         rootNodeUuid:
           type: string
         tags:
-          type: string
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         type:
           type: string
         uniqueKey:
@@ -9049,6 +9100,21 @@ components:
           type: string
         nameFilterChange:
           type: boolean
+        nodeFlags:
+          type: array
+          items:
+            type: string
+            enum:
+            - C
+            - D
+            - I
+            - V
+            - FM
+            - FN
+            - F
+            - L
+            - O
+          uniqueItems: true
         requiredPermissions:
           type: array
           items:
@@ -9461,6 +9527,8 @@ components:
           items:
             $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
+        showAlerts:
+          type: boolean
         temporaryOpenedItems:
           type: array
           items:
@@ -10872,6 +10940,7 @@ components:
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN
+          - ARROW_LEFT
           - ARROW_RIGHT
           - ARROW_UP
           - AUTO_REFRESH
@@ -11029,6 +11098,7 @@ components:
           - TABLE
           - TABLE_NESTED
           - TAB_CLOSE
+          - TAGS
           - TICK
           - UNDO
           - UNLOCK
@@ -11582,8 +11652,18 @@ components:
     QueryConfig:
       type: object
       properties:
+        dashboardPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         infoPopup:
           $ref: '#/components/schemas/InfoPopupConfig'
+        viewPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     QueryContext:
       type: object
       properties:
@@ -13766,6 +13846,11 @@ components:
           $ref: '#/components/schemas/ProcessConfig'
         query:
           $ref: '#/components/schemas/QueryConfig'
+        referencePipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         requireReactWrapper:
           type: boolean
         source:
