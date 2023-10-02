@@ -243,4 +243,16 @@ public class ContainerResourceInfo {
             return false;
         }
     }
+
+    @Override
+    public String toString() {
+        return "ContainerResourceInfo{" +
+                "uri=" + requestContext.getUriInfo().getRequestUri() +
+                ", user=" + securityContext.getUserIdentityForAudit() +
+                ", requestContext=" + requestContext +
+                ", operationType=" + operationType +
+                ", eventActionDecoratorClass=" + eventActionDecoratorClass +
+                ", autologgerAnnotationPresent=" + autologgerAnnotationPresent +
+                '}';
+    }
 }
