@@ -39,5 +39,7 @@ public interface ContentService {
 
     Map<DocRef, Set<DocRef>> fetchBrokenDependencies();
 
+    Set<DocRef> fetchBrokenDependencies(final DocRef docRef);
+
     ResourceKey exportAll();
 }

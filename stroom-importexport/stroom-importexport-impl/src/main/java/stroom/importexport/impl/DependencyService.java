@@ -13,4 +13,6 @@ public interface DependencyService {
     QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria);
 
     Map<DocRef, Set<DocRef>> getBrokenDependencies();
+
+    Set<DocRef> getBrokenDependencies(final DocRef docRef);
 }

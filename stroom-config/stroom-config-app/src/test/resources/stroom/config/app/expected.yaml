@@ -291,6 +291,10 @@ appConfig:
       suggestions:
         enabled: true
   explorer:
+    brokenDependenciesCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT1M"
+      maximumSize: 1000
     db:
       connection:
         jdbcDriverClassName: null

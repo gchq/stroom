@@ -23,6 +23,11 @@ public class MockDocRefInfoService implements DocRefInfoService {
     }
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return info(docRef).isPresent();
+    }
+
+    @Override
     public List<DocRef> findByName(final String type, final String nameFilter, final boolean allowWildCards) {
         return Collections.emptyList();
     }

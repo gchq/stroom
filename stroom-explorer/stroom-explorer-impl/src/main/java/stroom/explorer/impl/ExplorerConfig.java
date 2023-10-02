@@ -34,6 +34,7 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
 
     private final ExplorerDbConfig dbConfig;
     private final CacheConfig docRefInfoCache;
+    private final CacheConfig brokenDependenciesCache;
     private final Set<String> suggestedTags;
 
     public ExplorerConfig() {
@@ -42,18 +43,24 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        brokenDependenciesCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofMinutes(1))
+                .build();
         suggestedTags = Arrays.stream(StandardExplorerTags.values())
-                        .map(StandardExplorerTags::getTagName)
-                                .collect(Collectors.toSet());
+                .map(StandardExplorerTags::getTagName)
+                .collect(Collectors.toSet());
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ExplorerConfig(@JsonProperty("db") final ExplorerDbConfig dbConfig,
                           @JsonProperty("docRefInfoCache") final CacheConfig docRefInfoCache,
+                          @JsonProperty("brokenDependenciesCache") final CacheConfig brokenDependenciesCache,
                           @JsonProperty("suggestedTags") final Set<String> suggestedTags) {
         this.dbConfig = dbConfig;
         this.docRefInfoCache = docRefInfoCache;
+        this.brokenDependenciesCache = brokenDependenciesCache;
         // Filter out any blanks
         this.suggestedTags = NullSafe.stream(suggestedTags)
                 .filter(tag -> !NullSafe.isBlankString(tag))
@@ -72,14 +79,20 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
         return docRefInfoCache;
     }
 
+    @JsonProperty("brokenDependenciesCache")
+    public CacheConfig getBrokenDependenciesCache() {
+        return brokenDependenciesCache;
+    }
+
     @AllMatchPattern(pattern = ExplorerNode.TAG_PATTERN_STR)
     @JsonPropertyDescription(
             "A set of explorer node tags that will be provided to the user to pick from " +
-            "along with any custom tags added to nodes by the user.")
+                    "along with any custom tags added to nodes by the user.")
     @JsonProperty("suggestedTags")
     public Set<String> getSuggestedTags() {
         return Objects.requireNonNullElseGet(suggestedTags, Collections::emptySet);
     }
+
 
     // --------------------------------------------------------------------------------
 

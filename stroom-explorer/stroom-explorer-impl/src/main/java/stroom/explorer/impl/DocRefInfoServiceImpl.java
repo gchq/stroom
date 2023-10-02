@@ -58,6 +58,12 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     }
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return docRefInfoCache.get(docRef)
+                .isPresent();
+    }
+
+    @Override
     public List<DocRef> findByName(final String type,
                                    final String nameFilter,
                                    final boolean allowWildCards) {

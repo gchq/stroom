@@ -170,8 +170,7 @@ class ExplorerTreeModel implements EntityEvent.Handler {
                                 explorerTreeDao.createModel(this::getIcon, id, creationTime),
                         "Create model");
 
-                // Make sure the cache is fresh for our new model
-                brokenDependenciesCache.invalidate();
+                // Assume the cache has responded to events and is up-to-date
                 LOGGER.logDurationIfDebugEnabled(() ->
                                 addBrokenDependencies(newModel),
                         "Add dependencies to model");

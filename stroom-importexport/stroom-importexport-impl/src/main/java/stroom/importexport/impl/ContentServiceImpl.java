@@ -155,6 +155,11 @@ class ContentServiceImpl implements ContentService {
     }
 
     @Override
+    public Set<DocRef> fetchBrokenDependencies(final DocRef docRef) {
+        return dependencyService.getBrokenDependencies(docRef);
+    }
+
+    @Override
     public ResourceKey exportAll() {
         if (!securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
             throw new PermissionException(securityContext.getUserIdentityForAudit(),

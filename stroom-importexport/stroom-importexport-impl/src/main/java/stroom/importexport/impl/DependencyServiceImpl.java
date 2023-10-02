@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerDecorator;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.task.api.TaskContext;
@@ -21,6 +22,7 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -119,6 +121,22 @@ public class DependencyServiceImpl implements DependencyService {
                             }
                         })
                 .get();
+    }
+
+    @Override
+    public Set<DocRef> getBrokenDependencies(final DocRef docRef) {
+        Objects.requireNonNull(docRef, "Null docRef");
+        Objects.requireNonNull(docRef.getType(), "Null docRef type");
+
+        final ImportExportActionHandler handler = importExportActionHandlers.getHandler(docRef.getType());
+        if (handler != null) {
+            return NullSafe.stream(handler.getDependencies(docRef))
+                    .filter(depDocRef ->
+                            !docRefInfoService.exists(docRef))
+                    .collect(Collectors.toSet());
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     private QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria,

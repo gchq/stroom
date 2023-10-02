@@ -17,6 +17,8 @@ public interface DocRefInfoService extends DocRefDecorator {
 
     Optional<String> name(DocRef docRef);
 
+    boolean exists(final DocRef docRef);
+
     /**
      * Find by case-sensitive match on the name.
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.

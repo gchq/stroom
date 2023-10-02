@@ -50,7 +50,8 @@ public class ExplorerModule extends AbstractModule {
                 .addBinding(SystemExplorerActionHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(ExplorerTreeModel.class);
+                .addBinding(ExplorerTreeModel.class)
+                .addBinding(BrokenDependenciesCache.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ExplorerResourceImpl.class);
