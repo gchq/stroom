@@ -9217,6 +9217,8 @@ components:
     ExtendedUiConfig:
       type: object
       properties:
+        dependencyWarningsEnabled:
+          type: boolean
         externalIdentityProvider:
           type: boolean
         uiConfig:
