@@ -14,5 +14,7 @@ public interface DropDownTreeView extends View, Focus, HasUiHandlers<DropDownTre
 
     void setQuickFilterTooltipSupplier(final Supplier<SafeHtml> tooltipSupplier);
 
-    void clearFilter();
+    void clearQuickFilter();
+
+    void setQuickFilter(final String filterInput);
 }

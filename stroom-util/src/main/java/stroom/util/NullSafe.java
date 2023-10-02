@@ -353,6 +353,17 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed array of items or varargs items as a non-null set.
+     * Does not support null items in the array.
+     * @return A non-null unmodifiable set of items.
+     */
+    public static <T> Set<T> asSet(final T... items) {
+        return items == null || items.length == 0
+                ? Collections.emptySet()
+                : Set.of(items);
+    }
+
+    /**
      * Returns the passed set if it is non-null else returns an empty set.
      */
     public static <S extends Set<T>, T> Set<T> set(final S set) {

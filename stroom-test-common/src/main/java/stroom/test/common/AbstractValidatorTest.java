@@ -1,6 +1,8 @@
 package stroom.test.common;
 
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.validation.ValidationModule;
 
 import com.google.inject.Guice;
@@ -13,6 +15,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
 public abstract class AbstractValidatorTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractValidatorTest.class);
 
     @TempDir
     Path tempDir;
@@ -40,6 +44,9 @@ public abstract class AbstractValidatorTest {
         final Set<ConstraintViolation<T>> violations = getValidator().validate(object);
         Assertions.assertThat(violations)
                 .hasSize(1);
+
+        LOGGER.debug(() -> "Message: " + violations.iterator().next().getMessage());
+
         return violations;
     }
 }

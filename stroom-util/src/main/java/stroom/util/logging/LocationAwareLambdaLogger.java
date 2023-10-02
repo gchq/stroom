@@ -78,6 +78,147 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
     }
 
     @Override
+    public void log(final LogLevel logLevel, final String message) {
+        try {
+            switch (logLevel) {
+                case TRACE -> trace(message);
+                case DEBUG -> debug(message);
+                case INFO -> info(message);
+                case WARN -> warn(message);
+                case ERROR -> error(message);
+                default -> error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel, final String format, final Object arg) {
+        try {
+            switch (logLevel) {
+                case TRACE -> trace(format, arg);
+                case DEBUG -> debug(format, arg);
+                case INFO -> info(format, arg);
+                case WARN -> warn(format, arg);
+                case ERROR -> error(format, arg);
+                default -> error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel,
+                    final String format,
+                    final Object arg1,
+                    final Object arg2) {
+        try {
+            switch (logLevel) {
+                case TRACE -> trace(format, arg1, arg2);
+                case DEBUG -> debug(format, arg1, arg2);
+                case INFO -> info(format, arg1, arg2);
+                case WARN -> warn(format, arg1, arg2);
+                case ERROR -> error(format, arg1, arg2);
+                default -> error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel, final String format, final Object... args) {
+        try {
+            switch (logLevel) {
+                case TRACE -> trace(format, args);
+                case DEBUG -> debug(format, args);
+                case INFO -> info(format, args);
+                case WARN -> warn(format, args);
+                case ERROR -> error(format, args);
+                default -> error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel, final Supplier<String> messageSupplier) {
+        try {
+            switch (logLevel) {
+                case TRACE -> {
+                    if (isTraceEnabled()) {
+                        trace(messageSupplier.get());
+                    }
+                }
+                case DEBUG -> {
+                    if (isDebugEnabled()) {
+                        debug(messageSupplier.get());
+                    }
+                }
+                case INFO -> {
+                    if (isInfoEnabled()) {
+                        info(messageSupplier.get());
+                    }
+                }
+                case WARN -> {
+                    if (isWarnEnabled()) {
+                        warn(messageSupplier.get());
+                    }
+                }
+                case ERROR -> {
+                    if (isErrorEnabled()) {
+                        error(messageSupplier.get());
+                    }
+                }
+                default -> error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void log(final LogLevel logLevel,
+                    final Supplier<String> messageSupplier,
+                    final Throwable t) {
+        try {
+            switch (logLevel) {
+                case TRACE -> {
+                    if (isTraceEnabled()) {
+                        trace(messageSupplier.get(), t);
+                    }
+                }
+                case DEBUG -> {
+                    if (isDebugEnabled()) {
+                        debug(messageSupplier.get(), t);
+                    }
+                }
+                case INFO -> {
+                    if (isInfoEnabled()) {
+                        info(messageSupplier.get(), t);
+                    }
+                }
+                case WARN -> {
+                    if (isWarnEnabled()) {
+                        warn(messageSupplier.get(), t);
+                    }
+                }
+                case ERROR -> {
+                    if (isErrorEnabled()) {
+                        error(messageSupplier.get(), t);
+                    }
+                }
+                default -> error("Unexpected logLevel: {}", logLevel);
+            }
+        } catch (Exception e) {
+            error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public boolean isTraceEnabled() {
         return logger.isTraceEnabled();
     }
@@ -100,6 +241,23 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
     @Override
     public boolean isErrorEnabled() {
         return logger.isErrorEnabled();
+    }
+
+    @Override
+    public boolean isEnabled(final LogLevel logLevel) {
+        try {
+            return switch (logLevel) {
+                case TRACE -> logger.isTraceEnabled();
+                case DEBUG -> logger.isDebugEnabled();
+                case INFO -> logger.isInfoEnabled();
+                case WARN -> logger.isWarnEnabled();
+                case ERROR -> logger.isErrorEnabled();
+                default -> throw new RuntimeException("Unexpected logLevel: " + logLevel);
+            };
+        } catch (Exception e) {
+            error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+            return false;
+        }
     }
 
     @Override

@@ -14,11 +14,14 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_validation
     implementation libs.eventLogging
     implementation libs.guice5
     implementation libs.jackson_annotations
@@ -32,6 +35,7 @@ dependencies {
     implementation libs.ws_rs_api
 
     testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

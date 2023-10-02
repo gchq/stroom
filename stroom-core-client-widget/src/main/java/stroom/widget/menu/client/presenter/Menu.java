@@ -35,6 +35,7 @@ public class Menu {
 
             menuPresenter = menuPresenterProvider.get();
             menuPresenter.setData(event.getItems());
+            menuPresenter.setAllowCloseOnMoveLeft(event.isAllowCloseOnMoveLeft());
             currentItems = event.getItems();
 
             ShowPopupEvent.builder(menuPresenter)

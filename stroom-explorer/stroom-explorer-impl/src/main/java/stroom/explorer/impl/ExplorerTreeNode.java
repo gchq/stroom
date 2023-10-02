@@ -17,9 +17,13 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.util.NullSafe;
 import stroom.util.shared.HasIntegerId;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class ExplorerTreeNode implements HasIntegerId {
 
@@ -27,7 +31,7 @@ public class ExplorerTreeNode implements HasIntegerId {
     private String type;
     private String uuid;
     private String name;
-    private String tags;
+    private Set<String> tags;
 
     public ExplorerTreeNode() {
     }
@@ -36,7 +40,7 @@ public class ExplorerTreeNode implements HasIntegerId {
                             final String type,
                             final String uuid,
                             final String name,
-                            final String tags) {
+                            final Set<String> tags) {
         this.id = id;
         this.type = type;
         this.uuid = uuid;
@@ -45,6 +49,10 @@ public class ExplorerTreeNode implements HasIntegerId {
     }
 
     public static ExplorerTreeNode create(final DocRef docRef) {
+        return create(docRef, null);
+    }
+
+    public static ExplorerTreeNode create(final DocRef docRef, final Set<String> tags) {
         if (docRef == null) {
             return null;
         }
@@ -53,6 +61,9 @@ public class ExplorerTreeNode implements HasIntegerId {
         explorerTreeNode.setType(docRef.getType());
         explorerTreeNode.setUuid(docRef.getUuid());
         explorerTreeNode.setName(docRef.getName());
+        explorerTreeNode.setTags(NullSafe.hasItems(tags)
+                ? new HashSet<>(tags)
+                : null);
         return explorerTreeNode;
     }
 
@@ -89,11 +100,11 @@ public class ExplorerTreeNode implements HasIntegerId {
         this.name = name;
     }
 
-    public String getTags() {
+    public Set<String> getTags() {
         return tags;
     }
 
-    public void setTags(final String tags) {
+    public void setTags(final Set<String> tags) {
         this.tags = tags;
     }
 
@@ -109,6 +120,14 @@ public class ExplorerTreeNode implements HasIntegerId {
         clone.name = name;
         clone.tags = tags;
         return clone;
+    }
+
+    public ExplorerNode.Builder buildExplorerNode() {
+        return ExplorerNode.builder()
+                .type(type)
+                .uuid(uuid)
+                .name(name)
+                .tags(tags);
     }
 
     @Override

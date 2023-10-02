@@ -227,12 +227,27 @@ public final class LogUtil {
         }
     }
 
+    public static <T> String toPaddedMultiLine(final String padding,
+                                               final String multiLineMessage) {
+        if (multiLineMessage == null || multiLineMessage.isBlank()) {
+            return "";
+        } else {
+            return multiLineMessage.lines()
+                    .map(line -> Objects.requireNonNullElse(padding, "") + line)
+                    .collect(Collectors.joining("\n"));
+        }
+    }
+
     /**
-     * Returns the simple class name with the message
+     * Returns the simple class name with the message, useful as some exception messages
+     * only make sense if you know the class name, e.g. {@link NullPointerException} and
+     * some {@link java.io.IOException}s.
      */
     public static String exceptionMessage(final Throwable t) {
         if (t == null) {
             return null;
+        } else if (t.getMessage() == null) {
+            return NullSafe.get(t.getClass(), Class::getSimpleName);
         } else {
             return NullSafe.get(t.getClass(), Class::getSimpleName) + " " + t.getMessage();
         }

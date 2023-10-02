@@ -20,6 +20,9 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.NodeFlag;
+import stroom.explorer.shared.StandardExplorerTags;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 
@@ -28,6 +31,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+
+import java.util.Collection;
 
 public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
         implements DropDownUiHandlers, HasDataSelectionHandlers<ExplorerNode>, Focus {
@@ -57,12 +62,41 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
         getView().focus();
     }
 
+    public void setQuickFilter(final String filterInput) {
+        explorerDropDownTreePresenter.setInitialQuickFilter(filterInput);
+    }
+
     public void setIncludedTypes(final String... includedTypes) {
         explorerDropDownTreePresenter.setIncludedTypes(includedTypes);
     }
 
+    public void setIncludedTypes(final Collection<String> includedTypes) {
+        explorerDropDownTreePresenter.setIncludedTypes(GwtNullSafe.stream(includedTypes)
+                .toArray(String[]::new));
+    }
+
     public void setTags(final String... tags) {
         explorerDropDownTreePresenter.setTags(tags);
+    }
+
+    public void setTags(final Collection<String> tags) {
+        explorerDropDownTreePresenter.setTags(GwtNullSafe.stream(tags)
+                .toArray(String[]::new));
+    }
+
+    public void setTags(final StandardExplorerTags... tags) {
+        explorerDropDownTreePresenter.setTags(GwtNullSafe.stream(tags)
+                .map(StandardExplorerTags::getTagName)
+                .toArray(String[]::new));
+    }
+
+    public void setNodeFlags(final NodeFlag... nodeFlags) {
+        explorerDropDownTreePresenter.setNodeFlags(nodeFlags);
+    }
+
+    public void setNodeFlags(final Collection<NodeFlag> nodeFlags) {
+        explorerDropDownTreePresenter.setNodeFlags(GwtNullSafe.stream(nodeFlags)
+                .toArray(NodeFlag[]::new));
     }
 
     public void setRequiredPermissions(final String... requiredPermissions) {

@@ -228,6 +228,10 @@ public class MenuPresenter
         getView().setData(items);
     }
 
+    public void setAllowCloseOnMoveLeft(final boolean allowCloseOnMoveLeft) {
+        getView().setAllowCloseOnMoveLeft(allowCloseOnMoveLeft);
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -241,5 +245,12 @@ public class MenuPresenter
         void selectFirstItem();
 
         void cancelDelayedSubMenu();
+
+        /**
+         * If allowCloseOnMoveLeft is true and the menu item has no parent (i.e. a root item)
+         * then the menu will be closed. Useful when the menu is triggered by move right on
+         * an explorer tree or similar.
+         */
+        void setAllowCloseOnMoveLeft(final boolean allowCloseOnMoveLeft);
     }
 }

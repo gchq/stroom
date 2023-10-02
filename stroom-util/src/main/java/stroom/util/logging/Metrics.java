@@ -1,23 +1,26 @@
 package stroom.util.logging;
 
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class Metrics {
 
-    private static final Map<String, Metric> map = new ConcurrentHashMap<>();
+    private static final Map<String, Metric> NAME_TO_METRIC_MAP = new ConcurrentHashMap<>();
+    public static final int NANOS_IN_ONE_MILLI = 1_000_000;
+    public static final int NANOS_IN_ONE_SEC = 1_000_000_000;
     private static boolean enabled = false;
 
     public static <R> R measure(final String name, final Supplier<R> runnable) {
         if (enabled) {
-            return map.computeIfAbsent(name, k -> new Metric(name)).call(runnable);
+            return NAME_TO_METRIC_MAP.computeIfAbsent(name, k -> new Metric(name)).call(runnable);
         } else {
             return runnable.get();
         }
@@ -25,7 +28,7 @@ public class Metrics {
 
     public static void measure(final String name, final Runnable runnable) {
         if (enabled) {
-            map.computeIfAbsent(name, k -> new Metric(name)).call(() -> {
+            NAME_TO_METRIC_MAP.computeIfAbsent(name, k -> new Metric(name)).call(() -> {
                 runnable.run();
                 return null;
             });
@@ -35,22 +38,126 @@ public class Metrics {
     }
 
     public static void report() {
-        System.out.println(map
-                .values()
-                .stream()
-                .map(Metric::snapshot)
-                .sorted(Comparator.comparing(Snapshot::getDeltaCallsPerSecond))
-                .map(Snapshot::toString)
-                .collect(Collectors.joining("\n")) + "\n\n");
+        System.out.println(toAsciiTable(NAME_TO_METRIC_MAP) + "\n\n");
     }
 
     public static void reset() {
-        map.clear();
+        NAME_TO_METRIC_MAP.clear();
     }
 
     public static void setEnabled(final boolean enabled) {
         Metrics.enabled = enabled;
     }
+
+    /**
+     * Creates a non-static {@link LocalMetrics} for transient use in a class/method.
+     *
+     * @param isEnabled If false returns an instance that does nothing apart from call
+     *                  the passed runnables/suppliers.
+     */
+    public static LocalMetrics createLocalMetrics(final boolean isEnabled) {
+        return isEnabled
+                ? new EnabledLocalMetrics()
+                : DisabledLocalMetrics.INSTANCE;
+    }
+
+    private static String toAsciiTable(final Map<String, Metric> nameToMetricMap) {
+        final List<Snapshot> snapshots = nameToMetricMap
+                .values()
+                .stream()
+                .map(Metric::snapshot)
+                .sorted(Comparator.comparing(Snapshot::getDeltaCallsPerSecond))
+                .toList();
+
+        return AsciiTable.builder(snapshots)
+                .withColumn(Column.of("Name", Snapshot::getName))
+                .withColumn(Column.integer("Delta calls", Snapshot::getDeltaCalls))
+                .withColumn(Column.decimal(
+                        "Delta elapsed (ms)",
+                        (Snapshot row) -> row.getDeltaElapsed() / (double) NANOS_IN_ONE_MILLI,
+                        3))
+                .withColumn(Column.integer("Delta call/s", Snapshot::getDeltaCallsPerSecond))
+                .withColumn(Column.integer("Total calls", Snapshot::getCalls))
+                .withColumn(Column.decimal(
+                        "Total elapsed (ms)",
+                        (Snapshot row) -> row.getDeltaElapsed() / (double) NANOS_IN_ONE_MILLI,
+                        3))
+                .withColumn(Column.integer("Total call/s", Snapshot::getCallsPerSecond))
+                .build();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface LocalMetrics {
+
+        <R> R measure(final String name, final Supplier<R> runnable);
+
+        void measure(final String name, final Runnable runnable);
+
+        void reset();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class DisabledLocalMetrics implements LocalMetrics {
+
+        private static final DisabledLocalMetrics INSTANCE = new DisabledLocalMetrics();
+
+        @Override
+        public <R> R measure(final String name, final Supplier<R> runnable) {
+            return runnable.get();
+        }
+
+        @Override
+        public void measure(final String name, final Runnable runnable) {
+            runnable.run();
+        }
+
+        @Override
+        public void reset() {
+            // no-op
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class EnabledLocalMetrics implements LocalMetrics {
+
+        private final Map<String, Metric> nameToMetricsMap = new ConcurrentHashMap<>();
+
+        private EnabledLocalMetrics() {
+        }
+
+        public <R> R measure(final String name, final Supplier<R> runnable) {
+            return nameToMetricsMap.computeIfAbsent(name, k -> new Metric(name)).call(runnable);
+        }
+
+        public void measure(final String name, final Runnable runnable) {
+            nameToMetricsMap.computeIfAbsent(name, k -> new Metric(name)).call(() -> {
+                runnable.run();
+                return null;
+            });
+        }
+
+        @Override
+        public String toString() {
+            return Metrics.toAsciiTable(nameToMetricsMap);
+        }
+
+        public void reset() {
+            nameToMetricsMap.clear();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Metric {
 
@@ -106,6 +213,10 @@ public class Metrics {
 
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Snapshot {
 
         private final String name;
@@ -129,13 +240,13 @@ public class Metrics {
             this.elapsed = elapsed;
 
             if (deltaElapsed > 0) {
-                deltaCallsPerSecond = (long) (deltaCalls / (deltaElapsed / 1000000000D));
+                deltaCallsPerSecond = (long) (deltaCalls / (deltaElapsed / (double) NANOS_IN_ONE_SEC));
             } else {
                 deltaCallsPerSecond = 0;
             }
 
             if (elapsed > 0) {
-                callsPerSecond = (long) (calls / (elapsed / 1000000000D));
+                callsPerSecond = (long) (calls / (elapsed / (double) NANOS_IN_ONE_SEC));
             } else {
                 callsPerSecond = 0;
             }
@@ -171,14 +282,21 @@ public class Metrics {
 
         @Override
         public String toString() {
-            final String elapsedString = ModelStringUtil.formatDurationString(elapsed / 1000000);
-            final String deltaElapsedString = ModelStringUtil.formatDurationString(deltaElapsed / 1000000);
+            final String elapsedString = ModelStringUtil.formatDurationString(elapsed / NANOS_IN_ONE_MILLI);
+            final String deltaElapsedString = ModelStringUtil.formatDurationString(
+                    deltaElapsed / NANOS_IN_ONE_MILLI);
+            final String deltaCallsPerSecondStr = ModelStringUtil.formatCsv(deltaCallsPerSecond);
+            final String callsPerSecondStr = ModelStringUtil.formatCsv(callsPerSecond);
             return name +
                     ": " +
-                    "Delta " + deltaCalls + " in " + deltaElapsedString + " " + deltaCallsPerSecond + "cps " +
-                    "Total " + calls + " in " + elapsedString + " " + callsPerSecond + "cps";
+                    "Delta " + deltaCalls + " in " + deltaElapsedString + " " + deltaCallsPerSecondStr + " calls/sec " +
+                    "Total " + calls + " in " + elapsedString + " " + callsPerSecondStr + " calls/sec";
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class State {
 
@@ -195,6 +313,10 @@ public class Metrics {
             this.elapsed = elapsed;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Call {
 

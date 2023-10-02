@@ -46,6 +46,7 @@ import stroom.documentation.client.gin.DocumentationGinjector;
 import stroom.documentation.client.gin.DocumentationModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
+import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter;
@@ -199,4 +200,6 @@ public interface AppGinjectorUser extends
     AsyncProvider<FindPresenter> getFindPresenter();
 
     Provider<FullScreenPresenter> getFullScreenPresenter();
+
+    AsyncProvider<ExplorerNodeEditTagsPresenter> getExplorerNodeEditPresenter();
 }

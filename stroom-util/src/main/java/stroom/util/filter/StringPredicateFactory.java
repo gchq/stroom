@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
@@ -355,9 +356,14 @@ public class StringPredicateFactory {
         } else if (userInput.startsWith(REGEX_PREFIX)) {
             // User supplied regex so score on the len of the matched region
             final String strippedUserInput = stripPrefixesAndSuffixes(userInput);
-            final Pattern usersPattern = Pattern.compile(strippedUserInput, Pattern.CASE_INSENSITIVE);
-            return str ->
-                    calculateMatchInfo(usersPattern, str);
+            try {
+                final Pattern usersPattern = Pattern.compile(strippedUserInput, Pattern.CASE_INSENSITIVE);
+                return str ->
+                        calculateMatchInfo(usersPattern, str);
+            } catch (PatternSyntaxException e) {
+                // This is likely as the user may have not finished typing the regex
+                return str -> MatchInfo.noMatchInfo();
+            }
         } else {
             // All other modes just return a not found match info, e.g. if we are doing contains
             // it doesn't make much sense to compare the match length as it will be the same

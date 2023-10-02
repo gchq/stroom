@@ -44,6 +44,18 @@ public interface LambdaLogger extends Logger {
 
     void error(Supplier<String> message, Throwable t);
 
+    void log(LogLevel logLevel, String message);
+
+    void log(LogLevel logLevel, String format, Object arg);
+
+    void log(LogLevel logLevel, String format, Object arg1, Object arg2);
+
+    void log(LogLevel logLevel, String format, Object... args);
+
+    void log(LogLevel logLevel, Supplier<String> messageSupplier);
+
+    void log(LogLevel logLevel, Supplier<String> messageSupplier, Throwable t);
+
     boolean isTraceEnabled();
 
     boolean isDebugEnabled();
@@ -53,6 +65,8 @@ public interface LambdaLogger extends Logger {
     boolean isWarnEnabled();
 
     boolean isErrorEnabled();
+
+    boolean isEnabled(LogLevel logLevel);
 
     /**
      * Performs timedWork and if TRACE is enabled, logs the time taken to do that work

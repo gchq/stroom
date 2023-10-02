@@ -51,6 +51,7 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
+import stroom.explorer.client.event.ShowExplorerNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
@@ -68,6 +69,7 @@ import stroom.explorer.shared.ExplorerServiceCreateRequest;
 import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
+import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.event.ExportConfigEvent;
@@ -239,6 +241,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getDocRef().getType());
             if (plugin != null) {
+//                GWT.log("reloading " + event.getDocRef().getName());
                 plugin.reload(event.getDocRef());
             }
         }));
@@ -336,17 +339,20 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 8.4. Handle entity delete events.
         registerHandler(getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
+            final Runnable action = () ->
+                    delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+
             if (event.getConfirm()) {
                 ConfirmEvent.fire(
                         DocumentPluginEventManager.this,
                         "Are you sure you want to delete this item?",
                         ok -> {
                             if (ok) {
-                                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+                                action.run();
                             }
                         });
             } else {
-                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+                action.run();
             }
         }));
 
@@ -453,6 +459,7 @@ public class DocumentPluginEventManager extends Plugin {
                             .builder()
                             .items(menuItems)
                             .popupPosition(event.getPopupPosition())
+                            .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
                             .fire(this);
                 })
         );
@@ -505,6 +512,8 @@ public class DocumentPluginEventManager extends Plugin {
 
             success = false;
         }
+
+        RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
 
         // Refresh the tree
         RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
@@ -753,7 +762,7 @@ public class DocumentPluginEventManager extends Plugin {
         // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
         // item
         if (singleSelection && primarySelection != null && primarySelection.getDepth() > 0) {
-            final boolean isFavourite = primarySelection.getIsFavourite();
+            final boolean isFavourite = primarySelection.hasNodeFlag(NodeFlag.FAVOURITE);
             menuItems.add(new IconMenuItem.Builder()
                     .priority(priority)
                     .icon(isFavourite
@@ -880,6 +889,9 @@ public class DocumentPluginEventManager extends Plugin {
         final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap,
                 DocumentPermissionNames.READ,
                 false);
+        final ExplorerNode singleReadableItem = readableItems.stream()
+                .findFirst()
+                .orElse(null);
         final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap,
                 DocumentPermissionNames.UPDATE,
                 false);
@@ -892,9 +904,11 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
         final boolean isInfoEnabled = singleSelection & allowRead;
+        final boolean isEditTagsEnabled = singleSelection & allowUpdate;
 
         // Feeds are a special case so can't be copied or renamed, see https://github.com/gchq/stroom/issues/3048
-        final boolean hasFeed = readableItems.stream().anyMatch(item -> FeedDoc.DOCUMENT_TYPE.equals(item.getType()));
+        final boolean hasFeed = readableItems.stream()
+                .anyMatch(item -> FeedDoc.DOCUMENT_TYPE.equals(item.getType()));
 
         // Feeds are a special case so can't be renamed, see https://github.com/gchq/stroom/issues/2912
         final boolean isRenameEnabled = singleSelection
@@ -911,17 +925,18 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(new Separator(12));
         }
 
-        menuItems.add(createInfoMenuItem(readableItems, 20, isInfoEnabled));
+        menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled));
         menuItems.add(createCopyMenuItem(readableItems, 21, isCopyEnabled));
         menuItems.add(createMoveMenuItem(updatableItems, 22, allowUpdate));
         menuItems.add(createRenameMenuItem(updatableItems, 23, isRenameEnabled));
         menuItems.add(createDeleteMenuItem(deletableItems, 24, allowDelete));
+        menuItems.add(createEditTagsMenuItem(singleReadableItem, 25, isEditTagsEnabled));
 
         if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
-            menuItems.add(createImportMenuItem(25));
+            menuItems.add(createImportMenuItem(26));
         }
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            menuItems.add(createExportMenuItem(26, readableItems));
+            menuItems.add(createExportMenuItem(27, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.
@@ -1012,29 +1027,65 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList,
+    private MenuItem createInfoMenuItem(final ExplorerNode explorerNode,
                                         final int priority,
                                         final boolean enabled) {
-        final Command command = () ->
-                explorerNodeList.forEach(explorerNode -> {
-                    final Rest<DocRefInfo> rest = restFactory.create();
-                    rest
-                            .onSuccess(s ->
-                                    ShowInfoDocumentDialogEvent.fire(DocumentPluginEventManager.this, s))
-                            .onFailure(t ->
-                                    AlertEvent.fireError(
-                                            DocumentPluginEventManager.this,
-                                            t.getMessage(),
-                                            null))
-                            .call(EXPLORER_RESOURCE)
-                            .info(explorerNode.getDocRef());
-                });
+        final Command command;
+        if (enabled && explorerNode != null) {
+            command = () -> {
+                // Should only be one item as info is not supported for multi selection
+                // in the tree
+                final Rest<DocRefInfo> rest = restFactory.create();
+                rest
+                        .onSuccess(docRefInfo -> {
+                            final Rest<ExplorerNode> expNodeRest = restFactory.create();
+                            expNodeRest
+                                    .onSuccess(explorerNodeFromDb -> {
+                                        ShowInfoDocumentDialogEvent.fire(
+                                                DocumentPluginEventManager.this,
+                                                explorerNodeFromDb,
+                                                docRefInfo);
+                                    })
+                                    .onFailure(this::handleFailure)
+                                    .call(EXPLORER_RESOURCE)
+                                    .getFromDocRef(explorerNode.getDocRef());
+                        })
+                        .onFailure(this::handleFailure)
+                        .call(EXPLORER_RESOURCE)
+                        .info(explorerNode.getDocRef());
+            };
+        } else {
+            command = null;
+        }
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.INFO)
                 .text("Info")
-                .enabled(enabled)
+                .enabled(enabled && explorerNode != null)
+                .command(command)
+                .build();
+    }
+
+    private void handleFailure(final Throwable t) {
+        AlertEvent.fireError(
+                DocumentPluginEventManager.this,
+                t.getMessage(),
+                null);
+    }
+
+    private MenuItem createEditTagsMenuItem(final ExplorerNode explorerNode,
+                                            final int priority,
+                                            final boolean enabled) {
+        final Command command = enabled && explorerNode != null
+                ? () -> ShowExplorerNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNode)
+                : null;
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.TAGS)
+                .text("Tags")
+                .enabled(enabled && explorerNode != null)
                 .command(command)
                 .build();
     }

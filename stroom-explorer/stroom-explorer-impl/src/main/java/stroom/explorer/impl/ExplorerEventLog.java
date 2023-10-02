@@ -18,6 +18,7 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 
 interface ExplorerEventLog {
@@ -34,6 +35,8 @@ interface ExplorerEventLog {
     void move(DocRef document, DocRef folder, PermissionInheritance permissionInheritance, Exception ex);
 
     void rename(DocRef document, String name, Exception ex);
+
+    void update(ExplorerNode explorerNodeBefore, ExplorerNode explorerNodeAfter, Exception ex);
 
     void delete(DocRef document, Exception ex);
 }

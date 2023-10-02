@@ -79,6 +79,14 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "renameExplorerItems")
     ExplorerNode rename(@Parameter(description = "request", required = true) ExplorerServiceRenameRequest request);
 
+    @PUT
+    @Path("/tags")
+    @Operation(
+            summary = "Update explorer node tags",
+            operationId = "updateExplorerNodeTags")
+    ExplorerNode updateNodeTags(
+            @Parameter(description = "request", required = true) ExplorerNode explorerNode);
+
     @POST
     @Path("/info")
     @Operation(
@@ -106,6 +114,13 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             summary = "Fetch document types",
             operationId = "fetchExplorerDocumentTypes")
     DocumentTypes fetchDocumentTypes();
+
+    @GET
+    @Path("/fetchExplorerNodeTags")
+    @Operation(
+            summary = "Fetch all known explorer node tags",
+            operationId = "fetchExplorerNodeTags")
+    Set<String> fetchExplorerNodeTags();
 
     @POST
     @Path("/fetchExplorerPermissions")

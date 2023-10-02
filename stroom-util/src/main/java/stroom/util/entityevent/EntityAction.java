@@ -22,7 +22,12 @@ public enum EntityAction implements HasDisplayValue {
     CREATE("Create"),
     UPDATE("Update"),
     DELETE("Delete"),
-    CLEAR_CACHE("Clear Cache");
+    CLEAR_CACHE("Clear Cache"),
+    // Separate events for an explorer tree node update as the tree doesn't care about an update to the document
+    // itself but does care about updates to the properties of the node, e.g. tags
+    CREATE_EXPLORER_NODE("Create Explorer Node"),
+    UPDATE_EXPLORER_NODE("Update Explorer Node"),
+    DELETE_EXPLORER_NODE("Delete Explorer Node");
 
     private final String displayValue;
 

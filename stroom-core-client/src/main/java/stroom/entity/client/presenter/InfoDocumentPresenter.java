@@ -20,7 +20,9 @@ package stroom.entity.client.presenter;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -33,6 +35,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+
+import java.util.Set;
 
 public class InfoDocumentPresenter
         extends MyPresenter<InfoDocumentPresenter.InfoDocumentView, InfoDocumentPresenter.InfoDocumentProxy>
@@ -51,7 +55,7 @@ public class InfoDocumentPresenter
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(450, 300);
+        final PopupSize popupSize = PopupSize.resizable(500, 500);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
@@ -65,6 +69,7 @@ public class InfoDocumentPresenter
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
         final DocRefInfo info = event.getInfo();
         final DocRef docRef = info.getDocRef();
+        final ExplorerNode explorerNode = event.getExplorerNode();
 
         final StringBuilder sb = new StringBuilder();
         if (info.getOtherInfo() != null) {
@@ -94,11 +99,29 @@ public class InfoDocumentPresenter
             sb.append("\nUpdated On: ");
             sb.append(dateTimeFormatter.format(info.getUpdateTime()));
         }
+        if (GwtNullSafe.hasItems(explorerNode.getTags())) {
+            sb.append("\nTags: ");
+            appendNodeTags(sb, explorerNode);
+        }
 
         getView().setInfo(sb.toString());
 
         forceReveal();
     }
+
+    private void appendNodeTags(final StringBuilder stringBuilder,
+                                final ExplorerNode explorerNode) {
+        final Set<String> tags = explorerNode.getTags();
+        tags.stream()
+                .sorted()
+                .forEach(tag ->
+                        stringBuilder.append("\n\t")
+                                .append(tag));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface InfoDocumentView extends View, Focus {
 

@@ -133,7 +133,7 @@ public class PredicateUtil {
     }
 
     /**
-     * Combined the passed predicates together using an AND.
+     * Combined the passed predicates together using an OR
      * If there are no non-null predicates then the returned predicate is an always true one.
      */
     public static <T> Predicate<T> orPredicates(final List<Predicate<T>> predicates,
@@ -155,7 +155,8 @@ public class PredicateUtil {
     /**
      * Chains predicates together using an AND. predicate2 will be tested after predicate1.
      *
-     * @return A single predicate representing predicate1 AND predicate2.
+     * @return A single predicate representing predicate1 AND predicate2, or if predicate1
+     * and predicate2 are null
      */
     public static <T> Predicate<T> andPredicates(final Predicate<T> predicate1,
                                                  final Predicate<T> predicate2) {
@@ -164,6 +165,8 @@ public class PredicateUtil {
         } else {
             if (predicate1 == null) {
                 return predicate2;
+            } else if (predicate2 == null) {
+                return predicate1;
             } else {
                 return predicate1.and(predicate2);
             }
@@ -182,6 +185,8 @@ public class PredicateUtil {
         } else {
             if (predicate1 == null) {
                 return predicate2;
+            } else if (predicate2 == null) {
+                return predicate1;
             } else {
                 return predicate1.or(predicate2);
             }
