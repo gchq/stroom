@@ -35,6 +35,7 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
     private final ExplorerDbConfig dbConfig;
     private final CacheConfig docRefInfoCache;
     private final Set<String> suggestedTags;
+    private final boolean dependencyWarningsEnabled;
 
     public ExplorerConfig() {
         dbConfig = new ExplorerDbConfig();
@@ -45,19 +46,22 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
         suggestedTags = Arrays.stream(StandardExplorerTags.values())
                         .map(StandardExplorerTags::getTagName)
                                 .collect(Collectors.toSet());
+        dependencyWarningsEnabled = false;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ExplorerConfig(@JsonProperty("db") final ExplorerDbConfig dbConfig,
                           @JsonProperty("docRefInfoCache") final CacheConfig docRefInfoCache,
-                          @JsonProperty("suggestedTags") final Set<String> suggestedTags) {
+                          @JsonProperty("suggestedTags") final Set<String> suggestedTags,
+                          @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled) {
         this.dbConfig = dbConfig;
         this.docRefInfoCache = docRefInfoCache;
         // Filter out any blanks
         this.suggestedTags = NullSafe.stream(suggestedTags)
                 .filter(tag -> !NullSafe.isBlankString(tag))
                 .collect(Collectors.toSet());
+        this.dependencyWarningsEnabled = dependencyWarningsEnabled;
     }
 
     @Override
@@ -79,6 +83,13 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
     @JsonProperty("suggestedTags")
     public Set<String> getSuggestedTags() {
         return Objects.requireNonNullElseGet(suggestedTags, Collections::emptySet);
+    }
+
+    @JsonPropertyDescription(
+            "Enables warning indicators in the explorer tree for documents with broken dependencies")
+    @JsonProperty("dependencyWarningsEnabled")
+    public boolean getDependencyWarningsEnabled() {
+        return dependencyWarningsEnabled;
     }
 
     // --------------------------------------------------------------------------------

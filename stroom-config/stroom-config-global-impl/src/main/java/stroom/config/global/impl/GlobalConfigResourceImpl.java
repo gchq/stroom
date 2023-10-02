@@ -11,6 +11,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.openid.api.IdpType;
@@ -55,6 +56,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<UriFactory> uriFactory;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
+    private final Provider<ExplorerConfig> explorerConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -63,7 +65,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<UiConfig> uiConfig,
                              final Provider<UriFactory> uriFactory,
                              final Provider<NodeInfo> nodeInfoProvider,
-                             final Provider<OpenIdConfiguration> openIdConfigProvider) {
+                             final Provider<OpenIdConfiguration> openIdConfigProvider,
+                             final Provider<ExplorerConfig> explorerConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -72,6 +75,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.uriFactory = uriFactory;
         this.nodeInfoProvider = nodeInfoProvider;
         this.openIdConfigProvider = openIdConfigProvider;
+        this.explorerConfigProvider = explorerConfigProvider;
     }
 
 
@@ -284,7 +288,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         // the back-end config classes.
         return new ExtendedUiConfig(
                 uiConfig.get(),
-                isExternalIdp);
+                isExternalIdp,
+                explorerConfigProvider.get().getDependencyWarningsEnabled());
     }
 
     private Query buildRawQuery(final String userInput) {
