@@ -196,8 +196,12 @@ class ExplorerTreeModel implements EntityEvent.Handler {
         final Map<DocRef, Set<DocRef>> brokenDepsMap = NullSafe.map(brokenDependenciesCache.getMap());
         brokenDepsMap.forEach((nodeDocRef, missingDepDocRefs) -> {
             final ExplorerNode node = treeModel.getNode(nodeDocRef);
-            final List<NodeInfo> nodeInfos = buildNodeInfo(missingDepDocRefs);
-            treeModel.addNodeInfo(node, nodeInfos);
+            if (node != null) {
+                final List<NodeInfo> nodeInfos = buildNodeInfo(missingDepDocRefs);
+                if (!nodeInfos.isEmpty()) {
+                    treeModel.addNodeInfo(node, nodeInfos);
+                }
+            }
         });
     }
 
