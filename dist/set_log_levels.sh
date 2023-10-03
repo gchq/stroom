@@ -52,10 +52,18 @@ send_request() {
 
   echo -e "${GREEN}Setting ${type} ${BLUE}${package_or_class}${NC} to ${YELLOW}${new_log_level}${NC}"
 
+  local extra_args=()
+  if [[ "${URL}" == https* ]]; then
+    # Use insecure mode if stroom/proxy is running the admin port on https
+    extra_args+=("-k")
+  fi
+
   curl \
+    -s \
     -X \
     POST \
     -d "logger=${package_or_class}&level=${new_log_level}" \
+    "${extra_args[@]}" \
     "${URL}"
 }
 
