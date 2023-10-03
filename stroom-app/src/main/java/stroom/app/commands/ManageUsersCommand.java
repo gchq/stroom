@@ -233,7 +233,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                                 userService.getOrCreateUser(userName);
                                 logCreateUserEvent(userName, true, null);
                                 info(LOGGER,
-                                        "Created user " + UserName.buildCombinedName(userName),
+                                        "Created user '" + UserName.buildCombinedName(userName)+ "'",
                                         "  ");
                             });
         } catch (Exception e) {
@@ -257,7 +257,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             () -> {
                                 userService.getOrCreateUserGroup(groupName);
                                 logCreateGroupEvent(groupName, true, null);
-                                info(LOGGER, "Created group " + groupName, "  ");
+                                info(LOGGER, "Created group '" + groupName + "'", "  ");
                             });
         } catch (Exception e) {
             LOGGER.debug("Error", e);
@@ -288,7 +288,8 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         null,
                         true);
                 info(LOGGER,
-                        "Added " + userOrGroup.asCombinedName() + " to group " + targetGroup.asCombinedName(),
+                        "Added '" + userOrGroup.asCombinedName() + "' to group '"
+                                + targetGroup.asCombinedName() + "'",
                         "  ");
 
             } catch (Exception e) {
@@ -322,8 +323,8 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 userService.removeUserFromGroup(userOrGroup.getUuid(), targetGroup.getUuid());
 
                 logAddOrRemoveFromGroupEvent(
-                        groupArgs.userOrGroupId,
-                        groupArgs.targetGroupId,
+                        userOrGroup,
+                        targetGroup,
                         true,
                         null,
                         false);
@@ -360,11 +361,13 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
                 if (hasPermission(userOrGroup, permissionName)) {
                     final String failMsg = LogUtil.message("{} '{}' already has permission '{}'",
-                            getTypeName(userOrGroup), userOrGroup.asCombinedName(), permissionName);
+                            getTypeName(userOrGroup, true),
+                            userOrGroup.asCombinedName(),
+                            permissionName);
                     warn(LOGGER, failMsg, "  ");
 
-                    logAddOrRemoveFromGroupEvent(
-                            userOrGroupId,
+                    logAddOrRemovePermissionEvent(
+                            userOrGroup,
                             permissionName,
                             false,
                             failMsg,
@@ -374,7 +377,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             userOrGroup.getUuid(),
                             permissionName);
 
-                    logAddOrRemoveFromGroupEvent(
+                    logAddOrRemovePermissionEvent(
                             userOrGroupId,
                             permissionName,
                             true,
@@ -421,18 +424,20 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     info(LOGGER, LogUtil.message("Revoked application permission '{}' from '{}'",
                             permissionName, userOrGroup.asCombinedName()), "  ");
 
-                    logAddOrRemoveFromGroupEvent(
-                            userOrGroupId,
+                    logAddOrRemovePermissionEvent(
+                            userOrGroup,
                             permissionName,
                             true,
                             null,
                             false);
                 } else {
                     final String failMsg = LogUtil.message("{} '{}' does not have permission '{}'",
-                            getTypeName(userOrGroup), userOrGroup.asCombinedName(), permissionName);
+                            getTypeName(userOrGroup, true),
+                            userOrGroup.asCombinedName(),
+                            permissionName);
                     warn(LOGGER, failMsg, "  ");
 
-                    logAddOrRemoveFromGroupEvent(
+                    logAddOrRemovePermissionEvent(
                             userOrGroupId,
                             permissionName,
                             false,
@@ -452,8 +457,21 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         });
     }
 
-    private String getTypeName(final stroom.security.shared.User user) {
-        return NullSafe.get(user, stroom.security.shared.User::asCombinedName);
+    private String getTypeName(final stroom.security.shared.User user, final boolean isCapitalised) {
+        final String type;
+        if (user == null) {
+            type = "unknown type";
+        } else if (user.isGroup()) {
+            type = "group";
+        } else {
+            type = "user";
+        }
+        if (isCapitalised) {
+            return Character.toUpperCase(type.charAt(0)) +
+                    type.substring(1);
+        } else {
+            return type;
+        }
     }
 
     private boolean hasPermission(final stroom.security.shared.User userOrGroup, final String permissionName) {
@@ -559,7 +577,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         stroomEventLoggingService.log(
                 buildTypeId(CREATE_USER_ARG_NAME),
                 LogUtil.message(
-                        "A Stroom user account for {} was created",
+                        "Create user '{}'",
                         username),
                 createEventAction);
     }
@@ -584,7 +602,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         stroomEventLoggingService.log(
                 buildTypeId(CREATE_GROUP_ARG_NAME),
                 LogUtil.message(
-                        "A Stroom user account for {} {} was created", groupName),
+                        "Create group '{}'", groupName),
                 createEventAction);
     }
 
@@ -594,48 +612,10 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 Objects.requireNonNull(subCommand));
     }
 
-    private void logCreateUserOrGroupEvent(final String username,
-                                           final boolean wasSuccessful,
-                                           final String description,
-                                           final boolean isGroup) {
-
-        final Builder<Void> createEventActionBuilder = CreateEventAction.builder();
-
-        if (isGroup) {
-            createEventActionBuilder.addGroup(Group.builder()
-                    .withName(username)
-                    .build());
-        } else {
-            // For some reason IJ doesn't like event.logging.User.builder()
-            createEventActionBuilder.addUser(User.builder()
-                    .withName(username)
-                    .build());
-        }
-
-        final CreateEventAction createEventAction = createEventActionBuilder.withOutcome(
-                        Outcome.builder()
-                                .withSuccess(wasSuccessful)
-                                .withDescription(description)
-                                .build())
-                .build();
-
-        stroomEventLoggingService.log(
-                "CliCreateStroom" + (isGroup
-                        ? "Group"
-                        : "User"),
-                LogUtil.message(
-                        "A Stroom user account for {} {} was created",
-                        (isGroup
-                                ? "group"
-                                : "user"),
-                        username),
-                createEventAction);
-    }
-
     private void logAddOrRemoveFromGroupEvent(final stroom.security.shared.User userOrGroup,
                                               final stroom.security.shared.User group,
                                               final boolean wasSuccessful,
-                                              final String description,
+                                              final String outcomeDescription,
                                               final boolean isAddingGroup) {
 
         final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
@@ -656,26 +636,35 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .build());
         }
 
+        final String description = LogUtil.message("{} {} '{}' {} group '{}'",
+                (isAddingGroup
+                        ? "Add"
+                        : "Remove"),
+                (userOrGroup.isGroup()
+                        ? "group"
+                        : "user"),
+                NullSafe.get(userOrGroup, stroom.security.shared.User::getUserIdentityForAudit),
+                (isAddingGroup
+                        ? "to"
+                        : "from"),
+                NullSafe.get(group, stroom.security.shared.User::getUserIdentityForAudit));
+
         stroomEventLoggingService.log(
                 "CliAddToGroup",
-                LogUtil.message("User/Group {} was {} to group {}",
-                        userOrGroup,
-                        (isAddingGroup
-                                ? "added to"
-                                : "removed from"),
-                        group),
+                description,
                 authoriseBuilder
                         .withOutcome(Outcome.builder()
                                 .withSuccess(wasSuccessful)
-                                .withDescription(description)
+                                .withDescription(outcomeDescription)
                                 .build())
                         .build());
     }
 
+
     private void logAddOrRemoveFromGroupEvent(final String userOrGroupName,
                                               final String groupName,
                                               final boolean wasSuccessful,
-                                              final String description,
+                                              final String outcomeDescription,
                                               final boolean isAddingGroup) {
 
         final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
@@ -701,22 +690,128 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .build());
         }
 
+        final String description = LogUtil.message("{} user/group '{}' {} group '{}'",
+                (isAddingGroup
+                        ? "Add"
+                        : "Remove"),
+                userOrGroupName,
+                (isAddingGroup
+                        ? "to"
+                        : "from"),
+                groupName);
+
         stroomEventLoggingService.log(
                 "CliAddToGroup",
-                LogUtil.message("User/Group {} was {} to group {}",
-                        userOrGroupName,
-                        (isAddingGroup
-                                ? "added to"
-                                : "removed from"),
-                        groupName),
+                description,
                 authoriseBuilder
                         .withOutcome(Outcome.builder()
                                 .withSuccess(wasSuccessful)
-                                .withDescription(description)
+                                .withDescription(outcomeDescription)
                                 .build())
                         .build());
     }
 
+    private void logAddOrRemovePermissionEvent(final stroom.security.shared.User userOrGroup,
+                                               final String permission,
+                                               final boolean wasSuccessful,
+                                               final String outcomeDescription,
+                                               final boolean isAddingPermission) {
+
+        final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
+
+        if (userOrGroup.isGroup()) {
+            authoriseBuilder.addGroup(StroomEventLoggingUtil.createGroup(userOrGroup));
+        } else {
+            authoriseBuilder.addUser(StroomEventLoggingUtil.createUser(userOrGroup));
+        }
+
+        final Group groupBlock = Group.builder()
+                .withId(permission)
+                .withName(permission)
+                .build();
+        if (isAddingPermission) {
+            authoriseBuilder.withAddGroups(AddGroups.builder()
+                    .addGroups(groupBlock)
+                    .build());
+        } else {
+            authoriseBuilder.withRemoveGroups(RemoveGroups.builder()
+                    .addGroups(groupBlock)
+                    .build());
+        }
+
+        final String description = LogUtil.message("{} permission '{}' {} {} '{}'",
+                (isAddingPermission
+                        ? "Grant"
+                        : "Revoke"),
+                permission,
+                (isAddingPermission
+                        ? "to"
+                        : "from"),
+                (userOrGroup.isGroup()
+                        ? "group"
+                        : "user"),
+                NullSafe.get(userOrGroup, stroom.security.shared.User::getUserIdentityForAudit));
+
+        stroomEventLoggingService.log(
+                "CliAddToGroup",
+                description,
+                authoriseBuilder
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(wasSuccessful)
+                                .withDescription(outcomeDescription)
+                                .build())
+                        .build());
+    }
+
+    private void logAddOrRemovePermissionEvent(final String userOrGroupName,
+                                               final String permission,
+                                               final boolean wasSuccessful,
+                                               final String outcomeDescription,
+                                               final boolean isAddingPermission) {
+
+        final AuthoriseEventAction.Builder<Void> authoriseBuilder = AuthoriseEventAction.builder();
+
+        // Don't know if userOrGroupName is a user or group, so treat as a user
+
+        authoriseBuilder.addUser(User.builder()
+                .withId(userOrGroupName)
+                .withName(userOrGroupName)
+                .build());
+
+        final Group groupBlock = Group.builder()
+                .withId(permission)
+                .withName(permission)
+                .build();
+        if (isAddingPermission) {
+            authoriseBuilder.withAddGroups(AddGroups.builder()
+                    .addGroups(groupBlock)
+                    .build());
+        } else {
+            authoriseBuilder.withRemoveGroups(RemoveGroups.builder()
+                    .addGroups(groupBlock)
+                    .build());
+        }
+
+        final String description = LogUtil.message("{} permission '{}' {} user/group '{}'",
+                (isAddingPermission
+                        ? "Grant"
+                        : "Revoke"),
+                permission,
+                (isAddingPermission
+                        ? "to"
+                        : "from"),
+                userOrGroupName);
+
+        stroomEventLoggingService.log(
+                "CliAddToGroup",
+                description,
+                authoriseBuilder
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(wasSuccessful)
+                                .withDescription(outcomeDescription)
+                                .build())
+                        .build());
+    }
 
     // --------------------------------------------------------------------------------
 
