@@ -151,7 +151,9 @@ class NodeInclusionChecker {
     }
 
     boolean isFuzzyFilterMatch(final ExplorerNode node) {
-        return !hasNameFilter
+        // We may have a nameFilter but not a fuzzyMatchPredicate if the user has selected no types
+        // in the type filter
+        return !hasNameFilter || fuzzyMatchPredicate == null
                 || filterOutcomeMap.computeIfAbsent(node.getDocRef(), docRef ->
                 FilterOutcome.fromPredicateResult(fuzzyMatchPredicate.test(node)))
                 .isMatch;
