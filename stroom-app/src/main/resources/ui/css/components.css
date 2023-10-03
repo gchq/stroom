@@ -1304,8 +1304,10 @@
 }
 
 .steppingFilterViewImpl {
-    min-width: 400px;
-    min-height: 400px;
+}
+
+.steppingFilterViewImpl .pipelineElementChooser-textCell.pipelineElementChooser-filterOff{
+    color: var(--text-color--disabled);
 }
 
 .stepLocationViewImpl-left {
