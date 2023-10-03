@@ -3,6 +3,7 @@ package stroom.documentation.shared;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,7 +15,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class DocumentationDoc extends Doc {
+public class DocumentationDoc extends Doc implements HasData {
 
     public static final String DOCUMENT_TYPE = "Documentation";
     public static final SvgImage ICON = SvgImage.DOCUMENT_DOCUMENTATION;
@@ -57,14 +58,6 @@ public class DocumentationDoc extends Doc {
      */
     public static DocRef.TypedBuilder buildDocRef() {
         return DocRef.builder(DOCUMENT_TYPE);
-    }
-
-    public String getDocumentation() {
-        return documentation;
-    }
-
-    public void setDocumentation(final String documentation) {
-        this.documentation = documentation;
     }
 
     public String getData() {

@@ -70,7 +70,7 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
                                final DocRef docRef,
                                final DocumentationDoc document,
                                final boolean readOnly) {
-                presenter.setText(document.getDocumentation());
+                presenter.setText(document.getData());
                 presenter.setReadOnly(readOnly);
                 // Select the tab here to ensure the markdown editor toolbar display state (based
                 // on the readOnly value) is updated.
@@ -80,7 +80,7 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
             @Override
             public DocumentationDoc onWrite(final MarkdownEditPresenter presenter,
                                             final DocumentationDoc document) {
-                document.setDocumentation(presenter.getText());
+                document.setData(presenter.getText());
                 return document;
             }
         });
