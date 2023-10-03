@@ -57,7 +57,6 @@ class ExplorerDropDownTreePresenter
     private String caption = "Choose item";
     private ExplorerNode selectedExplorerNode;
     private String initialQuickFilter;
-    private boolean isShowing = false;
 
     @Inject
     ExplorerDropDownTreePresenter(final EventBus eventBus,
@@ -85,11 +84,9 @@ class ExplorerDropDownTreePresenter
 
     @Override
     protected void onHide() {
-        isShowing = false;
     }
 
     public void show() {
-        isShowing = true;
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
         ShowPopupEvent.builder(this)
@@ -155,15 +152,12 @@ class ExplorerDropDownTreePresenter
 
     public void refresh() {
         // Refresh gets called on show so no point doing it before then
-        if (isShowing) {
-//            GWT.log("refresh with initialQuickFilter: " + initialQuickFilter);
-            getView().setQuickFilter(initialQuickFilter);
-            explorerTree.getTreeModel().setInitialNameFilter(initialQuickFilter);
-            explorerTree.setSelectedItem(selectedExplorerNode);
-            explorerTree.getTreeModel().reset(initialQuickFilter);
-            explorerTree.getTreeModel().setEnsureVisible(selectedExplorerNode);
-            explorerTree.getTreeModel().refresh();
-        }
+        explorerTree.setSelectedItem(selectedExplorerNode);
+        getView().setQuickFilter(initialQuickFilter);
+        explorerTree.getTreeModel().setInitialNameFilter(initialQuickFilter);
+        explorerTree.getTreeModel().reset(initialQuickFilter);
+        explorerTree.getTreeModel().setEnsureVisible(selectedExplorerNode);
+        explorerTree.getTreeModel().refresh();
     }
 
     public void setIncludedTypes(final String... includedTypes) {
