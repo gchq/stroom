@@ -13,6 +13,35 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.71] - 2023-10-04
+
+* Issue **#3805** : Fix NPE when building explorer tree.
+
+* Issue **#3801** : Fix NPE when using explorer quick filter and type filter together.
+
+* Fix set_log_levels.sh curl command when the admin port is HTTPS.
+
+* Issue **#3800** : Fix tree pickers always showing None even when a document is selected in the tree dropdown.
+
+* Issue **#3796** : Fix duplicate Document matches when doing content search.
+
+* Issue **#3770** : Fix styling on Manage Step Filters screen.
+
+* Issue **#3771** : Fix audit events produced by manage users CLI command.
+
+* Issue **#3810** : Change the explorer tree pane background colour from blue to white in the _Light_ theme. This is to ensure the _Light_ theme is consistently dark text on a light background.
+
+* Improve the property descriptions for the `stroom.ui.theme.*` properties.
+
+* Issue **#3745** : Improve error message when filtering using an invalid stream Status value.
+
+* Change alert dialogs to not show the detail by default if the detail looks like a stack trace.
+
+* Issue **#3778** : Default folder permission cascade setting to `No`.
+
+* Issue **#3795** : Fix delete for activities.
+
+
 ## [v7.2-beta.70] - 2023-10-02
 
 * Issue **#3779** : Improve logging for StreamingAnalyticExecutor.
@@ -5989,7 +6018,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.70...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.71...HEAD
+[v7.2-beta.71]: https://github.com/gchq/stroom/compare/v7.2-beta.70...v7.2-beta.71
 [v7.2-beta.70]: https://github.com/gchq/stroom/compare/v7.2-beta.69...v7.2-beta.70
 [v7.2-beta.69]: https://github.com/gchq/stroom/compare/v7.2-beta.68...v7.2-beta.69
 [v7.2-beta.68]: https://github.com/gchq/stroom/compare/v7.2-beta.67...v7.2-beta.68
