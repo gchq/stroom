@@ -22,6 +22,7 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -35,6 +36,8 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     private static final int MAX_MESSAGE_LENGTH = 1000;
+    // Regex is testing html, hence the <br>
+    private static RegExp STACK_TRACE_PATTERN = RegExp.compile("<br>(\\sat |Caused by: )");
 
     private final FlowPanel layout = new FlowPanel();
     private final SimplePanel image = new SimplePanel();
@@ -120,7 +123,9 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
             builder.append(html);
             builder.appendHtmlConstant("</div>");
             detail.getElement().setInnerHTML(builder.toSafeHtml().asString());
-            showDetail(true);
+            // If it looks like a stack trace then your average user doesn't want to see that nastiness,
+            // but if not then it is probably useful for them to see.
+            showDetail(!STACK_TRACE_PATTERN.test(html.asString()));
         } else {
             showHideDetail.setVisible(false);
             setDetailVisible(false);
