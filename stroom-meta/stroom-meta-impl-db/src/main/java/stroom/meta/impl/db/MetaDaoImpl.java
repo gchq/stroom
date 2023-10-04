@@ -227,7 +227,7 @@ public class MetaDaoImpl implements MetaDao {
                 MetaFields.PIPELINE_NAME, metaProcessor.PIPELINE_UUID, this::getPipelineUuidsByName, true);
         expressionMapper.map(MetaFields.STATUS,
                 meta.STATUS,
-                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+                value -> MetaStatusId.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value -> getDate(MetaFields.STATUS_TIME, value));
         expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value -> getDate(MetaFields.CREATE_TIME, value));
         expressionMapper.map(MetaFields.EFFECTIVE_TIME,
@@ -238,7 +238,7 @@ public class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PARENT_STATUS,
                 parent.STATUS,
-                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+                value -> MetaStatusId.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.PARENT_CREATE_TIME,
                 parent.CREATE_TIME,
                 value -> getDate(MetaFields.PARENT_CREATE_TIME, value));

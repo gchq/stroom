@@ -30,30 +30,42 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     public static GwtEvent.Type<Handler> TYPE;
     private final AlertCallback callback;
 
-    private AlertEvent(final SafeHtml message, final SafeHtml detail, final Level level, final AlertCallback callback) {
+    private AlertEvent(final SafeHtml message,
+                       final SafeHtml detail,
+                       final Level level,
+                       final AlertCallback callback) {
         super(message, detail, level);
         this.callback = callback;
     }
 
-    public static void fireInfo(final HasHandlers handlers, final String message, final String detail,
+    public static void fireInfo(final HasHandlers handlers,
+                                final String message,
+                                final String detail,
                                 final AlertCallback callback) {
         handlers.fireEvent(new AlertEvent(fromString(message), fromString(detail), Level.INFO, callback));
     }
 
-    public static void fireInfo(final HasHandlers handlers, final String message, final AlertCallback callback) {
+    public static void fireInfo(final HasHandlers handlers,
+                                final String message,
+                                final AlertCallback callback) {
         fireInfo(handlers, message, null, callback);
     }
 
-    public static void fireWarn(final HasHandlers handlers, final String message, final String detail,
+    public static void fireWarn(final HasHandlers handlers,
+                                final String message,
+                                final String detail,
                                 final AlertCallback callback) {
         handlers.fireEvent(new AlertEvent(fromString(message), fromString(detail), Level.WARN, callback));
     }
 
-    public static void fireWarn(final HasHandlers handlers, final String message, final AlertCallback callback) {
+    public static void fireWarn(final HasHandlers handlers,
+                                final String message,
+                                final AlertCallback callback) {
         fireWarn(handlers, message, null, callback);
     }
 
-    public static void fireErrorFromException(final HasHandlers handlers, final Throwable throwable,
+    public static void fireErrorFromException(final HasHandlers handlers,
+                                              final Throwable throwable,
                                               final AlertCallback callback) {
         String message = throwable.getMessage();
         if (message == null || message.length() <= 1) {
@@ -62,8 +74,10 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
         fireErrorFromException(handlers, message, throwable, callback);
     }
 
-    public static void fireErrorFromException(final HasHandlers handlers, final String message,
-                                              final Throwable throwable, final AlertCallback callback) {
+    public static void fireErrorFromException(final HasHandlers handlers,
+                                              final String message,
+                                              final Throwable throwable,
+                                              final AlertCallback callback) {
         final StringBuilder detail = new StringBuilder();
 
         if (throwable instanceof EntityServiceException) {
@@ -90,11 +104,15 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
         fireError(handlers, message, detail.toString(), callback);
     }
 
-    public static void fireError(final HasHandlers handlers, final String message, final AlertCallback callback) {
+    public static void fireError(final HasHandlers handlers,
+                                 final String message,
+                                 final AlertCallback callback) {
         fireError(handlers, message, null, callback);
     }
 
-    public static void fireError(final HasHandlers handlers, final String message, final String detail,
+    public static void fireError(final HasHandlers handlers,
+                                 final String message,
+                                 final String detail,
                                  final AlertCallback callback) {
         handlers.fireEvent(new AlertEvent(fromString(message), fromString(detail), Level.ERROR, callback));
     }
@@ -119,6 +137,10 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     public AlertCallback getCallback() {
         return callback;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler extends EventHandler {
 
