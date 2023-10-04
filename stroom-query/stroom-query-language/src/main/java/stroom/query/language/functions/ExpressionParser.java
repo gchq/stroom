@@ -424,7 +424,7 @@ public class ExpressionParser {
         return result;
     }
 
-    private Param applyBODMAS(final List<Object> objects,
+    public Param applyBODMAS(final List<Object> objects,
                               final ExpressionContext expressionContext,
                               final FieldIndex fieldIndex) {
         boolean complete = false;
