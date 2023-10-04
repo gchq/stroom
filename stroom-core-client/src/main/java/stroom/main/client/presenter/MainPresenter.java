@@ -210,6 +210,10 @@ public class MainPresenter
 
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface MainView extends View, HasUiHandlers<MainUiHandlers> {
 
         SpinnerDisplay getSpinner();
@@ -220,6 +224,10 @@ public class MainPresenter
 
         void setBanner(String text);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {
 

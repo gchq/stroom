@@ -1441,6 +1441,11 @@
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
+    background-color: var(--navigation__title__background-color);
+}
+
+.navigation .explorerTreeViewImpl-nameFilterPanel {
+    background-color: var(--navigation__title__background-color);
 }
 
 .navigation-logo {
