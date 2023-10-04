@@ -233,7 +233,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                                 userService.getOrCreateUser(userName);
                                 logCreateUserEvent(userName, true, null);
                                 info(LOGGER,
-                                        "Created user '" + UserName.buildCombinedName(userName)+ "'",
+                                        "Created user '" + UserName.buildCombinedName(userName) + "'",
                                         "  ");
                             });
         } catch (Exception e) {
