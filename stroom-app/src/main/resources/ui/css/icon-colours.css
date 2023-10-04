@@ -33,7 +33,6 @@
     --icon-height: 16px;
 }
 
-.navigation,
 .stroom-theme-dark {
     --icon-colour__black: var(--white);
     /* For toggle buttons like exclamation.svg on stepper */
