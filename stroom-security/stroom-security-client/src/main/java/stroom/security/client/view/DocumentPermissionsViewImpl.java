@@ -19,6 +19,7 @@ package stroom.security.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
@@ -28,7 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
@@ -46,10 +46,13 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
     SelectionBox<ChangeDocumentPermissionsRequest.Cascade> cascade;
 
     @Inject
-    public DocumentPermissionsViewImpl(final EventBus eventBus, final Binder binder) {
+    public DocumentPermissionsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         copyPermissionsFromParentButton.setIcon(SvgImage.COPY);
-        cascade.addItems(ChangeDocumentPermissionsRequest.Cascade.values());
+        cascade.addItem(Cascade.NO);
+        cascade.addItem(Cascade.CHANGES_ONLY);
+        cascade.addItem(Cascade.ALL);
+        cascade.setValue(Cascade.NO);
     }
 
     @Override
