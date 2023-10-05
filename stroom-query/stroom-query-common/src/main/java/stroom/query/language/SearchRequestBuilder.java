@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -59,6 +58,8 @@ public class SearchRequestBuilder {
     private ExpressionContext expressionContext;
     private final FieldIndex fieldIndex;
     private final Map<String, Expression> expressionMap;
+    private final Set<String> addedFields = new HashSet<>();
+    private final List<AbstractToken> havingTokens = new ArrayList<>();
 
     @Inject
     public SearchRequestBuilder(final VisualisationTokenConsumer visualisationTokenConsumer) {
@@ -188,7 +189,7 @@ public class SearchRequestBuilder {
                                               final Set<TokenType> allowConsumed,
                                               final TokenType keyword,
                                               final Consumer<ExpressionOperator> expressionConsumer) {
-        List<AbstractToken> whereGroup = new ArrayList<>();
+        final List<AbstractToken> whereGroup = new ArrayList<>();
         final List<TokenType> localConsumedTokens = new ArrayList<>(consumedTokens);
         final Set<TokenType> allowFollowing = new HashSet<>(allowConsumed);
         int i = 0;
@@ -214,6 +215,8 @@ public class SearchRequestBuilder {
                 } else {
                     break;
                 }
+            } else {
+                break;
             }
         }
 
@@ -589,6 +592,11 @@ public class SearchRequestBuilder {
                                 consumedTokens,
                                 Set.of(TokenType.FROM),
                                 inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)));
+                        // Remember the tokens used for having clauses as we need to ensure they are added.
+                        if (keywordGroup.getChildren() != null &&
+                                keywordGroup.getChildren().size() > 0) {
+                            havingTokens.add(keywordGroup.getChildren().get(0));
+                        }
                         remaining =
                                 addExpression(remaining,
                                         consumedTokens,
@@ -640,15 +648,29 @@ public class SearchRequestBuilder {
 
         // Ensure StreamId and EventId fields exist if there is no grouping.
         if (groupDepth == 0) {
-            if (!fieldExists(tableSettingsBuilder, FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
-                tableSettingsBuilder.addFields(buildSpecialField(
-                        FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME,
-                        FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
+            if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
+                tableSettingsBuilder.addFields(buildSpecialField(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
             }
-            if (!fieldExists(tableSettingsBuilder, FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
-                tableSettingsBuilder.addFields(buildSpecialField(
-                        FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME,
-                        FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+            if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
+                tableSettingsBuilder.addFields(buildSpecialField(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+            }
+        }
+
+        // Add missing HAVING fields.
+        for (final AbstractToken token : havingTokens) {
+            final String fieldName = token.getUnescapedText();
+            if (!addedFields.contains(fieldName)) {
+                final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
+                addField(token,
+                        id,
+                        fieldName,
+                        fieldName,
+                        false,
+                        true,
+                        sortMap,
+                        groupMap,
+                        filterMap,
+                        tableSettingsBuilder);
             }
         }
 
@@ -680,28 +702,12 @@ public class SearchRequestBuilder {
         }
     }
 
-    public boolean fieldExists(final TableSettings.Builder tableSettingsBuilder,
-                               final String fieldName) {
-        final List<Field> fields = tableSettingsBuilder.build().getFields();
-        if (fields == null) {
-            return false;
-        }
-        final Optional<String> field = fields
-                .stream()
-                .map(Field::getExpression)
-                .filter(Objects::nonNull)
-                .map(ParamSubstituteUtil::getParam)
-                .filter(fieldName::equals)
-                .findAny();
-        return field.isPresent();
-    }
-
-    public Field buildSpecialField(final String columnName,
-                                   final String indexFieldName) {
+    public Field buildSpecialField(final String name) {
+        addedFields.add(name);
         return Field.builder()
-                .id(columnName)
-                .name(columnName)
-                .expression(ParamSubstituteUtil.makeParam(indexFieldName))
+                .id(name)
+                .name(name)
+                .expression(ParamSubstituteUtil.makeParam(name))
                 .visible(false)
                 .special(true)
                 .build();
@@ -887,6 +893,29 @@ public class SearchRequestBuilder {
                           final Map<String, Integer> groupMap,
                           final Map<String, Filter> filterMap,
                           final TableSettings.Builder tableSettingsBuilder) {
+        addField(token,
+                fieldName,
+                fieldName,
+                columnName,
+                true,
+                false,
+                sortMap,
+                groupMap,
+                filterMap,
+                tableSettingsBuilder);
+    }
+
+    private void addField(final AbstractToken token,
+                          final String id,
+                          final String fieldName,
+                          final String columnName,
+                          final boolean visible,
+                          final boolean special,
+                          final Map<String, Sort> sortMap,
+                          final Map<String, Integer> groupMap,
+                          final Map<String, Filter> filterMap,
+                          final TableSettings.Builder tableSettingsBuilder) {
+        addedFields.add(fieldName);
         Expression expression = expressionMap.get(fieldName);
         if (expression == null) {
             ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
@@ -907,7 +936,7 @@ public class SearchRequestBuilder {
 
         final String expressionString = expression.toString();
         final Field field = Field.builder()
-                .id(fieldName)
+                .id(id)
                 .name(columnName != null
                         ? columnName
                         : fieldName)
@@ -916,6 +945,8 @@ public class SearchRequestBuilder {
                 .group(groupMap.get(fieldName))
                 .filter(filterMap.get(fieldName))
                 .format(format)
+                .visible(visible)
+                .special(special)
                 .build();
         tableSettingsBuilder.addFields(field);
     }
