@@ -198,7 +198,11 @@ public class LmdbDataStore implements DataStore {
                 totalResultCount,
                 completionState);
 
-        storedValueKeyFactory = new StoredValueKeyFactory(compiledDepths, compiledFieldArray, keyFactoryConfig);
+        storedValueKeyFactory = new StoredValueKeyFactory(
+                compiledDepths,
+                compiledFieldArray,
+                keyFactoryConfig,
+                keyFactory);
 
         // Create a factory that makes DB state objects.
         currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);

@@ -8,7 +8,7 @@ import java.util.Objects;
 
 class UngroupedKeyPart implements KeyPart {
 
-    private long sequenceNumber;
+    private final long sequenceNumber;
 
     public UngroupedKeyPart(final long sequenceNumber) {
         this.sequenceNumber = sequenceNumber;
