@@ -37,7 +37,6 @@ import java.util.Set;
 public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
         implements HasDataSelectionHandlers<Set<ExplorerNode>>, Focus {
 
-    //    private final TickBoxSelectionModel<ExplorerNode> selectionModel;
     private final ExplorerTickBoxTree explorerTree;
 
     @Inject
@@ -45,85 +44,6 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
                                     final RestFactory restFactory,
                                     final EventBus eventBus) {
         super(new SimpleEventBus(), view);
-
-//        selectionModel = new TickBoxSelectionModel<ExplorerNode>() {
-//            @Override
-//            public ExplorerNode getParent(final ExplorerNode object) {
-//                if (object instanceof EntityCheckTreeData) {
-//                    return ((EntityCheckTreeData) object).getParent();
-//                }
-//
-//                return null;
-//            }
-//
-//            @Override
-//            public List<ExplorerNode> getChildren(final ExplorerNode object) {
-//                if (object instanceof EntityCheckTreeData) {
-//                    return ((EntityCheckTreeData) object).getChildren();
-//                }
-//
-//                return null;
-//            }
-//        };
-//
-//        final TickBoxTreeCell<ExplorerNode> cell = new TickBoxTreeCell<ExplorerNode>(selectionModel) {
-//            @Override
-//            protected Image getIcon(final ExplorerNode item) {
-//                return new Image(ImageUtil.getImageURL() + item.getIconUrl());
-//            }
-//        };
-
-//        treeModel = new ExplorerTreeModel(selectionModel, new TickBoxSelectionManager<ExplorerNode>(), cell,
-//                dispatcher);
-//        final MyCellTree cellTree = new MyCellTree(treeModel);
-//        cellTree.addOpenHandler(treeModel);
-//        cellTree.addCloseHandler(treeModel);
-//        treeModel.setRootTreeNode(cellTree.getRootTreeNode());
-//
-//        final UpdateHandler<ExplorerNode> updateHandler = new UpdateHandler<ExplorerNode>() {
-//            @Override
-//            public List<ExplorerNode> onUpdate(final ExplorerNode parent, final List<ExplorerNode> result) {
-//                List<ExplorerNode> children = result;
-//                if (result != null && selectionModel.isAffectRelatives()) {
-//                    children = new ArrayList<ExplorerNode>();
-//                    for (final ExplorerNode child : result) {
-//                        // Select if the parent is selected. If is is then set
-//                        // this item to be selected.
-//                        if (TickBoxState.TICK.equals(selectionModel.getState(parent))) {
-//                            selectionModel.setState(child, TickBoxState.TICK, true);
-//
-//                        } else {
-//                            final TickBoxState childTickBoxState = selectionModel.getState(child);
-//                            if (TickBoxState.TICK.equals(childTickBoxState)) {
-//                                selectionModel.modifyState(child, TickBoxState.UNTICK);
-//                                selectionModel.setState(child, TickBoxState.TICK, true);
-//                            }
-//                        }
-//
-//                        // Convert children to tree nodes so we can add parents
-//                        // and children.
-//                        final EntityCheckTreeData entityCheckTreeData = new EntityCheckTreeData(child);
-//                        entityCheckTreeData.setParent(parent);
-//                        if (parent != null && parent instanceof EntityCheckTreeData) {
-//                            ((EntityCheckTreeData) parent).addChild(entityCheckTreeData);
-//                        }
-//                        children.add(entityCheckTreeData);
-//                    }
-//                }
-//
-//                return children;
-//            }
-//        };
-//        treeModel.setUpdateHandler(updateHandler);
-//
-//        selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-//            @Override
-//            public void onSelectionChange(final SelectionChangeEvent event) {
-//                if (!selectionModel.isIgnorable()) {
-//                    DataSelectionEvent.fire(EntityCheckTreePresenter.this, selectionModel.getSelectedSet(), false);
-//                }
-//            }
-//        });
 
         explorerTree = new ExplorerTickBoxTree(restFactory);
 
@@ -168,14 +88,6 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     public void refresh() {
         explorerTree.getTreeModel().refresh();
     }
-
-//    public void setRemoveOrphans(final boolean removeOrphans) {
-//        treeModel.setRemoveOrphans(removeOrphans);
-//    }
-//
-//    public void refresh(final Set<ExplorerNode> openItems, final Integer depth) {
-//        treeModel.refresh(openItems, depth);
-//    }
 
     public ExplorerTreeModel getTreeModel() {
         return explorerTree.getTreeModel();
