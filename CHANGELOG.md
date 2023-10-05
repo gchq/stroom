@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.72] - 2023-10-05
+
+* Issue **#3817** : Fix treatment of negative numbers in StroomQL term values.
+
+* Issue **#3816** : StroomQL HAVING fields are no longer needed in SELECT to apply HAVING filter.
+
+* Issue **#3671** : Stop auto selecting parent folders in export tree when all child items selected.
+
+* Issue **#3823** : Fix explorer drop down tree selection control.
+
+* Issue **#3732** : Fix search result row id uniqueness.
+
+
 ## [v7.2-beta.71] - 2023-10-04
 
 * Issue **#3805** : Fix NPE when building explorer tree.
@@ -6018,7 +6031,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.71...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.72...HEAD
+[v7.2-beta.72]: https://github.com/gchq/stroom/compare/v7.2-beta.71...v7.2-beta.72
 [v7.2-beta.71]: https://github.com/gchq/stroom/compare/v7.2-beta.70...v7.2-beta.71
 [v7.2-beta.70]: https://github.com/gchq/stroom/compare/v7.2-beta.69...v7.2-beta.70
 [v7.2-beta.69]: https://github.com/gchq/stroom/compare/v7.2-beta.68...v7.2-beta.69
