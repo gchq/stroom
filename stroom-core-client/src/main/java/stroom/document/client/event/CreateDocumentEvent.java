@@ -108,6 +108,10 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
         return newDocConsumer;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onCreate(final CreateDocumentEvent event);

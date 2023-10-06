@@ -74,7 +74,7 @@ public class UserNameDataProvider implements Refreshable {
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
                             .call(USER_RESOURCE)
-                            .find(criteria);
+                            .findAssociates(criteria);
                 }
 
                 // We override the default set data functionality to allow the

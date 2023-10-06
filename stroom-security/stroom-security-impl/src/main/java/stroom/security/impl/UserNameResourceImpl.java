@@ -45,6 +45,11 @@ class UserNameResourceImpl implements UserNameResource {
     }
 
     @Override
+    public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
+        return userNameServiceProvider.get().findAssociates(criteria);
+    }
+
+    @Override
     public UserName getByDisplayName(final String displayName) {
         return userNameServiceProvider.get()
                 .getByDisplayName(displayName)

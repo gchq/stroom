@@ -7,6 +7,7 @@ import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -230,6 +231,16 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
 
     public String asCombinedName() {
         return UserName.buildCombinedName(subjectId, displayName);
+    }
+
+    /**
+     * @return "Group" or "User" depending on type.
+     */
+    @JsonIgnore
+    public String getType() {
+        return group
+                ? "Group"
+                : "User";
     }
 
     @Override

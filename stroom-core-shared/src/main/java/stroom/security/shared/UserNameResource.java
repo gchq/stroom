@@ -31,6 +31,16 @@ public interface UserNameResource extends RestResource, DirectRestService {
             operationId = "findUserNames")
     ResultPage<UserName> find(@Parameter(description = "criteria", required = true) FindUserNameCriteria criteria);
 
+    @POST
+    @Path("/findAssociates")
+    @Operation(
+            summary = "Find the user names matching the supplied criteria of users who belong to at least " +
+                    "one of the same groups as the current user. If the current user is admin or has " +
+                    "Manage Users permission then they can see all users.",
+            operationId = "findAssociateUserNames")
+    ResultPage<UserName> findAssociates(
+            @Parameter(description = "criteria", required = true) FindUserNameCriteria criteria);
+
     @GET
     @Path("/getByDisplayName/{displayName}")
     @Operation(
