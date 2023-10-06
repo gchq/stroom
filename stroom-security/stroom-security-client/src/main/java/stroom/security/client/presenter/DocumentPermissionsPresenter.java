@@ -43,13 +43,18 @@ import stroom.widget.tab.client.presenter.LinkTabsPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -69,7 +74,12 @@ public class DocumentPermissionsPresenter
     private final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider;
 
     private Changes changes = new Changes(new HashMap<>(), new HashMap<>());
+
+    // This is the working model of permissions that gets modified as changes are made
     private DocumentPermissions documentPermissions = null;
+    // The permissions initially received from the server before any client side changes are made.
+    // This is map will be set on show then will not change
+    private Map<String, Set<String>> initialPermissions = null;
 
     @Inject
     public DocumentPermissionsPresenter(
@@ -112,38 +122,15 @@ public class DocumentPermissionsPresenter
             final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
             final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
-            final TabData users = tabPresenter.addTab("Users", usersPresenter);
-
+            tabPresenter.addTab("Users", usersPresenter);
             tabPresenter.changeSelectedTab(groups);
 
-            getView().getCopyPermissionsFromParentButton().addClickHandler(event -> {
-                final Rest<DocumentPermissions> rest = restFactory.create();
-                rest
-                        .onSuccess(documentPermissions -> {
-                            // We want to wipe existing permissions, which means updating the removeSet on the
-                            // changeSet.
-                            final Map<String, Set<String>> permissionsToRemove = new HashMap<>();
-                            permissionsToRemove.putAll(usersPresenter.getDocumentPermissions().getPermissions());
-                            permissionsToRemove.putAll(groupsPresenter.getDocumentPermissions().getPermissions());
-
-                            // We need to update the changeSet with all the new permissions.
-                            changes = new Changes(documentPermissions.getPermissions(), permissionsToRemove);
-
-                            // We need to set the document permissions so that what's been changed is visible.
-                            usersPresenter.setDocumentPermissions(
-                                    allPermissions,
-                                    documentPermissions,
-                                    false,
-                                    changes);
-                            groupsPresenter.setDocumentPermissions(
-                                    allPermissions,
-                                    documentPermissions,
-                                    true,
-                                    changes);
-                        })
-                        .call(DOC_PERMISSION_RESOURCE)
-                        .copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef()));
-            });
+            getView().getCopyPermissionsFromParentButton()
+                    .addClickHandler(buildCopyPermissionsFromParentClickHandler(
+                            explorerNode,
+                            allPermissions,
+                            usersPresenter,
+                            groupsPresenter));
             // If we're looking at the root node then we can't copy from the parent because there isn't one.
             if (DocumentTypes.isSystem(explorerNode.getType())) {
                 getView().getCopyPermissionsFromParentButton().setEnabled(false);
@@ -154,6 +141,10 @@ public class DocumentPermissionsPresenter
             rest
                     .onSuccess(documentPermissions -> {
                         this.documentPermissions = documentPermissions;
+                        // Take a deep copy of documentPermissions before the user mutates it with client side
+                        // changes
+                        this.initialPermissions = Collections.unmodifiableMap(
+                                DocumentPermissions.copyPermsMap(documentPermissions.getPermissions()));
                         usersPresenter.setDocumentPermissions(
                                 allPermissions,
                                 documentPermissions,
@@ -165,38 +156,9 @@ public class DocumentPermissionsPresenter
                                 true,
                                 changes);
 
-                        PopupSize popupSize;
-                        if (DocumentTypes.isFolder(explorerNode.getType())) {
-                            popupSize = PopupSize.builder()
-                                    .width(Size
-                                            .builder()
-                                            .initial(1000)
-                                            .min(1000)
-                                            .resizable(true)
-                                            .build())
-                                    .height(Size
-                                            .builder()
-                                            .initial(800)
-                                            .min(800)
-                                            .resizable(true)
-                                            .build())
-                                    .build();
-                        } else {
-                            popupSize = PopupSize.builder()
-                                    .width(Size
-                                            .builder()
-                                            .initial(1000)
-                                            .min(1000)
-                                            .resizable(true)
-                                            .build())
-                                    .height(Size
-                                            .builder()
-                                            .initial(700)
-                                            .min(700)
-                                            .resizable(true)
-                                            .build())
-                                    .build();
-                        }
+                        final PopupSize popupSize = DocumentTypes.isFolder(explorerNode.getType())
+                                ? getFolderPopupSize()
+                                : getDocumentPopupSize();
 
                         ShowPopupEvent.builder(this)
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -211,18 +173,137 @@ public class DocumentPermissionsPresenter
         });
     }
 
+    private ClickHandler buildCopyPermissionsFromParentClickHandler(
+            final ExplorerNode explorerNode,
+            final List<String> allPermissions,
+            final DocumentPermissionsTabPresenter usersPresenter,
+            final DocumentPermissionsTabPresenter groupsPresenter) {
+
+        return event -> {
+            final Rest<DocumentPermissions> rest = restFactory.create();
+            rest
+                    .onSuccess(parentDocPermissions -> {
+                        // We want to wipe existing permissions on the server, which means updating the
+                        // removeSet with all currently
+                        // changeSet.
+//                        final Map<String, Set<String>> permissionsToRemove = new HashMap<>();
+//                        permissionsToRemove.putAll(usersPresenter.getDocumentPermissions().getPermissions());
+//                        permissionsToRemove.putAll(groupsPresenter.getDocumentPermissions().getPermissions());
+
+                        // We want to wipe existing permissions on the server, which means creating REMOVES
+                        // for all the perms that we started with except those that are also on the parent.
+                        final Map<String, Set<String>> permissionsToRemove = excludePermissions(
+                                initialPermissions,
+                                parentDocPermissions.getPermissions());
+                        final Map<String, Set<String>> permissionsToAdd = excludePermissions(
+                                parentDocPermissions.getPermissions(),
+                                initialPermissions);
+
+                        // Now create the ADDs and REMOVEs for the effective changes.
+                        changes = new Changes(permissionsToAdd, permissionsToRemove);
+
+                        // We need to set the document permissions so that what's been changed is visible.
+                        usersPresenter.setDocumentPermissions(
+                                allPermissions,
+                                parentDocPermissions,
+                                false,
+                                changes);
+                        groupsPresenter.setDocumentPermissions(
+                                allPermissions,
+                                parentDocPermissions,
+                                true,
+                                changes);
+                    })
+                    .call(DOC_PERMISSION_RESOURCE)
+                    .copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef()));
+        };
+    }
+
+    /**
+     * @return A new map containing all permissions found in permissions excluding those
+     * found in permissionsToExclude
+     */
+    private Map<String, Set<String>> excludePermissions(final Map<String, Set<String>> permissions,
+                                                        final Map<String, Set<String>> permissionsToExclude) {
+        if (GwtNullSafe.hasEntries(permissionsToExclude)) {
+            return GwtNullSafe.map(permissionsToExclude)
+                    .entrySet()
+                    .stream()
+                    .map(entry -> {
+                        final Set<String> excludeSet = permissionsToExclude.get(entry.getKey());
+                        if (GwtNullSafe.hasItems(excludeSet)) {
+                            final Set<String> newPermSet = GwtNullSafe.stream(entry.getValue())
+                                    .filter(perm -> !excludeSet.contains(perm))
+                                    .collect(Collectors.toSet());
+                            if (newPermSet.isEmpty()) {
+                                return null;
+                            } else {
+                                return new SimpleEntry<>(entry.getKey(), newPermSet);
+                            }
+                        } else {
+                            // Nothing to exclude so return as is
+                            return entry;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        } else {
+            return permissions;
+        }
+    }
+
+    private static PopupSize getDocumentPopupSize() {
+        PopupSize popupSize;
+        popupSize = PopupSize.builder()
+                .width(Size
+                        .builder()
+                        .initial(1000)
+                        .min(1000)
+                        .resizable(true)
+                        .build())
+                .height(Size
+                        .builder()
+                        .initial(700)
+                        .min(700)
+                        .resizable(true)
+                        .build())
+                .build();
+        return popupSize;
+    }
+
+    private static PopupSize getFolderPopupSize() {
+        PopupSize popupSize;
+        popupSize = PopupSize.builder()
+                .width(Size
+                        .builder()
+                        .initial(1000)
+                        .min(1000)
+                        .resizable(true)
+                        .build())
+                .height(Size
+                        .builder()
+                        .initial(800)
+                        .min(800)
+                        .resizable(true)
+                        .build())
+                .build();
+        return popupSize;
+    }
+
     private void onHideRequest(final HidePopupRequestEvent e, final DocRef docRef) {
         if (e.isOk()) {
             final Set<User> owners = documentPermissions.getOwners();
             if (GwtNullSafe.set(owners).size() > 1) {
                 final String ownerListStr = owners.stream()
-                        .map(user -> (user.isGroup() ? "Group" : "User ") + " - " + user.asCombinedName())
+                        .map(user -> (user.isGroup()
+                                ? "Group"
+                                : "User ") + " - " + user.asCombinedName())
                         .sorted()
                         .collect(Collectors.joining("\n"));
                 AlertEvent.fireError(
                         DocumentPermissionsPresenter.this,
-                        "Only one user/group can be the owner of this " + docRef.getType() + ".\n" +
-                                "The following users/groups currently have Owner permission",
+                        "Only one user/group can hold the Owner permission.\n" +
+                                "You have assigned Owner permission to the following users/groups:",
                         ownerListStr,
                         null);
             } else {
@@ -247,6 +328,10 @@ public class DocumentPermissionsPresenter
 
         return documentPermissionsListPresenterProvider.get();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DocumentPermissionsView extends View {
 

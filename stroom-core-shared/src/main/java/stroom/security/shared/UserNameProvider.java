@@ -23,6 +23,13 @@ public interface UserNameProvider {
 
     ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria);
 
+    /**
+     * Finds all users belonging to at least one of the current user's groups.
+     * If the current user is an admin or has {@link PermissionNames#MANAGE_USERS_PERMISSION}
+     * then they will see all users.
+     */
+    ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria);
+
     Optional<UserName> getBySubjectId(final String subjectId);
 
     Optional<UserName> getByDisplayName(final String displayName);

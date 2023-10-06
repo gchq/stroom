@@ -43,11 +43,40 @@ public class UserNameServiceImpl implements UserNameService {
     @Override
     public ResultPage<UserName> find(final FindUserNameCriteria criteria) {
         // Can't allow any user to list all users on the system
-        checkPermission();
-        // usernames with a uuid take priority
+        checkForManageUsersPermission();
         final List<UserName> userNames = userNameProviders.stream()
                 .flatMap(provider ->
                         provider.findUserNames(criteria).stream()
+                                .map(userName -> new PrioritisedUserName(
+                                        provider.getPriority(),
+                                        userName)))
+                .collect(Collectors.groupingBy(
+                        userName -> userName.userName.getSubjectId(),
+                        Collectors.reducing((userName1, userName2) -> {
+                            // Lower == higher priority
+                            if (userName1.priority < userName2.priority
+                                    || userName1.priority == userName2.priority) {
+                                return userName1;
+                            } else {
+                                return userName2;
+                            }
+                        })))
+                .values()
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(PrioritisedUserName::userName)
+                .collect(Collectors.toList());
+
+        return new ResultPage<>(userNames);
+    }
+
+    @Override
+    public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
+        // Any user can perform this, the various userNameProviders will apply perm checks
+        final List<UserName> userNames = userNameProviders.stream()
+                .flatMap(provider ->
+                        provider.findAssociates(criteria).stream()
                                 .map(userName -> new PrioritisedUserName(
                                         provider.getPriority(),
                                         userName)))
@@ -102,7 +131,7 @@ public class UserNameServiceImpl implements UserNameService {
                 .flatMap(optOptUserName -> optOptUserName);
     }
 
-    private void checkPermission() {
+    private void checkForManageUsersPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(
                     securityContext.getUserIdentityForAudit(), "You do not have permission to manage users");

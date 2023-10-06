@@ -36,6 +36,7 @@ public final class PermissionNames {
     public static final String IMPORT_DATA_PERMISSION = "Data - Import";
     public static final String EXPORT_DATA_PERMISSION = "Data - Export";
     public static final String MANAGE_USERS_PERMISSION = "Manage Users";
+    public static final String CHANGE_OWNER_PERMISSION = "Change Owner";
     public static final String STEPPING_PERMISSION = "Pipeline Stepping";
     public static final String MANAGE_PROCESSORS_PERMISSION = "Manage Processors";
     public static final String MANAGE_TASKS_PERMISSION = "Manage Tasks";
@@ -61,6 +62,7 @@ public final class PermissionNames {
             IMPORT_DATA_PERMISSION,
             EXPORT_DATA_PERMISSION,
             MANAGE_USERS_PERMISSION,
+            CHANGE_OWNER_PERMISSION,
             STEPPING_PERMISSION,
             MANAGE_PROCESSORS_PERMISSION,
             MANAGE_TASKS_PERMISSION,
@@ -108,6 +110,9 @@ public final class PermissionNames {
         PERMISSION_TO_DESCRIPTION_MAP.put(
                 MANAGE_USERS_PERMISSION,
                 "Access the screens to manage users, groups, permissions and API keys.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                CHANGE_OWNER_PERMISSION,
+                "Change the ownership of a document or folder to another user.");
         PERMISSION_TO_DESCRIPTION_MAP.put(
                 STEPPING_PERMISSION,
                 "Step data through a pipeline using the Stepper.");

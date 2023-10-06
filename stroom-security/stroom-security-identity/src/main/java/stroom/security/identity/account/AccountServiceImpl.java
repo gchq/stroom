@@ -75,6 +75,16 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     }
 
     @Override
+    public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            return findUserNames(criteria);
+        } else {
+            // No perms so can't see any accounts as accounts do not belong to groups
+            return new ResultPage<>(Collections.emptyList());
+        }
+    }
+
+    @Override
     public Optional<UserName> getBySubjectId(final String subjectId) {
 //        if (shouldProvideNames()) {
 //            return accountDao.get(subjectId)
