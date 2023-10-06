@@ -429,7 +429,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             throw new PermissionException(
                     securityContextProvider.get().getUserIdentityForAudit(),
                     LogUtil.message("A document/folder must have exactly one owner. " +
-                            "Requested changes would result in the following owners [{}].{}",
+                                    "Requested changes would result in the following owners [{}].{}",
                             effectiveOwnersStr, permMsg));
         }
 
@@ -541,6 +541,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         // This is done client side, but to be safe do it again
         validateOwners(changes, currentDocumentPermissions);
 
+        removeInvalidCreatePerms(docRef, documentPermissionServiceImpl, currentDocumentPermissions);
+
         if (clear) {
             // If we are asked to clear all permissions then use all the current perms for
             // this document and then remove them.
@@ -597,6 +599,43 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Previous code incorrectly assigned create perms to non-folders. While not causing a problem, they
+     * are cluttering up the db. It is not possible to tidy these up via a mig script as the security module
+     * does not know the types of the docs in the perms tables, so we will do it gradually via other changes.
+     */
+    private void removeInvalidCreatePerms(final DocRef docRef,
+                                          final DocumentPermissionServiceImpl documentPermissionServiceImpl,
+                                          final DocumentPermissions currentDocumentPermissions) {
+
+        try {
+            if (!DocumentTypes.isFolder(docRef.getType())) {
+                // Not a folder, so should not have create perms on it, so remove them
+                securityContextProvider.get().asProcessingUser(() -> {
+                    NullSafe.map(currentDocumentPermissions.getPermissions()).forEach((userUuid, perms) -> {
+                        final Set<String> createPerms = NullSafe.set(perms)
+                                .stream()
+                                .filter(DocumentPermissionNames::isDocumentCreatePermission)
+                                .collect(Collectors.toSet());
+                        if (!createPerms.isEmpty()) {
+                            LOGGER.info("Removing {} redundant create permissions from {} for userUuid '{}'. " +
+                                            "Permissions removed: {}",
+                                    createPerms.size(), docRef, userUuid, createPerms);
+                            documentPermissionServiceImpl.removePermissions(
+                                    docRef.getUuid(),
+                                    userUuid,
+                                    createPerms);
+                        }
+                    });
+                });
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error removing redundant create perms from {}: {}",
+                    docRef, e.getMessage(), e);
+            // Swallow it as this work is only a nice to have
         }
     }
 
