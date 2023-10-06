@@ -83,7 +83,7 @@ main() {
   # See https://cli.github.com/manual/gh_release_create
   gh release create \
     --title "${BUILD_TAG}" \
-    --notes-from-tag \
+    --notes "${message}" \
     --verify-tag \
     "${args[@]}" \
     "${BUILD_TAG}" \
