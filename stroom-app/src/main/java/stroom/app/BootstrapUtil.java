@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -157,9 +158,9 @@ public class BootstrapUtil {
         Objects.requireNonNull(buildInfo);
         LOGGER.info(LogUtil.inBoxOnNewLine(
                 """
-                Build version: {}
-                Build date:    {}
-                """,
+                        Build version: {}
+                        Build date:    {}
+                        """,
                 buildInfo.getBuildVersion(),
                 DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())));
     }
@@ -202,20 +203,26 @@ public class BootstrapUtil {
                 ensureBuildVersionTable(txnConfig, conn, thisNodeName);
 
                 BootstrapInfo bootstrapInfo = getBootstrapInfoFromDb(txnConfig);
-                boolean isDbBuildVersionUpToDate = bootstrapInfo.getBuildVersion().equals(buildVersion);
 
                 T output = null;
-                if (isDbBuildVersionUpToDate) {
+                if (!isUpgradeRequired(bootstrapInfo, buildVersion)) {
                     handleCorrectBuildVersion(bootstrapInfo, "no lock or DB migration required.");
                     // Set local state so the db modules know not to run flyway when work.get() is called
                     // below
                     DbMigrationState.markBootstrapMigrationsComplete();
                 } else {
-                    LOGGER.info("Found old build version '{}' in {} table with outcome {}. " +
-                                    "Bootstrap lock required.",
-                            bootstrapInfo.getBuildVersion(),
-                            BUILD_VERSION_TABLE_NAME,
-                            bootstrapInfo.getUpgradeOutcome());
+                    if (bootstrapInfo.getUpgradeOutcome().isPresent()) {
+                        LOGGER.info("Found old build version '{}' in table '{}' with upgrade outcome {}. " +
+                                        "Bootstrap lock required to upgrade the version.",
+                                bootstrapInfo.getBuildVersion(),
+                                BUILD_VERSION_TABLE_NAME,
+                                bootstrapInfo.getUpgradeOutcome().get());
+                    } else {
+                        LOGGER.info("Found build version '{}' in table '{}' with empty upgrade outcome. " +
+                                        "Bootstrap lock required to re-run the version upgrade.",
+                                bootstrapInfo.getBuildVersion(),
+                                BUILD_VERSION_TABLE_NAME);
+                    }
                     acquireBootstrapLock(connectionConfig, txnConfig);
 
                     // We now hold a cluster wide lock
@@ -224,16 +231,20 @@ public class BootstrapUtil {
                     // Re-check the lock table state now we are under lock
                     // For the first node these should be the same as when checked above
                     bootstrapInfo = getBootstrapInfoFromDb(txnConfig);
-                    isDbBuildVersionUpToDate = bootstrapInfo.getBuildVersion().equals(buildVersion);
 
-                    if (isDbBuildVersionUpToDate) {
+                    if (!isUpgradeRequired(bootstrapInfo, buildVersion)) {
                         handleCorrectBuildVersion(bootstrapInfo, "releasing lock. No DB migration required.");
                         // Set local state so the db modules know not to run flyway when work.get() is called
                         // below
                         DbMigrationState.markBootstrapMigrationsComplete();
                     } else {
-                        LOGGER.info("Upgrading stroom from '{}' to '{}' under lock",
-                                bootstrapInfo.getBuildVersion(), buildVersion);
+                        if (Objects.equals(bootstrapInfo.getBuildVersion(), buildVersion)) {
+                            LOGGER.info("Re-running the upgrade of stroom to version '{}' under cluster wide lock",
+                                    buildVersion);
+                        } else {
+                            LOGGER.info("Upgrading stroom from '{}' to '{}' under cluster wide lock",
+                                    bootstrapInfo.getBuildVersion(), buildVersion);
+                        }
 
                         // We hold the lock and the db version is out of date so perform work under lock
                         // including doing all the flyway migrations
@@ -283,15 +294,27 @@ public class BootstrapUtil {
         return workOutput;
     }
 
+    private static boolean isUpgradeRequired(final BootstrapInfo bootstrapInfo,
+                                             final String buildVersion) {
+        // Only need to upgrade if the build ver in the db is not the same as the
+        // ver being run.
+        // Also, empty outcome means we haven't yet attempted to boot with this version
+        // or, it has been cleared by an admin after a failed boot.
+        return !Objects.equals(bootstrapInfo.getBuildVersion(), buildVersion)
+                || bootstrapInfo.getUpgradeOutcome().isEmpty();
+    }
+
     private static void handleCorrectBuildVersion(final BootstrapInfo bootstrapInfo,
                                                   final String msgSuffix) {
-        switch (bootstrapInfo.getUpgradeOutcome()) {
+        final UpgradeOutcome upgradeOutcome = bootstrapInfo.getUpgradeOutcome()
+                .orElseThrow(() -> new RuntimeException("Null upgradeOutcome, should not have got here."));
+        switch (upgradeOutcome) {
             case SUCCESS -> {
-                LOGGER.info("Found required build version '{}' in {} table with outcome {}, " +
+                LOGGER.info("Found required build version '{}' in table '{}' with upgrade outcome {}, " +
                                 msgSuffix,
                         bootstrapInfo.getBuildVersion(),
                         BUILD_VERSION_TABLE_NAME,
-                        bootstrapInfo.getUpgradeOutcome());
+                        upgradeOutcome);
 
                 // Quickly drop out of the lock so the other waiting nodes can find this out.
             }
@@ -304,11 +327,14 @@ public class BootstrapUtil {
     }
 
     private static void logFailureAndThrow(final BootstrapInfo bootstrapInfo) {
-        final String msg = LogUtil.message("Build version {} is marked as {} by node {}. " +
+        final String outcome = bootstrapInfo.getUpgradeOutcome()
+                .map(UpgradeOutcome::toString)
+                .orElse("empty");
+        final String msg = LogUtil.message("Build version '{}' has an upgrade outcome of {} on node {}. " +
                         "Either deploy a new version; or fix the issue, set column {}.{} to null " +
                         "then re-try this version. Aborting application startup.",
                 bootstrapInfo.getBuildVersion(),
-                bootstrapInfo.getUpgradeOutcome(),
+                outcome,
                 bootstrapInfo.getExecutingNode(),
                 BUILD_VERSION_TABLE_NAME,
                 OUTCOME_COL_NAME);
@@ -542,6 +568,10 @@ public class BootstrapUtil {
         return connectionConfig;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class BootstrapInfo {
 
         private final String buildVersion;
@@ -564,8 +594,8 @@ public class BootstrapUtil {
             return executingNode;
         }
 
-        public UpgradeOutcome getUpgradeOutcome() {
-            return upgradeOutcome;
+        public Optional<UpgradeOutcome> getUpgradeOutcome() {
+            return Optional.ofNullable(upgradeOutcome);
         }
 
         public boolean isSuccess() {
@@ -574,6 +604,10 @@ public class BootstrapUtil {
 
         public boolean isFailed() {
             return UpgradeOutcome.FAILED.equals(upgradeOutcome);
+        }
+
+        public boolean hasOutcome() {
+            return upgradeOutcome != null;
         }
 
         @Override
@@ -586,10 +620,18 @@ public class BootstrapUtil {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private enum UpgradeOutcome {
         SUCCESS,
         FAILED
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class BootstrapFailureException extends RuntimeException {
 
