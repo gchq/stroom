@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.73] - 2023-10-06
+
+* Fix build issue.
+
+
 ## [v7.2-beta.72] - 2023-10-05
 
 * Issue **#3817** : Fix treatment of negative numbers in StroomQL term values.
@@ -6031,7 +6036,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.72...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.73...HEAD
+[v7.2-beta.73]: https://github.com/gchq/stroom/compare/v7.2-beta.72...v7.2-beta.73
 [v7.2-beta.72]: https://github.com/gchq/stroom/compare/v7.2-beta.71...v7.2-beta.72
 [v7.2-beta.71]: https://github.com/gchq/stroom/compare/v7.2-beta.70...v7.2-beta.71
 [v7.2-beta.70]: https://github.com/gchq/stroom/compare/v7.2-beta.69...v7.2-beta.70
