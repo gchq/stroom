@@ -48,13 +48,10 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -192,13 +189,12 @@ public class DocumentPermissionsPresenter
 
                         // We want to wipe existing permissions on the server, which means creating REMOVES
                         // for all the perms that we started with except those that are also on the parent.
-                        final Map<String, Set<String>> permissionsToRemove = excludePermissions(
+                        final Map<String, Set<String>> permissionsToRemove = DocumentPermissions.excludePermissions(
                                 initialPermissions,
                                 parentDocPermissions.getPermissions());
-                        final Map<String, Set<String>> permissionsToAdd = excludePermissions(
+                        final Map<String, Set<String>> permissionsToAdd = DocumentPermissions.excludePermissions(
                                 parentDocPermissions.getPermissions(),
                                 initialPermissions);
-
                         // Now create the ADDs and REMOVEs for the effective changes.
                         changes = new Changes(permissionsToAdd, permissionsToRemove);
 
@@ -213,44 +209,22 @@ public class DocumentPermissionsPresenter
                                 parentDocPermissions,
                                 true,
                                 changes);
+
+                        GWT.log("After copyFromParent:"
+                                + "\ninitialPermissions:\n"
+                                + DocumentPermissions.permsMapToStr(initialPermissions)
+                                + "\nparentDocPermissions:\n"
+                                + DocumentPermissions.permsMapToStr(parentDocPermissions.getPermissions())
+                                + "\nADDs:\n"
+                                + DocumentPermissions.permsMapToStr(permissionsToAdd)
+                                + "\nREMOVEs:\n"
+                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
                     })
                     .call(DOC_PERMISSION_RESOURCE)
                     .copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef()));
         };
     }
 
-    /**
-     * @return A new map containing all permissions found in permissions excluding those
-     * found in permissionsToExclude
-     */
-    private Map<String, Set<String>> excludePermissions(final Map<String, Set<String>> permissions,
-                                                        final Map<String, Set<String>> permissionsToExclude) {
-        if (GwtNullSafe.hasEntries(permissionsToExclude)) {
-            return GwtNullSafe.map(permissionsToExclude)
-                    .entrySet()
-                    .stream()
-                    .map(entry -> {
-                        final Set<String> excludeSet = permissionsToExclude.get(entry.getKey());
-                        if (GwtNullSafe.hasItems(excludeSet)) {
-                            final Set<String> newPermSet = GwtNullSafe.stream(entry.getValue())
-                                    .filter(perm -> !excludeSet.contains(perm))
-                                    .collect(Collectors.toSet());
-                            if (newPermSet.isEmpty()) {
-                                return null;
-                            } else {
-                                return new SimpleEntry<>(entry.getKey(), newPermSet);
-                            }
-                        } else {
-                            // Nothing to exclude so return as is
-                            return entry;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-        } else {
-            return permissions;
-        }
-    }
 
     private static PopupSize getDocumentPopupSize() {
         PopupSize popupSize;

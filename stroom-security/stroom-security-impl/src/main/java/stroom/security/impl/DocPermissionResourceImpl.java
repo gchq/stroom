@@ -383,20 +383,13 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 .runActionAndLog();
     }
 
-    private void validateOwners(final Changes changes, final DocumentPermissions documentPermissionsBefore) {
+    private void validateOwners(final Changes changes, final DocumentPermissions currentDocumentPermissions) {
 
-        final Set<String> ownerUuidsBefore = NullSafe.stream(documentPermissionsBefore.getOwners())
+        final Set<String> ownerUuidsBefore = NullSafe.stream(currentDocumentPermissions.getOwners())
                 .map(User::getUuid)
                 .collect(Collectors.toSet());
 
         final Set<String> effectiveOwnerUuids = new HashSet<>(ownerUuidsBefore);
-        // Apply the adds
-        NullSafe.map(changes.getAdd())
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().contains(DocumentPermissionNames.OWNER))
-                .map(Entry::getKey)
-                .forEach(effectiveOwnerUuids::add);
         // Apply the removes
         NullSafe.map(changes.getRemove())
                 .entrySet()
@@ -404,6 +397,13 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 .filter(entry -> entry.getValue().contains(DocumentPermissionNames.OWNER))
                 .map(Entry::getKey)
                 .forEach(effectiveOwnerUuids::remove);
+        // Apply the adds
+        NullSafe.map(changes.getAdd())
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().contains(DocumentPermissionNames.OWNER))
+                .map(Entry::getKey)
+                .forEach(effectiveOwnerUuids::add);
         final boolean hasOwnerChanged = !Objects.equals(effectiveOwnerUuids, ownerUuidsBefore);
         final String changeOwnerPermName = PermissionNames.CHANGE_OWNER_PERMISSION;
 
@@ -534,7 +534,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         }
 
         // This is done client side, but to be safe do it again
-        validateOwners(changes, documentPermissionsBefore);
+        validateOwners(changes, currentDocumentPermissions);
 
         if (clear) {
             // If we are asked to clear all permissions then use all the current perms for
