@@ -192,24 +192,6 @@ public class PermissionsListPresenter
         return column;
     }
 
-//    private Optional<InferredPermission> getCurrentUserInferredPermission(final String permission) {
-//        if (currentUser != null) {
-//
-//        } else {
-//            return Collections.emptySet();
-//        }
-//        return Optional.ofNullable(permission)
-//                .map()
-//    }
-
-//    private boolean currentUserHasInferredPermission(final String permission) {
-//        return GwtNullSafe.test(
-//                currentUser,
-//                User::getUuid,
-//                uuid -> documentPermissions.getPermissionsForUser(uuid),
-//                userPerms -> userPerms.contains(permission));
-//    }
-
     private void updateInferredPermissions() {
         if (currentUser != null && documentPermissions != null) {
             final Set<String> directPermissions = documentPermissions.getPermissionsForUser(currentUser.getUuid());
@@ -236,20 +218,7 @@ public class PermissionsListPresenter
                 .fetchDocumentTypes();
     }
 
-    public boolean containsPermission(final Map<String, Set<String>> permsMap,
-                                      final String userUuid,
-                                      final String permission) {
-        return GwtNullSafe.test(permsMap.get(userUuid),
-                perms -> perms.contains(permission));
-    }
-
     public void addPermission(final String userUuid, final String permission) {
-        GWT.log("Before ADD operation for userUuid: " + userUuid
-                + ", permission: '" + permission
-                + "', permissions:\n"
-                + DocumentPermissions.permsMapToStr(documentPermissions.getPermissions())
-                + "\n" + changes.toString());
-
         final Set<String> removals = GwtNullSafe.set(changes.getRemove().get(userUuid));
         // If this perm is in removals for the user/group, then they had it at the start
         // of this edit session, so no need to treat as an ADD, just remove the REMOVE.
@@ -263,21 +232,14 @@ public class PermissionsListPresenter
         // Add to the model.
         documentPermissions.addPermission(userUuid, permission);
         updateInferredPermissions();
-
-        GWT.log("After ADD operation for userUuid: " + userUuid
-                + ", permission: '" + permission
-                + "', permissions:\n"
-                + DocumentPermissions.permsMapToStr(documentPermissions.getPermissions())
-                + "\n" + changes.toString());
+//        GWT.log("After ADD operation for userUuid: " + userUuid
+//                + ", permission: '" + permission
+//                + "', permissions:\n"
+//                + DocumentPermissions.permsMapToStr(documentPermissions.getPermissions())
+//                + "\n" + changes.toString());
     }
 
     public void removePermission(final String userUuid, final String permission) {
-        GWT.log("Before REMOVE operation for userUuid: " + userUuid
-                + ", permission: '" + permission
-                + "', permissions:\n"
-                + DocumentPermissions.permsMapToStr(documentPermissions.getPermissions())
-                + "\n" + changes.toString());
-
         final Set<String> additions = GwtNullSafe.set(changes.getAdd().get(userUuid));
         // If this perm is in removals for the user/group, then they had it at the start
         // of this edit session, so no need to treat as an ADD, just remove the REMOVE.
@@ -291,12 +253,11 @@ public class PermissionsListPresenter
         // Remove from the model.
         documentPermissions.removePermission(userUuid, permission);
         updateInferredPermissions();
-
-        GWT.log("After REMOVE operation for userUuid: " + userUuid
-                + ", permission: '" + permission
-                + "', permissions:\n"
-                + DocumentPermissions.permsMapToStr(documentPermissions.getPermissions())
-                + "\n" + changes.toString());
+//        GWT.log("After REMOVE operation for userUuid: " + userUuid
+//                + ", permission: '" + permission
+//                + "', permissions:\n"
+//                + DocumentPermissions.permsMapToStr(documentPermissions.getPermissions())
+//                + "\n" + changes.toString());
     }
 
     public void toggle(final String userUuid, final String permission) {
@@ -307,9 +268,9 @@ public class PermissionsListPresenter
             hasPermission = permissions.contains(permission);
         }
 
-        GWT.log("toggle, userUuid: " + userUuid
-                + ", permission: '" + permission
-                + ", hasPermission: " + hasPermission);
+//        GWT.log("toggle, userUuid: " + userUuid
+//                + ", permission: '" + permission
+//                + ", hasPermission: " + hasPermission);
 
         if (hasPermission) {
             removePermission(userUuid, permission);

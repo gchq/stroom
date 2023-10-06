@@ -353,15 +353,16 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
         // It is possible in future that we could use Delta rather than Before/After
         // See https://github.com/gchq/event-logging-schema/issues/75
+        final MultiObject before = buildPermissionState(docRef, documentPermissionsBefore);
         stroomEventLoggingServiceProvider.get()
                 .loggedWorkBuilder()
                 .withTypeId(eventTypeId)
                 .withDescription(description)
                 .withDefaultEventAction(UpdateEventAction.builder()
-                        .withBefore(buildPermissionState(docRef, documentPermissionsBefore))
+                        .withBefore(before)
+                        .withAfter(before) // If successful we overwrite with after, but ensures we have one
                         .build())
                 .withComplexLoggedAction(updateEventAction -> {
-
                     // Do the actual change
                     changeDocPermissions(
                             docRef,
@@ -384,6 +385,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     private void validateOwners(final Changes changes, final DocumentPermissions currentDocumentPermissions) {
+        final SecurityContext securityContext = securityContextProvider.get();
 
         final Set<String> ownerUuidsBefore = NullSafe.stream(currentDocumentPermissions.getOwners())
                 .map(User::getUuid)
@@ -406,23 +408,17 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 .forEach(effectiveOwnerUuids::add);
         final boolean hasOwnerChanged = !Objects.equals(effectiveOwnerUuids, ownerUuidsBefore);
         final String changeOwnerPermName = PermissionNames.CHANGE_OWNER_PERMISSION;
+        final String permMsg = !securityContext.hasAppPermission(changeOwnerPermName)
+                ? " Also, " + changeOwnerPermName + " permission is required to change the owner and you do " +
+                "not hold this permission."
+                : "";
 
         if (effectiveOwnerUuids.isEmpty()) {
             throw new PermissionException(
                     securityContextProvider.get().getUserIdentityForAudit(),
                     LogUtil.message("A document/folder must have exactly one owner. " +
-                            "Requested changes would result in no owners"));
-        }
-
-        if (hasOwnerChanged
-                && !securityContextProvider.get().hasAppPermission(changeOwnerPermName)) {
-            throw new PermissionException(
-                    securityContextProvider.get().getUserIdentityForAudit(),
-                    LogUtil.message("{} permission is required to change the owner of a document/folder",
-                            changeOwnerPermName));
-        }
-
-        if (effectiveOwnerUuids.size() > 1) {
+                            "Requested changes would result in no owners.{}", permMsg));
+        } else if (effectiveOwnerUuids.size() > 1) {
             final UserService userService = userServiceProvider.get();
             final String effectiveOwnersStr = effectiveOwnerUuids.stream()
                     .map(userService::loadByUuid)
@@ -433,7 +429,16 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             throw new PermissionException(
                     securityContextProvider.get().getUserIdentityForAudit(),
                     LogUtil.message("A document/folder must have exactly one owner. " +
-                            "Requested changes would result in the following owners [{}]", effectiveOwnersStr));
+                            "Requested changes would result in the following owners [{}].{}",
+                            effectiveOwnersStr, permMsg));
+        }
+
+        if (hasOwnerChanged
+                && !securityContextProvider.get().hasAppPermission(changeOwnerPermName)) {
+            throw new PermissionException(
+                    securityContextProvider.get().getUserIdentityForAudit(),
+                    LogUtil.message("{} permission is required to change the owner of a document/folder",
+                            changeOwnerPermName));
         }
     }
 
