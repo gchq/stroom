@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.75] - 2023-10-06
+
+* Issue **#3797** : Fix bug preventing an owner from granting permissions on a document/folder. Change the document permissions screen to show only users that share at least one group with the user changing the permissions. This is to prevent lowly users from seeing all users on the system. Fix problem of ownership being removed from the owner. Fix other issues with the permission changes not reflecting the changes made in the UI.
+
+* Issue **#3822** : Fix NPE in bootstrap process.
+
+
 ## [v7.2-beta.74] - 2023-10-06
 
 * Fix build.
@@ -6041,7 +6048,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.74...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.75...HEAD
+[v7.2-beta.75]: https://github.com/gchq/stroom/compare/v7.2-beta.74...v7.2-beta.75
 [v7.2-beta.74]: https://github.com/gchq/stroom/compare/v7.2-beta.73...v7.2-beta.74
 [v7.2-beta.73]: https://github.com/gchq/stroom/compare/v7.2-beta.72...v7.2-beta.73
 [v7.2-beta.72]: https://github.com/gchq/stroom/compare/v7.2-beta.71...v7.2-beta.72
