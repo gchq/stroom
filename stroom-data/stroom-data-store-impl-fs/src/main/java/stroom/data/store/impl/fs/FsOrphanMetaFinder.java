@@ -18,9 +18,11 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.TaskContext;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.DurationTimer.IterationTimer;
 import stroom.util.logging.DurationTimer.TimedResult;
@@ -31,7 +33,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,22 +50,23 @@ class FsOrphanMetaFinder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsOrphanMetaFinder.class);
 
-    private static final int BATCH_SIZE = 1000;
-
     private final FsPathHelper fsPathHelper;
     private final MetaService metaService;
     private final DataVolumeService dataVolumeService;
     private final Provider<FsVolumeConfig> fsVolumeConfigProvider;
+    private final PathCreator pathCreator;
 
     @Inject
     public FsOrphanMetaFinder(final FsPathHelper fsPathHelper,
                               final MetaService metaService,
                               final DataVolumeService dataVolumeService,
-                              final Provider<FsVolumeConfig> fsVolumeConfigProvider) {
+                              final Provider<FsVolumeConfig> fsVolumeConfigProvider,
+                              final PathCreator pathCreator) {
         this.fsPathHelper = fsPathHelper;
         this.metaService = metaService;
         this.dataVolumeService = dataVolumeService;
         this.fsVolumeConfigProvider = fsVolumeConfigProvider;
+        this.pathCreator = pathCreator;
     }
 
     public FsOrphanMetaFinderProgress scan(final Consumer<SimpleMeta> orphanConsumer,
@@ -146,10 +148,10 @@ class FsOrphanMetaFinder {
             // The hope is that it is cheaper to list the root files in N parent dirs, where N < batch size,
             // then see if that list contains each meta root file, rather than hitting the FS for each meta
             // root file to check existence.
-            for (final DataVolume dataVol : dataVolumes) {
-                if (!isTerminated(taskContext)) {
-
-                    final long metaId = dataVol.getMetaId();
+            for (final DataVolume dataVolume : dataVolumes) {
+                if (!isTerminated(taskContext) &&
+                        FsVolumeType.STANDARD.equals(dataVolume.getVolume().getVolumeType())) {
+                    final long metaId = dataVolume.getMetaId();
                     // Should never be null as we used the metaMap keys to find the data vols
                     final SimpleMeta meta = metaIdToMetaMap.get(metaId);
                     final String streamTypeName = meta.getTypeName();
@@ -159,10 +161,11 @@ class FsOrphanMetaFinder {
                     // ...042.evt.bgz.seg.dat
                     // ...042.evt.bgz.mf.dat
 
+                    final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
                     final TimedResult<Path> rootFileResult = getRootPathIterationTimer.measureIf(
                             LOGGER.isDebugEnabled(),
                             () -> fsPathHelper.getRootPath(
-                                    Paths.get(dataVol.getVolumePath()),
+                                    volumePath,
                                     meta,
                                     streamTypeName));
                     final Path rootFile = rootFileResult.getResult();

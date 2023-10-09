@@ -23,6 +23,6 @@ public interface DataVolumeDao {
 
         long getMetaId();
 
-        String getVolumePath();
+        FsVolume getVolume();
     }
 }

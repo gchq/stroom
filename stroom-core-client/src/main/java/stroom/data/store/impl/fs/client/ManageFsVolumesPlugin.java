@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.data.store.impl.fs.client.presenter.ManageFSVolumesPresenter;
+import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -34,12 +34,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ManageFSVolumesPlugin extends NodeToolsContentPlugin<ManageFSVolumesPresenter> {
+public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupPresenter> {
 
     @Inject
-    ManageFSVolumesPlugin(final EventBus eventBus,
+    ManageFsVolumesPlugin(final EventBus eventBus,
                           final ContentManager contentManager,
-                          final Provider<ManageFSVolumesPresenter> presenterProvider,
+                          final Provider<FsVolumeGroupPresenter> presenterProvider,
                           final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
     }

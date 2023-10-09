@@ -23,10 +23,9 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +45,7 @@ import java.util.stream.Collectors;
  */
 final class FsSource implements InternalSource, SegmentInputStreamProviderFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsSource.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsSource.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final Map<String, FsSource> childMap = new HashMap<>();
@@ -130,7 +129,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
             try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
                 AttributeMapUtil.read(inputStream, attributeMap);
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
 
             try {
@@ -139,7 +138,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
                         .map(FileUtil::getCanonicalPath)
                         .collect(Collectors.joining("\n")));
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
     }
@@ -151,9 +150,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
             } else {
                 file = fileSystemStreamPathHelper.getChildPath(parent.getFile(), streamType);
             }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("getFile() " + FileUtil.getCanonicalPath(file));
-            }
+            LOGGER.debug(() -> "getFile() " + FileUtil.getCanonicalPath(file));
         }
         return file;
     }
@@ -231,7 +228,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
         // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bdy.dat
         // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bgz
         // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.mf.dat
-        // We wan't to ignore the internal .bdy., .seg. and .mf. ones
+        // We want to ignore the internal .bdy., .seg. and .mf. ones
         // and boil it down to (in this case) Raw Events, Meta & Context
 
         final List<Path> allDescendantStreamFileList = fileSystemStreamPathHelper.findAllDescendantStreamFileList(

@@ -25,6 +25,8 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -45,7 +47,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
 
-public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
+public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
@@ -55,7 +57,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
     private final DateTimeFormatter dateTimeFormatter;
 
     @Inject
-    public FSVolumeStatusListPresenter(final EventBus eventBus,
+    public FsVolumeStatusListPresenter(final EventBus eventBus,
                                        final PagerView view,
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
@@ -97,10 +99,35 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         final Column<FsVolume, String> volumeColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
+                if (volume == null) {
+                    return null;
+                }
+                if (FsVolumeType.S3.equals(volume.getVolumeType())) {
+                    final S3ClientConfig s3ClientConfig = volume.getS3ClientConfig();
+                    if (s3ClientConfig != null) {
+                        if (!s3ClientConfig.isUseFeedAsBucketName()) {
+                            return s3ClientConfig.getDefaultBucketName();
+                        }
+                    }
+                    return "<feed-name>.<stream-type>";
+                }
+
                 return volume.getPath();
             }
         };
         dataGrid.addResizableColumn(volumeColumn, "Path", 300);
+
+        // Volume type.
+        final Column<FsVolume, String> volumeTypeColumn = new Column<FsVolume, String>(new TextCell()) {
+            @Override
+            public String getValue(final FsVolume row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getVolumeType().getDisplayValue();
+            }
+        };
+        dataGrid.addResizableColumn(volumeTypeColumn, "Type", 90);
 
         // Status.
         final Column<FsVolume, String> streamStatusColumn = new Column<FsVolume, String>(new TextCell()) {

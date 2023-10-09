@@ -4,7 +4,9 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.docref.DocRef;
 import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeInfo;
@@ -78,6 +80,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
+    private final FsVolumeGroupService fsVolumeGroupService;
     private final FsVolumeStateDao fileSystemVolumeStateDao;
     private final SecurityContext securityContext;
     private final Provider<FsVolumeConfig> volumeConfigProvider;
@@ -97,6 +100,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     @Inject
     public FsVolumeService(final FsVolumeDao fsVolumeDao,
+                           final FsVolumeGroupService fsVolumeGroupService,
                            final FsVolumeStateDao fileSystemVolumeStateDao,
                            final SecurityContext securityContext,
                            final Provider<FsVolumeConfig> volumeConfigProvider,
@@ -108,6 +112,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final TaskContextFactory taskContextFactory,
                            final HasCapacitySelectorFactory hasCapacitySelectorFactory) {
         this.fsVolumeDao = fsVolumeDao;
+        this.fsVolumeGroupService = fsVolumeGroupService;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
         this.securityContext = securityContext;
         this.volumeConfigProvider = volumeConfigProvider;
@@ -154,6 +159,14 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
                 final FsVolumeState fileVolumeState = fileSystemVolumeStateDao.create(new FsVolumeState());
                 fileVolume.setVolumeState(fileVolumeState);
+
+                if (fileVolume.getVolumeGroupId() == null) {
+                    final FsVolumeGroup fsVolumeGroup = fsVolumeGroupService
+                            .getOrCreate(volumeConfigProvider.get().getDefaultStreamVolumeGroupName());
+                    if (fsVolumeGroup != null) {
+                        fileVolume.setVolumeGroupId(fsVolumeGroup.getId());
+                    }
+                }
 
                 AuditUtil.stamp(securityContext, fileVolume);
                 result = fsVolumeDao.create(fileVolume);
@@ -629,6 +642,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private void createVolume(final Path path) {
         final FsVolume fileVolume = new FsVolume();
+        fileVolume.setVolumeType(FsVolumeType.STANDARD);
         fileVolume.setPath(FileUtil.getCanonicalPath(path));
         create(fileVolume);
     }
@@ -646,7 +660,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     .getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                    " Please manually set limit for index volume. {}",
+                            " Please manually set limit for index volume. {}",
                     FileUtil.getCanonicalPath(path), e.getMessage()));
             return OptionalLong.empty();
         }

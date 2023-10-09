@@ -27,7 +27,7 @@ import stroom.config.global.client.view.GlobalPropertyTabViewImpl;
 import stroom.core.client.gin.PluginModule;
 import stroom.data.grid.client.WrapperView;
 import stroom.data.grid.client.WrapperViewImpl;
-import stroom.data.store.impl.fs.client.ManageFSVolumesPlugin;
+import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
@@ -63,7 +63,7 @@ public class MonitoringModule extends PluginModule {
         // Node management.
         bindPlugin(NodeMonitoringPlugin.class);
 
-        bindPlugin(ManageFSVolumesPlugin.class);
+        bindPlugin(ManageFsVolumesPlugin.class);
         bindPlugin(ManageIndexVolumesPlugin.class);
         bindPlugin(ManageGlobalPropertiesPlugin.class);
 

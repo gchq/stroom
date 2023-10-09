@@ -18,6 +18,7 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.S3TestVolumeUtil;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.index.VolumeCreator;
@@ -66,6 +67,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final IndexVolumeService indexVolumeService;
     private final UserNameService userNameService;
     private final ExplorerNodeService explorerNodeService;
+    private static final boolean USE_S3 = true;
 
     //    private static boolean needsCleanup;
     // Thread local for parallel test running
@@ -128,6 +130,10 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
         fsVolumeService.ensureDefaultVolumes();
         fsVolumeService.flush();
+
+        if (USE_S3) {
+            S3TestVolumeUtil.alterVolumes(fsVolumeService);
+        }
 
         final FsVolume fsVolume = fsVolumeService.getVolume();
         if (fsVolume == null) {

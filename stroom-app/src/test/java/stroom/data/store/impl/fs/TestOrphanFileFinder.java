@@ -31,6 +31,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -78,6 +79,8 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
     private Store streamStore;
     @Inject
     private MetaService metaService;
+    @Inject
+    private PathCreator pathCreator;
     // Use provider so we can set up the config before this guice create this
     @Inject
     private Provider<FsOrphanFileFinderExecutor> fsOrphanFileFinderExecutorProvider;
@@ -88,7 +91,9 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                 .forEach(meta -> {
                     LOGGER.info("Deleting meta with id: {}, volume: {}",
                             meta.getId(),
-                            dataVolumeService.findDataVolume(meta.getId()).getVolumePath());
+                            FileUtil.getCanonicalPath(
+                                    pathCreator.toAppPath(dataVolumeService
+                                            .findDataVolume(meta.getId()).getVolume().getPath())));
                     metaService.delete(meta.getId());
                 });
 
@@ -413,7 +418,10 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                     .forEach(meta -> {
                         LOGGER.info("Found meta with id: {}, volume: {}",
                                 meta.getId(),
-                                dataVolumeService.findDataVolume(meta.getId()).getVolumePath());
+                                FileUtil.getCanonicalPath(
+                                        pathCreator
+                                                .toAppPath(dataVolumeService
+                                                        .findDataVolume(meta.getId()).getVolume().getPath())));
                     });
 
             listAllVolsContent();

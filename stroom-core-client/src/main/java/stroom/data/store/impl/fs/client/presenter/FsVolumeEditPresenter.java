@@ -19,11 +19,14 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter.FsVolumeEditView;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.index.shared.ValidationResult;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.ModelStringUtil;
@@ -39,37 +42,35 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.function.Consumer;
 
-public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresenter.VolumeEditView> {
+public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
+    private final EditorPresenter editorPresenter;
     private final RestFactory restFactory;
     private FsVolume volume;
 
     @Inject
-    public FSVolumeEditPresenter(final EventBus eventBus, final VolumeEditView view,
+    public FsVolumeEditPresenter(final EventBus eventBus,
+                                 final FsVolumeEditView view,
+                                 final EditorPresenter editorPresenter,
                                  final RestFactory restFactory) {
         super(eventBus, view);
+        this.editorPresenter = editorPresenter;
         this.restFactory = restFactory;
-    }
 
-//    public void addVolume(final FsVolume volume, final Consumer<FsVolume> consumer) {
-//        read(volume, "Add Volume", consumer);
-//    }
-//
-//    public void editVolume(final FsVolume volume, final Consumer<FsVolume> consumer) {
-//        read(volume, "Edit Volume", consumer);
-//    }
-//
-//
+        editorPresenter.setMode(AceEditorMode.JSON);
+        view.setConfigView(editorPresenter.getView());
+    }
 
     void show(final FsVolume volume, final String title, final Consumer<FsVolume> consumer) {
         read(volume);
 
-        final PopupSize popupSize = PopupSize.resizableX();
+        final PopupSize popupSize = PopupSize.resizable(650, 650, 400, 500);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -86,7 +87,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
                             }
 
                         } catch (final RuntimeException e) {
-                            AlertEvent.fireError(FSVolumeEditPresenter.this, e.getMessage(), null);
+                            AlertEvent.fireError(FsVolumeEditPresenter.this, e.getMessage(), null);
                         }
                     } else {
                         consumer.accept(null);
@@ -107,7 +108,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
                         }
                     } else if (validationResult.isWarning()) {
                         ConfirmEvent.fireWarn(
-                                FSVolumeEditPresenter.this,
+                                FsVolumeEditPresenter.this,
                                 validationResult.getMessage(),
                                 confirmOk -> {
                                     if (confirmOk) {
@@ -118,13 +119,13 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
                                 });
                     } else {
                         AlertEvent.fireError(
-                                FSVolumeEditPresenter.this,
+                                FsVolumeEditPresenter.this,
                                 validationResult.getMessage(),
                                 null);
                     }
                 })
                 .onFailure(throwable -> {
-                    AlertEvent.fireError(FSVolumeEditPresenter.this, throwable.getMessage(), null);
+                    AlertEvent.fireError(FsVolumeEditPresenter.this, throwable.getMessage(), null);
                 })
                 .call(FS_VOLUME_RESOURCE)
                 .validate(volume);
@@ -154,9 +155,12 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
     private void read(final FsVolume volume) {
         this.volume = volume;
 
+        getView().getVolumeType().addItems(FsVolumeType.values());
+        getView().getVolumeType().setValue(volume.getVolumeType());
         getView().getPath().setText(volume.getPath());
-        getView().getStatus().addItems(VolumeUseStatus.values());
-        getView().getStatus().setValue(volume.getStatus());
+        getView().getVolumeStatus().addItems(VolumeUseStatus.values());
+        getView().getVolumeStatus().setValue(volume.getStatus());
+        editorPresenter.setText(volume.getS3ClientConfigData());
 
         if (volume.getByteLimit() != null) {
             getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(
@@ -169,8 +173,10 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
     }
 
     private void write() {
+        volume.setVolumeType(getView().getVolumeType().getValue());
         volume.setPath(getView().getPath().getText());
-        volume.setStatus(getView().getStatus().getValue());
+        volume.setStatus(getView().getVolumeStatus().getValue());
+        volume.setS3ClientConfigData(editorPresenter.getText());
 
         Long bytesLimit = null;
         final String limit = getView().getByteLimit().getText().trim();
@@ -180,12 +186,16 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
         volume.setByteLimit(bytesLimit);
     }
 
-    public interface VolumeEditView extends View, Focus {
+    public interface FsVolumeEditView extends View, Focus {
+
+        SelectionBox<FsVolumeType> getVolumeType();
 
         HasText getPath();
 
-        SelectionBox<VolumeUseStatus> getStatus();
+        SelectionBox<VolumeUseStatus> getVolumeStatus();
 
         HasText getByteLimit();
+
+        void setConfigView(View view);
     }
 }

@@ -6,7 +6,10 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.db.util.JooqUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -15,6 +18,7 @@ import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.TableField;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +29,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
+import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.FS_VOLUME_GROUP;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;
 
 @Singleton
@@ -131,10 +136,43 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
                 .map(this::recordToVolume);
     }
 
+    @Override
+    public List<FsVolume> getVolumesInGroup(final String groupName) {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                        .select()
+                        .from(FS_VOLUME)
+                        .join(FS_VOLUME_STATE)
+                        .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
+                        .where(FS_VOLUME_GROUP.NAME.eq(groupName))
+                        .fetch())
+                .map(this::recordToVolume);
+    }
+
+    @Override
+    public List<FsVolume> getVolumesInGroup(final int groupId) {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                        .select()
+                        .from(FS_VOLUME)
+                        .join(FS_VOLUME_STATE)
+                        .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .where(FS_VOLUME.FK_FS_VOLUME_GROUP_ID.eq(groupId))
+                        .fetch())
+                .map(this::recordToVolume);
+    }
+
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {
+        byte[] data = null;
+        if (fileVolume.getS3ClientConfigData() != null) {
+            data = fileVolume.getS3ClientConfigData().getBytes(StandardCharsets.UTF_8);
+        }
+
         record.from(fileVolume);
         record.set(FS_VOLUME.STATUS, fileVolume.getStatus().getPrimitiveValue());
         record.set(FS_VOLUME.FK_FS_VOLUME_STATE_ID, fileVolume.getVolumeState().getId());
+        record.set(FS_VOLUME.VOLUME_TYPE, fileVolume.getVolumeType().getId());
+        record.set(FS_VOLUME.FK_FS_VOLUME_GROUP_ID, fileVolume.getVolumeGroupId());
+        record.set(FS_VOLUME.DATA, data);
     }
 
     private FsVolume recordToVolume(Record record) {
@@ -161,6 +199,17 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
                 VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(FS_VOLUME.STATUS)));
         fileVolume.setByteLimit(record.get(FS_VOLUME.BYTE_LIMIT));
         fileVolume.setVolumeState(fileSystemVolumeState);
+        fileVolume.setVolumeType(FsVolumeType.fromId(record.get(FS_VOLUME.VOLUME_TYPE)));
+        fileVolume.setVolumeGroupId(record.get(FS_VOLUME.FK_FS_VOLUME_GROUP_ID));
+
+        final byte[] data = record.get(FS_VOLUME.DATA);
+        if (data != null) {
+            final String s3ClientConfigData = new String(data, StandardCharsets.UTF_8);
+            fileVolume.setS3ClientConfigData(s3ClientConfigData);
+            final S3ClientConfig s3ClientConfig = JsonUtil
+                    .readValue(s3ClientConfigData, S3ClientConfig.class);
+            fileVolume.setS3ClientConfig(s3ClientConfig);
+        }
         return fileVolume;
     }
 

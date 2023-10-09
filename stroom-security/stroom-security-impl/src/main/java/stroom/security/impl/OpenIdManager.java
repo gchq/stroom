@@ -212,10 +212,12 @@ class OpenIdManager {
     private String createLogoutUri(final String endpoint,
                                    final String clientId,
                                    final AuthenticationState state) {
+        UriBuilder redirect = UriBuilder.fromUri(state.getRedirectUri());
+        redirect = UriBuilderUtil.addParam(redirect, OpenId.STATE, state.getId());
+
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.POST_LOGOUT_REDIRECT_URI, state.getRedirectUri());
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state.getId());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.POST_LOGOUT_REDIRECT_URI, redirect.build().toString());
         return uriBuilder.build().toString();
     }
 }

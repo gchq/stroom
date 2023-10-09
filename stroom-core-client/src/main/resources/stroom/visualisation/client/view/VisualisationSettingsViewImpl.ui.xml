@@ -12,7 +12,7 @@
         <form:FormGroup identity="visualisationSettingsSettings"
                         label="Settings"
                         addStyleNames="default-min-sizes flex-grow-1">
-            <g:SimplePanel ui:field="settings" addStyleNames="dock-max stroom-control"/>
+            <g:SimplePanel ui:field="settings" addStyleNames="dock-max stroom-control__no-padding"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

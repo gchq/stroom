@@ -342,6 +342,47 @@ export interface Automate {
   refreshInterval?: string;
 }
 
+export type AwsBasicCredentials = AwsCredentials & { accessKeyId?: string; secretAccessKey?: string };
+
+export interface AwsCredentials {
+  type: string;
+}
+
+export interface AwsHttpConfig {
+  connectionTimeout?: string;
+  proxyConfiguration?: AwsProxyConfig;
+  trustAllCertificatesEnabled?: boolean;
+}
+
+export type AwsProfileCredentials = AwsCredentials & { profileFilePath?: string; profileName?: string };
+
+export interface AwsProxyConfig {
+  host?: string;
+  password?: string;
+
+  /** @format int32 */
+  port?: number;
+  scheme?: string;
+  useSystemPropertyValues?: boolean;
+  username?: string;
+}
+
+export type AwsSessionCredentials = AwsCredentials & {
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  sessionToken?: string;
+};
+
+export type AwsWebCredentials = AwsCredentials & {
+  asyncCredentialUpdateEnabled?: boolean;
+  prefetchTime?: string;
+  roleArn?: string;
+  roleSessionName?: string;
+  sessionDuration?: string;
+  staleTime?: string;
+  webIdentityTokenFile?: string;
+};
+
 export interface Base64EncodedDocumentData {
   dataMap?: Record<string, string>;
 
@@ -926,6 +967,7 @@ export interface DocumentType {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -1083,6 +1125,7 @@ export interface DocumentType {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1222,7 +1265,14 @@ export interface ElasticIndexTestResponse {
 }
 
 export interface EntityEvent {
-  action?: "CREATE" | "UPDATE" | "DELETE" | "CLEAR_CACHE";
+  action?:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CLEAR_CACHE"
+    | "CREATE_EXPLORER_NODE"
+    | "UPDATE_EXPLORER_NODE"
+    | "DELETE_EXPLORER_NODE";
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
@@ -1295,6 +1345,7 @@ export interface ExplorerDocContentMatch {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -1452,6 +1503,7 @@ export interface ExplorerDocContentMatch {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1478,6 +1530,7 @@ export interface ExplorerNode {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -1635,6 +1688,7 @@ export interface ExplorerNode {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1644,14 +1698,11 @@ export interface ExplorerNode {
     | "USERS"
     | "VOLUMES"
     | "WARNING";
-  isFavourite?: boolean;
-  isFilterMatch?: boolean;
-  isFolder?: boolean;
   name?: string;
+  nodeFlags?: ("C" | "D" | "I" | "V" | "FM" | "FN" | "F" | "L" | "O")[];
   nodeInfoList?: NodeInfo[];
-  nodeState?: "OPEN" | "CLOSED" | "LEAF";
   rootNodeUuid?: string;
-  tags?: string;
+  tags?: string[];
   type?: string;
   uniqueKey?: ExplorerNodeKey;
   uuid?: string;
@@ -1705,6 +1756,7 @@ export interface ExplorerTreeFilter {
   includedTypes?: string[];
   nameFilter?: string;
   nameFilterChange?: boolean;
+  nodeFlags?: ("C" | "D" | "I" | "V" | "FM" | "FN" | "F" | "L" | "O")[];
   requiredPermissions?: string[];
   tags?: string[];
 }
@@ -1960,6 +2012,7 @@ export interface FindExplorerNodeCriteria {
   /** @format int32 */
   minDepth?: number;
   openItems?: ExplorerNodeKey[];
+  showAlerts?: boolean;
   temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
@@ -2107,6 +2160,7 @@ export interface FsVolume {
   /** @format int32 */
   id?: number;
   path?: string;
+  s3ClientConfig?: S3ClientConfig;
   status?: "ACTIVE" | "INACTIVE" | "CLOSED";
 
   /** @format int64 */
@@ -2115,7 +2169,28 @@ export interface FsVolume {
 
   /** @format int32 */
   version?: number;
+
+  /** @format int32 */
+  volumeGroupId?: number;
   volumeState?: FsVolumeState;
+  volumeType?: "STANDARD" | "S3";
+}
+
+export interface FsVolumeGroup {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+
+  /** @format int32 */
+  version?: number;
 }
 
 export interface FsVolumeState {
@@ -2822,6 +2897,7 @@ export interface PipelineElementType {
     | "ALERT"
     | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
     | "AUTO_REFRESH"
@@ -2979,6 +3055,7 @@ export interface PipelineElementType {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -3315,7 +3392,9 @@ export type QueryComponentSettings = ComponentSettings & {
 };
 
 export interface QueryConfig {
+  dashboardPipelineSelectorIncludedTags?: string[];
   infoPopup?: InfoPopupConfig;
+  viewPipelineSelectorIncludedTags?: string[];
 }
 
 export interface QueryContext {
@@ -3628,6 +3707,15 @@ export interface ResultPageFsVolume {
 /**
  * A page of results.
  */
+export interface ResultPageFsVolumeGroup {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FsVolumeGroup[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageIndexShard {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -3792,6 +3880,48 @@ export interface Row {
 
   /** The value for this row of data. The values in the list are in the same order as the fields in the ResultRequest */
   values: string[];
+}
+
+export interface S3ClientConfig {
+  accelerate?: boolean;
+  async?: boolean;
+  checksumValidationEnabled?: boolean;
+  createBuckets?: boolean;
+  credentials?: AwsCredentials;
+  credentialsProviderType?:
+    | "ANONYMOUS"
+    | "DEFAULT"
+    | "ENVIRONMENT_VARIABLE"
+    | "PROFILE"
+    | "STATIC"
+    | "SYSTEM_PROPERTY"
+    | "WEB";
+  crossRegionAccessEnabled?: boolean;
+  defaultBucketName?: string;
+  endpointOverride?: string;
+  forcePathStyle?: boolean;
+  httpConfiguration?: AwsHttpConfig;
+
+  /** @format int32 */
+  maxConcurrency?: number;
+
+  /** @format int64 */
+  minimalPartSizeInBytes?: number;
+  multipart?: boolean;
+
+  /** @format int32 */
+  numRetries?: number;
+
+  /** @format int64 */
+  readBufferSizeInBytes?: number;
+  region?: string;
+
+  /** @format double */
+  targetThroughputInGbps?: number;
+
+  /** @format int64 */
+  thresholdInBytes?: number;
+  useFeedAsBucketName?: boolean;
 }
 
 export interface SavePipelineXmlRequest {
@@ -4657,6 +4787,7 @@ export interface UiConfig {
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
+  referencePipelineSelectorIncludedTags?: string[];
   requireReactWrapper?: boolean;
   source?: SourceConfig;
   splash?: SplashConfig;
@@ -7015,6 +7146,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name FetchExplorerNodeTags
+     * @summary Fetch all known explorer node tags
+     * @request GET:/explorer/v2/fetchExplorerNodeTags
+     * @secure
+     */
+    fetchExplorerNodeTags: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/explorer/v2/fetchExplorerNodeTags`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name FetchExplorerNodes
      * @summary Fetch explorer nodes
      * @request POST:/explorer/v2/fetchExplorerNodes
@@ -7137,6 +7285,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     renameExplorerItems: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
       this.request<any, ExplorerNode>({
         path: `/explorer/v2/rename`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name UpdateExplorerNodeTags
+     * @summary Update explorer node tags
+     * @request PUT:/explorer/v2/tags
+     * @secure
+     */
+    updateExplorerNodeTags: (data: ExplorerNode, params: RequestParams = {}) =>
+      this.request<any, ExplorerNode>({
+        path: `/explorer/v2/tags`,
         method: "PUT",
         body: data,
         secure: true,
@@ -7413,6 +7580,114 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateFsVolume: (id: number, data: FsVolume, params: RequestParams = {}) =>
       this.request<any, FsVolume>({
         path: `/fsVolume/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name CreateFsVolumeGroup
+     * @summary Creates a data volume group
+     * @request POST:/fsVolume/volumeGroup/v2
+     * @secure
+     */
+    createFsVolumeGroup: (data: string, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FetchFsVolumeGroupByName
+     * @summary Gets a data volume group by name
+     * @request GET:/fsVolume/volumeGroup/v2/fetchByName/{name}
+     * @secure
+     */
+    fetchFsVolumeGroupByName: (name: string, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/fetchByName/${name}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FindFsVolumeGroups
+     * @summary Finds data volume groups matching request
+     * @request POST:/fsVolume/volumeGroup/v2/find
+     * @secure
+     */
+    findFsVolumeGroups: (data: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageFsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name DeleteFsVolumeGroup
+     * @summary Deletes a data volume group
+     * @request DELETE:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    deleteFsVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FetchFsVolumeGroup
+     * @summary Gets a data volume group
+     * @request GET:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    fetchFsVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name UpdateFsVolumeGroup
+     * @summary Updates a data volume group
+     * @request PUT:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    updateFsVolumeGroup: (id: number, data: FsVolumeGroup, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
         method: "PUT",
         body: data,
         secure: true,

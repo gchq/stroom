@@ -48,6 +48,7 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -96,6 +97,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private FeedStore feedService;
     @Inject
     private ExplorerNodeService explorerNodeService;
+    @Inject
+    private PathCreator pathCreator;
 
     private DocRef feed1;
     private DocRef feed2;
@@ -740,7 +743,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
 
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
-        final Path volumePath = Paths.get(dataVolume.getVolumePath());
+        final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
         final Path rootFile = pathHelper.getRootPath(volumePath, meta, StreamTypeNames.RAW_EVENTS);
 
         assertThat(Files.isRegularFile(rootFile)).isTrue();

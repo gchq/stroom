@@ -16,31 +16,38 @@
 
 package stroom.data.store.impl.fs.client.view;
 
-import stroom.data.store.impl.fs.client.presenter.FSVolumeEditPresenter.VolumeEditView;
+import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter.FsVolumeEditView;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.item.client.SelectionBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
+public class FsVolumeEditViewImpl extends ViewImpl implements FsVolumeEditView {
 
     private final Widget widget;
 
+    @UiField
+    SelectionBox<FsVolumeType> volumeType;
     @UiField
     TextBox path;
     @UiField
     SelectionBox<VolumeUseStatus> status;
     @UiField
     TextBox byteLimit;
+    @UiField
+    SimplePanel configEditorContainer;
 
     @Inject
-    public FSVolumeEditViewImpl(final Binder binder) {
+    public FsVolumeEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -55,12 +62,17 @@ public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     }
 
     @Override
+    public SelectionBox<FsVolumeType> getVolumeType() {
+        return volumeType;
+    }
+
+    @Override
     public HasText getPath() {
         return path;
     }
 
     @Override
-    public SelectionBox<VolumeUseStatus> getStatus() {
+    public SelectionBox<VolumeUseStatus> getVolumeStatus() {
         return status;
     }
 
@@ -69,6 +81,12 @@ public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
         return byteLimit;
     }
 
-    public interface Binder extends UiBinder<Widget, FSVolumeEditViewImpl> {
+    @Override
+    public void setConfigView(final View view) {
+        configEditorContainer.setWidget(view.asWidget());
+    }
+
+    public interface Binder extends UiBinder<Widget, FsVolumeEditViewImpl> {
+
     }
 }
