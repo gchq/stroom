@@ -43,6 +43,7 @@ import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.Pip
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -72,6 +73,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineStructureView, PipelineDoc>
@@ -674,7 +676,20 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     event.hide();
                 };
 
-                newElementPresenter.show(elementType, handler);
+                // We need to suggest a unique id for the element, else the user will get an
+                // error if they click ok with a dup id.
+                final Set<String> existingIds = pipelineTreePresenter.getIds();
+                final String suggestedIdBase = ModelStringUtil.toCamelCase(elementType.getType());
+                String suggestedId = suggestedIdBase;
+
+                int suffix = 2;
+                if (existingIds.contains(suggestedId)) {
+                    do {
+                        suggestedId = suggestedIdBase + suffix++;
+                    } while (existingIds.contains(suggestedId));
+                }
+
+                newElementPresenter.show(elementType, handler, suggestedId);
             }
         }
     }
