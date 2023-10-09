@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -68,6 +69,7 @@ class ExplorerTreeModel implements EntityEvent.Handler {
     private final ExplorerActionHandlers explorerActionHandlers;
     private final BrokenDependenciesCache brokenDependenciesCache;
     private final SecurityContext securityContext;
+    private final Provider<ExplorerConfig> explorerConfigProvider;
 
     private volatile UnmodifiableTreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
@@ -81,7 +83,8 @@ class ExplorerTreeModel implements EntityEvent.Handler {
                       final TaskContextFactory taskContextFactory,
                       final ExplorerActionHandlers explorerActionHandlers,
                       final BrokenDependenciesCache brokenDependenciesCache,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final Provider<ExplorerConfig> explorerConfigProvider) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executor = executor;
@@ -89,6 +92,7 @@ class ExplorerTreeModel implements EntityEvent.Handler {
         this.explorerActionHandlers = explorerActionHandlers;
         this.brokenDependenciesCache = brokenDependenciesCache;
         this.securityContext = securityContext;
+        this.explorerConfigProvider = explorerConfigProvider;
     }
 
     private boolean isSynchronousUpdateRequired(final long minId, final long now) {
@@ -171,10 +175,12 @@ class ExplorerTreeModel implements EntityEvent.Handler {
                         "Create model");
 
                 // Make sure the cache is fresh for our new model
-                brokenDependenciesCache.invalidate();
-                LOGGER.logDurationIfDebugEnabled(() ->
-                                addBrokenDependencies(newModel),
-                        "Add dependencies to model");
+                if (explorerConfigProvider.get().getDependencyWarningsEnabled()) {
+                    brokenDependenciesCache.invalidate();
+                    LOGGER.logDurationIfDebugEnabled(() ->
+                                    addBrokenDependencies(newModel),
+                            "Add dependencies to model");
+                }
 
                 // Now make it immutable as this is our master model
                 newUnmodifiableModel = UnmodifiableTreeModel.wrap(newModel);
@@ -190,8 +196,12 @@ class ExplorerTreeModel implements EntityEvent.Handler {
         final Map<DocRef, Set<DocRef>> brokenDepsMap = NullSafe.map(brokenDependenciesCache.getMap());
         brokenDepsMap.forEach((nodeDocRef, missingDepDocRefs) -> {
             final ExplorerNode node = treeModel.getNode(nodeDocRef);
-            final List<NodeInfo> nodeInfos = buildNodeInfo(missingDepDocRefs);
-            treeModel.addNodeInfo(node, nodeInfos);
+            if (node != null) {
+                final List<NodeInfo> nodeInfos = buildNodeInfo(missingDepDocRefs);
+                if (!nodeInfos.isEmpty()) {
+                    treeModel.addNodeInfo(node, nodeInfos);
+                }
+            }
         });
     }
 

@@ -8,14 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StoredValueKeyFactory {
+
     private final CompiledDepths compiledDepths;
     private final Generator[][] groupGenerators;
     private final Generator timeGenerator;
+    private final KeyFactory keyFactory;
 
     public StoredValueKeyFactory(final CompiledDepths compiledDepths,
-                       final CompiledField[] compiledFieldArray,
-                       final KeyFactoryConfig keyFactoryConfig) {
+                                 final CompiledField[] compiledFieldArray,
+                                 final KeyFactoryConfig keyFactoryConfig,
+                                 final KeyFactory keyFactory) {
         this.compiledDepths = compiledDepths;
+        this.keyFactory = keyFactory;
         Generator[][] groupGenerators;
         Generator timeGenerator = null;
 
@@ -79,7 +83,7 @@ public class StoredValueKeyFactory {
 
         } else {
             // This item will not be grouped.
-            return parentKey.resolve(timeMs, 0);
+            return parentKey.resolve(timeMs, keyFactory.getUniqueId());
         }
     }
 
@@ -92,7 +96,7 @@ public class StoredValueKeyFactory {
 
         } else {
             // This item will not be grouped.
-            return parentKey.resolve(getTimeMs(storedValues), 0);
+            return parentKey.resolve(getTimeMs(storedValues), keyFactory.getUniqueId());
         }
     }
 }

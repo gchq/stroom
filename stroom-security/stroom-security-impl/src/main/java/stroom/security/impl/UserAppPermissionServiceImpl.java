@@ -85,7 +85,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
     private void validatePermissionName(final String permission) {
         if (!ALL_PERMISSIONS.contains(permission)) {
-            throw new RuntimeException(permission + " is not a valid permission name");
+            throw new RuntimeException("'" + permission + "' is not a valid permission name");
         }
     }
 

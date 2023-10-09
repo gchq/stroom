@@ -190,13 +190,12 @@ class UserServiceImpl implements UserService {
 
         final Predicate<User> userPredicate = user -> user.getUuid().length() > 5 && !user.isGroup();
 
-        // Admin users will see all.
-        if (securityContext.isAdmin()) {
+        // An admin or a MANAGE_USERS user will see all.
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             final FindUserCriteria findUserCriteria = new FindUserCriteria(filter, false);
             final List<User> users = find(findUserCriteria);
 
             userSet = new HashSet<>(users);
-
         } else {
             userSet = new HashSet<>();
             getUserBySubjectId(securityContext.getSubjectId())

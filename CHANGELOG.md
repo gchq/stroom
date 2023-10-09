@@ -13,6 +13,74 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.75] - 2023-10-06
+
+* Issue **#3797** : Fix bug preventing an owner from granting permissions on a document/folder. Change the document permissions screen to show only users that share at least one group with the user changing the permissions. This is to prevent lowly users from seeing all users on the system. Fix problem of ownership being removed from the owner. Fix other issues with the permission changes not reflecting the changes made in the UI.
+
+* Issue **#3822** : Fix NPE in bootstrap process.
+
+
+## [v7.2-beta.74] - 2023-10-06
+
+* Fix build.
+
+
+## [v7.2-beta.73] - 2023-10-06
+
+* Fix build issue.
+
+
+## [v7.2-beta.72] - 2023-10-05
+
+* Issue **#3817** : Fix treatment of negative numbers in StroomQL term values.
+
+* Issue **#3816** : StroomQL HAVING fields are no longer needed in SELECT to apply HAVING filter.
+
+* Issue **#3671** : Stop auto selecting parent folders in export tree when all child items selected.
+
+* Issue **#3823** : Fix explorer drop down tree selection control.
+
+* Issue **#3732** : Fix search result row id uniqueness.
+
+
+## [v7.2-beta.71] - 2023-10-04
+
+* Issue **#3805** : Fix NPE when building explorer tree.
+
+* Issue **#3801** : Fix NPE when using explorer quick filter and type filter together.
+
+* Fix set_log_levels.sh curl command when the admin port is HTTPS.
+
+* Issue **#3800** : Fix tree pickers always showing None even when a document is selected in the tree dropdown.
+
+* Issue **#3796** : Fix duplicate Document matches when doing content search.
+
+* Issue **#3770** : Fix styling on Manage Step Filters screen.
+
+* Issue **#3771** : Fix audit events produced by manage users CLI command.
+
+* Issue **#3810** : Change the explorer tree pane background colour from blue to white in the _Light_ theme. This is to ensure the _Light_ theme is consistently dark text on a light background.
+
+* Improve the property descriptions for the `stroom.ui.theme.*` properties.
+
+* Issue **#3745** : Improve error message when filtering using an invalid stream Status value.
+
+* Change alert dialogs to not show the detail by default if the detail looks like a stack trace.
+
+* Issue **#3778** : Default folder permission cascade setting to `No`.
+
+* Issue **#3795** : Fix delete for activities.
+
+
+## [v7.2-beta.70] - 2023-10-02
+
+* Issue **#3779** : Improve logging for StreamingAnalyticExecutor.
+
+* Add a prop `stroom.explorer.dependencyWarningsEnabled` to disable dependency warnings in the explorer tree.
+
+* Issue **#3798** : Change the position of the _Tags_ context menu item.
+
+
 ## [v7.2-beta.69] - 2023-10-02
 
 * Issue **#3742** : Improve performance of showing dependency problems in the explorer tree. Change the Toggle Alerts button in the explorer pane to be always visible and off by default.
@@ -5980,7 +6048,13 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.69...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.75...HEAD
+[v7.2-beta.75]: https://github.com/gchq/stroom/compare/v7.2-beta.74...v7.2-beta.75
+[v7.2-beta.74]: https://github.com/gchq/stroom/compare/v7.2-beta.73...v7.2-beta.74
+[v7.2-beta.73]: https://github.com/gchq/stroom/compare/v7.2-beta.72...v7.2-beta.73
+[v7.2-beta.72]: https://github.com/gchq/stroom/compare/v7.2-beta.71...v7.2-beta.72
+[v7.2-beta.71]: https://github.com/gchq/stroom/compare/v7.2-beta.70...v7.2-beta.71
+[v7.2-beta.70]: https://github.com/gchq/stroom/compare/v7.2-beta.69...v7.2-beta.70
 [v7.2-beta.69]: https://github.com/gchq/stroom/compare/v7.2-beta.68...v7.2-beta.69
 [v7.2-beta.68]: https://github.com/gchq/stroom/compare/v7.2-beta.67...v7.2-beta.68
 [v7.2-beta.67]: https://github.com/gchq/stroom/compare/v7.2-beta.66...v7.2-beta.67

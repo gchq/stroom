@@ -95,3 +95,15 @@ from 'Test Index'
 group by ${Stream Id}
 group by ${Event Time}
 select ${Stream Id}, ${Event Time}
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+having ${Stream Id} > -2
+select ${Stream Id}, ${Event Time}
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+having ${Stream Id} > -2
+select ${Event Time}

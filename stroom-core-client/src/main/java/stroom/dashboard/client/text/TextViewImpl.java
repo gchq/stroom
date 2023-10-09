@@ -75,6 +75,10 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, TextViewImpl> {
 
     }

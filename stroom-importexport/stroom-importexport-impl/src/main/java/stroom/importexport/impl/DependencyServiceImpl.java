@@ -12,14 +12,14 @@ import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResultPage;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -36,7 +36,7 @@ import javax.inject.Inject;
 
 public class DependencyServiceImpl implements DependencyService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DependencyServiceImpl.class);
 
     private final ImportExportActionHandlers importExportActionHandlers;
     private final DocRefInfoService docRefInfoService;
@@ -227,7 +227,14 @@ public class DependencyServiceImpl implements DependencyService {
                                 taskContext -> {
                                     Map<DocRef, Set<DocRef>> deps = null;
                                     try {
+                                        final DurationTimer timer = DurationTimer.start();
                                         deps = handler.getDependencies();
+                                        if (LOGGER.isDebugEnabled() && !NullSafe.isEmptyMap(deps)) {
+                                            LOGGER.debug("Handler {} returned dependencies for {} docs in {}",
+                                                    handler.getClass().getSimpleName(),
+                                                    deps.size(),
+                                                    timer);
+                                        }
                                     } catch (final RuntimeException e) {
                                         LOGGER.error(e.getMessage(), e);
                                     }

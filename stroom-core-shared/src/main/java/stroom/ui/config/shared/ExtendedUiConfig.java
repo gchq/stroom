@@ -32,18 +32,26 @@ public class ExtendedUiConfig {
             "provider or not")
     private final boolean externalIdentityProvider;
 
+    @JsonProperty
+    @JsonPropertyDescription(
+            "Enables warning indicators in the explorer tree for documents with broken dependencies")
+    private final boolean dependencyWarningsEnabled;
+
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
+        this.dependencyWarningsEnabled = false;
     }
 
     @JsonCreator
     public ExtendedUiConfig(
             @JsonProperty("uiConfig") final UiConfig uiConfig,
-            @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider) {
+            @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider,
+            @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled) {
 
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = externalIdentityProvider;
+        this.dependencyWarningsEnabled = dependencyWarningsEnabled;
     }
 
     public UiConfig getUiConfig() {
@@ -176,11 +184,6 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public boolean isExternalIdentityProvider() {
-        return externalIdentityProvider;
-    }
-
-    @JsonIgnore
     public NodeMonitoringConfig getNodeMonitoring() {
         return uiConfig.getNodeMonitoring();
     }
@@ -198,6 +201,16 @@ public class ExtendedUiConfig {
     @JsonIgnore
     public Set<String> getReferencePipelineSelectorIncludedTags() {
         return uiConfig.getReferencePipelineSelectorIncludedTags();
+    }
+
+    @JsonIgnore
+    public boolean isExternalIdentityProvider() {
+        return externalIdentityProvider;
+    }
+
+    @JsonIgnore
+    public boolean isDependencyWarningsEnabled() {
+        return dependencyWarningsEnabled;
     }
 
     @Override

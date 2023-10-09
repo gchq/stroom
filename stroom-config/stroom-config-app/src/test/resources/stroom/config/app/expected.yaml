@@ -307,6 +307,7 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    dependencyWarningsEnabled: false
     docRefInfoCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null

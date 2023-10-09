@@ -19,6 +19,7 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.DateExpressionParser.DatePoint;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
@@ -42,7 +43,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -58,6 +58,8 @@ public class SearchRequestBuilder {
     private ExpressionContext expressionContext;
     private final FieldIndex fieldIndex;
     private final Map<String, Expression> expressionMap;
+    private final Set<String> addedFields = new HashSet<>();
+    private final List<AbstractToken> havingTokens = new ArrayList<>();
 
     @Inject
     public SearchRequestBuilder(final VisualisationTokenConsumer visualisationTokenConsumer) {
@@ -187,7 +189,7 @@ public class SearchRequestBuilder {
                                               final Set<TokenType> allowConsumed,
                                               final TokenType keyword,
                                               final Consumer<ExpressionOperator> expressionConsumer) {
-        List<AbstractToken> whereGroup = new ArrayList<>();
+        final List<AbstractToken> whereGroup = new ArrayList<>();
         final List<TokenType> localConsumedTokens = new ArrayList<>(consumedTokens);
         final Set<TokenType> allowFollowing = new HashSet<>(allowConsumed);
         int i = 0;
@@ -213,6 +215,8 @@ public class SearchRequestBuilder {
                 } else {
                     break;
                 }
+            } else {
+                break;
             }
         }
 
@@ -309,41 +313,81 @@ public class SearchRequestBuilder {
     private int addValue(final List<AbstractToken> tokens,
                          final StringBuilder value,
                          final int start) {
-        final StringBuilder sb = new StringBuilder();
         for (int i = start; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
-
             if (TokenType.BETWEEN_AND.equals(token.getTokenType())) {
-                final String expression = sb.toString();
+                value.append(parseValueTokens(tokens.subList(start, i)));
+                return i;
+            }
+        }
 
-                if (i - start > 1) {
-                    // If we have more than one token then perhaps this is a date expression.
-                    try {
-                        DateExpressionParser.parse(expression, expressionContext.getDateTimeSettings());
-                    } catch (final RuntimeException e) {
-                        throw new TokenException(tokens.get(start + 1), "Unexpected token");
+        value.append(parseValueTokens(tokens.subList(start, tokens.size())));
+        return tokens.size();
+    }
+
+    private String parseValueTokens(final List<AbstractToken> tokens) {
+        if (tokens.size() == 0) {
+            return "";
+        }
+
+        boolean dateExpression = false;
+        boolean numericExpression = false;
+        final StringBuilder sb = new StringBuilder();
+        for (final AbstractToken token : tokens) {
+            if (TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
+                DatePoint foundFunction = null;
+                final String function = token.getUnescapedText();
+                for (final DatePoint datePoint : DatePoint.values()) {
+                    if (datePoint.getFunction().equals(function)) {
+                        foundFunction = datePoint;
+                        break;
                     }
                 }
-
-                value.append(expression);
-                return i;
-            } else {
-                sb.append(token.getUnescapedText());
+                if (foundFunction == null) {
+                    throw new TokenException(token, "Unexpected function in value");
+                } else {
+                    dateExpression = true;
+                }
+            } else if (TokenType.DURATION.equals(token.getTokenType())) {
+                dateExpression = true;
+            } else if (TokenType.NUMBER.equals(token.getTokenType())) {
+                numericExpression = true;
             }
+
+            sb.append(token.getUnescapedText());
         }
 
         final String expression = sb.toString();
-        if (tokens.size() - start > 1) {
-            // If we have more than one token then perhaps this is a date expression.
+        if (dateExpression) {
             try {
                 DateExpressionParser.parse(expression, expressionContext.getDateTimeSettings());
             } catch (final RuntimeException e) {
-                throw new TokenException(tokens.get(start + 1), "Unexpected token");
+                throw new TokenException(tokens.get(0), "Unexpected token");
             }
+        } else if (numericExpression) {
+            boolean seenSign = false;
+            boolean seenNumber = false;
+            for (final AbstractToken token : tokens) {
+                if (TokenType.PLUS.equals(token.getTokenType()) ||
+                        TokenType.MINUS.equals(token.getTokenType())) {
+                    if (seenSign || seenNumber) {
+                        throw new TokenException(token, "Unexpected token");
+                    }
+                    seenSign = true;
+                } else if (TokenType.NUMBER.equals(token.getTokenType())) {
+                    if (seenNumber) {
+                        throw new TokenException(token, "Unexpected token");
+                    }
+                    seenNumber = true;
+                } else {
+                    throw new TokenException(token, "Unexpected token");
+                }
+            }
+        } else if (tokens.size() > 1) {
+            throw new TokenException(tokens.get(1), "Unexpected token");
         }
-        value.append(expression);
 
-        return tokens.size();
+        return expression;
     }
 
     private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
@@ -548,6 +592,11 @@ public class SearchRequestBuilder {
                                 consumedTokens,
                                 Set.of(TokenType.FROM),
                                 inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)));
+                        // Remember the tokens used for having clauses as we need to ensure they are added.
+                        if (keywordGroup.getChildren() != null &&
+                                keywordGroup.getChildren().size() > 0) {
+                            havingTokens.add(keywordGroup.getChildren().get(0));
+                        }
                         remaining =
                                 addExpression(remaining,
                                         consumedTokens,
@@ -599,15 +648,29 @@ public class SearchRequestBuilder {
 
         // Ensure StreamId and EventId fields exist if there is no grouping.
         if (groupDepth == 0) {
-            if (!fieldExists(tableSettingsBuilder, FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
-                tableSettingsBuilder.addFields(buildSpecialField(
-                        FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME,
-                        FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
+            if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
+                tableSettingsBuilder.addFields(buildSpecialField(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
             }
-            if (!fieldExists(tableSettingsBuilder, FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
-                tableSettingsBuilder.addFields(buildSpecialField(
-                        FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME,
-                        FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+            if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
+                tableSettingsBuilder.addFields(buildSpecialField(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+            }
+        }
+
+        // Add missing HAVING fields.
+        for (final AbstractToken token : havingTokens) {
+            final String fieldName = token.getUnescapedText();
+            if (!addedFields.contains(fieldName)) {
+                final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
+                addField(token,
+                        id,
+                        fieldName,
+                        fieldName,
+                        false,
+                        true,
+                        sortMap,
+                        groupMap,
+                        filterMap,
+                        tableSettingsBuilder);
             }
         }
 
@@ -639,28 +702,12 @@ public class SearchRequestBuilder {
         }
     }
 
-    public boolean fieldExists(final TableSettings.Builder tableSettingsBuilder,
-                               final String fieldName) {
-        final List<Field> fields = tableSettingsBuilder.build().getFields();
-        if (fields == null) {
-            return false;
-        }
-        final Optional<String> field = fields
-                .stream()
-                .map(Field::getExpression)
-                .filter(Objects::nonNull)
-                .map(ParamSubstituteUtil::getParam)
-                .filter(fieldName::equals)
-                .findAny();
-        return field.isPresent();
-    }
-
-    public Field buildSpecialField(final String columnName,
-                                   final String indexFieldName) {
+    public Field buildSpecialField(final String name) {
+        addedFields.add(name);
         return Field.builder()
-                .id(columnName)
-                .name(columnName)
-                .expression(ParamSubstituteUtil.makeParam(indexFieldName))
+                .id(name)
+                .name(name)
+                .expression(ParamSubstituteUtil.makeParam(name))
                 .visible(false)
                 .special(true)
                 .build();
@@ -846,6 +893,29 @@ public class SearchRequestBuilder {
                           final Map<String, Integer> groupMap,
                           final Map<String, Filter> filterMap,
                           final TableSettings.Builder tableSettingsBuilder) {
+        addField(token,
+                fieldName,
+                fieldName,
+                columnName,
+                true,
+                false,
+                sortMap,
+                groupMap,
+                filterMap,
+                tableSettingsBuilder);
+    }
+
+    private void addField(final AbstractToken token,
+                          final String id,
+                          final String fieldName,
+                          final String columnName,
+                          final boolean visible,
+                          final boolean special,
+                          final Map<String, Sort> sortMap,
+                          final Map<String, Integer> groupMap,
+                          final Map<String, Filter> filterMap,
+                          final TableSettings.Builder tableSettingsBuilder) {
+        addedFields.add(fieldName);
         Expression expression = expressionMap.get(fieldName);
         if (expression == null) {
             ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
@@ -866,7 +936,7 @@ public class SearchRequestBuilder {
 
         final String expressionString = expression.toString();
         final Field field = Field.builder()
-                .id(fieldName)
+                .id(id)
                 .name(columnName != null
                         ? columnName
                         : fieldName)
@@ -875,6 +945,8 @@ public class SearchRequestBuilder {
                 .group(groupMap.get(fieldName))
                 .filter(filterMap.get(fieldName))
                 .format(format)
+                .visible(visible)
+                .special(special)
                 .build();
         tableSettingsBuilder.addFields(field);
     }

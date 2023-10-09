@@ -1822,6 +1822,7 @@ export type ExpressionTerm = ExpressionItem & {
 };
 
 export interface ExtendedUiConfig {
+  dependencyWarningsEnabled?: boolean;
   externalIdentityProvider?: boolean;
   uiConfig?: UiConfig;
 }

@@ -115,7 +115,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
             settingsPresenter.setComponents(components);
             settingsPresenter.read(componentConfig);
 
-            final PopupSize popupSize = PopupSize.resizable(550, 550);
+            final PopupSize popupSize = PopupSize.resizable(550, 650);
             ShowPopupEvent.builder(settingsPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)

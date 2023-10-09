@@ -101,7 +101,7 @@
 }
 
 .navigation .icon-button .face {
-    color: var(--navigation__text-color);
+    color: var(--navigation-icon-button__color);
 }
 
 .navigation-menu-button.icon-button .face,

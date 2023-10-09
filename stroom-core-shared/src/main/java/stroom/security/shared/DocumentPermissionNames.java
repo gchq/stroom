@@ -18,6 +18,7 @@ package stroom.security.shared;
 
 import stroom.util.shared.GwtNullSafe;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,6 +73,9 @@ public final class DocumentPermissionNames {
     public static final String CREATE_PREFIX = CREATE + " - ";
 
     public static final String[] DOCUMENT_PERMISSIONS = new String[]{USE, READ, UPDATE, DELETE, OWNER};
+    public static final Set<String> DOCUMENT_PERMISSIONS_SET = Collections.unmodifiableSet(
+            Arrays.stream(DOCUMENT_PERMISSIONS)
+            .collect(Collectors.toSet()));
 
     private static final Map<String, String> LOWER_PERMISSIONS = new HashMap<>();
     private static final Map<String, String> HIGHER_PERMISSIONS = new HashMap<>();
@@ -167,6 +171,11 @@ public final class DocumentPermissionNames {
                         + "]");
     }
 
+    public static Set<String> excludeCreatePermissions(final Set<String> perms) {
+        return GwtNullSafe.stream(perms)
+                .filter(DOCUMENT_PERMISSIONS_SET::contains)
+                .collect(Collectors.toSet());
+    }
 
     // --------------------------------------------------------------------------------
 

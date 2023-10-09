@@ -2,6 +2,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 
 import java.util.Objects;
 
@@ -47,5 +48,21 @@ public final class ExplorerConstants {
         } else {
             return Objects.equals(FAVOURITES_NODE, node);
         }
+    }
+
+    /**
+     * Tests whether a node is a folder
+     */
+    public static boolean isFolder(final ExplorerNode node) {
+        return GwtNullSafe.test(node,
+                ExplorerNode::getDocRef,
+                docRef -> FOLDER.equals(docRef.getType()));
+    }
+
+    /**
+     * Tests whether a {@link DocRef} is a folder
+     */
+    public static boolean isFolder(final DocRef docRef) {
+        return docRef != null && FOLDER.equals(docRef.getType());
     }
 }

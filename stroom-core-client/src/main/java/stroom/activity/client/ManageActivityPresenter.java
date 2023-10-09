@@ -207,6 +207,7 @@ public class ManageActivityPresenter
                     .popupType(PopupType.CLOSE_DIALOG)
                     .popupSize(popupSize)
                     .caption(title)
+                    .modal(true)
                     .onShow(e -> getView().focus())
                     .onHide(e -> {
                         final Activity selected = getSelected();
@@ -271,7 +272,7 @@ public class ManageActivityPresenter
                     result -> {
                         if (result) {
                             // Delete the activity
-                            final Rest<Activity> rest = restFactory.create();
+                            final Rest<Boolean> rest = restFactory.create();
                             rest
                                     .onSuccess(success -> {
                                         listPresenter.refresh();

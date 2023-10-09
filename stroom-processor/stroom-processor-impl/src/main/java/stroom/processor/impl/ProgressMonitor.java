@@ -214,6 +214,7 @@ public class ProgressMonitor {
         }
     }
 
+
     // --------------------------------------------------------------------------------
 
 
@@ -266,6 +267,10 @@ public class ProgressMonitor {
             completeDuration = durationTimer.get();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class PhaseDetails {
 

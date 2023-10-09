@@ -10,6 +10,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.NullSafe;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -381,34 +382,23 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                                         final DocRef dest,
                                         final boolean owner,
                                         final boolean cascade) {
-        String sourceType = null;
-        String sourceUuid = null;
-        String destUuid = null;
-
-        if (source != null) {
-            sourceType = source.getType();
-            sourceUuid = source.getUuid();
-        }
-
-        if (dest != null) {
-            destUuid = dest.getUuid();
-        }
+        final String sourceType = NullSafe.get(source, DocRef::getType);
+        final String sourceUuid = NullSafe.get(source, DocRef::getUuid);
 
         if (cascade
                 && sourceType != null
                 && sourceUuid != null
                 && DocumentTypes.isFolder(sourceType)) {
-            final String cascadeSourceUuid = sourceUuid;
             final List<ExplorerNode> descendants = getDescendants(dest);
             descendants.forEach(descendant ->
                     documentPermissionService.addDocumentPermissions(
-                            cascadeSourceUuid,
-                            descendant.getUuid(),
+                            source,
+                            descendant.getDocRef(),
                             owner)
             );
         }
 
-        documentPermissionService.addDocumentPermissions(sourceUuid, destUuid, owner);
+        documentPermissionService.addDocumentPermissions(source, dest, owner);
     }
 
     private void clearDocumentPermissions(final DocRef docRef) {

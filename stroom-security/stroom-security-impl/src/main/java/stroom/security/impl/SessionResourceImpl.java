@@ -120,6 +120,7 @@ public class SessionResourceImpl implements SessionResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public UrlResponse logout(final String redirectUri) {
+        LOGGER.debug("logout() - redirectUri: {}", redirectUri);
         final HttpServletRequest request = httpServletRequestProvider.get();
 
         // Get the session.
@@ -137,6 +138,7 @@ public class SessionResourceImpl implements SessionResource {
         }
 
         final String url = openIdManagerProvider.get().logout(request, redirectUri);
+        LOGGER.debug("Returning url: {}", url);
         return new UrlResponse(url);
     }
 

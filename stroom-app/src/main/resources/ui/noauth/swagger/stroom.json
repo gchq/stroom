@@ -12741,6 +12741,9 @@
       "ExtendedUiConfig" : {
         "type" : "object",
         "properties" : {
+          "dependencyWarningsEnabled" : {
+            "type" : "boolean"
+          },
           "externalIdentityProvider" : {
             "type" : "boolean"
           },

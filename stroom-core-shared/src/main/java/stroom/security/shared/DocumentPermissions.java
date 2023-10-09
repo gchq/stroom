@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -160,7 +162,7 @@ public class DocumentPermissions {
                 "docUuid='" + docUuid + '\'' +
                 ", users=" + users +
                 ", groups=" + groups +
-                ", permissions=" + permissions +
+                ", permissions=\n" + permsMapToStr(permissions) +
                 '}';
     }
 
@@ -171,6 +173,71 @@ public class DocumentPermissions {
     public Builder copy() {
         return new Builder(this);
     }
+
+    public static String permsMapToStr(final Map<String, Set<String>> perms) {
+        return GwtNullSafe.map(perms)
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    final String userUuid = entry.getKey();
+                    final String permStr = entry.getValue()
+                            .stream()
+                            .sorted()
+                            .collect(Collectors.joining(", "));
+                    return userUuid + " => [" + permStr + "]";
+                })
+                .collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * @return A non-null mutable deep copy of the supplied perms map
+     */
+    public static Map<String, Set<String>> copyPermsMap(final Map<String, Set<String>> perms) {
+        return GwtNullSafe.map(perms)
+                .entrySet()
+                .stream()
+                .map(entry -> new AbstractMap.SimpleEntry<>(
+                        entry.getKey(),
+                        new HashSet<>(GwtNullSafe.set(entry.getValue()))))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+    /**
+     * @return A new map containing all permissions found in permissions excluding those
+     * found in permissionsToExclude
+     */
+    public static Map<String, Set<String>> excludePermissions(final Map<String, Set<String>> permissions,
+                                                               final Map<String, Set<String>> permissionsToExclude) {
+        if (GwtNullSafe.hasEntries(permissionsToExclude)) {
+            return GwtNullSafe.map(permissions)
+                    .entrySet()
+                    .stream()
+                    .map(entry -> {
+                        final Set<String> excludeSet = permissionsToExclude.get(entry.getKey());
+                        if (GwtNullSafe.hasItems(excludeSet)) {
+                            final Set<String> newPermSet = GwtNullSafe.stream(entry.getValue())
+                                    .filter(perm -> !excludeSet.contains(perm))
+                                    .collect(Collectors.toSet());
+                            if (newPermSet.isEmpty()) {
+                                return null;
+                            } else {
+                                return new SimpleEntry<>(entry.getKey(), newPermSet);
+                            }
+                        } else {
+                            // Nothing to exclude so return as is
+                            return entry;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        } else {
+            return permissions;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 
@@ -206,6 +273,11 @@ public class DocumentPermissions {
 
         public Builder permission(final String userUuid, final String permission) {
             permissions.computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
+            return this;
+        }
+
+        public Builder permissions(final Map<String, Set<String>> permissions) {
+            this.permissions = permissions;
             return this;
         }
 

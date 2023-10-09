@@ -82,6 +82,11 @@ class TestUserNameServiceImpl {
         }
 
         @Override
+        public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
+            return ResultPage.createUnboundedList(userNames);
+        }
+
+        @Override
         public Optional<UserName> getBySubjectId(final String subjectId) {
             return Optional.empty();
         }

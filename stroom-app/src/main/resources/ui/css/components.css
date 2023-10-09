@@ -1304,8 +1304,10 @@
 }
 
 .steppingFilterViewImpl {
-    min-width: 400px;
-    min-height: 400px;
+}
+
+.steppingFilterViewImpl .pipelineElementChooser-textCell.pipelineElementChooser-filterOff{
+    color: var(--text-color--disabled);
 }
 
 .stepLocationViewImpl-left {
@@ -1439,6 +1441,11 @@
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
+    background-color: var(--navigation__title__background-color);
+}
+
+.navigation .explorerTreeViewImpl-nameFilterPanel {
+    background-color: var(--navigation__title__background-color);
 }
 
 .navigation-logo {
@@ -1975,13 +1982,11 @@ button.main-menu svg {
 }
 
 .documentPermissionType-destructive {
-    color: var(--text-color--red);
 }
 
 .documentPermissionType-destructive.documentPermissionType-inferred {
     /* color: hsl(from var(--text-color--red) h s calc(l - 20%)); */
-    color: var(--text-color--red--dark);
-    opacity: 85%;
+    opacity: 90%;
 }
 
 .documentPermissionType-destructive.documentPermissionType-direct {
@@ -1989,13 +1994,11 @@ button.main-menu svg {
 }
 
 .documentPermissionType-nonDestructive {
-    color: var(--text-color--green);
 }
 
 .documentPermissionType-nonDestructive.documentPermissionType-inferred {
     /* color: hsl(from var(--text-color--green) h s calc(l - 20%)); */
-    color: var(--text-color--green--dark);
-    opacity: 85%;
+    opacity: 90%;
 }
 
 .documentPermissionType-nonDestructive.documentPermissionType-direct {

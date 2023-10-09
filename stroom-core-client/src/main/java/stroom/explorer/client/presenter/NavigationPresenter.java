@@ -160,6 +160,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
                 getView().setActivityWidget(activityOuter);
             }
+            showAlertsBtn.setVisible(uiConfig.isDependencyWarningsEnabled());
         });
     }
 

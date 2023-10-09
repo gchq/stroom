@@ -35,6 +35,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.BasicSelectionEventManager;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
@@ -56,6 +57,7 @@ public class SteppingFilterPresenter extends
         MyPresenterWidget<SteppingFilterView> {
 
     protected static final String BASE_CLASS = "pipelineElementChooser";
+    private static final int ICON_COL_WIDTH = 20;
     private final XPathListPresenter xPathListPresenter;
     private final XPathFilterPresenter xPathFilterPresenter;
     private List<XPathFilter> xPathFilters;
@@ -108,8 +110,10 @@ public class SteppingFilterPresenter extends
                             }
                         })
                 .withStyleName(BASE_CLASS + "-iconCell svgIcon")
+                .centerAligned()
                 .build();
         elementChooser.addColumn(iconColumn);
+        elementChooser.setColumnWidth(iconColumn, ICON_COL_WIDTH, Unit.PX);
 
         final Function<PipelineElement, String> filterActiveStyleFunc = pipelineElement ->
                 GwtNullSafe.isTrue(elementIdToHasActiveFilterMap.get(pipelineElement.getId()))
@@ -131,10 +135,13 @@ public class SteppingFilterPresenter extends
                                 SvgPresets.FILTER.title("Has active filter(s)"))
                 .withStyleName(BASE_CLASS + "-filterIconCell svgIcon icon-colour__green")
                 .withConditionalStyleName(filterActiveStyleFunc)
+                .centerAligned()
                 .build();
         elementChooser.addColumn(filterIconColumn);
+        elementChooser.setColumnWidth(filterIconColumn, ICON_COL_WIDTH, Unit.PX);
 
         elementChooser.setSelectionModel(elementSelectionModel, new BasicSelectionEventManager<>(elementChooser));
+        elementChooser.setWidth("100%", true);
 
         getView().setElementChooser(elementChooser);
         getView().setXPathList(xPathListPresenter.getView());
@@ -248,7 +255,7 @@ public class SteppingFilterPresenter extends
             update(element);
         }
 
-        final PopupSize popupSize = PopupSize.resizable(850, 550);
+        final PopupSize popupSize = PopupSize.resizable(850, 550, 550, 400);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

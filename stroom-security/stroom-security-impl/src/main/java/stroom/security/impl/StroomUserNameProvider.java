@@ -46,6 +46,13 @@ class StroomUserNameProvider implements UserNameProvider {
     }
 
     @Override
+    public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
+        // Delegate perm checks to userService
+        final List<UserName> associates = userService.getAssociates(criteria.getQuickFilterInput());
+        return new ResultPage<>(associates);
+    }
+
+    @Override
     public Optional<UserName> getBySubjectId(final String subjectId) {
         return userCache.get(subjectId)
                 .map(User::asUserName);

@@ -180,6 +180,10 @@ public class DocumentPermissionsTabPresenter
         userListPresenter.refresh();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface DocumentPermissionsTabView extends View {
 
         void setUserView(View view);

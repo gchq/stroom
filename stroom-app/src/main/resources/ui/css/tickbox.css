@@ -39,24 +39,24 @@
 
 .tickBox-tick {
     background-color: var(--primary);
-    border: 3px solid var(--primary);
+    border: 3px solid transparent;
 }
 
 .tickBox-halfTick {
-    padding: 3px !important;
 }
 
 .tickBox-halfTick-inner {
     background-color: var(--primary);
     width: 100%;
     height: 100%;
+    border: 3px solid var(--control__background-color);
 }
 
 .tickBox-untick {
 }
 
 .tickBox-tick + .tickBox-noBorder {
-    border: 3px solid var(--primary);
+    border: 3px solid transparent;
 }
 
 .tickBox-noBorder {

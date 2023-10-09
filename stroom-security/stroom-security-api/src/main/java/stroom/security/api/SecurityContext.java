@@ -129,10 +129,23 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     boolean hasDocumentPermission(String documentUuid, String permission);
 
     /**
+     * Check if the user associated with this security context has the requested
+     * permission on the document specified by the document docRef.
+     *
+     * @param docRef The docRef of the document.
+     * @param permission   The permission we are checking for.
+     * @return True if the user associated with the security context has the
+     * requested permission.
+     */
+    default boolean hasDocumentPermission(DocRef docRef, String permission) {
+        return docRef != null && hasDocumentPermission(docRef.getUuid(), permission);
+    }
+
+    /**
      * Get the user UUID of the owner of a document. Throws authentication exception if there are multiple users with
      * ownership or no owners.
      *
-     * @param documentUuid The uuid of the document.
+     * @param docRef The uuid of the document.
      * @return The UUID of the document owner.
      */
     String getDocumentOwnerUuid(DocRef docRef);

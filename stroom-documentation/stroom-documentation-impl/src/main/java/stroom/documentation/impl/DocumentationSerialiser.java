@@ -24,13 +24,13 @@ public class DocumentationSerialiser implements DocumentSerialiser2<Documentatio
     @Override
     public DocumentationDoc read(final Map<String, byte[]> data) throws IOException {
         final DocumentationDoc document = delegate.read(data);
-        document.setDocumentation(EncodingUtil.asString(data.get(TEXT)));
+        document.setData(EncodingUtil.asString(data.get(TEXT)));
         return document;
     }
 
     @Override
     public Map<String, byte[]> write(final DocumentationDoc document) throws IOException {
-        final String text = document.getDocumentation();
+        final String text = document.getData();
         document.setData(null);
 
         final Map<String, byte[]> data = delegate.write(document);
