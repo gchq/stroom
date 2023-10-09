@@ -23,7 +23,10 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElements;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
@@ -38,7 +41,10 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
         implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
@@ -149,6 +155,21 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
 
     public void setElementSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
         getView().setSeverities(elementIdToSeveritiesMap);
+    }
+
+    /**
+     * @return All the element IDs currently in the pipeline
+     */
+    public Set<String> getIds() {
+        final List<PipelineElement> pipelineElements = GwtNullSafe.get(
+                pipelineModel,
+                PipelineModel::getPipelineData,
+                PipelineData::getElements,
+                PipelineElements::getAdd);
+
+        return GwtNullSafe.stream(pipelineElements)
+                .map(PipelineElement::getId)
+                .collect(Collectors.toSet());
     }
 
 

@@ -17,7 +17,6 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -55,10 +54,12 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
         }));
     }
 
-    public void show(final PipelineElementType elementType, final HidePopupRequestEvent.Handler handler) {
+    public void show(final PipelineElementType elementType,
+                     final HidePopupRequestEvent.Handler handler,
+                     final String suggestedId) {
         this.elementType = elementType;
         this.handler = handler;
-        getView().getId().setText(ModelStringUtil.toCamelCase(elementType.getType()));
+        getView().getId().setText(suggestedId);
 
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.builder(this)
@@ -77,6 +78,10 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
     public String getElementId() {
         return getView().getId().getText();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface NewElementView extends View, Focus {
 
