@@ -50,6 +50,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -90,7 +91,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final PathCreator pathCreator;
     // Hold a cache of the current picture of available volumes, with their used/free/total/etc. stats.
     // Allows for fast volume selection without having to hit the db each time.
-    private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
+    private final AtomicReference<Volumes> currentVolumes = new AtomicReference<>();
     private final AtomicReference<HasCapacitySelector> volumeSelector = new AtomicReference<>();
     private final NodeInfo nodeInfo;
     private final TaskContextFactory taskContextFactory;
@@ -129,10 +130,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     public FsVolume create(final FsVolume fileVolume) {
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
-            FsVolume result = null;
+            FsVolume result;
             Path volPath = getAbsVolumePath(fileVolume);
             try {
-                if (volPath != null) {
+                if (volPath != null && FsVolumeType.STANDARD.equals(fileVolume.getVolumeType())) {
                     if (Files.exists(volPath) && !Files.isDirectory(volPath)) {
                         throw new RuntimeException(LogUtil.message(
                                 "Unable to create volume as path '{}' exists but is not a directory.", volPath));
@@ -231,12 +232,22 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     /**
      * @return An active and non-full volume selected by the configured volume selector
      */
-    public FsVolume getVolume() {
+    public FsVolume getVolume(final String volumeGroupName) {
+        final String volumeGroup;
+
+        // Use the default volume group if null.
+        if (volumeGroupName == null || volumeGroupName.isBlank()) {
+            LOGGER.debug("Using default volume group");
+            volumeGroup = volumeConfigProvider.get().getDefaultStreamVolumeGroupName();
+        } else {
+            volumeGroup = volumeGroupName;
+        }
+
         return securityContext.insecureResult(() -> {
             // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
             ensureDefaultVolumes();
 
-            final Set<FsVolume> set = getVolumeSet(VolumeUseStatus.ACTIVE);
+            final Set<FsVolume> set = getVolumeSet(volumeGroup, VolumeUseStatus.ACTIVE);
             if (set.size() > 0) {
                 final FsVolume volume = set.iterator().next();
                 LOGGER.trace("Using volume {}", volume);
@@ -246,9 +257,11 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         });
     }
 
-    private Set<FsVolume> getVolumeSet(final VolumeUseStatus streamStatus) {
+    private Set<FsVolume> getVolumeSet(final String volumeGroup, final VolumeUseStatus streamStatus) {
         final HasCapacitySelector volumeSelector = getVolumeSelector();
-        final List<FsVolume> allVolumeList = getCurrentVolumeList().list;
+        final List<FsVolume> allVolumeList = getCurrentVolumes()
+                .getMap()
+                .getOrDefault(volumeGroup, Collections.emptyList());
         LOGGER.trace("allVolumeList {}", allVolumeList);
         final List<FsVolume> freeVolumes = FsVolumeListUtil.removeFullVolumes(allVolumeList);
         LOGGER.trace("freeVolumes {}", freeVolumes);
@@ -309,7 +322,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .build();
     }
 
-    private List<FsVolume> getFilteredVolumeList(final List<FsVolume> allVolumes, final VolumeUseStatus streamStatus) {
+    private List<FsVolume> getFilteredVolumeList(final List<FsVolume> allVolumes,
+                                                 final VolumeUseStatus streamStatus) {
         final List<FsVolume> list = new ArrayList<>();
         for (final FsVolume volume : allVolumes) {
             // Check the volume type matches.
@@ -367,7 +381,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private synchronized void clearCurrentVolumeList() {
         LOGGER.debug("Clearing currentVolumeList");
-        currentVolumeList.set(null);
+        currentVolumes.set(null);
     }
 
     private void fireChange(final EntityAction action) {
@@ -392,7 +406,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final List<FsVolume> volumeList = doFind(FindFsVolumeCriteria.matchAll()).getValues();
         for (final FsVolume volume : volumeList) {
             final Path path = getAbsVolumePath(volume);
-            FileUtil.deleteDir(path);
+            if (!FileUtil.deleteDir(path)) {
+                LOGGER.error(() -> "Unable to delete dir: " + FileUtil.getCanonicalPath(path));
+            }
             // Delete the db record
             fsVolumeDao.delete(volume.getId());
         }
@@ -415,45 +431,49 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         LOGGER.debug("createdDefaultVolumes set to false");
     }
 
-    private VolumeList getCurrentVolumeList() {
-        VolumeList volumeList = currentVolumeList.get();
-        if (volumeList == null) {
+    private Volumes getCurrentVolumes() {
+        Volumes volumes = currentVolumes.get();
+        if (volumes == null) {
             synchronized (this) {
-                volumeList = currentVolumeList.get();
-                if (volumeList == null) {
-                    volumeList = refresh(true);
-                    currentVolumeList.set(volumeList);
+                volumes = currentVolumes.get();
+                if (volumes == null) {
+                    volumes = refreshVolumeList(true);
+                    currentVolumes.set(volumes);
                 }
             }
         }
-        return volumeList;
+        return volumes;
     }
 
     @Override
     public void flush() {
         // Called from UI so make sure it is up to date
-        refresh(true);
+        refreshVolumeList(true);
     }
 
     void updateStatus() {
         // Each node needs to get a lock so that the first one in can update the state and then
         // every other node can then just read the state written by the first node.
         clusterLockService.lock(LOCK_NAME, () ->
-                refresh(false));
+                refreshVolumeList(false));
     }
 
-    private synchronized VolumeList refresh(final boolean isForcedRefresh) {
+    private synchronized Volumes refreshVolumeList(final boolean isForcedRefresh) {
         taskContextFactory.current().info(() -> "Refreshing volumes");
 
         // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
         ensureDefaultVolumes();
 
         final Instant now = Instant.now();
-        final List<FsVolume> volumes = new ArrayList<>();
+        final Map<String, List<FsVolume>> volumes = new HashMap<>();
 
         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
         final List<FsVolume> dbVolumes = find(findVolumeCriteria).getValues();
+        final Map<Integer, String> groupNameMap = fsVolumeGroupService
+                .getAll()
+                .stream()
+                .collect(Collectors.toMap(FsVolumeGroup::getId, FsVolumeGroup::getName));
 
         final StroomDuration volumeStateUpdateThreshold = volumeConfigProvider.get().getMaxVolumeStateAge();
         final long updateTimeCutOffEpochMs = now.minus(volumeStateUpdateThreshold.getDuration()).toEpochMilli();
@@ -474,19 +494,23 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
                 // Record some statistics for the use of this volume.
                 recordStats(volume);
-                volumes.add(volume);
+                final String groupName = groupNameMap.get(volume.getVolumeGroupId());
+                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
                     dbVolumes,
                     optMinUpdateTimeEpochMs.map(DateUtil::createNormalDateTimeString)));
-            volumes.addAll(dbVolumes);
+            for (final FsVolume volume : dbVolumes) {
+                final String groupName = groupNameMap.get(volume.getVolumeGroupId());
+                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
+            }
         }
 
-        final VolumeList newList = new VolumeList(now.toEpochMilli(), volumes);
-        final VolumeList currentList = currentVolumeList.get();
+        final Volumes newList = new Volumes(now.toEpochMilli(), volumes);
+        final Volumes currentList = currentVolumes.get();
         if (currentList == null || currentList.createTime < newList.createTime) {
-            currentVolumeList.set(newList);
+            currentVolumes.set(newList);
         }
 
         return newList;
@@ -669,11 +693,14 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     @Override
     public SystemInfoResult getSystemInfo() {
 
-        final VolumeList volumeList = getCurrentVolumeList();
+        final Volumes volumes = getCurrentVolumes();
 
         // Need to wrap with optional as Map.ofEntries does not support null values.
-        final var volInfoList = volumeList.getList()
+        final var volInfoList = volumes
+                .getMap()
+                .values()
                 .stream()
+                .flatMap(List::stream)
                 .map(vol -> Map.ofEntries(
                         new SimpleEntry<>("path", Optional.ofNullable(getAbsVolumePath(vol))),
                         new SimpleEntry<>("limit", Optional.ofNullable(vol.getByteLimit())),
@@ -695,7 +722,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         return SystemInfoResult.builder(this)
                 .addDetail("volumeSelector", volumeConfigProvider.get().getVolumeSelector())
-                .addDetail("volumeListCreateTime", DateUtil.createNormalDateTimeString(volumeList.getCreateTime()))
+                .addDetail("volumeListCreateTime", DateUtil.createNormalDateTimeString(volumes.getCreateTime()))
                 .addDetail("volumeList", volInfoList)
                 .build();
     }
@@ -807,18 +834,18 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return pathCreator.toAppPath(volume.getPath());
     }
 
-    private static class VolumeList {
+    private static class Volumes {
 
         private final long createTime;
-        private final List<FsVolume> list;
+        private final Map<String, List<FsVolume>> map;
 
-        VolumeList(final long createTime, final List<FsVolume> list) {
+        Volumes(final long createTime, final Map<String, List<FsVolume>> map) {
             this.createTime = createTime;
-            this.list = list;
+            this.map = map;
         }
 
-        public List<FsVolume> getList() {
-            return list;
+        public Map<String, List<FsVolume>> getMap() {
+            return map;
         }
 
         public long getCreateTime() {

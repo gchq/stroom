@@ -18,7 +18,7 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
-import stroom.data.store.impl.fs.S3TestVolumeUtil;
+import stroom.data.store.impl.fs.S3ExampleVolumes;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.index.VolumeCreator;
@@ -67,7 +67,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final IndexVolumeService indexVolumeService;
     private final UserNameService userNameService;
     private final ExplorerNodeService explorerNodeService;
-    private static final boolean USE_S3 = true;
+    private final S3ExampleVolumes s3ExampleVolumes;
 
     //    private static boolean needsCleanup;
     // Thread local for parallel test running
@@ -86,7 +86,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final PathCreator pathCreator,
                               final IndexVolumeService indexVolumeService,
                               final UserNameService userNameService,
-                              final ExplorerNodeService explorerNodeService) {
+                              final ExplorerNodeService explorerNodeService,
+                              final S3ExampleVolumes s3ExampleVolumes) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -100,6 +101,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.indexVolumeService = indexVolumeService;
         this.userNameService = userNameService;
         this.explorerNodeService = explorerNodeService;
+        this.s3ExampleVolumes = s3ExampleVolumes;
     }
 
     @Override
@@ -130,12 +132,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
         fsVolumeService.ensureDefaultVolumes();
         fsVolumeService.flush();
+        s3ExampleVolumes.addS3ExampleVolume();
 
-        if (USE_S3) {
-            S3TestVolumeUtil.alterVolumes(fsVolumeService);
-        }
-
-        final FsVolume fsVolume = fsVolumeService.getVolume();
+        final FsVolume fsVolume = fsVolumeService.getVolume(null);
         if (fsVolume == null) {
             Assertions.fail("No active and non-full volumes found. " +
                     "Likely a problem with default volume creation in setup, or a too full disk.");

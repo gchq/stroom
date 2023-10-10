@@ -287,7 +287,12 @@ public class MockStore implements Store, Clearable {
     }
 
     @Override
-    public Target openTarget(final MetaProperties metaProperties) {
+    public Target openTarget(final MetaProperties metaProperties) throws DataException {
+        return openTarget(metaProperties, null);
+    }
+
+    @Override
+    public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) {
         final Meta meta = metaService.create(metaProperties);
 
         final Map<String, ByteArrayOutputStream> typeMap = new HashMap<>();

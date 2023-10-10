@@ -17,9 +17,12 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
@@ -30,6 +33,7 @@ import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.ResultPage;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -44,12 +48,14 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class NewPropertyPresenter
         extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView>
         implements NewPropertyUiHandlers {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+    private static final FsVolumeGroupResource VOLUME_GROUP_RESOURCE = GWT.create(FsVolumeGroupResource.class);
 
     private final RestFactory restFactory;
     private final EntityDropDownPresenter entityDropDownPresenter;
@@ -73,6 +79,7 @@ public class NewPropertyPresenter
     private TextBox textBox;
 
     private String currentDataType;
+    private String currentVolumeGroup;
     private boolean dataTypePresenterInitialised;
     private SelectionBox<String> dataTypeWidget;
     private boolean entityPresenterInitialised;
@@ -139,6 +146,8 @@ public class NewPropertyPresenter
 
         if ("streamType".equals(propertyType.getName())) {
             enterDataTypeMode(property);
+        } else if ("volumeGroup".equals(propertyType.getName())) {
+            enterVolumeGroupMode(property);
         } else if ("boolean".equals(propertyType.getType())) {
             enterBooleanMode(property);
         } else if ("int".equals(propertyType.getType())) {
@@ -162,6 +171,8 @@ public class NewPropertyPresenter
         final PipelinePropertyType propertyType = property.getPropertyType();
 
         if ("streamType".equals(propertyType.getName())) {
+            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+        } else if ("volumeGroup".equals(propertyType.getName())) {
             property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
         } else if ("boolean".equals(propertyType.getType())) {
             final String value = listBox.getValue();
@@ -322,6 +333,58 @@ public class NewPropertyPresenter
 
         dataTypeWidget.setEnabled(Source.LOCAL.equals(source));
         dataTypeWidget.setValue(currentDataType);
+    }
+
+    private void enterVolumeGroupMode(final PipelineProperty property) {
+        if (!dataTypePresenterInitialised) {
+            dataTypeWidget = new SelectionBox<>();
+
+            // Load data types.
+            final Rest<ResultPage<FsVolumeGroup>> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        dataTypeWidget.clear();
+                        dataTypeWidget.setNonSelectString("");
+                        if (result != null && result.getValues() != null) {
+                            dataTypeWidget.addItems(
+                                    result
+                                            .getValues()
+                                            .stream()
+                                            .map(FsVolumeGroup::getName)
+                                            .collect(Collectors.toList()));
+                        }
+
+                        if (currentVolumeGroup != null) {
+                            dataTypeWidget.setValue(currentVolumeGroup);
+                        }
+
+                        dataTypePresenterInitialised = true;
+                    })
+                    .call(VOLUME_GROUP_RESOURCE)
+                    .find(new ExpressionCriteria());
+
+            dataTypeWidget.addValueChangeHandler(event -> {
+                final String volumeGroup = dataTypeWidget.getValue();
+                if (!EqualsUtil.isEquals(currentVolumeGroup, volumeGroup)) {
+                    setDirty(true);
+                }
+            });
+
+            final Widget widget = dataTypeWidget;
+            widget.getElement().getStyle().setWidth(100, Unit.PCT);
+            widget.getElement().getStyle().setMarginBottom(0, Unit.PX);
+            getView().setValueWidget(widget);
+
+            dataTypePresenterInitialised = true;
+        }
+
+        currentVolumeGroup = null;
+        if (property.getValue() != null && property.getValue().getString() != null) {
+            currentVolumeGroup = property.getValue().toString();
+        }
+
+        dataTypeWidget.setEnabled(Source.LOCAL.equals(source));
+        dataTypeWidget.setValue(currentVolumeGroup);
     }
 
     private void enterEntityMode(final PipelineProperty property) {

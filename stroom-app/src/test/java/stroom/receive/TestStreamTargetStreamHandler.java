@@ -19,6 +19,7 @@ package stroom.receive;
 
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.data.store.mock.MockStore;
 import stroom.data.zip.StroomZipFileType;
 import stroom.docref.DocRef;
@@ -52,6 +53,8 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
     private FeedStore feedStore;
     @Inject
     private MetaService metaService;
+    @Inject
+    private VolumeGroupNameProvider volumeGroupNameProvider;
 
     /**
      * This test is used to check that feeds that are set to be reference feeds
@@ -77,7 +80,8 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 streamStore,
                 feedProperties,
                 metaService,
-                null);
+                null,
+                volumeGroupNameProvider);
         final ProgressHandler progressHandler = new ProgressHandler("Test");
         streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
             try {
@@ -126,7 +130,8 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 streamStore,
                 feedProperties,
                 metaService,
-                null);
+                null,
+                volumeGroupNameProvider);
         streamTargetStreamHandlers.handle(feedName1, StreamTypeNames.RAW_EVENTS, attributeMap1, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getDotExtension(),
@@ -174,7 +179,8 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 streamStore,
                 feedProperties,
                 metaService,
-                null);
+                null,
+                volumeGroupNameProvider);
         streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getDotExtension(),

@@ -24,12 +24,6 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.data.store.impl.fs.shared.AwsBasicCredentials;
-import stroom.data.store.impl.fs.shared.AwsCredentialsProviderType;
-import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
-import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
@@ -101,8 +95,6 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     private FeedStore feedService;
     @Inject
     private ExplorerNodeService explorerNodeService;
-    @Inject
-    private FsVolumeService fsVolumeService;
 
     private DocRef feed1;
     private DocRef feed2;
@@ -111,8 +103,6 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
     @BeforeEach
     void setProperties() {
-        S3TestVolumeUtil.alterVolumes(fsVolumeService);
-
         feed1 = setupFeed("FEED1");
         feed2 = setupFeed("FEED2");
         feed3 = setupFeed("FEED3");
@@ -820,6 +810,11 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
             fail("Expecting an error");
         } catch (final RuntimeException e) {
             // Expected.
+        } finally {
+            FileUtil.addFilePermission(dir,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.GROUP_WRITE,
+                    PosixFilePermission.OTHERS_WRITE);
         }
     }
 

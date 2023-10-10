@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
@@ -57,25 +58,33 @@ class FsStore implements Store, AttributeMapFactory {
     private final FsVolumeService volumeService;
     private final DataVolumeService dataVolumeService;
     private final PathCreator pathCreator;
+    private final Provider<FsVolumeConfig> volumeConfigProvider;
 
     @Inject
     FsStore(final FsPathHelper fileSystemStreamPathHelper,
             final MetaService metaService,
             final FsVolumeService volumeService,
             final DataVolumeService dataVolumeService,
-            final PathCreator pathCreator) {
+            final PathCreator pathCreator,
+            final Provider<FsVolumeConfig> volumeConfigProvider) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.volumeService = volumeService;
         this.dataVolumeService = dataVolumeService;
         this.pathCreator = pathCreator;
+        this.volumeConfigProvider = volumeConfigProvider;
     }
 
     @Override
-    public Target openTarget(final MetaProperties metaProperties) {
+    public Target openTarget(final MetaProperties metaProperties) throws DataException {
+        return openTarget(metaProperties, null);
+    }
+
+    @Override
+    public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) {
         LOGGER.debug(() -> "openTarget() " + metaProperties);
 
-        final FsVolume volume = volumeService.getVolume();
+        final FsVolume volume = volumeService.getVolume(volumeGroup);
         if (volume == null) {
             throw new DataException("""
                     Failed to get lock as no writable volumes. This may be because there are no active \

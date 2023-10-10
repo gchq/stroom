@@ -36,7 +36,7 @@ import stroom.meta.shared.Meta;
  * </p>
  */
 public interface Store {
-
+    Target openTarget(MetaProperties metaProperties) throws DataException;
     /**
      * <p>
      * Open a new target (i.e. new file) based on some meta data
@@ -44,7 +44,7 @@ public interface Store {
      *
      * @return the stream to write to
      */
-    Target openTarget(MetaProperties metaProperties) throws DataException;
+    Target openTarget(MetaProperties metaProperties, String volumeGroup) throws DataException;
 
     /**
      * <p>

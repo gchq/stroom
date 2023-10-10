@@ -19,6 +19,7 @@ package stroom.pipeline.writer;
 
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.shared.FeedDoc;
@@ -66,11 +67,13 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private final MetaHolder metaHolder;
     private final NodeInfo nodeInfo;
     private final DocRefInfoService docRefInfoService;
+    private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     private DocRef feedRef;
     private String feed;
     private String streamType;
     private boolean segmentOutput = true;
+    private String volumeGroup;
 
     private StreamKey key;
 
@@ -79,12 +82,14 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                           final Store streamStore,
                           final MetaHolder metaHolder,
                           final NodeInfo nodeInfo,
-                          final DocRefInfoService docRefInfoService) {
+                          final DocRefInfoService docRefInfoService,
+                          final VolumeGroupNameProvider volumeGroupNameProvider) {
         super(destinations);
         this.streamStore = streamStore;
         this.metaHolder = metaHolder;
         this.nodeInfo = nodeInfo;
         this.docRefInfoService = docRefInfoService;
+        this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
     @Override
@@ -102,7 +107,9 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 .build();
 
         final String nodeName = nodeInfo.getThisNodeName();
-        final Target streamTarget = streamStore.openTarget(metaProperties);
+        final String volumeGroupName = volumeGroupNameProvider
+                .getVolumeGroupName(key.getFeed(), key.getStreamType(), volumeGroup);
+        final Target streamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
         return new RollingStreamDestination(key,
                 getFrequency(),
                 getSchedule(),
@@ -196,5 +203,12 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             displayPriority = 6)
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
+    }
+
+    @PipelineProperty(
+            description = "Optionally override the default volume group of the destination feed.",
+            displayPriority = 7)
+    public void setVolumeGroup(final String volumeGroup) {
+        this.volumeGroup = volumeGroup;
     }
 }

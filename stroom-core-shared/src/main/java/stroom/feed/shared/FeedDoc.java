@@ -47,7 +47,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "retentionDayAge",
         "reference",
         "streamType",
-        "status"})
+        "status",
+        "volumeGroup"})
 @JsonInclude(Include.NON_NULL)
 public class FeedDoc extends Doc {
 
@@ -70,6 +71,8 @@ public class FeedDoc extends Doc {
     private String streamType;
     @JsonProperty
     private FeedStatus status;
+    @JsonProperty
+    private String volumeGroup;
 
     public FeedDoc() {
     }
@@ -94,7 +97,8 @@ public class FeedDoc extends Doc {
                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                    @JsonProperty("reference") final boolean reference,
                    @JsonProperty("streamType") final String streamType,
-                   @JsonProperty("status") final FeedStatus status) {
+                   @JsonProperty("status") final FeedStatus status,
+                   @JsonProperty("volumeGroup") final String volumeGroup) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
@@ -104,6 +108,7 @@ public class FeedDoc extends Doc {
         this.reference = reference;
         this.streamType = streamType;
         this.status = status;
+        this.volumeGroup = volumeGroup;
     }
 
     /**
@@ -201,6 +206,14 @@ public class FeedDoc extends Doc {
 
     public void setReference(final boolean reference) {
         this.reference = reference;
+    }
+
+    public String getVolumeGroup() {
+        return volumeGroup;
+    }
+
+    public void setVolumeGroup(final String volumeGroup) {
+        this.volumeGroup = volumeGroup;
     }
 
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {

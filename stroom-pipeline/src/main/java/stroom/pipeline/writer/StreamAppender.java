@@ -19,6 +19,7 @@ package stroom.pipeline.writer;
 
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -73,6 +74,7 @@ public class StreamAppender extends AbstractAppender {
     private final MetaData metaData;
     private final RecordCount recordCount;
     private final DocRefInfoService docRefInfoService;
+    private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     private DocRef feedRef;
     private String streamType;
@@ -80,6 +82,7 @@ public class StreamAppender extends AbstractAppender {
     private Target streamTarget;
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private long count;
+    private String volumeGroup;
 
     private ProcessStatistics lastProcessStatistics;
 
@@ -90,7 +93,8 @@ public class StreamAppender extends AbstractAppender {
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
                           final RecordCount recordCount,
-                          final DocRefInfoService docRefInfoService) {
+                          final DocRefInfoService docRefInfoService,
+                          final VolumeGroupNameProvider volumeGroupNameProvider) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -99,6 +103,7 @@ public class StreamAppender extends AbstractAppender {
         this.metaData = metaData;
         this.recordCount = recordCount;
         this.docRefInfoService = docRefInfoService;
+        this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
     @Override
@@ -157,7 +162,9 @@ public class StreamAppender extends AbstractAppender {
                 .processorTaskId(processorTaskId)
                 .build();
 
-        streamTarget = streamStore.openTarget(metaProperties);
+        final String volumeGroupName = volumeGroupNameProvider
+                .getVolumeGroupName(feed, streamType, volumeGroup);
+        streamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
@@ -294,6 +301,13 @@ public class StreamAppender extends AbstractAppender {
             displayPriority = 6)
     public void setSplitRecords(final boolean splitRecords) {
         super.setSplitRecords(splitRecords);
+    }
+
+    @PipelineProperty(
+            description = "Optionally override the default volume group of the destination feed.",
+            displayPriority = 7)
+    public void setVolumeGroup(final String volumeGroup) {
+        this.volumeGroup = volumeGroup;
     }
 
     private void fatal(final String message) {
