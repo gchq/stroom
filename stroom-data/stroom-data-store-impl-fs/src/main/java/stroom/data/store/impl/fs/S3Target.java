@@ -214,11 +214,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                                 ZipUtil.zip(zipFile, tempDir);
 
                                 // Upload the zip to S3.
-                                s3Manager.upload(
-                                        meta,
-                                        meta.getTypeName(),
-                                        getAttributes(),
-                                        zipFile);
+                                s3Manager.upload(meta, getAttributes(), zipFile);
 
                             } catch (final IOException e) {
                                 throw new UncheckedIOException(e);

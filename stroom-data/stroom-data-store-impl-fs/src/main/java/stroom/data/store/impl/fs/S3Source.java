@@ -75,10 +75,7 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
         try {
             zipFile = tempDir.resolve("temp.zip");
             // Download the zip from S3.
-            s3Manager.download(
-                    meta,
-                    meta.getTypeName(),
-                    zipFile);
+            s3Manager.download(meta, zipFile);
 
             ZipUtil.zip(zipFile, tempDir);
         } catch (final IOException e) {

@@ -6,6 +6,7 @@ import stroom.data.store.impl.fs.shared.AwsProxyConfig;
 import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -20,7 +21,6 @@ import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider;
-import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.profiles.ProfileFile;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -246,20 +246,39 @@ public class S3Manager {
     }
 
     public PutObjectResponse upload(final Meta meta,
-                                    final String streamType,
                                     final AttributeMap attributeMap,
                                     final Path source) {
         final String bucketName = createBucketName(meta);
+        final PutObjectRequest request = createPutObjectRequest(bucketName, meta, attributeMap);
+        PutObjectResponse response;
+        try {
+            response = tryUpload(request, source);
+        } catch (final RuntimeException e) {
+            if (s3ClientConfig.isCreateBuckets()) {
+                LOGGER.debug(e::getMessage, e);
 
-        final PutObjectRequest request = createPutObjectRequest(bucketName, meta, streamType, attributeMap);
+                // If we are creating buckets then try to create the bucket and upload again.
+                try {
+                    createBucket(bucketName);
+                    response = tryUpload(request, source);
+                } catch (final RuntimeException e2) {
+                    LOGGER.error(e2::getMessage, e2);
+                    throw e2;
+                }
+            } else {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        }
+        return response;
+    }
+
+    public PutObjectResponse tryUpload(final PutObjectRequest request,
+                                       final Path source) {
+        LOGGER.debug(() -> "Try uploading: " + request);
         final PutObjectResponse response;
-        LOGGER.debug(() -> "Uploading: " + request);
 
         if (s3ClientConfig.isAsync()) {
-            if (s3ClientConfig.isCreateBuckets()) {
-                createBucketAsync(bucketName);
-            }
-
             try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
                 if (s3ClientConfig.isMultipart()) {
                     try (final S3TransferManager transferManager =
@@ -284,130 +303,47 @@ public class S3Manager {
                 } else {
                     response = s3AsyncClient.putObject(request, source).join();
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
             }
         } else {
-            if (s3ClientConfig.isCreateBuckets()) {
-                createBucket(bucketName);
-            }
-
             try (final S3Client s3Client = createClient(s3ClientConfig)) {
                 response = s3Client.putObject(request, source);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
             }
         }
-
         LOGGER.debug(() -> "Upload response: " + response);
         return response;
     }
 
-    private CreateBucketResponse createBucketAsync(final String bucketName) {
-        try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
-            return s3AsyncClient.createBucket(CreateBucketRequest.builder().bucket(bucketName).build()).join();
-        } catch (final S3Exception e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
+    private void createBucket(final String bucketName) {
+        final CreateBucketRequest request = CreateBucketRequest.builder().bucket(bucketName).build();
+        final CreateBucketResponse response;
+        LOGGER.debug(() -> "Creating bucket: " + bucketName);
+        LOGGER.trace(() -> "Create bucket request: " + request);
+        if (s3ClientConfig.isAsync()) {
+            try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
+                response = s3AsyncClient.createBucket(
+                        request).join();
+            } catch (final S3Exception e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        } else {
+            try (final S3Client s3Client = createClient(s3ClientConfig)) {
+                response = s3Client.createBucket(request);
+            } catch (final S3Exception e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
         }
-    }
-
-    private CreateBucketResponse createBucket(final String bucketName) {
-        try (final S3Client s3Client = createClient(s3ClientConfig)) {
-            return s3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
-        } catch (final S3Exception e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
-        }
-    }
-
-    private String uploadMultipart(final Meta meta,
-                                   final String streamType,
-                                   final AttributeMap attributeMap,
-                                   final Path source,
-                                   final String bucketName) {
-        final S3AsyncClient s3AsyncClient = S3AsyncClient
-                .crtBuilder()
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(
-                        "AKIAIOSFODNN7EXAMPLE",
-                        "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")))
-//                .credentialsProvider(DefaultCredentialsProvider.create())
-                .region(Region.EU_NORTH_1)
-                .endpointOverride(URI.create("http://localhost:9444"))
-//                .targetThroughputInGbps(20.0)
-//                .minimumPartSizeInBytes(1L)
-                .build();
-
-        try (final S3TransferManager transferManager =
-                S3TransferManager.builder()
-                        .s3Client(s3AsyncClient)
-                        .build()) {
-
-            final PutObjectRequest request = createPutObjectRequest(bucketName, meta, streamType, attributeMap);
-            LOGGER.debug(() -> "Uploading: " + request);
-
-            final UploadFileRequest uploadFileRequest =
-                    UploadFileRequest.builder()
-                            .putObjectRequest(request)
-                            .addTransferListener(LoggingTransferListener.create())
-                            .source(source)
-                            .build();
-
-            final FileUpload fileUpload = transferManager.uploadFile(uploadFileRequest);
-
-            final CompletedFileUpload uploadResult = fileUpload.completionFuture().join();
-            System.out.println(uploadResult.response());
-            return uploadResult.response().toString();
-        }
-    }
-
-    private void uploadAsync(final Meta meta,
-                             final String streamType,
-                             final AttributeMap attributeMap,
-                             final Path source,
-                             final String bucketName) {
-        final S3AsyncClient s3AsyncClient = S3AsyncClient
-                .crtBuilder()
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(
-                        "AKIAIOSFODNN7EXAMPLE",
-                        "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")))
-//                .credentialsProvider(DefaultCredentialsProvider.create())
-                .region(Region.US_WEST_2)
-                .endpointOverride(URI.create("http://localhost:9444"))
-//                .targetThroughputInGbps(20.0)
-//                .minimumPartSizeInBytes(ByteSize.ofMebibytes(8).getBytes())
-                .build();
-
-
-        s3AsyncClient.createBucket(CreateBucketRequest.builder().bucket(bucketName).build()).join();
-
-        final PutObjectRequest request = createPutObjectRequest(bucketName, meta, streamType, attributeMap);
-        System.out.println("Uploading: " + request);
-        s3AsyncClient.putObject(request, source).join();
-    }
-
-    private void uploadSync(final S3Client s3Client,
-                            final Meta meta,
-                            final String streamType,
-                            final AttributeMap attributeMap,
-                            final Path source,
-                            final String bucketName) {
-        s3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
-
-        final PutObjectRequest request = createPutObjectRequest(bucketName, meta, streamType, attributeMap);
-        System.out.println("Uploading: " + request);
-        s3Client.putObject(request, source);
+        LOGGER.debug(() -> "Created bucket: " + bucketName);
+        LOGGER.trace(() -> "Created bucket response: " + response);
     }
 
     public GetObjectResponse download(final Meta meta,
-                                      final String streamType,
                                       final Path dest) {
         final String bucketName = createBucketName(meta);
         final GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
-                .key(createKey(meta, streamType))
+                .key(createKey(meta))
                 .build();
         final GetObjectResponse response;
         LOGGER.debug(() -> "Downloading: " + request);
@@ -454,12 +390,11 @@ public class S3Manager {
         return response;
     }
 
-    public DeleteObjectResponse delete(final Meta meta,
-                                       final String streamType) {
+    public DeleteObjectResponse delete(final Meta meta) {
         final String bucketName = createBucketName(meta);
         final DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(bucketName)
-                .key(createKey(meta, streamType))
+                .key(createKey(meta))
                 .build();
         final DeleteObjectResponse response;
         LOGGER.debug(() -> "Deleting: " + request);
@@ -484,40 +419,45 @@ public class S3Manager {
         return response;
     }
 
-    public Optional<DeleteObjectResponse> tryDelete(final Meta meta,
-                                                    final String streamType) {
+    public Optional<DeleteObjectResponse> tryDelete(final Meta meta) {
         try {
-            return Optional.of(delete(meta, streamType));
+            return Optional.of(delete(meta));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
         return Optional.empty();
     }
 
-    private Tagging createTags(final Meta meta, final String streamType) {
+    private Tagging createTags(final Meta meta) {
         return Tagging.builder()
                 .tagSet(
                         Tag.builder().key("feed").value(meta.getFeedName()).build(),
-                        Tag.builder().key("stream-type").value(streamType).build(),
+                        Tag.builder().key("stream-type").value(meta.getTypeName()).build(),
                         Tag.builder().key("meta-id").value(String.valueOf(meta.getId())).build()
                 )
                 .build();
     }
 
-    private String createKey(final Meta meta, final String streamType) {
+    private String createKey(final Meta meta) {
 //        String extension = EXTENSION_MAP.get(streamType);
 //        if (extension == null) {
 //            extension = "dat";
 //        }
-        if (s3ClientConfig.isUseFeedAsBucketName()) {
-            return meta.getId() + ".zip";
-        }
-        return meta.getFeedName() + "/" + meta.getTypeName() + "/" + meta.getId() + ".zip";
+//        if (s3ClientConfig.isUseFeedAsBucketName()) {
+//            return meta.getId() + ".zip";
+//        }
+        final String paddedId = FsPrefixUtil.padId(meta.getId());
+        final String datePath = createDatePath(meta.getCreateMs());
+        return meta.getFeedName() + "/" + meta.getTypeName() + "/" + datePath + "/" + paddedId + ".zip";
+    }
+
+    private String createDatePath(final long timeMs) {
+        final String utcDate = DateUtil.createNormalDateTimeString(timeMs);
+        return utcDate.substring(0, 4) + "/" + utcDate.substring(5, 7) + "/" + utcDate.substring(8, 10);
     }
 
     private PutObjectRequest createPutObjectRequest(final String bucketName,
                                                     final Meta meta,
-                                                    final String streamType,
                                                     final AttributeMap attributeMap) {
         final Map<String, String> metadata = attributeMap
                 .entrySet()
@@ -526,8 +466,8 @@ public class S3Manager {
 
         return PutObjectRequest.builder()
                 .bucket(bucketName)
-                .key(createKey(meta, streamType))
-                .tagging(createTags(meta, streamType))
+                .key(createKey(meta))
+                .tagging(createTags(meta))
                 .metadata(metadata)
                 .build();
     }
