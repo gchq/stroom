@@ -75,6 +75,7 @@ public class AnalyticProcessingPresenter
     private DocRef currentErrorFeed;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
+    private boolean isErrorFeedInitialised = false;
 
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
@@ -120,9 +121,16 @@ public class AnalyticProcessingPresenter
             setDirty(true);
         }));
         registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> {
-            if (!Objects.equals(errorFeedPresenter.getSelectedEntityReference(), currentErrorFeed)) {
-                currentErrorFeed = errorFeedPresenter.getSelectedEntityReference();
-                onDirty();
+
+            final DocRef selectedEntityReference = errorFeedPresenter.getSelectedEntityReference();
+            // Don't want to fire dirty event when the entity is first set
+            if (isErrorFeedInitialised) {
+                if (!Objects.equals(selectedEntityReference, currentErrorFeed)) {
+                    currentErrorFeed = selectedEntityReference;
+                    onDirty();
+                }
+            } else {
+                isErrorFeedInitialised = true;
             }
         }));
     }

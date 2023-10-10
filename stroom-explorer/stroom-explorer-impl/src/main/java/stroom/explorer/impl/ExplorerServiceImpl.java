@@ -856,6 +856,7 @@ class ExplorerServiceImpl
                                final String name,
                                final ExplorerNode destinationFolder,
                                final PermissionInheritance permissionInheritance) {
+
         final DocRef folderRef = getDestinationFolderRef(destinationFolder);
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 

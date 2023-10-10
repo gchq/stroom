@@ -21,8 +21,10 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -37,6 +39,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class InfoDocumentPresenter
         extends MyPresenter<InfoDocumentPresenter.InfoDocumentView, InfoDocumentPresenter.InfoDocumentProxy>
@@ -67,7 +70,8 @@ public class InfoDocumentPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
-        final DocRefInfo info = event.getInfo();
+        final ExplorerNodeInfo explorerNodeInfo = event.getExplorerNodeInfo();
+        final DocRefInfo info = event.getDocRefInfo();
         final DocRef docRef = info.getDocRef();
         final ExplorerNode explorerNode = event.getExplorerNode();
 
@@ -83,6 +87,18 @@ public class InfoDocumentPresenter
         sb.append(docRef.getType());
         sb.append("\nName: ");
         sb.append(docRef.getName());
+        if (GwtNullSafe.hasItems(explorerNodeInfo.getOwners())) {
+            final Set<UserName> owners = explorerNodeInfo.getOwners();
+            if (owners.size() > 1) {
+                sb.append("\nOwners: ");
+            } else {
+                sb.append("\nOwner: ");
+            }
+            sb.append(explorerNodeInfo.getOwners()
+                    .stream()
+                    .map(UserName::getUserIdentityForAudit)
+                    .collect(Collectors.joining(", ")));
+        }
         if (info.getCreateUser() != null) {
             sb.append("\nCreated By: ");
             sb.append(info.getCreateUser());

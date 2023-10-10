@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -175,6 +176,19 @@ public final class DocumentPermissionNames {
         return GwtNullSafe.stream(perms)
                 .filter(DOCUMENT_PERMISSIONS_SET::contains)
                 .collect(Collectors.toSet());
+    }
+
+    public static Set<String> excludePermissions(final Set<String> perms,
+                                                 final String... excludePerms) {
+        if (GwtNullSafe.hasItems(excludePerms)) {
+            final Set<String> result = new HashSet<>(perms);
+            for (final String excludePerm : excludePerms) {
+                result.remove(excludePerm);
+            }
+            return Collections.unmodifiableSet(result);
+        } else {
+            return perms;
+        }
     }
 
     // --------------------------------------------------------------------------------

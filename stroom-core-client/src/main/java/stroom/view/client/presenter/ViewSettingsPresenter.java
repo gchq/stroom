@@ -46,6 +46,8 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
     private final EntityDropDownPresenter pipelineSelectionPresenter;
     private final EditExpressionPresenter expressionPresenter;
+    private boolean isDataSourceSelectionInitialised = false;
+    private boolean isPipelineSelectionInitialised = false;
 
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
@@ -82,16 +84,30 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
     @Override
     protected void onBind() {
+        registerHandlers();
+    }
+
+    private void registerHandlers() {
         registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> {
-            if (!Objects.equals(getEntity().getDataSource(),
-                    dataSourceSelectionPresenter.getSelectedEntityReference())) {
-                setDirty(true);
+            final DocRef selectedEntityReference = dataSourceSelectionPresenter.getSelectedEntityReference();
+            // Don't want to fire dirty event when the entity is first set
+            if (isDataSourceSelectionInitialised) {
+                if (!Objects.equals(getEntity().getDataSource(), selectedEntityReference)) {
+                    setDirty(true);
+                }
+            } else {
+                isDataSourceSelectionInitialised = true;
             }
         }));
         registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> {
-            if (!Objects.equals(getEntity().getPipeline(),
-                    pipelineSelectionPresenter.getSelectedEntityReference())) {
-                setDirty(true);
+            final DocRef selectedEntityReference = pipelineSelectionPresenter.getSelectedEntityReference();
+            // Don't want to fire dirty event when the entity is first set
+            if (isPipelineSelectionInitialised) {
+                if (!Objects.equals(getEntity().getPipeline(), selectedEntityReference)) {
+                    setDirty(true);
+                }
+            } else {
+                isPipelineSelectionInitialised = true;
             }
         }));
         registerHandler(expressionPresenter.addDirtyHandler(event -> setDirty(true)));
@@ -101,7 +117,6 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     protected void onRead(final DocRef docRef, final ViewDoc entity, final boolean readOnly) {
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
-
         expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, MetaFields.getAllFields());
 
         // Read expression.

@@ -17,8 +17,11 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodeInfo;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -29,24 +32,16 @@ import java.util.Objects;
 public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final ExplorerNode explorerNode;
-    private final DocRefInfo info;
+    private final ExplorerNodeInfo explorerNodeInfo;
 
-    private ShowInfoDocumentDialogEvent(final ExplorerNode explorerNode, final DocRefInfo info) {
-        this.explorerNode = Objects.requireNonNull(explorerNode);
-        this.info = Objects.requireNonNull(info);
-        if (!Objects.equals(explorerNode.getDocRef(), info.getDocRef())) {
-            throw new RuntimeException("Different docRefs, "
-                    + "node docref: " + explorerNode.getDocRef()
-                    + " info docRef: " + info.getDocRef());
-        }
+    private ShowInfoDocumentDialogEvent(final ExplorerNodeInfo explorerNodeInfo) {
+        this.explorerNodeInfo = Objects.requireNonNull(explorerNodeInfo);
     }
 
     public static void fire(final HasHandlers handlers,
-                            final ExplorerNode explorerNode,
-                            final DocRefInfo info) {
+                            final ExplorerNodeInfo explorerNodeInfo) {
         handlers.fireEvent(
-                new ShowInfoDocumentDialogEvent(explorerNode, info));
+                new ShowInfoDocumentDialogEvent(explorerNodeInfo));
     }
 
     public static Type<Handler> getType() {
@@ -66,13 +61,22 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
         handler.onCreate(this);
     }
 
-    public DocRefInfo getInfo() {
-        return info;
+    public DocRef getDocRef() {
+        return GwtNullSafe.get(explorerNodeInfo, ExplorerNodeInfo::getExplorerNode, ExplorerNode::getDocRef);
+    }
+
+    public DocRefInfo getDocRefInfo() {
+        return explorerNodeInfo.getDocRefInfo();
     }
 
     public ExplorerNode getExplorerNode() {
-        return explorerNode;
+        return explorerNodeInfo.getExplorerNode();
     }
+
+    public ExplorerNodeInfo getExplorerNodeInfo() {
+        return explorerNodeInfo;
+    }
+
 
     // --------------------------------------------------------------------------------
 

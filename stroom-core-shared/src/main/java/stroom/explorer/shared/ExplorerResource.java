@@ -17,7 +17,6 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -92,7 +91,14 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Get document info",
             operationId = "fetchExplorerItemInfo")
-    DocRefInfo info(@Parameter(description = "docRef", required = true) DocRef docRef);
+    ExplorerNodeInfo info(@Parameter(description = "docRef", required = true) DocRef docRef);
+
+    @POST
+    @Path("/decorate")
+    @Operation(
+            summary = "Decorate the docRef will all values, e.g. add the name",
+            operationId = "decorateDocRef")
+    DocRef decorate(@Parameter(description = "docRef", required = true) DocRef docRef);
 
     @POST
     @Path("/getFromDocRef")
