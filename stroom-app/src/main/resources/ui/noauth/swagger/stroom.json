@@ -9133,6 +9133,36 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/userNames/v1/findAssociates" : {
+      "post" : {
+        "operationId" : "findAssociateUserNames",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindUserNameCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageUserName"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/userNames/v1/getByDisplayName/{displayName}" : {
       "get" : {
         "operationId" : "getByDisplayName",
@@ -12806,6 +12836,9 @@
           },
           "version" : {
             "type" : "string"
+          },
+          "volumeGroup" : {
+            "type" : "string"
           }
         }
       },
@@ -13221,6 +13254,9 @@
       "FindFsVolumeCriteria" : {
         "type" : "object",
         "properties" : {
+          "group" : {
+            "$ref" : "#/components/schemas/FsVolumeGroup"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
@@ -13607,6 +13643,9 @@
           },
           "s3ClientConfig" : {
             "$ref" : "#/components/schemas/S3ClientConfig"
+          },
+          "s3ClientConfigData" : {
+            "type" : "string"
           },
           "status" : {
             "type" : "string",

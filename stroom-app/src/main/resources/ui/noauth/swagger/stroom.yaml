@@ -6272,6 +6272,28 @@ paths:
       summary: Find the user names matching the supplied criteria
       tags:
       - Authorisation
+  /userNames/v1/findAssociates:
+    post:
+      operationId: findAssociateUserNames
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindUserNameCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageUserName'
+          description: default response
+      summary: Find the user names matching the supplied criteria of users who belong
+        to at least one of the same groups as the current user. If the current user
+        is admin or has Manage Users permission then they can see all users.
+      tags:
+      - Authorisation
   /userNames/v1/getByDisplayName/{displayName}:
     get:
       operationId: getByDisplayName
@@ -9473,6 +9495,8 @@ components:
           type: string
         version:
           type: string
+        volumeGroup:
+          type: string
     FetchAllDocumentPermissionsRequest:
       type: object
       properties:
@@ -9765,6 +9789,8 @@ components:
     FindFsVolumeCriteria:
       type: object
       properties:
+        group:
+          $ref: '#/components/schemas/FsVolumeGroup'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         selection:
@@ -10033,6 +10059,8 @@ components:
           type: string
         s3ClientConfig:
           $ref: '#/components/schemas/S3ClientConfig'
+        s3ClientConfigData:
+          type: string
         status:
           type: string
           enum:

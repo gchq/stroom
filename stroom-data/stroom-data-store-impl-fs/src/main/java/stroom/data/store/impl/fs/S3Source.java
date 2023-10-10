@@ -54,6 +54,7 @@ final class S3Source implements Source {
 
     private final Map<Long, S3InputStreamProvider> partMap = new HashMap<>();
     private final Path tempDir;
+    private final String s3Location;
     private AttributeMap attributeMap;
 
     private final Meta meta;
@@ -63,6 +64,8 @@ final class S3Source implements Source {
     private S3Source(final S3Manager s3Manager,
                      final Meta meta,
                      final Path tempDir) {
+        s3Location = "S3 > " + s3Manager.createBucketName(meta) + " > " + s3Manager.createKey(meta);
+
         // Create zip.
         Path zipFile = null;
         try {
@@ -124,13 +127,15 @@ final class S3Source implements Source {
                 LOGGER.error(e::getMessage, e);
             }
 
+            attributeMap.put("S3 Location", s3Location);
+
             try {
                 try (final Stream<Path> stream = Files.list(tempDir)) {
                     final String fileNames = stream
                             .map(FileUtil::getCanonicalPath)
                             .sorted()
                             .collect(Collectors.joining("\n"));
-                    attributeMap.put("Files", fileNames);
+                    attributeMap.put("Temp Files", fileNames);
                 }
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);

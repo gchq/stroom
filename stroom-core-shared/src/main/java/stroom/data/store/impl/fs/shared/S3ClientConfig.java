@@ -55,7 +55,8 @@ public class S3ClientConfig {
     private final String defaultBucketName;
 
     @JsonCreator
-    public S3ClientConfig(@JsonProperty("credentialsProviderType") final AwsCredentialsProviderType credentialsProviderType,
+    public S3ClientConfig(@JsonProperty("credentialsProviderType") final
+                          AwsCredentialsProviderType credentialsProviderType,
                           @JsonProperty("credentials") final AwsCredentials credentials,
                           @JsonProperty("readBufferSizeInBytes") final Long readBufferSizeInBytes,
                           @JsonProperty("region") final String region,

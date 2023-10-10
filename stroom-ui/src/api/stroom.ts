@@ -1850,6 +1850,7 @@ export interface FeedDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+  volumeGroup?: string;
 }
 
 export interface FetchAllDocumentPermissionsRequest {
@@ -2027,6 +2028,7 @@ export interface FindExplorerNodeQuery {
 }
 
 export interface FindFsVolumeCriteria {
+  group?: FsVolumeGroup;
   pageRequest?: PageRequest;
   selection?: SelectionVolumeUseStatus;
   sort?: string;
@@ -2162,6 +2164,7 @@ export interface FsVolume {
   id?: number;
   path?: string;
   s3ClientConfig?: S3ClientConfig;
+  s3ClientConfigData?: string;
   status?: "ACTIVE" | "INACTIVE" | "CLOSED";
 
   /** @format int64 */
@@ -10890,6 +10893,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     findUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageUserName>({
         path: `/userNames/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name FindAssociateUserNames
+     * @summary Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.
+     * @request POST:/userNames/v1/findAssociates
+     * @secure
+     */
+    findAssociateUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageUserName>({
+        path: `/userNames/v1/findAssociates`,
         method: "POST",
         body: data,
         secure: true,

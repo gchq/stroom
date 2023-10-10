@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -169,10 +170,11 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
             data = fileVolume.getS3ClientConfigData().getBytes(StandardCharsets.UTF_8);
         }
 
+        final FsVolumeType volumeType = Objects.requireNonNullElse(fileVolume.getVolumeType(), FsVolumeType.STANDARD);
         record.from(fileVolume);
         record.set(FS_VOLUME.STATUS, fileVolume.getStatus().getPrimitiveValue());
         record.set(FS_VOLUME.FK_FS_VOLUME_STATE_ID, fileVolume.getVolumeState().getId());
-        record.set(FS_VOLUME.VOLUME_TYPE, fileVolume.getVolumeType().getId());
+        record.set(FS_VOLUME.VOLUME_TYPE, volumeType.getId());
         record.set(FS_VOLUME.FK_FS_VOLUME_GROUP_ID, fileVolume.getVolumeGroupId());
         record.set(FS_VOLUME.DATA, data);
     }

@@ -35,8 +35,8 @@ public class AwsWebCredentials implements AwsCredentials {
     private final Boolean asyncCredentialUpdateEnabled;
 
     /**
-     * Configure the amount of time, relative to STS token expiration, that the cached credentials are considered close to
-     * stale and should be updated.
+     * Configure the amount of time, relative to STS token expiration, that the cached credentials are considered close
+     * to stale and should be updated.
      *
      * <p>Prefetch updates will occur between the specified time and the stale time of the provider. Prefetch
      * updates may be asynchronous. See {@link #asyncCredentialUpdateEnabled}.
@@ -47,8 +47,8 @@ public class AwsWebCredentials implements AwsCredentials {
     private final String prefetchTime;
 
     /**
-     * Configure the amount of time, relative to STS token expiration, that the cached credentials are considered stale and
-     * must be updated. All threads will block until the value is updated.
+     * Configure the amount of time, relative to STS token expiration, that the cached credentials are considered stale
+     * and must be updated. All threads will block until the value is updated.
      *
      * <p>By default, this is 1 minute.
      */

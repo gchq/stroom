@@ -2,14 +2,13 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.shared.AwsBasicCredentials;
-import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.data.store.impl.fs.shared.AwsCredentialsProviderType;
+import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 
 import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;

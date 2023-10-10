@@ -73,6 +73,7 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
     public FsVolume() {
         status = VolumeUseStatus.ACTIVE;
+        volumeType = FsVolumeType.STANDARD;
     }
 
     @JsonCreator
@@ -100,7 +101,9 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         this.status = status;
         this.byteLimit = byteLimit;
         this.volumeState = volumeState;
-        this.volumeType = volumeType;
+        this.volumeType = volumeType == null
+                ? FsVolumeType.STANDARD
+                : volumeType;
         this.s3ClientConfig = s3ClientConfig;
         this.s3ClientConfigData = s3ClientConfigData;
         this.volumeGroupId = volumeGroupId;
@@ -290,12 +293,10 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                 Objects.equals(path, volume.path) &&
                 status == volume.status &&
                 Objects.equals(byteLimit, volume.byteLimit) &&
-                Objects.equals(volumeState, volume.volumeState) &&
                 volumeType == volume.volumeType &&
                 Objects.equals(s3ClientConfig, volume.s3ClientConfig) &&
                 Objects.equals(s3ClientConfigData, volume.s3ClientConfigData) &&
-                Objects.equals(volumeGroupId, volume.volumeGroupId) &&
-                Objects.equals(capacityInfo, volume.capacityInfo);
+                Objects.equals(volumeGroupId, volume.volumeGroupId);
     }
 
     @Override
@@ -309,12 +310,10 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                 path,
                 status,
                 byteLimit,
-                volumeState,
                 volumeType,
                 s3ClientConfig,
                 s3ClientConfigData,
-                volumeGroupId,
-                capacityInfo);
+                volumeGroupId);
     }
 
 

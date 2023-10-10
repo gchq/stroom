@@ -6,7 +6,7 @@ public enum AwsCredentialsProviderType implements HasDisplayValue {
     ANONYMOUS("Anonymous Credentials Provider"),
     DEFAULT("Default Credentials Provider"),
     ENVIRONMENT_VARIABLE("Environment Variable Credentials Provider"),
-//    LAZY("Lazy Aws Credentials Provider"),
+    //    LAZY("Lazy Aws Credentials Provider"),
 //    PROCESS("Process Credentials Provider"),
     PROFILE("Profile Credentials Provider"),
     STATIC("Static Credentials Provider"),

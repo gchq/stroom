@@ -149,7 +149,8 @@ public class S3Manager {
 //            case    LAZY -> LazyAwsCredentialsProvider.create();
 //            case    PROCESS -> ProcessCredentialsProvider.create();
                 case PROFILE -> {
-                    final stroom.data.store.impl.fs.shared.AwsCredentials awsCredentials = s3ClientConfig.getCredentials();
+                    final stroom.data.store.impl.fs.shared.AwsCredentials awsCredentials =
+                            s3ClientConfig.getCredentials();
                     if (awsCredentials instanceof final AwsProfileCredentials awsProfileCredentials) {
                         if (awsProfileCredentials.getProfileFilePath() != null &&
                                 awsProfileCredentials.getProfileFilePath().length() > 0) {
@@ -215,7 +216,7 @@ public class S3Manager {
         return credentialsProvider;
     }
 
-    private String createBucketName(final Meta meta) {
+    public String createBucketName(final Meta meta) {
         if (s3ClientConfig.isUseFeedAsBucketName()) {
             final String bucketName = createS3Name(meta.getFeedName()) + "." + createS3Name(meta.getTypeName());
             if (bucketName.length() > 63) {
@@ -431,7 +432,7 @@ public class S3Manager {
                 .build();
     }
 
-    private String createKey(final Meta meta) {
+    public String createKey(final Meta meta) {
 //        String extension = EXTENSION_MAP.get(streamType);
 //        if (extension == null) {
 //            extension = "dat";

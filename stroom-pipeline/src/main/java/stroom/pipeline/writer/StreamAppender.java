@@ -19,10 +19,10 @@ package stroom.pipeline.writer;
 
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;

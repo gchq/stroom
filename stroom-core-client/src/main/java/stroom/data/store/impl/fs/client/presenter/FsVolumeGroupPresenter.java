@@ -91,8 +91,8 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
             if (name != null) {
                 final Rest<FsVolumeGroup> rest = restFactory.create();
                 rest
-                        .onSuccess(FsVolumeGroup -> {
-                            edit(FsVolumeGroup);
+                        .onSuccess(volumeGroup -> {
+                            edit(volumeGroup);
                             presenter.hide();
                             refresh();
                         })
@@ -115,9 +115,9 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         }
     }
 
-    private void edit(final FsVolumeGroup FsVolumeGroup) {
+    private void edit(final FsVolumeGroup volumeGroup) {
         final FsVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(FsVolumeGroup, "Edit Volume Group - " + FsVolumeGroup.getName(), result -> {
+        editor.show(volumeGroup, "Edit Volume Group - " + volumeGroup.getName(), result -> {
             if (result != null) {
                 refresh();
             }

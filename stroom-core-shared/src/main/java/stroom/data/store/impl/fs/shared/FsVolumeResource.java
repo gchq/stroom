@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl.fs.shared;
 
-import stroom.index.shared.ValidationResult;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;

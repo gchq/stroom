@@ -19,12 +19,12 @@ package stroom.receive;
 
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.data.store.mock.MockStore;
 import stroom.data.zip.StroomZipFileType;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;

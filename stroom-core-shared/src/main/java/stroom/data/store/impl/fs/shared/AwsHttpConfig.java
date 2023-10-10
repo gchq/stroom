@@ -46,8 +46,10 @@ public class AwsHttpConfig {
 //     *
 //     * <p>
 //     * You can set a throughput threshold for a connection to be considered healthy. If a connection falls below this
-//     * threshold ({@link S3CrtConnectionHealthConfiguration#minimumThroughputInBps() }) for the configurable amount of time
-//     * ({@link S3CrtConnectionHealthConfiguration#minimumThroughputTimeout()}), then the connection is considered unhealthy
+//     * threshold ({@link S3CrtConnectionHealthConfiguration#minimumThroughputInBps() }) for the configurable amount
+//     of time
+//     * ({@link S3CrtConnectionHealthConfiguration#minimumThroughputTimeout()}), then the connection is considered
+//     unhealthy
 //     * and will be shut down.
 //     *
 //     * @param healthConfiguration The health checks config to use

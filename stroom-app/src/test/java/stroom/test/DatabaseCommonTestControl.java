@@ -54,7 +54,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
-    private static final boolean USE_S3 = true;
+    private static final boolean USE_S3 = false;
 
     private final ContentImportService contentImportService;
     private final IndexShardManager indexShardManager;

@@ -1,8 +1,8 @@
 package stroom.receive.common;
 
 import stroom.data.store.api.Store;
-import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.api.FeedProperties;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.statistics.api.MetaStatistics;
