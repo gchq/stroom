@@ -114,7 +114,8 @@ public class CreateDocumentPresenter
         if (e.isOk()) {
             final ExplorerNode destinationFolder = getFolder();
             if (!allowNullFolder && destinationFolder == null) {
-                AlertEvent.fireWarn(CreateDocumentPresenter.this,
+                AlertEvent.fireWarn(
+                        CreateDocumentPresenter.this,
                         "No parent folder has been selected",
                         null);
             } else {
@@ -124,10 +125,13 @@ public class CreateDocumentPresenter
                 }
 
                 if (docName == null || docName.length() == 0) {
-                    AlertEvent.fireWarn(CreateDocumentPresenter.this,
-                            "You must provide a name for the new " + docType.toLowerCase(), null);
+                    AlertEvent.fireWarn(
+                            CreateDocumentPresenter.this,
+                            "You must provide a name for the new " + docType.toLowerCase(),
+                            null);
                 } else {
-                    CreateDocumentEvent.fire(CreateDocumentPresenter.this,
+                    CreateDocumentEvent.fire(
+                            CreateDocumentPresenter.this,
                             CreateDocumentPresenter.this,
                             docType,
                             docName,
@@ -145,6 +149,10 @@ public class CreateDocumentPresenter
         return entityTreePresenter.getSelectedItem();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface CreateDocumentView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
 
         String getName();
@@ -157,6 +165,10 @@ public class CreateDocumentPresenter
 
         void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface CreateDocumentProxy extends Proxy<CreateDocumentPresenter> {

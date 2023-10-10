@@ -27,7 +27,6 @@ import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
@@ -62,6 +61,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFavouriteResource;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerServiceCopyRequest;
@@ -560,7 +560,8 @@ public class DocumentPluginEventManager extends Plugin {
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .create(new ExplorerServiceCreateRequest(docType,
+                .create(new ExplorerServiceCreateRequest(
+                        docType,
                         docName,
                         destinationFolder,
                         permissionInheritance));
@@ -625,17 +626,14 @@ public class DocumentPluginEventManager extends Plugin {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
-            restFactory.create()
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            final DocRefInfo docRefInfo = (DocRefInfo) result;
-                            if (docRefInfo.getDocRef() != null) {
-                                docRef.setName(docRefInfo.getDocRef().getName());
-                            }
+            restFactory.create(DocRef.class)
+                    .onSuccess(decoratedDocRef -> {
+                        if (decoratedDocRef != null) {
+                            docRef.setName(decoratedDocRef.getName());
                         }
                     })
                     .call(EXPLORER_RESOURCE)
-                    .info(docRef);
+                    .decorate(docRef);
             documentPlugin.open(docRef, forceOpen, fullScreen);
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
@@ -1035,20 +1033,12 @@ public class DocumentPluginEventManager extends Plugin {
             command = () -> {
                 // Should only be one item as info is not supported for multi selection
                 // in the tree
-                final Rest<DocRefInfo> rest = restFactory.create();
+                final Rest<ExplorerNodeInfo> rest = restFactory.create();
                 rest
-                        .onSuccess(docRefInfo -> {
-                            final Rest<ExplorerNode> expNodeRest = restFactory.create();
-                            expNodeRest
-                                    .onSuccess(explorerNodeFromDb -> {
-                                        ShowInfoDocumentDialogEvent.fire(
-                                                DocumentPluginEventManager.this,
-                                                explorerNodeFromDb,
-                                                docRefInfo);
-                                    })
-                                    .onFailure(this::handleFailure)
-                                    .call(EXPLORER_RESOURCE)
-                                    .getFromDocRef(explorerNode.getDocRef());
+                        .onSuccess(explorerNodeInfo -> {
+                            ShowInfoDocumentDialogEvent.fire(
+                                    DocumentPluginEventManager.this,
+                                    explorerNodeInfo);
                         })
                         .onFailure(this::handleFailure)
                         .call(EXPLORER_RESOURCE)
