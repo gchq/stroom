@@ -165,7 +165,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 copyPermissions(
                         NullSafe.get(sourceDocRef, DocRef::getUuid),
                         documentDocRef.getUuid(),
-                        excludeCreatePermissions);
+                        excludeCreatePermissions,
+                        owner);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message(
@@ -197,7 +198,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private void copyPermissions(final String sourceUuid,
                                  final String destUuid,
-                                 final boolean excludeCreatePermissions) {
+                                 final boolean excludeCreatePermissions,
+                                 final boolean owner) {
         LOGGER.debug("copyPermissions() - sourceUuid: {}, destUuid: {}", sourceUuid, destUuid);
         if (sourceUuid != null) {
             final stroom.security.shared.DocumentPermissions sourceDocumentPermissions =
@@ -209,9 +211,17 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                     for (final Map.Entry<String, Set<String>> entry : userPermissions.entrySet()) {
                         final String userUuid = entry.getKey();
 
-                        final Set<String> sourcePermissions = excludeCreatePermissions
+                        Set<String> sourcePermissions = excludeCreatePermissions
                                 ? DocumentPermissionNames.excludeCreatePermissions(entry.getValue())
                                 : entry.getValue();
+
+                        if (owner) {
+                            // We don't want to copy the ownership from the source as current user is
+                            // the owner
+                            sourcePermissions = DocumentPermissionNames.excludePermissions(
+                                    sourcePermissions,
+                                    DocumentPermissionNames.OWNER);
+                        }
 
                         for (final String permission : sourcePermissions) {
                             try {

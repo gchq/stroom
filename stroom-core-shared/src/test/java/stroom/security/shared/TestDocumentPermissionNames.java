@@ -5,13 +5,15 @@ import stroom.test.common.TestUtil;
 import stroom.util.shared.GwtUtil;
 
 import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static stroom.security.shared.DocumentPermissionNames.DELETE;
@@ -22,10 +24,31 @@ import static stroom.security.shared.DocumentPermissionNames.USE;
 
 class TestDocumentPermissionNames {
 
-    @Test
-    void getInferredPermissions() {
-
-
+    @TestFactory
+    Stream<DynamicTest> testExcludePermissions() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Set<String>, String[]>>() {})
+                .withWrappedOutputType(new TypeLiteral<Set<String>>() {})
+                .withTestFunction(testCase -> DocumentPermissionNames.excludePermissions(
+                        testCase.getInput()._1(),
+                        testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(
+                        Tuple.of(Set.of("a", "b", "c"), null),
+                        Set.of("a", "b", "c"))
+                .addCase(
+                        Tuple.of(Set.of("a", "b", "c"), new String[0]),
+                        Set.of("a", "b", "c"))
+                .addCase(
+                        Tuple.of(Set.of("a", "b", "c"), new String[] {"b"}),
+                        Set.of("a", "c"))
+                .addCase(
+                        Tuple.of(Set.of("a", "b", "c"), new String[] {"d"}),
+                        Set.of("a", "b", "c"))
+                .addCase(
+                        Tuple.of(Set.of("a", "b", "c"), new String[] {"a", "b", "c"}),
+                        Collections.emptySet())
+                .build();
     }
 
     @TestFactory
