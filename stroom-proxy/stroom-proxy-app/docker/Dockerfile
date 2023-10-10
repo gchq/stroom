@@ -58,6 +58,9 @@ VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/repo/
 VOLUME /stroom-proxy/logs/
+VOLUME /stroom-proxy/db/
+VOLUME /stroom-proxy/failures/
+VOLUME /stroom-proxy/sqlite_library/
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
@@ -86,6 +89,9 @@ RUN \
     mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/repo && \
+    mkdir -p /stroom-proxy/db && \
+    mkdir -p /stroom-proxy/failures && \
+    mkdir -p /stroom-proxy/sqlite_library && \
     chown -R proxy:proxy /stroom-proxy
 
 # Copy all the fat jars for the application and connectors

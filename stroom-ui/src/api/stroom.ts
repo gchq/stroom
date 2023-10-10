@@ -10679,6 +10679,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
+     * @name FindAssociateUserNames
+     * @summary Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.
+     * @request POST:/userNames/v1/findAssociates
+     * @secure
+     */
+    findAssociateUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageUserName>({
+        path: `/userNames/v1/findAssociates`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
      * @name GetByDisplayName
      * @summary Find the user name matching the supplied displayName
      * @request GET:/userNames/v1/getByDisplayName/{displayName}
