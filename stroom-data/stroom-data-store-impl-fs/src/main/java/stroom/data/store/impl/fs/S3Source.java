@@ -23,16 +23,13 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.zip.ZipUtil;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
@@ -43,8 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * A file system implementation of Source.
@@ -56,7 +51,7 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
     private final S3PathHelper pathHelper;
     private final Map<String, S3Source> childMap = new HashMap<>();
     private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
-    private final Path volumePath;
+    private final Path tempDir;
     private final String streamType;
     private final S3Source parent;
     private AttributeMap attributeMap;
@@ -70,40 +65,21 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
     private S3Source(final S3Manager s3Manager,
                      final S3PathHelper pathHelper,
                      final Meta meta,
-                     final String streamType) {
+                     final String streamType,
+                     final Path tempDir) {
         // Create zip.
         Path zipFile = null;
-        Path volumePath = null;
         try {
-            volumePath = Files.createTempDirectory("stroom");
-            zipFile = volumePath.resolve("temp.zip");
+            zipFile = tempDir.resolve("temp.zip");
             // Download the zip from S3.
             s3Manager.download(
                     meta,
                     meta.getTypeName(),
                     zipFile);
-            try (final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(
-                    Files.newInputStream(zipFile)))) {
-                ZipEntry entry = zipInputStream.getNextEntry();
-                while (entry != null) {
-                    final Path file = volumePath.resolve(entry.getName());
-                    try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-                        StreamUtil.streamToStream(zipInputStream, outputStream);
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                    entry = zipInputStream.getNextEntry();
-                }
-            }
-        } catch (final IOException e) {
-            if (volumePath != null) {
-                try {
-                    FileUtil.deleteDir(volumePath);
-                } catch (final RuntimeException e2) {
-                    LOGGER.debug(e2::getMessage, e2);
-                }
-            }
 
+            ZipUtil.zip(zipFile, tempDir);
+        } catch (final IOException e) {
+            FileUtil.deleteDir(tempDir);
             throw new UncheckedIOException(e);
         } finally {
             if (zipFile != null) {
@@ -117,7 +93,7 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
 
         this.pathHelper = pathHelper;
         this.meta = meta;
-        this.volumePath = volumePath;
+        this.tempDir = tempDir;
         this.parent = null;
         this.streamType = streamType;
         validate();
@@ -129,7 +105,7 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
                      final Path file) {
         this.pathHelper = pathHelper;
         this.meta = parent.meta;
-        this.volumePath = parent.volumePath;
+        this.tempDir = parent.tempDir;
         this.parent = parent;
         this.streamType = streamType;
         this.file = file;
@@ -144,8 +120,9 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
     static S3Source create(final S3Manager s3Manager,
                            final S3PathHelper pathHelper,
                            final Meta meta,
-                           final String streamType) {
-        return new S3Source(s3Manager, pathHelper, meta, streamType);
+                           final String streamType,
+                           final Path tempDir) {
+        return new S3Source(s3Manager, pathHelper, meta, streamType, tempDir);
     }
 
     private void validate() {
@@ -195,7 +172,7 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
     private Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = pathHelper.getRootPath(volumePath, meta, streamType);
+                file = pathHelper.getRootPath(tempDir, meta, streamType);
             } else {
                 file = pathHelper.getChildPath(parent.getFile(), streamType);
             }
@@ -223,7 +200,7 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
                 childMap.clear();
 
                 try {
-                    FileUtil.deleteDir(volumePath);
+                    FileUtil.deleteDir(tempDir);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                 }

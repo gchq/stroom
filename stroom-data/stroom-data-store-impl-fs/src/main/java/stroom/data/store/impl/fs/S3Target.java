@@ -28,12 +28,10 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,9 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * A file system implementation of Target.
@@ -59,7 +54,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
     private final S3PathHelper pathHelper;
     private final Map<String, S3Target> childMap = new HashMap<>();
     private final HashMap<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
-    private final Path volumePath;
+    private final Path tempDir;
     private final String streamType;
     private final S3Target parent;
     private AttributeMap attributeMap;
@@ -77,21 +72,18 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                      final S3PathHelper pathHelper,
                      final Meta requestMetaData,
                      final String streamType,
+                     final Path tempDir,
                      final boolean append) {
-        try {
-            this.metaService = metaService;
-            this.s3Manager = s3Manager;
-            this.pathHelper = pathHelper;
-            this.meta = requestMetaData;
-            this.volumePath = Files.createTempDirectory("stroom");
-            this.parent = null;
-            this.streamType = streamType;
-            this.append = append;
+        this.metaService = metaService;
+        this.s3Manager = s3Manager;
+        this.pathHelper = pathHelper;
+        this.meta = requestMetaData;
+        this.tempDir = tempDir;
+        this.parent = null;
+        this.streamType = streamType;
+        this.append = append;
 
-            validate();
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        validate();
     }
 
     private S3Target(final MetaService metaService,
@@ -99,12 +91,13 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                      final S3PathHelper pathHelper,
                      final S3Target parent,
                      final String streamType,
+                     final Path tempDir,
                      final Path file) {
         this.metaService = metaService;
         this.s3Manager = s3Manager;
         this.pathHelper = pathHelper;
         this.meta = parent.meta;
-        this.volumePath = parent.volumePath;
+        this.tempDir = tempDir;
         this.parent = parent;
         this.append = parent.append;
         this.streamType = streamType;
@@ -122,8 +115,9 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                            final S3PathHelper pathHelper,
                            final Meta meta,
                            final String streamType,
+                           final Path tempDir,
                            final boolean append) {
-        return new S3Target(metaService, s3Manager, pathHelper, meta, streamType, append);
+        return new S3Target(metaService, s3Manager, pathHelper, meta, streamType, tempDir, append);
     }
 
     private void validate() {
@@ -208,7 +202,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
     Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = pathHelper.getRootPath(volumePath, meta, streamType);
+                file = pathHelper.getRootPath(tempDir, meta, streamType);
             } else {
                 file = pathHelper.getChildPath(parent.getFile(), streamType);
             }
@@ -260,21 +254,8 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                         try {
                             // Create zip.
                             try {
-                                zipFile = Files.createTempFile("stroom", ".zip");
-                                try (final ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(
-                                        Files.newOutputStream(zipFile)))) {
-                                    try (final Stream<Path> stream = Files.list(volumePath)) {
-                                        stream.forEach(path -> {
-                                            try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(
-                                                    path))) {
-                                                zipOutputStream.putNextEntry(new ZipEntry(path.getFileName().toString()));
-                                                StreamUtil.streamToStream(inputStream, zipOutputStream);
-                                            } catch (final IOException e) {
-                                                throw new UncheckedIOException(e);
-                                            }
-                                        });
-                                    }
-                                }
+                                zipFile = tempDir.resolve("temp.zip");
+                                ZipUtil.zip(zipFile, tempDir);
 
                                 // Upload the zip to S3.
                                 s3Manager.upload(
@@ -294,7 +275,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                                     }
                                 }
                                 try {
-                                    FileUtil.deleteDir(volumePath);
+                                    FileUtil.deleteDir(tempDir);
                                 } catch (final RuntimeException e) {
                                     LOGGER.debug(e::getMessage, e);
                                 }
@@ -357,7 +338,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                 childMap.clear();
 
                 try {
-                    FileUtil.deleteDir(volumePath);
+                    FileUtil.deleteDir(tempDir);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                 }
@@ -433,7 +414,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
 
     private S3Target child(final String streamTypeName) {
         final Path childFile = pathHelper.getChildPath(getFile(), streamTypeName);
-        return new S3Target(metaService, s3Manager, pathHelper, this, streamTypeName, childFile);
+        return new S3Target(metaService, s3Manager, pathHelper, this, streamTypeName, tempDir, childFile);
     }
 
     Target getParent() {
@@ -464,7 +445,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                 file = getFile();
 
                 // Make sure the parent path exists.
-                if (!FileSystemUtil.mkdirs(volumePath, file.getParent())) {
+                if (!FileSystemUtil.mkdirs(tempDir, file.getParent())) {
                     // Unable to create path
                     throw new DataException("Unable to create directory for file " + file);
                 }

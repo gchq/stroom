@@ -43,7 +43,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     private List<String> defaultStreamVolumePaths;
     private final double defaultStreamVolumeFilesystemUtilisation;
     private final boolean createDefaultStreamVolumesOnStart;
-    private final String defaultStreamVolumeGroupName;
+    private String defaultStreamVolumeGroupName;
     private final int findOrphanedMetaBatchSize;
 
     private final CacheConfig feedPathCache;
@@ -130,6 +130,10 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
             "application start.")
     public String getDefaultStreamVolumeGroupName() {
         return defaultStreamVolumeGroupName;
+    }
+
+    public void setDefaultStreamVolumeGroupName(final String defaultStreamVolumeGroupName) {
+        this.defaultStreamVolumeGroupName = defaultStreamVolumeGroupName;
     }
 
     public CacheConfig getFeedPathCache() {

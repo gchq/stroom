@@ -133,6 +133,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         fsVolumeService.ensureDefaultVolumes();
         fsVolumeService.flush();
         s3ExampleVolumes.addS3ExampleVolume();
+        fsVolumeConfig.setDefaultStreamVolumeGroupName("S3");
 
         final FsVolume fsVolume = fsVolumeService.getVolume(null);
         if (fsVolume == null) {

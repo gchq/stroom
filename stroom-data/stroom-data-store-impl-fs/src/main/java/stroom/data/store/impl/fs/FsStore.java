@@ -32,16 +32,19 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
@@ -58,7 +61,7 @@ class FsStore implements Store, AttributeMapFactory {
     private final FsVolumeService volumeService;
     private final DataVolumeService dataVolumeService;
     private final PathCreator pathCreator;
-    private final Provider<FsVolumeConfig> volumeConfigProvider;
+    private final TempDirProvider tempDirProvider;
 
     @Inject
     FsStore(final FsPathHelper fileSystemStreamPathHelper,
@@ -66,13 +69,13 @@ class FsStore implements Store, AttributeMapFactory {
             final FsVolumeService volumeService,
             final DataVolumeService dataVolumeService,
             final PathCreator pathCreator,
-            final Provider<FsVolumeConfig> volumeConfigProvider) {
+            final TempDirProvider tempDirProvider) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.volumeService = volumeService;
         this.dataVolumeService = dataVolumeService;
         this.pathCreator = pathCreator;
-        this.volumeConfigProvider = volumeConfigProvider;
+        this.tempDirProvider = tempDirProvider;
     }
 
     @Override
@@ -114,12 +117,14 @@ class FsStore implements Store, AttributeMapFactory {
             case S3 -> {
                 final String streamType = meta.getTypeName();
                 final S3Manager s3Manager = new S3Manager(volume.getS3ClientConfig());
+                final Path tempDir = createTempPath(meta.getId());
                 final S3Target s3Target = S3Target.create(
                         metaService,
                         s3Manager,
                         new S3PathHelper(),
                         meta,
                         streamType,
+                        tempDir,
                         false);
                 // Force Creation of the files
                 s3Target.getOutputStream();
@@ -128,6 +133,16 @@ class FsStore implements Store, AttributeMapFactory {
         }
 
         return target;
+    }
+
+    private Path createTempPath(final Long metaId) {
+        try {
+            final Path path = tempDirProvider.get().resolve(metaId + "__" + UUID.randomUUID());
+            Files.createDirectories(path);
+            return path;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override
@@ -236,7 +251,8 @@ class FsStore implements Store, AttributeMapFactory {
                 }
                 case S3 -> {
                     final S3Manager s3Manager = new S3Manager(dataVolume.getVolume().getS3ClientConfig());
-                    source = S3Source.create(s3Manager, new S3PathHelper(), meta, meta.getTypeName());
+                    final Path tempDir = createTempPath(meta.getId());
+                    source = S3Source.create(s3Manager, new S3PathHelper(), meta, meta.getTypeName(), tempDir);
                 }
             }
 
