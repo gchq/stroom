@@ -55,7 +55,6 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -75,7 +74,7 @@ public class S3Manager {
 //        EXTENSION_MAP.put(StreamTypeNames.CONTEXT, "ctx");
 //    }
 
-    private static final Pattern S3_NAME_PATTERN = Pattern.compile("[^a-z1-9]");
+    private static final Pattern S3_NAME_PATTERN = Pattern.compile("[^a-z0-9]");
 
     private final S3ClientConfig s3ClientConfig;
 
@@ -249,10 +248,10 @@ public class S3Manager {
                                     final AttributeMap attributeMap,
                                     final Path source) {
         final String bucketName = createBucketName(meta);
-        final PutObjectRequest request = createPutObjectRequest(bucketName, meta, attributeMap);
-        PutObjectResponse response;
+        final String key = createKey(meta);
+
         try {
-            response = tryUpload(request, source);
+            return tryUpload(bucketName, key, meta, attributeMap, source);
         } catch (final RuntimeException e) {
             if (s3ClientConfig.isCreateBuckets()) {
                 LOGGER.debug(e::getMessage, e);
@@ -260,23 +259,37 @@ public class S3Manager {
                 // If we are creating buckets then try to create the bucket and upload again.
                 try {
                     createBucket(bucketName);
-                    response = tryUpload(request, source);
+                    return tryUpload(bucketName, key, meta, attributeMap, source);
                 } catch (final RuntimeException e2) {
-                    LOGGER.error(e2::getMessage, e2);
+                    LOGGER.error(() -> "Error uploading: bucketName=" +
+                            bucketName +
+                            ", key=" +
+                            key +
+                            ", message=" +
+                            e2.getMessage(), e2);
                     throw e2;
                 }
             } else {
-                LOGGER.error(e::getMessage, e);
+                LOGGER.error(() -> "Error uploading: bucketName=" +
+                        bucketName +
+                        ", key=" +
+                        key +
+                        ", message=" +
+                        e.getMessage(), e);
                 throw e;
             }
         }
-        return response;
     }
 
-    public PutObjectResponse tryUpload(final PutObjectRequest request,
+    public PutObjectResponse tryUpload(final String bucketName,
+                                       final String key,
+                                       final Meta meta,
+                                       final AttributeMap attributeMap,
                                        final Path source) {
-        LOGGER.debug(() -> "Try uploading: " + request);
+        final PutObjectRequest request = createPutObjectRequest(bucketName, key, meta, attributeMap);
         final PutObjectResponse response;
+        LOGGER.debug(() -> "Uploading: bucketName=" + bucketName + ", key=" + key);
+        LOGGER.trace(() -> "Upload request: " + request);
 
         if (s3ClientConfig.isAsync()) {
             try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
@@ -309,7 +322,9 @@ public class S3Manager {
                 response = s3Client.putObject(request, source);
             }
         }
-        LOGGER.debug(() -> "Upload response: " + response);
+
+        LOGGER.debug(() -> "Uploaded: bucketName=" + bucketName + ", key=" + key);
+        LOGGER.trace(() -> "Upload response: " + response);
         return response;
     }
 
@@ -341,12 +356,14 @@ public class S3Manager {
     public GetObjectResponse download(final Meta meta,
                                       final Path dest) {
         final String bucketName = createBucketName(meta);
+        final String key = createKey(meta);
         final GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
-                .key(createKey(meta))
+                .key(key)
                 .build();
         final GetObjectResponse response;
-        LOGGER.debug(() -> "Downloading: " + request);
+        LOGGER.debug(() -> "Downloading: bucketName=" + bucketName + ", key=" + key);
+        LOGGER.trace(() -> "Download request: " + request);
 
         if (s3ClientConfig.isAsync()) {
             try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
@@ -381,23 +398,31 @@ public class S3Manager {
             try (final S3Client s3Client = createClient(s3ClientConfig)) {
                 response = s3Client.getObject(request, dest);
             } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
+                LOGGER.error(() -> "Error downloading: bucketName=" +
+                        bucketName +
+                        ", key=" +
+                        key +
+                        ", message=" +
+                        e.getMessage(), e);
                 throw e;
             }
         }
 
-        LOGGER.debug(() -> "Download response: " + response);
+        LOGGER.debug(() -> "Downloaded: bucketName=" + bucketName + ", key=" + key);
+        LOGGER.trace(() -> "Download response: " + response);
         return response;
     }
 
     public DeleteObjectResponse delete(final Meta meta) {
         final String bucketName = createBucketName(meta);
+        final String key = createKey(meta);
         final DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(bucketName)
-                .key(createKey(meta))
+                .key(key)
                 .build();
         final DeleteObjectResponse response;
-        LOGGER.debug(() -> "Deleting: " + request);
+        LOGGER.debug(() -> "Deleting: bucketName=" + bucketName + ", key=" + key);
+        LOGGER.trace(() -> "Delete request: " + request);
 
         if (s3ClientConfig.isAsync()) {
             try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
@@ -415,17 +440,9 @@ public class S3Manager {
             }
         }
 
-        LOGGER.debug(() -> "Delete response: " + response);
+        LOGGER.debug(() -> "Deleted: bucketName=" + bucketName + ", key=" + key);
+        LOGGER.trace(() -> "Delete response: " + response);
         return response;
-    }
-
-    public Optional<DeleteObjectResponse> tryDelete(final Meta meta) {
-        try {
-            return Optional.of(delete(meta));
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
-        return Optional.empty();
     }
 
     private Tagging createTags(final Meta meta) {
@@ -446,17 +463,25 @@ public class S3Manager {
 //        if (s3ClientConfig.isUseFeedAsBucketName()) {
 //            return meta.getId() + ".zip";
 //        }
-        final String paddedId = FsPrefixUtil.padId(meta.getId());
-        final String datePath = createDatePath(meta.getCreateMs());
-        return meta.getFeedName() + "/" + meta.getTypeName() + "/" + datePath + "/" + paddedId + ".zip";
-    }
 
-    private String createDatePath(final long timeMs) {
-        final String utcDate = DateUtil.createNormalDateTimeString(timeMs);
-        return utcDate.substring(0, 4) + "/" + utcDate.substring(5, 7) + "/" + utcDate.substring(8, 10);
+        final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
+        final String paddedId = FsPrefixUtil.padId(meta.getId());
+        return createS3Name(meta.getFeedName()) +
+                "/" +
+                createS3Name(meta.getTypeName()) +
+                "/" +
+                createS3Name(utcDate.substring(0, 4)) +
+                "/" +
+                createS3Name(utcDate.substring(5, 7)) +
+                "/" +
+                createS3Name(utcDate.substring(8, 10)) +
+                "/" +
+                paddedId +
+                S3FileExtensions.ZIP_EXTENSION;
     }
 
     private PutObjectRequest createPutObjectRequest(final String bucketName,
+                                                    final String key,
                                                     final Meta meta,
                                                     final AttributeMap attributeMap) {
         final Map<String, String> metadata = attributeMap
@@ -466,7 +491,7 @@ public class S3Manager {
 
         return PutObjectRequest.builder()
                 .bucket(bucketName)
-                .key(createKey(meta))
+                .key(key)
                 .tagging(createTags(meta))
                 .metadata(metadata)
                 .build();

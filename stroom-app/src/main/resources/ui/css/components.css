@@ -1450,12 +1450,13 @@
 
 .navigation-logo {
     flex-grow: 1;
-    padding: 6px 0 2px 0;
+    padding: 6px 0 0 0;
     background-color: transparent;
     color: white;
     border: 0;
     text-align: left;
     width: auto;
+    height: 43px;
 }
 
 .navigation-logo-image svg {
