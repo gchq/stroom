@@ -41,6 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -121,8 +122,8 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         try (Stream<Path> stream = Files.walk(path)) {
             stream.forEach(path2 -> sb.append("\n  ")
                     .append(path2.toString()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
 
         LOGGER.info("Listing contents of {}{}", path, sb);
