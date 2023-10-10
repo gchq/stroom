@@ -190,6 +190,7 @@ public class FsVolumeGroupEditPresenter
             open = true;
 
             this.volumeGroup = volumeGroup;
+            volumeStatusListPresenter.setGroup(volumeGroup);
             getView().setName(volumeGroup.getName());
 
             final PopupSize popupSize = PopupSize.resizable(1000, 600);

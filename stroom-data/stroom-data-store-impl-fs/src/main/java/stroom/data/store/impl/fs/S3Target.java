@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.Target;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
@@ -26,7 +28,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
-import stroom.util.io.SeekableOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.zip.ZipUtil;
@@ -38,68 +39,40 @@ import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 /**
  * A file system implementation of Target.
  */
-final class S3Target implements InternalTarget, SegmentOutputStreamProviderFactory {
+final class S3Target implements Target {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Target.class);
 
-    public static final String MANIFEST_FILE_NAME = "001.mf";
-
     private final MetaService metaService;
     private final S3Manager s3Manager;
-    private final S3PathHelper pathHelper;
-    private final Map<String, S3Target> childMap = new HashMap<>();
-    private final HashMap<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
+
+    private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
     private final Path tempDir;
-    private final String streamType;
-    private final S3Target parent;
     private AttributeMap attributeMap;
-    private OutputStream outputStream;
-    private Path file;
 
     private Meta meta;
     private boolean closed;
     private boolean deleted;
-    private long index;
+    private long partNo;
 
     private S3Target(final MetaService metaService,
                      final S3Manager s3Manager,
-                     final S3PathHelper pathHelper,
-                     final Meta requestMetaData,
-                     final String streamType,
+                     final Meta meta,
                      final Path tempDir) {
         this.metaService = metaService;
         this.s3Manager = s3Manager;
-        this.pathHelper = pathHelper;
-        this.meta = requestMetaData;
+        this.meta = meta;
         this.tempDir = tempDir;
-        this.parent = null;
-        this.streamType = streamType;
-
-        validate();
-    }
-
-    private S3Target(final MetaService metaService,
-                     final S3Manager s3Manager,
-                     final S3PathHelper pathHelper,
-                     final S3Target parent,
-                     final String streamType,
-                     final Path tempDir,
-                     final Path file) {
-        this.metaService = metaService;
-        this.s3Manager = s3Manager;
-        this.pathHelper = pathHelper;
-        this.meta = parent.meta;
-        this.tempDir = tempDir;
-        this.parent = parent;
-        this.streamType = streamType;
-        this.file = file;
-        validate();
     }
 
     /**
@@ -109,17 +82,9 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
      */
     static S3Target create(final MetaService metaService,
                            final S3Manager s3Manager,
-                           final S3PathHelper pathHelper,
                            final Meta meta,
-                           final String streamType,
                            final Path tempDir) {
-        return new S3Target(metaService, s3Manager, pathHelper, meta, streamType, tempDir);
-    }
-
-    private void validate() {
-        if (streamType == null) {
-            throw new IllegalStateException("Must have a stream type");
-        }
+        return new S3Target(metaService, s3Manager, meta, tempDir);
     }
 
     @Override
@@ -129,9 +94,6 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
 
     @Override
     public AttributeMap getAttributes() {
-        if (parent != null) {
-            return parent.getAttributes();
-        }
         if (attributeMap == null) {
             attributeMap = new AttributeMap();
         }
@@ -140,7 +102,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
 
     private void writeManifest() {
         try {
-            final Path manifestFile = tempDir.resolve(MANIFEST_FILE_NAME);
+            final Path manifestFile = tempDir.resolve(S3FileExtensions.MANIFEST_FILE_NAME);
             try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(manifestFile))) {
                 AttributeMapUtil.write(getAttributes(), outputStream);
             }
@@ -155,16 +117,27 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
         }
     }
 
-    Path getFile() {
-        if (file == null) {
-            if (parent == null) {
-                file = pathHelper.getRootPath(tempDir, meta, streamType);
-            } else {
-                file = pathHelper.getChildPath(parent.getFile(), streamType);
+    private void closeAllStreams() throws IOException {
+        // If we get error on closing the stream we must return it to the caller
+        IOException streamCloseException = null;
+
+        // Close the streams.
+        for (final OutputStreamProvider outputStreamProvider : partMap.values()) {
+            try {
+                outputStreamProvider.close();
+            } catch (final ClosedByInterruptException e) {
+                // WE expect these exceptions if a user is trying to terminate.
+                LOGGER.debug(() -> "closeStreamTarget() - Error on closing stream " + this, e);
+                streamCloseException = e;
+            } catch (final IOException e) {
+                LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
+                streamCloseException = e;
             }
-            LOGGER.debug(() -> "getFile() " + FileUtil.getCanonicalPath(file));
         }
-        return file;
+
+        if (streamCloseException != null) {
+            throw streamCloseException;
+        }
     }
 
     @Override
@@ -177,73 +150,58 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
             if (!deleted) {
                 // If we get error on closing the stream we must return it to the caller
                 IOException streamCloseException = null;
-
-                // Close the stream target.
                 try {
-                    if (outputStream != null) {
-                        outputStream.close();
-                    }
-
-                    // Close off any open kids .... closing the parent
-                    // closes kids (the caller can also close the kid off if they like).
-                    childMap.forEach((k, v) -> v.close());
-                    childMap.clear();
-                } catch (final ClosedByInterruptException e) {
-                    // WE expect these exceptions if a user is trying to terminate.
-                    LOGGER.debug(() -> "closeStreamTarget() - Error on closing stream " + this, e);
-                    streamCloseException = e;
+                    closeAllStreams();
                 } catch (final IOException e) {
-                    LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
                     streamCloseException = e;
                 }
+                partMap.clear();
 
-                // Only write meta for the root target.
-                if (parent == null) {
-                    // Update attributes and write the manifest.
-                    updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
-                    updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
-                    writeManifest();
+                // Update attributes and write the manifest.
+                final String totalFileSize = String.valueOf(getTotalFileSize());
+                updateAttribute(this, MetaFields.RAW_SIZE, totalFileSize);
+                updateAttribute(this, MetaFields.FILE_SIZE, totalFileSize);
+                writeManifest();
 
-                    if (streamCloseException == null) {
+                if (streamCloseException == null) {
 
-                        Path zipFile = null;
+                    Path zipFile = null;
+                    try {
+                        // Create zip.
                         try {
-                            // Create zip.
-                            try {
-                                zipFile = tempDir.resolve("temp.zip");
-                                ZipUtil.zip(zipFile, tempDir);
+                            zipFile = tempDir.resolve(S3FileExtensions.ZIP_FILE_NAME);
+                            ZipUtil.zip(zipFile, tempDir);
 
-                                // Upload the zip to S3.
-                                s3Manager.upload(meta, getAttributes(), zipFile);
+                            // Upload the zip to S3.
+                            s3Manager.upload(meta, getAttributes(), zipFile);
 
-                            } catch (final IOException e) {
-                                throw new UncheckedIOException(e);
-                            } finally {
-                                if (zipFile != null) {
-                                    try {
-                                        Files.delete(zipFile);
-                                    } catch (final IOException e) {
-                                        LOGGER.debug(e::getMessage, e);
-                                    }
-                                }
+                        } catch (final IOException e) {
+                            throw new UncheckedIOException(e);
+                        } finally {
+                            if (zipFile != null) {
                                 try {
-                                    FileUtil.deleteDir(tempDir);
-                                } catch (final RuntimeException e) {
+                                    Files.delete(zipFile);
+                                } catch (final IOException e) {
                                     LOGGER.debug(e::getMessage, e);
                                 }
                             }
-
-                            // Unlock will update the meta data so set it back on the stream
-                            // target so the client has the up to date copy
-                            unlock(getMeta(), getAttributes());
-
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e::getMessage, e);
-                            throw e;
+                            try {
+                                FileUtil.deleteDir(tempDir);
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e::getMessage, e);
+                            }
                         }
-                    } else {
-                        throw new UncheckedIOException(streamCloseException);
+
+                        // Unlock will update the meta data so set it back on the stream
+                        // target so the client has the up to date copy
+                        unlock(getMeta(), getAttributes());
+
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                        throw e;
                     }
+                } else {
+                    throw new UncheckedIOException(streamCloseException);
                 }
             }
         } finally {
@@ -280,93 +238,62 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
         try {
             // Close the stream target.
             try {
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-
-                // Close off any open kids .... closing the parent
-                // closes kids (the caller can also close the kid off if they like).
-                childMap.forEach((k, v) -> v.close());
-                childMap.clear();
-
-                try {
-                    FileUtil.deleteDir(tempDir);
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e::getMessage, e);
-                }
+                closeAllStreams();
             } catch (final IOException e) {
-                LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
+                LOGGER.debug(e::getMessage, e);
             }
 
-            // Only delete the root target.
-            if (parent == null) {
-                // Mark the target meta as deleted.
-                this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
+            try {
+                FileUtil.deleteDir(tempDir);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
             }
+
+            // Mark the target meta as deleted.
+            this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
+
         } finally {
             deleted = true;
         }
     }
 
-    private Long getStreamSize() {
-        try {
-            long total = 0;
-            if (outputStream != null) {
-                total += ((SeekableOutputStream) outputStream).getSize();
-            }
-            return total;
-        } catch (final IOException ioEx) {
-            // Wrap it
-            throw new RuntimeException(ioEx);
-        }
-    }
+//    private Long getStreamSize() {
+//        long total = 0;
+//        for (final S3OutputStreamProvider outputStreamProvider : partMap.values()) {
+//            total += outputStreamProvider.getStreamSize();
+//        }
+//        return total;
+//    }
 
     private Long getTotalFileSize() {
-        long total = 0;
-        final Path file = getFile();
-        try {
-            if (Files.isRegularFile(file)) {
-                total += Files.size(file);
-            }
+        final AtomicLong size = new AtomicLong();
+        try (final Stream<Path> stream = Files.list(tempDir)) {
+            stream.forEach(path -> {
+                try {
+                    final String fileName = path.getFileName().toString();
+                    final int index = fileName.indexOf(".");
+                    if (index >= 0) {
+                        final String extension = fileName.substring(index);
+                        if (extension.endsWith(S3FileExtensions.DATA_EXTENSION)) {
+                            size.addAndGet(Files.size(path));
+                        }
+                    }
+                } catch (final IOException e) {
+                    LOGGER.debug(e::getMessage, e);
+                }
+            });
         } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
+            throw new UncheckedIOException(e);
         }
-        return total;
+        return size.get();
     }
 
     @Override
     public OutputStreamProvider next() {
-        final OutputStreamProvider outputStreamProvider = new OutputStreamProviderImpl(meta, this, index);
-        index++;
-        return outputStreamProvider;
-    }
-
-    @Override
-    public SegmentOutputStreamProvider getSegmentOutputStreamProvider(final String streamTypeName) {
-        return outputStreamMap.computeIfAbsent(streamTypeName, k -> {
-            final S3Target target = getChild(k);
-            if (target == null) {
-                return null;
-            }
-            return new SegmentOutputStreamProvider(target, k);
-        });
-    }
-
-    private S3Target getChild(final String streamTypeName) {
-        if (closed) {
-            throw new RuntimeException("Closed");
-        }
-
-        if (streamTypeName == null) {
-            return this;
-        }
-
-        return childMap.computeIfAbsent(streamTypeName, this::child);
-    }
-
-    private S3Target child(final String streamTypeName) {
-        final Path childFile = pathHelper.getChildPath(getFile(), streamTypeName);
-        return new S3Target(metaService, s3Manager, pathHelper, this, streamTypeName, tempDir, childFile);
+        final long no = ++partNo;
+        final S3OutputStreamProvider s3OutputStreamProvider = new S3OutputStreamProvider(tempDir, no);
+        partMap.put(no, s3OutputStreamProvider);
+        return s3OutputStreamProvider;
     }
 
     @Override
@@ -374,56 +301,71 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
         return "id=" + meta.getId();
     }
 
-    /////////////////////////////////
-    // START INTERNAL TARGET
-    /////////////////////////////////
+    private static class S3OutputStreamProvider implements OutputStreamProvider {
 
-    /**
-     * Gets the output stream for this stream target.
-     */
-    @Override
-    public OutputStream getOutputStream() {
-        if (outputStream == null) {
+        private final Path dir;
+        private final String partString;
+        private final List<SegmentOutputStream> segmentOutputStreams = new ArrayList<>();
+        private SegmentOutputStream dataStream;
+
+        public S3OutputStreamProvider(final Path dir, final long partNo) {
+            this.dir = dir;
+            partString = FsPrefixUtil.padId(partNo);
+        }
+
+        @Override
+        public SegmentOutputStream get() {
+            if (dataStream != null) {
+                throw new RuntimeException("Unexpected get");
+            }
+            dataStream = create(S3FileExtensions.DATA_EXTENSION);
+            return dataStream;
+        }
+
+        @Override
+        public SegmentOutputStream get(final String childStreamType) {
+            if (childStreamType == null) {
+                return get();
+            }
+
+            final String extension = S3FileExtensions.EXTENSION_MAP.get(childStreamType);
+            if (extension == null) {
+                throw new RuntimeException("Unexpected child stream type: " + childStreamType);
+            }
+            return create(extension);
+        }
+
+        private SegmentOutputStream create(final String extension) {
             try {
-                // Get the file.
-                file = getFile();
-
-                // Make sure the parent path exists.
-                if (!FileSystemUtil.mkdirs(tempDir, file.getParent())) {
-                    // Unable to create path
-                    throw new DataException("Unable to create directory for file " + file);
-                }
-
-                // If the file already exists then delete it.
-                if (Files.exists(file)) {
-                    LOGGER.warn(() -> "About to overwrite file: " + FileUtil.getCanonicalPath(file));
-                    if (!FileSystemUtil.deleteAnyPath(file)) {
-                        LOGGER.error(() -> "getOutputStream() - Unable to delete existing files for new stream target");
-                        throw new DataException("Unable to delete existing files for new stream target " + file);
-                    }
-                }
-
-                outputStream = pathHelper.getOutputStream(streamType, file);
-            } catch (final IOException ioEx) {
-                LOGGER.error(() -> "getOutputStream() - " + ioEx.getMessage());
-                // No reason to get a IO on opening the out stream .... fail in
-                // a heap
-                throw new DataException(ioEx);
+                final String fileName = partString + extension;
+                final Path dataFile = dir.resolve(fileName);
+                final Path indexFile = dir.resolve(fileName + S3FileExtensions.INDEX_EXTENSION);
+                final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(dataFile));
+                final SegmentOutputStream segmentOutputStream = new RASegmentOutputStream(outputStream, () ->
+                        new BufferedOutputStream(Files.newOutputStream(indexFile)));
+                segmentOutputStreams.add(segmentOutputStream);
+                return segmentOutputStream;
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
         }
-        return outputStream;
-    }
 
-    @Override
-    public OutputStream getChildOutputStream(final String type) {
-        final InternalTarget childTarget = getChild(type);
-        if (childTarget != null) {
-            return childTarget.getOutputStream();
+        @Override
+        public void close() throws IOException {
+            IOException exception = null;
+            for (final SegmentOutputStream segmentOutputStream : segmentOutputStreams) {
+                try {
+                    segmentOutputStream.close();
+                } catch (final IOException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    if (exception == null) {
+                        exception = e;
+                    }
+                }
+            }
+            if (exception != null) {
+                throw exception;
+            }
         }
-        return null;
     }
-
-    /////////////////////////////////
-    // END INTERNAL TARGET
-    /////////////////////////////////
 }

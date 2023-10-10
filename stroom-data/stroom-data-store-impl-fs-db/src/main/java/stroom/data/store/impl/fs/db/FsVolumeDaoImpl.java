@@ -99,7 +99,9 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     @Override
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
-                volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getSelection()));
+                volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getSelection()),
+                Optional.ofNullable(criteria.getGroup())
+                        .map(group -> FS_VOLUME.FK_FS_VOLUME_GROUP_ID.eq(group.getId())));
 
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);

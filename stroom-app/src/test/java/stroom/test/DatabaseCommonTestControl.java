@@ -54,6 +54,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
+    private static final boolean USE_S3 = true;
+
     private final ContentImportService contentImportService;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
@@ -132,8 +134,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
         fsVolumeService.ensureDefaultVolumes();
         fsVolumeService.flush();
+
         s3ExampleVolumes.addS3ExampleVolume();
-        fsVolumeConfig.setDefaultStreamVolumeGroupName("S3");
+        if (USE_S3) {
+            fsVolumeConfig.setDefaultStreamVolumeGroupName("S3");
+        }
 
         final FsVolume fsVolume = fsVolumeService.getVolume(null);
         if (fsVolume == null) {

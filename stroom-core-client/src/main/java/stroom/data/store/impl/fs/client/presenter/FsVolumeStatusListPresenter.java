@@ -24,6 +24,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.S3ClientConfig;
@@ -32,6 +33,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -53,8 +55,10 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
 
     private final MyDataGrid<FsVolume> dataGrid;
     private final MultiSelectionModelImpl<FsVolume> selectionModel;
-    private final RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
+    private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
+    private FindFsVolumeCriteria criteria;
+    private RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
 
     @Inject
     public FsVolumeStatusListPresenter(final EventBus eventBus,
@@ -62,6 +66,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -71,24 +76,33 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         getWidget().getElement().addClassName("default-min-sizes");
 
         initTableColumns();
+    }
 
-        final FindFsVolumeCriteria criteria = FindFsVolumeCriteria.matchAll();
-        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<FsVolume>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
-                CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<FsVolume>> rest = restFactory.create();
-                rest
-                        .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(FS_VOLUME_RESOURCE)
-                        .find(criteria);
-            }
-        };
-        dataProvider.addDataDisplay(dataGrid);
-        dataProvider.refresh();
+    public void setGroup(final FsVolumeGroup group) {
+        criteria = new FindFsVolumeCriteria(
+                null,
+                group,
+                null,
+                Selection.selectAll());
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<FsVolume>> dataConsumer,
+                                    final Consumer<Throwable> throwableConsumer) {
+                    CriteriaUtil.setRange(criteria, range);
+                    final Rest<ResultPage<FsVolume>> rest = restFactory.create();
+                    rest
+                            .onSuccess(dataConsumer)
+                            .onFailure(throwableConsumer)
+                            .call(FS_VOLUME_RESOURCE)
+                            .find(criteria);
+                }
+            };
+            dataProvider.addDataDisplay(dataGrid);
+        } else {
+            dataProvider.refresh();
+        }
     }
 
     /**

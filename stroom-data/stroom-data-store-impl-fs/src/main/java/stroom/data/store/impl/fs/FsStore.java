@@ -25,11 +25,9 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -112,18 +110,15 @@ class FsStore implements Store, AttributeMapFactory {
                 target = fsTarget;
             }
             case S3 -> {
-                final String streamType = meta.getTypeName();
                 final S3Manager s3Manager = new S3Manager(volume.getS3ClientConfig());
                 final Path tempDir = createTempPath(meta.getId());
                 final S3Target s3Target = S3Target.create(
                         metaService,
                         s3Manager,
-                        new S3PathHelper(),
                         meta,
-                        streamType,
                         tempDir);
                 // Force Creation of the files
-                s3Target.getOutputStream();
+//                s3Target.getOutputStream();
                 target = s3Target;
             }
         }
@@ -213,7 +208,7 @@ class FsStore implements Store, AttributeMapFactory {
                 case S3 -> {
                     final S3Manager s3Manager = new S3Manager(dataVolume.getVolume().getS3ClientConfig());
                     final Path tempDir = createTempPath(meta.getId());
-                    source = S3Source.create(s3Manager, new S3PathHelper(), meta, meta.getTypeName(), tempDir);
+                    source = S3Source.create(s3Manager, meta, tempDir);
                 }
             }
 
@@ -221,28 +216,6 @@ class FsStore implements Store, AttributeMapFactory {
         } catch (final DataException e) {
             LOGGER.debug(e::getMessage, e);
             throw e;
-        }
-    }
-
-    private void syncAttributes(final Meta meta, final Target target) {
-        updateAttribute(target, MetaFields.ID, String.valueOf(meta.getId()));
-
-        if (meta.getParentMetaId() != null) {
-            updateAttribute(target, MetaFields.PARENT_ID,
-                    String.valueOf(meta.getParentMetaId()));
-        }
-
-        updateAttribute(target, MetaFields.FEED, meta.getFeedName());
-        updateAttribute(target, MetaFields.TYPE, meta.getTypeName());
-        updateAttribute(target, MetaFields.CREATE_TIME, String.valueOf(meta.getCreateMs()));
-        if (meta.getEffectiveMs() != null) {
-            updateAttribute(target, MetaFields.EFFECTIVE_TIME, String.valueOf(meta.getEffectiveMs()));
-        }
-    }
-
-    private void updateAttribute(final Target target, final AbstractField key, final String value) {
-        if (!target.getAttributes().containsKey(key.getName())) {
-            target.getAttributes().put(key.getName(), value);
         }
     }
 

@@ -16,16 +16,17 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.Source;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.zip.ZipUtil;
 
 import java.io.BufferedInputStream;
@@ -37,9 +38,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,37 +48,29 @@ import java.util.stream.Stream;
 /**
  * A file system implementation of Source.
  */
-final class S3Source implements InternalSource, SegmentInputStreamProviderFactory {
+final class S3Source implements Source {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Source.class);
 
-    private final S3PathHelper pathHelper;
-    private final Map<String, S3Source> childMap = new HashMap<>();
-    private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
+    private final Map<Long, S3InputStreamProvider> partMap = new HashMap<>();
     private final Path tempDir;
-    private final String streamType;
-    private final S3Source parent;
     private AttributeMap attributeMap;
-    private InputStream inputStream;
-    private Path file;
 
     private final Meta meta;
     private boolean closed;
-    private Long count;
+    private final Map<String, Long> counts;
 
     private S3Source(final S3Manager s3Manager,
-                     final S3PathHelper pathHelper,
                      final Meta meta,
-                     final String streamType,
                      final Path tempDir) {
         // Create zip.
         Path zipFile = null;
         try {
-            zipFile = tempDir.resolve("temp.zip");
+            zipFile = tempDir.resolve(S3FileExtensions.ZIP_FILE_NAME);
             // Download the zip from S3.
             s3Manager.download(meta, zipFile);
 
-            ZipUtil.zip(zipFile, tempDir);
+            ZipUtil.unzip(zipFile, tempDir);
         } catch (final IOException e) {
             FileUtil.deleteDir(tempDir);
             throw new UncheckedIOException(e);
@@ -91,25 +84,10 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
             }
         }
 
-        this.pathHelper = pathHelper;
         this.meta = meta;
         this.tempDir = tempDir;
-        this.parent = null;
-        this.streamType = streamType;
-        validate();
-    }
 
-    private S3Source(final S3PathHelper pathHelper,
-                     final S3Source parent,
-                     final String streamType,
-                     final Path file) {
-        this.pathHelper = pathHelper;
-        this.meta = parent.meta;
-        this.tempDir = parent.tempDir;
-        this.parent = parent;
-        this.streamType = streamType;
-        this.file = file;
-        validate();
+        counts = countTypes();
     }
 
     /**
@@ -118,17 +96,9 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
      * @return A new file system source.
      */
     static S3Source create(final S3Manager s3Manager,
-                           final S3PathHelper pathHelper,
                            final Meta meta,
-                           final String streamType,
                            final Path tempDir) {
-        return new S3Source(s3Manager, pathHelper, meta, streamType, tempDir);
-    }
-
-    private void validate() {
-        if (streamType == null) {
-            throw new IllegalStateException("Must have a stream type");
-        }
+        return new S3Source(s3Manager, meta, tempDir);
     }
 
     @Override
@@ -138,9 +108,6 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
 
     @Override
     public AttributeMap getAttributes() {
-        if (parent != null) {
-            return parent.getAttributes();
-        }
         if (attributeMap == null) {
             attributeMap = new AttributeMap();
             readManifest(attributeMap);
@@ -149,7 +116,7 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
     }
 
     private void readManifest(final AttributeMap attributeMap) {
-        final Path manifestFile = tempDir.resolve(S3Target.MANIFEST_FILE_NAME);
+        final Path manifestFile = tempDir.resolve(S3FileExtensions.MANIFEST_FILE_NAME);
         if (Files.isRegularFile(manifestFile)) {
             try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(manifestFile))) {
                 AttributeMapUtil.read(inputStream, attributeMap);
@@ -158,29 +125,40 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
             }
 
             try {
-                final List<Path> files = new ArrayList<>();
                 try (final Stream<Path> stream = Files.list(tempDir)) {
-                    stream.forEach(files::add);
+                    final String fileNames = stream
+                            .map(FileUtil::getCanonicalPath)
+                            .sorted()
+                            .collect(Collectors.joining("\n"));
+                    attributeMap.put("Files", fileNames);
                 }
-                attributeMap.put("Files", files.stream()
-                        .map(FileUtil::getCanonicalPath)
-                        .collect(Collectors.joining("\n")));
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
     }
 
-    private Path getFile() {
-        if (file == null) {
-            if (parent == null) {
-                file = pathHelper.getRootPath(tempDir, meta, streamType);
-            } else {
-                file = pathHelper.getChildPath(parent.getFile(), streamType);
+    private void closeAllStreams() throws IOException {
+        // If we get error on closing the stream we must return it to the caller
+        IOException streamCloseException = null;
+
+        // Close the streams.
+        for (final InputStreamProvider inputStreamProvider : partMap.values()) {
+            try {
+                inputStreamProvider.close();
+            } catch (final ClosedByInterruptException e) {
+                // WE expect these exceptions if a user is trying to terminate.
+                LOGGER.debug(() -> "closeStreamTarget() - Error on closing stream " + this, e);
+                streamCloseException = e;
+            } catch (final IOException e) {
+                LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
+                streamCloseException = e;
             }
-            LOGGER.debug(() -> "getFile() " + FileUtil.getCanonicalPath(file));
         }
-        return file;
+
+        if (streamCloseException != null) {
+            throw streamCloseException;
+        }
     }
 
     @Override
@@ -191,24 +169,24 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
 
         try {
             // Close the stream target.
+            // If we get error on closing the stream we must return it to the caller
+            IOException streamCloseException = null;
             try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-
-                // Close off any open kids .... closing the parent
-                // closes kids (the caller can also close the kid off if they like).
-                childMap.forEach((k, v) -> v.close());
-                childMap.clear();
-
-                try {
-                    FileUtil.deleteDir(tempDir);
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e::getMessage, e);
-                }
+                closeAllStreams();
             } catch (final IOException e) {
-                LOGGER.error("closeStreamSource() - Error on closing stream {}", this, e);
-                throw new UncheckedIOException(e);
+                streamCloseException = e;
+            }
+            partMap.clear();
+
+            try {
+                FileUtil.deleteDir(tempDir);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+
+            if (streamCloseException != null) {
+                LOGGER.error("closeStreamSource() - Error on closing stream {}", this, streamCloseException);
+                throw new UncheckedIOException(streamCloseException);
             }
 
         } finally {
@@ -218,123 +196,132 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
 
     @Override
     public InputStreamProvider get(final long index) {
-        return new InputStreamProviderImpl(meta, this, index);
+        final long partNo = index + 1;
+        final S3InputStreamProvider s3InputStreamProvider = new S3InputStreamProvider(tempDir, partNo);
+        partMap.put(partNo, s3InputStreamProvider);
+        return s3InputStreamProvider;
     }
 
     @Override
     public long count() {
-        if (count == null) {
-            final InputStream data = getInputStream();
-            final InputStream boundaryIndex = getChildInputStream(InternalStreamTypeNames.BOUNDARY_INDEX);
-            count = new RASegmentInputStream(data, boundaryIndex).count();
-        }
-        return count;
+        return counts.getOrDefault(S3FileExtensions.DATA_EXTENSION, 0L);
     }
 
     @Override
     public long count(final String childStreamType) throws IOException {
-        final InternalSource childSource = getChild(childStreamType);
-        Objects.requireNonNull(childSource, () ->
-                LogUtil.message("No source found for childStreamType {}", childStreamType));
-
-        return childSource.count();
-    }
-
-    @Override
-    public SegmentInputStreamProvider getSegmentInputStreamProvider(final String streamTypeName) {
-        return inputStreamMap.computeIfAbsent(streamTypeName, k -> {
-            final InternalSource source = getChild(k);
-            if (source == null) {
-                return null;
-            }
-            return new SegmentInputStreamProvider(source, k);
-        });
-    }
-
-    @Override
-    public Set<String> getChildTypes() {
-
-        // You may have files like this:
-        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.bdy.dat
-        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.bgz
-        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.ctx.bdy.dat
-        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.ctx.bgz
-        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bdy.dat
-        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bgz
-        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.mf.dat
-        // We want to ignore the internal .bdy., .seg. and .mf. ones
-        // and boil it down to (in this case) Raw Events, Meta & Context
-
-        final List<Path> allDescendantStreamFileList = pathHelper.findAllDescendantStreamFileList(
-                getFile());
-        return allDescendantStreamFileList.stream()
-                .map(pathHelper::decodeChildStreamType)
-                .collect(Collectors.toSet());
-    }
-
-    private InternalSource getChild(final String streamTypeName) {
-        if (closed) {
-            throw new RuntimeException("Closed");
+        if (childStreamType == null) {
+            return count();
         }
 
-        if (streamTypeName == null) {
-            return this;
+        final String extension = S3FileExtensions.EXTENSION_MAP.get(childStreamType);
+        if (extension == null) {
+            throw new RuntimeException("Unexpected child stream type: " + childStreamType);
         }
-
-        return childMap.computeIfAbsent(streamTypeName, this::child);
+        return counts.getOrDefault(extension, 0L);
     }
 
-    private S3Source child(final String streamTypeName) {
-        final Path childFile = pathHelper.getChildPath(getFile(), streamTypeName);
-        boolean lazy = pathHelper.isStreamTypeLazy(streamTypeName);
-        boolean isFile = Files.isRegularFile(childFile);
-        if (lazy || isFile) {
-            return new S3Source(pathHelper, this, streamTypeName, childFile);
-        } else {
-            return null;
-        }
-    }
-
-//    Source getParent() {
-//        return parent;
-//    }
-
-    /////////////////////////////////
-    // START INTERNAL SOURCE
-    /////////////////////////////////
-
-    @Override
-    public InputStream getInputStream() {
-        // First Call?
-        if (inputStream == null) {
-            try {
-                inputStream = pathHelper.getInputStream(streamType, getFile());
-            } catch (final ClosedByInterruptException ioEx) {
-                // Sometimes we deliberately interrupt reading so don't log the error here.
-                throw new UncheckedIOException(ioEx);
-
-            } catch (final IOException ioEx) {
-                // Don't log this as an error if we expect this stream to have been deleted or be locked.
-                if (meta == null || Status.UNLOCKED.equals(meta.getStatus())) {
-                    LOGGER.error("getInputStream", ioEx);
+    private Map<String, Long> countTypes() {
+        final Map<String, Long> counts = new HashMap<>();
+        try (final Stream<Path> stream = Files.list(tempDir)) {
+            stream.forEach(path -> {
+                final String fileName = path.getFileName().toString();
+                final int index = fileName.indexOf(".");
+                if (index >= 0) {
+                    final String extension = fileName.substring(index);
+                    final String numPart = fileName.substring(0, index);
+                    final long partNo = FsPrefixUtil.dePadId(numPart);
+                    counts.compute(extension, (k, v) -> {
+                        if (v == null) {
+                            return partNo;
+                        } else {
+                            return Math.max(v, partNo);
+                        }
+                    });
                 }
+            });
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return counts;
+    }
 
-                throw new UncheckedIOException(ioEx);
+    private static class S3InputStreamProvider implements InputStreamProvider {
+
+        private final Path dir;
+        private final String partString;
+        private final List<SegmentInputStream> segmentInputStreams = new ArrayList<>();
+        private SegmentInputStream dataStream;
+
+        public S3InputStreamProvider(final Path dir, final long partNo) {
+            this.dir = dir;
+            partString = FsPrefixUtil.padId(partNo);
+        }
+
+        @Override
+        public SegmentInputStream get() {
+            if (dataStream != null) {
+                throw new RuntimeException("Unexpected get");
+            }
+            dataStream = create(S3FileExtensions.DATA_EXTENSION);
+            return dataStream;
+        }
+
+        @Override
+        public SegmentInputStream get(final String childStreamType) {
+            if (childStreamType == null) {
+                return get();
+            }
+
+            final String extension = S3FileExtensions.EXTENSION_MAP.get(childStreamType);
+            if (extension == null) {
+                throw new RuntimeException("Unexpected child stream type: " + childStreamType);
+            }
+            return create(extension);
+        }
+
+        private SegmentInputStream create(final String extension) {
+            try {
+                final String fileName = partString + extension;
+                final Path dataFile = dir.resolve(fileName);
+                final Path indexFile = dir.resolve(fileName + S3FileExtensions.INDEX_EXTENSION);
+                final InputStream inputStream = new UncompressedInputStream(dataFile, false);
+                final InputStream indexStream = new UncompressedInputStream(indexFile, true);
+                final SegmentInputStream segmentInputStream = new RASegmentInputStream(inputStream, indexStream);
+                segmentInputStreams.add(segmentInputStream);
+                return segmentInputStream;
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
         }
-        return inputStream;
-    }
 
-    @Override
-    public InputStream getChildInputStream(final String type) {
-        final InternalSource childSource = getChild(type);
-        if (childSource != null) {
-            return childSource.getInputStream();
+        @Override
+        public Set<String> getChildTypes() {
+            final Set<String> childTypes = new HashSet<>();
+            if (Files.exists(dir.resolve(partString + S3FileExtensions.META_EXTENSION))) {
+                childTypes.add(StreamTypeNames.META);
+            }
+            if (Files.exists(dir.resolve(partString + S3FileExtensions.CONTEXT_EXTENSION))) {
+                childTypes.add(StreamTypeNames.CONTEXT);
+            }
+            return childTypes;
         }
-        return null;
-    }
 
-    /////////////////////////////////
-    // END INTERNAL SOURCE
-    /////////////////////////////////
+        @Override
+        public void close() throws IOException {
+            IOException exception = null;
+            for (final SegmentInputStream segmentInputStream : segmentInputStreams) {
+                try {
+                    segmentInputStream.close();
+                } catch (final IOException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    if (exception == null) {
+                        exception = e;
+                    }
+                }
+            }
+            if (exception != null) {
+                throw exception;
+            }
+        }
+    }
 }
