@@ -60,7 +60,7 @@ VOLUME /stroom-proxy/repo/
 VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/db/
 VOLUME /stroom-proxy/failures/
-VOLUME /stroom-proxy/sqlite_library/
+# sqlite_library mounted as tmpfs not a managed volumne
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
@@ -75,7 +75,10 @@ CMD ["./start.sh"]
 #RUN echo "151.101.112.249 dl-cdn.alpinelinux.org" >> /etc/hosts && \
 
 # Create a system user/group with no home and no shell and a uid:gid of 1000:1000
+
+# IMPORTANT!!!
 # If you add any new dirs here, make sure you also chown them in docker-entrypoint.sh
+# IMPORTANT!!!
 RUN \
     addgroup -g 1000 -S proxy && \
     adduser -u 1000 -S -s /bin/false -D -G proxy proxy && \
