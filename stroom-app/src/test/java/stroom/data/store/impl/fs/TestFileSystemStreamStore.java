@@ -23,7 +23,6 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
@@ -58,7 +57,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
@@ -633,7 +631,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // the last one as it would be the most effective.
         criteria = new EffectiveMetaDataCriteria(
                 new Period(DateUtil.parseNormalDateTimeString("2013-01-01T00:00:00.000Z"),
-                DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
+                        DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
                 feed2,
                 StreamTypeNames.REFERENCE);
 
@@ -718,73 +716,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();
-    }
-
-    @Test
-    void testAppendStream() throws IOException {
-        final String testString1 = FileSystemTestUtil.getUniqueTestString();
-        final String testString2 = FileSystemTestUtil.getUniqueTestString();
-        final String testString3 = FileSystemTestUtil.getUniqueTestString();
-        final String testString4 = FileSystemTestUtil.getUniqueTestString();
-        final String testString5 = FileSystemTestUtil.getUniqueTestString();
-        final String testString6 = FileSystemTestUtil.getUniqueTestString();
-
-        final MetaProperties metaProperties = MetaProperties.builder()
-                .feedName(FEED1)
-                .typeName(StreamTypeNames.RAW_EVENTS)
-                .build();
-
-        Meta meta;
-        try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
-            meta = streamTarget.getMeta();
-            TargetUtil.write(streamTarget, "xyz");
-            streamTarget.getAttributes().put(testString1, testString2);
-            streamTarget.getAttributes().put(MetaFields.REC_READ.getName(), "100");
-        }
-
-        final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
-        final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
-        final Path rootFile = pathHelper.getRootPath(volumePath, meta, StreamTypeNames.RAW_EVENTS);
-
-        assertThat(Files.isRegularFile(rootFile)).isTrue();
-
-        try (final Source streamSource = streamStore.openSource(meta.getId())) {
-            meta = streamSource.getMeta();
-            assertThat(streamSource.getAttributes().get(testString1)).isEqualTo(testString2);
-        }
-
-        final Path manifestFile = pathHelper.getChildPath(rootFile, InternalStreamTypeNames.MANIFEST);
-
-        assertThat(Files.isRegularFile(manifestFile)).isTrue();
-
-        try (final Target streamTarget = streamStore.openExistingTarget(meta)) {
-            meta = streamTarget.getMeta();
-            streamTarget.getAttributes().put(testString3, testString4);
-        }
-
-        try (final Source streamSource = streamStore.openSource(meta.getId())) {
-            meta = streamSource.getMeta();
-            assertThat(streamSource.getAttributes().get(testString1)).isEqualTo(testString2);
-            assertThat(streamSource.getAttributes().get(testString3)).isEqualTo(testString4);
-        }
-
-        assertThat(FileSystemUtil.deleteAnyPath(manifestFile)).isTrue();
-//        for (final StreamAttributeValue value : streamAttributeValueService
-//                .find(FindStreamAttributeValueCriteria.create(stream))) {
-//            assertThat(streamAttributeValueService.delete(value)).isTrue();
-//        }
-
-        try (final Target streamTarget = streamStore.openExistingTarget(meta)) {
-            meta = streamTarget.getMeta();
-            streamTarget.getAttributes().put(testString5, testString6);
-            assertThat(streamTarget.getAttributes().get(testString3)).isNull();
-        }
-
-        try (final Source streamSource = streamStore.openSource(meta.getId())) {
-            meta = streamSource.getMeta();
-            assertThat(streamSource.getAttributes().get(testString5)).isEqualTo(testString6);
-            assertThat(streamSource.getAttributes().get(testString3)).isNull();
-        }
     }
 
     /**

@@ -28,18 +28,21 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.zip.ZipUtil;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A file system implementation of Source.
@@ -149,17 +152,19 @@ final class S3Source implements InternalSource, SegmentInputStreamProviderFactor
     }
 
     private void readManifest(final AttributeMap attributeMap) {
-        final Path file = getFile();
-        final Path manifestFile = pathHelper.getChildPath(file, InternalStreamTypeNames.MANIFEST);
+        final Path manifestFile = tempDir.resolve(S3Target.MANIFEST_FILE_NAME);
         if (Files.isRegularFile(manifestFile)) {
-            try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
+            try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(manifestFile))) {
                 AttributeMapUtil.read(inputStream, attributeMap);
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
             }
 
             try {
-                final List<Path> files = pathHelper.getFiles(file);
+                final List<Path> files = new ArrayList<>();
+                try (final Stream<Path> stream = Files.list(tempDir)) {
+                    stream.forEach(files::add);
+                }
                 attributeMap.put("Files", files.stream()
                         .map(FileUtil::getCanonicalPath)
                         .collect(Collectors.joining("\n")));

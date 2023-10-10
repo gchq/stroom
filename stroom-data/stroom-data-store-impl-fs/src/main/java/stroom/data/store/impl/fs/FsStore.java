@@ -30,7 +30,6 @@ import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.Status;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -42,7 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -108,8 +106,7 @@ class FsStore implements Store, AttributeMapFactory {
                         fileSystemStreamPathHelper,
                         meta,
                         volumePath,
-                        streamType,
-                        false);
+                        streamType);
                 // Force Creation of the files
                 fsTarget.getOutputStream();
                 target = fsTarget;
@@ -124,8 +121,7 @@ class FsStore implements Store, AttributeMapFactory {
                         new S3PathHelper(),
                         meta,
                         streamType,
-                        tempDir,
-                        false);
+                        tempDir);
                 // Force Creation of the files
                 s3Target.getOutputStream();
                 target = s3Target;
@@ -137,47 +133,12 @@ class FsStore implements Store, AttributeMapFactory {
 
     private Path createTempPath(final Long metaId) {
         try {
-            final Path path = tempDirProvider.get().resolve(metaId + "__" + UUID.randomUUID());
+            final Path path = tempDirProvider.get().resolve("s3_" + metaId + "__" + UUID.randomUUID());
             Files.createDirectories(path);
             return path;
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    @Override
-    public Target openExistingTarget(final Meta meta) throws DataException {
-        Objects.requireNonNull(meta, "Null meta");
-        LOGGER.debug(() -> "openExistingTarget() " + meta);
-
-        // Lock the object
-        final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
-        if (dataVolume == null) {
-            throw new DataException("Not all volumes are unlocked");
-        }
-        final Meta lockedMeta = metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
-        Target target = null;
-        switch (dataVolume.getVolume().getVolumeType()) {
-            case STANDARD -> {
-                final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
-                final String streamType = lockedMeta.getTypeName();
-                final FsTarget fsTarget = FsTarget.create(metaService,
-                        fileSystemStreamPathHelper,
-                        lockedMeta,
-                        volumePath,
-                        streamType,
-                        true);
-                target = fsTarget;
-            }
-            case S3 -> {
-                throw new UnsupportedOperationException("Append is not supported");
-
-            }
-        }
-
-        syncAttributes(lockedMeta, target);
-
-        return target;
     }
 
     @Override

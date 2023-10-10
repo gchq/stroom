@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.Target;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
@@ -32,8 +31,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.zip.ZipUtil;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
@@ -48,6 +47,8 @@ import java.util.Map;
 final class S3Target implements InternalTarget, SegmentOutputStreamProviderFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Target.class);
+
+    public static final String MANIFEST_FILE_NAME = "001.mf";
 
     private final MetaService metaService;
     private final S3Manager s3Manager;
@@ -64,7 +65,6 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
     private Meta meta;
     private boolean closed;
     private boolean deleted;
-    private final boolean append;
     private long index;
 
     private S3Target(final MetaService metaService,
@@ -72,8 +72,7 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                      final S3PathHelper pathHelper,
                      final Meta requestMetaData,
                      final String streamType,
-                     final Path tempDir,
-                     final boolean append) {
+                     final Path tempDir) {
         this.metaService = metaService;
         this.s3Manager = s3Manager;
         this.pathHelper = pathHelper;
@@ -81,7 +80,6 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
         this.tempDir = tempDir;
         this.parent = null;
         this.streamType = streamType;
-        this.append = append;
 
         validate();
     }
@@ -99,7 +97,6 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
         this.meta = parent.meta;
         this.tempDir = tempDir;
         this.parent = parent;
-        this.append = parent.append;
         this.streamType = streamType;
         this.file = file;
         validate();
@@ -115,9 +112,8 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
                            final S3PathHelper pathHelper,
                            final Meta meta,
                            final String streamType,
-                           final Path tempDir,
-                           final boolean append) {
-        return new S3Target(metaService, s3Manager, pathHelper, meta, streamType, tempDir, append);
+                           final Path tempDir) {
+        return new S3Target(metaService, s3Manager, pathHelper, meta, streamType, tempDir);
     }
 
     private void validate() {
@@ -138,55 +134,15 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
         }
         if (attributeMap == null) {
             attributeMap = new AttributeMap();
-            if (isAppend()) {
-                readManifest(attributeMap);
-            }
         }
         return attributeMap;
     }
 
-    private void readManifest(final AttributeMap attributeMap) {
-        final Path manifestFile = pathHelper.getChildPath(getFile(), InternalStreamTypeNames.MANIFEST);
-        if (Files.isRegularFile(manifestFile)) {
-            try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
-                AttributeMapUtil.read(inputStream, attributeMap);
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        }
-    }
-
     private void writeManifest() {
         try {
-            boolean doneManifest = false;
-            final Path manifestFile = pathHelper.getChildPath(getFile(),
-                    InternalStreamTypeNames.MANIFEST);
-
-            // Are we appending?
-            if (isAppend()) {
-                // Does the manifest exist ... overwrite it
-                if (Files.isRegularFile(manifestFile)) {
-                    try (final OutputStream outputStream = pathHelper.getOutputStream(
-                            InternalStreamTypeNames.MANIFEST,
-                            manifestFile)) {
-                        AttributeMapUtil.write(getAttributes(), outputStream);
-                    }
-                    doneManifest = true;
-                }
-            }
-
-            if (!doneManifest) {
-                // No manifest done yet ... output one if the parent dir's exist
-                if (Files.isDirectory(getFile().getParent())) {
-                    try (final OutputStream outputStream = pathHelper.getOutputStream(
-                            InternalStreamTypeNames.MANIFEST,
-                            manifestFile)) {
-                        AttributeMapUtil.write(getAttributes(), outputStream);
-                    }
-                } else {
-                    LOGGER.warn(() -> "closeStreamTarget() - Closing target file with no directory present");
-                }
-
+            final Path manifestFile = tempDir.resolve(MANIFEST_FILE_NAME);
+            try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(manifestFile))) {
+                AttributeMapUtil.write(getAttributes(), outputStream);
             }
         } catch (final IOException e) {
             LOGGER.error(() -> "closeStreamTarget() - Error on writing Manifest " + this, e);
@@ -415,14 +371,6 @@ final class S3Target implements InternalTarget, SegmentOutputStreamProviderFacto
     private S3Target child(final String streamTypeName) {
         final Path childFile = pathHelper.getChildPath(getFile(), streamTypeName);
         return new S3Target(metaService, s3Manager, pathHelper, this, streamTypeName, tempDir, childFile);
-    }
-
-    Target getParent() {
-        return parent;
-    }
-
-    boolean isAppend() {
-        return append;
     }
 
     @Override
