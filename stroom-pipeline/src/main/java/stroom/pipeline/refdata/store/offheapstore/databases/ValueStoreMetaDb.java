@@ -165,50 +165,59 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
         try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
 
             boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
-            if (!isFound) {
-                throw new RuntimeException(LogUtil.message(
-                        "Expecting to find entry for {}", ByteBufferUtils.byteBufferInfo(keyBuffer)));
-            }
-            final ByteBuffer valueBuffer = cursor.val();
+            if (isFound) {
+                final ByteBuffer valueBuffer = cursor.val();
 
-            // We run LMDB in its default mode of read only mmaps so we cannot mutate the key/value
-            // bytebuffers.  Instead we must copy the content and put the replacement entry.
-            // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
-            // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
-            // doing a high volume of value mutations read-only mode is a safer bet.
-            int currRefCount = valueSerde.extractReferenceCount(valueBuffer);
+                // We run LMDB in its default mode of read only mmaps so we cannot mutate the key/value
+                // bytebuffers.  Instead we must copy the content and put the replacement entry.
+                // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
+                // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
+                // doing a high volume of value mutations read-only mode is a safer bet.
+                int currRefCount = valueSerde.extractReferenceCount(valueBuffer);
 
-            if (currRefCount <= 1) {
-                // we had the last ref to this value so we can delete it
-                LAMBDA_LOGGER.trace(() -> LogUtil.message(
-                        "Ref count is zero, deleting entry for key {}",
-                        ByteBufferUtils.byteBufferInfo(keyBuffer)));
-                cursor.delete();
+                if (currRefCount <= 1) {
+                    // we had the last ref to this value so we can delete it
+                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
+                            "Ref count is zero, deleting entry for key {}",
+                            ByteBufferUtils.byteBufferInfo(keyBuffer)));
+                    cursor.delete();
 
-                // perform any post delete actions
-                onDeleteAction.accept(writeTxn, keyBuffer, valueBuffer);
-                return true;
+                    // perform any post delete actions
+                    onDeleteAction.accept(writeTxn, keyBuffer, valueBuffer);
+                    return true;
 
-            } else {
-                // other people have a ref to it so just decrement the ref count
-                try (PooledByteBuffer pooledNewValueBuffer = getPooledValueBuffer()) {
-                    final ByteBuffer newValueBuf = pooledNewValueBuffer.getByteBuffer();
-                    valueSerde.cloneAndDecrementRefCount(
-                            valueBuffer,
-                            newValueBuf);
+                } else {
+                    // other people have a ref to it so just decrement the ref count
+                    try (PooledByteBuffer pooledNewValueBuffer = getPooledValueBuffer()) {
+                        final ByteBuffer newValueBuf = pooledNewValueBuffer.getByteBuffer();
+                        valueSerde.cloneAndDecrementRefCount(
+                                valueBuffer,
+                                newValueBuf);
 
-                    if (LAMBDA_LOGGER.isTraceEnabled()) {
-                        int oldRefCount = valueSerde.extractReferenceCount(keyBuffer);
-                        int newRefCount = valueSerde.extractReferenceCount(newValueBuf);
-                        LAMBDA_LOGGER.trace(() -> LogUtil.message(
-                                "Updating entry ref count from {} to {} for key {}",
-                                oldRefCount,
-                                newRefCount,
-                                ByteBufferUtils.byteBufferInfo(keyBuffer)));
+                        if (LAMBDA_LOGGER.isTraceEnabled()) {
+                            int oldRefCount = valueSerde.extractReferenceCount(keyBuffer);
+                            int newRefCount = valueSerde.extractReferenceCount(newValueBuf);
+                            LAMBDA_LOGGER.trace(() -> LogUtil.message(
+                                    "Updating entry ref count from {} to {} for key {}",
+                                    oldRefCount,
+                                    newRefCount,
+                                    ByteBufferUtils.byteBufferInfo(keyBuffer)));
+                        }
+                        cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
                     }
-                    cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
+                    return false;
                 }
-                return false;
+            } else {
+                // Entry not found. This should not really happen as a value store entry should only be deleted
+                // if its reference count drops to zero which should not be the case here as our KV entry
+                // holds a ref to it. It indicates we have a problem somewhere.
+
+                LAMBDA_LOGGER.warn(() -> "Expected to find a valueStoreMetaDb entry found with key: "
+                        + ByteBufferUtils.byteBufferInfo(keyBuffer));
+                // It is not there, which is what we want, so we have effectively deleted it, however
+                // I think we have to assume if it is not there then the corresponding valueStoreDb entry is also
+                // not there so don't call the onDeleteAction.
+                return true;
             }
         }
     }
