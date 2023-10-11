@@ -31,6 +31,7 @@ import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -117,13 +118,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                     return null;
                 }
                 if (FsVolumeType.S3.equals(volume.getVolumeType())) {
-                    final S3ClientConfig s3ClientConfig = volume.getS3ClientConfig();
-                    if (s3ClientConfig != null) {
-                        if (!s3ClientConfig.isUseFeedAsBucketName()) {
-                            return s3ClientConfig.getDefaultBucketName();
-                        }
-                    }
-                    return "<feed-name>.<stream-type>";
+                    return GwtNullSafe.get(volume.getS3ClientConfig(), S3ClientConfig::getBucketName);
                 }
 
                 return volume.getPath();

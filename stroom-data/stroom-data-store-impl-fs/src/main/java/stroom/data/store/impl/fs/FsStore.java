@@ -110,7 +110,7 @@ class FsStore implements Store, AttributeMapFactory {
                 target = fsTarget;
             }
             case S3 -> {
-                final S3Manager s3Manager = new S3Manager(volume.getS3ClientConfig());
+                final S3Manager s3Manager = new S3Manager(pathCreator, volume.getS3ClientConfig());
                 final Path tempDir = createTempPath(meta.getId());
                 final S3Target s3Target = S3Target.create(
                         metaService,
@@ -206,7 +206,7 @@ class FsStore implements Store, AttributeMapFactory {
                     source = FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
                 }
                 case S3 -> {
-                    final S3Manager s3Manager = new S3Manager(dataVolume.getVolume().getS3ClientConfig());
+                    final S3Manager s3Manager = new S3Manager(pathCreator, dataVolume.getVolume().getS3ClientConfig());
                     final Path tempDir = createTempPath(meta.getId());
                     source = S3Source.create(s3Manager, meta, tempDir);
                 }

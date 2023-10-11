@@ -231,9 +231,9 @@ final class S3Target implements Target {
         if (deleted) {
             throw new DataException("Target already deleted");
         }
-        if (closed) {
-            throw new DataException("Target already closed");
-        }
+//        if (closed) {
+//            throw new DataException("Target already closed");
+//        }
 
         try {
             // Close the stream target.

@@ -2993,6 +2993,36 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/decorate" : {
+      "post" : {
+        "operationId" : "decorateDocRef",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "docRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocRef"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Decorate the docRef will all values, e.g. add the name",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/delete" : {
       "delete" : {
         "operationId" : "deleteExplorerItems",
@@ -3249,7 +3279,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocRefInfo"
+                  "$ref" : "#/components/schemas/ExplorerNodeInfo"
                 }
               }
             },
@@ -12504,6 +12534,24 @@
           },
           "uuid" : {
             "type" : "string"
+          }
+        }
+      },
+      "ExplorerNodeInfo" : {
+        "type" : "object",
+        "properties" : {
+          "docRefInfo" : {
+            "$ref" : "#/components/schemas/DocRefInfo"
+          },
+          "explorerNode" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
+          },
+          "owners" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UserName"
+            },
+            "uniqueItems" : true
           }
         }
       },

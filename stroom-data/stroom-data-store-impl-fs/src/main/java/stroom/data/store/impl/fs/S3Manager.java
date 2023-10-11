@@ -6,7 +6,7 @@ import stroom.data.store.impl.fs.shared.AwsProxyConfig;
 import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.util.date.DateUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -51,9 +51,13 @@ import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,10 +70,20 @@ public class S3Manager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Manager.class);
 
     private static final Pattern S3_NAME_PATTERN = Pattern.compile("[^a-z0-9]");
+    private static final Pattern S3_BUCKET_NAME_PATTERN = Pattern.compile("[^0-9a-z.]");
+    private static final Pattern S3_KEY_NAME_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
+    private static final Pattern LEADING_HYPHENS = Pattern.compile("^-+");
+    private static final Pattern TRAILING_HYPHENS = Pattern.compile("-+$");
+    private static final Pattern LEADING_SLASH = Pattern.compile("^/+");
+    private static final Pattern TRAILING_SLASH = Pattern.compile("/+$");
+    private static final Pattern MULTI_SLASH = Pattern.compile("/+");
 
+    private final PathCreator pathCreator;
     private final S3ClientConfig s3ClientConfig;
 
-    public S3Manager(final S3ClientConfig s3ClientConfig) {
+    public S3Manager(final PathCreator pathCreator,
+                     final S3ClientConfig s3ClientConfig) {
+        this.pathCreator = pathCreator;
         this.s3ClientConfig = s3ClientConfig;
     }
 
@@ -78,11 +92,11 @@ public class S3Manager {
         return S3AsyncClient
                 .crtBuilder()
                 .credentialsProvider(awsCredentialsProvider)
-                .region(Region.of(s3ClientConfig.getRegion()))
+                .region(createRegion(s3ClientConfig.getRegion()))
                 .minimumPartSizeInBytes(s3ClientConfig.getMinimalPartSizeInBytes())
                 .targetThroughputInGbps(s3ClientConfig.getTargetThroughputInGbps())
                 .maxConcurrency(s3ClientConfig.getMaxConcurrency())
-                .endpointOverride(URI.create(s3ClientConfig.getEndpointOverride()))
+                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
                 .checksumValidationEnabled(s3ClientConfig.getChecksumValidationEnabled())
                 .initialReadBufferSizeInBytes(s3ClientConfig.getReadBufferSizeInBytes())
                 .httpConfiguration(createHttpConfiguration(s3ClientConfig.getHttpConfiguration()))
@@ -102,12 +116,26 @@ public class S3Manager {
         return S3Client
                 .builder()
                 .credentialsProvider(awsCredentialsProvider)
-                .region(Region.of(s3ClientConfig.getRegion()))
-                .endpointOverride(URI.create(s3ClientConfig.getEndpointOverride()))
+                .region(createRegion(s3ClientConfig.getRegion()))
+                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
                 .accelerate(s3ClientConfig.getAccelerate())
                 .forcePathStyle(s3ClientConfig.getForcePathStyle())
                 .crossRegionAccessEnabled(s3ClientConfig.isCrossRegionAccessEnabled())
                 .build();
+    }
+
+    private URI createUri(final String uri) {
+        if (uri == null || uri.isBlank()) {
+            return null;
+        }
+        return URI.create(uri);
+    }
+
+    private Region createRegion(final String region) {
+        if (region == null || region.isBlank()) {
+            return null;
+        }
+        return Region.of(region);
     }
 
     private S3CrtHttpConfiguration createHttpConfiguration(final AwsHttpConfig awsHttpConfig) {
@@ -217,23 +245,32 @@ public class S3Manager {
     }
 
     public String createBucketName(final Meta meta) {
-        if (s3ClientConfig.isUseFeedAsBucketName()) {
-            final String bucketName = createS3Name(meta.getFeedName()) + "." + createS3Name(meta.getTypeName());
-            if (bucketName.length() > 63) {
-                return bucketName.substring(0, 63);
-            }
-            return bucketName;
-        }
-
-        final String bucketName = s3ClientConfig.getDefaultBucketName();
+        String bucketName = s3ClientConfig.getBucketName();
         if (bucketName == null || bucketName.isBlank()) {
             throw new RuntimeException("No bucket name defined in S3 volume config");
         }
+
+        bucketName = pathCreator.replace(bucketName, "feed", meta::getFeedName);
+        bucketName = pathCreator.replace(bucketName, "type", meta::getTypeName);
+        bucketName = bucketName.toLowerCase(Locale.ROOT);
+        bucketName = S3_BUCKET_NAME_PATTERN.matcher(bucketName).replaceAll("-");
+        bucketName = LEADING_HYPHENS.matcher(bucketName).replaceAll("");
+        bucketName = TRAILING_HYPHENS.matcher(bucketName).replaceAll("");
+        if (bucketName.length() > 63) {
+            LOGGER.warn("Truncating bucket name: " + bucketName);
+            return bucketName.substring(0, 63);
+        }
+
         return bucketName;
     }
 
     private String createS3Name(final String name) {
-        return S3_NAME_PATTERN.matcher(name.toLowerCase(Locale.ROOT)).replaceAll("-");
+        String s3Name = name;
+        s3Name = s3Name.toLowerCase(Locale.ROOT);
+        s3Name = S3_NAME_PATTERN.matcher(s3Name).replaceAll("-");
+        s3Name = LEADING_HYPHENS.matcher(s3Name).replaceAll("");
+        s3Name = TRAILING_HYPHENS.matcher(s3Name).replaceAll("");
+        return s3Name;
     }
 
     public PutObjectResponse upload(final Meta meta,
@@ -433,28 +470,30 @@ public class S3Manager {
     }
 
     public String createKey(final Meta meta) {
-//        String extension = EXTENSION_MAP.get(streamType);
-//        if (extension == null) {
-//            extension = "dat";
-//        }
-//        if (s3ClientConfig.isUseFeedAsBucketName()) {
-//            return meta.getId() + ".zip";
-//        }
+        String keyName = s3ClientConfig.getKeyPattern();
+        if (keyName == null || keyName.isBlank()) {
+            throw new RuntimeException("No key pattern defined in S3 volume config");
+        }
+        final ZonedDateTime zonedDateTime =
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
+        final String idPadded = FsPrefixUtil.padId(meta.getId());
+        keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
+        keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
+        keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
+        keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
+        keyName = pathCreator.replace(keyName, "idPath", () -> FsPrefixUtil.getIdPath(idPadded));
+        keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
 
-        final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
-        final String paddedId = FsPrefixUtil.padId(meta.getId());
-        return createS3Name(meta.getFeedName()) +
-                "/" +
-                createS3Name(meta.getTypeName()) +
-                "/" +
-                createS3Name(utcDate.substring(0, 4)) +
-                "/" +
-                createS3Name(utcDate.substring(5, 7)) +
-                "/" +
-                createS3Name(utcDate.substring(8, 10)) +
-                "/" +
-                paddedId +
-                S3FileExtensions.ZIP_EXTENSION;
+        keyName = S3_KEY_NAME_PATTERN.matcher(keyName).replaceAll("-");
+        keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
+        keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
+        keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
+
+        if (keyName.getBytes(StandardCharsets.UTF_8).length > 1024) {
+            throw new RuntimeException("Key name too long: " + keyName);
+        }
+
+        return keyName;
     }
 
     private PutObjectRequest createPutObjectRequest(final String bucketName,

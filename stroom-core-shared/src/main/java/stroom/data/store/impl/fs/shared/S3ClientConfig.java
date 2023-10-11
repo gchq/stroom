@@ -50,9 +50,9 @@ public class S3ClientConfig {
     @JsonProperty
     private final boolean createBuckets;
     @JsonProperty
-    private final boolean useFeedAsBucketName;
+    private final String bucketName;
     @JsonProperty
-    private final String defaultBucketName;
+    private final String keyPattern;
 
     @JsonCreator
     public S3ClientConfig(@JsonProperty("credentialsProviderType") final
@@ -74,8 +74,8 @@ public class S3ClientConfig {
                           @JsonProperty("async") final boolean async,
                           @JsonProperty("multipart") final boolean multipart,
                           @JsonProperty("createBuckets") final boolean createBuckets,
-                          @JsonProperty("useFeedAsBucketName") final boolean useFeedAsBucketName,
-                          @JsonProperty("defaultBucketName") final String defaultBucketName) {
+                          @JsonProperty("bucketName") final String bucketName,
+                          @JsonProperty("keyPattern") final String keyPattern) {
         this.credentialsProviderType = credentialsProviderType;
         this.credentials = credentials;
         this.readBufferSizeInBytes = readBufferSizeInBytes;
@@ -94,8 +94,8 @@ public class S3ClientConfig {
         this.async = async;
         this.multipart = multipart;
         this.createBuckets = createBuckets;
-        this.useFeedAsBucketName = useFeedAsBucketName;
-        this.defaultBucketName = defaultBucketName;
+        this.bucketName = bucketName;
+        this.keyPattern = keyPattern;
     }
 
     public AwsCredentialsProviderType getCredentialsProviderType() {
@@ -170,12 +170,12 @@ public class S3ClientConfig {
         return createBuckets;
     }
 
-    public boolean isUseFeedAsBucketName() {
-        return useFeedAsBucketName;
+    public String getBucketName() {
+        return bucketName;
     }
 
-    public String getDefaultBucketName() {
-        return defaultBucketName;
+    public String getKeyPattern() {
+        return keyPattern;
     }
 
     public Builder copy() {
@@ -200,7 +200,6 @@ public class S3ClientConfig {
                 async == that.async &&
                 multipart == that.multipart &&
                 createBuckets == that.createBuckets &&
-                useFeedAsBucketName == that.useFeedAsBucketName &&
                 credentialsProviderType == that.credentialsProviderType &&
                 Objects.equals(credentials, that.credentials) &&
                 Objects.equals(readBufferSizeInBytes, that.readBufferSizeInBytes) &&
@@ -215,7 +214,8 @@ public class S3ClientConfig {
                 Objects.equals(forcePathStyle, that.forcePathStyle) &&
                 Objects.equals(numRetries, that.numRetries) &&
                 Objects.equals(thresholdInBytes, that.thresholdInBytes) &&
-                Objects.equals(defaultBucketName, that.defaultBucketName);
+                Objects.equals(bucketName, that.bucketName) &&
+                Objects.equals(keyPattern, that.keyPattern);
     }
 
     @Override
@@ -238,8 +238,8 @@ public class S3ClientConfig {
                 async,
                 multipart,
                 createBuckets,
-                useFeedAsBucketName,
-                defaultBucketName);
+                bucketName,
+                keyPattern);
     }
 
     @Override
@@ -263,8 +263,8 @@ public class S3ClientConfig {
                 ", async=" + async +
                 ", multipart=" + multipart +
                 ", createBuckets=" + createBuckets +
-                ", useFeedAsBucketName=" + useFeedAsBucketName +
-                ", defaultBucketName='" + defaultBucketName + '\'' +
+                ", bucketName='" + bucketName + '\'' +
+                ", keyPattern='" + keyPattern + '\'' +
                 '}';
     }
 
@@ -289,9 +289,9 @@ public class S3ClientConfig {
         private Long thresholdInBytes;
         private boolean async;
         private boolean multipart;
-        private boolean createBuckets = true;
-        private boolean useFeedAsBucketName = true;
-        private String defaultBucketName;
+        private boolean createBuckets;
+        private String bucketName = "stroom.${feed}.${type}";
+        private String keyPattern = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip";
 
         public Builder() {
         }
@@ -318,8 +318,8 @@ public class S3ClientConfig {
             this.async = s3ClientConfig.async;
             this.multipart = s3ClientConfig.multipart;
             this.createBuckets = s3ClientConfig.createBuckets;
-            this.useFeedAsBucketName = s3ClientConfig.useFeedAsBucketName;
-            this.defaultBucketName = s3ClientConfig.defaultBucketName;
+            this.bucketName = s3ClientConfig.bucketName;
+            this.keyPattern = s3ClientConfig.keyPattern;
         }
 
         public Builder credentialsProviderType(final AwsCredentialsProviderType credentialsProviderType) {
@@ -412,13 +412,13 @@ public class S3ClientConfig {
             return this;
         }
 
-        public Builder useFeedAsBucketName(final boolean useFeedAsBucketName) {
-            this.useFeedAsBucketName = useFeedAsBucketName;
+        public Builder bucketName(final String bucketName) {
+            this.bucketName = bucketName;
             return this;
         }
 
-        public Builder defaultBucketName(final String defaultBucketName) {
-            this.defaultBucketName = defaultBucketName;
+        public Builder keyPattern(final String keyPattern) {
+            this.keyPattern = keyPattern;
             return this;
         }
 
@@ -442,8 +442,8 @@ public class S3ClientConfig {
                     async,
                     multipart,
                     createBuckets,
-                    useFeedAsBucketName,
-                    defaultBucketName);
+                    bucketName,
+                    keyPattern);
         }
     }
 }
