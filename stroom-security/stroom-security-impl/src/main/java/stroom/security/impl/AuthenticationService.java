@@ -129,9 +129,7 @@ public class AuthenticationService {
 
         try {
             optUser = userDao.getBySubjectId(subjectId, false);
-            if (optUser.isEmpty()
-                    && User.ADMIN_SUBJECT_ID.equals(subjectId)
-                    && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+            if (optUser.isEmpty() && shouldCreateAdminUser(subjectId)) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
                 //   running of stroom in UseInternal mode which then leaves admin/admin open
@@ -145,6 +143,13 @@ public class AuthenticationService {
         }
 
         return optUser;
+    }
+
+    private boolean shouldCreateAdminUser(final String subjectId) {
+        return User.ADMIN_SUBJECT_ID.equals(subjectId)
+                && (
+                IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())
+                        || IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType()));
     }
 
     public User createOrRefreshUser(final String subjectId) {
@@ -167,8 +172,7 @@ public class AuthenticationService {
                     final User userRef = create(subjectId, isGroup);
 
                     // Creating the admin user so create its group too
-                    if (User.ADMIN_SUBJECT_ID.equals(subjectId)
-                            && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+                    if (shouldCreateAdminUser(subjectId)) {
                         try {
                             User userGroup = createOrRefreshAdminUserGroup(ADMINISTRATORS_GROUP_SUBJECT_ID);
                             userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());
