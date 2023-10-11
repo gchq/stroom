@@ -80,6 +80,10 @@ public class ProxyDbModule extends AbstractModule {
             final Path libraryDir = pathCreator.toAppPath(libraryDirStr);
             LOGGER.info("Setting {} to '{}'", SQLITE_TEMPDIR_PROP, libraryDir.toString());
             System.setProperty(SQLITE_TEMPDIR_PROP, libraryDir.toString());
+            if (!Files.exists(libraryDir)) {
+                LOGGER.info("Ensuring '{}' exists", libraryDir);
+                FileUtil.ensureDirExists(libraryDir);
+            }
         }
 
         final Path path = dbDir.resolve("proxy-repo.db");
