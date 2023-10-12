@@ -5,14 +5,27 @@ import stroom.util.io.TempDirProvider;
 
 import com.google.inject.AbstractModule;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class TestingHomeAndTempProvidersModule extends AbstractModule {
 
     private final Path tempDir;
+    private final Path homeDir;
+
+    public TestingHomeAndTempProvidersModule() {
+        try {
+            this.tempDir = Files.createTempDirectory("stroom-temp");
+            this.homeDir = tempDir.resolve("home");
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating temp dir", e);
+        }
+    }
 
     public TestingHomeAndTempProvidersModule(final Path tempDir) {
         this.tempDir = tempDir;
+        this.homeDir = tempDir.resolve("home");
     }
 
     @Override
@@ -24,7 +37,7 @@ public class TestingHomeAndTempProvidersModule extends AbstractModule {
     }
 
     public Path getHomeDir() {
-        return tempDir.resolve("home");
+        return homeDir;
     }
 
     public Path getTempDir() {

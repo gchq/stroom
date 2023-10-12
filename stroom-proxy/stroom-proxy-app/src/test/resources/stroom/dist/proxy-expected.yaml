@@ -13,7 +13,7 @@ proxyConfig:
     syncFrequency: "PT1M"
     upstreamUrl: null
   db:
-    batchSize: 10000000
+    batchSize: 1000000
     cleanupFrequency: "PT1S"
     connectionPragma:
     - "pragma synchronous = normal;"
@@ -23,6 +23,7 @@ proxyConfig:
     flushFrequency: "PT1S"
     globalPragma:
     - "pragma journal_mode = WAL;"
+    libraryDir: "sqlite_library"
     maintenancePragma:
     - "pragma wal_checkpoint(truncate);"
     - "pragma vacuum;"

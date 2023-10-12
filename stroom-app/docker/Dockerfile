@@ -65,6 +65,8 @@ VOLUME /stroom/config/
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
 VOLUME /stroom/content_pack_import/
 
+# lmdb_library mouted as tmpfs not a managed volume
+
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
 
@@ -79,9 +81,6 @@ VOLUME /stroom/reference_data/
 
 # Create Docker volume for Stroom's off-heap search result data
 VOLUME /stroom/search_results/
-
-# Create Docker volume for Stroom's LMDB system library binary
-VOLUME /stroom/lmdb_library/
 
 # Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
@@ -99,6 +98,9 @@ CMD ["./start.sh", "server"]
 # see https://github.com/docker-library/openjdk/issues/73#issuecomment-207816707
 
 # Create a user with no home and no shell
+# IMPORTANT!!!
+# If you add any new dirs here, make sure you also chown them in docker-entrypoint.sh
+# IMPORTANT!!!
 RUN \
     apk add --no-cache \
         ttf-dejavu && \
@@ -120,7 +122,9 @@ RUN \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
-# IMPORTANT - if you add/change a dir above you need to do the same in entrypoint.sh
+# IMPORTANT!!!
+# If you add any new dirs above, make sure you also chown them in docker-entrypoint.sh
+# IMPORTANT!!!
 
 # Those that are most likely to have changed get copied last to speed up build
 

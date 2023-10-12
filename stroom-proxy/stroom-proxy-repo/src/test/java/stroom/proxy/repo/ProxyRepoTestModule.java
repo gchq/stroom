@@ -1,7 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.db.util.DbModule;
-import stroom.util.io.FileUtil;
+import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
 
 import com.google.inject.AbstractModule;
 
@@ -14,8 +14,13 @@ public class ProxyRepoTestModule extends AbstractModule {
         install(new ProxyDbModule());
         install(new DbModule());
 
-        final Path repoDir = FileUtil.createTempDirectory("stroom-proxy-repo");
-        final Path dbDir = FileUtil.createTempDirectory("stroom-proxy-db");
+        final TestingHomeAndTempProvidersModule homeAndTempProvidersModule = new TestingHomeAndTempProvidersModule();
+        install(homeAndTempProvidersModule);
+
+        final Path homeDir = homeAndTempProvidersModule.getHomeDir();
+        final Path repoDir = homeDir.resolve("repo");
+        final Path dbDir = homeDir.resolve("db");
+
         bind(RepoDirProvider.class).toInstance(() -> repoDir);
         bind(RepoDbDirProvider.class).toInstance(() -> dbDir);
         bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);

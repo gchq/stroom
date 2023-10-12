@@ -13,12 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+<<<<<<< HEAD
 ## [v7.3-beta.1] - 2023-10-10
 
 * Issue **#3827** : Change the new pipeline element dialog to always suggest a unique element ID.
 
 * Issue **#3830** : Add S3 data storage option.
 
+=======
+## [v7.2-beta.76] - 2023-10-11
+
+* Issue **#3827** : Change the new pipeline element dialog to always suggest a unique element ID.
+
+>>>>>>> 144be1cbebbe106d345276fdb6ebafc9a3be8a28
 * Issue **#3831** : Fix new documents/folders getting dual ownership when created. Now the creator of the document/folder will be the owner of it, not the owner of the destination.
 
 * Add owner information to the Info explorer tree context menu item.
@@ -6061,8 +6068,13 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.1...HEAD
 [v7.3-beta.1]: https://github.com/gchq/stroom/compare/v7.2-beta.75...v7.3-beta.1
+=======
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.76...HEAD
+[v7.2-beta.76]: https://github.com/gchq/stroom/compare/v7.2-beta.75...v7.2-beta.76
+>>>>>>> 144be1cbebbe106d345276fdb6ebafc9a3be8a28
 [v7.2-beta.75]: https://github.com/gchq/stroom/compare/v7.2-beta.74...v7.2-beta.75
 [v7.2-beta.74]: https://github.com/gchq/stroom/compare/v7.2-beta.73...v7.2-beta.74
 [v7.2-beta.73]: https://github.com/gchq/stroom/compare/v7.2-beta.72...v7.2-beta.73
