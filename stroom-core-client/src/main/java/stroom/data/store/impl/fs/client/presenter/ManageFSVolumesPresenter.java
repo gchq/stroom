@@ -81,8 +81,9 @@ public class ManageFSVolumesPresenter extends ContentTabPresenter<WrapperView> {
         registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
-            final Rest<Boolean> rest = restFactory.create();
-            rest.onSuccess(response -> refresh()).call(FS_VOLUME_RESOURCE).rescan();
+            restFactory.builder()
+                    .forBoolean()
+                    .onSuccess(response -> refresh()).call(FS_VOLUME_RESOURCE).rescan();
         }));
     }
 
