@@ -494,8 +494,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             }
         }
 
-        final Source streamSource = streamStore.openSource(meta.getId(), true);
-        assertThat(streamSource.getMeta().getStatus()).isEqualTo(Status.DELETED);
+        try (final Source streamSource = streamStore.openSource(meta.getId(), true)) {
+            assertThat(streamSource.getMeta().getStatus()).isEqualTo(Status.DELETED);
+        }
     }
 
     @Test

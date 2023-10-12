@@ -54,7 +54,7 @@ public interface Store {
      *
      * @return items deleted
      */
-    Target deleteTarget(Target target);
+    void deleteTarget(Target target);
 
     /**
      * <p>

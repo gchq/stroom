@@ -20,6 +20,7 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Target;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
@@ -30,7 +31,6 @@ import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.zip.ZipUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -54,8 +54,8 @@ final class S3Target implements Target {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Target.class);
 
     private final MetaService metaService;
-    private final S3Manager s3Manager;
-
+    private final S3Store s3Store;
+    private final DataVolume dataVolume;
     private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
     private final Path tempDir;
     private AttributeMap attributeMap;
@@ -65,26 +65,16 @@ final class S3Target implements Target {
     private boolean deleted;
     private long partNo;
 
-    private S3Target(final MetaService metaService,
-                     final S3Manager s3Manager,
-                     final Meta meta,
-                     final Path tempDir) {
+    public S3Target(final MetaService metaService,
+                    final S3Store s3Store,
+                    final Path tempDir,
+                    final DataVolume dataVolume,
+                    final Meta meta) {
+        this.dataVolume = dataVolume;
         this.metaService = metaService;
-        this.s3Manager = s3Manager;
+        this.s3Store = s3Store;
         this.meta = meta;
         this.tempDir = tempDir;
-    }
-
-    /**
-     * Creates a new file system stream target.
-     *
-     * @return A new file system target.
-     */
-    static S3Target create(final MetaService metaService,
-                           final S3Manager s3Manager,
-                           final Meta meta,
-                           final Path tempDir) {
-        return new S3Target(metaService, s3Manager, meta, tempDir);
     }
 
     @Override
@@ -165,36 +155,15 @@ final class S3Target implements Target {
 
                 if (streamCloseException == null) {
 
-                    Path zipFile = null;
                     try {
-                        // Create zip.
-                        try {
-                            zipFile = tempDir.resolve(S3FileExtensions.ZIP_FILE_NAME);
-                            ZipUtil.zip(zipFile, tempDir);
+                        final AttributeMap attributeMap = getAttributes();
 
-                            // Upload the zip to S3.
-                            s3Manager.upload(meta, getAttributes(), zipFile);
-
-                        } catch (final IOException e) {
-                            throw new UncheckedIOException(e);
-                        } finally {
-                            if (zipFile != null) {
-                                try {
-                                    Files.delete(zipFile);
-                                } catch (final IOException e) {
-                                    LOGGER.debug(e::getMessage, e);
-                                }
-                            }
-                            try {
-                                FileUtil.deleteDir(tempDir);
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug(e::getMessage, e);
-                            }
-                        }
+                        // Zip and upload.
+                        s3Store.upload(tempDir, dataVolume, meta, attributeMap);
 
                         // Unlock will update the meta data so set it back on the stream
                         // target so the client has the up to date copy
-                        unlock(getMeta(), getAttributes());
+                        unlock(getMeta(), attributeMap);
 
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
@@ -206,6 +175,12 @@ final class S3Target implements Target {
             }
         } finally {
             closed = true;
+
+            try {
+                FileUtil.deleteDir(tempDir);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
         }
     }
 

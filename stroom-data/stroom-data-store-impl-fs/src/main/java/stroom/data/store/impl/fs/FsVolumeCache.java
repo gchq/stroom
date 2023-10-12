@@ -18,7 +18,7 @@ public class FsVolumeCache implements Clearable {
 
     @Inject
     FsVolumeCache(final CacheManager cacheManager,
-                  final Provider<FsVolumeConfig> pipelineConfigProvider,
+                  final Provider<FsVolumeConfig> volumeConfigProvider,
                   final FsVolumeDao fsVolumeDao) {
         this.fsVolumeDao = fsVolumeDao;
 
@@ -26,7 +26,7 @@ public class FsVolumeCache implements Clearable {
         // cache, so keep the time short and expire after write, not access.
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
-                () -> pipelineConfigProvider.get().getVolumeCache(),
+                () -> volumeConfigProvider.get().getVolumeCache(),
                 this::create);
     }
 

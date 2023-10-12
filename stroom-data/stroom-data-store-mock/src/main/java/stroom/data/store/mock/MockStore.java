@@ -91,12 +91,11 @@ public class MockStore implements Store, Clearable {
     }
 
     @Override
-    public Target deleteTarget(final Target target) {
+    public void deleteTarget(final Target target) {
         final long streamId = target.getMeta().getId();
         openOutputStream.remove(streamId);
         fileData.remove(streamId);
         ((MockTarget) target).delete();
-        return target;
     }
 
     @Override

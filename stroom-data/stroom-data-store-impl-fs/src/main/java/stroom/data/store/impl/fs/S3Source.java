@@ -27,7 +27,6 @@ import stroom.meta.shared.Meta;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.zip.ZipUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -57,51 +56,20 @@ final class S3Source implements Source {
     private final String s3Location;
     private AttributeMap attributeMap;
 
+    private final S3Store s3Store;
     private final Meta meta;
     private boolean closed;
     private final Map<String, Long> counts;
 
-    private S3Source(final S3Manager s3Manager,
-                     final Meta meta,
-                     final Path tempDir) {
-        s3Location = "S3 > " + s3Manager.createBucketName(meta) + " > " + s3Manager.createKey(meta);
-
-        // Create zip.
-        Path zipFile = null;
-        try {
-            zipFile = tempDir.resolve(S3FileExtensions.ZIP_FILE_NAME);
-            // Download the zip from S3.
-            s3Manager.download(meta, zipFile);
-
-            ZipUtil.unzip(zipFile, tempDir);
-        } catch (final IOException e) {
-            FileUtil.deleteDir(tempDir);
-            throw new UncheckedIOException(e);
-        } finally {
-            if (zipFile != null) {
-                try {
-                    Files.delete(zipFile);
-                } catch (final IOException e) {
-                    LOGGER.debug(e::getMessage, e);
-                }
-            }
-        }
-
-        this.meta = meta;
+    public S3Source(final S3Store s3Store,
+                    final Path tempDir,
+                    final String s3Location,
+                    final Meta meta) {
+        this.s3Store = s3Store;
         this.tempDir = tempDir;
-
+        this.s3Location = s3Location;
+        this.meta = meta;
         counts = countTypes();
-    }
-
-    /**
-     * Creates a new file system stream source.
-     *
-     * @return A new file system source.
-     */
-    static S3Source create(final S3Manager s3Manager,
-                           final Meta meta,
-                           final Path tempDir) {
-        return new S3Source(s3Manager, meta, tempDir);
     }
 
     @Override
@@ -183,15 +151,17 @@ final class S3Source implements Source {
             }
             partMap.clear();
 
-            try {
-                FileUtil.deleteDir(tempDir);
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-            }
-
             if (streamCloseException != null) {
+                try {
+                    FileUtil.deleteDir(tempDir);
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
+                }
+
                 LOGGER.error("closeStreamSource() - Error on closing stream {}", this, streamCloseException);
                 throw new UncheckedIOException(streamCloseException);
+            } else {
+                s3Store.release(meta, tempDir);
             }
 
         } finally {
