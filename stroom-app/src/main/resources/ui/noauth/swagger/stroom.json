@@ -16876,6 +16876,9 @@
           "async" : {
             "type" : "boolean"
           },
+          "bucketName" : {
+            "type" : "string"
+          },
           "checksumValidationEnabled" : {
             "type" : "boolean"
           },
@@ -16892,9 +16895,6 @@
           "crossRegionAccessEnabled" : {
             "type" : "boolean"
           },
-          "defaultBucketName" : {
-            "type" : "string"
-          },
           "endpointOverride" : {
             "type" : "string"
           },
@@ -16903,6 +16903,9 @@
           },
           "httpConfiguration" : {
             "$ref" : "#/components/schemas/AwsHttpConfig"
+          },
+          "keyPattern" : {
+            "type" : "string"
           },
           "maxConcurrency" : {
             "type" : "integer",
@@ -16933,9 +16936,6 @@
           "thresholdInBytes" : {
             "type" : "integer",
             "format" : "int64"
-          },
-          "useFeedAsBucketName" : {
-            "type" : "boolean"
           }
         }
       },
