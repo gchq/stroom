@@ -12654,6 +12654,8 @@ components:
           type: boolean
         async:
           type: boolean
+        bucketName:
+          type: string
         checksumValidationEnabled:
           type: boolean
         createBuckets:
@@ -12672,14 +12674,14 @@ components:
           - WEB
         crossRegionAccessEnabled:
           type: boolean
-        defaultBucketName:
-          type: string
         endpointOverride:
           type: string
         forcePathStyle:
           type: boolean
         httpConfiguration:
           $ref: '#/components/schemas/AwsHttpConfig'
+        keyPattern:
+          type: string
         maxConcurrency:
           type: integer
           format: int32
@@ -12702,8 +12704,6 @@ components:
         thresholdInBytes:
           type: integer
           format: int64
-        useFeedAsBucketName:
-          type: boolean
     SavePipelineXmlRequest:
       type: object
       properties:
