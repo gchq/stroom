@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.3] - 2023-10-12
+
+* Issue **#3830** : Add caching of S3 downloads.
+
+
 ## [v7.3-beta.2] - 2023-10-12
 
 * Issue **#3830** : Add S3 Bucket and Key name patterns.
@@ -6074,11 +6079,13 @@ Improve error handling during reference data initialisation.
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
 <<<<<<< HEAD
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.3...HEAD
+[v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3
 [v7.3-beta.2]: https://github.com/gchq/stroom/compare/v7.3-beta.1...v7.3-beta.2
 [v7.3-beta.1]: https://github.com/gchq/stroom/compare/v7.2-beta.75...v7.3-beta.1
 =======
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.3...HEAD
+[v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3
 [v7.3-beta.2]: https://github.com/gchq/stroom/compare/v7.3-beta.1...v7.3-beta.2
 [v7.2-beta.76]: https://github.com/gchq/stroom/compare/v7.2-beta.75...v7.2-beta.76
 >>>>>>> 144be1cbebbe106d345276fdb6ebafc9a3be8a28
