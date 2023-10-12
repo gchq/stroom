@@ -3895,6 +3895,7 @@ export interface Row {
 export interface S3ClientConfig {
   accelerate?: boolean;
   async?: boolean;
+  bucketName?: string;
   checksumValidationEnabled?: boolean;
   createBuckets?: boolean;
   credentials?: AwsCredentials;
@@ -3907,10 +3908,10 @@ export interface S3ClientConfig {
     | "SYSTEM_PROPERTY"
     | "WEB";
   crossRegionAccessEnabled?: boolean;
-  defaultBucketName?: string;
   endpointOverride?: string;
   forcePathStyle?: boolean;
   httpConfiguration?: AwsHttpConfig;
+  keyPattern?: string;
 
   /** @format int32 */
   maxConcurrency?: number;
@@ -3931,7 +3932,6 @@ export interface S3ClientConfig {
 
   /** @format int64 */
   thresholdInBytes?: number;
-  useFeedAsBucketName?: boolean;
 }
 
 export interface SavePipelineXmlRequest {
