@@ -571,8 +571,8 @@ public class DataPresenter
 
                 final Long currentMetaId = getCurrentMetaId();
                 if (currentMetaId != null && currentMetaId >= 0) {
-                    final Rest<Set<String>> rest = restFactory.create();
-                    rest
+                    restFactory.builder()
+                            .forSetOf(String.class)
                             .onSuccess(availableChildStreamTypes -> {
 //                                GWT.log("Received available child stream types " + availableChildStreamTypes);
                                 currentAvailableStreamTypes = availableChildStreamTypes;
@@ -1096,8 +1096,8 @@ public class DataPresenter
 
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
-            final Rest<List<DataInfoSection>> rest = restFactory.create();
-            rest
+            restFactory.builder()
+                    .forListOf(DataInfoSection.class)
                     .onSuccess(this::handleMetaInfoResult)
                     .call(DATA_RESOURCE)
                     .viewInfo(metaId);

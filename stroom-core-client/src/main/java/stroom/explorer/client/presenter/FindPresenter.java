@@ -3,7 +3,6 @@ package stroom.explorer.client.presenter;
 import stroom.cell.list.client.CustomCellList;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.ShowFindEvent;
@@ -90,8 +89,8 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                         currentQuery.isMatchCase(),
                         currentQuery.isRegex());
 
-                final Rest<ResultPage<ExplorerDocContentMatch>> rest = restFactory.create();
-                rest
+                restFactory.builder()
+                        .forResultPageOf(ExplorerDocContentMatch.class)
                         .onSuccess(resultPage -> {
                             if (resultPage.getPageStart() != cellList.getPageStart()) {
                                 cellList.setPageStart(resultPage.getPageStart());
