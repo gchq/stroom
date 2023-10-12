@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.31] - 2023-10-12
+
+* Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
+
+
 ## [v7.0.30] - 2023-07-12
 
 * Issue **#3595** : Fix `data()` links when the dashboard is directly linked. Only works for `displayType` of `dialog`, not `tab` as there are no tabs in a direct linked dashboard.
@@ -4866,7 +4871,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.30...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.31...HEAD
+[v7.0.31]: https://github.com/gchq/stroom/compare/v7.0.30...v7.0.31
 [v7.0.30]: https://github.com/gchq/stroom/compare/v7.0.29...v7.0.30
 [v7.0.29]: https://github.com/gchq/stroom/compare/v7.0.28...v7.0.29
 [v7.0.28]: https://github.com/gchq/stroom/compare/v7.0.27...v7.0.28
