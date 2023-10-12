@@ -300,7 +300,7 @@ public class S3Manager {
         }
     }
 
-    public PutObjectResponse tryUpload(final String bucketName,
+    private PutObjectResponse tryUpload(final String bucketName,
                                        final String key,
                                        final Meta meta,
                                        final AttributeMap attributeMap,
