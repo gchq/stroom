@@ -20,23 +20,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Add/Change docker managed volumes. For stroom, make `lmdb_library` and `/tmp` tmpfs mounts. For stroom-proxy, add `sqlite_library` as a tmpfs mount, make `/tmp` a tmpfs mount and add `db` and `failures` as managed volumes. Change sqlite connection to use `sqlite_library` instead of `/tmp` for its library location.
 
 
-<<<<<<< HEAD
-
-
 ## [v7.3-beta.1] - 2023-10-10
 
 * Issue **#3827** : Change the new pipeline element dialog to always suggest a unique element ID.
 
 * Issue **#3830** : Add S3 data storage option.
 
-=======
-
 
 ## [v7.2-beta.76] - 2023-10-11
 
 * Issue **#3827** : Change the new pipeline element dialog to always suggest a unique element ID.
-
->>>>>>> 144be1cbebbe106d345276fdb6ebafc9a3be8a28
 
 * Issue **#3831** : Fix new documents/folders getting dual ownership when created. Now the creator of the document/folder will be the owner of it, not the owner of the destination.
 
