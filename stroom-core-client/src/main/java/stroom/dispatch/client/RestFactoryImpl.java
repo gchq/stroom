@@ -68,9 +68,11 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
     private static class RestBuilderImpl implements RestBuilder {
 
-        private static final TypeLiteral<Void> VOID_TYPE_LITERAL = new TypeLiteral<>() {
+        @SuppressWarnings("Convert2Diamond")
+        private static final TypeLiteral<Void> VOID_TYPE_LITERAL = new TypeLiteral<Void>() {
         };
-        private static final TypeLiteral<Boolean> BOOLEAN_TYPE_LITERAL = new TypeLiteral<>() {
+        @SuppressWarnings("Convert2Diamond")
+        private static final TypeLiteral<Boolean> BOOLEAN_TYPE_LITERAL = new TypeLiteral<Boolean>() {
         };
 
         private final HasHandlers hasHandlers;
@@ -110,19 +112,22 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         @Override
         public <T> Rest<List<T>> forListOf(final Class<T> itemType) {
-            return createRest(new TypeLiteral<>() {
+            //noinspection Convert2Diamond
+            return createRest(new TypeLiteral<List<T>>() {
             });
         }
 
         @Override
         public <T> Rest<Set<T>> forSetOf(final Class<T> itemType) {
-            return createRest(new TypeLiteral<>() {
+            //noinspection Convert2Diamond
+            return createRest(new TypeLiteral<Set<T>>() {
             });
         }
 
         @Override
         public <T> Rest<ResultPage<T>> forResultPageOf(final Class<T> itemType) {
-            return createRest(new TypeLiteral<>() {
+            //noinspection Convert2Diamond
+            return createRest(new TypeLiteral<ResultPage<T>>() {
             });
         }
     }
