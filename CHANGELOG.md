@@ -21,7 +21,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Add owner information to the Info explorer tree context menu item.
 
-* Issue **#3834** : Stop _View_ and _AnmalyticRule_ documents showing as having unsaved changes on open.
+* Issue **#3834** : Stop _View_ and _AnalyticRule_ documents showing as having unsaved changes on open.
 
 
 ## [v7.2-beta.75] - 2023-10-06
