@@ -9,22 +9,18 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.common.v2.ExpressionContextFactory;
-import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 
 import javax.inject.Inject;
 
 public class AnalyticRuleSearchRequestHelper {
 
-    private final DataSourceResolver dataSourceResolver;
     private final SearchRequestBuilder searchRequestBuilder;
     private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
-    public AnalyticRuleSearchRequestHelper(final DataSourceResolver dataSourceResolver,
-                                           final SearchRequestBuilder searchRequestBuilder,
+    public AnalyticRuleSearchRequestHelper(final SearchRequestBuilder searchRequestBuilder,
                                            final ExpressionContextFactory expressionContextFactory) {
-        this.dataSourceResolver = dataSourceResolver;
         this.searchRequestBuilder = searchRequestBuilder;
         this.expressionContextFactory = expressionContextFactory;
     }
@@ -43,8 +39,7 @@ public class AnalyticRuleSearchRequestHelper {
                 DateTimeSettings.builder().build(),
                 false);
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-        final SearchRequest searchRequest = searchRequestBuilder
+        return searchRequestBuilder
                 .create(alertRule.getQuery(), sampleRequest, expressionContext);
-        return dataSourceResolver.resolveDataSource(searchRequest);
     }
 }

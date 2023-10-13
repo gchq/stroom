@@ -190,3 +190,11 @@ select StreamId
 from "index_view"
 where 'My Field' between now()-1w and now()
 select StreamId
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId

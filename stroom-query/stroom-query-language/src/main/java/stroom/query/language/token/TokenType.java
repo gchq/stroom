@@ -45,6 +45,8 @@ public enum TokenType {
     LESS_THAN_OR_EQUAL_TO,
     IS_NULL,
     IS_NOT_NULL,
+    IN,
+    DICTIONARY,
 
     // Logic
     AND,
@@ -100,22 +102,15 @@ public enum TokenType {
             LESS_THAN_OR_EQUAL_TO,
             IS_NULL,
             IS_NOT_NULL,
+            IN,
             BETWEEN);
-
-    public static final Set<TokenType> NUMERIC_OPERATOR = Set.of(
-            ORDER,
-            DIVISION,
-            MULTIPLICATION,
-            MODULUS,
-            PLUS,
-            MINUS);
 
     public static final Set<TokenType> VALUES = Set.of(
             SINGLE_QUOTED_STRING,
             DOUBLE_QUOTED_STRING,
             STRING,
             NUMBER
-            );
+    );
 
     public static final Set<TokenType> ALL = Set.of(values());
 
