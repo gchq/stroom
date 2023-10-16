@@ -229,7 +229,7 @@
     --navigation__title__background-color: var(--icon-colour__blue);
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--row__text-color--selected);
-    --navigation__text-color--no-match: #a9a9a9;
+    --navigation__text-color--no-match: #767676;
 
     /* Specific */
     --header__icon-color: #2185d0;
