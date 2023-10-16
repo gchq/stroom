@@ -10,6 +10,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -55,7 +56,11 @@ public class DocResolver {
         if (docRefs.size() == 0) {
             throw new RuntimeException(type + " \"" + name + "\" not found");
         } else if (docRefs.size() > 1) {
-            throw new RuntimeException("Multiple " + type + "s found for \"" + name + "\"");
+            throw new RuntimeException("Multiple " +
+                    type.toLowerCase(Locale.ROOT) +
+                    " items found with name \"" +
+                    name +
+                    "\"");
         }
         return docRefs.get(0);
     }
