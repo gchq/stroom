@@ -6,6 +6,7 @@ import stroom.data.store.impl.fs.shared.AwsProxyConfig;
 import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -245,11 +246,9 @@ public class S3Manager {
     }
 
     public String createBucketName(final Meta meta) {
-        String bucketName = s3ClientConfig.getBucketName();
-        if (bucketName == null || bucketName.isBlank()) {
-            throw new RuntimeException("No bucket name defined in S3 volume config");
-        }
-
+        String bucketName = NullSafe
+                .nonBlank(s3ClientConfig.getBucketName())
+                .orElse(S3ClientConfig.DEFAULT_BUCKET_NAME);
         bucketName = pathCreator.replace(bucketName, "feed", meta::getFeedName);
         bucketName = pathCreator.replace(bucketName, "type", meta::getTypeName);
         bucketName = bucketName.toLowerCase(Locale.ROOT);
@@ -301,10 +300,10 @@ public class S3Manager {
     }
 
     private PutObjectResponse tryUpload(final String bucketName,
-                                       final String key,
-                                       final Meta meta,
-                                       final AttributeMap attributeMap,
-                                       final Path source) {
+                                        final String key,
+                                        final Meta meta,
+                                        final AttributeMap attributeMap,
+                                        final Path source) {
         final PutObjectRequest request = createPutObjectRequest(bucketName, key, meta, attributeMap);
         logRequest("Uploading: ", bucketName, key, request);
 
@@ -470,10 +469,9 @@ public class S3Manager {
     }
 
     public String createKey(final Meta meta) {
-        String keyName = s3ClientConfig.getKeyPattern();
-        if (keyName == null || keyName.isBlank()) {
-            throw new RuntimeException("No key pattern defined in S3 volume config");
-        }
+        String keyName = NullSafe
+                .nonBlank(s3ClientConfig.getKeyPattern())
+                .orElse(S3ClientConfig.DEFAULT_KEY_PATTERN);
         final ZonedDateTime zonedDateTime =
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
         final String idPadded = FsPrefixUtil.padId(meta.getId());

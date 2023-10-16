@@ -8,8 +8,6 @@ import stroom.db.util.JooqUtil;
 
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
@@ -21,8 +19,6 @@ import javax.inject.Inject;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.FS_VOLUME_GROUP;
 
 class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsVolumeGroupDaoImpl.class);
 
     static final Function<Record, FsVolumeGroup> RECORD_TO_FS_VOLUME_GROUP_MAPPER = record -> {
         final FsVolumeGroup fsVolumeGroup = new FsVolumeGroup();
@@ -94,13 +90,6 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public FsVolumeGroup update(FsVolumeGroup fsVolumeGroup) {
-        // Get the current group name.
-        String currentGroupName = null;
-        if (fsVolumeGroup.getId() != null) {
-            final FsVolumeGroup current = get(fsVolumeGroup.getId());
-            currentGroupName = current.getName();
-        }
-
         final FsVolumeGroup saved;
         try {
             saved = genericDao.update(fsVolumeGroup);

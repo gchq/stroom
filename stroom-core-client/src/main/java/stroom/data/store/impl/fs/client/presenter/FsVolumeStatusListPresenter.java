@@ -118,7 +118,10 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                     return null;
                 }
                 if (FsVolumeType.S3.equals(volume.getVolumeType())) {
-                    return GwtNullSafe.get(volume.getS3ClientConfig(), S3ClientConfig::getBucketName);
+                    return GwtNullSafe.getOrElse(
+                            volume.getS3ClientConfig(),
+                            S3ClientConfig::getBucketName,
+                            S3ClientConfig.DEFAULT_BUCKET_NAME);
                 }
 
                 return volume.getPath();

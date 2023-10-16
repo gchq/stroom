@@ -10,6 +10,10 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class S3ClientConfig {
 
+    public static final String DEFAULT_BUCKET_NAME = "stroom.${feed}.${type}";
+    public static final String DEFAULT_KEY_PATTERN =
+            "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip";
+
     @JsonProperty
     private final AwsCredentialsProviderType credentialsProviderType;
     @JsonProperty
@@ -290,8 +294,8 @@ public class S3ClientConfig {
         private boolean async;
         private boolean multipart;
         private boolean createBuckets;
-        private String bucketName = "stroom.${feed}.${type}";
-        private String keyPattern = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip";
+        private String bucketName = DEFAULT_BUCKET_NAME;
+        private String keyPattern = DEFAULT_KEY_PATTERN;
 
         public Builder() {
         }

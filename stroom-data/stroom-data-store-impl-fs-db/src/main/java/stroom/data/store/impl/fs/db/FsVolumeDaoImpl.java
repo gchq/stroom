@@ -10,6 +10,8 @@ import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.db.util.JooqUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -35,6 +37,8 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_S
 
 @Singleton
 public class FsVolumeDaoImpl implements FsVolumeDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeDaoImpl.class);
 
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
@@ -166,8 +170,11 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {
         byte[] data = null;
-        if (fileVolume.getS3ClientConfigData() != null) {
-            data = fileVolume.getS3ClientConfigData().getBytes(StandardCharsets.UTF_8);
+        final String json = fileVolume.getS3ClientConfigData();
+        if (json != null && !json.isBlank()) {
+            // Check we can deserialise the json string.
+            JsonUtil.readValue(json, S3ClientConfig.class);
+            data = json.getBytes(StandardCharsets.UTF_8);
         }
 
         final FsVolumeType volumeType = Objects.requireNonNullElse(fileVolume.getVolumeType(), FsVolumeType.STANDARD);
@@ -208,11 +215,15 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
         final byte[] data = record.get(FS_VOLUME.DATA);
         if (data != null) {
-            final String s3ClientConfigData = new String(data, StandardCharsets.UTF_8);
-            fileVolume.setS3ClientConfigData(s3ClientConfigData);
-            final S3ClientConfig s3ClientConfig = JsonUtil
-                    .readValue(s3ClientConfigData, S3ClientConfig.class);
-            fileVolume.setS3ClientConfig(s3ClientConfig);
+            try {
+                final String s3ClientConfigData = new String(data, StandardCharsets.UTF_8);
+                fileVolume.setS3ClientConfigData(s3ClientConfigData);
+                final S3ClientConfig s3ClientConfig = JsonUtil
+                        .readValue(s3ClientConfigData, S3ClientConfig.class);
+                fileVolume.setS3ClientConfig(s3ClientConfig);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
         }
         return fileVolume;
     }
