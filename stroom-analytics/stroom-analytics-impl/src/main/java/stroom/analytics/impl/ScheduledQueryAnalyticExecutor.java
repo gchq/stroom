@@ -38,7 +38,6 @@ import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -78,7 +77,6 @@ public class ScheduledQueryAnalyticExecutor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledQueryAnalyticExecutor.class);
 
     private final AnalyticHelper analyticHelper;
-    private final DataSourceResolver dataSourceResolver;
     private final ExecutorProvider executorProvider;
     private final ResultStoreManager searchResponseCreatorManager;
     private final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider;
@@ -95,7 +93,6 @@ public class ScheduledQueryAnalyticExecutor {
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
-                                   final DataSourceResolver dataSourceResolver,
                                    final ExecutorProvider executorProvider,
                                    final ResultStoreManager searchResponseCreatorManager,
                                    final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
@@ -110,7 +107,6 @@ public class ScheduledQueryAnalyticExecutor {
                                    final ExpressionContextFactory expressionContextFactory,
                                    final SecurityContext securityContext) {
         this.analyticHelper = analyticHelper;
-        this.dataSourceResolver = dataSourceResolver;
         this.executorProvider = executorProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
@@ -267,7 +263,6 @@ public class ScheduledQueryAnalyticExecutor {
                         false);
                 final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
                 SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest, expressionContext);
-                mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
                 // Fix table result requests.
                 final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();

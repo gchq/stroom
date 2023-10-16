@@ -44,12 +44,12 @@ class DataSourceResourceImpl implements DataSourceResource {
 
     @Override
     public DataSource fetch(final DocRef dataSourceRef) {
-        return queryServiceProvider.get().getDataSource(dataSourceRef);
+        return queryServiceProvider.get().getDataSource(dataSourceRef).orElse(null);
     }
 
     @Override
     public DataSource fetchFromQuery(final String query) {
-        return queryServiceProvider.get().getDataSource(query);
+        return queryServiceProvider.get().getDataSource(query).orElse(null);
     }
 
     @Override

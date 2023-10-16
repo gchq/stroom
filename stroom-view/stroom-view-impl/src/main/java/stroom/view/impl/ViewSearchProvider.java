@@ -68,7 +68,7 @@ public class ViewSearchProvider implements SearchProvider {
         }
 
         final Optional<DataSourceProvider> delegate =
-                dataSourceProviderRegistry.get().getDataSourceProvider(docRef);
+                dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
         if (delegate.isEmpty()) {
             throw new RuntimeException("No data source provider found for view " + docRef);
         }

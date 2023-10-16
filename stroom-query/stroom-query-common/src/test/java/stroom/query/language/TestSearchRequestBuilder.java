@@ -45,7 +45,9 @@ public class TestSearchRequestBuilder extends AbstractQueryTest {
                     .dateTimeSettings(dateTimeSettings)
                     .maxStringLength(100)
                     .build();
-            searchRequest = new SearchRequestBuilder(null)
+            searchRequest = new SearchRequestBuilder(
+                    (keywordGroup, parentTableSettings) -> null,
+                    new MockDocResolver())
                     .create(input, searchRequest, expressionContext);
             return JsonUtil.writeValueAsString(searchRequest);
 
