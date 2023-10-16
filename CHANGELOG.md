@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.77] - 2023-10-16
+
+* Issue **#3842** : Add support for `field in` to Stroom QL.
+
+* Issue **#3836** : Add support for `field in dictionary` to Stroom QL.
+
+
 ## [v7.2-beta.76] - 2023-10-11
 
 * Issue **#3827** : Change the new pipeline element dialog to always suggest a unique element ID.
@@ -6059,7 +6066,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.76...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.77...HEAD
+[v7.2-beta.77]: https://github.com/gchq/stroom/compare/v7.2-beta.76...v7.2-beta.77
 [v7.2-beta.76]: https://github.com/gchq/stroom/compare/v7.2-beta.75...v7.2-beta.76
 [v7.2-beta.75]: https://github.com/gchq/stroom/compare/v7.2-beta.74...v7.2-beta.75
 [v7.2-beta.74]: https://github.com/gchq/stroom/compare/v7.2-beta.73...v7.2-beta.74
