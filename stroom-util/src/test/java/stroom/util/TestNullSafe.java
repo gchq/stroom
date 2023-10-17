@@ -1432,29 +1432,46 @@ class TestNullSafe {
 
         final TimedCase pureJavaCase = TimedCase.of("Pure java", (round, iterations) -> {
             final Level1 nonNullLevel1 = new Level1();
-            int i = 0;
-            if (nonNullLevel1 != null
-                    && nonNullLevel1.getNonNullLevel2() != null
-                    && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
-                i++;
+            long i = 0;
+            for (i = 0; i < iterations; i++) {
+                if (nonNullLevel1 != null
+                        && nonNullLevel1.getNonNullLevel2() != null
+                        && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
+                    i++;
+                }
             }
-//            System.out.println(i);
+            System.out.println(i);
         });
         final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
             final Level1 nonNullLevel1 = new Level1();
-            int i = 0;
-            if (NullSafe.nonNull(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3)) {
-                i++;
+            long i = 0;
+            for (i = 0; i < iterations; i++) {
+                if (NullSafe.nonNull(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3)) {
+                    i++;
+                }
             }
-//            System.out.println(i);
+        });
+        final TimedCase optCase = TimedCase.of("Optional", (round, iterations) -> {
+            final Level1 nonNullLevel1 = new Level1();
+            long i = 0;
+            for (i = 0; i < iterations; i++) {
+                if (Optional.ofNullable(nonNullLevel1)
+                        .map(Level1::getNonNullLevel2)
+                        .map(Level2::getNonNullLevel3)
+                        .filter(Objects::nonNull)
+                        .isPresent()) {
+                    i++;
+                }
+            }
         });
 
         TestUtil.comparePerformance(
                 4,
-                1_000_000_000,
+                100_000_000L,
                 LOGGER::info,
                 pureJavaCase,
-                nullSafeCase);
+                nullSafeCase,
+                optCase);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
