@@ -76,6 +76,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -671,10 +672,10 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         return TimedCase.of(testName, (round, iterations) -> {
             final int roundIdx = round - 1;
             try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb.getPooledBufferPair()) {
-                final int fromInc = iterations * roundIdx;
-                final int toExc = iterations * (roundIdx + 1);
+                final long fromInc = iterations * roundIdx;
+                final long toExc = iterations * (roundIdx + 1);
                 lmdbEnv.doWithWriteTxn(writeTxn -> {
-                    IntStream.range(fromInc, toExc)
+                    LongStream.range(fromInc, toExc)
                             .forEach(i -> {
                                 final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
                                 keyBuff.clear();
@@ -683,11 +684,11 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                                 basicLmdbDb.serializeKey(
                                         keyBuff,
                                         "key-" + Strings.padStart(
-                                                Integer.toString(i), 10, '0'));
+                                                Long.toString(i), 10, '0'));
                                 basicLmdbDb.serializeValue(
                                         valBuff,
                                         "val-" + Strings.padStart(
-                                                Integer.toString(i), 10, '0'));
+                                                Long.toString(i), 10, '0'));
                                 // Do the put
                                 putFunc.accept(writeTxn, keyBuff, valBuff);
                             });
