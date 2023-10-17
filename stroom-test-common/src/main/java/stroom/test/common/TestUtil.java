@@ -270,7 +270,7 @@ public class TestUtil {
     }
 
     public static void comparePerformance(final int rounds,
-                                          final int iterations,
+                                          final long iterations,
                                           final Consumer<String> outputConsumer,
                                           final TimedCase... testCases) {
         comparePerformance(rounds, iterations, null, outputConsumer, testCases);
@@ -288,7 +288,7 @@ public class TestUtil {
      * @param testCases The test cases to run in each round.
      */
     public static void comparePerformance(final int rounds,
-                                          final int iterations,
+                                          final long iterations,
                                           final TestSetup setup,
                                           final Consumer<String> outputConsumer,
                                           final TimedCase... testCases) {
@@ -357,7 +357,7 @@ public class TestUtil {
                                 .average()
                                 .getAsDouble())))
                 .withColumn(Column.decimal("Per iter (last round)", entry ->
-                        entry.getValue().get(rounds - 1).toNanos() / (double) iterations, 0))
+                        entry.getValue().get(rounds - 1).toNanos() / (double) iterations, 6))
                 .build();
         outputConsumer.accept(LogUtil.message("Summary (iterations: {}, values in nanos):\n{}",
                 ModelStringUtil.formatCsv(iterations),
@@ -370,7 +370,7 @@ public class TestUtil {
 
     public static interface TestSetup {
 
-        void run(final int rounds, final int iterations);
+        void run(final int rounds, final long iterations);
     }
 
 
@@ -410,6 +410,6 @@ public class TestUtil {
          * @param round      One based
          * @param iterations Number of iterations to perform in the work
          */
-        void run(final int round, final int iterations);
+        void run(final int round, final long iterations);
     }
 }
