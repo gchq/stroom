@@ -19,6 +19,8 @@ package stroom.query.common.v2;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -39,24 +41,13 @@ import java.util.regex.Pattern;
 
 public class DateExpressionParser {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DateExpressionParser.class);
+
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d+[smhdwMy])+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
     private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 
     private DateExpressionParser() {
-    }
-
-    public static Optional<ZonedDateTime> parse(final String expression) {
-        return parse(
-                expression,
-                DateTimeSettings.builder().build());
-    }
-
-
-    public static Optional<ZonedDateTime> parse(final String expression, final long nowEpochMilli) {
-        return parse(
-                expression,
-                DateTimeSettings.builder().referenceTime(nowEpochMilli).build());
     }
 
     public static TimeFilter getTimeFilter(final TimeRange timeRange,
@@ -77,6 +68,38 @@ public class DateExpressionParser {
                         dateTimeSettings)
                 .map(time -> time.toInstant().toEpochMilli())
                 .orElse(defaultValue);
+    }
+
+    public static long getMs(final String fieldName, final String value) {
+        return getMs(fieldName, value, DateTimeSettings.builder().build());
+    }
+
+    public static long getMs(final String fieldName,
+                             final String value,
+                             final DateTimeSettings dateTimeSettings) {
+        try {
+            return parse(value, dateTimeSettings)
+                    .map(dt -> dt.toInstant().toEpochMilli())
+                    .orElseThrow();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException("Expected a standard date value for field \"" +
+                    fieldName +
+                    "\" but was given string \"" +
+                    value +
+                    "\"");
+        }
+    }
+
+    public static Optional<ZonedDateTime> parse(final String expression) {
+        return parse(
+                expression,
+                DateTimeSettings.builder().build());
+    }
+
+    public static Optional<ZonedDateTime> parse(final String expression,
+                                                final long referenceTime) {
+        return parse(expression, DateTimeSettings.builder().referenceTime(referenceTime).build());
     }
 
     public static Optional<ZonedDateTime> parse(final String expression,
@@ -267,7 +290,7 @@ public class DateExpressionParser {
         }
     }
 
-    public static TimeFunction parseDuration(final String string, final char sign) {
+    private static TimeFunction parseDuration(final String string, final char sign) {
         // Strip out spaces.
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 

@@ -431,12 +431,12 @@ public class ExpressionMatcher {
             }
 
             //empty optional will be caught below
-            return DateExpressionParser.parse(
+            return DateExpressionParser.getMs(
+                    fieldName,
                     value.toString(),
-                    dateTimeSettings).get().toInstant().toEpochMilli();
+                    dateTimeSettings);
         } catch (final Exception e) {
-            throw new MatchException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
+            throw new MatchException(e.getMessage());
         }
     }
 
