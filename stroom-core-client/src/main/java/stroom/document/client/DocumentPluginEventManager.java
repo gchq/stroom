@@ -260,8 +260,10 @@ public class DocumentPluginEventManager extends Plugin {
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
-            final Rest<ExplorerNode> rest = restFactory.create();
-            rest
+//            final Rest<ExplorerNode> rest = restFactory.create();
+//            rest
+            restFactory.builder()
+                    .forType(ExplorerNode.class)
                     .onSuccess(explorerNode -> {
                         // Now we have the explorer node proceed with the save as.
                         final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
@@ -613,7 +615,8 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
-        final Rest<Void> rest = restFactory.create();
+        final Rest<Void> rest = restFactory.builder()
+                .forVoid();
         rest.onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this));
         if (setFavourite) {
             rest.call(EXPLORER_FAV_RESOURCE).createUserFavourite(docRef);
@@ -626,7 +629,8 @@ public class DocumentPluginEventManager extends Plugin {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
-            restFactory.create(DocRef.class)
+            restFactory.builder()
+                    .forType(DocRef.class)
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
                             docRef.setName(decoratedDocRef.getName());
