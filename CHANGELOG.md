@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.79] - 2023-10-18
+
+* Issue **#3849** : Add fix for `DateExpressionParser` NPE.
+
+
 ## [v7.2-beta.78] - 2023-10-17
 
 * Issue **#3846** : Increase contrast ratio of non-matches in filtered explorer tree when in light mode.
@@ -6075,7 +6080,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.78...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.79...HEAD
+[v7.2-beta.79]: https://github.com/gchq/stroom/compare/v7.2-beta.78...v7.2-beta.79
 [v7.2-beta.78]: https://github.com/gchq/stroom/compare/v7.2-beta.77...v7.2-beta.78
 [v7.2-beta.77]: https://github.com/gchq/stroom/compare/v7.2-beta.76...v7.2-beta.77
 [v7.2-beta.76]: https://github.com/gchq/stroom/compare/v7.2-beta.75...v7.2-beta.76
