@@ -34,6 +34,7 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -63,9 +64,7 @@ public class DateExpressionParser {
         if (expression == null || expression.isBlank()) {
             return defaultValue;
         }
-        return DateExpressionParser.parse(
-                        expression,
-                        dateTimeSettings)
+        return parse(expression, dateTimeSettings)
                 .map(time -> time.toInstant().toEpochMilli())
                 .orElse(defaultValue);
     }
@@ -103,11 +102,14 @@ public class DateExpressionParser {
     }
 
     public static Optional<ZonedDateTime> parse(final String expression,
-                                                final DateTimeSettings dateTimeSettings) {
+                                                final DateTimeSettings dts) {
+        final DateTimeSettings dateTimeSettings = Objects
+                .requireNonNullElseGet(dts, () -> DateTimeSettings.builder().build());
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
-
-        parseConstants(chars, parts, dateTimeSettings.getReferenceTime());
+        final long referenceTime = Objects
+                .requireNonNullElseGet(dateTimeSettings.getReferenceTime(), System::currentTimeMillis);
+        parseConstants(chars, parts, referenceTime);
         parseDurations(chars, parts);
 
         // Find index of any remaining date.
@@ -128,9 +130,7 @@ public class DateExpressionParser {
             } catch (final DateTimeParseException e) {
 
                 try {
-                    if (dateTimeSettings != null &&
-                            dateTimeSettings.getTimeZone() != null &&
-                            dateTimeSettings.getTimeZone().getUse() != null) {
+                    if (dateTimeSettings.getTimeZone() != null && dateTimeSettings.getTimeZone().getUse() != null) {
                         switch (dateTimeSettings.getTimeZone().getUse()) {
                             case LOCAL -> {
                                 final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
@@ -179,12 +179,11 @@ public class DateExpressionParser {
 
                     time = (ZonedDateTime) part.getObject();
 
-                } else if (part.getObject() instanceof TimeFunction) {
+                } else if (part.getObject() instanceof final TimeFunction duration) {
                     if (time == null) {
                         throw new DateTimeException("You must specify a time or time constant before adding or " +
                                 "subtracting duration '" + part.toString().trim() + "'.");
                     }
-                    final TimeFunction duration = (TimeFunction) part.getObject();
                     time = duration.apply(time);
                 }
             }
