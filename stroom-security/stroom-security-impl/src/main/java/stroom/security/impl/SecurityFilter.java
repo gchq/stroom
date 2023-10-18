@@ -22,6 +22,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -167,6 +168,18 @@ class SecurityFilter implements Filter {
                 optUserIdentity = openIdManager.getOrSetSessionUser(request, optUserIdentity);
                 if (LOGGER.isDebugEnabled()) {
                     logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
+                }
+
+                // TODO: 18/10/2023 Put in config
+                final boolean useCertAuthForServiceUsers = true;
+                if (optUserIdentity.isEmpty() && useCertAuthForServiceUsers) {
+                    final CertificateExtractor certificateExtractor = new CertificateExtractor();
+                    final String cn = certificateExtractor.getCN(request)
+                            .orElse(null);
+                    final String dn = certificateExtractor.getDN(request)
+                            .orElse(null);
+
+                    LOGGER.info("CN: '{}', DN '{}'", cn, dn);
                 }
 
                 if (optUserIdentity.isPresent()) {

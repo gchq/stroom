@@ -234,8 +234,12 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                 jerseyClientConfiguration,
                 JerseyClientConfiguration::getTlsConfiguration,
                 tlsConfiguration -> {
-                    modifyPath(tlsConfiguration::getKeyStorePath, tlsConfiguration::setKeyStorePath);
-                    modifyPath(tlsConfiguration::getTrustStorePath, tlsConfiguration::setTrustStorePath);
+                    modifyPath(jerseyClientName,
+                            tlsConfiguration::getKeyStorePath,
+                            tlsConfiguration::setKeyStorePath);
+                    modifyPath(jerseyClientName,
+                            tlsConfiguration::getTrustStorePath,
+                            tlsConfiguration::setTrustStorePath);
                 });
     }
 
@@ -333,7 +337,8 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                 });
     }
 
-    private void modifyPath(final Supplier<File> getter,
+    private void modifyPath(final JerseyClientName jerseyClientName,
+                            final Supplier<File> getter,
                             final Consumer<File> setter) {
         Objects.requireNonNull(getter);
         Objects.requireNonNull(setter);
@@ -344,7 +349,8 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
             final Path newPath = pathCreator.toAppPath(file.getPath());
             if (!Files.exists(newPath)) {
                 throw new RuntimeException(LogUtil.message(
-                        "File '{}' in jersey client configuration '{}' does not exist", newPath));
+                        "File '{}' in jersey client configuration '{}' does not exist",
+                        newPath, jerseyClientName));
             }
             final File newFile = newPath.toFile();
             LOGGER.debug("Changing {} to {}", file, newFile);

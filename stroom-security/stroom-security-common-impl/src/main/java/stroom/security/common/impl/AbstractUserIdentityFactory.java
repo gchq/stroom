@@ -225,7 +225,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 return jwtContextFactory.createAuthorisationEntries(accessToken);
 
             } else {
-                LOGGER.debug(() -> "Wrong type of userIdentity " + userIdentity.getClass());
+                LOGGER.debug(() -> "userIdentity has no headers - " + userIdentity.getClass());
                 return Collections.emptyMap();
             }
         }
