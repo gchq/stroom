@@ -65,7 +65,7 @@ public class TestListDbMigrations {
                     final Version version = entry.getKey();
                     final Map<String, List<Script>> prefixToScriptsMap = entry.getValue();
                     stringBuilder.appendMagenta(version.toString())
-                                    .append("\n");
+                            .append("\n");
                     prefixToScriptsMap.entrySet()
                             .stream()
                             .sorted(Comparator.comparing(Entry::getKey, moduleComparator))
@@ -182,7 +182,7 @@ public class TestListDbMigrations {
         final String moduleName = moduleDir.getFileName().toString();
 
         Path projectRootDir = moduleDir;
-        while(!Files.exists(projectRootDir.resolve(".git"))) {
+        while (!Files.exists(projectRootDir.resolve(".git"))) {
             projectRootDir = projectRootDir.resolve("..")
                     .toAbsolutePath()
                     .normalize();
