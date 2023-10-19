@@ -741,7 +741,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         final AtomicLong allItemsCounter = new AtomicLong(0);
         final AtomicLong consumedCounter = new AtomicLong(0);
         final Predicate<RefStoreEntry> takeWhilePredicate = refStoreEntry ->
-                        consumedCounter.incrementAndGet() <= limit;
+                consumedCounter.incrementAndGet() <= limit;
         final BooleanSupplier skipTest = skipCount == 0
                 ? () -> true
                 : () -> allItemsCounter.incrementAndGet() > skipCount;
@@ -1004,9 +1004,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                              final Function<RefStoreEntry, Long> valueExtractor) {
         // TODO @AT Handle stuff like 'today() -1d'
         // TODO @AT Need to get now() once for the query
-        final Long termValue = getDate(expressionTerm.getField(),
-                expressionTerm.getValue(),
-                Instant.now().toEpochMilli());
+        final Long termValue = DateExpressionParser.getMs(expressionTerm.getField(), expressionTerm.getValue());
         return switch (expressionTerm.getCondition()) {
             case EQUALS -> rec ->
                     Objects.equals(valueExtractor.apply(rec), termValue);
@@ -1081,19 +1079,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 val = docRefInfoService.name(docRef).orElse(docRef.getUuid());
             }
             return ValString.create(val);
-        }
-    }
-
-    private long getDate(final String fieldName, final String value, final long nowEpochMs) {
-        try {
-            // TODO @AT Get the timezone from the user's local?
-            return DateExpressionParser.parse(value, nowEpochMs)
-                    .map(dt -> dt.toInstant().toEpochMilli())
-                    .orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + fieldName
-                            + "\" but was given string \"" + value + "\""));
-        } catch (final RuntimeException e) {
-            throw new RuntimeException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
         }
     }
 }

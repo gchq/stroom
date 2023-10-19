@@ -43,7 +43,6 @@ import org.jooq.Result;
 import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,11 +89,11 @@ class AnnotationDaoImpl implements AnnotationDao {
 //        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationFields.CREATED_ON_FIELD,
                 ANNOTATION.CREATE_TIME_MS,
-                value -> getDate(AnnotationFields.CREATED_ON, value));
+                value -> DateExpressionParser.getMs(AnnotationFields.CREATED_ON, value));
         expressionMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
         expressionMapper.map(AnnotationFields.UPDATED_ON_FIELD,
                 ANNOTATION.UPDATE_TIME_MS,
-                value -> getDate(AnnotationFields.UPDATED_ON, value));
+                value -> DateExpressionParser.getMs(AnnotationFields.UPDATED_ON, value));
         expressionMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
         expressionMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
         expressionMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
@@ -124,21 +123,6 @@ class AnnotationDaoImpl implements AnnotationDao {
         valueMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, ValString::create);
         valueMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, ValString::create);
         return valueMapper;
-    }
-
-    private long getDate(final String fieldName, final String value) {
-        try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value);
-
-            return optional.orElseThrow(() ->
-                            new RuntimeException(
-                                    "Expected a standard date value for field \"" + fieldName
-                                            + "\" but was given string \"" + value + "\""))
-                    .toInstant().toEpochMilli();
-        } catch (final Exception e) {
-            throw new RuntimeException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"", e);
-        }
     }
 
     @Override

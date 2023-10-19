@@ -1,7 +1,6 @@
 package stroom.processor.impl.db;
 
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -59,7 +58,6 @@ import org.jooq.impl.DSL;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -161,21 +159,17 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.docRefInfoService = docRefInfoService;
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(ProcessorTaskFields.CREATE_TIME,
-                PROCESSOR_TASK.CREATE_TIME_MS,
-                value -> getDate(ProcessorTaskFields.CREATE_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, value ->
+                DateExpressionParser.getMs(ProcessorTaskFields.CREATE_TIME.getName(), value));
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, Long::valueOf);
-        expressionMapper.map(ProcessorTaskFields.START_TIME,
-                PROCESSOR_TASK.START_TIME_MS,
-                value -> getDate(ProcessorTaskFields.START_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.START_TIME, PROCESSOR_TASK.START_TIME_MS, value ->
+                DateExpressionParser.getMs(ProcessorTaskFields.START_TIME.getName(), value));
         expressionMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, Long::valueOf);
-        expressionMapper.map(ProcessorTaskFields.END_TIME,
-                PROCESSOR_TASK.END_TIME_MS,
-                value -> getDate(ProcessorTaskFields.END_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.END_TIME, PROCESSOR_TASK.END_TIME_MS, value ->
+                DateExpressionParser.getMs(ProcessorTaskFields.END_TIME.getName(), value));
         expressionMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, Long::valueOf);
-        expressionMapper.map(ProcessorTaskFields.STATUS_TIME,
-                PROCESSOR_TASK.STATUS_TIME_MS,
-                value -> getDate(ProcessorTaskFields.STATUS_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.STATUS_TIME, PROCESSOR_TASK.STATUS_TIME_MS, value ->
+                DateExpressionParser.getMs(ProcessorTaskFields.STATUS_TIME.getName(), value));
         expressionMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
@@ -218,19 +212,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 PROCESSOR_TASK.STATUS,
                 v -> ValString.create(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(v).getDisplayValue()));
         valueMapper.map(ProcessorTaskFields.TASK_ID, PROCESSOR_TASK.ID, ValLong::create);
-    }
-
-    private long getDate(final DateField field, final String value) {
-        try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value);
-
-            return optional.orElseThrow(() ->
-                    new RuntimeException("Expected a standard date value for field \"" + field.getName()
-                            + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
-        } catch (final Exception e) {
-            throw new RuntimeException("Expected a standard date value for field \"" + field.getName()
-                    + "\" but was given string \"" + value + "\"", e);
-        }
     }
 
     private Val getPipelineName(final String uuid) {
