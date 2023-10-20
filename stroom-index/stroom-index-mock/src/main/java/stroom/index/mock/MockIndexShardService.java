@@ -19,11 +19,11 @@ package stroom.index.mock;
 
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardUtil;
-import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneVersionUtil;
 import stroom.index.shared.Partition;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;

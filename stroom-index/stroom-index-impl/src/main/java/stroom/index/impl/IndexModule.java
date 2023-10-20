@@ -107,6 +107,7 @@ public class IndexModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(IndexVolumeServiceImpl.class);
+        HasSystemInfoBinder.create(binder()).bind(IndexSystemInfo.class);
     }
 
     private static class IndexShardDelete extends RunnableWrapper {

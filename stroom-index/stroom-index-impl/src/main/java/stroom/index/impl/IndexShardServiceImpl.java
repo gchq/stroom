@@ -28,6 +28,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
@@ -83,15 +84,13 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
             final IndexStructure indexStructure = indexStructureCache.get(
                     new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
             final IndexDoc index = indexStructure.getIndex();
-
-
             final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
 
             return indexShardDao.create(
                     indexShardKey,
                     indexVolume,
                     ownerNodeName,
-                    LuceneVersionUtil.getCurrentVersion());
+                    LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
         });
     }
 

@@ -1,10 +1,8 @@
 package stroom.search.extraction;
 
-import stroom.pipeline.filter.FieldValue;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import java.util.List;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 @PipelineScoped

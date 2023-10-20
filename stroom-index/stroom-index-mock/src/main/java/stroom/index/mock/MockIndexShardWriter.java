@@ -16,15 +16,12 @@
 
 package stroom.index.mock;
 
+import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStructure;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexableField;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MockIndexShardWriter implements IndexShardWriter {
 
     //    private final IndexShardManager indexShardManager;
-    private final List<Document> documents = new ArrayList<>();
+    private final List<IndexDocument> documents = new ArrayList<>();
 
     private final IndexShardKey indexShardKey;
     private final long indexShardId;
@@ -55,18 +52,14 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public void addDocument(final Document document) {
+    public void addDocument(final IndexDocument document) throws IndexException {
         try {
             if (documentCount.getAndIncrement() >= maxDocumentCount) {
                 throw new IndexException("Shard is full");
             }
 
             // Create a new document and copy the fields.
-            final Document doc = new Document();
-            for (final IndexableField field : document.getFields()) {
-                doc.add(field);
-            }
-            documents.add(doc);
+            documents.add(document);
 
         } catch (final RuntimeException e) {
             documentCount.decrementAndGet();
@@ -74,14 +67,14 @@ public class MockIndexShardWriter implements IndexShardWriter {
         }
     }
 
-    public List<Document> getDocuments() {
+    public List<IndexDocument> getDocuments() {
         return documents;
     }
 
-    @Override
-    public IndexWriter getWriter() {
-        return null;
-    }
+//    @Override
+//    public IndexWriter getWriter() {
+//        return null;
+//    }
 
     @Override
     public int getDocumentCount() {

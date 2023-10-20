@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.api.NotificationState;
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
@@ -39,10 +40,11 @@ import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionState;
 import stroom.search.extraction.FieldListConsumerHolder;
-import stroom.search.impl.SearchExpressionQueryBuilderFactory;
+import stroom.search.extraction.MemoryIndex;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -97,7 +99,7 @@ public class TableBuilderAnalyticExecutor {
     private final Provider<ExtractionState> extractionStateProvider;
     private final AnalyticDataStores analyticDataStores;
     private final TaskContextFactory taskContextFactory;
-    private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
+    private final Provider<MemoryIndex> memoryIndexProvider;
     private final AnalyticTrackerDao analyticTrackerDao;
     private final ExpressionMatcher metaExpressionMatcher;
     private final NodeInfo nodeInfo;
@@ -120,7 +122,7 @@ public class TableBuilderAnalyticExecutor {
                                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                                         final Provider<ExtractionState> extractionStateProvider,
                                         final TaskContextFactory taskContextFactory,
-                                        final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                                        final Provider<MemoryIndex> memoryIndexProvider,
                                         final AnalyticDataStores analyticDataStores,
                                         final AnalyticTrackerDao analyticTrackerDao,
                                         final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
@@ -138,7 +140,7 @@ public class TableBuilderAnalyticExecutor {
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.extractionStateProvider = extractionStateProvider;
         this.taskContextFactory = taskContextFactory;
-        this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
+        this.memoryIndexProvider = memoryIndexProvider;
         this.analyticDataStores = analyticDataStores;
         this.analyticTrackerDao = analyticTrackerDao;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
@@ -453,10 +455,9 @@ public class TableBuilderAnalyticExecutor {
         final SearchRequest searchRequest = dataStore.searchRequest();
         final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
 
-        // Cache the query for use across multiple streams.
-        final SearchExpressionQueryCache searchExpressionQueryCache =
-                new SearchExpressionQueryCache(searchExpressionQueryBuilderFactory,
-                        searchRequest);
+        // Cache the memory index for use across multiple streams.
+        final MemoryIndex memoryIndex = memoryIndexProvider.get();
+
         // Get the field index.
         final FieldIndex fieldIndex = lmdbDataStore.getFieldIndex();
         return new TableBuilderAnalyticFieldListConsumer(
@@ -464,7 +465,7 @@ public class TableBuilderAnalyticExecutor {
                 fieldIndex,
                 NotificationState.NO_OP,
                 lmdbDataStore,
-                searchExpressionQueryCache,
+                memoryIndex,
                 minEventId);
     }
 

@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.api.NotificationState;
 import stroom.analytics.shared.AnalyticRuleDoc;
 
 import java.util.Map;

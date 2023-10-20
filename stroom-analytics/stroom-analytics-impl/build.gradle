@@ -16,7 +16,6 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-api')
@@ -41,7 +40,6 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
     implementation libs.jaxb_api
-    implementation libs.lucene_memory
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.simple_java_mail

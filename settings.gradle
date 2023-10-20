@@ -115,11 +115,6 @@ include 'stroom-documentation:stroom-documentation-impl'
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'
 
-//// Elastic
-//include 'stroom-elastic:stroom-elastic-api'
-//include 'stroom-elastic:stroom-elastic-impl'
-//include 'stroom-elastic:stroom-elastic-impl-http'
-
 // Event logging
 include 'stroom-event-logging:stroom-event-logging-api'
 include 'stroom-event-logging:stroom-event-logging-impl'
@@ -149,8 +144,9 @@ include 'stroom-importexport:stroom-importexport-api'
 include 'stroom-importexport:stroom-importexport-impl'
 
 // Index
-include 'stroom-index:stroom-index-app'
+include 'stroom-index:lucene553-shaded'
 include 'stroom-index:stroom-index-impl'
+include 'stroom-index:stroom-index-lucene553'
 include 'stroom-index:stroom-index-mock'
 include 'stroom-index:stroom-index-impl-db'
 include 'stroom-index:stroom-index-impl-db-jooq'

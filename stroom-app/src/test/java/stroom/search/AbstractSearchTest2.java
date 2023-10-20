@@ -166,7 +166,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             assertThat(rows).hasSize(componentIds.size());
 
             int count = rows.values().iterator().next().size();
-            assertThat(count).as("Correct number of results found").isEqualTo(expectResultCount);
+            assertThat(count).as("Incorrect number of results found").isEqualTo(expectResultCount);
         }
         resultMapConsumer.accept(rows);
     }

@@ -50,8 +50,6 @@ import javax.xml.bind.annotation.XmlType;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
 
-    private static final long serialVersionUID = 3100770758821157580L;
-
     @XmlElement(name = "fieldType")
     @JsonProperty
     private final IndexFieldType fieldType;

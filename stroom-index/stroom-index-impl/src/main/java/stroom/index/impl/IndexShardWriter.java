@@ -19,29 +19,25 @@ package stroom.index.impl;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShardKey;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.store.AlreadyClosedException;
-
-import java.io.IOException;
-
 public interface IndexShardWriter {
 
-    IndexShardKey getIndexShardKey();
+    void addDocument(IndexDocument document) throws IndexException;
 
-    long getIndexShardId();
-
-    void addDocument(Document document) throws IOException, IndexException, AlreadyClosedException;
+    void updateIndexStructure(IndexStructure indexStructure);
 
     void flush();
 
     void close();
 
-    IndexWriter getWriter();
+//     IndexWriter getWriter() {
+//        return indexWriter;
+//    }
 
     int getDocumentCount();
 
-    void updateIndexStructure(IndexStructure indexStructure);
+    IndexShardKey getIndexShardKey();
+
+    long getIndexShardId();
 
     long getCreationTime();
 

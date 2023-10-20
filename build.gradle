@@ -123,7 +123,6 @@ ext.versions = [
         jooq              : '3.16.4',
         junit_jupiter     : '5.8.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
-        lucene            : '5.5.3',
         swagger           : '2.1.12',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
@@ -254,11 +253,6 @@ ext.libs = [
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
-        lucene_analyzers_common             : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
-        lucene_backward_codecs              : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
-        lucene_core                         : "org.apache.lucene:lucene-core:$versions.lucene",
-        lucene_memory                       : "org.apache.lucene:lucene-memory:$versions.lucene",
-        lucene_queryparser                  : "org.apache.lucene:lucene-queryparser:$versions.lucene",
         mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                        : "org.mockito:mockito-core", // version controlled by dropwizard-dependencies
         mockito_junit_jupiter               : "org.mockito:mockito-junit-jupiter", // version controlled by dropwizard-dependencies
@@ -399,12 +393,6 @@ subprojects {
                     substitute module('org.glassfish.jersey.core:jersey-common') using module("org.glassfish.jersey.core:jersey-common:$versions.jersey")
                     substitute module('org.glassfish.jersey.core:jersey-server') using module("org.glassfish.jersey.core:jersey-server:$versions.jersey")
                     substitute module('org.glassfish.jersey.core:jersey-client') using module("org.glassfish.jersey.core:jersey-client:$versions.jersey")
-
-//                    substitute module('org.apache.lucene:lucene-analyzers-common') with module("org.apache.lucene:lucene-analyzers-common:$versions.lucene")
-//                    substitute module('org.apache.lucene:lucene-backward-codecs') with module("org.apache.lucene:lucene-backward-codecs:$versions.lucene")
-//                    substitute module('org.apache.lucene:lucene-core') with module("org.apache.lucene:lucene-core:$versions.lucene")
-//                    substitute module('org.apache.lucene:lucene-queryparser') with module("org.apache.lucene:lucene-queryparser:$versions.lucene")
-                    // substitute module('javax.validation:validation-api') with module("javax.validation:validation-api:1.1.0.Final")
                 }
 
                 // Stop stroom libs from dragging in a different version of dropwizard

@@ -32,7 +32,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
-import org.apache.lucene.search.Query;
+import org.apache.lucene553.search.Query;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import java.io.IOException;

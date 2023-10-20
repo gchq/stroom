@@ -136,6 +136,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-impl')
+    implementation project(':stroom-index:stroom-index-lucene553')
     implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-index:stroom-index-impl-db-jooq')
     implementation project(':stroom-job:stroom-job-api')
@@ -270,7 +271,6 @@ dependencies {
     testImplementation project(':stroom-explorer:stroom-explorer-impl-db')
     testImplementation project(':stroom-headless')
     testImplementation project(':stroom-importexport:stroom-importexport-api')
-    testImplementation project(':stroom-index:stroom-index-impl')
     testImplementation project(':stroom-index:stroom-index-mock')
     testImplementation project(':stroom-meta:stroom-meta-api')
     testImplementation project(':stroom-meta:stroom-meta-mock')
@@ -305,7 +305,6 @@ dependencies {
     testImplementation libs.junit_jupiter_api
     testImplementation libs.junit_platform_launcher
     testImplementation libs.lmdbjava
-    testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
     testImplementation libs.swagger_annotations

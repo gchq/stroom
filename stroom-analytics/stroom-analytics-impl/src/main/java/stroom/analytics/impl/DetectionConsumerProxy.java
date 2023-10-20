@@ -13,6 +13,7 @@ import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.StoredValues;
+import stroom.search.extraction.ProcessLifecycleAware;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
