@@ -61,7 +61,7 @@ class TestXMLWriter extends StroomUnitTest {
 
     @Test
     void test() {
-        final Path testInputDir = StroomPipelineTestFileUtil.getTestResourcesDir();
+        final Path testInputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve("TestXMLWriter");
         final Path testOutputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve("TestXMLWriter");
 
         processDir(testInputDir, testOutputDir);
