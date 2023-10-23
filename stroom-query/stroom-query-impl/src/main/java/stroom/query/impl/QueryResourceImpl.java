@@ -49,6 +49,7 @@ import stroom.view.api.ViewStore;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -211,21 +212,19 @@ class QueryResourceImpl implements QueryResource {
                         .flatMap(sig -> sig.asAliases().stream())
                         .collect(Collectors.toList()));
 
-        final DataSource dataSource = request.getDataSourceRef() != null
-                ? queryServiceProvider.get().getDataSource(request.getDataSourceRef())
-                : queryServiceProvider.get().getDataSource(request.getQuery());
+        final Optional<DataSource> optional = Optional.ofNullable(request.getDataSourceRef())
+                .map(docRef -> queryServiceProvider.get().getDataSource(docRef))
+                .orElse(queryServiceProvider.get().getDataSource(request.getQuery()));
 
-        final List<AbstractField> dataSourceFields = dataSource != null
-                ? getData(request, HelpItemType.FIELD, FIELD_FILTER_FIELD_MAPPERS, dataSource::getFields)
-                : Collections.emptyList();
+        final List<AbstractField> dataSourceFields = optional
+                .map(ds -> getData(request, HelpItemType.FIELD, FIELD_FILTER_FIELD_MAPPERS, ds::getFields))
+                .orElse(Collections.emptyList());
 
-        final QueryHelpItemsResult queryHelpItemsResult = new QueryHelpItemsResult(
+        return new QueryHelpItemsResult(
                 dataSources,
                 structureElements,
                 functionSignatures,
                 dataSourceFields);
-
-        return queryHelpItemsResult;
     }
 
     private <T> List<T> getData(final QueryHelpItemsRequest request,

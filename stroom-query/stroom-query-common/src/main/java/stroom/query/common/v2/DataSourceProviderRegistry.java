@@ -1,10 +1,8 @@
 package stroom.query.common.v2;
 
+import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -17,8 +15,6 @@ import javax.inject.Singleton;
 @SuppressWarnings("unused")
 public class DataSourceProviderRegistry {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProviderRegistry.class);
-
     private final Map<String, DataSourceProvider> dataSourceProviders = new ConcurrentHashMap<>();
 
     @Inject
@@ -28,7 +24,16 @@ public class DataSourceProviderRegistry {
         }
     }
 
-    public Optional<DataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
-        return Optional.ofNullable(dataSourceProviders.get(dataSourceRef.getType()));
+    public Optional<DataSourceProvider> getDataSourceProvider(final String type) {
+        return Optional.ofNullable(dataSourceProviders.get(type));
+    }
+
+    public Optional<DataSource> getDataSource(final DocRef docRef) {
+        return getDataSourceProvider(docRef.getType())
+                .map(dsp -> dsp.getDataSource(docRef));
+    }
+
+    public Set<String> getTypes() {
+        return dataSourceProviders.keySet();
     }
 }

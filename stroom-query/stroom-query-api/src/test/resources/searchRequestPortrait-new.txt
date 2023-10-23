@@ -506,7 +506,6 @@ class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query stroo
 class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query$Builder stroom.query.api.v2.Query$Builder.addParam(java.lang.String,java.lang.String)
 class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query$Builder stroom.query.api.v2.Query$Builder.addParams(stroom.query.api.v2.Param...)
 class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query$Builder stroom.query.api.v2.Query$Builder.dataSource(stroom.docref.DocRef)
-class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query$Builder stroom.query.api.v2.Query$Builder.dataSourceName(java.lang.String)
 class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query$Builder stroom.query.api.v2.Query$Builder.expression(stroom.query.api.v2.ExpressionOperator)
 class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query$Builder stroom.query.api.v2.Query$Builder.params(java.util.List<stroom.query.api.v2.Param>)
 class stroom.query.api.v2.Query$Builder - public stroom.query.api.v2.Query$Builder stroom.query.api.v2.Query$Builder.timeRange(stroom.query.api.v2.TimeRange)

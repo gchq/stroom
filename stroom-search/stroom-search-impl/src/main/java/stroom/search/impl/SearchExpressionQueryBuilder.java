@@ -441,7 +441,7 @@ public class SearchExpressionQueryBuilder {
         } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
                 case EQUALS -> {
-                    final Long date1 = getDate(fieldName, value);
+                    final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
                     return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
                 }
                 case CONTAINS -> {
@@ -450,21 +450,33 @@ public class SearchExpressionQueryBuilder {
                 case GREATER_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName,
                             8,
-                            getDate(fieldName, value),
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
                             Long.MAX_VALUE,
                             false,
                             true);
                 }
                 case GREATER_THAN_OR_EQUAL_TO -> {
-                    return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
+                    return NumericRangeQuery.newLongRange(fieldName,
+                            8,
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
+                            Long.MAX_VALUE,
+                            true,
                             true);
                 }
                 case LESS_THAN -> {
-                    return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(fieldName,
+                            8,
+                            Long.MIN_VALUE,
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
+                            true,
                             false);
                 }
                 case LESS_THAN_OR_EQUAL_TO -> {
-                    return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(fieldName,
+                            8,
+                            Long.MIN_VALUE,
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
+                            true,
                             true);
                 }
                 case BETWEEN -> {
@@ -795,23 +807,11 @@ public class SearchExpressionQueryBuilder {
         return false;
     }
 
-    private long getDate(final String fieldName, final String value) {
-        try {
-            return DateExpressionParser.parse(value, dateTimeSettings)
-                    .map(dt -> dt.toInstant().toEpochMilli())
-                    .orElseThrow(() -> new SearchException("Expected a standard date value for field \"" + fieldName
-                            + "\" but was given string \"" + value + "\""));
-        } catch (final RuntimeException e) {
-            throw new SearchException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
-        }
-    }
-
     private long[] getDates(final String fieldName, final String value) {
         final String[] values = value.split(DELIMITER);
         final long[] dates = new long[values.length];
         for (int i = 0; i < values.length; i++) {
-            dates[i] = getDate(fieldName, values[i].trim());
+            dates[i] = DateExpressionParser.getMs(fieldName, values[i].trim(), dateTimeSettings);
         }
 
         return dates;

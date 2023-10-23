@@ -33,7 +33,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.query.language.DataSourceResolver;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
@@ -43,6 +43,7 @@ import stroom.util.shared.Message;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import javax.inject.Inject;
@@ -56,18 +57,18 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
-    private final Provider<DataSourceResolver> dataSourceResolverProvider;
+    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestBuilder searchRequestBuilder;
 
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
                           final AnalyticRuleSerialiser serialiser,
                           final SecurityContext securityContext,
-                          final Provider<DataSourceResolver> dataSourceResolverProvider,
+                          final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestBuilder searchRequestBuilder) {
         this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
         this.securityContext = securityContext;
-        this.dataSourceResolverProvider = dataSourceResolverProvider;
+        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestBuilder = searchRequestBuilder;
     }
 
@@ -177,21 +178,28 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         return (doc, dependencyRemapper) -> {
             try {
                 if (doc.getQuery() != null) {
-                    searchRequestBuilder.extractDataSourceNameOnly(doc.getQuery(), dataSourceName -> {
+                    searchRequestBuilder.extractDataSourceOnly(doc.getQuery(), docRef -> {
                         try {
-                            if (dataSourceName != null) {
-                                final DataSource dataSource = dataSourceResolverProvider
-                                        .get()
-                                        .resolveDataSource(dataSourceName);
-                                if (dataSource != null && dataSource.getDocRef() != null) {
+                            if (docRef != null) {
+                                final Optional<DataSource> optional = dataSourceProviderRegistryProvider
+                                        .get().getDataSource(docRef);
+                                optional.ifPresent(dataSource -> {
                                     final DocRef remapped = dependencyRemapper.remap(dataSource.getDocRef());
-                                    if (remapped != null &&
-                                            remapped.getName() != null &&
-                                            remapped.getName().length() > 0 &&
-                                            !Objects.equals(dataSourceName, remapped.getName())) {
-                                        doc.setQuery(doc.getQuery().replaceFirst(dataSourceName, remapped.getName()));
+                                    if (remapped != null) {
+                                        String query = doc.getQuery();
+                                        if (remapped.getName() != null &&
+                                                !remapped.getName().isBlank() &&
+                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            query = query.replaceFirst(docRef.getName(), remapped.getName());
+                                        }
+                                        if (remapped.getUuid() != null &&
+                                                !remapped.getUuid().isBlank() &&
+                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
+                                        }
+                                        doc.setQuery(query);
                                     }
-                                }
+                                });
                             }
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e::getMessage, e);

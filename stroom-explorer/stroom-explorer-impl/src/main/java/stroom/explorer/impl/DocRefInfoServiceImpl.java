@@ -7,8 +7,6 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,8 +17,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 class DocRefInfoServiceImpl implements DocRefInfoService {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoServiceImpl.class);
 
     private final DocRefInfoCache docRefInfoCache;
     private final SecurityContext securityContext;
