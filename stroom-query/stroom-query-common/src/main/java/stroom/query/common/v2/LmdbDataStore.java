@@ -245,8 +245,14 @@ public class LmdbDataStore implements DataStore {
         }
 
         if (fieldIdToValueMap != null) {
-            // If the value filter doesn't match then get out of here now.
-            if (!fieldExpressionMatcher.match(fieldIdToValueMap, valueFilter)) {
+            try {
+                // If the value filter doesn't match then get out of here now.
+                if (!fieldExpressionMatcher.match(fieldIdToValueMap, valueFilter)) {
+                    return;
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                errorConsumer.add(e);
                 return;
             }
         }
