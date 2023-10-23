@@ -26,7 +26,7 @@ public class Lucene553Module extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(MemoryIndex.class).to(MemoryIndexImpl.class);
+//        bind(MemoryIndex.class).to(MemoryIndexImpl.class);
 
         // Bind this provider.
         GuiceUtil.buildMultiBinder(binder(), LuceneProvider.class).addBinding(Lucene460Provider.class);

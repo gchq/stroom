@@ -70,6 +70,6 @@ class Lucene980Provider implements LuceneProvider {
 
     @Override
     public LuceneVersion getLuceneVersion() {
-        return LuceneVersion.LUCENE_5_5_3;
+        return LuceneVersion.LUCENE_9_8_0;
     }
 }

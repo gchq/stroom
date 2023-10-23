@@ -16,19 +16,31 @@
 
 package stroom.index.shared;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public final class LuceneVersionUtil {
 
-    public static final LuceneVersion CURRENT_LUCENE_VERSION = LuceneVersion.LUCENE_5_5_3;
+    public static final LuceneVersion CURRENT_LUCENE_VERSION = LuceneVersion.LUCENE_9_8_0;
+
+    private static final Map<String, LuceneVersion> VERSION_MAP = new HashMap<>();
+
+    static {
+        for (final LuceneVersion luceneVersion : LuceneVersion.values()) {
+            VERSION_MAP.put(luceneVersion.getDisplayValue(), luceneVersion);
+        }
+    }
 
     private LuceneVersionUtil() {
         // Private constructor for utility class.
     }
 
     public static LuceneVersion getLuceneVersion(final String indexVersion) {
-        if ("5.5.3".equals(indexVersion)) {
-            return LuceneVersion.LUCENE_5_5_3;
+        final LuceneVersion luceneVersion = VERSION_MAP.get(indexVersion);
+        if (luceneVersion == null) {
+            throw new RuntimeException("Unsupported Lucene version: " + indexVersion);
         }
-        throw new RuntimeException("Unsupported Lucene version: " + indexVersion);
+        return luceneVersion;
     }
 
     public static String getCurrentVersion() {
