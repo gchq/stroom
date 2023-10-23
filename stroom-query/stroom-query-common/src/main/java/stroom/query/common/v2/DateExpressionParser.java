@@ -19,6 +19,8 @@ package stroom.query.common.v2;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -32,6 +34,7 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -39,24 +42,13 @@ import java.util.regex.Pattern;
 
 public class DateExpressionParser {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DateExpressionParser.class);
+
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d+[smhdwMy])+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
     private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 
     private DateExpressionParser() {
-    }
-
-    public static Optional<ZonedDateTime> parse(final String expression) {
-        return parse(
-                expression,
-                DateTimeSettings.builder().build());
-    }
-
-
-    public static Optional<ZonedDateTime> parse(final String expression, final long nowEpochMilli) {
-        return parse(
-                expression,
-                DateTimeSettings.builder().referenceTime(nowEpochMilli).build());
     }
 
     public static TimeFilter getTimeFilter(final TimeRange timeRange,
@@ -72,19 +64,52 @@ public class DateExpressionParser {
         if (expression == null || expression.isBlank()) {
             return defaultValue;
         }
-        return DateExpressionParser.parse(
-                        expression,
-                        dateTimeSettings)
+        return parse(expression, dateTimeSettings)
                 .map(time -> time.toInstant().toEpochMilli())
                 .orElse(defaultValue);
     }
 
+    public static long getMs(final String fieldName, final String value) {
+        return getMs(fieldName, value, DateTimeSettings.builder().build());
+    }
+
+    public static long getMs(final String fieldName,
+                             final String value,
+                             final DateTimeSettings dateTimeSettings) {
+        try {
+            return parse(value, dateTimeSettings)
+                    .map(dt -> dt.toInstant().toEpochMilli())
+                    .orElseThrow();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException("Expected a standard date value for field \"" +
+                    fieldName +
+                    "\" but was given string \"" +
+                    value +
+                    "\"");
+        }
+    }
+
+    public static Optional<ZonedDateTime> parse(final String expression) {
+        return parse(
+                expression,
+                DateTimeSettings.builder().build());
+    }
+
     public static Optional<ZonedDateTime> parse(final String expression,
-                                                final DateTimeSettings dateTimeSettings) {
+                                                final long referenceTime) {
+        return parse(expression, DateTimeSettings.builder().referenceTime(referenceTime).build());
+    }
+
+    public static Optional<ZonedDateTime> parse(final String expression,
+                                                final DateTimeSettings dts) {
+        final DateTimeSettings dateTimeSettings = Objects
+                .requireNonNullElseGet(dts, () -> DateTimeSettings.builder().build());
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
-
-        parseConstants(chars, parts, dateTimeSettings.getReferenceTime());
+        final long referenceTime = Objects
+                .requireNonNullElseGet(dateTimeSettings.getReferenceTime(), System::currentTimeMillis);
+        parseConstants(chars, parts, referenceTime);
         parseDurations(chars, parts);
 
         // Find index of any remaining date.
@@ -105,9 +130,7 @@ public class DateExpressionParser {
             } catch (final DateTimeParseException e) {
 
                 try {
-                    if (dateTimeSettings != null &&
-                            dateTimeSettings.getTimeZone() != null &&
-                            dateTimeSettings.getTimeZone().getUse() != null) {
+                    if (dateTimeSettings.getTimeZone() != null && dateTimeSettings.getTimeZone().getUse() != null) {
                         switch (dateTimeSettings.getTimeZone().getUse()) {
                             case LOCAL -> {
                                 final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
@@ -156,12 +179,11 @@ public class DateExpressionParser {
 
                     time = (ZonedDateTime) part.getObject();
 
-                } else if (part.getObject() instanceof TimeFunction) {
+                } else if (part.getObject() instanceof final TimeFunction duration) {
                     if (time == null) {
                         throw new DateTimeException("You must specify a time or time constant before adding or " +
                                 "subtracting duration '" + part.toString().trim() + "'.");
                     }
-                    final TimeFunction duration = (TimeFunction) part.getObject();
                     time = duration.apply(time);
                 }
             }
@@ -267,7 +289,7 @@ public class DateExpressionParser {
         }
     }
 
-    public static TimeFunction parseDuration(final String string, final char sign) {
+    private static TimeFunction parseDuration(final String string, final char sign) {
         // Strip out spaces.
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 

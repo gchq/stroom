@@ -107,3 +107,11 @@ group by ${Stream Id}
 group by ${Event Time}
 having ${Stream Id} > -2
 select ${Event Time}
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId

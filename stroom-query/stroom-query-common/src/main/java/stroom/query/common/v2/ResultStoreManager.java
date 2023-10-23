@@ -33,7 +33,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
@@ -315,20 +314,15 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     private SearchRequest addReferenceTime(final SearchRequest searchRequest) {
-        if (GwtNullSafe.get(searchRequest, SearchRequest::getDateTimeSettings) != null) {
-            DateTimeSettings dateTimeSettings = searchRequest.getDateTimeSettings();
-            if (searchRequest.getDateTimeSettings().getReferenceTime() == null) {
-                LOGGER.debug("Adding referenceTime");
-                dateTimeSettings = dateTimeSettings.copy()
-                        .referenceTime(System.currentTimeMillis())
-                        .build();
-
-                return searchRequest.copy()
-                        .dateTimeSettings(dateTimeSettings)
-                        .build();
-            } else {
-                return searchRequest;
-            }
+        DateTimeSettings dateTimeSettings = searchRequest.getDateTimeSettings();
+        if (dateTimeSettings == null) {
+            LOGGER.debug("Adding dateTimeSettings");
+            dateTimeSettings = DateTimeSettings.builder().referenceTime(System.currentTimeMillis()).build();
+            return searchRequest.copy().dateTimeSettings(dateTimeSettings).build();
+        } else if (dateTimeSettings.getReferenceTime() == null) {
+            LOGGER.debug("Adding referenceTime");
+            dateTimeSettings = dateTimeSettings.copy().referenceTime(System.currentTimeMillis()).build();
+            return searchRequest.copy().dateTimeSettings(dateTimeSettings).build();
         } else {
             return searchRequest;
         }

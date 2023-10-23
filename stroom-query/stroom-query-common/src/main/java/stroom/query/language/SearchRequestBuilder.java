@@ -1,5 +1,6 @@
 package stroom.query.language;
 
+import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -55,6 +56,8 @@ public class SearchRequestBuilder {
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
 
+    private final DocResolver docResolver;
+
     private ExpressionContext expressionContext;
     private final FieldIndex fieldIndex;
     private final Map<String, Expression> expressionMap;
@@ -62,13 +65,15 @@ public class SearchRequestBuilder {
     private final List<AbstractToken> havingTokens = new ArrayList<>();
 
     @Inject
-    public SearchRequestBuilder(final VisualisationTokenConsumer visualisationTokenConsumer) {
+    public SearchRequestBuilder(final VisualisationTokenConsumer visualisationTokenConsumer,
+                                final DocResolver docResolver) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
+        this.docResolver = docResolver;
         this.fieldIndex = new FieldIndex();
         this.expressionMap = new HashMap<>();
     }
 
-    public void extractDataSourceNameOnly(final String string, final Consumer<String> consumer) {
+    public void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
         if (tokens.size() == 0) {
@@ -82,7 +87,7 @@ public class SearchRequestBuilder {
         final List<AbstractToken> childTokens = tokenGroup.getChildren();
 
         // Add data source.
-        addDataSourceName(childTokens, consumer, true);
+        addDataSource(childTokens, consumer, true);
     }
 
     public SearchRequest create(final String string,
@@ -141,11 +146,6 @@ public class SearchRequestBuilder {
                 in.getTimeout());
     }
 
-    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
-                                                  final Consumer<String> consumer) {
-        return addDataSourceName(tokens, consumer, false);
-    }
-
     /**
      * @param isLenient Ignores any additional child tokens found. This is to support getting just
      *                  the data source from a partially written query, which is likely to not be
@@ -153,9 +153,9 @@ public class SearchRequestBuilder {
      *                  <pre>{@code from View sel}</pre> and at this point do code completion on 'sel'
      *                  so if this method is called it will treat 'sel as an extra child.
      */
-    private List<AbstractToken> addDataSourceName(final List<AbstractToken> tokens,
-                                                  final Consumer<String> consumer,
-                                                  final boolean isLenient) {
+    private List<AbstractToken> addDataSource(final List<AbstractToken> tokens,
+                                              final Consumer<DocRef> consumer,
+                                              final boolean isLenient) {
         AbstractToken token = tokens.get(0);
 
         // The first token must be `FROM`.
@@ -179,7 +179,7 @@ public class SearchRequestBuilder {
             throw new TokenException(dataSourceToken, "Expected a token of type string");
         }
         final String dataSourceName = dataSourceToken.getUnescapedText();
-        consumer.accept(dataSourceName);
+        consumer.accept(docResolver.resolveDataSourceRef(dataSourceName));
 
         return tokens.subList(1, tokens.size());
     }
@@ -250,63 +250,161 @@ public class SearchRequestBuilder {
             throw new TokenException(conditionToken, "Expected condition token");
         }
 
-        final String field = fieldToken.getUnescapedText();
-        final StringBuilder value = new StringBuilder();
-        int end = addValue(tokens, value, 2);
+        if (TokenType.IN.equals(conditionToken.getTokenType())) {
+            addInTerm(tokens, parentBuilder);
 
-        if (TokenType.BETWEEN.equals(conditionToken.getTokenType())) {
-            if (tokens.size() == end) {
-                throw new TokenException(tokens.get(tokens.size() - 1), "Expected between and");
-            }
-
-            final AbstractToken betweenAnd = tokens.get(end);
-            if (!TokenType.BETWEEN_AND.equals(betweenAnd.getTokenType())) {
-                throw new TokenException(betweenAnd, "Expected between and");
-            }
-            value.append(", ");
-            end = addValue(tokens, value, end + 1);
-        }
-
-        // Check we consumed all tokens to get the value(s).
-        if (end < tokens.size()) {
-            throw new TokenException(tokens.get(end), "Unexpected token");
-        }
-
-        // If we have a where clause then we expect the next token to contain an expression.
-        Condition cond;
-        boolean not = false;
-        switch (conditionToken.getTokenType()) {
-            case EQUALS -> cond = Condition.EQUALS;
-            case NOT_EQUALS -> {
-                cond = Condition.EQUALS;
-                not = true;
-            }
-            case GREATER_THAN -> cond = Condition.GREATER_THAN;
-            case GREATER_THAN_OR_EQUAL_TO -> cond = Condition.GREATER_THAN_OR_EQUAL_TO;
-            case LESS_THAN -> cond = Condition.LESS_THAN;
-            case LESS_THAN_OR_EQUAL_TO -> cond = Condition.LESS_THAN_OR_EQUAL_TO;
-            case IS_NULL -> cond = Condition.IS_NULL;
-            case IS_NOT_NULL -> cond = Condition.IS_NOT_NULL;
-            case BETWEEN -> cond = Condition.BETWEEN;
-            default -> throw new TokenException(conditionToken, "Unknown condition: " + conditionToken);
-        }
-
-        final ExpressionTerm expressionTerm = ExpressionTerm
-                .builder()
-                .field(field)
-                .condition(cond)
-                .value(value.toString().trim())
-                .build();
-
-        if (not) {
-            parentBuilder
-                    .addOperator(ExpressionOperator
-                            .builder()
-                            .op(Op.NOT)
-                            .addTerm(expressionTerm)
-                            .build());
         } else {
+            final String field = fieldToken.getUnescapedText();
+            final StringBuilder value = new StringBuilder();
+            int end = addValue(tokens, value, 2);
+
+            if (TokenType.BETWEEN.equals(conditionToken.getTokenType())) {
+                if (tokens.size() == end) {
+                    throw new TokenException(tokens.get(tokens.size() - 1), "Expected between and");
+                }
+
+                final AbstractToken betweenAnd = tokens.get(end);
+                if (!TokenType.BETWEEN_AND.equals(betweenAnd.getTokenType())) {
+                    throw new TokenException(betweenAnd, "Expected between and");
+                }
+                value.append(", ");
+                end = addValue(tokens, value, end + 1);
+            }
+
+            // Check we consumed all tokens to get the value(s).
+            if (end < tokens.size()) {
+                throw new TokenException(tokens.get(end), "Unexpected token");
+            }
+
+            // If we have a where clause then we expect the next token to contain an expression.
+            Condition cond;
+            boolean not = false;
+            switch (conditionToken.getTokenType()) {
+                case EQUALS -> cond = Condition.EQUALS;
+                case NOT_EQUALS -> {
+                    cond = Condition.EQUALS;
+                    not = true;
+                }
+                case GREATER_THAN -> cond = Condition.GREATER_THAN;
+                case GREATER_THAN_OR_EQUAL_TO -> cond = Condition.GREATER_THAN_OR_EQUAL_TO;
+                case LESS_THAN -> cond = Condition.LESS_THAN;
+                case LESS_THAN_OR_EQUAL_TO -> cond = Condition.LESS_THAN_OR_EQUAL_TO;
+                case IS_NULL -> cond = Condition.IS_NULL;
+                case IS_NOT_NULL -> cond = Condition.IS_NOT_NULL;
+                case BETWEEN -> cond = Condition.BETWEEN;
+                default -> throw new TokenException(conditionToken, "Unknown condition: " + conditionToken);
+            }
+
+            final ExpressionTerm expressionTerm = ExpressionTerm
+                    .builder()
+                    .field(field)
+                    .condition(cond)
+                    .value(value.toString().trim())
+                    .build();
+
+            if (not) {
+                parentBuilder
+                        .addOperator(ExpressionOperator
+                                .builder()
+                                .op(Op.NOT)
+                                .addTerm(expressionTerm)
+                                .build());
+            } else {
+                parentBuilder.addTerm(expressionTerm);
+            }
+        }
+    }
+
+    private void addInTerm(
+            final List<AbstractToken> tokens,
+            final ExpressionOperator.Builder parentBuilder) {
+        final AbstractToken fieldToken = tokens.get(0);
+        final AbstractToken conditionToken = tokens.get(1);
+        final AbstractToken valueToken = tokens.get(2);
+
+        if (TokenType.DICTIONARY.equals(valueToken.getTokenType())) {
+            if (tokens.size() < 4) {
+                throw new TokenException(valueToken, "Expected dictionary name");
+            }
+            if (tokens.size() > 4) {
+                throw new TokenException(tokens.get(4), "Unexpected token");
+            }
+            final AbstractToken dictionaryNameToken = tokens.get(3);
+            final Set<TokenType> stringTypes = Set.of(
+                    TokenType.SINGLE_QUOTED_STRING,
+                    TokenType.DOUBLE_QUOTED_STRING,
+                    TokenType.STRING);
+            if (!stringTypes.contains(dictionaryNameToken.getTokenType())) {
+                throw new TokenException(dictionaryNameToken, "Expected dictionary name not " +
+                        dictionaryNameToken.getTokenType() +
+                        " token");
+            }
+            final String field = fieldToken.getUnescapedText();
+            final String dictionaryName = dictionaryNameToken.getUnescapedText().trim();
+            final DocRef dictionaryRef;
+            try {
+                dictionaryRef = docResolver.resolveDocRef("Dictionary", dictionaryName);
+            } catch (final RuntimeException e) {
+                throw new TokenException(dictionaryNameToken, e.getMessage());
+            }
+
+            final ExpressionTerm expressionTerm = ExpressionTerm
+                    .builder()
+                    .field(field)
+                    .condition(Condition.IN_DICTIONARY)
+                    .docRef(dictionaryRef)
+                    .build();
             parentBuilder.addTerm(expressionTerm);
+
+        } else if (valueToken instanceof final TokenGroup tokenGroup) {
+            if (tokens.size() > 3) {
+                throw new TokenException(tokens.get(3), "Unexpected token");
+            }
+
+            final Set<TokenType> allowedTypes = Set.of(
+                    TokenType.SINGLE_QUOTED_STRING,
+                    TokenType.DOUBLE_QUOTED_STRING,
+                    TokenType.STRING,
+                    TokenType.NUMBER,
+                    TokenType.DATE_TIME);
+            final List<AbstractToken> children = tokenGroup.getChildren();
+            final StringBuilder sb = new StringBuilder();
+            AbstractToken lastToken = null;
+            for (final AbstractToken token : children) {
+                if (TokenType.COMMA.equals(token.getTokenType())) {
+                    if (lastToken == null) {
+                        throw new TokenException(token, "Unexpected leading comma");
+                    } else if (TokenType.COMMA.equals(lastToken.getTokenType())) {
+                        throw new TokenException(token, "Unexpected comma");
+                    }
+                } else if (allowedTypes.contains(token.getTokenType())) {
+                    if (lastToken != null) {
+                        if (!TokenType.COMMA.equals(lastToken.getTokenType())) {
+                            throw new TokenException(token, "Expected comma delimited");
+                        }
+                        sb.append(", ");
+                    }
+                    sb.append(token.getUnescapedText());
+                } else {
+                    throw new TokenException(token, "Unexpected token");
+                }
+                lastToken = token;
+            }
+            if (lastToken != null && TokenType.COMMA.equals(lastToken.getTokenType())) {
+                throw new TokenException(lastToken, "Unexpected trailing comma");
+            }
+
+            final String field = fieldToken.getUnescapedText();
+            final ExpressionTerm expressionTerm = ExpressionTerm
+                    .builder()
+                    .field(field)
+                    .condition(Condition.IN)
+                    .value(sb.toString())
+                    .build();
+            parentBuilder.addTerm(expressionTerm);
+
+        } else {
+            throw new TokenException(valueToken, "Expected parentheses after IN clause");
         }
     }
 
@@ -395,6 +493,7 @@ public class SearchRequestBuilder {
         final List<AbstractToken> termTokens = new ArrayList<>();
 
         int i = 0;
+        AbstractToken lastToken = null;
         for (; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
             final TokenType tokenType = token.getTokenType();
@@ -404,13 +503,16 @@ public class SearchRequestBuilder {
                             TokenType.OR.equals(tokenType) ||
                             TokenType.NOT.equals(tokenType);
 
-            if (!(token instanceof KeywordGroup) &&
+            if (lastToken != null && TokenType.IN.equals(lastToken.getTokenType())) {
+                // Treat token following IN as part of term.
+                termTokens.add(token);
+
+            } else if (!(token instanceof KeywordGroup) &&
                     !(token instanceof TokenGroup) &&
                     !logic) {
 
                 // Treat token as part of a term.
                 termTokens.add(token);
-
             } else {
                 // Add current term.
                 if (termTokens.size() > 0) {
@@ -441,6 +543,8 @@ public class SearchRequestBuilder {
                     }
                 }
             }
+
+            lastToken = token;
         }
 
         // Add remaining term.
@@ -519,9 +623,7 @@ public class SearchRequestBuilder {
                                 consumedTokens,
                                 Set.of(),
                                 Set.of());
-                        remaining =
-                                addDataSourceName(remaining,
-                                        queryBuilder::dataSourceName);
+                        remaining = addDataSource(remaining, queryBuilder::dataSource, false);
                     }
                     case WHERE -> {
                         checkTokenOrder(token,

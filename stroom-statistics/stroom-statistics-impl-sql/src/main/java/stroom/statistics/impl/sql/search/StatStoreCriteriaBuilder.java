@@ -17,7 +17,6 @@ import stroom.util.shared.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -223,15 +222,10 @@ public class StatStoreCriteriaBuilder {
     private static long parseDateTime(final String type,
                                       final String value,
                                       final DateTimeSettings dateTimeSettings) {
-        final ZonedDateTime dateTime;
         try {
-            dateTime = DateExpressionParser.parse(value, dateTimeSettings)
-                    .orElseThrow(() -> RestUtil.badRequest(
-                            "DateTime term has an invalid '" + type + "' value of '" + value + "'"));
+            return DateExpressionParser.getMs(type, value, dateTimeSettings);
         } catch (final Exception e) {
             throw RestUtil.badRequest("DateTime term has an invalid '" + type + "' value of '" + value + "'");
         }
-
-        return dateTime.toInstant().toEpochMilli();
     }
 }

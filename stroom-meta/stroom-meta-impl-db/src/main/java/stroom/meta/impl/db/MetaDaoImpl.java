@@ -8,7 +8,6 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -82,7 +81,6 @@ import org.jooq.impl.DSL;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -225,23 +223,21 @@ public class MetaDaoImpl implements MetaDao {
         // Get 0-many uuids for a pipe name (partial/wild-carded)
         expressionMapper.multiMap(
                 MetaFields.PIPELINE_NAME, metaProcessor.PIPELINE_UUID, this::getPipelineUuidsByName, true);
-        expressionMapper.map(MetaFields.STATUS,
-                meta.STATUS,
-                value -> MetaStatusId.getPrimitiveValue(value.toUpperCase()));
-        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value -> getDate(MetaFields.STATUS_TIME, value));
-        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value -> getDate(MetaFields.CREATE_TIME, value));
-        expressionMapper.map(MetaFields.EFFECTIVE_TIME,
-                meta.EFFECTIVE_TIME,
-                value -> getDate(MetaFields.EFFECTIVE_TIME, value));
+        expressionMapper.map(MetaFields.STATUS, meta.STATUS, value ->
+                MetaStatusId.getPrimitiveValue(value.toUpperCase()));
+        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.STATUS_TIME.getName(), value));
+        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.CREATE_TIME.getName(), value));
+        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.EFFECTIVE_TIME.getName(), value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
-        expressionMapper.map(MetaFields.PARENT_STATUS,
-                parent.STATUS,
-                value -> MetaStatusId.getPrimitiveValue(value.toUpperCase()));
-        expressionMapper.map(MetaFields.PARENT_CREATE_TIME,
-                parent.CREATE_TIME,
-                value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
+        expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value ->
+                MetaStatusId.getPrimitiveValue(value.toUpperCase()));
+        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getName(), value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
         valueMapper = new ValueMapper();
@@ -260,19 +256,6 @@ public class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
         valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
         valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
-    }
-
-    private long getDate(final DateField field, final String value) {
-        try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value);
-
-            return optional.orElseThrow(() ->
-                    new RuntimeException("Expected a standard date value for field \"" + field.getName()
-                            + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
-        } catch (final Exception e) {
-            throw new RuntimeException("Expected a standard date value for field \"" + field.getName()
-                    + "\" but was given string \"" + value + "\"", e);
-        }
     }
 
     private Val getPipelineName(final String uuid) {

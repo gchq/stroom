@@ -36,9 +36,9 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeRange;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.language.token.TokenException;
 import stroom.query.shared.DownloadQueryResultsRequest;
@@ -60,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -80,7 +81,7 @@ class QueryServiceImpl implements QueryService {
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final DataSourceResolver dataSourceResolver;
+    private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final SearchRequestBuilder searchRequestBuilder;
@@ -94,7 +95,7 @@ class QueryServiceImpl implements QueryService {
                      final HttpServletRequestHolder httpServletRequestHolder,
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
-                     final DataSourceResolver dataSourceResolver,
+                     final DataSourceProviderRegistry dataSourceProviderRegistry,
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
                      final SearchRequestBuilder searchRequestBuilder,
@@ -106,7 +107,7 @@ class QueryServiceImpl implements QueryService {
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.dataSourceResolver = dataSourceResolver;
+        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.searchRequestBuilder = searchRequestBuilder;
@@ -360,7 +361,6 @@ class QueryServiceImpl implements QueryService {
                 searchRequest.isIncremental());
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
         SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest, expressionContext);
-        mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -488,21 +488,19 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public DataSource getDataSource(final DocRef dataSourceRef) {
-        return dataSourceResolver.resolveDataSource(dataSourceRef);
+    public Optional<DataSource> getDataSource(final DocRef dataSourceRef) {
+        return dataSourceProviderRegistry.getDataSource(dataSourceRef);
     }
 
     @Override
-    public DataSource getDataSource(final String query) {
+    public Optional<DataSource> getDataSource(final String query) {
         final AtomicReference<DataSource> ref = new AtomicReference<>();
         try {
-            searchRequestBuilder.extractDataSourceNameOnly(query, dataSourceName -> {
-                final DataSource dataSource = dataSourceResolver.resolveDataSource(dataSourceName);
-                ref.set(dataSource);
-            });
+            searchRequestBuilder.extractDataSourceOnly(query, docRef ->
+                    ref.set(getDataSource(docRef).orElse(null)));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
-        return ref.get();
+        return Optional.ofNullable(ref.get());
     }
 }

@@ -32,7 +32,6 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
@@ -61,8 +60,6 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     private ResultStoreManager searchResponseCreatorManager;
     @Inject
     private SearchRequestBuilder searchRequestBuilder;
-    @Inject
-    private DataSourceResolver dataSourceResolver;
     @Inject
     private ExpressionContextFactory expressionContextFactory;
 
@@ -116,7 +113,6 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 false);
         final ExpressionContext expressionContext = expressionContextFactory.createContext(searchRequest);
         searchRequest = searchRequestBuilder.create(queryString, searchRequest, expressionContext);
-        searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
 
         // Add extraction pipeline.
         // TODO : @66 REPLACE WITH VIEW BASED EXTRACTION
