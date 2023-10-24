@@ -110,4 +110,6 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
     Option getViewAsHexOption();
 
     void setControlsVisible(boolean visible);
+
+    void setOptionsToDefaultAvailability();
 }
