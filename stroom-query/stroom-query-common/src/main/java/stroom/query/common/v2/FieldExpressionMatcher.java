@@ -51,6 +51,8 @@ public class FieldExpressionMatcher {
     public FieldExpressionMatcher(final List<Field> fields) {
         this.fieldNameToFieldMap = new HashMap<>();
         for (final Field field : NullSafe.list(fields)) {
+            // Allow match by id and name.
+            fieldNameToFieldMap.putIfAbsent(field.getId(), field);
             fieldNameToFieldMap.putIfAbsent(field.getName(), field);
         }
     }
