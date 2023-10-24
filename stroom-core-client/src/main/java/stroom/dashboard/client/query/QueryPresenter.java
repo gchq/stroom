@@ -140,8 +140,8 @@ public class QueryPresenter
     private long defaultProcessorRecordLimit;
     private boolean initialised;
     private Timer autoRefreshTimer;
-    private String lastUsedQueryInfo;
     private boolean queryOnOpen;
+    private QueryInfo queryInfo;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -151,7 +151,6 @@ public class QueryPresenter
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
-                          final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final IndexLoader indexLoader,
                           final RestFactory restFactory,
@@ -177,12 +176,7 @@ public class QueryPresenter
                 if (searchModel.isSearching()) {
                     QueryPresenter.this.stop();
                 } else {
-                    queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
-                        if (state.isOk()) {
-                            lastUsedQueryInfo = state.getQueryInfo();
-                            QueryPresenter.this.start();
-                        }
-                    });
+                    QueryPresenter.this.promptAndStart();
                 }
             }
         });
@@ -195,7 +189,7 @@ public class QueryPresenter
 
             @Override
             public void search() {
-                start();
+                promptAndStart();
             }
         });
 
@@ -618,13 +612,17 @@ public class QueryPresenter
     }
 
     @Override
-    public void setQueryInfo(final String queryInfo) {
-        lastUsedQueryInfo = queryInfo;
+    public void setQueryInfo(final QueryInfo queryInfo) {
+        this.queryInfo = queryInfo;
     }
 
     @Override
     public void setQueryOnOpen(final boolean queryOnOpen) {
         this.queryOnOpen = queryOnOpen;
+    }
+
+    private void promptAndStart() {
+        queryInfo.prompt(this::start);
     }
 
     @Override
@@ -676,7 +674,7 @@ public class QueryPresenter
                     dashboardContext.getTimeRange(),
                     incremental,
                     storeHistory,
-                    lastUsedQueryInfo,
+                    queryInfo.getMessage(),
                     null,
                     null);
         }
@@ -705,7 +703,7 @@ public class QueryPresenter
                     dashboardContext.getTimeRange(),
                     true,
                     false,
-                    lastUsedQueryInfo,
+                    queryInfo.getMessage(),
                     node,
                     queryKey);
         }
