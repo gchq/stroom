@@ -51,10 +51,11 @@ plugins {
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-def javaVersion = JavaVersion.VERSION_21;
-if (JavaVersion.current() != javaVersion) {
-    throw new GradleException(
-            "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
 }
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
@@ -341,9 +342,6 @@ subprojects {
 //        rules +=  'unused-dependency'
 ////        rules +=  'all-dependency'
 //    }
-
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
