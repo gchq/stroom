@@ -105,6 +105,10 @@ public class ProcessorModule extends AbstractModule {
                 .bindShutdownTaskTo(ProcessorTaskManagerShutdown.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
 
         @Inject
@@ -112,6 +116,10 @@ public class ProcessorModule extends AbstractModule {
             super(processorTaskQueueManager::writeQueueStatistics);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ProcessorTaskRetention extends RunnableWrapper {
 
@@ -121,6 +129,10 @@ public class ProcessorModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskManagerStartup extends RunnableWrapper {
 
         @Inject
@@ -128,6 +140,10 @@ public class ProcessorModule extends AbstractModule {
             super(processorTaskManager::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
 
@@ -137,6 +153,10 @@ public class ProcessorModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskManagerDisownDeadTasks extends RunnableWrapper {
 
         @Inject
@@ -145,6 +165,10 @@ public class ProcessorModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskManagerReleaseOldQueuedTasks extends RunnableWrapper {
 
         @Inject
@@ -152,6 +176,10 @@ public class ProcessorModule extends AbstractModule {
             super(processorTaskQueueManager::releaseOldQueuedTasks);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ProcessorTaskCreatorJob extends RunnableWrapper {
 
