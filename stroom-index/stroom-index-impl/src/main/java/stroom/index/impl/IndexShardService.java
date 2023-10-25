@@ -20,6 +20,7 @@ package stroom.index.impl;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneVersion;
 import stroom.util.shared.ResultPage;
 
 public interface IndexShardService {
@@ -38,4 +39,6 @@ public interface IndexShardService {
                 Long commitDurationMs,
                 Long commitMs,
                 Long fileSize);
+
+    void setIndexVersion(LuceneVersion indexVersion);
 }

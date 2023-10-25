@@ -28,6 +28,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
@@ -55,6 +56,8 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     private final IndexStructureCache indexStructureCache;
     private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
+
+    private LuceneVersion indexVersion = LuceneVersionUtil.CURRENT_LUCENE_VERSION;
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
@@ -90,7 +93,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                     indexShardKey,
                     indexVolume,
                     ownerNodeName,
-                    LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
+                    indexVersion.getDisplayValue());
         });
     }
 
@@ -158,5 +161,10 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                        final ValuesConsumer consumer) {
         securityContext.secure(PERMISSION, () ->
                 indexShardDao.search(criteria, fields, consumer));
+    }
+
+    @Override
+    public void setIndexVersion(final LuceneVersion indexVersion) {
+        this.indexVersion = indexVersion;
     }
 }

@@ -61,7 +61,7 @@ import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestInteractiveSearch extends AbstractSearchTest {
+abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
     private static boolean doneSetup;
     @Inject

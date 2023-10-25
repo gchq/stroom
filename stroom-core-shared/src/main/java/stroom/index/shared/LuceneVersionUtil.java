@@ -44,6 +44,6 @@ public final class LuceneVersionUtil {
     }
 
     public static String getCurrentVersion() {
-        return CURRENT_LUCENE_VERSION.toString();
+        return CURRENT_LUCENE_VERSION.getDisplayValue();
     }
 }
