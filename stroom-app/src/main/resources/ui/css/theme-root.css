@@ -86,7 +86,6 @@
     --pipeline-element-box__background-color--hover: #f7fbff;
     --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
     --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
-    --pipeline-element-box__background-color--hotspot: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: #666;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
@@ -95,6 +94,7 @@
     --pipeline-element-box__border-color--error: orangered;
     --pipeline-element-box__border-color--fatal-error: red;
     --pipeline-element-box__border-color--fatal-error-dark: #c60000;
+    --pipeline-element-box__border-color--hotspot: var(--pipeline-element-box__border-color--info);
 
     --link__text-color: #0000AA;
 
