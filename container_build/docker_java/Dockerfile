@@ -69,8 +69,8 @@ RUN apk add --no-cache \
       graphviz \
       su-exec \
       tini \
-      ttf-droid \
-      ttf-droid-nonlatin \
+      font-droid \
+      font-droid-nonlatin \
     && curl \
       -Ls \
       https://github.com/plantuml/plantuml/releases/download/v$PLANTUML_VERSION/plantuml-$PLANTUML_VERSION.jar \
