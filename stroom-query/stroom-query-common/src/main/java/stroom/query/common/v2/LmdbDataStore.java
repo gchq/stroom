@@ -115,7 +115,6 @@ public class LmdbDataStore implements DataStore {
     private final KeyFactory keyFactory;
     private final LmdbPayloadCreator payloadCreator;
     private final TransferState transferState = new TransferState();
-    private final ValHasher valHasher;
 
     private final Serialisers serialisers;
 
@@ -170,8 +169,14 @@ public class LmdbDataStore implements DataStore {
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFieldArray);
         keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledFieldArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
-        valHasher = new ValHasher(serialisers.getOutputFactory(), errorConsumer);
-        lmdbRowKeyFactory = LmdbRowKeyFactoryFactory.create(keyFactory, keyFactoryConfig, compiledDepths, valHasher);
+        final ValHasher valHasher = new ValHasher(serialisers.getOutputFactory(), errorConsumer);
+        storedValueKeyFactory = new StoredValueKeyFactoryImpl(
+                compiledDepths,
+                compiledFieldArray,
+                keyFactoryConfig,
+                valHasher);
+        lmdbRowKeyFactory = LmdbRowKeyFactoryFactory
+                .create(keyFactory, keyFactoryConfig, compiledDepths, storedValueKeyFactory);
         lmdbRowValueFactory = new LmdbRowValueFactory(
                 valueReferenceIndex,
                 serialisers.getOutputFactory(),
@@ -197,12 +202,6 @@ public class LmdbDataStore implements DataStore {
                 maxResultSizes,
                 totalResultCount,
                 completionState);
-
-        storedValueKeyFactory = new StoredValueKeyFactory(
-                compiledDepths,
-                compiledFieldArray,
-                keyFactoryConfig,
-                keyFactory);
 
         // Create a factory that makes DB state objects.
         currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
@@ -280,9 +279,7 @@ public class LmdbDataStore implements DataStore {
         // Get a reference to the current event so we can keep track of what we have stored data for.
         final CurrentDbState currentDbState = currentDbStateFactory.createCurrentDbState(values);
 
-        Key parentKey = Key.ROOT_KEY;
         ByteBuffer parentRowKey = null;
-
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final StoredValues storedValues = valueReferenceIndex.createStoredValues();
             final boolean[] valueIndices = valueIndicesByDepth[depth];
@@ -308,17 +305,11 @@ public class LmdbDataStore implements DataStore {
                 }
             }
 
-            final Val[] groupValues = storedValueKeyFactory.getGroupValues(depth, storedValues);
-            final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
-            final long groupHash = valHasher.hash(groupValues);
-            final Key key = storedValueKeyFactory.createKey(parentKey, timeMs, groupValues);
-
-            final ByteBuffer rowKey = lmdbRowKeyFactory.create(depth, parentRowKey, groupHash, timeMs);
+            final ByteBuffer rowKey = lmdbRowKeyFactory.create(depth, parentRowKey, storedValues);
             final ByteBuffer rowValue = lmdbRowValueFactory.create(storedValues);
 
             put(new LmdbKV(currentDbState, rowKey, rowValue));
 
-            parentKey = key;
             parentRowKey = rowKey;
         }
     }
@@ -934,6 +925,7 @@ public class LmdbDataStore implements DataStore {
                 final KeyVal<ByteBuffer> keyVal = iterator.next();
                 // All valid keys are more than a single byte long. Single byte keys are used to store db info.
                 if (LmdbRowKeyFactoryFactory.isNotStateKey(keyVal.key())) {
+                    final ByteBuffer keyBuffer = keyVal.key();
                     final ByteBuffer valueBuffer = keyVal.val();
 
                     // If we are just counting the total results from this point then we don't need to
@@ -941,7 +933,7 @@ public class LmdbDataStore implements DataStore {
                     if (fetchState.justCount) {
                         if (mapper.hidesRows()) {
                             final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
-                            final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
+                            final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                             final ItemImpl item = new ItemImpl(
                                     readContext,
                                     key,
@@ -976,7 +968,7 @@ public class LmdbDataStore implements DataStore {
                             if (openGroups.isNotEmpty()) {
                                 // Add children if the group is open.
                                 final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
-                                final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
+                                final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                                 final int childDepth = depth + 1;
                                 if (openGroups.isOpen(key) &&
                                         compiledSorters.length > childDepth) {
@@ -998,7 +990,7 @@ public class LmdbDataStore implements DataStore {
                     } else {
                         do {
                             final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
-                            final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
+                            final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                             final ItemImpl item = new ItemImpl(
                                     readContext,
                                     key,
@@ -1088,6 +1080,7 @@ public class LmdbDataStore implements DataStore {
                 // All valid keys are more than a single byte long. Single byte keys are used to store db
                 // info.
                 if (LmdbRowKeyFactoryFactory.isNotStateKey(keyVal.key())) {
+                    final ByteBuffer keyBuffer = keyVal.key();
                     final ByteBuffer valueBuffer = keyVal.val();
                     boolean isFirstValue = true;
                     // It is possible to have no actual values, e.g. if you have just one col of
@@ -1096,7 +1089,7 @@ public class LmdbDataStore implements DataStore {
                         isFirstValue = false;
 
                         final StoredValues storedValues = valueReferenceIndex.read(valueBuffer);
-                        final Key key = storedValueKeyFactory.createKey(parentKey, storedValues);
+                        final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                         final ItemImpl item = new ItemImpl(readContext, key, storedValues);
                         if (mapper.hidesRows()) {
                             final R row = mapper.create(fields, item);

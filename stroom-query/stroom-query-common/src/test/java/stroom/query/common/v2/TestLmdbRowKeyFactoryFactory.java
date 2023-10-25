@@ -12,6 +12,8 @@ import stroom.query.common.v2.LmdbRowKeyFactoryFactory.NestedGroupedLmdbRowKeyFa
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.NestedTimeGroupedLmdbRowKeyFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ref.StoredValues;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,21 +28,24 @@ public class TestLmdbRowKeyFactoryFactory {
 
     @Test
     void testFlatGroupedLmdbRowKeyFactory() {
-        final FlatGroupedLmdbRowKeyFactory keyFactory = new FlatGroupedLmdbRowKeyFactory();
+        final FlatGroupedLmdbRowKeyFactory keyFactory =
+                new FlatGroupedLmdbRowKeyFactory(getStoredValueKeyFactory());
         testUnique(keyFactory);
         testNonTimeGroupedChildKeyRange(keyFactory);
     }
 
     @Test
     void testFlatUngroupedLmdbRowKeyFactory() {
-        final FlatUngroupedLmdbRowKeyFactory keyFactory = new FlatUngroupedLmdbRowKeyFactory(getUniqueIdProvider());
+        final FlatUngroupedLmdbRowKeyFactory keyFactory =
+                new FlatUngroupedLmdbRowKeyFactory(getUniqueIdProvider());
         testUnique(keyFactory);
         testNonTimeGroupedChildKeyRange(keyFactory);
     }
 
     @Test
     void testFlatTimeGroupedLmdbRowKeyFactory() {
-        final FlatTimeGroupedLmdbRowKeyFactory keyFactory = new FlatTimeGroupedLmdbRowKeyFactory();
+        final FlatTimeGroupedLmdbRowKeyFactory keyFactory =
+                new FlatTimeGroupedLmdbRowKeyFactory(getStoredValueKeyFactory());
         testUnique(keyFactory);
         testTimeGroupedChildKeyRange(keyFactory);
     }
@@ -48,7 +53,7 @@ public class TestLmdbRowKeyFactoryFactory {
     @Test
     void testFlatTimeUngroupedLmdbRowKeyFactory() {
         final FlatTimeUngroupedLmdbRowKeyFactory keyFactory =
-                new FlatTimeUngroupedLmdbRowKeyFactory(getUniqueIdProvider());
+                new FlatTimeUngroupedLmdbRowKeyFactory(getUniqueIdProvider(), getStoredValueKeyFactory());
         testUnique(keyFactory);
         testTimeGroupedChildKeyRange(keyFactory);
     }
@@ -58,14 +63,13 @@ public class TestLmdbRowKeyFactoryFactory {
         final LmdbRowKeyFactory keyFactory = new NestedGroupedLmdbRowKeyFactory(
                 getUniqueIdProvider(),
                 getCompiledDepths(),
-                new ValHasher(new OutputFactoryImpl(new SearchResultStoreConfig()), new ErrorConsumerImpl()));
+                getStoredValueKeyFactory());
         testUnique(keyFactory);
         testNonTimeGroupedChildKeyRange(keyFactory);
 
-        final ByteBuffer parentKey = keyFactory
-                .create(0, null, 100L, 100L);
-        final ByteBuffer key = keyFactory
-                .create(1, parentKey, 100L, 100L);
+        final StoredValues storedValues = new StoredValues(new Object[]{ValLong.create(100L), ValLong.create(100L)});
+        final ByteBuffer parentKey = keyFactory.create(0, null, storedValues);
+        final ByteBuffer key = keyFactory.create(1, parentKey, storedValues);
         final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
         keyFactory.makeUnique(lmdbKV);
@@ -77,14 +81,13 @@ public class TestLmdbRowKeyFactoryFactory {
         final LmdbRowKeyFactory keyFactory = new NestedTimeGroupedLmdbRowKeyFactory(
                 getUniqueIdProvider(),
                 getCompiledDepths(),
-                new ValHasher(new OutputFactoryImpl(new SearchResultStoreConfig()), new ErrorConsumerImpl()));
+                getStoredValueKeyFactory());
         testUnique(keyFactory);
         testTimeGroupedChildKeyRange(keyFactory);
 
-        final ByteBuffer parentKey = keyFactory
-                .create(0, null, 100L, 100L);
-        final ByteBuffer key = keyFactory
-                .create(1, parentKey, 100L, 100L);
+        final StoredValues storedValues = new StoredValues(new Object[]{ValLong.create(100L), ValLong.create(100L)});
+        final ByteBuffer parentKey = keyFactory.create(0, null, storedValues);
+        final ByteBuffer key = keyFactory.create(1, parentKey, storedValues);
         final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
         keyFactory.makeUnique(lmdbKV);
@@ -93,8 +96,8 @@ public class TestLmdbRowKeyFactoryFactory {
 
 
     private void testUnique(final LmdbRowKeyFactory keyFactory) {
-        final ByteBuffer key = keyFactory
-                .create(0, null, 100L, 100L);
+        final StoredValues storedValues = new StoredValues(new Object[]{ValLong.create(100L), ValLong.create(100L)});
+        final ByteBuffer key = keyFactory.create(0, null, storedValues);
         final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
         System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
         keyFactory.makeUnique(lmdbKV);
@@ -142,5 +145,33 @@ public class TestLmdbRowKeyFactoryFactory {
                 fields, fieldIndex, Collections.emptyMap());
         final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
         return new CompiledDepths(compiledFieldArray, false);
+    }
+
+    private ValHasher getValHasher() {
+        return new ValHasher(new OutputFactoryImpl(new SearchResultStoreConfig()), new ErrorConsumerImpl());
+    }
+
+    private StoredValueKeyFactory getStoredValueKeyFactory() {
+        return new StoredValueKeyFactory() {
+            @Override
+            public Val[] getGroupValues(final int depth, final StoredValues storedValues) {
+                return new Val[0];
+            }
+
+            @Override
+            public long getGroupHash(final int depth, final StoredValues storedValues) {
+                return 0;
+            }
+
+            @Override
+            public long hash(final Val[] groupValues) {
+                return 0;
+            }
+
+            @Override
+            public long getTimeMs(final StoredValues storedValues) {
+                return 0;
+            }
+        };
     }
 }
