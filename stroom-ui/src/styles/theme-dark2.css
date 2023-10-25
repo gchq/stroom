@@ -59,16 +59,16 @@
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
     --navigation-icon-button__border-color--hover: rgb(45, 47, 53);
 
-    --expression-item-box__background-color--selected: #454545;
-    --expression-item-box__background-color--hover: #555;
+    --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
+    --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #333;
-    --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
+    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
 
     --pipeline-element-box__background-color: #454545;
     --pipeline-element-box__background-color--hover: #505050;
-    --pipeline-element-box__background-color--selected: #1164a3;
-    --pipeline-element-box__background-color--selected--hover: #1164a3;
-    --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
+    --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
+    --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
+    --pipeline-element-box__background-color--hotspot: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: #fff;
     --pipeline-element-box__border-color: #a1a1a1;
 
