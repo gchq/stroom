@@ -324,6 +324,10 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         return taskContext;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private record SecurityAttributes(UserIdentity userIdentity, boolean useAsRead) {
 
     }

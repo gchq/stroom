@@ -66,6 +66,10 @@ public class JobSystemModule extends AbstractModule {
                 .bindShutdownTaskTo(ScheduledTaskExecutorShutdown.class, 9);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class FetchNewTasks extends RunnableWrapper {
 
         @Inject
@@ -73,6 +77,10 @@ public class JobSystemModule extends AbstractModule {
             super(distributedTaskFetcher::execute);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class JobBootstrapStartup extends RunnableWrapper {
 
@@ -82,6 +90,10 @@ public class JobSystemModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DistributedTaskFetcherShutdown extends RunnableWrapper {
 
         @Inject
@@ -90,6 +102,10 @@ public class JobSystemModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ScheduledTaskExecutorStartup extends RunnableWrapper {
 
         @Inject
@@ -97,6 +113,10 @@ public class JobSystemModule extends AbstractModule {
             super(scheduledTaskExecutor::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ScheduledTaskExecutorShutdown extends RunnableWrapper {
 
