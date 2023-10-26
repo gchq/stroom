@@ -37,6 +37,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
+// Not currently bound pending re-visiting receipt rules as the current implementation
+// was not fully thought through
+// See https://github.com/gchq/stroom/issues/1125
 @Singleton
 public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
 
