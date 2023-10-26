@@ -25,7 +25,7 @@ public class PipelineStreamTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         DataProcessorBinder.create(binder())
-                .bind(PipelineStreamProcessorTaskExecutor.PIPELINE_STREAM_PROCESSOR,
-                        PipelineStreamProcessorTaskExecutor.class);
+                .bind(PipelineDataProcessorTaskExecutor.PIPELINE_STREAM_PROCESSOR,
+                        PipelineDataProcessorTaskExecutor.class);
     }
 }

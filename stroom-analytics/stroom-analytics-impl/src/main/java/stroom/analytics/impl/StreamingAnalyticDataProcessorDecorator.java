@@ -22,6 +22,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.filter.FieldValue;
 import stroom.processor.api.DataProcessorDecorator;
 import stroom.processor.shared.ProcessorFilter;
@@ -48,10 +49,10 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class StreamingAnalyticProcessorTaskExecutor implements DataProcessorDecorator {
+public class StreamingAnalyticDataProcessorDecorator implements DataProcessorDecorator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory
-            .getLogger(StreamingAnalyticProcessorTaskExecutor.class);
+            .getLogger(StreamingAnalyticDataProcessorDecorator.class);
 
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
@@ -66,15 +67,15 @@ public class StreamingAnalyticProcessorTaskExecutor implements DataProcessorDeco
     private AnalyticFieldListConsumer fieldListConsumer;
 
     @Inject
-    public StreamingAnalyticProcessorTaskExecutor(final AnalyticRuleStore analyticRuleStore,
-                                                  final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
-                                                  final AnalyticHelper analyticHelper,
-                                                  final ExpressionContextFactory expressionContextFactory,
-                                                  final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
-                                                  final NotificationStateService notificationStateService,
-                                                  final DetectionConsumerFactory detectionConsumerFactory,
-                                                  final DetectionConsumerProxy detectionConsumerProxy,
-                                                  final FieldListConsumerHolder fieldListConsumerHolder) {
+    public StreamingAnalyticDataProcessorDecorator(final AnalyticRuleStore analyticRuleStore,
+                                                   final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
+                                                   final AnalyticHelper analyticHelper,
+                                                   final ExpressionContextFactory expressionContextFactory,
+                                                   final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                                                   final NotificationStateService notificationStateService,
+                                                   final DetectionConsumerFactory detectionConsumerFactory,
+                                                   final DetectionConsumerProxy detectionConsumerProxy,
+                                                   final FieldListConsumerHolder fieldListConsumerHolder) {
         this.analyticRuleStore = analyticRuleStore;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.analyticHelper = analyticHelper;
@@ -84,6 +85,22 @@ public class StreamingAnalyticProcessorTaskExecutor implements DataProcessorDeco
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.detectionConsumerProxy = detectionConsumerProxy;
         this.fieldListConsumerHolder = fieldListConsumerHolder;
+    }
+
+    @Override
+    public String getErrorFeedName(final ProcessorFilter processorFilter, final Meta meta) {
+        if (processorFilter != null &&
+                processorFilter.getQueryData() != null &&
+                processorFilter.getQueryData().getAnalyticRule() != null) {
+            // Load rule.
+            final StreamingAnalytic analytic = loadStreamingAnalytic(processorFilter.getQueryData().getAnalyticRule());
+            if (analytic.streamingAnalyticProcessConfig() != null &&
+                    analytic.streamingAnalyticProcessConfig().getErrorFeed() != null &&
+                    analytic.streamingAnalyticProcessConfig().getErrorFeed().getName() != null) {
+                return analytic.streamingAnalyticProcessConfig.getErrorFeed().getName();
+            }
+        }
+        return meta.getFeedName();
     }
 
     @Override

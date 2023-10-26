@@ -132,7 +132,7 @@ public class AnalyticRuleProcessors {
         return expressionOperator;
     }
 
-    private List<ProcessorFilter> getProcessorFilters(final AnalyticRuleDoc doc) {
+    public List<ProcessorFilter> getProcessorFilters(final AnalyticRuleDoc doc) {
         final List<ProcessorFilter> list = new ArrayList<>();
         final Optional<ViewDoc> optional = getViewDoc(doc);
         optional.ifPresent(viewDoc -> {

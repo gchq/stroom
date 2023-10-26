@@ -108,11 +108,11 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExecutor {
+public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
 
     public static final String PIPELINE_STREAM_PROCESSOR = "pipelineStreamProcessor";
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineStreamProcessorTaskExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
     private static final int PREVIEW_SIZE = 100;
@@ -152,28 +152,28 @@ public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExe
     private long startTime;
 
     @Inject
-    PipelineStreamProcessorTaskExecutor(final PipelineFactory pipelineFactory,
-                                        final Store store,
-                                        final PipelineStore pipelineStore,
-                                        final MetaService metaService,
-                                        final ProcessorTaskService processorTaskService,
-                                        final PipelineHolder pipelineHolder,
-                                        final FeedHolder feedHolder,
-                                        final FeedProperties feedProperties,
-                                        final MetaDataHolder metaDataHolder,
-                                        final MetaHolder metaHolder,
-                                        final SearchIdHolder searchIdHolder,
-                                        final LocationFactoryProxy locationFactory,
-                                        final StreamProcessorHolder streamProcessorHolder,
-                                        final ErrorReceiverProxy errorReceiverProxy,
-                                        final ErrorWriterProxy errorWriterProxy,
-                                        final MetaData metaData,
-                                        final RecordCount recordCount,
-                                        final RecordErrorReceiver recordErrorReceiver,
-                                        final NodeInfo nodeInfo,
-                                        final PipelineDataCache pipelineDataCache,
-                                        final InternalStatisticsReceiver internalStatisticsReceiver,
-                                        final Provider<DataProcessorDecorator> dataProcessorDecoratorProvider) {
+    PipelineDataProcessorTaskExecutor(final PipelineFactory pipelineFactory,
+                                      final Store store,
+                                      final PipelineStore pipelineStore,
+                                      final MetaService metaService,
+                                      final ProcessorTaskService processorTaskService,
+                                      final PipelineHolder pipelineHolder,
+                                      final FeedHolder feedHolder,
+                                      final FeedProperties feedProperties,
+                                      final MetaDataHolder metaDataHolder,
+                                      final MetaHolder metaHolder,
+                                      final SearchIdHolder searchIdHolder,
+                                      final LocationFactoryProxy locationFactory,
+                                      final StreamProcessorHolder streamProcessorHolder,
+                                      final ErrorReceiverProxy errorReceiverProxy,
+                                      final ErrorWriterProxy errorWriterProxy,
+                                      final MetaData metaData,
+                                      final RecordCount recordCount,
+                                      final RecordErrorReceiver recordErrorReceiver,
+                                      final NodeInfo nodeInfo,
+                                      final PipelineDataCache pipelineDataCache,
+                                      final InternalStatisticsReceiver internalStatisticsReceiver,
+                                      final Provider<DataProcessorDecorator> dataProcessorDecoratorProvider) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
@@ -220,25 +220,26 @@ public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExe
         // processor.
         final Meta meta = streamSource.getMeta();
 
+        final DataProcessorDecorator dataProcessorDecorator = dataProcessorDecoratorProvider.get();
+        final String errorFeedName = dataProcessorDecorator.getErrorFeedName(processorFilter, meta);
+
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider =
                 new ProcessInfoOutputStreamProvider(
                         streamStore,
                         metaData,
                         meta,
+                        errorFeedName,
                         processor,
                         processorFilter,
                         processorTask,
                         recordCount,
                         errorReceiverProxy)) {
 
-            DataProcessorDecorator dataProcessorDecorator = null;
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
-
-                dataProcessorDecorator = dataProcessorDecoratorProvider.get();
                 dataProcessorDecorator.start(processorFilter);
                 process(taskContext);
 
@@ -246,9 +247,7 @@ public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExe
                 outputError(e);
             } finally {
                 try {
-                    if (dataProcessorDecorator != null) {
-                        dataProcessorDecorator.end();
-                    }
+                    dataProcessorDecorator.end();
                 } catch (final Exception e) {
                     outputError(e);
                 }
@@ -605,6 +604,7 @@ public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExe
         private final Store streamStore;
         private final MetaData metaData;
         private final Meta meta;
+        private final String feedName;
         private final Processor processor;
         private final ProcessorFilter processorFilter;
         private final ProcessorTask processorTask;
@@ -617,6 +617,7 @@ public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExe
         ProcessInfoOutputStreamProvider(final Store streamStore,
                                         final MetaData metaData,
                                         final Meta meta,
+                                        final String feedName,
                                         final Processor processor,
                                         final ProcessorFilter processorFilter,
                                         final ProcessorTask processorTask,
@@ -625,6 +626,7 @@ public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExe
             this.streamStore = streamStore;
             this.metaData = metaData;
             this.meta = meta;
+            this.feedName = feedName;
             this.processor = processor;
             this.processorFilter = processorFilter;
             this.processorTask = processorTask;
@@ -668,7 +670,7 @@ public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExe
                 // Create a processing info stream to write all processing
                 // information to.
                 final MetaProperties dataProperties = MetaProperties.builder()
-                        .feedName(meta.getFeedName())
+                        .feedName(feedName)
                         .typeName(StreamTypeNames.ERROR)
                         .parent(meta)
                         .processorUuid(processorUuid)

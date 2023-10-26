@@ -72,7 +72,7 @@ public class AnalyticsModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), NodeSearchTaskHandlerProvider.class)
                 .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);
 
-        bind(DataProcessorDecorator.class).to(StreamingAnalyticProcessorTaskExecutor.class);
+        bind(DataProcessorDecorator.class).to(StreamingAnalyticDataProcessorDecorator.class);
     }
 
     private static class TableBuilderAnalyticExecutorRunnable extends RunnableWrapper {
