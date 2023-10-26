@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.processor.api.DataProcessorDecorator;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;
@@ -43,12 +44,12 @@ public class AnalyticsModule extends AbstractModule {
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
                         .advanced(true))
-                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
-                        .name("Analytic Executor: Streaming")
-                        .description("Run streaming analytics periodically")
-                        .schedule(PERIODIC, "1m")
-                        .enabled(false)
-                        .advanced(true))
+//                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
+//                        .name("Analytic Executor: Streaming")
+//                        .description("Run streaming analytics periodically")
+//                        .schedule(PERIODIC, "1m")
+//                        .enabled(false)
+//                        .advanced(true))
                 .bindJobTo(ScheduledAnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
@@ -70,6 +71,8 @@ public class AnalyticsModule extends AbstractModule {
                 .addBinding(AnalyticsSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), NodeSearchTaskHandlerProvider.class)
                 .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);
+
+        bind(DataProcessorDecorator.class).to(StreamingAnalyticProcessorTaskExecutor.class);
     }
 
     private static class TableBuilderAnalyticExecutorRunnable extends RunnableWrapper {
@@ -80,13 +83,13 @@ public class AnalyticsModule extends AbstractModule {
         }
     }
 
-    private static class StreamingAnalyticExecutorRunnable extends RunnableWrapper {
-
-        @Inject
-        StreamingAnalyticExecutorRunnable(final StreamingAnalyticExecutor executor) {
-            super(executor::exec);
-        }
-    }
+//    private static class StreamingAnalyticExecutorRunnable extends RunnableWrapper {
+//
+//        @Inject
+//        StreamingAnalyticExecutorRunnable(final StreamingAnalyticExecutor executor) {
+//            super(executor::exec);
+//        }
+//    }
 
     private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
 

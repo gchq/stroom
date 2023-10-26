@@ -2054,6 +2054,26 @@ paths:
       summary: Create explorer item
       tags:
       - Explorer (v2)
+  /explorer/v2/decorate:
+    post:
+      operationId: decorateDocRef
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocRef'
+          description: default response
+      summary: Decorate the docRef will all values, e.g. add the name
+      tags:
+      - Explorer (v2)
   /explorer/v2/delete:
     delete:
       operationId: deleteExplorerItems
@@ -2230,7 +2250,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DocRefInfo'
+                $ref: '#/components/schemas/ExplorerNodeInfo'
           description: default response
       summary: Get document info
       tags:
@@ -6150,6 +6170,28 @@ paths:
       summary: Find the user names matching the supplied criteria
       tags:
       - Authorisation
+  /userNames/v1/findAssociates:
+    post:
+      operationId: findAssociateUserNames
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindUserNameCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageUserName'
+          description: default response
+      summary: Find the user names matching the supplied criteria of users who belong
+        to at least one of the same groups as the current user. If the current user
+        is admin or has Manage Users permission then they can see all users.
+      tags:
+      - Authorisation
   /userNames/v1/getByDisplayName/{displayName}:
     get:
       operationId: getByDisplayName
@@ -8991,6 +9033,18 @@ components:
           $ref: '#/components/schemas/ExplorerNodeKey'
         uuid:
           type: string
+    ExplorerNodeInfo:
+      type: object
+      properties:
+        docRefInfo:
+          $ref: '#/components/schemas/DocRefInfo'
+        explorerNode:
+          $ref: '#/components/schemas/ExplorerNode'
+        owners:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserName'
+          uniqueItems: true
     ExplorerNodeKey:
       type: object
       properties:
@@ -11682,6 +11736,8 @@ components:
     QueryData:
       type: object
       properties:
+        analyticRule:
+          $ref: '#/components/schemas/DocRef'
         dataSource:
           $ref: '#/components/schemas/DocRef'
         expression:

@@ -63,6 +63,7 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.processor.api.DataProcessorDecorator;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
@@ -105,10 +106,13 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
+public class PipelineStreamProcessorTaskExecutor implements DataProcessorTaskExecutor {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
+    public static final String PIPELINE_STREAM_PROCESSOR = "pipelineStreamProcessor";
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineStreamProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
     private static final int PREVIEW_SIZE = 100;
@@ -138,6 +142,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private final NodeInfo nodeInfo;
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
+    private final Provider<DataProcessorDecorator> dataProcessorDecoratorProvider;
 
     private Processor streamProcessor;
     private ProcessorFilter processorFilter;
@@ -147,27 +152,28 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private long startTime;
 
     @Inject
-    PipelineDataProcessorTaskExecutor(final PipelineFactory pipelineFactory,
-                                      final Store store,
-                                      final PipelineStore pipelineStore,
-                                      final MetaService metaService,
-                                      final ProcessorTaskService processorTaskService,
-                                      final PipelineHolder pipelineHolder,
-                                      final FeedHolder feedHolder,
-                                      final FeedProperties feedProperties,
-                                      final MetaDataHolder metaDataHolder,
-                                      final MetaHolder metaHolder,
-                                      final SearchIdHolder searchIdHolder,
-                                      final LocationFactoryProxy locationFactory,
-                                      final StreamProcessorHolder streamProcessorHolder,
-                                      final ErrorReceiverProxy errorReceiverProxy,
-                                      final ErrorWriterProxy errorWriterProxy,
-                                      final MetaData metaData,
-                                      final RecordCount recordCount,
-                                      final RecordErrorReceiver recordErrorReceiver,
-                                      final NodeInfo nodeInfo,
-                                      final PipelineDataCache pipelineDataCache,
-                                      final InternalStatisticsReceiver internalStatisticsReceiver) {
+    PipelineStreamProcessorTaskExecutor(final PipelineFactory pipelineFactory,
+                                        final Store store,
+                                        final PipelineStore pipelineStore,
+                                        final MetaService metaService,
+                                        final ProcessorTaskService processorTaskService,
+                                        final PipelineHolder pipelineHolder,
+                                        final FeedHolder feedHolder,
+                                        final FeedProperties feedProperties,
+                                        final MetaDataHolder metaDataHolder,
+                                        final MetaHolder metaHolder,
+                                        final SearchIdHolder searchIdHolder,
+                                        final LocationFactoryProxy locationFactory,
+                                        final StreamProcessorHolder streamProcessorHolder,
+                                        final ErrorReceiverProxy errorReceiverProxy,
+                                        final ErrorWriterProxy errorWriterProxy,
+                                        final MetaData metaData,
+                                        final RecordCount recordCount,
+                                        final RecordErrorReceiver recordErrorReceiver,
+                                        final NodeInfo nodeInfo,
+                                        final PipelineDataCache pipelineDataCache,
+                                        final InternalStatisticsReceiver internalStatisticsReceiver,
+                                        final Provider<DataProcessorDecorator> dataProcessorDecoratorProvider) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
@@ -189,6 +195,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         this.nodeInfo = nodeInfo;
         this.pipelineDataCache = pipelineDataCache;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
+        this.dataProcessorDecoratorProvider = dataProcessorDecoratorProvider;
     }
 
     @Override
@@ -225,16 +232,27 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         recordCount,
                         errorReceiverProxy)) {
 
+            DataProcessorDecorator dataProcessorDecorator = null;
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
 
+                dataProcessorDecorator = dataProcessorDecoratorProvider.get();
+                dataProcessorDecorator.start(processorFilter);
                 process(taskContext);
 
             } catch (final Exception e) {
                 outputError(e);
             } finally {
+                try {
+                    if (dataProcessorDecorator != null) {
+                        dataProcessorDecorator.end();
+                    }
+                } catch (final Exception e) {
+                    outputError(e);
+                }
+
                 // Ensure we are no longer interrupting if necessary.
                 if (Thread.interrupted()) {
                     LOGGER.debug(() -> "Cleared interrupt flag");
@@ -251,8 +269,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         final long read = recordCount.getRead();
         final long written = recordCount.getWritten();
         final Map<Severity, Long> markerCounts = new HashMap<>();
-        if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-            final ErrorStatistics statistics = (ErrorStatistics) errorReceiverProxy.getErrorReceiver();
+        if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics statistics) {
             for (final Severity sev : statistics.getSeverities()) {
                 markerCounts.put(sev, statistics.getRecords(sev));
             }
@@ -299,8 +316,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
 
             // Create some processing info.
-            final String info = "" +
-                    " pipeline=" +
+            final String info = " pipeline=" +
                     pipelineDoc.getName() +
                     ", feed=" +
                     feedName +

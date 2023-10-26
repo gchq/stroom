@@ -1667,6 +1667,12 @@ export interface ExplorerNode {
   uuid?: string;
 }
 
+export interface ExplorerNodeInfo {
+  docRefInfo?: DocRefInfo;
+  explorerNode?: ExplorerNode;
+  owners?: UserName[];
+}
+
 export interface ExplorerNodeKey {
   rootNodeUuid?: string;
   type?: string;
@@ -3344,6 +3350,9 @@ export interface QueryContext {
 }
 
 export interface QueryData {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  analyticRule?: DocRef;
+
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
 
@@ -6978,6 +6987,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name DecorateDocRef
+     * @summary Decorate the docRef will all values, e.g. add the name
+     * @request POST:/explorer/v2/decorate
+     * @secure
+     */
+    decorateDocRef: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
+        path: `/explorer/v2/decorate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name DeleteExplorerItems
      * @summary Delete explorer items
      * @request DELETE:/explorer/v2/delete
@@ -7132,7 +7160,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchExplorerItemInfo: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DocRefInfo>({
+      this.request<any, ExplorerNodeInfo>({
         path: `/explorer/v2/info`,
         method: "POST",
         body: data,
@@ -10668,6 +10696,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     findUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageUserName>({
         path: `/userNames/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name FindAssociateUserNames
+     * @summary Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.
+     * @request POST:/userNames/v1/findAssociates
+     * @secure
+     */
+    findAssociateUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageUserName>({
+        path: `/userNames/v1/findAssociates`,
         method: "POST",
         body: data,
         secure: true,

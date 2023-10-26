@@ -37,7 +37,7 @@ public class CreateProcessFilterRequest {
     @JsonProperty
     private final boolean autoPriority;
     @JsonProperty
-    private boolean reprocess;
+    private final boolean reprocess;
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
