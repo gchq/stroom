@@ -84,7 +84,9 @@ public class ExplorerNodeEditTagsViewImpl
     Label editNodeTagsAllTagsLabel;
     @UiField
     ListBox nodeTagsListBox;
-    private DocRef docRef;
+    @UiField
+    Label nodeTagsLabel;
+    private List<DocRef> docRefs;
 
     @Inject
     public ExplorerNodeEditTagsViewImpl(final Binder binder) {
@@ -346,6 +348,10 @@ public class ExplorerNodeEditTagsViewImpl
         final List<String> tagsList = GwtNullSafe.stream(nodeTags)
                 .sorted()
                 .collect(Collectors.toList());
+        final int documentCount = GwtNullSafe.size(docRefs);
+        nodeTagsLabel.setText(documentCount > 0
+                ? "Tags to add to " + documentCount + " Documents"
+                : "Document Tags");
 
         nodeTagsListBox.clear();
         for (final String string : tagsList) {
@@ -437,14 +443,14 @@ public class ExplorerNodeEditTagsViewImpl
     }
 
     @Override
-    public void setData(final DocRef nodeDocRef,
+    public void setData(final List<DocRef> nodeDocRefs,
                         final Set<String> nodeTags,
                         final Set<String> allTags) {
 
         clearInput();
         this.nodeTags.clear();
         this.allTags.clear();
-        this.docRef = nodeDocRef;
+        this.docRefs = nodeDocRefs;
         this.nodeTags.addAll(GwtNullSafe.set(nodeTags));
         this.allTags.addAll(GwtNullSafe.set(allTags));
         updateNodeTagsListBoxContents();

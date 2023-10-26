@@ -25,8 +25,10 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.explorer.client.event.ShowExplorerNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
+import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -46,8 +48,11 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ExplorerNodeEditTagsPresenter
         extends MyPresenter<ExplorerNodeEditTagsView, ExplorerNodeEditTagsProxy>
@@ -59,7 +64,7 @@ public class ExplorerNodeEditTagsPresenter
 
     private final RestFactory restFactory;
 
-    private ExplorerNode explorerNode;
+    private List<ExplorerNode> explorerNodes;
 
     @Inject
     public ExplorerNodeEditTagsPresenter(final EventBus eventBus,
@@ -75,34 +80,56 @@ public class ExplorerNodeEditTagsPresenter
     @Override
     public void onCreate(final ShowExplorerNodeTagsDialogEvent event) {
 //        GWT.log("onCreate: " + GwtNullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
-        explorerNode = Objects.requireNonNull(event.getExplorerNode(),
-                "Null explorerNode on ShowExplorerNodeTagsDialogEvent");
-        final DocRef docRef = Objects.requireNonNull(explorerNode.getDocRef(), "Null docRef on explorerNode");
+        explorerNodes = GwtNullSafe.list(event.getExplorerNodes());
+        if (GwtNullSafe.isEmptyCollection(explorerNodes)) {
+            AlertEvent.fireError(this, "No explorer nodes supplied", null);
+        } else {
+            final List<DocRef> docRefs = explorerNodes.stream()
+                    .map(ExplorerNode::getDocRef)
+                    .collect(Collectors.toList());
 
-        final Rest<Set<String>> allNodeTagsRest = restFactory.create();
-        allNodeTagsRest
-                .onSuccess(allTags -> {
+            final Rest<Set<String>> allNodeTagsRest = restFactory.create();
+            allNodeTagsRest
+                    .onSuccess(allTags -> {
+                        if (isSingleDocRef()) {
+                            final Rest<Set<String>> expNodeRest = restFactory.create();
+                            expNodeRest
+                                    .onSuccess(nodetags -> {
+                                        getView().setData(docRefs, nodetags, allTags);
+                                        forceReveal();
+                                    })
+                                    .onFailure(this::handleFailure)
+                                    .call(EXPLORER_RESOURCE)
+                                    .fetchExplorerNodeTags(docRefs);
+                        } else {
+                            // Adding to multiple so don't need to know what tags the nodes have
+                            getView().setData(docRefs, Collections.emptySet(), allTags);
+                            forceReveal();
+                        }
+                    })
+                    .onFailure(this::handleFailure)
+                    .call(EXPLORER_RESOURCE)
+                    .fetchExplorerNodeTags();
 
-                    final Rest<ExplorerNode> expNodeRest = restFactory.create();
-                    expNodeRest
-                            .onSuccess(explorerNodeFromDb -> {
-                                GWT.log("allTags: " + allTags);
-                                GWT.log("nodeTags: " + explorerNodeFromDb.getTags());
-                                getView().setData(docRef, explorerNodeFromDb.getTags(), allTags);
-                                forceReveal();
-                            })
-                            .onFailure(this::handleFailure)
-                            .call(EXPLORER_RESOURCE)
-                            .getFromDocRef(explorerNode.getDocRef());
-                })
-                .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .fetchExplorerNodeTags();
+        }
+
+    }
+
+    private String getNodeName() {
+        if (GwtNullSafe.hasItems(explorerNodes)) {
+            return explorerNodes.size() > 1
+                    ? explorerNodes.size() + " Documents"
+                    : explorerNodes.get(0).getName();
+        } else {
+            throw new RuntimeException("No explorerNodes");
+        }
     }
 
     @Override
     protected void revealInParent() {
-        final String caption = "Edit Tags for " + explorerNode.getName();
+        final String caption = isSingleDocRef()
+                ? "Edit Tags on " + getNodeName()
+                : "Add Tags to " + getNodeName();
 
         final PopupSize popupSize = PopupSize.resizable(700, 700, 700, 700);
 
@@ -117,34 +144,61 @@ public class ExplorerNodeEditTagsPresenter
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent e) {
-        if (e.isOk()) {
-            final Set<String> nodeTags = getView().getNodeTags();
-            if (!Objects.equals(explorerNode.getTags(), nodeTags)) {
+    public void onHideRequest(final HidePopupRequestEvent event) {
+        if (event.isOk()) {
+            final Set<String> editedTags = getView().getNodeTags();
 
-                final ExplorerNode updatedNode = explorerNode.copy()
-                        .tags(nodeTags)
-                        .build();
-
-
-                final Rest<ExplorerNode> rest = restFactory.create();
-                rest
-                        .onSuccess(explorerNode -> {
-                            // Update the node in the tree with the new tags
-                            RefreshDocumentEvent.fire(
-                                    ExplorerNodeEditTagsPresenter.this,
-                                    explorerNode.getDocRef());
-                            GWT.log("after update, tags: " + updatedNode.getTags());
-
-                            e.hide();
-                        })
-                        .onFailure(this::handleFailure)
-                        .call(EXPLORER_RESOURCE)
-                        .updateNodeTags(updatedNode);
+            if (isSingleDocRef()) {
+                if (!Objects.equals(getSingleNode().getTags(), editedTags)) {
+                    updateTagsOnNode(event, editedTags);
+                } else {
+                    event.hide();
+                }
+            } else {
+                if (GwtNullSafe.hasItems(editedTags)) {
+                    addTagsToNodes(event, editedTags);
+                } else {
+                    event.hide();
+                }
             }
         } else {
-            e.hide();
+            event.hide();
         }
+    }
+
+    private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
+        final List<DocRef> nodeDocRefs = getNodeDocRefs();
+        final Rest<Void> rest = restFactory.create();
+        rest
+                .onSuccess(voidResult -> {
+                    // Update the node in the tree with the new tags
+                    nodeDocRefs.forEach(docRef ->
+                            RefreshDocumentEvent.fire(
+                                    ExplorerNodeEditTagsPresenter.this, docRef));
+                    event.hide();
+                })
+                .onFailure(this::handleFailure)
+                .call(EXPLORER_RESOURCE)
+                .addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
+    }
+
+    private void updateTagsOnNode(final HidePopupRequestEvent event, final Set<String> editedTags) {
+        final ExplorerNode updatedNode = getSingleNode().copy()
+                .tags(editedTags)
+                .build();
+
+        final Rest<ExplorerNode> rest = restFactory.create();
+        rest
+                .onSuccess(explorerNode -> {
+                    // Update the node in the tree with the new tags
+                    RefreshDocumentEvent.fire(
+                            ExplorerNodeEditTagsPresenter.this,
+                            explorerNode.getDocRef());
+                    event.hide();
+                })
+                .onFailure(this::handleFailure)
+                .call(EXPLORER_RESOURCE)
+                .updateNodeTags(updatedNode);
     }
 
     @Override
@@ -159,15 +213,38 @@ public class ExplorerNodeEditTagsPresenter
                 null);
     }
 
+    private boolean isSingleDocRef() {
+        return GwtNullSafe.size(explorerNodes) == 1;
+    }
+
+    private ExplorerNode getSingleNode() {
+        if (isSingleDocRef()) {
+            return explorerNodes.get(0);
+        } else {
+            throw new RuntimeException("Expecting one node, found " + GwtNullSafe.size(explorerNodes));
+        }
+    }
+
+    private List<DocRef> getNodeDocRefs() {
+        return GwtNullSafe.stream(explorerNodes)
+                .filter(Objects::nonNull)
+                .map(ExplorerNode::getDocRef)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
     public interface ExplorerNodeEditTagsView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
 
+        /**
+         * @return Either the desired set of tags for a single docRef or the tags to add to all docRefs
+         */
         Set<String> getNodeTags();
 
-        void setData(final DocRef nodeDocRef,
+        void setData(final List<DocRef> nodeDocRefs,
                      final Set<String> nodeTags,
                      final Set<String> allNodeTags);
     }

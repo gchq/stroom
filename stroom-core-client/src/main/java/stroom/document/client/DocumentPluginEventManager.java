@@ -83,6 +83,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -902,7 +903,7 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
         final boolean isInfoEnabled = singleSelection & allowRead;
-        final boolean isEditTagsEnabled = singleSelection & allowUpdate;
+//        final boolean isEditTagsEnabled = updatableItems.size() > 0 && allowUpdate;
 
         // Feeds are a special case so can't be copied or renamed, see https://github.com/gchq/stroom/issues/3048
         final boolean hasFeed = readableItems.stream()
@@ -924,7 +925,7 @@ public class DocumentPluginEventManager extends Plugin {
         }
 
         menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled));
-        menuItems.add(createEditTagsMenuItem(singleReadableItem, 21, isEditTagsEnabled));
+        menuItems.add(createEditOrAddTagsMenuItem(readableItems, 21, allowUpdate));
         menuItems.add(createCopyMenuItem(readableItems, 22, isCopyEnabled));
         menuItems.add(createMoveMenuItem(updatableItems, 23, allowUpdate));
         menuItems.add(createRenameMenuItem(updatableItems, 24, isRenameEnabled));
@@ -1064,18 +1065,22 @@ public class DocumentPluginEventManager extends Plugin {
                 null);
     }
 
-    private MenuItem createEditTagsMenuItem(final ExplorerNode explorerNode,
-                                            final int priority,
-                                            final boolean enabled) {
-        final Command command = enabled && explorerNode != null
-                ? () -> ShowExplorerNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNode)
+    private MenuItem createEditOrAddTagsMenuItem(final List<ExplorerNode> explorerNodes,
+                                                 final int priority,
+                                                 final boolean enabled) {
+        final Command command = enabled && explorerNodes != null
+                ? () -> ShowExplorerNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNodes)
                 : null;
+
+        final String text = GwtNullSafe.size(explorerNodes) > 1
+                ? "Add Tags"
+                : "Edit Tags";
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.TAGS)
-                .text("Tags")
-                .enabled(enabled && explorerNode != null)
+                .text(text)
+                .enabled(enabled && explorerNodes != null)
                 .command(command)
                 .build();
     }
