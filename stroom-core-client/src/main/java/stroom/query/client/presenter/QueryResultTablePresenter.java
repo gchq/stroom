@@ -486,6 +486,10 @@ public class QueryResultTablePresenter
         return selectionModel;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface QueryResultTableView extends View, HasUiHandlers<TableUiHandlers> {
 
         void setTableView(View view);

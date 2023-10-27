@@ -5,8 +5,6 @@ import stroom.explorer.shared.ExplorerNode;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.ToIntFunction;
 
 public class UnmodifiableTreeModel {
 
@@ -52,20 +50,8 @@ public class UnmodifiableTreeModel {
         treeModel.addRoot(rootNode);
     }
 
-    public void add(final ExplorerNode parent, final ExplorerNode child) {
-        throw new UnsupportedOperationException("Mutations not supported");
-    }
-
-    public void replaceNode(final ExplorerNode newNode) {
-        throw new UnsupportedOperationException("Mutations not supported");
-    }
-
     public boolean containsNode(final ExplorerNode node) {
         return treeModel.containsNode(node);
-    }
-
-    public void replaceNode(final String key, final ExplorerNode newNode) {
-        throw new UnsupportedOperationException("Mutations not supported");
     }
 
     public ExplorerNode getParent(final ExplorerNode child) {
@@ -78,14 +64,6 @@ public class UnmodifiableTreeModel {
 
     public boolean hasChildren(final String key) {
         return treeModel.hasChildren(key);
-    }
-
-    public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
-        throw new UnsupportedOperationException("Mutations not supported");
-    }
-
-    public void decorate(final BiFunction<String, ExplorerNode, ExplorerNode> nodeDecorator) {
-        throw new UnsupportedOperationException("Mutations not supported");
     }
 
     public List<DocRef> getChildren(final DocRef parent) {

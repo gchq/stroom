@@ -42,6 +42,9 @@ import stroom.explorer.client.presenter.EntityTreePresenter.EntityTreeView;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
@@ -57,6 +60,7 @@ import stroom.explorer.client.presenter.TypeFilterViewImpl;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
+import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
 import stroom.explorer.client.view.FindViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
@@ -147,6 +151,11 @@ public class AppModule extends AbstractPresenterModule {
                 ExplorerNodeEditTagsView.class,
                 ExplorerNodeEditTagsViewImpl.class,
                 ExplorerNodeEditTagsProxy.class);
+        bindPresenter(
+                ExplorerNodeRemoveTagsPresenter.class,
+                ExplorerNodeRemoveTagsView.class,
+                ExplorerNodeRemoveTagsViewImpl.class,
+                ExplorerNodeRemoveTagsProxy.class);
 
         bindPresenter(FindPresenter.class, FindView.class, FindViewImpl.class, FindProxy.class);
 

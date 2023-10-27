@@ -86,6 +86,22 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     ExplorerNode updateNodeTags(
             @Parameter(description = "request", required = true) ExplorerNode explorerNode);
 
+    @PUT
+    @Path("/addTags")
+    @Operation(
+            summary = "Add tags to explorer nodes",
+            operationId = "addTags")
+    void addTags(
+            @Parameter(description = "request", required = true) AddRemoveTagsRequest request);
+
+    @DELETE
+    @Path("/removeTags")
+    @Operation(
+            summary = "Remove tags from explorer nodes",
+            operationId = "removeTags")
+    void removeTags(
+            @Parameter(description = "request", required = true) AddRemoveTagsRequest request);
+
     @POST
     @Path("/info")
     @Operation(
@@ -129,6 +145,13 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     Set<String> fetchExplorerNodeTags();
 
     @POST
+    @Path("/fetchExplorerNodeTagsByDocRefs")
+    @Operation(
+            summary = "Fetch explorer node tags held by at least one of decRefs",
+            operationId = "fetchExplorerNodeTagsByDocRefs")
+    Set<String> fetchExplorerNodeTags(final List<DocRef> docRefs);
+
+    @POST
     @Path("/fetchExplorerPermissions")
     @Operation(
             summary = "Fetch permissions for explorer items",
@@ -151,4 +174,19 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "findExplorerNodes")
     ResultPage<ExplorerDocContentMatch> findContent(
             @Parameter(description = "request", required = true) FindExplorerNodeQuery request);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    enum TagFetchMode {
+        /**
+         * Tags held by ALL nodes.
+         */
+        AND,
+        /**
+         * Tags held by at least one node
+         */
+        OR
+    }
 }
