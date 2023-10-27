@@ -44,6 +44,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -110,6 +111,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
             protected void onAttach() {
                 super.onAttach();
                 GlobalResizeObserver.addListener(getElement(), element -> onResize());
+            }
+
+            @Override
+            public void onBrowserEvent(final Event event) {
+                super.onBrowserEvent(event);
             }
 
             @Override
@@ -371,12 +377,13 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
             }
         }
 
-        safeHtmlBuilder
-                .appendHtmlConstant("</div>");
+        safeHtmlBuilder.appendHtmlConstant("</div>");
 
         final ScrollPanel scrollPanel = new ScrollPanel();
-        final HTMLPanel htmlPanel = new HTMLPanel(safeHtmlBuilder.toSafeHtml());
-        scrollPanel.setWidget(htmlPanel.asWidget());
+        scrollPanel.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
+        scrollPanel.getElement().addClassName("editor-error-container");
+        scrollPanel.getElement().addClassName("max");
+        scrollPanel.setWidget(new HTMLPanel(safeHtmlBuilder.toSafeHtml()).asWidget());
         content.setWidget(scrollPanel.asWidget());
     }
 
@@ -561,6 +568,24 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public void setOptionsToDefaultAvailability() {
+        getBasicAutoCompletionOption().setToDefaultAvailability();
+        getFormatAction().setToDefaultAvailability();
+        getHighlightActiveLineOption().setToDefaultAvailability();
+        getHighlightActiveLineOption().setToDefaultState();
+        getLineNumbersOption().setToDefaultAvailability();
+        getLineWrapOption().setToDefaultAvailability();
+        getLiveAutoCompletionOption().setToDefaultAvailability();
+        getShowIndentGuides().setToDefaultAvailability();
+        getShowInvisiblesOption().setToDefaultAvailability();
+        getSnippetsOption().setToDefaultAvailability();
+        getStylesOption().setToDefaultAvailability();
+        getUseVimBindingsOption().setToDefaultAvailability();
+        getViewAsHexOption().setToDefaultAvailability();
+    }
+
+
+    @Override
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
         return content.addDomHandler(handler, KeyDownEvent.getType());
     }
@@ -594,6 +619,10 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     public void onResize() {
         doLayout();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<FlowPanel, EditorViewImpl> {
 

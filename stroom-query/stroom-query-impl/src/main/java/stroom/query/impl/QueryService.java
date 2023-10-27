@@ -10,6 +10,7 @@ import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResourceGeneration;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface QueryService {
 
@@ -27,7 +28,7 @@ public interface QueryService {
 
     List<String> fetchTimeZones();
 
-    DataSource getDataSource(DocRef docRef);
+    Optional<DataSource> getDataSource(DocRef docRef);
 
-    DataSource getDataSource(String query);
+    Optional<DataSource> getDataSource(String query);
 }

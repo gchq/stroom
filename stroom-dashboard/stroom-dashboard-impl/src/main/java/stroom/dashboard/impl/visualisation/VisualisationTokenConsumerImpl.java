@@ -16,6 +16,7 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.QLVisSettings;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.DocResolver;
 import stroom.query.language.VisualisationTokenConsumer;
 import stroom.query.language.token.AbstractToken;
 import stroom.query.language.token.KeywordGroup;
@@ -34,10 +35,13 @@ import javax.inject.Inject;
 
 public class VisualisationTokenConsumerImpl implements VisualisationTokenConsumer {
 
+    private final DocResolver docResolver;
     private final VisualisationStore visualisationStore;
 
     @Inject
-    public VisualisationTokenConsumerImpl(final VisualisationStore visualisationStore) {
+    public VisualisationTokenConsumerImpl(final DocResolver docResolver,
+                                          final VisualisationStore visualisationStore) {
+        this.docResolver = docResolver;
         this.visualisationStore = visualisationStore;
     }
 
@@ -95,15 +99,9 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         VisualisationDoc visualisationDoc;
 
         // Load visualisation.
-        final List<DocRef> docRefs = visualisationStore.findByName(visName);
-        if (docRefs.size() == 0) {
-            throw new TokenException(token, "Visualisation not found with name '" + visName + "'");
-        }
-        if (docRefs.size() > 1) {
-            throw new TokenException(token, "More than one visualisation found with name '" + visName + "'");
-        }
+        final DocRef docRef = docResolver.resolveDocRef(VisualisationDoc.DOCUMENT_TYPE, visName);
         try {
-            visualisationDoc = visualisationStore.readDocument(docRefs.get(0));
+            visualisationDoc = visualisationStore.readDocument(docRef);
             if (visualisationDoc == null) {
                 throw new TokenException(token,
                         "Unable to load visualisation with name '" + visName + "'");

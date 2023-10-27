@@ -53,3 +53,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
 from "index_view"
 where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
 select StreamId
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId

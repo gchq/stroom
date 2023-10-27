@@ -26,6 +26,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerNodePermissionsService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
@@ -141,6 +142,18 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
+    public void addTags(final AddRemoveTagsRequest request) {
+        Objects.requireNonNull(request);
+        explorerServiceProvider.get().addTags(request.getDocRefs(), request.getTags());
+    }
+
+    @Override
+    public void removeTags(final AddRemoveTagsRequest request) {
+        Objects.requireNonNull(request);
+        explorerServiceProvider.get().removeTags(request.getDocRefs(), request.getTags());
+    }
+
+    @Override
     @AutoLogged(OperationType.VIEW)
     public ExplorerNodeInfo info(final DocRef docRef) {
         final DocRefInfo docRefInfo = docRefInfoServiceProvider.get()
@@ -205,6 +218,11 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     public Set<String> fetchExplorerNodeTags() {
         return explorerServiceProvider.get().getTags();
+    }
+
+    @Override
+    public Set<String> fetchExplorerNodeTags(final List<DocRef> docRefs) {
+        return explorerServiceProvider.get().getTags(docRefs, TagFetchMode.OR);
     }
 
     @Override

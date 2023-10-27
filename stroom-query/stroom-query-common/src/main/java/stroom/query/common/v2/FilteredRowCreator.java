@@ -66,6 +66,7 @@ public class FilteredRowCreator implements ItemMapper<Row> {
             final Val val = item.getValue(i);
             final String string = fieldFormatter.format(field, val);
             stringValues.add(string);
+            fieldIdToValueMap.put(field.getId(), string);
             fieldIdToValueMap.put(field.getName(), string);
             i++;
         }

@@ -42,9 +42,11 @@ public class Tokeniser {
         // Tag keywords.
         TokenType.KEYWORDS.forEach(token -> tagKeyword(token.toString().toLowerCase(Locale.ROOT), token));
         // Treat other conjunctions as keywords.
+        tagKeyword("in", TokenType.IN);
         tagKeyword("by", TokenType.BY);
         tagKeyword("as", TokenType.AS);
         tagKeyword("between", TokenType.BETWEEN);
+        tagKeyword("dictionary", TokenType.DICTIONARY);
 
         // Tag functions.
         split("([a-z][a-zA-Z]*)(\\()", 1, TokenType.FUNCTION_NAME);
@@ -53,7 +55,7 @@ public class Tokeniser {
         split("\\(", 0, TokenType.OPEN_BRACKET);
         split("\\)", 0, TokenType.CLOSE_BRACKET);
 
-        // Tag whitespace.
+        // Tag null conditions.
         split("(^|\\s)(is[\\s]+null)(\\s|$)", 2, TokenType.IS_NULL);
         split("(^|\\s)(is[\\s]+not[\\s]+null)(\\s|$)", 2, TokenType.IS_NOT_NULL);
 

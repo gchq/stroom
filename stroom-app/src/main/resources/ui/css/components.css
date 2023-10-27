@@ -371,6 +371,10 @@
     table-layout: fixed;
 }
 
+.info-tooltip table .wrap {
+    white-space: normal;
+}
+
 .info-layout {
 	width: 100%;
 	height: 100%;

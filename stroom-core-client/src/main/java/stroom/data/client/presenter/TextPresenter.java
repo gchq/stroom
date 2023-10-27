@@ -113,6 +113,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
         return editorPresenter.getLineWrapOption();
     }
 
+    public Option getShowIndentGuides() {
+        return editorPresenter.getShowIndentGuides();
+    }
+
     public Option getShowInvisiblesOption() {
         return editorPresenter.getShowInvisiblesOption();
     }
@@ -153,6 +157,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
         editorPresenter.setTheme(theme);
     }
 
+    public void setOptionsToDefaultAvailability() {
+        editorPresenter.setOptionsToDefaultAvailability();
+    }
+
     public EditorMenuPresenter getContextMenu() {
         return editorPresenter.getContextMenu();
     }
@@ -185,6 +193,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
     public void setMode(final AceEditorMode mode) {
         editorPresenter.setMode(mode);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
 

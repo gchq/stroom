@@ -51,6 +51,8 @@ public class FieldExpressionMatcher {
     public FieldExpressionMatcher(final List<Field> fields) {
         this.fieldNameToFieldMap = new HashMap<>();
         for (final Field field : NullSafe.list(fields)) {
+            // Allow match by id and name.
+            fieldNameToFieldMap.putIfAbsent(field.getId(), field);
             fieldNameToFieldMap.putIfAbsent(field.getName(), field);
         }
     }
@@ -137,8 +139,15 @@ public class FieldExpressionMatcher {
         }
 
         final Object attribute = attributeMap.get(term.getField());
+        if (Condition.IS_NULL.equals(condition)) {
+            return attribute == null;
+        } else if (Condition.IS_NOT_NULL.equals(condition)) {
+            return attribute != null;
+        }
+
         if (attribute == null) {
-            throw new MatchException("Attribute '" + term.getField() + "' not found");
+            return false;
+//            throw new MatchException("Attribute '" + term.getField() + "' not found");
         }
 
         // Create a query based on the field type and condition.

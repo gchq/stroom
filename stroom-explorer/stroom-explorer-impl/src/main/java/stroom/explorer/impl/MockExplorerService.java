@@ -23,12 +23,14 @@ import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.ResultPage;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -76,6 +78,16 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
+    public void addTags(final List<DocRef> docRefs, final Set<String> tags) {
+
+    }
+
+    @Override
+    public void removeTags(final List<DocRef> docRefs, final Set<String> tags) {
+
+    }
+
+    @Override
     public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
         return null;
     }
@@ -95,6 +107,11 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public Set<String> getTags() {
+        return null;
+    }
+
+    @Override
+    public Set<String> getTags(final Collection<DocRef> docRefs, final TagFetchMode fetchMode) {
         return null;
     }
 

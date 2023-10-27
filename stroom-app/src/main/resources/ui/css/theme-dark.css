@@ -79,13 +79,12 @@
     --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
     --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #333;
-    --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
+    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
 
     --pipeline-element-box__background-color: #454545;
     --pipeline-element-box__background-color--hover: #505050;
-    --pipeline-element-box__background-color--selected: #1164a3;
-    --pipeline-element-box__background-color--selected--hover: #276fb0;
-    --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
+    --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
+    --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: var(--text-color);
     --pipeline-element-box__text-color--selected: var(--text-color--selected);
     --pipeline-element-box__border-color: #777;
@@ -95,6 +94,7 @@
     --pipeline-element-box__border-color--error: orangered;
     --pipeline-element-box__border-color--fatal-error: red;
     --pipeline-element-box__border-color--fatal-error-dark: #c60000;
+    --pipeline-element-box__border-color--hotspot: var(--pipeline-element-box__border-color--info);
 
     --link__text-color: #3aaaff;
 
@@ -164,7 +164,8 @@
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
     --dashboard-panel__border-color: #353944;
-    --dashboard-panel__grid-color: rgba(255, 255, 255, 0.04);
+    --dashboard-panel__grid-color: rgba(255, 255, 255, 0.1);
+    --dashboard-panel__grid-background-color: rgba(255, 255, 255, 0.015);
 
     /* ExpanderCell */
     --expander-cell-icon__background-color--hover: rgba(255, 255, 255, 0.2);

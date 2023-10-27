@@ -4,7 +4,6 @@ import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.StreamingAnalyticProcessConfig;
-import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.ExpressionCriteria;
@@ -22,7 +21,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
@@ -36,25 +34,21 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class AnalyticRuleProcessors {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleProcessors.class);
 
-    private final Provider<DataSourceResolver> dataSourceResolverProvider;
     private final SearchRequestBuilder searchRequestBuilder;
     private final ProcessorService processorService;
     private final ProcessorFilterService processorFilterService;
     private final ViewStore viewStore;
 
     @Inject
-    public AnalyticRuleProcessors(final Provider<DataSourceResolver> dataSourceResolverProvider,
-                                  final SearchRequestBuilder searchRequestBuilder,
+    public AnalyticRuleProcessors(final SearchRequestBuilder searchRequestBuilder,
                                   final ProcessorService processorService,
                                   final ProcessorFilterService processorFilterService,
                                   final ViewStore viewStore) {
-        this.dataSourceResolverProvider = dataSourceResolverProvider;
         this.searchRequestBuilder = searchRequestBuilder;
         this.processorService = processorService;
         this.processorFilterService = processorFilterService;
@@ -214,16 +208,10 @@ public class AnalyticRuleProcessors {
         final AtomicReference<ViewDoc> reference = new AtomicReference<>();
         try {
             if (doc.getQuery() != null) {
-                searchRequestBuilder.extractDataSourceNameOnly(doc.getQuery(), dataSourceName -> {
+                searchRequestBuilder.extractDataSourceOnly(doc.getQuery(), docRef -> {
                     try {
-                        if (dataSourceName != null) {
-                            final DataSource dataSource = dataSourceResolverProvider
-                                    .get()
-                                    .resolveDataSource(dataSourceName);
-                            if (dataSource != null && dataSource.getDocRef() != null) {
-                                final DocRef ref = dataSource.getDocRef();
-                                reference.set(viewStore.readDocument(ref));
-                            }
+                        if (docRef != null) {
+                            reference.set(viewStore.readDocument(docRef));
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e::getMessage, e);

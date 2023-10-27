@@ -320,3 +320,44 @@ select StreamId
    </SELECT>
 </TOKEN_GROUP>
 -----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>StreamId</STRING>
+      <IN>in</IN>
+      <TOKEN_GROUP>
+         <NUMBER>123</NUMBER>
+         <COMMA>,</COMMA>
+         <NUMBER>456</NUMBER>
+      </TOKEN_GROUP>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>StreamId</STRING>
+      <IN>in</IN>
+      <DICTIONARY>dictionary</DICTIONARY>
+      <DOUBLE_QUOTED_STRING>"my_dictionary"</DOUBLE_QUOTED_STRING>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----

@@ -22,6 +22,7 @@ import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
@@ -29,6 +30,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -56,6 +58,20 @@ public interface ExplorerService extends Clearable {
 
     ExplorerNode updateTags(ExplorerNode explorerNode);
 
+    /**
+     * @param docRefs The nodes to add tags to.
+     * @param tags Tags to add (if not already present) to all the nodes represented by docRefs.
+     *             Will not error if tags are already present.
+     */
+    void addTags(List<DocRef> docRefs, Set<String> tags);
+
+    /**
+     * @param docRefs The nodes to remove tags from.
+     * @param tags Tags to remove (if present) from all the nodes represented by docRefs.
+     *             Will not error if tags are not present.
+     */
+    void removeTags(List<DocRef> docRefs, Set<String> tags);
+
     BulkActionResult delete(List<ExplorerNode> explorerNodes);
 
     void rebuildTree();
@@ -63,9 +79,14 @@ public interface ExplorerService extends Clearable {
     List<DocumentType> getTypes();
 
     /**
-     * @return All known node tags
+     * @return All known node tags + tags from {@link stroom.explorer.shared.StandardExplorerTags}
      */
     Set<String> getTags();
+
+    /**
+     * @return All tags held by at least one of docRefs
+     */
+    Set<String> getTags(final Collection<DocRef> docRefs, final TagFetchMode fetchMode);
 
     List<DocumentType> getVisibleTypes();
 
