@@ -51,8 +51,10 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
+import stroom.processor.shared.ProcessorType;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
@@ -247,7 +249,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 if (row instanceof ProcessorFilterRow) {
                     icon = SvgPresets.FILTER.enabled(true);
                 } else if (row instanceof ProcessorRow) {
-                    icon = SvgPresets.PROCESS.enabled(true);
+                    if (ProcessorType.STREAMING_ANALYTIC
+                            .equals(((ProcessorRow) row).getProcessor().getProcessorType())) {
+                        icon = SvgPresets.enabled(SvgImage.DOCUMENT_ANALYTIC_RULE,
+                                ProcessorType.STREAMING_ANALYTIC.getDisplayValue());
+                    } else {
+                        icon = SvgPresets.PROCESS.enabled(true);
+                    }
                 }
                 return icon;
             }

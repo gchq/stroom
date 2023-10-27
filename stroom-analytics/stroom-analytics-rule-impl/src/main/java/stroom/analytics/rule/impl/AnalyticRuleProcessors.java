@@ -16,6 +16,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -61,52 +62,62 @@ public class AnalyticRuleProcessors {
     }
 
     public void deleteProcessorFilters(final AnalyticRuleDoc doc) {
-        final List<ProcessorFilter> existing = getProcessorFilters(doc);
-        deleteFilters(existing);
+        final Optional<ViewDoc> optionalViewDoc = getViewDoc(doc);
+        optionalViewDoc.ifPresent(viewDoc -> {
+            final List<Processor> processors = getProcessor(viewDoc);
+            if (processors.size() > 1) {
+                throw new RuntimeException("Unexpected number of processors");
+            } else {
+                for (final Processor processor : processors) {
+                    final List<ProcessorFilter> existing = getProcessorFilters(doc, processor);
+                    deleteFilters(existing);
+                }
+            }
+        });
     }
 
     public void updateProcessorFilters(final AnalyticRuleDoc doc) {
-        final List<ProcessorFilter> existing = getProcessorFilters(doc);
         if (AnalyticProcessType.STREAMING.equals(doc.getAnalyticProcessType())) {
-            final AnalyticProcessConfig analyticProcessConfig = doc.getAnalyticProcessConfig();
-            if (analyticProcessConfig instanceof final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
-                if (existing.size() > 0) {
-                    // Enable/disable filters.
-                    enableFilters(existing, streamingAnalyticProcessConfig.isEnabled());
-                } else {
-                    // Create filter.
-                    final Optional<ViewDoc> optionalViewDoc = getViewDoc(doc);
-                    if (optionalViewDoc.isEmpty()) {
-                        throw new RuntimeException("Unable to find referenced view to process data");
-                    }
-                    final ViewDoc viewDoc = optionalViewDoc.get();
-
-//                    final Processor processor = getOrCreateProcessor(viewDoc.getPipeline());
-                    final ExpressionOperator expressionOperator = getDataProcessingExpression(viewDoc);
-                    final QueryData queryData = QueryData
-                            .builder()
-                            .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                            .expression(expressionOperator)
-                            .analyticRule(DocRefUtil.create(doc))
-                            .build();
-                    final CreateProcessFilterRequest request = CreateProcessFilterRequest
-                            .builder()
-                            .queryData(queryData)
-                            .pipeline(viewDoc.getPipeline())
-                            .minMetaCreateTimeMs(streamingAnalyticProcessConfig.getMinMetaCreateTimeMs())
-                            .maxMetaCreateTimeMs(streamingAnalyticProcessConfig.getMaxMetaCreateTimeMs())
-                            .enabled(analyticProcessConfig.isEnabled())
-                            .priority(10)
-                            .build();
-                    processorFilterService.create(request);
-                }
-            } else {
-                // Disable processor filters.
-                enableFilters(existing, false);
+            final Optional<ViewDoc> optionalViewDoc = getViewDoc(doc);
+            if (optionalViewDoc.isEmpty()) {
+                throw new RuntimeException("No view can be found for analytic");
             }
-        } else {
-            // Disable processor filters.
-            enableFilters(existing, false);
+
+            optionalViewDoc.ifPresent(viewDoc -> {
+                // Get or create processor.
+                final Processor processor = getOrCreateProcessor(viewDoc);
+                final List<ProcessorFilter> existing = getProcessorFilters(doc, processor);
+                final AnalyticProcessConfig analyticProcessConfig = doc.getAnalyticProcessConfig();
+                if (analyticProcessConfig instanceof
+                        final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+                    if (existing.size() > 0) {
+                        // Enable/disable filters.
+                        enableFilters(existing, streamingAnalyticProcessConfig.isEnabled());
+                    } else {
+                        // Create filter.
+                        final ExpressionOperator expressionOperator = getDataProcessingExpression(viewDoc);
+                        final QueryData queryData = QueryData
+                                .builder()
+                                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                                .expression(expressionOperator)
+                                .analyticRule(DocRefUtil.create(doc))
+                                .build();
+                        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                                .builder()
+                                .queryData(queryData)
+                                .pipeline(viewDoc.getPipeline())
+                                .minMetaCreateTimeMs(streamingAnalyticProcessConfig.getMinMetaCreateTimeMs())
+                                .maxMetaCreateTimeMs(streamingAnalyticProcessConfig.getMaxMetaCreateTimeMs())
+                                .enabled(analyticProcessConfig.isEnabled())
+                                .priority(10)
+                                .build();
+                        processorFilterService.create(processor, request);
+                    }
+                } else {
+                    // Disable processor filters.
+                    enableFilters(existing, false);
+                }
+            });
         }
     }
 
@@ -132,45 +143,74 @@ public class AnalyticRuleProcessors {
         return expressionOperator;
     }
 
-    public List<ProcessorFilter> getProcessorFilters(final AnalyticRuleDoc doc) {
-        final List<ProcessorFilter> list = new ArrayList<>();
-        final Optional<ViewDoc> optional = getViewDoc(doc);
-        optional.ifPresent(viewDoc -> {
-            final DocRef pipelineDocRef = viewDoc.getPipeline();
-            if (pipelineDocRef != null) {
-                // First try to find the associated processors
-                final ExpressionOperator processorExpression = ExpressionOperator.builder()
-                        .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
-                ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(
-                        processorExpression));
-                if (processorResultPage.size() > 1) {
-                    throw new RuntimeException("Unexpected number of processors");
-                } else if (processorResultPage.size() == 1) {
-                    final Processor processor = processorResultPage.getFirst();
-                    final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                            .addTerm(ProcessorFilterFields.PROCESSOR_ID,
-                                    ExpressionTerm.Condition.EQUALS,
-                                    processor.getId())
-                            .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
-                            .build();
-                    final ResultPage<ProcessorFilter> filterResultPage = processorFilterService
-                            .find(new ExpressionCriteria(filterExpression));
-                    for (final ProcessorFilter filter : filterResultPage.getValues()) {
-                        if (filter.getQueryData() != null) {
-                            final DocRef analyticRule = filter.getQueryData().getAnalyticRule();
-                            if (Objects.equals(analyticRule.getUuid(), doc.getUuid())) {
-                                list.add(filter);
-                            }
-                        }
-                    }
-                }
-            }
-        });
+    private Processor getOrCreateProcessor(final ViewDoc viewDoc) {
+        final List<Processor> processors = getProcessor(viewDoc);
+        Processor processor;
+        if (processors.size() > 1) {
+            throw new RuntimeException("Unexpected number of processors");
 
+        } else if (processors.size() == 0) {
+            // Create processor.
+            if (viewDoc.getPipeline() == null) {
+                throw new RuntimeException("View has no pipeline referenced");
+            }
+            processor = new Processor();
+            processor.setEnabled(true);
+            processor.setPipeline(viewDoc.getPipeline());
+            processor.setProcessorType(ProcessorType.STREAMING_ANALYTIC);
+            processor = processorService.create(processor);
+        } else {
+            processor = processors.get(0);
+        }
+        return processor;
+    }
+
+    public List<Processor> getProcessor(final ViewDoc viewDoc) {
+        final List<Processor> list = new ArrayList<>();
+        final DocRef pipelineDocRef = viewDoc.getPipeline();
+        if (pipelineDocRef != null) {
+            // First try to find the associated processors
+            final ExpressionOperator processorExpression = ExpressionOperator.builder()
+                    .addTerm(
+                            ProcessorFields.PROCESSOR_TYPE,
+                            Condition.EQUALS,
+                            ProcessorType.STREAMING_ANALYTIC.getDisplayValue())
+                    .addTerm(
+                            ProcessorFields.PIPELINE,
+                            Condition.IS_DOC_REF,
+                            pipelineDocRef)
+                    .build();
+            list.addAll(processorService.find(new ExpressionCriteria(processorExpression)).getValues());
+        }
         return list;
     }
 
-    private Optional<ViewDoc> getViewDoc(final AnalyticRuleDoc doc) {
+    public List<ProcessorFilter> getProcessorFilters(final AnalyticRuleDoc doc, final Processor processor) {
+        final List<ProcessorFilter> list = new ArrayList<>();
+        final ExpressionOperator filterExpression = ExpressionOperator.builder()
+                .addTerm(
+                        ProcessorFilterFields.PROCESSOR_ID,
+                        ExpressionTerm.Condition.EQUALS,
+                        processor.getId())
+                .addTerm(
+                        ProcessorFilterFields.DELETED,
+                        Condition.EQUALS,
+                        false)
+                .build();
+        final ResultPage<ProcessorFilter> filterResultPage = processorFilterService
+                .find(new ExpressionCriteria(filterExpression));
+        for (final ProcessorFilter filter : filterResultPage.getValues()) {
+            if (filter.getQueryData() != null) {
+                final DocRef analyticRule = filter.getQueryData().getAnalyticRule();
+                if (Objects.equals(analyticRule.getUuid(), doc.getUuid())) {
+                    list.add(filter);
+                }
+            }
+        }
+        return list;
+    }
+
+    public Optional<ViewDoc> getViewDoc(final AnalyticRuleDoc doc) {
         final AtomicReference<ViewDoc> reference = new AtomicReference<>();
         try {
             if (doc.getQuery() != null) {
@@ -196,35 +236,4 @@ public class AnalyticRuleProcessors {
 
         return Optional.ofNullable(reference.get());
     }
-
-//    private Processor getOrCreateProcessor(final DocRef pipeline) {
-//        final ExpressionOperator expression = ExpressionOperator
-//                .builder()
-//                .addTerm(ProcessorFields.PIPELINE, Condition.EQUALS, pipeline.getUuid())
-//                .build();
-//        final ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(expression));
-//        for (final Processor processor : processorResultPage.getValues()) {
-//            if (STREAMING_ANALYTIC_TASK.equals(processor.getTaskType())) {
-//                return processor;
-//            }
-//        }
-//        return createProcessor(pipeline);
-//    }
-//
-//    private Processor createProcessor(final DocRef pipeline) {
-//        final Processor processor = new Processor(
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                STREAMING_ANALYTIC_TASK,
-//                pipeline.getUuid(),
-//                pipeline.getName(),
-//                true,
-//                false);
-//        return processorService.create(processor);
-//    }
 }

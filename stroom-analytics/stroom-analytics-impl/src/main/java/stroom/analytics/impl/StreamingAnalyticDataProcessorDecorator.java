@@ -24,7 +24,6 @@ import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.filter.FieldValue;
-import stroom.processor.api.DataProcessorDecorator;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.SearchRequest;
@@ -49,7 +48,7 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class StreamingAnalyticDataProcessorDecorator implements DataProcessorDecorator {
+public class StreamingAnalyticDataProcessorDecorator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory
             .getLogger(StreamingAnalyticDataProcessorDecorator.class);
@@ -68,10 +67,12 @@ public class StreamingAnalyticDataProcessorDecorator implements DataProcessorDec
 
     @Inject
     public StreamingAnalyticDataProcessorDecorator(final AnalyticRuleStore analyticRuleStore,
-                                                   final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
+                                                   final AnalyticRuleSearchRequestHelper
+                                                           analyticRuleSearchRequestHelper,
                                                    final AnalyticHelper analyticHelper,
                                                    final ExpressionContextFactory expressionContextFactory,
-                                                   final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                                                   final SearchExpressionQueryBuilderFactory
+                                                           searchExpressionQueryBuilderFactory,
                                                    final NotificationStateService notificationStateService,
                                                    final DetectionConsumerFactory detectionConsumerFactory,
                                                    final DetectionConsumerProxy detectionConsumerProxy,
@@ -87,7 +88,6 @@ public class StreamingAnalyticDataProcessorDecorator implements DataProcessorDec
         this.fieldListConsumerHolder = fieldListConsumerHolder;
     }
 
-    @Override
     public String getErrorFeedName(final ProcessorFilter processorFilter, final Meta meta) {
         if (processorFilter != null &&
                 processorFilter.getQueryData() != null &&
@@ -103,7 +103,6 @@ public class StreamingAnalyticDataProcessorDecorator implements DataProcessorDec
         return meta.getFeedName();
     }
 
-    @Override
     public void start(final ProcessorFilter processorFilter) {
         if (processorFilter != null &&
                 processorFilter.getQueryData() != null &&
@@ -117,7 +116,6 @@ public class StreamingAnalyticDataProcessorDecorator implements DataProcessorDec
         }
     }
 
-    @Override
     public void end() {
         if (fieldListConsumer != null) {
             fieldListConsumer.end();

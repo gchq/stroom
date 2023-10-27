@@ -522,6 +522,36 @@
         "tags" : [ "AnalyticNotifications" ]
       }
     },
+    "/analyticProcess/v1/filter" : {
+      "post" : {
+        "operationId" : "findAnalyticProcessFilter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticRuleDoc"
+              }
+            }
+          },
+          "description" : "analyticRuleDoc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessorFilterRow"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the process filter for the specified process",
+        "tags" : [ "AnalyticProcess" ]
+      }
+    },
     "/analyticProcess/v1/tracker" : {
       "post" : {
         "operationId" : "findAnalyticProcessTracker",
@@ -533,7 +563,7 @@
               }
             }
           },
-          "description" : "processUuid",
+          "description" : "analyticUuid",
           "required" : true
         },
         "responses" : {
@@ -15141,8 +15171,9 @@
           "pipelineUuid" : {
             "type" : "string"
           },
-          "taskType" : {
-            "type" : "string"
+          "processorType" : {
+            "type" : "string",
+            "enum" : [ "PIPELINE", "STREAMING_ANALYTIC" ]
           },
           "updateTimeMs" : {
             "type" : "integer",

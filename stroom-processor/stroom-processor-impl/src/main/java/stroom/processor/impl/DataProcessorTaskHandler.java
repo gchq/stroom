@@ -23,13 +23,13 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
-import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
-import stroom.processor.api.TaskType;
+import stroom.processor.api.ProcessorTaskExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -52,7 +52,7 @@ public class DataProcessorTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataProcessorTaskHandler.class);
 
-    private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
+    private final Map<ProcessorType, Provider<ProcessorTaskExecutor>> executorProviders;
     private final ProcessorCache processorCache;
     private final ProcessorFilterCache processorFilterCache;
     private final ProcessorTaskDao processorTaskDao;
@@ -63,7 +63,7 @@ public class DataProcessorTaskHandler {
     private final TaskContextFactory taskContextFactory;
 
     @Inject
-    DataProcessorTaskHandler(final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders,
+    DataProcessorTaskHandler(final Map<ProcessorType, Provider<ProcessorTaskExecutor>> executorProviders,
                              final ProcessorCache processorCache,
                              final ProcessorFilterCache processorFilterCache,
                              final ProcessorTaskDao processorTaskDao,
@@ -158,12 +158,12 @@ public class DataProcessorTaskHandler {
                     // Avoid having to do another fetch
                     processorTask.setProcessorFilter(destProcessorFilter);
 
-                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(
-                            new TaskType(destStreamProcessor.getTaskType()));
-                    final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
+                    final Provider<ProcessorTaskExecutor> executorProvider = executorProviders.get(
+                            destStreamProcessor.getProcessorType());
+                    final ProcessorTaskExecutor processorTaskExecutor = executorProvider.get();
 
                     try {
-                        processorResult = dataProcessorTaskExecutor
+                        processorResult = processorTaskExecutor
                                 .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
                         // Only record completion for this task if it was not
                         // terminated.
@@ -219,7 +219,7 @@ public class DataProcessorTaskHandler {
                     " " +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
                     " " +
-                    destStreamProcessor.getTaskType() +
+                    destStreamProcessor.getProcessorType() +
                     " " +
                     destStreamProcessor.getPipelineUuid());
         } else {
@@ -228,7 +228,7 @@ public class DataProcessorTaskHandler {
                     " " +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
                     " " +
-                    destStreamProcessor.getTaskType());
+                    destStreamProcessor.getProcessorType());
         }
     }
 }

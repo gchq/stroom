@@ -23,10 +23,14 @@ import stroom.analytics.shared.AnalyticTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
+import stroom.view.shared.ViewDoc;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -55,14 +59,25 @@ class AnalyticProcessResourceImpl implements AnalyticProcessResource {
 
     @Override
     public ProcessorFilterRow getFilter(final AnalyticRuleDoc analyticRuleDoc) {
-        if (analyticRuleDoc == null) {
-            return null;
-        }
-        final List<ProcessorFilter> list = analyticRuleProcessorsProvider.get().getProcessorFilters(analyticRuleDoc);
-        if (list == null || list.size() == 0) {
-            return null;
+        if (analyticRuleDoc != null) {
+            final List<ProcessorFilter> list = new ArrayList<>();
+            final AnalyticRuleProcessors analyticRuleProcessors = analyticRuleProcessorsProvider.get();
+            final Optional<ViewDoc> optionalViewDoc = analyticRuleProcessors.getViewDoc(analyticRuleDoc);
+            optionalViewDoc.ifPresent(viewDoc -> {
+                final List<Processor> processors = analyticRuleProcessors.getProcessor(viewDoc);
+                if (processors.size() == 1) {
+                    final Processor processor = processors.get(0);
+                    final List<ProcessorFilter> existing = analyticRuleProcessors
+                            .getProcessorFilters(analyticRuleDoc, processor);
+                    list.addAll(existing);
+                }
+            });
+
+            if (list.size() == 1) {
+                return processorFilterServiceProvider.get().getRow(list.get(0));
+            }
         }
 
-        return processorFilterServiceProvider.get().getRow(list.get(0));
+        return null;
     }
 }

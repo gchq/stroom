@@ -63,12 +63,11 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.processor.api.DataProcessorDecorator;
-import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
+import stroom.processor.api.ProcessorTaskExecutor;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -105,14 +104,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
-public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
+public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExecutor {
 
-    public static final String PIPELINE_STREAM_PROCESSOR = "pipelineStreamProcessor";
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
     private static final int PREVIEW_SIZE = 100;
@@ -142,7 +137,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private final NodeInfo nodeInfo;
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
-    private final Provider<DataProcessorDecorator> dataProcessorDecoratorProvider;
 
     private Processor streamProcessor;
     private ProcessorFilter processorFilter;
@@ -151,29 +145,27 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
     private long startTime;
 
-    @Inject
-    PipelineDataProcessorTaskExecutor(final PipelineFactory pipelineFactory,
-                                      final Store store,
-                                      final PipelineStore pipelineStore,
-                                      final MetaService metaService,
-                                      final ProcessorTaskService processorTaskService,
-                                      final PipelineHolder pipelineHolder,
-                                      final FeedHolder feedHolder,
-                                      final FeedProperties feedProperties,
-                                      final MetaDataHolder metaDataHolder,
-                                      final MetaHolder metaHolder,
-                                      final SearchIdHolder searchIdHolder,
-                                      final LocationFactoryProxy locationFactory,
-                                      final StreamProcessorHolder streamProcessorHolder,
-                                      final ErrorReceiverProxy errorReceiverProxy,
-                                      final ErrorWriterProxy errorWriterProxy,
-                                      final MetaData metaData,
-                                      final RecordCount recordCount,
-                                      final RecordErrorReceiver recordErrorReceiver,
-                                      final NodeInfo nodeInfo,
-                                      final PipelineDataCache pipelineDataCache,
-                                      final InternalStatisticsReceiver internalStatisticsReceiver,
-                                      final Provider<DataProcessorDecorator> dataProcessorDecoratorProvider) {
+    protected AbstractProcessorTaskExecutor(final PipelineFactory pipelineFactory,
+                                            final Store store,
+                                            final PipelineStore pipelineStore,
+                                            final MetaService metaService,
+                                            final ProcessorTaskService processorTaskService,
+                                            final PipelineHolder pipelineHolder,
+                                            final FeedHolder feedHolder,
+                                            final FeedProperties feedProperties,
+                                            final MetaDataHolder metaDataHolder,
+                                            final MetaHolder metaHolder,
+                                            final SearchIdHolder searchIdHolder,
+                                            final LocationFactoryProxy locationFactory,
+                                            final StreamProcessorHolder streamProcessorHolder,
+                                            final ErrorReceiverProxy errorReceiverProxy,
+                                            final ErrorWriterProxy errorWriterProxy,
+                                            final MetaData metaData,
+                                            final RecordCount recordCount,
+                                            final RecordErrorReceiver recordErrorReceiver,
+                                            final NodeInfo nodeInfo,
+                                            final PipelineDataCache pipelineDataCache,
+                                            final InternalStatisticsReceiver internalStatisticsReceiver) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
@@ -195,7 +187,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         this.nodeInfo = nodeInfo;
         this.pipelineDataCache = pipelineDataCache;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
-        this.dataProcessorDecoratorProvider = dataProcessorDecoratorProvider;
     }
 
     @Override
@@ -220,8 +211,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         // processor.
         final Meta meta = streamSource.getMeta();
 
-        final DataProcessorDecorator dataProcessorDecorator = dataProcessorDecoratorProvider.get();
-        final String errorFeedName = dataProcessorDecorator.getErrorFeedName(processorFilter, meta);
+        final String errorFeedName = getErrorFeedName(processorFilter, meta);
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider =
@@ -240,14 +230,14 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
-                dataProcessorDecorator.start(processorFilter);
+                beforeProcessing(processorFilter);
                 process(taskContext);
 
             } catch (final Exception e) {
                 outputError(e);
             } finally {
                 try {
-                    dataProcessorDecorator.end();
+                    afterProcessing(processorFilter);
                 } catch (final Exception e) {
                     outputError(e);
                 }
@@ -274,6 +264,16 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             }
         }
         return new ProcessorResultImpl(read, written, markerCounts);
+    }
+
+    protected String getErrorFeedName(final ProcessorFilter processorFilter, final Meta meta) {
+        return meta.getFeedName();
+    }
+
+    protected void beforeProcessing(final ProcessorFilter processorFilter) {
+    }
+
+    protected void afterProcessing(final ProcessorFilter processorFilter) {
     }
 
     private void process(final TaskContext taskContext) {

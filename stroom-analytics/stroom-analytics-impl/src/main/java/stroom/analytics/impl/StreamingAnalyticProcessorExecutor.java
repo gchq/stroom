@@ -1,0 +1,113 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package stroom.analytics.impl;
+
+import stroom.core.dataprocess.AbstractProcessorTaskExecutor;
+import stroom.data.store.api.Store;
+import stroom.feed.api.FeedProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
+import stroom.node.api.NodeInfo;
+import stroom.pipeline.ErrorWriterProxy;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.RecordErrorReceiver;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaData;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.state.SearchIdHolder;
+import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.statistics.api.InternalStatisticsReceiver;
+
+import javax.inject.Inject;
+
+public class StreamingAnalyticProcessorExecutor extends AbstractProcessorTaskExecutor {
+
+    private final StreamingAnalyticDataProcessorDecorator streamingAnalyticDataProcessorDecorator;
+
+    @Inject
+    public StreamingAnalyticProcessorExecutor(final PipelineFactory pipelineFactory,
+                                              final Store store,
+                                              final PipelineStore pipelineStore,
+                                              final MetaService metaService,
+                                              final ProcessorTaskService processorTaskService,
+                                              final PipelineHolder pipelineHolder,
+                                              final FeedHolder feedHolder,
+                                              final FeedProperties feedProperties,
+                                              final MetaDataHolder metaDataHolder,
+                                              final MetaHolder metaHolder,
+                                              final SearchIdHolder searchIdHolder,
+                                              final LocationFactoryProxy locationFactory,
+                                              final StreamProcessorHolder streamProcessorHolder,
+                                              final ErrorReceiverProxy errorReceiverProxy,
+                                              final ErrorWriterProxy errorWriterProxy,
+                                              final MetaData metaData,
+                                              final RecordCount recordCount,
+                                              final RecordErrorReceiver recordErrorReceiver,
+                                              final NodeInfo nodeInfo,
+                                              final PipelineDataCache pipelineDataCache,
+                                              final InternalStatisticsReceiver internalStatisticsReceiver,
+                                              final StreamingAnalyticDataProcessorDecorator
+                                                          streamingAnalyticDataProcessorDecorator) {
+        super(pipelineFactory,
+                store,
+                pipelineStore,
+                metaService,
+                processorTaskService,
+                pipelineHolder,
+                feedHolder,
+                feedProperties,
+                metaDataHolder,
+                metaHolder,
+                searchIdHolder,
+                locationFactory,
+                streamProcessorHolder,
+                errorReceiverProxy,
+                errorWriterProxy,
+                metaData,
+                recordCount,
+                recordErrorReceiver,
+                nodeInfo,
+                pipelineDataCache,
+                internalStatisticsReceiver);
+        this.streamingAnalyticDataProcessorDecorator = streamingAnalyticDataProcessorDecorator;
+    }
+
+    @Override
+    protected String getErrorFeedName(final ProcessorFilter processorFilter, final Meta meta) {
+        return streamingAnalyticDataProcessorDecorator.getErrorFeedName(processorFilter, meta);
+    }
+
+    @Override
+    protected void beforeProcessing(final ProcessorFilter processorFilter) {
+        streamingAnalyticDataProcessorDecorator.start(processorFilter);
+    }
+
+    @Override
+    protected void afterProcessing(final ProcessorFilter processorFilter) {
+        streamingAnalyticDataProcessorDecorator.end();
+    }
+}

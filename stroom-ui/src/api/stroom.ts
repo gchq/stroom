@@ -3144,7 +3144,7 @@ export interface Processor {
   id?: number;
   pipelineName?: string;
   pipelineUuid?: string;
-  taskType?: string;
+  processorType?: "PIPELINE" | "STREAMING_ANALYTIC";
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -5440,6 +5440,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   analyticProcess = {
+    /**
+     * No description
+     *
+     * @tags AnalyticProcess
+     * @name FindAnalyticProcessFilter
+     * @summary Find the process filter for the specified process
+     * @request POST:/analyticProcess/v1/filter
+     * @secure
+     */
+    findAnalyticProcessFilter: (data: AnalyticRuleDoc, params: RequestParams = {}) =>
+      this.request<any, ProcessorFilterRow>({
+        path: `/analyticProcess/v1/filter`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
     /**
      * No description
      *

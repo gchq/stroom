@@ -19,7 +19,8 @@ package stroom.analytics.impl;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.processor.api.DataProcessorDecorator;
+import stroom.processor.api.ProcessorTaskExecutorBinder;
+import stroom.processor.shared.ProcessorType;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;
@@ -72,7 +73,8 @@ public class AnalyticsModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), NodeSearchTaskHandlerProvider.class)
                 .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);
 
-        bind(DataProcessorDecorator.class).to(StreamingAnalyticDataProcessorDecorator.class);
+        ProcessorTaskExecutorBinder.create(binder())
+                .bind(ProcessorType.STREAMING_ANALYTIC, StreamingAnalyticProcessorExecutor.class);
     }
 
     private static class TableBuilderAnalyticExecutorRunnable extends RunnableWrapper {

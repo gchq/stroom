@@ -1,6 +1,7 @@
 package stroom.processor.impl.db;
 
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorType;
 
 import org.jooq.Record;
 
@@ -21,8 +22,9 @@ class RecordToProcessorMapper implements Function<Record, Processor> {
         processor.setUpdateUser(record.get(PROCESSOR.UPDATE_USER));
         processor.setUuid(record.get(PROCESSOR.UUID));
         processor.setPipelineUuid(record.get(PROCESSOR.PIPELINE_UUID));
-        processor.setTaskType(record.get(PROCESSOR.TASK_TYPE));
+        processor.setProcessorType(ProcessorType.fromDisplayValue(record.get(PROCESSOR.TASK_TYPE)));
         processor.setEnabled(record.get(PROCESSOR.ENABLED));
+        processor.setDeleted(record.get(PROCESSOR.DELETED));
         return processor;
     }
 }

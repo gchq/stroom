@@ -16,6 +16,7 @@ import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -24,14 +25,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
-import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class ProcessorDaoImpl implements ProcessorDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorDaoImpl.class);
+
+    private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
+    private static final BiFunction<Processor, ProcessorRecord, ProcessorRecord> PROCESSOR_TO_RECORD_MAPPER =
+            new ProcessorToRecordMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
@@ -43,11 +49,17 @@ class ProcessorDaoImpl implements ProcessorDao {
                             final ExpressionMapperFactory expressionMapperFactory,
                             final ProcessorFilterDaoImpl processorFilterDao) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.genericDao = new GenericDao<>(processorDbConnProvider, PROCESSOR, PROCESSOR.ID, Processor.class);
+        this.genericDao = new GenericDao<>(
+                processorDbConnProvider,
+                PROCESSOR,
+                PROCESSOR.ID,
+                PROCESSOR_TO_RECORD_MAPPER,
+                RECORD_TO_PROCESSOR_MAPPER);
         this.processorFilterDao = processorFilterDao;
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFields.PROCESSOR_TYPE, PROCESSOR.TASK_TYPE, String::valueOf);
         expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value, false);
         expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);
@@ -77,7 +89,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                             processor.getUpdateTimeMs(),
                             processor.getUpdateUser(),
                             processor.getUuid(),
-                            processor.getTaskType(),
+                            processor.getProcessorType().getDisplayValue(),
                             processor.getPipelineUuid(),
                             processor.isEnabled(),
                             processor.isDeleted())
@@ -98,6 +110,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                     .select()
                     .from(PROCESSOR)
                     .where(PROCESSOR.PIPELINE_UUID.eq(processor.getPipelineUuid()))
+                    .and(PROCESSOR.TASK_TYPE.eq(processor.getProcessorType().getDisplayValue()))
                     .fetchOneInto(Processor.class);
         });
     }
@@ -187,10 +200,11 @@ class ProcessorDaoImpl implements ProcessorDao {
     public Optional<Processor> fetchByPipelineUuid(final String pipelineUuid) {
         Objects.requireNonNull(pipelineUuid);
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .select()
-                .from(PROCESSOR)
-                .where(PROCESSOR.PIPELINE_UUID.eq(pipelineUuid))
-                .fetchOptionalInto(Processor.class));
+                        .select()
+                        .from(PROCESSOR)
+                        .where(PROCESSOR.PIPELINE_UUID.eq(pipelineUuid))
+                        .fetchOptional())
+                .map(RECORD_TO_PROCESSOR_MAPPER);
     }
 
     @Override
@@ -200,7 +214,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .from(PROCESSOR)
                         .where(PROCESSOR.UUID.eq(uuid))
                         .fetchOptional())
-                .map(record -> record.into(Processor.class));
+                .map(RECORD_TO_PROCESSOR_MAPPER);
     }
 
     @Override
@@ -214,7 +228,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .where(condition)
                         .limit(offset, limit)
                         .fetch())
-                .into(Processor.class);
+                .map(RECORD_TO_PROCESSOR_MAPPER::apply);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 }
