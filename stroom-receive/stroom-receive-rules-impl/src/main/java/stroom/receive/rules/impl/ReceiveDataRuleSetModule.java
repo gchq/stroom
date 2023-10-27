@@ -17,7 +17,6 @@
 package stroom.receive.rules.impl;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -33,8 +32,11 @@ public class ReceiveDataRuleSetModule extends AbstractModule {
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(ReceiveDataRuleSetServiceImpl.class);
+        // Commented out pending re-visiting receipt rules as the current implementation
+        // was not fully thought through
+        // See https://github.com/gchq/stroom/issues/1125
+//        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+//                .addBinding(ReceiveDataRuleSetServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ReceiveDataRuleSetServiceImpl.class);
