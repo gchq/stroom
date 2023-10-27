@@ -57,6 +57,10 @@ public class RefreshDocumentEvent extends GwtEvent<RefreshDocumentEvent.Handler>
         return docRef;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onReload(RefreshDocumentEvent event);

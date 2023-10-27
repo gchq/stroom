@@ -4,27 +4,6 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="removeNodeTags max form flex-column">
-
-<!--        <form:FormGroup identity="removeNodeTagsAddTags"-->
-<!--                        label="Remove/Filter Tag(s)"-->
-<!--                        addStyleNames="removeNodeTagsAddTagsFrmGrp dock-min form">-->
-<!--            <g:FlowPanel styleName="max form dock-min">-->
-<!--                <g:HTML styleName="removeNodeTagsAddTagsLabel example-label">-->
-<!--                    E.g. One tag '<code>extraction-pipeline</code>' or multiple tags '<code>system-x system-y</code>'.-->
-<!--                </g:HTML>-->
-<!--                <g:FlowPanel styleName="removeNodeTagsAddTagsInputContainer flex-row dock-min form">-->
-<!--                    <g:FlowPanel styleName="removeNodeTagsAddTagsInputPanel flex-row dock-max form">-->
-<!--                        <g:TextBox ui:field="textBox"-->
-<!--                                   addStyleNames="removeNodeTagsAddTagsInput form-control lower-case-input dock-max"/>-->
-<!--                        <b:ButtonPanel ui:field="clearButtonPanel"-->
-<!--                                       addStyleNames="align-center dock-min"/>-->
-<!--                    </g:FlowPanel>-->
-<!--                    <b:ButtonPanel ui:field="inputButtonPanel"-->
-<!--                                   addStyleNames="align-center dock-min"/>-->
-<!--                </g:FlowPanel>-->
-<!--            </g:FlowPanel>-->
-<!--        </form:FormGroup>-->
-
         <g:FlowPanel styleName="removeNodeTagsListsContainer form dock-max flex-row">
             <form:FormGroup identity="removeNodeTagsNodeTags"
                             addStyleNames="removeNodeTagsNodeTagsFrmGrp dock-max">
@@ -36,6 +15,5 @@
                 </g:FlowPanel>
             </form:FormGroup>
         </g:FlowPanel>
-
     </g:FlowPanel>
 </ui:UiBinder>

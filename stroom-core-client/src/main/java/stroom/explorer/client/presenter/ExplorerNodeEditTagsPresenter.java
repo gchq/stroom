@@ -135,7 +135,7 @@ public class ExplorerNodeEditTagsPresenter
                 ? "Edit Tags on " + getNodeName()
                 : "Add Tags to " + getNodeName();
 
-        final PopupSize popupSize = PopupSize.resizable(700, 700, 700, 700);
+        final PopupSize popupSize = PopupSize.resizable(600, 600, 400, 400);
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
