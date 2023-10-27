@@ -103,7 +103,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .select()
                         .from(PROCESSOR)
                         .where(PROCESSOR.ID.eq(id))
-                        .fetchOneInto(Processor.class);
+                        .fetchOptional();
             }
 
             return context
@@ -111,8 +111,10 @@ class ProcessorDaoImpl implements ProcessorDao {
                     .from(PROCESSOR)
                     .where(PROCESSOR.PIPELINE_UUID.eq(processor.getPipelineUuid()))
                     .and(PROCESSOR.TASK_TYPE.eq(processor.getProcessorType().getDisplayValue()))
-                    .fetchOneInto(Processor.class);
-        });
+                    .fetchOptional();
+        })
+        .map(RECORD_TO_PROCESSOR_MAPPER)
+        .orElse(null);
     }
 
     @Override
