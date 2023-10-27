@@ -349,7 +349,7 @@ public class ExplorerNodeEditTagsViewImpl
                 .sorted()
                 .collect(Collectors.toList());
         final int documentCount = GwtNullSafe.size(docRefs);
-        nodeTagsLabel.setText(documentCount > 0
+        nodeTagsLabel.setText(documentCount > 1
                 ? "Tags to add to " + documentCount + " Documents"
                 : "Document Tags");
 

@@ -26,19 +26,19 @@ import com.google.gwt.event.shared.HasHandlers;
 import java.util.List;
 import java.util.Objects;
 
-public class ShowExplorerNodeTagsDialogEvent extends GwtEvent<ShowExplorerNodeTagsDialogEvent.Handler> {
+public class ShowEditNodeTagsDialogEvent extends GwtEvent<ShowEditNodeTagsDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final List<ExplorerNode> explorerNodes;
 
-    private ShowExplorerNodeTagsDialogEvent(final List<ExplorerNode> explorerNodes) {
+    private ShowEditNodeTagsDialogEvent(final List<ExplorerNode> explorerNodes) {
         this.explorerNodes = Objects.requireNonNull(explorerNodes);
     }
 
     public static void fire(final HasHandlers handlers,
                             final List<ExplorerNode> explorerNodes) {
         handlers.fireEvent(
-                new ShowExplorerNodeTagsDialogEvent(explorerNodes));
+                new ShowEditNodeTagsDialogEvent(explorerNodes));
     }
 
     public static Type<Handler> getType() {
@@ -67,6 +67,6 @@ public class ShowExplorerNodeTagsDialogEvent extends GwtEvent<ShowExplorerNodeTa
 
     public interface Handler extends EventHandler {
 
-        void onCreate(final ShowExplorerNodeTagsDialogEvent event);
+        void onCreate(final ShowEditNodeTagsDialogEvent event);
     }
 }

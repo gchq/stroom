@@ -22,9 +22,9 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
-import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
+import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
@@ -48,19 +48,18 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Presenter for editing the tags on a single node or adding tags to multiple nodes.
+ * Presenter for removing tags from multiple nodes.
  * See {@link ExplorerNodeRemoveTagsPresenter} for tag removal on multiple nodes.
  */
-public class ExplorerNodeEditTagsPresenter
-        extends MyPresenter<ExplorerNodeEditTagsView, ExplorerNodeEditTagsProxy>
-        implements ShowEditNodeTagsDialogEvent.Handler,
+public class ExplorerNodeRemoveTagsPresenter
+        extends MyPresenter<ExplorerNodeRemoveTagsView, ExplorerNodeRemoveTagsProxy>
+        implements ShowRemoveNodeTagsDialogEvent.Handler,
         HidePopupRequestEvent.Handler,
         HidePopupEvent.Handler {
 
@@ -71,10 +70,10 @@ public class ExplorerNodeEditTagsPresenter
     private List<ExplorerNode> explorerNodes;
 
     @Inject
-    public ExplorerNodeEditTagsPresenter(final EventBus eventBus,
-                                         final RestFactory restFactory,
-                                         final ExplorerNodeEditTagsView view,
-                                         final ExplorerNodeEditTagsProxy proxy) {
+    public ExplorerNodeRemoveTagsPresenter(final EventBus eventBus,
+                                           final RestFactory restFactory,
+                                           final ExplorerNodeRemoveTagsView view,
+                                           final ExplorerNodeRemoveTagsProxy proxy) {
         super(eventBus, view, proxy);
         this.restFactory = restFactory;
         view.setUiHandlers(new DefaultHideRequestUiHandlers(this));
@@ -82,7 +81,7 @@ public class ExplorerNodeEditTagsPresenter
 
     @ProxyEvent
     @Override
-    public void onCreate(final ShowEditNodeTagsDialogEvent event) {
+    public void onCreate(final ShowRemoveNodeTagsDialogEvent event) {
 //        GWT.log("onCreate: " + GwtNullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
         explorerNodes = GwtNullSafe.list(event.getExplorerNodes());
         if (GwtNullSafe.isEmptyCollection(explorerNodes)) {
@@ -92,50 +91,25 @@ public class ExplorerNodeEditTagsPresenter
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
 
-            final Rest<Set<String>> allNodeTagsRest = restFactory.create();
-            allNodeTagsRest
-                    .onSuccess(allTags -> {
-                        if (isSingleDocRef()) {
-                            final Rest<Set<String>> expNodeRest = restFactory.create();
-                            expNodeRest
-                                    .onSuccess(nodetags -> {
-                                        getView().setData(docRefs, nodetags, allTags);
-                                        forceReveal();
-                                    })
-                                    .onFailure(this::handleFailure)
-                                    .call(EXPLORER_RESOURCE)
-                                    .fetchExplorerNodeTags(docRefs);
-                        } else {
-                            // Adding to multiple so don't need to know what tags the nodes have
-                            getView().setData(docRefs, Collections.emptySet(), allTags);
-                            forceReveal();
-                        }
+            final Rest<Set<String>> expNodeRest = restFactory.create();
+            expNodeRest
+                    .onSuccess(nodetags -> {
+                        getView().setData(docRefs, nodetags);
+                        forceReveal();
                     })
                     .onFailure(this::handleFailure)
                     .call(EXPLORER_RESOURCE)
-                    .fetchExplorerNodeTags();
-
-        }
-
-    }
-
-    private String getNodeName() {
-        if (GwtNullSafe.hasItems(explorerNodes)) {
-            return explorerNodes.size() > 1
-                    ? explorerNodes.size() + " Documents"
-                    : explorerNodes.get(0).getName();
-        } else {
-            throw new RuntimeException("No explorerNodes");
+                    .fetchExplorerNodeTags(docRefs);
         }
     }
 
     @Override
     protected void revealInParent() {
-        final String caption = isSingleDocRef()
-                ? "Edit Tags on " + getNodeName()
-                : "Add Tags to " + getNodeName();
+        final String caption = "Remove Tags from "
+                + GwtNullSafe.size(explorerNodes)
+                + " Documents";
 
-        final PopupSize popupSize = PopupSize.resizable(700, 700, 700, 700);
+        final PopupSize popupSize = PopupSize.resizable(400, 500, 300, 300);
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -150,27 +124,20 @@ public class ExplorerNodeEditTagsPresenter
     @Override
     public void onHideRequest(final HidePopupRequestEvent event) {
         if (event.isOk()) {
-            final Set<String> editedTags = getView().getNodeTags();
+            final Set<String> removeTags = getView().getRemoveTags();
 
-            if (isSingleDocRef()) {
-                if (!Objects.equals(getSingleNode().getTags(), editedTags)) {
-                    updateTagsOnNode(event, editedTags);
-                } else {
-                    event.hide();
-                }
+            if (GwtNullSafe.hasItems(removeTags)) {
+                removeTagsFromNodes(event, removeTags);
             } else {
-                if (GwtNullSafe.hasItems(editedTags)) {
-                    addTagsToNodes(event, editedTags);
-                } else {
-                    event.hide();
-                }
+                event.hide();
             }
         } else {
             event.hide();
         }
     }
 
-    private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
+    private void removeTagsFromNodes(final HidePopupRequestEvent event,
+                                     final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
         final Rest<Void> rest = restFactory.create();
         rest
@@ -178,31 +145,12 @@ public class ExplorerNodeEditTagsPresenter
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->
                             RefreshDocumentEvent.fire(
-                                    ExplorerNodeEditTagsPresenter.this, docRef));
+                                    ExplorerNodeRemoveTagsPresenter.this, docRef));
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
                 .call(EXPLORER_RESOURCE)
-                .addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
-    }
-
-    private void updateTagsOnNode(final HidePopupRequestEvent event, final Set<String> editedTags) {
-        final ExplorerNode updatedNode = getSingleNode().copy()
-                .tags(editedTags)
-                .build();
-
-        final Rest<ExplorerNode> rest = restFactory.create();
-        rest
-                .onSuccess(explorerNode -> {
-                    // Update the node in the tree with the new tags
-                    RefreshDocumentEvent.fire(
-                            ExplorerNodeEditTagsPresenter.this,
-                            explorerNode.getDocRef());
-                    event.hide();
-                })
-                .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .updateNodeTags(updatedNode);
+                .removeTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
     }
 
     @Override
@@ -212,7 +160,7 @@ public class ExplorerNodeEditTagsPresenter
 
     private void handleFailure(final Throwable t) {
         AlertEvent.fireError(
-                ExplorerNodeEditTagsPresenter.this,
+                ExplorerNodeRemoveTagsPresenter.this,
                 t.getMessage(),
                 null);
     }
@@ -241,16 +189,16 @@ public class ExplorerNodeEditTagsPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface ExplorerNodeEditTagsView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
+    public interface ExplorerNodeRemoveTagsView
+            extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
 
         /**
-         * @return Either the desired set of tags for a single docRef or the tags to add to all docRefs
+         * @return The set of tags to remove from all nodes
          */
-        Set<String> getNodeTags();
+        Set<String> getRemoveTags();
 
         void setData(final List<DocRef> nodeDocRefs,
-                     final Set<String> nodeTags,
-                     final Set<String> allNodeTags);
+                     final Set<String> nodeTags);
     }
 
 
@@ -258,7 +206,7 @@ public class ExplorerNodeEditTagsPresenter
 
 
     @ProxyCodeSplit
-    public interface ExplorerNodeEditTagsProxy extends Proxy<ExplorerNodeEditTagsPresenter> {
+    public interface ExplorerNodeRemoveTagsProxy extends Proxy<ExplorerNodeRemoveTagsPresenter> {
 
     }
 }
