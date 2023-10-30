@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.1] - 2023-10-30
+
+* Issue **#3883** : Fix auto creation of `admin` user when an IDP type of TEST_CREDENTIALS is used.
+
+
 ## [v7.2.0] - 2023-10-27
 
 * Issue **#3863** : Improve layout of dashboard column expression editor, reducing the height of the expression editor box.
@@ -6115,7 +6120,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.1...HEAD
+[v7.2.1]: https://github.com/gchq/stroom/compare/v7.2.0...v7.2.1
 [v7.2.0]: https://github.com/gchq/stroom/compare/v7.2-beta.79...v7.2.0
 [v7.2-beta.79]: https://github.com/gchq/stroom/compare/v7.2-beta.78...v7.2-beta.79
 [v7.2-beta.78]: https://github.com/gchq/stroom/compare/v7.2-beta.77...v7.2-beta.78
