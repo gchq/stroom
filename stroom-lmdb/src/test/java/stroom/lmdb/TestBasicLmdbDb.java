@@ -759,6 +759,77 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         LOGGER.debug("basicLmdbDb count:  {}", ModelStringUtil.formatCsv(basicLmdbDb.getEntryCount()));
     }
 
+    /**
+     * Comparing overwriting the same key N times vs putting N entries each with a different key
+     */
+    @Disabled
+    @Test
+    void testPutVsAppend_perf() {
+        final TimedCase dbWarmUp = TimedCase.of("DB warm up", (round, iterations) -> {
+            final int roundIdx = round - 1;
+            final long fromInc = iterations * roundIdx;
+            final long toExc = iterations * (roundIdx + 1);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            basicLmdbDb.put(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    "val-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    false,
+                                    false);
+                        });
+            });
+        });
+
+        final TimedCase putToSameKey = TimedCase.of("Put to same key", (round, iterations) -> {
+            final int roundIdx = round - 1;
+            final long fromInc = iterations * roundIdx;
+            final long toExc = iterations * (roundIdx + 1);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            // Same key every time, diff val
+                            basicLmdbDb.put(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(fromInc), 10, '0'),
+                                    "val-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    true,
+                                    false);
+                        });
+            });
+        });
+
+        final TimedCase putNewKeys = TimedCase.of("Put new keys", (round, iterations) -> {
+            final int roundIdx = round - 1;
+            final long fromInc = iterations * roundIdx;
+            final long toExc = iterations * (roundIdx + 1);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            // Same key every time, diff val
+                            basicLmdbDb.put(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    "val-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    false,
+                                    true);
+                        });
+            });
+        });
+
+        TestUtil.comparePerformance(
+                3,
+                1_000_000,
+                LOGGER::info,
+                dbWarmUp,
+                putToSameKey,
+                putNewKeys);
+    }
+
     @Test
     void testKeyRange() {
         basicLmdbDb.put("key11", "value1", false);
