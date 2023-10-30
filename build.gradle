@@ -463,7 +463,7 @@ subprojects {
             }
         }
 
-        reports.html.destination = file("${reporting.baseDir}/${name}")
+        reports.html.outputLocation = file("${reporting.baseDir}/${name}")
 
         afterSuite { descriptor, result ->
             if (descriptor != null
@@ -472,7 +472,7 @@ subprojects {
 
                 // test class failed so add its project info and test report file to a global list for
                 // processing at the end of the build
-                def reportFileName = "${reports.junitXml.destination}/TEST-${descriptor.className}.xml"
+                def reportFileName = "${reports.junitXml.outputLocation}/TEST-${descriptor.className}.xml"
                 def reportFile = file(reportFileName)
                 def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
                 failedTestReportFiles.add(pair)
@@ -554,7 +554,10 @@ subprojects {
             doFirst {
                 // We have to alter the existing jvm args rather than set them so that we don't lose debug args added by
                 // IJ Idea.
-                def jvmArgsCopy = jvmArgs
+                def jvmArgsCopy = []
+                for (arg in jvmArgs) {
+                    jvmArgsCopy.add(arg);
+                }
                 jvmArgsCopy.add("--add-opens")
                 jvmArgsCopy.add("java.base/java.nio=ALL-UNNAMED")
                 jvmArgsCopy.add("--add-opens")

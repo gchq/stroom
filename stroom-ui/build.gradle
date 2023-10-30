@@ -74,7 +74,13 @@ task yarnBuild {
     }
 }
 
-task copyYarnBuild(dependsOn: yarnBuild, type: Copy) {
+task copyYarnBuild(type: Copy) {
+    dependsOn yarnBuild
+    dependsOn checkstyleMain
+    dependsOn checkstyleTest
+    dependsOn test
+    dependsOn jar
+
     group "yarn"
     outputs.upToDateWhen { false }
     from "${project.buildDir}"
