@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.32] - 2023-10-30
+
+* Change the hard-coded test credentials to match those in v7.2 so that a test stack with 7.0 proxy and 7.2 stroom can communicate with each other. This change has no bearing on production deployments.
+
+
 ## [v7.0.31] - 2023-10-12
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
@@ -4871,7 +4876,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.31...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.32...HEAD
+[v7.0.32]: https://github.com/gchq/stroom/compare/v7.0.31...v7.0.32
 [v7.0.31]: https://github.com/gchq/stroom/compare/v7.0.30...v7.0.31
 [v7.0.30]: https://github.com/gchq/stroom/compare/v7.0.29...v7.0.30
 [v7.0.29]: https://github.com/gchq/stroom/compare/v7.0.28...v7.0.29
