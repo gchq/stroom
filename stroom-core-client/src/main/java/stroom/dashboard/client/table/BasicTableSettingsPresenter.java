@@ -34,6 +34,7 @@ import stroom.util.shared.GwtNullSafe;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ import java.util.Objects;
 
 public class BasicTableSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView>
-        implements Focus {
+        implements Focus, BasicTableSettingsUihandlers {
 
     private final EntityDropDownPresenter pipelinePresenter;
 
@@ -66,6 +67,8 @@ public class BasicTableSettingsPresenter
                         QueryConfig::getDashboardPipelineSelectorIncludedTags,
                         ExplorerTreeFilter::createTagQuickFilterInput,
                         pipelinePresenter::setQuickFilter));
+
+        view.setUiHandlers(this);
     }
 
     @Override
@@ -96,6 +99,20 @@ public class BasicTableSettingsPresenter
 
     private void setExtractValues(final boolean extractValues) {
         getView().setExtractValues(extractValues);
+    }
+
+    private boolean useDefaultExtractionPipeline() {
+        return getView().isUseDefaultExtractionPipeline();
+    }
+
+    private void setUseDefaultExtractionPipeline(final boolean useDefaultExtractionPipeline) {
+        getView().setUseDefaultExtractionPipeline(useDefaultExtractionPipeline);
+        pipelinePresenter.setEnabled(!useDefaultExtractionPipeline);
+    }
+
+    @Override
+    public void onUseDefaultExtractionPipeline(final boolean useDefaultExtractionPipeline) {
+        pipelinePresenter.setEnabled(!useDefaultExtractionPipeline);
     }
 
     private DocRef getPipeline() {
@@ -140,6 +157,7 @@ public class BasicTableSettingsPresenter
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
         setQueryId(settings.getQueryId());
         setExtractValues(settings.extractValues());
+        setUseDefaultExtractionPipeline(settings.useDefaultExtractionPipeline());
         setPipeline(settings.getExtractionPipeline());
         setMaxResults(fromList(settings.getMaxResults()));
         setPageSize(settings.getPageSize() != null
@@ -162,6 +180,7 @@ public class BasicTableSettingsPresenter
                 .copy()
                 .queryId(getQueryId())
                 .extractValues(extractValues())
+                .useDefaultExtractionPipeline(useDefaultExtractionPipeline())
                 .extractionPipeline(getPipeline())
                 .maxResults(toList(getMaxResults()))
                 .pageSize(getPageSize())
@@ -180,6 +199,8 @@ public class BasicTableSettingsPresenter
 
         final boolean equal = Objects.equals(oldSettings.getQueryId(), newSettings.getQueryId()) &&
                 Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
+                Objects.equals(oldSettings.useDefaultExtractionPipeline(),
+                        newSettings.useDefaultExtractionPipeline()) &&
                 Objects.equals(oldSettings.getExtractionPipeline(), newSettings.getExtractionPipeline()) &&
                 Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
                 Objects.equals(oldSettings.getPageSize(), newSettings.getPageSize()) &&
@@ -225,7 +246,7 @@ public class BasicTableSettingsPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface BasicTableSettingsView extends BasicSettingsView {
+    public interface BasicTableSettingsView extends BasicSettingsView, HasUiHandlers<BasicTableSettingsUihandlers> {
 
         void setQueryList(List<Component> queryList);
 
@@ -236,6 +257,10 @@ public class BasicTableSettingsPresenter
         boolean isExtractValues();
 
         void setExtractValues(boolean extractValues);
+
+        boolean isUseDefaultExtractionPipeline();
+
+        void setUseDefaultExtractionPipeline(boolean extractValues);
 
         void setPipelineView(View view);
 
