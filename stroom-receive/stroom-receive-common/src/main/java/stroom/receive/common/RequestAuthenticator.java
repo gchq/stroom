@@ -4,7 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.security.api.UserIdentity;
 
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Handles the authentication of HTTP requests into stroom or stroom-proxy

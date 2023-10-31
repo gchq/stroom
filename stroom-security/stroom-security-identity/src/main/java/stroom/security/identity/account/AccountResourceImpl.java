@@ -50,8 +50,8 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.NotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.NotFoundException;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AccountResourceImpl implements AccountResource {

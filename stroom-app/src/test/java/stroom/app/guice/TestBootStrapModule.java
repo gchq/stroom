@@ -10,7 +10,7 @@ import stroom.util.guice.GuiceUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 

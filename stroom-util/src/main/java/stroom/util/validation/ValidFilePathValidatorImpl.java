@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.inject.Inject;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
 

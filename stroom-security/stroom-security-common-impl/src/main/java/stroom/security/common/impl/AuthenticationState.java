@@ -3,7 +3,7 @@ package stroom.security.common.impl;
 import stroom.security.openid.api.OpenId;
 
 import java.util.Set;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
 public class AuthenticationState {
 

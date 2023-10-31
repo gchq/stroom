@@ -18,7 +18,7 @@ import com.google.inject.Injector;
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
 import event.logging.User;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;

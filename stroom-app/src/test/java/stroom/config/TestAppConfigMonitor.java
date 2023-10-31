@@ -33,7 +33,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 class TestAppConfigMonitor {
 

@@ -15,8 +15,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Duration;
 import java.util.Objects;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig {

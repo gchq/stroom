@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
 public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {

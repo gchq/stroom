@@ -20,14 +20,15 @@ package stroom.node.mock;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
 
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.Response;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.Response;
 
 /**
  * Mock class that manages one node.

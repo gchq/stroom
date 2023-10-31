@@ -31,8 +31,8 @@ dependencies {
     implementation libs.dropwizard_metrics_annotation
     implementation libs.eventLogging
     implementation libs.guice5
-    implementation libs.httpcore
-    implementation libs.http_client
+    implementation libs.httpcore__elastic
+    implementation libs.http_client__elastic
     implementation libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.restygwt

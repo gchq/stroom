@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 ///**
 // * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}

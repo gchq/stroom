@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 /**
  * Provides system information for inspecting index shards.

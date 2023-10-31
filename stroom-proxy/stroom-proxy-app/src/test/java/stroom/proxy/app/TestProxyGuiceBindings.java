@@ -5,8 +5,8 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.dropwizard.Application;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Environment;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.assertj.core.api.Assertions;
@@ -67,6 +67,10 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
     protected Class<? extends Application<Config>> getAppClass() {
         return MyApp.class;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyApp extends Application<Config> {
 

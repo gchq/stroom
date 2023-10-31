@@ -74,8 +74,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.SyncInvoker;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.client.SyncInvoker;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 

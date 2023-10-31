@@ -17,8 +17,8 @@ import org.mockito.Mockito;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 
 class TestRequestAuthenticatorImpl {
 

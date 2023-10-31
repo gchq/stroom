@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
 

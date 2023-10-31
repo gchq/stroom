@@ -18,7 +18,7 @@
 
 package stroom.security.identity.account;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public enum AccountValidationError {
     NO_USER("Please supply a user with an email address and a password. "),

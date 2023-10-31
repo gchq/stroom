@@ -4,7 +4,7 @@ import stroom.security.identity.exceptions.BadRequestException;
 
 import java.net.URI;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface AuthenticationService {
     String SIGN_IN_URL_PATH = "/s/signIn";

@@ -1,7 +1,7 @@
 package stroom.dropwizard.common;
 
 import io.dropwizard.lifecycle.Managed;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

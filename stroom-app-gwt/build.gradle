@@ -58,7 +58,7 @@ dependencies {
     gwtSourceImplementation libs.jaxb_api
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
-    gwtSourceImplementation libs.ws_rs_api
+    gwtSourceImplementation libs.ws_rs_api__gwt
 
 //    gwtSourceImplementation libs.stroomDocRef
 //    gwtSourceCompile "${libs.stroomDocRef}:sources"

@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Reads the bytes in an {@link InputStream} and decodes them into {@link DecodedChar} instances

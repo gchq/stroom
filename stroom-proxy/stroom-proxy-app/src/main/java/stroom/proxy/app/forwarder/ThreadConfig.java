@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Min;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)

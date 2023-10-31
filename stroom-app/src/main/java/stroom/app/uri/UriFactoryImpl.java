@@ -11,7 +11,7 @@ import stroom.config.common.UriFactory;
 import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.HttpsConnectorFactory;
-import io.dropwizard.server.DefaultServerFactory;
+import io.dropwizard.core.server.DefaultServerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

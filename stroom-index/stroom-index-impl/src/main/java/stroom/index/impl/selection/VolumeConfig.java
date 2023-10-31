@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
 public class VolumeConfig extends AbstractConfig implements IsStroomConfig {

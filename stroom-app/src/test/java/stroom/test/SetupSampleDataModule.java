@@ -14,7 +14,7 @@ import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 
 import java.nio.file.Path;
 

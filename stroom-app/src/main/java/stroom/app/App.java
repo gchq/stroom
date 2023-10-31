@@ -34,7 +34,6 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
-import stroom.dropwizard.common.WebSockets;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
@@ -63,11 +62,15 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.SessionCookieConfig;
+import jakarta.validation.ValidatorFactory;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
@@ -77,10 +80,6 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
 import javax.inject.Inject;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.SessionCookieConfig;
-import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 
@@ -99,8 +98,6 @@ public class App extends Application<Config> {
     @Inject
     private AdminServlets adminServlets;
     @Inject
-    private WebSockets webSockets;
-    @Inject
     private SessionListeners sessionListeners;
     @Inject
     private RestResources restResources;
@@ -115,7 +112,7 @@ public class App extends Application<Config> {
 
     private final Path configFile;
 
-    // This is an additional injector for use only with javax.validation. It means we can do validation
+    // This is an additional injector for use only with jakarta.validation. It means we can do validation
     // of the yaml file before our main injector has been created and also so we can use our custom
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
@@ -177,7 +174,7 @@ public class App extends Application<Config> {
 
         addCliCommands(bootstrap);
 
-        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // If we want to use jakarta.validation on our rest resources with our own custom validation annotations
         // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
@@ -270,9 +267,6 @@ public class App extends Application<Config> {
 
         // Add admin port/path servlets. Needs to be called after healthChecks.register()
         adminServlets.register();
-
-        // Add web sockets
-        webSockets.register();
 
         // Add session listeners.
         sessionListeners.register();
@@ -388,7 +382,7 @@ public class App extends Application<Config> {
         // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
-    private static void configureCors(io.dropwizard.setup.Environment environment) {
+    private static void configureCors(io.dropwizard.core.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");

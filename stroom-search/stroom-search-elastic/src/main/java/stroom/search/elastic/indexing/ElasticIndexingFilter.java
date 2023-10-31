@@ -87,7 +87,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.NotFoundException;
+import jakarta.ws.rs.NotFoundException;
 
 /**
  * Accepts `json` schema XML and sends documents to Elasticsearch as batches for indexing

@@ -18,8 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SessionResourceImpl implements SessionResource {

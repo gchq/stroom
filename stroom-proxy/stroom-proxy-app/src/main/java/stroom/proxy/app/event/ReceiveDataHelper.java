@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class ReceiveDataHelper {
 

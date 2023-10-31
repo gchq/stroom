@@ -87,7 +87,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * An Off Heap implementation of {@link RefDataStore} using LMDB.

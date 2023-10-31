@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class MockUserIdentityFactory implements UserIdentityFactory {
 
@@ -68,12 +68,12 @@ public class MockUserIdentityFactory implements UserIdentityFactory {
     }
 
     @Override
-    public boolean hasAuthenticationCertificate(final javax.servlet.http.HttpServletRequest request) {
+    public boolean hasAuthenticationCertificate(final jakarta.servlet.http.HttpServletRequest request) {
         return false;
     }
 
     @Override
-    public boolean hasAuthenticationToken(final javax.servlet.http.HttpServletRequest request) {
+    public boolean hasAuthenticationToken(final jakarta.servlet.http.HttpServletRequest request) {
         return false;
     }
 }

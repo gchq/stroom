@@ -7,7 +7,7 @@ import stroom.util.shared.NotInjectableConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Min;
 
 @NotInjectableConfig
 public abstract class AbstractResultStoreConfig extends AbstractConfig {

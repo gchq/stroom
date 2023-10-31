@@ -29,7 +29,7 @@ import com.google.inject.util.Providers;
 
 import java.util.Collections;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class TestBaseModule extends AbstractModule {
 

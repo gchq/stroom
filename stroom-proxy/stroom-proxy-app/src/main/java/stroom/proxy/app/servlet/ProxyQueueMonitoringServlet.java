@@ -12,10 +12,10 @@ import java.io.Writer;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Unauthenticated
 public class ProxyQueueMonitoringServlet extends HttpServlet implements IsServlet {

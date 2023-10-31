@@ -3,7 +3,7 @@ package stroom.index.app.guice;
 import stroom.index.app.Config;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 
 public class AppModule extends AbstractModule {
 

@@ -13,7 +13,7 @@ import io.dropwizard.validation.ValidationMethod;
 
 import java.util.List;
 import java.util.Set;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyConfig {

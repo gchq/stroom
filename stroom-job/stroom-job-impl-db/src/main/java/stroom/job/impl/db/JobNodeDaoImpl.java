@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import static stroom.job.impl.db.jooq.Tables.JOB;
 import static stroom.job.impl.db.jooq.Tables.JOB_NODE;

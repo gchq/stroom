@@ -1,7 +1,7 @@
 package stroom.util.jersey;
 
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.UriBuilder;
 
 public class UriBuilderUtil {
 

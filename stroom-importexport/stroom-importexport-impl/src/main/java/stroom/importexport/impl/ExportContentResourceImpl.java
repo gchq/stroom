@@ -12,9 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 @AutoLogged
 public class ExportContentResourceImpl implements ExportContentResource {

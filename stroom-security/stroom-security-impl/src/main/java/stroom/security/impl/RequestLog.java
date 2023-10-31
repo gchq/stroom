@@ -3,8 +3,8 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class RequestLog {
     private static final Logger REQUEST_LOGGER = LoggerFactory.getLogger(RequestLog.class);

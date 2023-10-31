@@ -19,7 +19,7 @@ import java.io.PrintStream;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 
 public abstract class AbstractRest<R> implements Rest<R> {
 

@@ -14,7 +14,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.io.DirProvidersModule;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 
 public class CoreTestModule extends AbstractModule {
 

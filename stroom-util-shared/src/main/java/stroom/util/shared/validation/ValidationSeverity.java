@@ -1,10 +1,10 @@
 package stroom.util.shared.validation;
 
 import java.util.Set;
-import javax.validation.Payload;
+import jakarta.validation.Payload;
 
 /**
- * Severities for javax.validation.  Use it like this:
+ * Severities for jakarta.validation.  Use it like this:
  *
  * <pre>
  * {@code

@@ -12,8 +12,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 public final class AuthenticationStateSessionUtil {
 

@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)

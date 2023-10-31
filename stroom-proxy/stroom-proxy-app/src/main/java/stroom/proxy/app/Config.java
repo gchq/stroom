@@ -1,12 +1,12 @@
 package stroom.proxy.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.core.Configuration;
+import jakarta.validation.Valid;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.validation.Valid;
 
 public class Config extends Configuration {
 

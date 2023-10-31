@@ -3,12 +3,13 @@ package stroom.proxy.app.event;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.ModelStringUtil;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -79,10 +80,11 @@ public class TestTextEventServlet {
             httpPost.addHeader("Environment", "EXAMPLE_ENVIRONMENT");
             httpPost.setEntity(
                     new InputStreamEntity(
-                            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8))));
+                            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)),
+                            ContentType.DEFAULT_TEXT));
 
             // Execute and get the response.
-            final HttpResponse response = httpClient.execute(httpPost);
+            final CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute( httpPost);
             final HttpEntity entity = response.getEntity();
 
             if (entity != null) {
@@ -92,7 +94,7 @@ public class TestTextEventServlet {
                 }
             }
 
-            return response.getStatusLine().getStatusCode() == 200;
+            return response.getCode() == 200;
         } catch (final Exception e) {
             System.err.println(e.getMessage());
         }

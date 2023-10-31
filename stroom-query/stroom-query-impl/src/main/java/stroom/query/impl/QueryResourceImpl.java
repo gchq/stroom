@@ -55,7 +55,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Entity;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {

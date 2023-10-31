@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import static org.jooq.impl.DSL.select;
 import static stroom.job.impl.db.jooq.Tables.JOB;

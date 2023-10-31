@@ -26,10 +26,10 @@ import io.dropwizard.validation.ValidationMethod;
 
 import java.util.HashSet;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -194,7 +194,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                 '}';
     }
 
-    @SuppressWarnings("unused") // Used by javax.validation
+    @SuppressWarnings("unused") // Used by jakarta.validation
     @JsonIgnore
     @ValidationMethod(message = "The 'rawMetaTypes' property must be a sub-set of the 'metaTypes' property.")
     @Valid

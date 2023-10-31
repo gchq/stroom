@@ -20,9 +20,9 @@ import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
 import java.util.Enumeration;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Utility between Stroom and Stroom PROXY

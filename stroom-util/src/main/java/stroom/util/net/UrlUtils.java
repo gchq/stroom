@@ -1,12 +1,13 @@
 package stroom.util.net;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.UriBuilder;
+
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.UriBuilder;
 
 public final class UrlUtils {
 

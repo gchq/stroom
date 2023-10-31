@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 // Non-static methods to make mocking this possible in tests
 public class CertificateExtractor {
@@ -34,7 +34,7 @@ public class CertificateExtractor {
      * API into the request for the certificate details.
      */
     private static final String X_SSL_CERT = "X-SSL-CERT";
-    private static final String SERVLET_CERT_ARG = "javax.servlet.request.X509Certificate";
+    private static final String SERVLET_CERT_ARG = "jakarta.servlet.request.X509Certificate";
     private static final String X_SSL_CLIENT_S_DN = "X-SSL-CLIENT-S-DN";
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateExtractor.class);
 

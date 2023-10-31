@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 class TestProxyOpenIdConfig extends AbstractValidatorTest {
 

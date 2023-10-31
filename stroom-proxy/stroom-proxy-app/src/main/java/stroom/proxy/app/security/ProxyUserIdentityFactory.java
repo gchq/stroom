@@ -20,7 +20,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {

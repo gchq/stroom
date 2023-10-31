@@ -12,7 +12,7 @@ import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateOutcome;
 import event.logging.User;
 import event.logging.util.EventLoggingUtil;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;

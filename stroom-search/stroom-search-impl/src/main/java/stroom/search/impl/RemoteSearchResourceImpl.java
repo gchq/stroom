@@ -23,7 +23,7 @@ import com.codahale.metrics.annotation.Timed;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.core.StreamingOutput;
 
 @AutoLogged(OperationType.UNLOGGED)
 public class RemoteSearchResourceImpl implements RemoteSearchResource {

@@ -5,7 +5,7 @@ import stroom.util.shared.validation.ValidRegexValidator;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class ValidRegexValidatorImpl implements ValidRegexValidator {
 

@@ -16,7 +16,7 @@ import org.jose4j.jwt.JwtClaims;
 
 import java.util.Objects;
 import java.util.Optional;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 public class UserIdentityImpl
         implements UserIdentity, HasSession, HasStroomUserIdentity, HasUpdatableToken {

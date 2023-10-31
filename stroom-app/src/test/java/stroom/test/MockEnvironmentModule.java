@@ -2,7 +2,7 @@ package stroom.test;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.mockito.Mockito;
 
 public class MockEnvironmentModule extends AbstractModule {

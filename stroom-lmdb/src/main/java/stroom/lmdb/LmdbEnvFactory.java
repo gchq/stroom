@@ -105,7 +105,7 @@ public class LmdbEnvFactory {
                     throw new RuntimeException("Unable to read LMDB system library at " +
                             lmdbSystemLibraryPath.toAbsolutePath().normalize());
                 }
-                // javax.validation should ensure the path is valid if set
+                // jakarta.validation should ensure the path is valid if set
                 final String lmdbNativeLibProp = LmdbLibraryConfig.LMDB_NATIVE_LIB_PROP;
                 System.setProperty(lmdbNativeLibProp, lmdbSystemLibraryPath.toAbsolutePath().normalize().toString());
                 LOGGER.info("Using provided LMDB system library file. Setting prop {} to '{}'",

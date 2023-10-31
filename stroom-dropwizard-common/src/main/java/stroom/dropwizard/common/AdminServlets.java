@@ -4,7 +4,7 @@ import stroom.util.ConsoleColour;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsAdminServlet;
 
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.apache.commons.lang3.StringUtils;
@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.servlet.Servlet;
+import jakarta.servlet.Servlet;
 
 public class AdminServlets {
 

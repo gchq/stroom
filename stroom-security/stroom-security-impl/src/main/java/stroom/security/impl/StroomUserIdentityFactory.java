@@ -39,8 +39,8 @@ import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 @Singleton
 public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {

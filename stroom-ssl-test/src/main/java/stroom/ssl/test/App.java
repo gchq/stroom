@@ -17,12 +17,12 @@
 package stroom.ssl.test;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
 
 public class App extends Application<Config> {
 

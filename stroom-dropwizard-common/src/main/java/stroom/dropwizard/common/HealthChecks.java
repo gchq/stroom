@@ -3,7 +3,7 @@ package stroom.dropwizard.common;
 import stroom.util.HasHealthCheck;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

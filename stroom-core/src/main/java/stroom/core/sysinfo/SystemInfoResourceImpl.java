@@ -22,9 +22,9 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.UriInfo;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SystemInfoResourceImpl implements SystemInfoResource {

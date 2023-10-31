@@ -32,7 +32,7 @@ import io.dropwizard.validation.ValidationMethod;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import javax.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.AssertTrue;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {

@@ -31,7 +31,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
 

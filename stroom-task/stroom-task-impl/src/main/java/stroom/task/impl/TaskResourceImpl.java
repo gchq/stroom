@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Entity;
 
 @AutoLogged
 class TaskResourceImpl implements TaskResource {
