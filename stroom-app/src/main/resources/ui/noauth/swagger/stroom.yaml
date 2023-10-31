@@ -13600,6 +13600,8 @@ components:
           description: TODO
         showDetail:
           type: boolean
+        useDefaultExtractionPipeline:
+          type: boolean
       required:
       - fields
       - queryId
