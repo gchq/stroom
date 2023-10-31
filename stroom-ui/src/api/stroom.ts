@@ -4460,6 +4460,7 @@ export interface TableComponentSettings {
   /** TODO */
   queryId: string;
   showDetail?: boolean;
+  useDefaultExtractionPipeline?: boolean;
 }
 
 export type TableCoprocessorSettings = CoprocessorSettings & { componentIds?: string[]; tableSettings?: TableSettings };
