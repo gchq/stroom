@@ -2014,6 +2014,24 @@ paths:
       summary: Sends an entity event
       tags:
       - Entity Events
+  /explorer/v2/addTags:
+    put:
+      operationId: addTags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRemoveTagsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Add tags to explorer nodes
+      tags:
+      - Explorer (v2)
   /explorer/v2/copy:
     post:
       operationId: copyExplorerItems
@@ -2149,6 +2167,29 @@ paths:
       summary: Fetch all known explorer node tags
       tags:
       - Explorer (v2)
+  /explorer/v2/fetchExplorerNodeTagsByDocRefs:
+    post:
+      operationId: fetchExplorerNodeTagsByDocRefs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DocRef'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                uniqueItems: true
+          description: default response
+      summary: Fetch explorer node tags held by at least one of decRefs
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchExplorerNodes:
     post:
       operationId: fetchExplorerNodes
@@ -2273,6 +2314,24 @@ paths:
                 $ref: '#/components/schemas/BulkActionResult'
           description: default response
       summary: Move explorer items
+      tags:
+      - Explorer (v2)
+  /explorer/v2/removeTags:
+    delete:
+      operationId: removeTags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRemoveTagsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Remove tags from explorer nodes
       tags:
       - Explorer (v2)
   /explorer/v2/rename:
@@ -6911,6 +6970,18 @@ components:
             type: string
           userUuid:
             type: string
+    AddRemoveTagsRequest:
+      type: object
+      properties:
+        docRefs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocRef'
+        tags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     AnalyticDataShard:
       type: object
       properties:
@@ -8291,7 +8362,6 @@ components:
           - REMOVE
           - RESIZE
           - RESIZE_HANDLE
-          - RULESET
           - SAVE
           - SAVEAS
           - SEARCH
@@ -8299,6 +8369,7 @@ components:
           - SHARD_CLOSE
           - SHARD_FLUSH
           - SHARE
+          - SHIELD
           - SHOW
           - SHOW_MENU
           - STEP
@@ -8778,7 +8849,6 @@ components:
           - REMOVE
           - RESIZE
           - RESIZE_HANDLE
-          - RULESET
           - SAVE
           - SAVEAS
           - SEARCH
@@ -8786,6 +8856,7 @@ components:
           - SHARD_CLOSE
           - SHARD_FLUSH
           - SHARE
+          - SHIELD
           - SHOW
           - SHOW_MENU
           - STEP
@@ -8970,7 +9041,6 @@ components:
           - REMOVE
           - RESIZE
           - RESIZE_HANDLE
-          - RULESET
           - SAVE
           - SAVEAS
           - SEARCH
@@ -8978,6 +9048,7 @@ components:
           - SHARD_CLOSE
           - SHARD_FLUSH
           - SHARE
+          - SHIELD
           - SHOW
           - SHOW_MENU
           - STEP
@@ -11135,7 +11206,6 @@ components:
           - REMOVE
           - RESIZE
           - RESIZE_HANDLE
-          - RULESET
           - SAVE
           - SAVEAS
           - SEARCH
@@ -11143,6 +11213,7 @@ components:
           - SHARD_CLOSE
           - SHARD_FLUSH
           - SHARE
+          - SHIELD
           - SHOW
           - SHOW_MENU
           - STEP

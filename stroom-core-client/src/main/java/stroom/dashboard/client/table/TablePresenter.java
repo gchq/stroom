@@ -841,17 +841,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             setSettings(getTableSettings().copy().fields(new ArrayList<>()).build());
         }
 
-        // Update the extraction pipeline if the loaded data source has changed.
         if (currentSearchModel != null) {
             final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
-            if (!Objects.equals(getTableSettings().getDataSourceRef(),
-                    indexLoader.getLoadedDataSourceRef())) {
-                TableComponentSettings.Builder builder = getTableSettings().copy();
+
+            // See if the datasource changed.
+            final DocRef currentDataSource = getTableSettings().getDataSourceRef();
+            final DocRef loadedDataSource = indexLoader.getLoadedDataSourceRef();
+            if (!Objects.equals(currentDataSource, loadedDataSource)) {
+                final TableComponentSettings.Builder builder = getTableSettings().copy();
+
+                // Update data source ref so the table has an idea where it will be receiving data from.
                 builder.dataSourceRef(indexLoader.getLoadedDataSourceRef());
-                DocRef docRef = indexLoader.getDefaultExtractionPipeline();
-                if (docRef != null) {
-                    builder.extractionPipeline(docRef).extractValues(true);
+
+                // Update the extraction pipeline.
+                final DocRef extractionPipeline = indexLoader.getDefaultExtractionPipeline();
+                if (extractionPipeline != null && getTableSettings().useDefaultExtractionPipeline()) {
+                    builder.extractionPipeline(extractionPipeline).extractValues(true);
                 }
+
                 setSettings(builder.build());
             }
         }
