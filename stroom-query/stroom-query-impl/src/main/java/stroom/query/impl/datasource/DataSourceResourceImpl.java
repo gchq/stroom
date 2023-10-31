@@ -22,9 +22,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.query.impl.QueryService;
-import stroom.util.NullSafe;
-import stroom.view.api.ViewStore;
-import stroom.view.shared.ViewDoc;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -33,13 +30,10 @@ import javax.inject.Provider;
 class DataSourceResourceImpl implements DataSourceResource {
 
     private final Provider<QueryService> queryServiceProvider;
-    private final Provider<ViewStore> viewStoreProvider;
 
     @Inject
-    DataSourceResourceImpl(final Provider<QueryService> queryServiceProvider,
-                           final Provider<ViewStore> viewStoreProvider) {
+    DataSourceResourceImpl(final Provider<QueryService> queryServiceProvider) {
         this.queryServiceProvider = queryServiceProvider;
-        this.viewStoreProvider = viewStoreProvider;
     }
 
     @Override
@@ -54,8 +48,6 @@ class DataSourceResourceImpl implements DataSourceResource {
 
     @Override
     public Documentation fetchDocumentation(final DocRef docRef) {
-        final String markdown = NullSafe.get(viewStoreProvider.get().readDocument(docRef),
-                ViewDoc::getDescription);
-        return Documentation.of(markdown);
+        return queryServiceProvider.get().fetchDocumentation(docRef);
     }
 }
