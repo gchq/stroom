@@ -33,6 +33,13 @@ import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserName;
 
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionEvent;
+import jakarta.servlet.http.HttpSessionListener;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +49,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.HttpSessionEvent;
-import jakarta.servlet.http.HttpSessionListener;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 @Singleton
 class SessionListListener implements HttpSessionListener, SessionListService {

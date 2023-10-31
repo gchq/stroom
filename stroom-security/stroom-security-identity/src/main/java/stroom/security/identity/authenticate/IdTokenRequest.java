@@ -1,7 +1,6 @@
 package stroom.security.identity.authenticate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "A request to exchange an access code with an id token. This is the final step in " +

@@ -31,12 +31,12 @@ import com.codahale.metrics.annotation.Timed;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.NotFoundException;
 
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.NotFoundException;
 
 @AutoLogged
 public class ApiKeyResourceImpl implements ApiKeyResource {

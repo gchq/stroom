@@ -1,7 +1,8 @@
 package stroom.util.shared.validation;
 
-import java.util.Set;
 import jakarta.validation.Payload;
+
+import java.util.Set;
 
 /**
  * Severities for jakarta.validation.  Use it like this:

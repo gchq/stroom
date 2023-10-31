@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
-import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class ProcessorDaoImpl implements ProcessorDao {
 

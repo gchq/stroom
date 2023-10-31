@@ -1,13 +1,13 @@
 package stroom.dropwizard.common;
 
 import io.dropwizard.core.setup.Environment;
+import jakarta.servlet.http.HttpSessionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Set;
 import javax.inject.Inject;
-import jakarta.servlet.http.HttpSessionListener;
 
 public class SessionListeners {
 

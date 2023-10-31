@@ -2,8 +2,9 @@ package stroom.security.common.impl;
 
 import stroom.security.openid.api.OpenId;
 
-import java.util.Set;
 import jakarta.ws.rs.core.UriBuilder;
+
+import java.util.Set;
 
 public class AuthenticationState {
 

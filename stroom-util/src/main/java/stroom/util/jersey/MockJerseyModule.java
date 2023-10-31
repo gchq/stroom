@@ -2,7 +2,6 @@ package stroom.util.jersey;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-
 import jakarta.inject.Singleton;
 
 public class MockJerseyModule extends AbstractModule {

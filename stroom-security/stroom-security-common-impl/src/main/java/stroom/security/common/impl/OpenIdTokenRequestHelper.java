@@ -14,14 +14,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
@@ -32,6 +24,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Helper for getting OIDC tokens from an endpoint

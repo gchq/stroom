@@ -6,6 +6,10 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Public un-authenticated servlet for client systems to monitor stroom-proxy's availability.

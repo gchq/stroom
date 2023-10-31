@@ -20,11 +20,10 @@ package stroom.security.identity.exceptions.mappers;
 
 import stroom.security.identity.exceptions.UnsupportedFilterException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UnsupportedFilterExceptionMapper implements ExceptionMapper<UnsupportedFilterException> {
 

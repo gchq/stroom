@@ -36,6 +36,11 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
 
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -46,10 +51,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 @AutoLogged
 class CacheResourceImpl implements CacheResource {

@@ -16,7 +16,6 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.meta.api.MetaProperties;
 import stroom.util.Period;
 
 public class FindAnalyticOutputCriteria {

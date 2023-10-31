@@ -22,6 +22,7 @@ import stroom.util.sysinfo.SystemInfoResult;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.ws.rs.BadRequestException;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -46,7 +47,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import jakarta.ws.rs.BadRequestException;
 
 /**
  * Provides system information for inspecting index shards.

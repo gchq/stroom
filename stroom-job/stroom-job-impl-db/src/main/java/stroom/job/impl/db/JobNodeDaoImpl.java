@@ -11,6 +11,7 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.util.shared.HasIntCrud;
 
+import jakarta.validation.constraints.NotNull;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -24,7 +25,6 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.inject.Inject;
-import jakarta.validation.constraints.NotNull;
 
 import static stroom.job.impl.db.jooq.Tables.JOB;
 import static stroom.job.impl.db.jooq.Tables.JOB_NODE;

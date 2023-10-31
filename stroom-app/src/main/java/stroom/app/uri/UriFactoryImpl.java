@@ -8,10 +8,10 @@ import stroom.config.common.UiUriConfig;
 import stroom.config.common.UriConfig;
 import stroom.config.common.UriFactory;
 
+import io.dropwizard.core.server.DefaultServerFactory;
 import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.HttpsConnectorFactory;
-import io.dropwizard.core.server.DefaultServerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

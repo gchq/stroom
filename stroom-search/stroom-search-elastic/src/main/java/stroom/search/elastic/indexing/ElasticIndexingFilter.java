@@ -45,6 +45,7 @@ import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import jakarta.ws.rs.NotFoundException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkItemResponse.Failure;
@@ -87,7 +88,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.ws.rs.NotFoundException;
 
 /**
  * Accepts `json` schema XML and sends documents to Elasticsearch as batches for indexing

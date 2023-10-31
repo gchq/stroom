@@ -59,6 +59,7 @@ import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.KeyRange;
@@ -87,7 +88,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * An Off Heap implementation of {@link RefDataStore} using LMDB.

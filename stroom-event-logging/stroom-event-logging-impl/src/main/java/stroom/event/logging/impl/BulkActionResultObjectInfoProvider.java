@@ -1,6 +1,5 @@
 package stroom.event.logging.impl;
 
-import stroom.docref.DocRef;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerNode;

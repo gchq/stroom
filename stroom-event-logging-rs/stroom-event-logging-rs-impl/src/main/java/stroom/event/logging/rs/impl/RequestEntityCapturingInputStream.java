@@ -17,6 +17,10 @@
 package stroom.event.logging.rs.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ResourceInfo;
+import jakarta.ws.rs.core.Context;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -27,10 +31,6 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.container.ResourceInfo;
-import jakarta.ws.rs.core.Context;
 
 import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
 

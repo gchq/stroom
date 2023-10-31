@@ -16,12 +16,12 @@
 
 package stroom.legacy.model_6_1;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
 @Deprecated

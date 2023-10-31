@@ -16,12 +16,12 @@
 
 package stroom.legacy.model_6_1;
 
+import java.io.Serializable;
+import java.util.Comparator;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.io.Serializable;
-import java.util.Comparator;
 
 /**
  * List of all known stream types within the system.

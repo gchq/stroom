@@ -5,7 +5,6 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
-import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;

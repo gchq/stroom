@@ -35,7 +35,6 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;

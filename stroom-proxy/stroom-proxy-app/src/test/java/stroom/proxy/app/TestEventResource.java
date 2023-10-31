@@ -102,7 +102,7 @@ public class TestEventResource {
                             ContentType.DEFAULT_TEXT));
 
             // Execute and get the response.
-            final CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute( httpPost);
+            final CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(httpPost);
             final HttpEntity entity = response.getEntity();
 
             if (entity != null) {

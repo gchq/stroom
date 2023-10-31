@@ -16,11 +16,11 @@
 
 package stroom.legacy.model_6_1;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * Utility class to match on sets of id's With concepts like match anything,

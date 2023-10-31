@@ -34,12 +34,12 @@ import stroom.util.shared.ResultPage;
 
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
+import jakarta.ws.rs.client.Entity;
 
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.ws.rs.client.Entity;
 
 @AutoLogged
 class TaskResourceImpl implements TaskResource {

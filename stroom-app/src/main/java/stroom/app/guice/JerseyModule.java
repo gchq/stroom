@@ -18,15 +18,15 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-
-import java.util.Map;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.ExceptionMapper;
+
+import java.util.Map;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 public class JerseyModule extends AbstractModule {
 

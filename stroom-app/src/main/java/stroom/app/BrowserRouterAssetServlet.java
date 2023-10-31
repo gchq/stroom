@@ -10,6 +10,11 @@ import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
 import io.dropwizard.servlets.assets.ByteRange;
 import io.dropwizard.servlets.assets.ResourceURL;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
@@ -17,11 +22,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

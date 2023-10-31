@@ -13,6 +13,9 @@ import stroom.util.sysinfo.SystemInfoResultList;
 
 import event.logging.Resource;
 import event.logging.ViewEventAction;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.UriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +25,6 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.UriInfo;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SystemInfoResourceImpl implements SystemInfoResource {

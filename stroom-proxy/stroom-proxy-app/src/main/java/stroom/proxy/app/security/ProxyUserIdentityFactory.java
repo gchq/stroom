@@ -12,6 +12,7 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.JerseyClientFactory;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
@@ -20,7 +21,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import jakarta.servlet.http.HttpServletRequest;
 
 @Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {

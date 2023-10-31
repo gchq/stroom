@@ -7,9 +7,9 @@ import stroom.util.shared.IsProxyConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 import javax.inject.Singleton;
-import jakarta.validation.constraints.Min;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)

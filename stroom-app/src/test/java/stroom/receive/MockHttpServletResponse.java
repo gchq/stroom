@@ -16,13 +16,14 @@
 
 package stroom.receive;
 
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Locale;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 
 public class MockHttpServletResponse implements HttpServletResponse {
 

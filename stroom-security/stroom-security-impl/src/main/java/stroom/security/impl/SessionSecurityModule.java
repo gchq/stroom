@@ -4,7 +4,6 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
-
 import jakarta.servlet.http.HttpSessionListener;
 
 public class SessionSecurityModule extends AbstractModule {

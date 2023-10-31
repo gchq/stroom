@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.validation.Validator;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,6 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.validation.Validator;
 
 class TestAppConfigMonitor {
 

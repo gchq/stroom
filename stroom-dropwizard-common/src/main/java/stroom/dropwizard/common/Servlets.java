@@ -15,6 +15,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.core.setup.Environment;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import jakarta.servlet.Servlet;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.pathmap.PathMappings;
 import org.eclipse.jetty.http.pathmap.PathSpec;
@@ -32,7 +33,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import jakarta.servlet.Servlet;
 
 @Singleton
 public class Servlets implements ServletAuthenticationChecker {

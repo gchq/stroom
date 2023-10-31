@@ -19,7 +19,6 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
-import stroom.index.shared.IndexShardKey;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.date.DateUtil;
 

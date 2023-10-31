@@ -22,6 +22,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple4;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.OPTIONS;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -47,15 +56,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Provider;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HEAD;
-import jakarta.ws.rs.OPTIONS;
-import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.Response;
 
 class TestRestResources {
 

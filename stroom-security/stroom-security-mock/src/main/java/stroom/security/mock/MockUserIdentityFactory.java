@@ -4,12 +4,13 @@ import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
-import jakarta.servlet.http.HttpServletRequest;
 
 public class MockUserIdentityFactory implements UserIdentityFactory {
 

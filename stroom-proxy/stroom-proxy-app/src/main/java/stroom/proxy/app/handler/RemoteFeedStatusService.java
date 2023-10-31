@@ -19,6 +19,14 @@ import com.codahale.metrics.health.HealthCheck;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.dropwizard.lifecycle.Managed;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response.StatusType;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -34,14 +42,6 @@ import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-import jakarta.ws.rs.core.Response.StatusType;
 
 @Singleton
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck, Managed {

@@ -16,12 +16,12 @@
 
 package stroom.legacy.model_6_1;
 
+import java.util.Arrays;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "size", propOrder = {"width", "height"})

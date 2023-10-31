@@ -10,9 +10,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
-import jakarta.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class IndexCacheConfig extends AbstractConfig implements IsStroomConfig {

@@ -9,11 +9,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Module;
 import io.dropwizard.core.setup.Environment;
+import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.nio.file.Path;
-import jakarta.validation.constraints.NotNull;
 
 class TestProxyModule {
 

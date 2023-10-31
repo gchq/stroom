@@ -7,10 +7,8 @@ import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.Doc;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.Message;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

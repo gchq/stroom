@@ -10,13 +10,14 @@ import stroom.util.cert.CertificateExtractor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.servlet.http.HttpServletRequest;
 
 public class RequestAuthenticatorImpl implements RequestAuthenticator {
 

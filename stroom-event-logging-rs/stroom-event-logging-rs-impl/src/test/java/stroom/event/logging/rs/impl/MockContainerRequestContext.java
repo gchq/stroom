@@ -16,13 +16,6 @@
 
 package stroom.event.logging.rs.impl;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
@@ -31,6 +24,14 @@ import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.UriInfo;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class MockContainerRequestContext implements ContainerRequestContext {
 

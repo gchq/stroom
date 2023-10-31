@@ -26,12 +26,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import org.glassfish.jersey.message.MessageUtils;
-
-import java.io.IOException;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ResourceContext;
@@ -39,6 +33,12 @@ import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.WriterInterceptorContext;
+import org.glassfish.jersey.message.MessageUtils;
+
+import java.io.IOException;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {

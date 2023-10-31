@@ -27,6 +27,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException;
 import io.dropwizard.core.setup.Environment;
+import jakarta.validation.constraints.NotNull;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
@@ -44,7 +45,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
-import jakarta.validation.constraints.NotNull;
 
 public class BootstrapUtil {
 

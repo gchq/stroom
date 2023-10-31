@@ -29,15 +29,15 @@ import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 @Deprecated // This is pretty limited in what it can do. HttpAppender is much better and more configurable
 @ConfigurableElement(type = "HttpPostFilter",

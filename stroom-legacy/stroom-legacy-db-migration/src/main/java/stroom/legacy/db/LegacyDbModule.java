@@ -30,6 +30,7 @@ import stroom.util.shared.Version;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.validation.constraints.NotNull;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
@@ -51,7 +52,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the

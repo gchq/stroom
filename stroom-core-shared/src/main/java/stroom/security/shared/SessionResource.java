@@ -5,8 +5,6 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.fusesource.restygwt.client.DirectRestService;
-
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -14,6 +12,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.fusesource.restygwt.client.DirectRestService;
 
 /**
  * This is used by the OpenId flow - when a user request a log out the remote authentication service

@@ -16,7 +16,6 @@
 
 package stroom.index.shared;
 
-import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.FindWithCriteria;
 import stroom.util.shared.ResourcePaths;
@@ -26,8 +25,6 @@ import stroom.util.shared.ResultPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.fusesource.restygwt.client.DirectRestService;
-
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -37,6 +34,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.fusesource.restygwt.client.DirectRestService;
 
 @Tag(name = "Indexes (v2)")
 @Path(IndexResource.BASE_PATH)

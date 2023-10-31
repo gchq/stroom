@@ -22,6 +22,10 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,10 +34,6 @@ import java.util.Enumeration;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * <p>

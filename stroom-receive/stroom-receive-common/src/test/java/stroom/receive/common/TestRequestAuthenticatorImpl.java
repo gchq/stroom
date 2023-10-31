@@ -9,6 +9,8 @@ import stroom.test.common.TestUtil;
 import stroom.util.cert.CertificateExtractor;
 
 import io.vavr.Tuple;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -17,8 +19,6 @@ import org.mockito.Mockito;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.core.HttpHeaders;
 
 class TestRequestAuthenticatorImpl {
 

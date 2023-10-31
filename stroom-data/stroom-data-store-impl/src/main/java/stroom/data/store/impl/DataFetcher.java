@@ -79,6 +79,7 @@ import stroom.util.shared.string.HexDump;
 import stroom.util.shared.string.HexDumpLine;
 import stroom.util.string.HexDumpUtil;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.ByteOrderMark;
 
 import java.io.BufferedOutputStream;
@@ -98,7 +99,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Provider;
-import jakarta.validation.constraints.NotNull;
 import javax.xml.transform.TransformerException;
 
 public class DataFetcher {

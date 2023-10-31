@@ -8,6 +8,9 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,8 +21,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 
 public class ConfigValidator<T> {
 

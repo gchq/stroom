@@ -27,6 +27,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.JwtContext;
@@ -39,8 +41,6 @@ import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
 @Singleton
 public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {

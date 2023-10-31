@@ -26,6 +26,13 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.UserName;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -33,12 +40,6 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 class SessionListServlet extends HttpServlet implements IsServlet {
 

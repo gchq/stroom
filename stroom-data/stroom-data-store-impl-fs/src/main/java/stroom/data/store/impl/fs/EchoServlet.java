@@ -21,12 +21,13 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Set;
 
 @Unauthenticated
 public class EchoServlet extends HttpServlet implements IsServlet {

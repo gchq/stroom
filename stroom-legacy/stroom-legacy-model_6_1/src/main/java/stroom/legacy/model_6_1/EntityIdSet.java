@@ -16,11 +16,11 @@
 
 package stroom.legacy.model_6_1;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * Hold id criteria

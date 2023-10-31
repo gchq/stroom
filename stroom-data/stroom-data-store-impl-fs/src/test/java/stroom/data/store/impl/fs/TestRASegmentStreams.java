@@ -20,6 +20,7 @@ import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
+import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import jakarta.validation.constraints.NotNull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

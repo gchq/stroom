@@ -1,7 +1,6 @@
 package stroom.util.servlet;
 
 import com.google.inject.AbstractModule;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 public class MockServletModule extends AbstractModule {

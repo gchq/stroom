@@ -7,12 +7,12 @@ import stroom.util.shared.BuildInfo;
 
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.core.setup.Environment;
+import jakarta.ws.rs.client.Client;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.Map;
-import jakarta.ws.rs.client.Client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

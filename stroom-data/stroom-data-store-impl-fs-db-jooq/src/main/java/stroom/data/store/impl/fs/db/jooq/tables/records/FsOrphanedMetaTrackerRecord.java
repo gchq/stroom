@@ -5,13 +5,13 @@
 package stroom.data.store.impl.fs.db.jooq.tables.records;
 
 
+import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Row2;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 
 
 /**

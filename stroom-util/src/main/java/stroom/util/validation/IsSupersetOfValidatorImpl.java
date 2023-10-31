@@ -3,11 +3,12 @@ package stroom.util.validation;
 import stroom.util.shared.validation.IsSupersetOf;
 import stroom.util.shared.validation.IsSupersetOfValidator;
 
+import jakarta.validation.ConstraintValidatorContext;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import jakarta.validation.ConstraintValidatorContext;
 
 public class IsSupersetOfValidatorImpl implements IsSupersetOfValidator {
 

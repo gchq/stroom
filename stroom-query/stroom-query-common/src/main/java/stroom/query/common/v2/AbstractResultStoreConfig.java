@@ -6,7 +6,6 @@ import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import jakarta.validation.constraints.Min;
 
 @NotInjectableConfig

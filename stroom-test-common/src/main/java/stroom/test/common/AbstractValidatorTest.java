@@ -6,13 +6,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.validation.ValidationModule;
 
 import com.google.inject.Guice;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.Set;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 
 public abstract class AbstractValidatorTest {
 

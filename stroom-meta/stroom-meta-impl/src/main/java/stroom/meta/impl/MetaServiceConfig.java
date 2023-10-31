@@ -23,13 +23,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
-
-import java.util.HashSet;
-import java.util.Set;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
 @JsonPropertyOrder(alphabetic = true)

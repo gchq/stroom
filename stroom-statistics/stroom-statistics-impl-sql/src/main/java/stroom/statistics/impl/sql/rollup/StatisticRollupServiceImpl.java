@@ -20,7 +20,6 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.CustomRollUpMaskFields;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -3,6 +3,7 @@ package stroom.security.common.impl;
 import stroom.test.common.TestUtil;
 
 import com.google.inject.TypeLiteral;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -13,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import jakarta.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -28,7 +28,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
-import org.apache.commons.fileupload2.core.FileItem;
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.slf4j.Logger;
@@ -115,7 +114,8 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
         final Map<String, DiskFileItem> fields = new HashMap<>();
         final DiskFileItemFactory factory = DiskFileItemFactory.builder()
                 .get();
-        final JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload = new JakartaServletFileUpload<>(factory);
+        final JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload =
+                new JakartaServletFileUpload<>(factory);
 
         try {
             final List<DiskFileItem> items = upload.parseRequest(request);

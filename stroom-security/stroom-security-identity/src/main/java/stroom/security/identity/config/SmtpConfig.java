@@ -29,11 +29,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.simplejavamail.mailer.config.TransportStrategy;
-
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import org.simplejavamail.mailer.config.TransportStrategy;
 
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)

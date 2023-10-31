@@ -18,8 +18,6 @@ package stroom.core.servlet;
 
 import stroom.util.servlet.HttpServletRequestHolder;
 
-import java.io.IOException;
-import javax.inject.Inject;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -27,6 +25,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.io.IOException;
+import javax.inject.Inject;
 
 public class HttpServletRequestFilter implements Filter {
 

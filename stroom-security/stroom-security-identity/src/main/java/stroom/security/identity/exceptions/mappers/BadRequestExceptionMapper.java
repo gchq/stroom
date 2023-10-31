@@ -20,12 +20,11 @@ package stroom.security.identity.exceptions.mappers;
 
 import stroom.security.identity.exceptions.BadRequestException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Provider
 public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestException> {

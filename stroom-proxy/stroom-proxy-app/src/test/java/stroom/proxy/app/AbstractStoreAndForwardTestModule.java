@@ -49,10 +49,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.dropwizard.core.setup.Environment;
+import jakarta.ws.rs.client.Client;
 import org.mockito.Mockito;
 
 import java.nio.file.Path;
-import jakarta.ws.rs.client.Client;
 
 public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
 

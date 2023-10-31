@@ -15,6 +15,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,9 +25,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import javax.inject.Inject;
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 
 public class TestAppConfigValidator {
 

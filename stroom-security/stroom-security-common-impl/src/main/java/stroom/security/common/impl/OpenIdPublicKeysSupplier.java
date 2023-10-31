@@ -9,6 +9,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.ws.rs.core.Response;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.PublicJsonWebKey;
@@ -26,7 +27,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import jakarta.ws.rs.core.Response;
 
 @Singleton
 public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {

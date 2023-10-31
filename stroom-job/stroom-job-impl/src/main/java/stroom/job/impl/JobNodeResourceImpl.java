@@ -36,14 +36,14 @@ import event.logging.And;
 import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
-
-import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobNodeResourceImpl implements JobNodeResource {

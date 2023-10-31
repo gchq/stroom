@@ -1,11 +1,11 @@
 package stroom.legacy.model_6_1;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "conditionFormattingRule", propOrder = {

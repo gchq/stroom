@@ -20,12 +20,13 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 
 public abstract class AppServlet extends HttpServlet {
 

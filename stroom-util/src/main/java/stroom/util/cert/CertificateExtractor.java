@@ -19,13 +19,14 @@ package stroom.util.cert;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.http.HttpServletRequest;
 
 // Non-static methods to make mocking this possible in tests
 public class CertificateExtractor {

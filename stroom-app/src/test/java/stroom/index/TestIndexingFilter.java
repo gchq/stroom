@@ -40,7 +40,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;

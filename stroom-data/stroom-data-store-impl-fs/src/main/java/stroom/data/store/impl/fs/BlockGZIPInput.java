@@ -18,13 +18,14 @@ package stroom.data.store.impl.fs;
 
 import stroom.util.io.SeekableInputStream;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.zip.GZIPInputStream;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * @see BlockGZIPConstants

@@ -6,13 +6,13 @@ import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.servlet.http.HttpServletRequest;
 
 ///**
 // * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}

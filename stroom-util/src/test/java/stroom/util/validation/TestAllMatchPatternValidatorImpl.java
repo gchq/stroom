@@ -3,12 +3,12 @@ package stroom.util.validation;
 import stroom.test.common.AbstractValidatorTest;
 import stroom.util.shared.validation.AllMatchPattern;
 
+import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import jakarta.validation.ConstraintViolation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

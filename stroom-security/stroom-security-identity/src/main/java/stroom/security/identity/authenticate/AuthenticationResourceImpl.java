@@ -25,11 +25,9 @@ import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.openid.api.OpenId;
 import stroom.util.jersey.UriBuilderUtil;
-import stroom.util.net.UrlUtils;
 import stroom.util.shared.PermissionException;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Strings;
 import event.logging.AuthenticateAction;
 import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateLogonType;
@@ -41,18 +39,18 @@ import event.logging.EventSource;
 import event.logging.Outcome;
 import event.logging.User;
 import event.logging.ViewEventAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 @AutoLogged(OperationType.MANUALLY_LOGGED)

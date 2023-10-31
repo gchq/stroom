@@ -2,7 +2,6 @@ package stroom.util.guice;
 
 import com.google.inject.Binder;
 import com.google.inject.multibindings.MapBinder;
-
 import jakarta.servlet.Filter;
 
 public class FilterBinder {

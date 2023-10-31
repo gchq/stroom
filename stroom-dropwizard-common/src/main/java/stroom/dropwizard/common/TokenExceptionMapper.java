@@ -3,7 +3,6 @@ package stroom.dropwizard.common;
 import stroom.security.api.TokenException;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
-
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;

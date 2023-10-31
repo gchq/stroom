@@ -23,12 +23,13 @@ import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
 

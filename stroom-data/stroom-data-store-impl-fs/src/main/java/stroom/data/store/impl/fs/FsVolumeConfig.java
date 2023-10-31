@@ -13,12 +13,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import jakarta.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
 public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {

@@ -23,8 +23,6 @@ import stroom.util.shared.ResultPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.fusesource.restygwt.client.DirectRestService;
-
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -34,6 +32,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.fusesource.restygwt.client.DirectRestService;
 
 @Tag(name = "Jobs (Node)")
 @Path(JobNodeResource.BASE_PATH)

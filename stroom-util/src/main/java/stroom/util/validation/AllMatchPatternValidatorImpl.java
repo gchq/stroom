@@ -3,12 +3,13 @@ package stroom.util.validation;
 import stroom.util.shared.validation.AllMatchPattern;
 import stroom.util.shared.validation.AllMatchPatternValidator;
 
+import jakarta.validation.ConstraintValidatorContext;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import jakarta.validation.ConstraintValidatorContext;
 
 public class AllMatchPatternValidatorImpl implements AllMatchPatternValidator {
 

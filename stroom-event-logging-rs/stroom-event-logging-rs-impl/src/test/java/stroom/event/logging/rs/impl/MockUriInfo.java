@@ -16,13 +16,14 @@
 
 package stroom.event.logging.rs.impl;
 
-import java.net.URI;
-import java.util.List;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.PathSegment;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+
+import java.net.URI;
+import java.util.List;
 
 public class MockUriInfo implements UriInfo {
 

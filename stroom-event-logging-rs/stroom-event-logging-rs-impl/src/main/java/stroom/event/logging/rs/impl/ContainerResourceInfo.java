@@ -25,12 +25,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import java.lang.reflect.Method;
-import java.util.Optional;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.ResourceInfo;
+
+import java.lang.reflect.Method;
+import java.util.Optional;
 
 public class ContainerResourceInfo {
 

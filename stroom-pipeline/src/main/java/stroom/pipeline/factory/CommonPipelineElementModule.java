@@ -16,8 +16,6 @@
 
 package stroom.pipeline.factory;
 
-import stroom.util.guice.RestResourcesBinder;
-
 public class CommonPipelineElementModule extends PipelineElementModule {
     @Override
     protected void configureElements() {

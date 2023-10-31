@@ -18,6 +18,14 @@ import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,14 +40,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 @Singleton
 public class ContentSyncService implements Managed, HasHealthCheck {

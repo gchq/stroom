@@ -1,7 +1,5 @@
 package stroom.test.common.util.test;
 
-import stroom.content.ContentPack;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

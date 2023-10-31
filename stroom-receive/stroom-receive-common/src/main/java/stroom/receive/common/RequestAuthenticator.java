@@ -3,8 +3,9 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.security.api.UserIdentity;
 
-import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Map;
 
 /**
  * Handles the authentication of HTTP requests into stroom or stroom-proxy

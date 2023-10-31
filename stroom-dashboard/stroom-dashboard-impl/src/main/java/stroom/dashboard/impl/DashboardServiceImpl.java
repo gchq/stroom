@@ -74,6 +74,8 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.string.ExceptionStringUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -92,7 +94,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import jakarta.servlet.http.HttpServletRequest;
 
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {

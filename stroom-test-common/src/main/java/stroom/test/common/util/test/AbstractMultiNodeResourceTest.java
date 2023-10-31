@@ -6,6 +6,17 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.ext.ExceptionMapper;
 import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -35,17 +46,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.ext.ExceptionMapper;
 
 /**
  * An abstract test class for use when testing a resource that is running on multiple nodes.

@@ -19,6 +19,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import event.logging.AuthenticateOutcomeReason;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.core.UriBuilder;
 
 import java.net.URI;
 import java.time.Instant;
@@ -26,9 +29,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import jakarta.ws.rs.core.UriBuilder;
 
 
 class AuthenticationServiceImpl implements AuthenticationService {

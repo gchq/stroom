@@ -39,12 +39,13 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.ws.rs.ProcessingException;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import jakarta.ws.rs.ProcessingException;
 
 public class DataProcessorTaskHandler {
 

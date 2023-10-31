@@ -32,11 +32,11 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
+import jakarta.ws.rs.client.Entity;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import jakarta.ws.rs.client.Entity;
 
 @Singleton
 @AutoLogged

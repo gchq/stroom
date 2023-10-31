@@ -27,9 +27,6 @@ import org.elasticsearch.search.suggest.term.TermSuggestionBuilder;
 import org.elasticsearch.search.suggest.term.TermSuggestionBuilder.SuggestMode;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;

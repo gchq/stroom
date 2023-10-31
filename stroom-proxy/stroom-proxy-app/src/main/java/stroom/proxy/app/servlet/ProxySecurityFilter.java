@@ -27,11 +27,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -42,6 +37,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * <p>

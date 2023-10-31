@@ -30,6 +30,7 @@ import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.net.HostNameUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -49,7 +50,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-import jakarta.servlet.http.HttpServletRequest;
 
 public class StroomStreamProcessor {
 
