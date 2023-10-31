@@ -23,8 +23,10 @@ import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -32,11 +34,13 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 
-public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSettingsView {
+public class BasicTableSettingsViewImpl
+        extends ViewWithUiHandlers<BasicTableSettingsUihandlers>
+        implements BasicTableSettingsView {
 
     private final Widget widget;
     @UiField
@@ -47,6 +51,8 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     SelectionBox<Component> query;
     @UiField
     CustomCheckBox extractValues;
+    @UiField
+    CustomCheckBox useDefaultExtractionPipeline;
     @UiField
     SimplePanel pipeline;
     @UiField
@@ -121,6 +127,16 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     }
 
     @Override
+    public boolean isUseDefaultExtractionPipeline() {
+        return useDefaultExtractionPipeline.getValue();
+    }
+
+    @Override
+    public void setUseDefaultExtractionPipeline(final boolean extractValues) {
+        this.useDefaultExtractionPipeline.setValue(extractValues);
+    }
+
+    @Override
     public void setPipelineView(final View view) {
         final Widget widget = view.asWidget();
         widget.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -159,6 +175,11 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
 
     public void onResize() {
         ((RequiresResize) widget).onResize();
+    }
+
+    @UiHandler("useDefaultExtractionPipeline")
+    public void onUseDefaultExtractionPipeline(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onUseDefaultExtractionPipeline(useDefaultExtractionPipeline.getValue());
     }
 
     public interface Binder extends UiBinder<Widget, BasicTableSettingsViewImpl> {

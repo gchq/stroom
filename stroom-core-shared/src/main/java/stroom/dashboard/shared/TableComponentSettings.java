@@ -66,6 +66,9 @@ public class TableComponentSettings implements ComponentSettings {
     private final Boolean extractValues;
 
     @JsonProperty
+    private final Boolean useDefaultExtractionPipeline;
+
+    @JsonProperty
     private final DocRef extractionPipeline;
 
     @Schema(description = "Defines the maximum number of results to return at each grouping level, e.g. " +
@@ -102,6 +105,7 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
             @JsonProperty("fields") final List<Field> fields,
             @JsonProperty("extractValues") final Boolean extractValues,
+            @JsonProperty("useDefaultExtractionPipeline") final Boolean useDefaultExtractionPipeline,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Long> maxResults,
             @JsonProperty("pageSize") final Integer pageSize,
@@ -114,6 +118,7 @@ public class TableComponentSettings implements ComponentSettings {
         this.dataSourceRef = dataSourceRef;
         this.fields = fields;
         this.extractValues = extractValues;
+        this.useDefaultExtractionPipeline = useDefaultExtractionPipeline;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
         this.pageSize = pageSize;
@@ -143,6 +148,17 @@ public class TableComponentSettings implements ComponentSettings {
             return true;
         }
         return extractValues;
+    }
+
+    public Boolean getUseDefaultExtractionPipeline() {
+        return useDefaultExtractionPipeline;
+    }
+
+    public boolean useDefaultExtractionPipeline() {
+        if (useDefaultExtractionPipeline == null) {
+            return false;
+        }
+        return useDefaultExtractionPipeline;
     }
 
     public DocRef getExtractionPipeline() {
@@ -189,6 +205,7 @@ public class TableComponentSettings implements ComponentSettings {
                 Objects.equals(dataSourceRef, that.dataSourceRef) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(extractValues, that.extractValues) &&
+                Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
                 Objects.equals(pageSize, that.pageSize) &&
@@ -204,6 +221,7 @@ public class TableComponentSettings implements ComponentSettings {
                 dataSourceRef,
                 fields,
                 extractValues,
+                useDefaultExtractionPipeline,
                 extractionPipeline,
                 maxResults,
                 pageSize,
@@ -219,6 +237,7 @@ public class TableComponentSettings implements ComponentSettings {
                 ", dataSourceRef=" + dataSourceRef +
                 ", fields=" + fields +
                 ", extractValues=" + extractValues +
+                ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + maxResults +
                 ", pageSize=" + pageSize +
@@ -246,6 +265,7 @@ public class TableComponentSettings implements ComponentSettings {
         private DocRef dataSourceRef;
         private List<Field> fields;
         private Boolean extractValues;
+        private Boolean useDefaultExtractionPipeline = Boolean.TRUE;
         private DocRef extractionPipeline;
         private List<Long> maxResults;
         private Integer pageSize;
@@ -263,6 +283,7 @@ public class TableComponentSettings implements ComponentSettings {
                     ? null
                     : new ArrayList<>(tableSettings.fields);
             this.extractValues = tableSettings.extractValues;
+            this.useDefaultExtractionPipeline = tableSettings.useDefaultExtractionPipeline;
             this.extractionPipeline = tableSettings.extractionPipeline;
             this.maxResults = tableSettings.maxResults == null
                     ? null
@@ -330,6 +351,16 @@ public class TableComponentSettings implements ComponentSettings {
             return this;
         }
 
+        public Builder useDefaultExtractionPipeline(final Boolean value) {
+            if (value == null || !value) {
+                this.useDefaultExtractionPipeline = null;
+            } else {
+                this.useDefaultExtractionPipeline = Boolean.TRUE;
+            }
+            return this;
+        }
+
+
         /**
          * @param value The reference to the extraction pipeline that will be used on the results
          * @return The {@link TableSettings.Builder}, enabling method chaining
@@ -391,6 +422,7 @@ public class TableComponentSettings implements ComponentSettings {
                     dataSourceRef,
                     fields,
                     extractValues,
+                    useDefaultExtractionPipeline,
                     extractionPipeline,
                     maxResults,
                     pageSize,

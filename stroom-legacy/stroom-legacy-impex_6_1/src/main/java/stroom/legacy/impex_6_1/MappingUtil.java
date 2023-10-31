@@ -197,6 +197,7 @@ public final class MappingUtil {
                 null,
                 mapList(value.getFields(), MappingUtil::map),
                 value.getExtractValues(),
+                false,
                 map(value.getExtractionPipeline()),
                 maxResults,
                 100,

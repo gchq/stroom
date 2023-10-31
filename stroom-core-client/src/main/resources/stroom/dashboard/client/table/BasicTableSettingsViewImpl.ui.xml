@@ -17,6 +17,9 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="extractValues" identity="basicTableSettingsExtractValues" label="Extract Values"/>
         </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="useDefaultExtractionPipeline" identity="basicTableSettingsUseDefaultExtractionPipeline" label="Use Default Extraction Pipeline"/>
+        </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsExtractionPipeline" label="Extraction Pipeline">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
