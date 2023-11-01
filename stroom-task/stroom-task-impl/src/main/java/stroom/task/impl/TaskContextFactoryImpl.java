@@ -266,7 +266,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
 
             } catch (final Throwable t) {
                 try {
-                    if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
+                    if (t instanceof TaskTerminatedException) {
                         LOGGER.debug(() -> "exec() - Task killed! (" + taskName + ")", t);
                     } else {
                         LOGGER.debug(() -> t.getMessage() + " (" + taskName + ")", t);

@@ -51,10 +51,11 @@ plugins {
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-def javaVersion = JavaVersion.VERSION_17;
-if (JavaVersion.current() != javaVersion) {
-    throw new GradleException(
-            "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
 }
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
@@ -198,7 +199,7 @@ ext.libs = [
         gwt_user                            : "org.gwtproject:gwt-user:$versions.gwt",
         gwtp_mvp_client                     : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                                : 'com.google.code.gson:gson:2.6.2',
-        hbase                               : "org.apache.hbase:hbase-common:2.1.5", // should be set to be consistent with CDH version
+        hbase                               : "org.apache.hbase:hbase-common:2.1.10", // should be set to be consistent with CDH version
         hessian                             : "com.caucho:hessian:4.0.65",
         hibernate_jpa                       : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final", // remove when legacy code is removed
         hikari                              : "com.zaxxer:HikariCP:$versions.hikari",
@@ -341,9 +342,6 @@ subprojects {
 //        rules +=  'unused-dependency'
 ////        rules +=  'all-dependency'
 //    }
-
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
