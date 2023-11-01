@@ -17,13 +17,13 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.api.NotificationState;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.meta.shared.Meta;
-import stroom.pipeline.filter.FieldValue;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.SearchRequest;
@@ -31,8 +31,10 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.FieldListConsumerHolder;
-import stroom.search.impl.SearchExpressionQueryBuilderFactory;
+import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.MemoryIndex;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
@@ -57,7 +59,7 @@ public class StreamingAnalyticDataProcessorDecorator {
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final AnalyticHelper analyticHelper;
     private final ExpressionContextFactory expressionContextFactory;
-    private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
+    private final MemoryIndex memoryIndex;
     private final NotificationStateService notificationStateService;
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final DetectionConsumerProxy detectionConsumerProxy;
@@ -71,8 +73,7 @@ public class StreamingAnalyticDataProcessorDecorator {
                                                            analyticRuleSearchRequestHelper,
                                                    final AnalyticHelper analyticHelper,
                                                    final ExpressionContextFactory expressionContextFactory,
-                                                   final SearchExpressionQueryBuilderFactory
-                                                           searchExpressionQueryBuilderFactory,
+                                                   final MemoryIndex memoryIndex,
                                                    final NotificationStateService notificationStateService,
                                                    final DetectionConsumerFactory detectionConsumerFactory,
                                                    final DetectionConsumerProxy detectionConsumerProxy,
@@ -81,7 +82,7 @@ public class StreamingAnalyticDataProcessorDecorator {
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.analyticHelper = analyticHelper;
         this.expressionContextFactory = expressionContextFactory;
-        this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
+        this.memoryIndex = memoryIndex;
         this.notificationStateService = notificationStateService;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.detectionConsumerProxy = detectionConsumerProxy;
@@ -135,10 +136,6 @@ public class StreamingAnalyticDataProcessorDecorator {
                 paramMap);
         final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 
-        // Cache the query for use across multiple streams.
-        final SearchExpressionQueryCache searchExpressionQueryCache =
-                new SearchExpressionQueryCache(searchExpressionQueryBuilderFactory, searchRequest);
-
         // Determine if notifications have been disabled.
         final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
         // Only execute if the state is enabled.
@@ -157,7 +154,7 @@ public class StreamingAnalyticDataProcessorDecorator {
                         fieldIndex,
                         notificationState,
                         detectionConsumerProxy,
-                        searchExpressionQueryCache,
+                        memoryIndex,
                         null,
                         detectionConsumerProxy));
 
@@ -177,7 +174,7 @@ public class StreamingAnalyticDataProcessorDecorator {
         info(() -> "Loading rule");
         final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRule);
 
-        ViewDoc viewDoc = null;
+        ViewDoc viewDoc;
 
         // Try and get view.
         final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
